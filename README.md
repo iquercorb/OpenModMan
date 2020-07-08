@@ -1,7 +1,10 @@
 ----------------------------------------------------------------------------------------
-#Open Mod Mananager
-Open Mod Manager is an open source and generic Mod ("Modifications") manager. 
+Open Mod Mananager
 ----------------------------------------------------------------------------------------
+
+Open Mod Manager is an open source and generic Mod ("Modifications") manager. 
+
+
 Version: 0.9.0 (beta)
 ----------------------------------------------------------------------------------------
 
