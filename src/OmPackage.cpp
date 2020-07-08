@@ -1,0 +1,2088 @@
+/*
+  This file is part of Open Mod Manager.
+
+  Open Mod Manager is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Open Mod Manager is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "thirdparty/miniz/miniz.h"
+#include "OmZipFile.h"
+#include "OmXmlDoc.h"
+#include "OmManager.h"
+#include "OmContext.h"
+#include "OmLocation.h"
+#include "OmPackage.h"
+#include <time.h>
+
+
+#define PKG_BACKUP_DIR    L"backup_dir"
+#define PKG_BACKUP_DEF    L"backup_def"
+#define PKG_SOURCE_DIR    L"source_dir"
+#define PKG_SOURCE_DEF    L"source_def"
+
+
+/// \brief Get package folder tree.
+///
+/// Get the full list, in recursive way, of items (subfolders and files)
+/// contained in the specified folder.
+///
+/// \param[in]  ls      : Pointer to array to get list of entries.
+/// \param[in]  orig    : Path to where to begin the inspection.
+/// \param[in]  from    : Relative path from orig to build paths in recursive way.
+///
+/// \return The filled buffer as const char
+///
+static void __OmPackage_getItemsFromDir(vector<OmPackageItem>* ls, const wstring& orig, const wstring& from)
+{
+  wstring item;
+  wstring root;
+
+  wstring srch(orig); srch += L"\\*";
+  WIN32_FIND_DATAW fd;
+  HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
+  if(hnd != INVALID_HANDLE_VALUE) {
+    do {
+      // skip this and parent folder
+      if(!wcscmp(fd.cFileName, L".")) continue;
+      if(!wcscmp(fd.cFileName, L"..")) continue;
+
+      OmPackageItem pkg_item;
+      pkg_item.cdri = -1;
+      pkg_item.dest = PKGITEM_DEST_NUL;
+
+      if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if(!from.size()) {
+          item = fd.cFileName;
+        } else {
+          Om_concatPaths(item, from, fd.cFileName);
+        }
+        Om_concatPaths(root, orig, fd.cFileName);
+
+        pkg_item.type = PKGITEM_TYPE_D;
+        // add final backslash to stay consistent with zip CDR conventions
+        pkg_item.path = item + L"\\";
+        ls->push_back(pkg_item);
+
+        // go deep in hierarchy
+        __OmPackage_getItemsFromDir(ls, root, item);
+
+      } else {
+        Om_concatPaths(item, from, fd.cFileName);
+
+        pkg_item.type = PKGITEM_TYPE_F;
+        pkg_item.path = item;
+        ls->push_back(pkg_item);
+      }
+    } while(FindNextFileW(hnd, &fd));
+  }
+  FindClose(hnd);
+}
+
+
+/// \brief Parse Package identity
+///
+/// Parse the Package identity to extract the display name and a potential
+/// version substring.
+///
+/// \param[out] name    : Parsed display name.
+/// \param[out] vers    : Parsed version if any.
+/// \param[in]  ident   : Package identity string to be parsed.
+///
+/// \return True if version string candidate was found, false otherwise
+///
+static inline bool __OmPackage_parseIdent(wstring& name, OmVersion& vers, const wstring& ident)
+{
+  // parse raw name to get display name and potential version
+  bool has_version = false;
+  // we search a version part in the name, this must be the letter V preceded
+  // by a common separator, like space, minus or underscore character, followed
+  // by a number
+  size_t v_pos = ident.find_last_of(L"vV");
+  if(v_pos > 0) {
+    // verify the V letter is preceded by a common separator
+    wchar_t wc = ident[v_pos - 1];
+    if(wc == L' ' || wc == L'_' || wc == L'-') {
+      // verify the V letter is followed by a number
+      wc = ident[v_pos + 1];
+      if(wc > 0x29 && wc < 0x40) { // 0123456789
+        // get the substring from v char to the end of string
+        if(vers.parse(ident.substr(v_pos+1, -1))) {
+          has_version = true;
+        }
+      }
+    }
+  }
+
+  if(has_version) {
+    // we extract the substring from the beginning to the version substring
+    name = ident.substr(0, v_pos);
+  } else {
+    name = ident;
+  }
+
+  return has_version;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmPackage::OmPackage() :
+  _type(0),
+  _ident(),
+  _hash(0),
+  _name(),
+  _source(),
+  _sourceDir(),
+  _sourceItem(),
+  _depends(),
+  _backup(),
+  _backupDir(),
+  _backupItem(),
+  _overlap(),
+  _desc(),
+  _version(),
+  _picture(nullptr),
+  _location(nullptr),
+  _error()
+{
+
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmPackage::OmPackage(OmLocation* location) :
+  _type(0),
+  _ident(),
+  _hash(0),
+  _name(),
+  _source(),
+  _sourceDir(),
+  _sourceItem(),
+  _depends(),
+  _backup(),
+  _backupDir(),
+  _backupItem(),
+  _overlap(),
+  _desc(),
+  _version(),
+  _picture(nullptr),
+  _location(location),
+  _error()
+{
+
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmPackage::~OmPackage()
+{
+  if(this->_picture) DeleteObject(this->_picture);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::sourceParse(const wstring& path)
+{
+  this->_source = path;
+
+  // check if it is a file
+  if(Om_isFile(this->_source)) {
+
+    // get Package identity from file name without extension
+    this->_ident = Om_getNamePart(this->_source);
+
+    // this is a file, so check if it is a Zip file
+    if(Om_isFileZip(this->_source)) {
+
+      // we got a zip file, checks whether it is formated like we expect it
+      OmZipFile src_zip;
+      if(!src_zip.load(this->_source)) {
+        // bad news, I can't even load it...
+        this->_error = L"Unable to load zip archive \"";
+        this->_error += this->_source + L"\": ";
+        this->_error += src_zip.lastErrorStr();
+        this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+        src_zip.close();
+        this->sourceClear();
+        return false;
+      }
+
+      bool has_def = false;
+      OmConfig src_def;
+
+      // check for a an .omp definition file in the zip archive
+      wstring zcd_entry;
+      unsigned zcd_count = src_zip.indexCount(); //< count of Central Directory Records
+
+      // we search beginning from the last entry because the definition file is
+      // almost all the time the very last one added in in the archive
+      unsigned zcd_index = zcd_count;
+      while(zcd_index--) {
+
+        src_zip.index(zcd_entry, zcd_index); //< get Central Directory Record entry
+
+        if(Om_extensionMatches(zcd_entry, OMM_PKG_FILE_EXT)) {
+          // good candidate for Package definition, try to load it
+          char* buff = nullptr;
+          size_t s = src_zip.size(zcd_index);
+          try {
+            buff = new char[s+1];
+          } catch (std::bad_alloc& ba) {
+            this->_error = L"Unable to extract file \"";
+            this->_error += zcd_entry + L"\" memory allocation error: ";
+            this->_error += Om_toWcString(ba.what());
+            this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+            src_zip.close();
+            this->sourceClear();
+            return false;
+          }
+          if(!src_zip.extract(zcd_index, buff, s)) {
+            this->_error = L"Unable to extract \"";
+            this->_error += zcd_entry + L"\" from zip archive: ";
+            this->_error += src_zip.lastErrorStr();
+            this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+            src_zip.close();
+            delete [] buff;
+            this->sourceClear();
+            return false;
+          }
+          buff[s] = 0;
+          if(src_def.parse(Om_toWcString(buff), OMM_CFG_SIGN_PKG)) {
+            has_def = true;
+            delete [] buff;
+            break;
+          } else {
+            this->_error = L"Error parsing Package definition candidate \"";
+            this->_error += zcd_entry + L"\" : ";
+            this->_error += src_def.lastErrorStr();
+            this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+          }
+          delete [] buff;
+        }
+      }
+
+      if(has_def) {
+        // definition file was found we retrieve Package infos from it
+        OmXmlNode cfg_xml = src_def.xml();
+        // search for <install> node in definition
+        if(!cfg_xml.hasChild(L"install")) {
+          this->_error = L"Error parsing Package definition : <install> node is missing.";
+          this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+          src_zip.close();
+          this->sourceClear();
+          return false;
+        }
+        // install directory name
+        this->_sourceDir = cfg_xml.child(L"install").content();
+        // make sure src list is empty
+        this->_sourceItem.clear();
+        // then we now must create the tree
+        OmPackageItem pkg_item;
+        pkg_item.dest = PKGITEM_DEST_NUL;
+        // here we go to gather files to install
+        for(unsigned i = 0; i < zcd_count; ++i) {
+          src_zip.index(zcd_entry, i); //< get Central Directory Record entry
+
+          // we check for all entry with the specified destination folder as
+          // root, then we get only the relative path for the Package Item.
+          if(Om_getRelativePath(pkg_item.path, this->_sourceDir, zcd_entry)) {
+            // we got one, lets add it to the package tree
+            pkg_item.cdri = i; //< keep Zip CDR index
+            pkg_item.type = src_zip.indexOm_isDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
+            this->_sourceItem.push_back(pkg_item);
+          }
+        }
+        // make sure dependency list is empty
+        this->_depends.clear();
+        // check for Package dependencies
+        if(cfg_xml.hasChild(L"dependencies")) {
+          OmXmlNode dpnd_node = cfg_xml.child(L"dependencies");
+          unsigned dpnd_count = dpnd_node.childCount(L"ident");
+          for(unsigned i = 0; i < dpnd_count; ++i) {
+            this->_depends.push_back(dpnd_node.child(L"ident", i).content());
+          }
+        }
+        // check for Package description
+        if(cfg_xml.hasChild(L"description")) {
+          this->_desc = cfg_xml.child(L"description").content();
+            // the XML store text with simple LF as new line, so we need to
+            // replace back all simple LF into CRLF
+            size_t lf = this->_desc.find(L'\n'); // get first occurrence
+            while(lf != std::wstring::npos) {
+              this->_desc.replace(lf, 1, L"\r\n"); //< replace with CRLF
+              lf = this->_desc.find(L'\n', lf + 2); //< get next occurrence
+            }
+        }
+        // check for Package picture
+        if(cfg_xml.hasChild(L"picture")) {
+          wstring pic_name = cfg_xml.child(L"picture").content();
+          int zcrd_index = src_zip.locate(pic_name);
+          if(zcrd_index >= 0) {
+            uint8_t* buff = nullptr;
+            size_t s = src_zip.size(zcrd_index);
+            try {
+              buff = new uint8_t[s];
+            } catch (std::bad_alloc& ba) {
+              this->_error = L"Unable to extract file \"";
+              this->_error += pic_name + L"\" memory allocation error: ";
+              this->_error += Om_toWcString(ba.what());
+              this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+            }
+            if(buff != nullptr) {
+              if(src_zip.extract(zcrd_index, buff, s)) {
+                // finally load picture data
+                this->_picture = (HBITMAP)Om_loadBitmap(buff, s, 0, 0, true);
+              } else {
+                this->_error = L"Unable to extract referenced Package picture \"";
+                this->_error += pic_name + L"\" from archive : ";
+                this->_error += src_zip.lastErrorStr();
+                this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+              }
+              delete [] buff;
+            }
+          } else {
+            this->_error = L"Referenced Package picture \"";
+            this->_error += pic_name + L"\" not found in Package.";
+            this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+          }
+        }
+      } else {
+
+        // no Package definition found in archive, we try the legacy way to
+        // parse the Package. The rule is to have a folder with the same than
+        // the zip file itself at the root of the zip file,
+        // lets call it the "mirror folder": PackageName.zip => PackageName/
+
+        bool has_mirror = false;
+        for(unsigned i = 0; i < zcd_count; ++i) {
+          src_zip.index(zcd_entry, i);
+          if(Om_isRootOfPath(this->_ident, zcd_entry)) {
+            has_mirror = true;
+            break;
+          }
+        }
+        if(!has_mirror) {
+          // bad luck, this one is not is not a good one
+          this->_error = L"Mirror folder \"";
+          this->_error += this->_ident + L"\" not found in zip archive";
+          this->_error += this->_source + L"\": Not a valid Package.";
+          this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+          src_zip.close();
+          this->sourceClear();
+          return false;
+        }
+        // make sure src list is empty
+        this->_sourceItem.clear();
+        // then we now must create the tree
+        OmPackageItem pkg_item;
+        pkg_item.dest = PKGITEM_DEST_NUL;
+        // we check ALL zip CDR entries at once to get all what we can
+        for(unsigned i = 0; i < zcd_count; ++i) {
+
+          src_zip.index(zcd_entry, i); //< get Central Directory Record entry
+
+          // we check for all entry with the package identity folder as
+          // root, then we get only the relative path for the Package Item.
+          if(Om_getRelativePath(pkg_item.path, this->_ident, zcd_entry)) {
+            // we got one, lets add it to the package tree
+            pkg_item.cdri = i; //< keep Zip CDR index
+            pkg_item.type = src_zip.indexOm_isDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
+            this->_sourceItem.push_back(pkg_item);
+          }
+          // lookup for a readme file to get description
+          if(Om_namesMatches(zcd_entry, L"readme.txt")) {
+            char* buff = nullptr;
+            size_t s = src_zip.size(i);
+            try {
+              buff = new char[s+1];
+            } catch (std::bad_alloc& ba) {
+              this->_error = L"Unable to extract README \"";
+              this->_error += zcd_entry + L"\" memory allocation error : ";
+              this->_error += Om_toWcString(ba.what());
+              this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+            }
+            if(buff != nullptr) {
+              if(src_zip.extract(i, buff, s)) {
+                buff[s] = 0; //< add terminal null
+                this->_desc = Om_toWcString(buff);
+              } else {
+                this->_error = L"Unable to extract README \"";
+                this->_error += zcd_entry + L"\" from zip archive : ";
+                this->_error += src_zip.lastErrorStr();
+                this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+              }
+              delete[] buff; //< do not forget to delete buffer
+            }
+          }
+          // lookup for snapshot
+          if(Om_namesMatches(zcd_entry, L"picture.jpg") ||
+             Om_namesMatches(zcd_entry, L"picture.png") ||
+             Om_namesMatches(zcd_entry, L"picture.bmp") ||
+             Om_namesMatches(zcd_entry, L"picture.gif")) {
+
+            uint8_t* buff = nullptr;
+            size_t s = src_zip.size(i);
+            try {
+              buff = new uint8_t[s];
+            } catch (std::bad_alloc& ba) {
+              this->_error = L"Unable to extract Picture \"";
+              this->_error += zcd_entry + L"\" memory allocation error : ";
+              this->_error += Om_toWcString(ba.what());
+              this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+            }
+            if(buff != nullptr) {
+              if(src_zip.extract(i, buff, s)) {
+                this->_picture = (HBITMAP)Om_loadBitmap(buff, s, 0, 0, true);
+              } else {
+                this->_error = L"Unable to extract Picture \"";
+                this->_error += zcd_entry + L"\" from zip archive : ";
+                this->_error += src_zip.lastErrorStr();
+                this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
+              }
+              delete [] buff; //< do not forget to delete buffer
+            }
+          }
+        }
+      }
+
+      src_zip.close();
+
+      this->_type |= PKG_TYPE_ZIP;
+
+    } else {
+
+      // file but not a zip, skip this...
+      this->sourceClear();
+      return false;
+    }
+  } else {
+    // the source is not a file, maybe this is a folder
+    if(Om_isDir(this->_source)) {
+
+      // get Package identity from folder name full name
+      this->_ident = Om_getFilePart(this->_source);
+
+      // make sure src list is empty
+      this->_sourceItem.clear();
+
+      // get Package item list from folder content (recursive function)
+      __OmPackage_getItemsFromDir(&this->_sourceItem, this->_source, L"");
+
+    } else {
+
+      // obviously something is wrong
+      this->sourceClear();
+      return false;
+    }
+  }
+
+  // parse raw name to get display name and potential version
+  __OmPackage_parseIdent(this->_name, this->_version, this->_ident);
+
+  // create hash from file name
+  this->_hash = Om_getXXHash3(Om_getFilePart(this->_source));
+
+  // This package is now valid source to be installed
+  this->_type |= PKG_TYPE_SRC;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::backupParse(const wstring& path)
+{
+  OmConfig bck_def;
+
+  bool has_def = false;
+
+  this->_backup = path;
+
+  if(Om_isFileZip(this->_backup)) {
+
+    OmZipFile bck_zip;
+
+    // load the backup Zip file
+    if(!bck_zip.load(this->_backup)) {
+      this->_error = L"Unable to load zip archive : ";
+      this->_error += bck_zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+      bck_zip.close();
+      this->backupClear();
+      return false;
+    }
+
+    // check for a an .omb definition file in the zip archive
+    wstring zcd_entry;
+    unsigned zcd_count = bck_zip.indexCount(); //< count of Central Directory Records
+
+    // we search beginning from the last entry because the definition file is
+    // almost all the time the very last one added in in the archive
+    unsigned zcd_index = zcd_count;
+    while(zcd_index--) {
+
+      bck_zip.index(zcd_entry, zcd_index); //< get Central Directory Record entry
+
+      if(Om_extensionMatches(zcd_entry, OMM_BCK_FILE_EXT)) {
+        // good candidate for Package definition, try to load it
+        char* buff = nullptr;
+        size_t s = bck_zip.size(zcd_index);
+        try {
+          buff = new char[s+1];
+        } catch (std::bad_alloc& ba) {
+          this->_error = L"Unable to extract file \"";
+          this->_error += zcd_entry + L"\" memory allocation error: ";
+          this->_error += Om_toWcString(ba.what());
+          this->log(0, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
+          bck_zip.close();
+          this->backupClear();
+          return false;
+        }
+        if(!bck_zip.extract(zcd_index, buff, s)) {
+          this->_error = L"Unable to extract \"";
+          this->_error += zcd_entry + L"\" from zip archive: ";
+          this->_error += bck_zip.lastErrorStr();
+          this->log(0, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
+          bck_zip.close();
+          delete [] buff;
+          this->backupClear();
+          return false;
+        }
+        buff[s] = 0;
+        if(bck_def.parse(Om_toWcString(buff), OMM_CFG_SIGN_BCK)) {
+          has_def = true;
+          delete [] buff;
+          break;
+        } else {
+          this->_error = L"Error parsing Backup definition candidate \"";
+          this->_error += zcd_entry + L"\" : ";
+          this->_error += bck_def.lastErrorStr();
+          this->log(1, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
+        }
+        delete [] buff;
+      }
+    }
+
+    if(!has_def) {
+      this->_error = L"Invalid Backup data: Backup definition file not found in archive.";
+      this->log(1, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+      this->backupClear();
+      return false;
+    }
+
+    // we do not need the zip file anymore
+    bck_zip.close();
+
+  } else {
+
+    if(!Om_isDir(this->_backup)) {
+      this->_error = L"Found invalid Backup data \"";
+      this->_error += this->_backup + L"\" : ";
+      this->_error += L"element is not a valid zip archive nor a folder.";
+      this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+      this->backupClear();
+      return false;
+    }
+
+    // search a Backup definition file within the sub-folder
+    vector<wstring> ls;
+    Om_lsFile(&ls, this->_backup, true);
+
+    for(unsigned i = 0; i < ls.size(); ++i) {
+      if(Om_extensionMatches(ls[i], OMM_BCK_FILE_EXT)) {
+        if(bck_def.open(ls[i], OMM_CFG_SIGN_BCK)) {
+          has_def = true;
+          break;
+        } else {
+          this->_error = L"Error parsing Backup definition candidate \"";
+          this->_error += ls[i] + L"\" : ";
+          this->_error += bck_def.lastErrorStr();
+          this->log(1, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
+        }
+      }
+    }
+
+    if(!has_def) {
+      this->_error = L"Invalid Backup data: Backup definition file not found in sub-folder.";
+      this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+      this->backupClear();
+      return false;
+    }
+  }
+
+  OmXmlNode def_xml = bck_def.xml();
+
+  // verify the Backup definition have the proper nodes
+  if(def_xml.hasChild(L"backup")) {
+    this->_backupDir = def_xml.child(L"backup").content();
+  } else {
+    this->_error = L"Error parsing Backup definition : <backup> node is missing.";
+    this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+    this->backupClear();
+    return false;
+  }
+  if(def_xml.hasChild(L"ident")) {
+    this->_ident = def_xml.child(L"ident").content();
+  } else {
+    this->_error = L"Error parsing Backup definition : <ident> node is missing.";
+    this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+    this->backupClear();
+    return false;
+  }
+  if(def_xml.hasChild(L"hash")) {
+    this->_hash = Om_toUint64(def_xml.child(L"hash").content());
+  } else {
+    this->_error = L"Error parsing Backup definition : <hash> node is missing.";
+    this->log(0, wstring(L"Package(")+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
+    this->backupClear();
+    return false;
+  }
+
+  // parse display name and version from identity
+  __OmPackage_parseIdent(this->_name, this->_version, this->_ident);
+
+  this->_backupItem.clear();
+  OmPackageItem bck_item;
+  OmXmlNode xml_item;
+
+  // get list of installed files, they are listed in the
+  // backup definition, either as <cpy> or <del> entries.
+  unsigned item_count = def_xml.childCount(L"cpy");
+  for(unsigned i = 0; i < item_count; ++i) {
+    xml_item = def_xml.child(L"cpy", i);
+    bck_item.path = xml_item.content();
+    bck_item.type = (xml_item.attrAsInt(L"dir")>0)?PKGITEM_TYPE_D:PKGITEM_TYPE_F;
+    bck_item.cdri = xml_item.attrAsInt(L"cdi");
+    bck_item.dest = PKGITEM_DEST_CPY;
+    this->_backupItem.push_back(bck_item);
+  }
+  item_count = def_xml.childCount(L"del");
+  for(unsigned i = 0; i < item_count; ++i) {
+    xml_item = def_xml.child(L"del", i);
+    bck_item.path = xml_item.content();
+    bck_item.type = (xml_item.attrAsInt(L"dir")>0)?PKGITEM_TYPE_D:PKGITEM_TYPE_F;
+    bck_item.cdri = -1;
+    bck_item.dest = PKGITEM_DEST_DEL;
+    this->_backupItem.push_back(bck_item);
+  }
+
+  this->_overlap.clear();
+  // retrieve the backup overlap list, they are stored as a list of CRC64
+  // corresponding to package name
+  if(def_xml.hasChild(L"overlap")) {
+    OmXmlNode xml_ovlap = def_xml.child(L"overlap");
+    unsigned crc_count = xml_ovlap.childCount(L"crc");
+    for(unsigned i = 0; i < crc_count; ++i) {
+      xml_item = xml_ovlap.child(L"crc", i);
+      this->_overlap.push_back(Om_toUint64(xml_item.content()));
+    }
+  }
+
+  // All appear OK, we finalizes our package setup
+  this->_type |= PKG_TYPE_BCK;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::sourceClear()
+{
+  // remove the source flag
+  this->_type &= ~PKG_TYPE_SRC;
+  this->_type &= ~PKG_TYPE_ZIP;
+  this->_depends.clear();
+  this->_source.clear();
+  this->_sourceDir.clear();
+  this->_sourceItem.clear();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::backupClear()
+{
+  // remove the backup flag
+  this->_type &= ~PKG_TYPE_BCK;
+  this->_overlap.clear();
+  this->_backup.clear();
+  this->_backupDir.clear();
+  this->_backupItem.clear();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::sourceValid()
+{
+  if(this->_type & PKG_TYPE_SRC) {
+
+    // this is brutal but safe, we simply re-parse the previously
+    // parsed source to ensure everything is up to date
+    if(!this->sourceParse(this->_source)) {
+      this->sourceClear();
+      return false;
+    }
+  } else {
+    // the Package was not even previously a source
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::backupValid()
+{
+  if(this->_type & PKG_TYPE_BCK) {
+
+    // this is brutal but safe, we simply re-parse the previously
+    // parsed source to ensure everything is up to date
+    if(!this->backupParse(this->_backup)) {
+      this->backupClear();
+      return false;
+    }
+  } else {
+    // the Package was not even previously a source
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::uninst(HWND hPb, const bool *pAbort)
+{
+  // cannot install without valid Location
+  if(this->_location == nullptr) {
+    this->_error = L"Package cannot be uninstalled without valid Location.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+    return false;
+  }
+
+  if(!(this->_type & PKG_TYPE_BCK)) {
+    // I am sorry Dave, but there is no backup to restore
+    this->_error = L"Backup data does not exists.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+    return false;
+  }
+
+  // ultimate validity check before try to install
+  if(!this->backupValid()) {
+    this->_error = L"Backup data no longer available "
+                   L"at the expected location. Unable to restore.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+    return false;
+  }
+
+  // initialize the progress bar
+  if(hPb) {
+    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_backupItem.size()));
+    SendMessage(hPb, PBM_SETSTEP, (WPARAM) 1, 0);
+    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  }
+
+  // it still time to abort
+  if(pAbort) {
+    if(*pAbort) {
+      this->log(1, wstring(L"Package(")+this->_ident+L") Uninstall", L"Aborted.");
+      return true;
+    }
+  }
+
+  // restore backed files into destination tree
+  if(!this->_doUninst(hPb, pAbort)) {
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
+{
+  // cannot install without valid Location
+  if(this->_location == nullptr) {
+    this->_error = L"Package cannot be installed without valid Location.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+    return false;
+  }
+
+  // is there really something to install ?
+  if(!(this->_type & PKG_TYPE_SRC)) {
+    this->_error = L"Source data does not exists.";
+    this->log(1, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+    return false;
+  }
+
+  // ultimate validity check before try to install
+  if(!this->sourceValid()) {
+    this->_error = L"Source data no longer available "
+                   L"at the expected location. Unable to install.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+    return false;
+  }
+
+  // initialize the progress bar
+  if(hPb) {
+    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, 2*this->_sourceItem.size()));
+    SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  }
+
+  // it still time to abort
+  if(pAbort) {
+    if(*pAbort) {
+      this->log(1, wstring(L"Package(")+this->_ident+L") Install", L"Aborted.");
+      return true;
+    }
+  }
+
+  // Step 1 : Create backups of destination files overwritten by package
+  if(!this->_doBackup(zipLvl, hPb, pAbort)) {
+    return false;
+  }
+
+  if(pAbort) {
+    if(*pAbort) {
+      return true;
+    }
+  }
+
+  // Step 2 : Install package files into destination tree
+  if(!this->_doInstall(hPb, pAbort)) {
+    return false;
+  }
+
+  if(pAbort) {
+    if(*pAbort) {
+      return true;
+    }
+  }
+
+  return true;
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::couldOverlap(const OmPackage* other) const
+{
+  if(other->_backupItem.size()) {
+
+    for(unsigned i = 0; i < _sourceItem.size(); ++i) {
+
+      for(unsigned j = 0; j < other->_backupItem.size(); ++j) {
+
+        // compare only if both are file or folder
+        if(_sourceItem[i].type != other->_backupItem[j].type)
+          continue;
+
+        // Directories to be cleaned need to be empty first, so we also
+        // lookup for created directories overlap
+        if(other->_backupItem[j].type == PKGITEM_TYPE_D) {
+          // compare only if other entry is "To Delete", meaning this was a
+          // created directory, to be deleted at restore
+          if(other->_backupItem[j].dest != PKGITEM_DEST_DEL) {
+            continue;
+          }
+        }
+
+        // same path mean overlap
+        if(_sourceItem[i].path == other->_backupItem[j].path) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::setPicture(HBITMAP hBmp)
+{
+  if(hBmp != nullptr) {
+
+    this->_picture = static_cast<HBITMAP>(CopyImage(hBmp,IMAGE_BITMAP,0,0,0));
+
+  } else {
+
+    if(this->_picture != nullptr)
+      DeleteObject(this->_picture);
+
+    this->_picture = nullptr;
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
+{
+  if(!(this->_type & PKG_TYPE_ZIP)) {
+    if(Om_isDir(this->_source)) {
+      if(!Om_checkAccessRead(this->_source)) {
+        this->_error = L"Installation source files location folder \"";
+        this->_error += this->_source + L"\" read permission denied.";
+          this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
+          return false;
+      }
+    } else {
+      this->_error = L"Installation source files location folder \"";
+      this->_error += this->_source + L"\" does not exists.";
+      this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
+      return false;
+    }
+  }
+
+  if(!this->_sourceItem.size()) {
+    this->_error = L"Package does not contain any Source data to be saved.";
+    this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
+    return false;
+  }
+
+  OmZipFile src_zip;
+
+  int result;
+  bool has_failed = false;
+  bool has_aborted = false;
+
+  // create package identity according destination path
+  wstring pkg_ident = Om_getNamePart(path);
+
+  // do we got a Zip file or a legacy Folder
+  if(this->_type & PKG_TYPE_ZIP) {
+    if(!src_zip.load(this->_source)) {
+      this->_error = L"Unable to load zip archive \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += src_zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+      src_zip.close();
+      return false;
+    }
+  }
+
+  OmZipFile pkg_zip;
+
+  // use temporary file name, in case source and destination are the same
+  wstring pkg_tmp_path;
+  Om_concatPaths(pkg_tmp_path, Om_getDirPart(path), pkg_ident);
+  pkg_tmp_path += L".ztmp";
+
+  // initialize zip archive
+  if(!pkg_zip.init(pkg_tmp_path)) {
+    this->_error = L"Unable to create file at the specified location \"";
+    this->_error += Om_getDirPart(path) + L"\": ";
+    this->_error += pkg_zip.lastErrorStr();
+    this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+
+    pkg_zip.close();
+    Om_fileDelete(pkg_tmp_path);
+    return false;
+  }
+
+  OmConfig pkg_def;
+  pkg_def.init(OMM_CFG_SIGN_PKG);
+
+  OmXmlNode  def_xml = pkg_def.xml();
+
+  wstring pkg_name;
+  OmVersion pkg_vers;
+
+  // parse raw name to get display name and potential version
+  __OmPackage_parseIdent(pkg_name, pkg_vers, pkg_ident);
+
+  wstring hash_full = Om_toHexString(Om_getXXHash3(pkg_ident + L".zip"));
+  wstring hash_name = Om_toHexString(Om_getXXHash3(pkg_name));
+
+  // write base components to source definition
+  def_xml.addChild(L"ident").setContent(pkg_ident);
+  def_xml.addChild(L"hash_full").setContent(hash_full);
+  def_xml.addChild(L"hash_name").setContent(hash_name);
+
+  // defines the package source directory
+  def_xml.addChild(L"install").setContent(pkg_ident);
+
+  // initialize the progress bar
+  if(hPb) {
+    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_sourceItem.size()));
+    SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  }
+
+  wstring src_path, zcd_entry;
+
+  uint8_t*  buff;
+  size_t    s;
+
+  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+    // check for abort request
+    if(pAbort) {
+      if(*pAbort) {
+        has_aborted = true;
+        break;
+      }
+    }
+    // update description
+    if(hSc) {
+      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)this->_sourceItem[i].path.c_str());
+    }
+    // destination zip path, with mirror folder preceding
+    Om_concatPaths(zcd_entry, pkg_ident, this->_sourceItem[i].path);
+    // check if we have a file or folder to install
+    if(this->_sourceItem[i].type == PKGITEM_TYPE_F) { //< this is a file
+      // if zip Source, extract from zip to append to other
+      if(this->_type & PKG_TYPE_ZIP) {
+        // create new buffer to load source zip content
+        s = src_zip.size(this->_sourceItem[i].cdri);
+        if(s) {
+          try {
+            buff = new uint8_t[s];
+          } catch (std::bad_alloc& ba) {
+            this->_error = L"Unable to extract file \"";
+            this->_error += this->_sourceItem[i].path + L"\" memory allocation error: ";
+            this->_error += Om_toWcString(ba.what());
+            this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+            has_failed = true;
+            break;
+          }
+          // extract source zip content to buffer
+          if(!src_zip.extract(this->_sourceItem[i].cdri, buff, s)) {
+            this->_error = L"Unable to extract file \"";
+            this->_error += this->_sourceItem[i].path + L"\" to destination: ";
+            this->_error += src_zip.lastErrorStr();
+            this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+            has_failed = true;
+            delete [] buff;
+            break;
+          }
+          // append data to destination zip archive
+          if(!pkg_zip.append(buff, s, zcd_entry, zipLvl)) {
+            this->_error = L"Unable to add file \"";
+            this->_error += zcd_entry + L"\" to archive: ";
+            this->_error += pkg_zip.lastErrorStr();
+            this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+            has_failed = true;
+            delete [] buff;
+            break;
+          }
+          delete [] buff;
+        }
+      } else {
+        // path to item in package sub-directory
+        Om_concatPaths(src_path, this->_source, this->_sourceItem[i].path);
+        // add file to destination zip archive
+        if(!pkg_zip.append(src_path, zcd_entry, zipLvl)) {
+          this->_error = L"Unable to add file \"";
+          this->_error += this->_sourceItem[i].path + L"\" to archive: ";
+          this->_error += pkg_zip.lastErrorStr();
+          this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+          has_failed = true;
+          break;
+        }
+      }
+    } else {
+      // add folder to destination zip archive
+      if(!pkg_zip.append(nullptr, 0, zcd_entry, zipLvl)) {
+        this->_error = L"Unable to add folder \"";
+        this->_error += zcd_entry + L"\" to archive: ";
+        this->_error += pkg_zip.lastErrorStr();
+        this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+        has_failed = true;
+        break;
+      }
+    }
+    // step progress bar
+    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    #ifdef DEBUG_SLOW
+    Sleep(DEBUG_SLOW); //< for debug
+    #endif
+  }
+
+  // do not need the source zip anymore
+  src_zip.close();
+
+  if(has_failed) {
+    pkg_zip.close();
+    Om_fileDelete(pkg_tmp_path);
+    // update description
+    if(hSc) SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"operation failed");
+    return false;
+  }
+
+  if(has_aborted) {
+    pkg_zip.close();
+    Om_fileDelete(pkg_tmp_path);
+    // update description
+    if(hSc) SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"operation aborted");
+    return true;
+  }
+
+  // add dependency to source definition
+  if(this->_depends.size()) {
+    OmXmlNode xml_dpnd = def_xml.addChild(L"dependencies");
+    for(unsigned i = 0; i < this->_depends.size(); ++i) {
+      xml_dpnd.addChild(L"ident").setContent(this->_depends[i]);
+    }
+  }
+
+  // add description to source definition
+  if(!this->_desc.empty()) {
+    def_xml.addChild(L"description").setContent(this->_desc);
+  }
+
+  // add picture to archive and source definition
+  if(this->_picture != nullptr) {
+    // Copy the HBITMAP with DIB section
+    HBITMAP hBmp = static_cast<HBITMAP>(CopyImage(this->_picture,IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
+    // retrieve HBITMAP raw pixels data
+    BITMAP bmp;
+    GetObject(hBmp, sizeof(BITMAP), &bmp);
+    // create a PNG image from raw pixel data
+    size_t png_size = 0;
+    void* png_data = tdefl_write_image_to_png_file_in_memory_ex(
+                        bmp.bmBits, bmp.bmWidth, bmp.bmHeight,
+                        static_cast<int>(bmp.bmBitsPixel/8),
+                        &png_size, MZ_BEST_SPEED, MZ_TRUE); // flip vertically
+    // don't need this anymore
+    DeleteObject(hBmp);
+    // add picture as PNG file in zip archive
+    if(!pkg_zip.append(png_data, png_size, L"source_pic.png", zipLvl)) {
+      this->_error = L"Unable to add PNG image to archive: ";
+      this->_error += pkg_zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+      pkg_zip.close();
+      Om_fileDelete(pkg_tmp_path);
+      return false;
+    }
+    // release png data
+    mz_free(png_data);
+    // add section to source definition
+    def_xml.addChild(L"picture").setContent(L"source_pic.png");
+  }
+
+
+  // add a REAMDE.TXT file into archive
+  string pkg_readme = "Open Mod Package file for \"";
+  pkg_readme += Om_toMbString(pkg_ident);
+  pkg_readme += "\" Mod.\r\n\r\n"
+  "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
+  "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
+  "If you want to install this Mod manually, you will find the Mod files into\r\n"
+  "the following folder : \r\n\r\n  \"";
+  pkg_readme += Om_toMbString(pkg_ident);
+  pkg_readme += "\"\r\n\r\n"
+  "Its content is respecting the destination folder tree and includes files to\r\n"
+  "be overwritten or added :\r\n"
+  "\r\n";
+  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+    pkg_readme += "   ";
+    pkg_readme += Om_toMbString(this->_sourceItem[i].path);
+    pkg_readme += "\r\n";
+  }
+  pkg_readme += "\r\n"
+  "Once you made a backup of the genuine files, you can install the Mod by\r\n"
+  "extracting the content of the previously indicated folder into the\r\n"
+  "application/game installation folder, overwriting genuine files.\r\n\r\n"
+
+  // TODO: update URL here...
+  "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
+  "visit :\r\n\r\n   https://....";
+
+  // add the REAMDE.TXT file in zip archive
+  if(!pkg_zip.append(pkg_readme.c_str(), pkg_readme.size(), L"README.TXT", zipLvl)) {
+    this->_error = L"Unable to add XML data to archive: ";
+    this->_error += pkg_zip.lastErrorStr();
+    this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+    pkg_zip.close();
+    Om_fileDelete(pkg_tmp_path);
+    return false;
+  }
+
+  // compose source definition file name
+  wstring pkg_def_name = PKG_SOURCE_DEF;
+  pkg_def_name += L".";
+  pkg_def_name += OMM_PKG_FILE_EXT;
+
+  // get XML backup data
+  string pkg_def_data = pkg_def.data();
+
+  // add the definition file in zip archive
+  if(!pkg_zip.append(pkg_def_data.c_str(), pkg_def_data.size(), pkg_def_name, zipLvl)) {
+    this->_error = L"Unable to add XML data to archive: ";
+    this->_error += pkg_zip.lastErrorStr();
+    this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+    pkg_zip.close();
+    Om_fileDelete(pkg_tmp_path);
+    return false;
+  }
+
+  // finalize destination zip file
+  pkg_zip.close();
+
+  // compose the definitive package filename
+  wstring pkg_path;
+  Om_concatPaths(pkg_path, Om_getDirPart(path), pkg_ident);
+  pkg_path += L".zip";
+
+  // in case file already exists, we delete it
+  if(Om_isFile(pkg_path)) {
+    result = Om_fileDelete(pkg_path);
+    if(result != 0) {
+      this->_error = L"Unable to overwrite file \"";
+      this->_error += pkg_path + L"\": ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+      return false;
+    }
+  }
+  // rename temporary file to its final name
+  result = Om_fileMove(pkg_tmp_path, pkg_path);
+  if(result != 0) {
+    this->_error = L"Unable to rename temporary file \"";
+    this->_error += pkg_tmp_path + L"\": ";
+    this->_error += Om_getErrorStr(result);
+    this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::clear()
+{
+  this->_type = 0;
+  this->_hash = 0;
+  if(this->_picture) DeleteObject(this->_picture);
+  this->_picture = nullptr;
+  this->_name.clear();
+  this->_ident.clear();
+  this->_source.clear();
+  this->_sourceDir.clear();
+  this->_sourceItem.clear();
+  this->_depends.clear();
+  this->_backup.clear();
+  this->_backupDir.clear();
+  this->_backupItem.clear();
+  this->_overlap.clear();
+  this->_desc.clear();
+  this->_version.define(0,0,0);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
+{
+  if(this->_location != nullptr) {
+
+    wchar_t buff[128];
+    swprintf(buff, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
+
+    this->_location->log(level, buff, detail);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
+{
+  // initialize local timer
+  clock_t time = clock();
+
+  // a backup already exists ?
+  if(this->_type & PKG_TYPE_BCK) {
+    this->_error = L"Backup requested while Backup data already exists.";
+    this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+    return false;
+  }
+
+  OmZipFile bck_zip;
+  int result;
+  bool has_failed = false;
+  bool has_aborted = false;
+
+  // negative compression level mean sub-directory instead of zip file
+  bool is_zip = (zipLvl >= 0) ? true : false;
+
+  // define the backup root dir
+  this->_backupDir = PKG_BACKUP_DIR;
+
+  // path to backup root path, mainly used for sub-directory backup
+  wstring bck_dir_path;
+
+  // base file name for backup file or sub-directory
+  wstring bck_file_name(Om_getFilePart(this->_source));
+
+  if(is_zip) {
+    // backup zip file name
+    bck_file_name += L".zip";
+    // backup zip full path
+    this->_backup = this->_location->_backupDir; //< Location Backup location
+    this->_backup += L"\\";
+    this->_backup += bck_file_name;
+
+    // initialize zip archive
+    if(!bck_zip.init(this->_backup)) {
+      this->_error = L"Unable to initialize zip archive \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += bck_zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+
+      bck_zip.close();
+      Om_fileDelete(this->_backup);
+      this->backupClear();
+      return false;
+    }
+  } else { // Sub-Directory backup
+    // backup sub-directory full path
+    this->_backup = this->_location->_backupDir; //< Location Backup location
+    this->_backup += L"\\";
+    this->_backup += bck_file_name;
+
+    // create sub-directory into Backup location
+    result = Om_dirCreate(this->_backup);
+    if(result != 0) {
+      this->_error = L"Unable to create sub-directory \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+      this->backupClear();
+      return false;
+    }
+
+    // compose the path to backup root path
+    bck_dir_path = this->_backup + L"\\" + this->_backupDir;
+
+    // create backup data root folder in Backup sub-directory
+    result = Om_dirCreate(bck_dir_path);
+    if(result != 0) {
+      this->_error = L"Unable to create sub-directory \"";
+      this->_error += bck_dir_path + L"\" : ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+      this->backupClear();
+      return false;
+    }
+  }
+
+  // retrieve the list of overlapped package
+  vector<uint64_t> ovlap_list;
+  this->_location->getInstallOverlapList(ovlap_list, this);
+
+  // compose the Backup definition file name
+  wstring back_def_name = PKG_BACKUP_DEF;
+  back_def_name += L".";
+  back_def_name += OMM_BCK_FILE_EXT;
+
+  OmConfig bck_def;
+  if(is_zip) {
+    bck_def.init(OMM_CFG_SIGN_BCK);
+  } else {
+    bck_def.init(this->_backup + L"\\" + back_def_name, OMM_CFG_SIGN_BCK);
+  }
+
+  OmXmlNode  def_xml = bck_def.xml();
+
+  def_xml.addChild(L"ident").setContent(this->_ident);
+  def_xml.addChild(L"hash").setContent(Om_toHexString(this->_hash));
+
+  // define backup root directory
+  def_xml.addChild(L"backup").setContent(this->_backupDir);
+
+  // it should be already empty, but we want to be sure
+  this->_backupItem.clear();
+
+  // stuff for Backup item list generation
+  OmPackageItem  bck_item;
+  OmXmlNode  xml_item;
+  wstring app_file, bck_file, zcd_entry, bck_tree;
+
+  for(unsigned i = 0, z = 0; i < this->_sourceItem.size(); ++i) {
+    // check for abort request
+    if(pAbort) {
+      if(*pAbort) {
+        has_aborted = true;
+        break;
+      }
+    }
+    // path to item in the destination tree
+    Om_concatPaths(app_file, this->_location->_installDir, this->_sourceItem[i].path);
+    // our future Backup item entry
+    bck_item.path = this->_sourceItem[i].path;
+    bck_item.type = this->_sourceItem[i].type;
+    // check if item exists in destination tree
+    if(Om_pathExists(app_file)) {
+      // if item is a file, save to zip archive
+      if(this->_sourceItem[i].type == PKGITEM_TYPE_F) { //< this is a file
+        // add a 'copy' entry into backup definition
+        xml_item = def_xml.addChild(L"cpy");
+        xml_item.setAttr(L"dir", L"0");
+        xml_item.setAttr(L"cdi", (int)z); //< CDR index in zip
+        if(is_zip) {
+          // backup file path in zip archive
+          Om_concatPaths(zcd_entry, this->_backupDir, this->_sourceItem[i].path);
+          // add file to zip archive
+          if(!bck_zip.append(app_file, zcd_entry, zipLvl)) {
+            this->_error = L"Unable to add file \"";
+            this->_error += zcd_entry + L"\" to backup archive: ";
+            this->_error += bck_zip.lastErrorStr();
+            this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+            // notify process failed and break loop
+            has_failed = true;
+            break;
+          }
+        } else {
+          // path of item in backup directory
+          Om_concatPaths(bck_file, bck_dir_path, this->_sourceItem[i].path);
+          // create the folder tree if needed
+          bck_tree = Om_getDirPart(bck_file);
+          if(!Om_isDir(bck_tree)) {
+            // in case the package source is a zip file, the zip may not
+            // contain each sub-directories as individual CDR entries, so the
+            // folder tree where to move files may not be previously created.
+            result = Om_dirCreateRecursive(bck_tree);
+            if(result != 0) {
+              this->_error = L"Unable to create folder tree \"";
+              this->_error += bck_tree + L"\" into backup directory: ";
+              this->_error += Om_getErrorStr(result);
+              this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+              // notify process failed and break loop
+              has_failed = true;
+              break;
+            }
+          }
+          // copy file to backup directory
+          //int result = Om_fileCopy(app_file, bck_file, true); //< slow
+          result = Om_fileMove(app_file, bck_file); //< risky
+          if(result != 0) {
+            this->_error = L"Unable to move file \"";
+            this->_error += this->_sourceItem[i].path + L"\" to backup directory: ";
+            this->_error += Om_getErrorStr(result);
+            this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+            // notify process failed and break loop
+            has_failed = true;
+            break;
+          }
+        }
+        // this thing is now part of backup tree
+        bck_item.cdri = z;
+        bck_item.dest = PKGITEM_DEST_CPY;
+        this->_backupItem.push_back(bck_item);
+        z++; //< increment CDR index
+      } else {
+        if(!is_zip) {
+          // path of item in backup directory
+          Om_concatPaths(bck_file, bck_dir_path, this->_sourceItem[i].path);
+          // we simply create the folder in backup directory
+          result = Om_dirCreate(bck_file);
+          if(result != 0) {
+            this->_error = L"Unable to create sub-folder \"";
+            this->_error += this->_sourceItem[i].path + L"\" in backup directory: ";
+            this->_error += Om_getErrorStr(result);
+            this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+            // notify process failed and break loop
+            has_failed = true;
+            break;
+          }
+        }
+        // step progress bar
+        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        #ifdef DEBUG_SLOW
+        Sleep(DEBUG_SLOW); //< for debug
+        #endif
+        // do not care about folders
+        continue;
+      }
+    } else { // item doesn't exists in destination, it should be deleted at restore
+      // adds a "To be deleted" entry into backup definition
+      xml_item = def_xml.addChild(L"del");
+      if(this->_sourceItem[i].type == PKGITEM_TYPE_F) { //< this is a file
+        xml_item.setAttr(L"dir", L"0");
+      } else {
+        xml_item.setAttr(L"dir", L"1");
+      }
+      // this thing is now part of backup tree
+      bck_item.cdri = -1;
+      bck_item.dest = PKGITEM_DEST_DEL;
+      this->_backupItem.push_back(bck_item);
+    }
+    // set destination path of this entry in backup definition
+    xml_item.setContent(this->_sourceItem[i].path);
+    // step progress bar
+    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    #ifdef DEBUG_SLOW
+    Sleep(DEBUG_SLOW); //< for debug
+    #endif
+  }
+
+  // it still time to abort
+  if(pAbort) {
+    if(*pAbort) has_aborted = true;
+  }
+
+  // process abortion requested
+  if(has_aborted) {
+    this->log(1, wstring(L"Package(")+this->_ident+L") Backup", L"Aborted.");
+    if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
+    this->_undoInstall(hPb);
+    return true;
+  }
+
+  // this mean the backup process encountered error, we undo and return
+  if(has_failed) {
+    this->log(1, wstring(L"Package(")+this->_ident+L") Backup", L"Failed.");
+    if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
+    this->_undoInstall(hPb);
+    return false;
+  }
+
+  // we add an overlap list
+  if(ovlap_list.size()) {
+    OmXmlNode xml_ovlap = def_xml.addChild(L"overlap");
+    for(unsigned i = 0; i < ovlap_list.size(); ++i) {
+      xml_ovlap.addChild(L"crc").setContent(Om_toHexString(ovlap_list[i]));
+    }
+  }
+
+  if(is_zip) {
+    // get backup definition XML data
+    string bck_def_data = bck_def.data();
+    // add definition file in zip archive
+    if(!bck_zip.append(bck_def_data.c_str(), bck_def_data.size(), back_def_name, zipLvl)) {
+      this->_error = L"Unable to add Backup database to archive: ";
+      this->_error += bck_zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+
+      bck_zip.close();
+      Om_fileDelete(this->_backup);
+      return false;
+    }
+    // finalize and close zip archive
+    bck_zip.close();
+  } else {
+    // save XML backup data
+    if(!bck_def.save()) {
+      this->_error = L"Unable to save Backup database into backup directory: ";
+      this->_error += bck_def.lastErrorStr();
+      this->log(0, wstring(L"Package(")+this->_ident+L") Backup", this->_error);
+      Om_dirDeleteRecursive(this->_backup);
+      return false;
+    }
+  }
+
+  // backup is done without error, we now can update the local overlap list
+  if(ovlap_list.size()) {
+    for(unsigned i = 0; i < ovlap_list.size(); ++i) {
+      this->_overlap.push_back(ovlap_list[i]);
+    }
+  }
+
+  // we finally update this package as backup
+  this->_type |= PKG_TYPE_BCK;
+
+  // making report
+  wchar_t buff[64];
+  swprintf(buff, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+
+  this->log(2, wstring(L"Package(")+this->_ident+L")", buff);
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
+{
+  // initialize local timer
+  clock_t time = clock();
+
+  OmZipFile zip;
+  int result;
+  bool has_failed = false;
+  bool has_aborted = false;
+
+  wstring src_file, app_file;
+
+  // do we got a Zip file or a legacy Folder
+  if(this->_type & PKG_TYPE_ZIP) {
+    if(!zip.load(this->_source)) {
+      this->_error = L"Unable to load zip archive \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+
+      zip.close();
+      this->_undoInstall(hPb); //< automatically uninstall the package
+      return false;
+    }
+  }
+
+  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+    // check for abort request
+    if(pAbort) {
+      if(*pAbort) {
+        has_aborted = true;
+        break;
+      }
+    }
+    // path to destination file to be overwritten
+    Om_concatPaths(app_file, this->_location->_installDir, this->_sourceItem[i].path);
+    // check if we have a file or folder to install
+    if(this->_sourceItem[i].type == PKGITEM_TYPE_F) { //< this is a file
+
+      if(this->_type & PKG_TYPE_ZIP) {
+        // extract to destination
+        if(!zip.extract(this->_sourceItem[i].cdri, app_file)) {
+          this->_error = L"Unable to extract file \"";
+          this->_error += this->_sourceItem[i].path + L"\" to destination: ";
+          this->_error += zip.lastErrorStr();
+          this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+          has_failed = true;
+          break;
+        }
+      } else {
+        // path to item in package sub-directory
+        Om_concatPaths(src_file, this->_source, this->_sourceItem[i].path);
+        // Copy this, and overwrite please...
+        result = Om_fileCopy(src_file, app_file, true);
+        if(result != 0) {
+          this->_error = L"Unable to copy file \"";
+          this->_error += this->_sourceItem[i].path + L"\" to destination: ";
+          this->_error += Om_getErrorStr(result);
+          this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+          has_failed = true;
+          break;
+        }
+      }
+
+    } else {
+      // we got a folder, we check if it exists in destination
+      if(!Om_isDir(app_file)) {
+        // we have to create this one
+        result = Om_dirCreate(app_file);
+        if(result != 0) {
+          this->_error = L"Unable to create sub-folder \"";
+          this->_error += this->_sourceItem[i].path + L"\" in destination: ";
+          this->_error += Om_getErrorStr(result);
+          this->log(0, wstring(L"Package(")+this->_ident+L") Install", this->_error);
+          has_failed = true;
+          break;
+        }
+      }
+    }
+    // step progress bar
+    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    #ifdef DEBUG_SLOW
+    Sleep(DEBUG_SLOW); //< for debug
+    #endif
+  }
+
+  // it still time to abort
+  if(pAbort) {
+    if(*pAbort) has_aborted = true;
+  }
+
+  // process abortion requested
+  if(has_aborted) {
+    this->log(1, wstring(L"Package(")+this->_ident+L") Install", L"Aborted.");
+    if(this->_type & PKG_TYPE_ZIP) zip.close();
+    this->_undoInstall(hPb);
+    return true;
+  }
+
+  // this mean the backup process encountered error, we undo and return
+  if(has_failed) {
+    this->log(1, wstring(L"Package(")+this->_ident+L") Install", L"Failed.");
+    if(this->_type & PKG_TYPE_ZIP) zip.close();
+    this->_undoInstall(hPb);
+    return false;
+  }
+
+  // making report
+  wchar_t buff[64];
+  swprintf(buff, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+
+  this->log(2, wstring(L"Package(")+this->_ident+L")", buff);
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
+{
+  // initialize local timer
+  clock_t time = clock();
+
+  int result;
+  bool is_zip;
+
+  if(Om_isFileZip(this->_backup)) {
+
+    OmZipFile zip;
+    if(!zip.load(this->_backup)) {
+      this->_error = L"Unable to load zip archive \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += zip.lastErrorStr();
+      this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+      return false;
+    }
+
+    is_zip = true; //< backup data is zip file
+
+    wstring app_file;
+
+    // first we restore genuine files from zip
+    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+      // we are interested only by backup file to copy
+      if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
+        // path to installed file to be overwritten
+        Om_concatPaths(app_file, this->_location->_installDir, this->_backupItem[i].path);
+        // extract from zip
+        if(!zip.extract(this->_backupItem[i].cdri, app_file)) {
+          this->_error = L"Unable to extract file \"";
+          this->_error += app_file + L"\" to destination: ";
+          this->_error += zip.lastErrorStr();
+          this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+        }
+        // step progress bar
+        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        #ifdef DEBUG_SLOW
+        Sleep(DEBUG_SLOW); //< for debug
+        #endif
+      }
+    }
+    // we do not need this anymore
+    zip.close();
+
+  } else {
+
+    if(!Om_isDir(this->_backup)) {
+      this->_error = L"Invalid backup data \"";
+      this->_error += this->_backup + L"\": neither a valid zip archive or directory";
+      this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+      return false;
+    }
+
+    // compose the path to backup root path
+    wstring bck_dir_path = this->_backup + L"\\" + this->_backupDir;
+
+    if(!Om_isDir(bck_dir_path)) {
+      this->_error = L"Expected backup data sub-directory \"";
+      this->_error += bck_dir_path + L"\" does not exists : invalid or malformed backup data.";
+      this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
+      return false;
+    }
+
+    is_zip = false; //< backup data is a sub-directory
+
+    // all appear OK, we can proceed
+    wstring bck_file, app_file;
+
+    // first we restore genuine files from zip
+    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+      // we are interested only by backup file to copy
+      if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
+        // path to file in the backup sub-directory
+        Om_concatPaths(bck_file, bck_dir_path, this->_backupItem[i].path);
+        // path to destination file to be overwritten
+        Om_concatPaths(app_file, this->_location->_installDir, this->_backupItem[i].path);
+        // move file from backup sub-directory
+
+        // Move file from backup directory to destination, notice that the
+        // Om_fileDelete + Om_fileMove method is way faster than the
+        // Om_fileCopy method
+        result = Om_fileDelete(app_file);
+        if(result == 0) {
+          result = Om_fileMove(bck_file, app_file);
+          if(result != 0) {
+            this->_error = L"Unable to move file \"";
+            this->_error += this->_sourceItem[i].path + L"\": ";
+            this->_error += Om_getErrorStr(result);
+            this->log(0, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+          }
+        } else {
+          this->_error = L"Unable to delete file \"";
+          this->_error += this->_sourceItem[i].path + L"\": ";
+          this->_error += Om_getErrorStr(result);
+          this->log(0, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+        }
+        // step progress bar
+        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        #ifdef DEBUG_SLOW
+        Sleep(DEBUG_SLOW); //< for debug
+        #endif
+      }
+    }
+  }
+
+  // Now delete the added (not modified) files and/or folders by the Package
+  // installation.
+  //
+  // the <del> entries are listed in the depth-first order, so, reading list
+  // in backward give us the perfect order to delete elements: from "leaves"
+  // to "root".
+  // Otherwise, we may  have to request to delete folders before their
+  // contents, which simply does not work.
+
+  wstring del_file;
+
+  unsigned n = this->_backupItem.size();
+  while(n--) {
+    // we are interested only by file to cleanup
+    if(this->_backupItem[n].dest == PKGITEM_DEST_DEL) {
+      // get destination file (to be deleted) path
+      Om_concatPaths(del_file, this->_location->_installDir, this->_backupItem[n].path);
+      // check whether this is a file or directory
+      if(this->_backupItem[n].type == PKGITEM_TYPE_F) {
+        result = Om_fileDelete(del_file);
+        if(result != 0) {
+          this->_error = L"Unable to delete file \"";
+          this->_error += del_file + L"\": ";
+          this->_error += Om_getErrorStr(result);
+          this->log(1, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+        }
+      } else {
+        result = Om_dirDelete(del_file);
+        if(result != 0) {
+          this->_error = L"Unable to delete sub-folder \"";
+          this->_error += del_file + L"\": ";
+          this->_error += Om_getErrorStr(result);
+          this->log(1, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+        }
+      }
+      // step progress bar
+      if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+      #ifdef DEBUG_SLOW
+      Sleep(DEBUG_SLOW); //< for debug
+      #endif
+    }
+  }
+
+  // cleanup backup data either zip file or sub-directory...
+  if(is_zip) {
+    result = Om_fileDelete(this->_backup);
+    if(result != 0) {
+      this->_error = L"Unable to delete backup data file \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+    }
+  } else {
+    result = Om_dirDeleteRecursive(this->_backup);
+    if(result != 0) {
+      this->_error = L"Unable to delete backup data sub-folder \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
+    }
+  }
+
+  // revoke the backup property of this package
+  this->backupClear();
+
+  // making report
+  wchar_t buff[64];
+  swprintf(buff, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+
+  log(2, wstring(L"Package(")+this->_ident+L")", buff);
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::_undoInstall(HWND hPb)
+{
+  // initialize local timer
+  clock_t time = clock();
+
+  // This function restores partial unfinished backup data, avoiding checks
+  // for valid package backup entry
+  //
+  // Its main purpose is to be called after a failed sub-directory backup process
+  // to move back the destination genuine file which was moved into the backup
+  // sub-directory right before a package installation
+  //
+  // as the problem does not concern the zipped backup method, this function only
+  // restore files from sub-directory backup, and simply cleanup the zipped backup
+  // if it exists.
+
+  int result;
+
+  if(Om_isDir(this->_backup)) {
+
+    // compose the path to backup root path
+    wstring bck_dir_path = this->_backup + L"\\" + this->_backupDir;
+
+    wstring bck_file, app_file, del_file;
+
+    // first we restore genuine files from zip
+    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+      // we are interested only by backup file to copy
+      if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
+        // path to file in the backup sub-directory
+        Om_concatPaths(bck_file, bck_dir_path, this->_backupItem[i].path);
+        // path to file in the destination to be restored
+        Om_concatPaths(app_file, this->_location->_installDir, this->_backupItem[i].path);
+        // check whether we need to delete an already installed file, it should
+        // be an non-genuine destination file, moved here during an aborted
+        // install process
+        if(Om_isFile(app_file)) {
+          result = Om_fileDelete(app_file);
+          if(result != 0) {
+            this->_error = L"Unable to delete file \"";
+            this->_error += this->_sourceItem[i].path + L"\": ";
+            this->_error += Om_getErrorStr(result);
+            this->log(0, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+          }
+        }
+        // move the backed file to the destination
+        result = Om_fileMove(bck_file, app_file);
+        if(result != 0) {
+          this->_error = L"Unable to move file \"";
+          this->_error += this->_sourceItem[i].path + L"\": ";
+          this->_error += Om_getErrorStr(result);
+          this->log(1, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+        }
+        // step the progress bar backward
+        if(hPb) {
+          int p = SendMessage(hPb, PBM_GETPOS, 0, 0);
+          SendMessage(hPb, PBM_SETPOS, p-1, 0);
+        }
+        #ifdef DEBUG_SLOW
+        Sleep(DEBUG_SLOW); //< for debug
+        #endif
+      }
+    }
+
+    // Now delete the added (not modified) files and/or folders by the Package
+    // installation.
+    //
+    // the <del> entries are listed in the depth-first order, so, reading list
+    // in backward give us the perfect order to delete elements: from "leaves"
+    // to "root".
+    // Otherwise, we may  have to request to delete folders before their
+    // contents, which simply does not work.
+
+    unsigned n = this->_backupItem.size();
+    while(n--) {
+      // we are interested only by file to cleanup
+      if(this->_backupItem[n].dest == PKGITEM_DEST_DEL) {
+        // get destination file (to be deleted) path
+        Om_concatPaths(del_file, this->_location->_installDir, this->_backupItem[n].path);
+        // check whether this is a file or directory
+        if(this->_backupItem[n].type == PKGITEM_TYPE_F) {
+          if(Om_isFile(del_file)) {
+            result = Om_fileDelete(del_file);
+            if(result != 0) {
+              this->_error = L"Unable to delete file \"";
+              this->_error += del_file + L"\": ";
+              this->_error += Om_getErrorStr(result);
+              this->log(1, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+            }
+          }
+        } else {
+          if(Om_isDir(del_file)) {
+            result = Om_dirDelete(del_file);
+            if(result != 0) {
+              this->_error = L"Unable to delete sub-folder \"";
+              this->_error += del_file + L"\": ";
+              this->_error += Om_getErrorStr(result);
+              this->log(1, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+            }
+          }
+        }
+        // step the progress bar backward
+        if(hPb) {
+          int p = SendMessage(hPb, PBM_GETPOS, 0, 0);
+          SendMessage(hPb, PBM_SETPOS, p-1, 0);
+        }
+        #ifdef DEBUG_SLOW
+        Sleep(DEBUG_SLOW); //< for debug
+        #endif
+      }
+    }
+    // cleanup backup sub-directory
+    result = Om_dirDeleteRecursive(this->_backup);
+    if(result != 0) {
+      this->_error = L"Unable to delete Backup data sub-folder \"";
+      this->_error += this->_backup + L"\": ";
+      this->_error += Om_getErrorStr(result);
+      this->log(0, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+    }
+
+  } else {
+    // cleanup backup zip file if exists
+    if(Om_isFileZip(this->_backup)) {
+      result = Om_fileDelete(this->_backup);
+      if(result != 0) {
+        this->_error = L"Unable to delete Backup data file \"";
+        this->_error += this->_backup + L"\": ";
+        this->_error += Om_getErrorStr(result);
+        this->log(0, wstring(L"Package(")+this->_ident+L") Undo", this->_error);
+      }
+    }
+  }
+
+  // revoke the backup property of this package
+  this->backupClear();
+
+  // making report
+  wchar_t buff[64];
+  swprintf(buff, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+
+  log(2, wstring(L"Package(")+this->_ident+L")", buff);
+}

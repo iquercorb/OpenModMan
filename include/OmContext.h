@@ -1,0 +1,325 @@
+/*
+  This file is part of Open Mod Manager.
+
+  Open Mod Manager is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Open Mod Manager is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef OMCONTEXT_H
+#define OMCONTEXT_H
+
+#include "OmGlobal.h"
+#include "OmConfig.h"
+#include "OmLocation.h"
+#include "OmBatch.h"
+
+class OmManager;
+
+/// \brief OmManager Context object.
+///
+/// The Context object describe a global environment for package management.
+///
+class OmContext
+{
+  friend class OmLocation;
+  friend class Package;
+
+  public:
+
+    /// \brief Constructor.
+    ///
+    /// Default constructor.
+    ///
+    OmContext(OmManager* manager);
+
+    /// \brief Destructor.
+    ///
+    /// Default destructor.
+    ///
+    ~OmContext();
+
+    /// \brief Open Context.
+    ///
+    /// Load Context from specified file.
+    ///
+    /// \param[in]  path    : File path of Context to be loaded.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool open(const wstring& path);
+
+    /// \brief Close Context.
+    ///
+    /// Close and empty the current instance.
+    ///
+    void close();
+
+    /// \brief Get last error string.
+    ///
+    /// Returns last error message string.
+    ///
+    /// \return Last error message string.
+    ///
+    const wstring& lastError() const {
+      return _error;
+    }
+
+    /// \brief Check whether is valid.
+    ///
+    /// Checks whether this instance is correctly loaded a ready to use.
+    ///
+    /// \return True if this instance is valid, false otherwise.
+    ///
+    bool isValid() const {
+      return _valid;
+    }
+
+    /// \brief Get Context file path.
+    ///
+    /// Returns Context file path.
+    ///
+    /// \return Context file path.
+    ///
+    const wstring& path() const {
+      return _path;
+    }
+
+    /// \brief Get Context UUID.
+    ///
+    /// Returns Context UUID.
+    ///
+    /// \return Context UUID.
+    ///
+    const wstring& uuid() const {
+      return _uuid;
+    }
+
+    /// \brief Get Context title.
+    ///
+    /// Returns Context title.
+    ///
+    /// \return Context title.
+    ///
+    const wstring& title() const {
+      return _title;
+    }
+
+    /// \brief Get Context home directory.
+    ///
+    /// Returns home directory.
+    ///
+    /// \return Context home directory.
+    ///
+    const wstring& home() const {
+      return _home;
+    }
+
+    /// \brief Get Context icon.
+    ///
+    /// Returns Context icon as icon handle.
+    ///
+    /// \return Banner bitmap handle.
+    ///
+    const HICON& icon() const {
+      return _icon;
+    }
+
+    /// \brief Get current Location.
+    ///
+    /// Returns current active Location.
+    ///
+    /// \return Current active Location or nullptr if none is active.
+    ///
+    OmLocation* curLocation() {
+      return _curLocation;
+    }
+
+    /// \brief Get Context Location count.
+    ///
+    /// Returns count of Location defined in the Context.
+    ///
+    /// \return Location count.
+    ///
+    unsigned locationCount() {
+      return _location.size();
+    }
+
+    /// \brief Get Location.
+    ///
+    /// Returns Location at index.
+    ///
+    /// \param[in]  i       : Location index.
+    ///
+    /// \return Location object at index.
+    ///
+    OmLocation* location(unsigned i) {
+      return _location[i];
+    }
+
+    /// \brief Find Location.
+    ///
+    /// Find Location by its UUID.
+    ///
+    /// \param[in]  uuid     : Location UUID to search.
+    ///
+    /// \return Location index or -1 if not found.
+    ///
+    int findLocation(const wstring& uuid);
+
+    /// \brief Select Location.
+    ///
+    /// Sets the specified Location as active one.
+    ///
+    /// \param[in]  i       : Location index or -1 to unselect.
+    ///
+    void selLocation(int i);
+
+    /// \brief Get Context Batch count.
+    ///
+    /// Returns count of Batch defined in the Context.
+    ///
+    /// \return Batch count.
+    ///
+    unsigned batchCount() {
+      return _batch.size();
+    }
+
+    /// \brief Get Batch.
+    ///
+    /// Returns Batch at index.
+    ///
+    /// \param[in]  i       : Batch index.
+    ///
+    /// \return Batch object at index.
+    ///
+    OmBatch* batch(unsigned i) {
+      return _batch[i];
+    }
+
+    /// \brief Set Context title.
+    ///
+    /// Defines and save Context title.
+    ///
+    /// \param[in]  title   : Title to defines and save
+    ///
+    void setTitle(const wstring& title);
+
+    /// \brief Set Context icon.
+    ///
+    /// Defines and save Context icon.
+    ///
+    /// \param[in]  src     : Source image file to save as icon.
+    ///
+    void setIcon(const wstring& src);
+
+    /// \brief Remove Context icon.
+    ///
+    /// Remove configured Context icon.
+    ///
+    void remIcon();
+
+    /// \brief Make new Location.
+    ///
+    /// Creates a new Location within the Context.
+    ///
+    /// \param[in]  title     : Title of new Location to be created.
+    /// \param[in]  install   : Package installation destination folder path.
+    /// \param[in]  library   : Custom package Library folder path.
+    /// \param[in]  backup    : Custom package Backup folder path.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool makeLocation(const wstring& title, const wstring& install, const wstring& library, const wstring& backup);
+
+    /// \brief Purge existing Location.
+    ///
+    /// Cleanup and removes a Location. Notice that this operation actually delete
+    /// the Location folder and configuration files.
+    ///
+    /// \param[in]  i          : Location index to be removed.
+    /// \param[in]  hWnd       : Parent window handle (HWND) for warning messages.
+    /// \param[in]  hPb        : Progress Bar control handle (HWND) to be updated during process.
+    /// \param[in]  hSc        : Static Label control handle (HWND) to be updated during process.
+    /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool purgeLocation(int i, HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort);
+
+    /// \brief Sort Location list.
+    ///
+    /// Sort Location list according Location ordering index.
+    ///
+    void sortLocations();
+
+    /// \brief Make new Batch.
+    ///
+    /// Creates a new Batch within the Context.
+    ///
+    /// \param[in]  title     : Title of new Batch to be created.
+    /// \param[in]  hash_lsts : Per Location install package hash lists.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool makeBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts);
+
+    /// \brief Delete Batch.
+    ///
+    /// Delete batch definition file and remove it from list.
+    ///
+    /// \param[in]  i     : Index of Batch to delete
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool deleteBatch(unsigned i);
+
+    /// \brief Sort Batches list.
+    ///
+    /// Sort Batches list according Location ordering index.
+    ///
+    void sortBatches();
+
+    /// \brief Add log.
+    ///
+    /// Add entry to log file.
+    ///
+    void log(unsigned level, const wstring& head, const wstring& detail);
+
+  private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    OmManager*          _manager;
+
+    OmConfig            _config;
+
+    wstring             _path;
+
+    wstring             _uuid;
+
+    wstring             _title;
+
+    wstring             _home;
+
+    HICON               _icon;
+
+    vector<OmLocation*> _location;
+
+    OmLocation*         _curLocation;
+
+    vector<OmBatch*>    _batch;
+
+    bool                _valid;
+
+    wstring             _error;
+};
+
+#endif // OMCONTEXT_H

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Open Mod Manager" />
+		<Option platforms="Windows;" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<MakeCommands>
+			<Build command="" />
+			<CompileFile command="" />
+			<Clean command="" />
+			<DistClean command="" />
+			<AskRebuildNeeded command="" />
+			<SilentBuild command=" &gt; $(CMD_NULL)" />
+		</MakeCommands>
+		<Build>
+			<Target title="64-bit Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/64-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/dbg/64/" />
+				<Option type="1" />
+				<Option compiler="mingw-w64_x86_64" />
+				<Compiler>
+					<Add option="-pedantic" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-m64" />
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+					<Add directory="include/Core" />
+					<Add directory="include/Gui" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add option="-m64" />
+					<Add directory="lib/curl/64-bit" />
+				</Linker>
+			</Target>
+			<Target title="64-bit Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/64-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/rel/64/" />
+				<Option type="0" />
+				<Option compiler="mingw-w64_x86_64" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-pedantic" />
+					<Add option="-Wall" />
+					<Add option="-Wextra" />
+					<Add option="-Weffc++" />
+					<Add option="-m64" />
+					<Add directory="include/Core" />
+					<Add directory="include/Gui" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+					<Add directory="lib/curl/64-bit" />
+				</Linker>
+			</Target>
+			<Target title="32-bit Debug">
+				<Option platforms="Windows;" />
+				<Option output="bin/32-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/dbg/32/" />
+				<Option type="1" />
+				<Option compiler="mingw-w64_i686" />
+				<Compiler>
+					<Add option="-pedantic" />
+					<Add option="-Wall" />
+					<Add option="-m32" />
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+					<Add directory="include/Core" />
+					<Add directory="include/Gui" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add option="-m32" />
+					<Add directory="lib/curl/32-bit" />
+				</Linker>
+			</Target>
+			<Target title="32-bit Release">
+				<Option platforms="Windows;" />
+				<Option output="bin/32-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/rel/32/" />
+				<Option type="0" />
+				<Option compiler="mingw-w64_i686" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-pedantic" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-m32" />
+					<Add directory="include/Core" />
+					<Add directory="include/Gui" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m32" />
+					<Add directory="lib/curl/32-bit" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add directory="include" />
+			<Add directory="include/Gui" />
+			<Add directory="include/Engine" />
+			<Add directory="include/Core" />
+			<Add directory="include/thirdparty/miniz" />
+			<Add directory="include/thirdparty/pugixml" />
+			<Add directory="include/thirdparty/zlib" />
+			<Add directory="include/thirdparty/zlib/contrib/minizip" />
+			<Add directory="include/thirdparty/curl" />
+			<Add directory="include/thirdparty/xxhash" />
+		</Compiler>
+		<ResourceCompiler>
+			<Add directory="include" />
+		</ResourceCompiler>
+		<Linker>
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add library="Comctl32" />
+			<Add library="Gdi32" />
+			<Add library="Shlwapi" />
+			<Add library="Comdlg32" />
+			<Add library="Gdiplus" />
+			<Add library="Ole32" />
+			<Add library="UxTheme" />
+			<Add library="libcurl.a" />
+			<Add directory="lib/curl" />
+		</Linker>
+		<Unit filename="include/OmBatch.h" />
+		<Unit filename="include/OmConfig.h" />
+		<Unit filename="include/OmContext.h" />
+		<Unit filename="include/OmDialog.h" />
+		<Unit filename="include/OmDialogProp.h" />
+		<Unit filename="include/OmDialogWiz.h" />
+		<Unit filename="include/OmGlobal.h" />
+		<Unit filename="include/OmLocation.h" />
+		<Unit filename="include/OmManager.h" />
+		<Unit filename="include/OmPackage.h" />
+		<Unit filename="include/OmVersion.h" />
+		<Unit filename="include/OmXmlDoc.h" />
+		<Unit filename="include/OmZipFile.h" />
+		<Unit filename="include/gui/OmUiHelpAbout.h" />
+		<Unit filename="include/gui/OmUiHelpLog.h" />
+		<Unit filename="include/gui/OmUiMain.h" />
+		<Unit filename="include/gui/OmUiMainLib.h" />
+		<Unit filename="include/gui/OmUiNewBat.h" />
+		<Unit filename="include/gui/OmUiNewLoc.h" />
+		<Unit filename="include/gui/OmUiNewPkg.h" />
+		<Unit filename="include/gui/OmUiProgress.h" />
+		<Unit filename="include/gui/OmUiPropBat.h" />
+		<Unit filename="include/gui/OmUiPropBatStg.h" />
+		<Unit filename="include/gui/OmUiPropCtx.h" />
+		<Unit filename="include/gui/OmUiPropCtxBat.h" />
+		<Unit filename="include/gui/OmUiPropCtxLoc.h" />
+		<Unit filename="include/gui/OmUiPropCtxStg.h" />
+		<Unit filename="include/gui/OmUiPropLoc.h" />
+		<Unit filename="include/gui/OmUiPropLocBck.h" />
+		<Unit filename="include/gui/OmUiPropLocStg.h" />
+		<Unit filename="include/gui/OmUiPropMan.h" />
+		<Unit filename="include/gui/OmUiPropManGle.h" />
+		<Unit filename="include/gui/OmUiPropManPkg.h" />
+		<Unit filename="include/gui/OmUiPropPkg.h" />
+		<Unit filename="include/gui/OmUiPropPkgBck.h" />
+		<Unit filename="include/gui/OmUiPropPkgSrc.h" />
+		<Unit filename="include/gui/OmUiWizCtx.h" />
+		<Unit filename="include/gui/OmUiWizCtxBeg.h" />
+		<Unit filename="include/gui/OmUiWizCtxCfg.h" />
+		<Unit filename="include/gui/OmUiWizCtxLoc.h" />
+		<Unit filename="include/gui/res/resource.h" />
+		<Unit filename="include/gui/res/resources.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="include/thirdparty/curl/curl.h" />
+		<Unit filename="include/thirdparty/curl/curlver.h" />
+		<Unit filename="include/thirdparty/curl/easy.h" />
+		<Unit filename="include/thirdparty/curl/mprintf.h" />
+		<Unit filename="include/thirdparty/curl/multi.h" />
+		<Unit filename="include/thirdparty/curl/stdcheaders.h" />
+		<Unit filename="include/thirdparty/curl/system.h" />
+		<Unit filename="include/thirdparty/curl/typecheck-gcc.h" />
+		<Unit filename="include/thirdparty/curl/urlapi.h" />
+		<Unit filename="include/thirdparty/miniz/miniz.h" />
+		<Unit filename="include/thirdparty/pugixml/pugiconfig.hpp" />
+		<Unit filename="include/thirdparty/pugixml/pugixml.hpp" />
+		<Unit filename="include/thirdparty/xxhash/xxh3.h" />
+		<Unit filename="include/thirdparty/xxhash/xxhash.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="src/OmBatch.cpp" />
+		<Unit filename="src/OmConfig.cpp" />
+		<Unit filename="src/OmContext.cpp" />
+		<Unit filename="src/OmDialog.cpp" />
+		<Unit filename="src/OmDialogProp.cpp" />
+		<Unit filename="src/OmDialogWiz.cpp" />
+		<Unit filename="src/OmGlobal.cpp" />
+		<Unit filename="src/OmLocation.cpp" />
+		<Unit filename="src/OmManager.cpp" />
+		<Unit filename="src/OmPackage.cpp" />
+		<Unit filename="src/OmVersion.cpp" />
+		<Unit filename="src/OmXmlDoc.cpp" />
+		<Unit filename="src/OmZipFile.cpp" />
+		<Unit filename="src/gui/OmUiHelpAbout.cpp" />
+		<Unit filename="src/gui/OmUiHelpLog.cpp" />
+		<Unit filename="src/gui/OmUiMain.cpp" />
+		<Unit filename="src/gui/OmUiMainLib.cpp" />
+		<Unit filename="src/gui/OmUiNewBat.cpp" />
+		<Unit filename="src/gui/OmUiNewLoc.cpp" />
+		<Unit filename="src/gui/OmUiNewPkg.cpp" />
+		<Unit filename="src/gui/OmUiProgress.cpp" />
+		<Unit filename="src/gui/OmUiPropBat.cpp" />
+		<Unit filename="src/gui/OmUiPropBatStg.cpp" />
+		<Unit filename="src/gui/OmUiPropCtx.cpp" />
+		<Unit filename="src/gui/OmUiPropCtxBat.cpp" />
+		<Unit filename="src/gui/OmUiPropCtxLoc.cpp" />
+		<Unit filename="src/gui/OmUiPropCtxStg.cpp" />
+		<Unit filename="src/gui/OmUiPropLoc.cpp" />
+		<Unit filename="src/gui/OmUiPropLocBck.cpp" />
+		<Unit filename="src/gui/OmUiPropLocStg.cpp" />
+		<Unit filename="src/gui/OmUiPropMan.cpp" />
+		<Unit filename="src/gui/OmUiPropManGle.cpp" />
+		<Unit filename="src/gui/OmUiPropManPkg.cpp" />
+		<Unit filename="src/gui/OmUiPropPkg.cpp" />
+		<Unit filename="src/gui/OmUiPropPkgBck.cpp" />
+		<Unit filename="src/gui/OmUiPropPkgSrc.cpp" />
+		<Unit filename="src/gui/OmUiWizCtx.cpp" />
+		<Unit filename="src/gui/OmUiWizCtxBeg.cpp" />
+		<Unit filename="src/gui/OmUiWizCtxCfg.cpp" />
+		<Unit filename="src/gui/OmUiWizCtxLoc.cpp" />
+		<Unit filename="src/thirdparty/miniz/miniz.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/thirdparty/pugixml/pugixml.cpp" />
+		<Unit filename="src/thirdparty/xxhash/xxhash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
