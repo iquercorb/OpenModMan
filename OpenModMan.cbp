@@ -18,7 +18,7 @@
 			<Target title="64-bit Debug">
 				<Option platforms="Windows;" />
 				<Option output="bin/64-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/dbg/64/" />
+				<Option object_output="obj/64-bit/Debug" />
 				<Option type="1" />
 				<Option compiler="mingw-w64_x86_64" />
 				<Compiler>
@@ -40,7 +40,7 @@
 			<Target title="64-bit Release">
 				<Option platforms="Windows;" />
 				<Option output="bin/64-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/rel/64/" />
+				<Option object_output="obj/64-bit/Release" />
 				<Option type="0" />
 				<Option compiler="mingw-w64_x86_64" />
 				<Compiler>
@@ -63,7 +63,7 @@
 			<Target title="32-bit Debug">
 				<Option platforms="Windows;" />
 				<Option output="bin/32-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/dbg/32/" />
+				<Option object_output="obj/32-bit/Debug" />
 				<Option type="1" />
 				<Option compiler="mingw-w64_i686" />
 				<Compiler>
@@ -84,7 +84,7 @@
 			<Target title="32-bit Release">
 				<Option platforms="Windows;" />
 				<Option output="bin/32-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/rel/32/" />
+				<Option object_output="obj/32-bit/Release" />
 				<Option type="0" />
 				<Option compiler="mingw-w64_i686" />
 				<Compiler>
