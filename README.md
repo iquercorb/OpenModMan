@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.0 (beta)
+Version: 0.9.1 (beta)
 ----------------------------------------------------------------------------------------
 
 
