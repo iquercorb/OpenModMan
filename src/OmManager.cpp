@@ -66,9 +66,9 @@ OmManager::~OmManager()
 bool OmManager::init()
 {
   // Create application folder if does not exists
-  wchar_t buff[MAX_PATH];
-  SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, buff);
-  this->_home = buff;
+  wchar_t wcbuf[OMM_MAX_PATH];
+  SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, wcbuf);
+  this->_home = wcbuf;
   this->_home += L"\\";
   this->_home += OMM_APP_NAME;
 
@@ -89,9 +89,8 @@ bool OmManager::init()
   }
 
   // initialize log file
-  wchar_t logPath[MAX_PATH];
-  swprintf(logPath, MAX_PATH, L"%ls\\log.txt", this->_home.c_str());
-  this->_logFile = CreateFileW(logPath, GENERIC_WRITE, 0, nullptr,
+  swprintf(wcbuf, OMM_MAX_PATH, L"%ls\\log.txt", this->_home.c_str());
+  this->_logFile = CreateFileW(wcbuf, GENERIC_WRITE, 0, nullptr,
                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
   // first log line
   this->log(2, L"Manager", L"Initialization");
@@ -340,9 +339,9 @@ void OmManager::getDefaultLocation(wstring& path)
     if(this->_config.xml().hasChild(L"default_location")) {
       path = this->_config.xml().child(L"default_location").content();
     } else {
-      wchar_t buff[MAX_PATH];
-      SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, buff);
-      path = buff;
+      wchar_t wcbuf[OMM_MAX_PATH];
+      SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, wcbuf);
+      path = wcbuf;
     }
   }
 }

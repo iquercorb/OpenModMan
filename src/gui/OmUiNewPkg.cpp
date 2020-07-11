@@ -204,11 +204,11 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       location = manager->curContext()->curLocation();
 
     int lb_sel;
-    wchar_t dpn_buf[MAX_PATH];
-    wchar_t sel_dir[MAX_PATH];
-    wchar_t pkg_src[MAX_PATH];
-    wchar_t img_src[MAX_PATH];
-    wchar_t txt_src[MAX_PATH];
+    wchar_t dpn_buf[OMM_MAX_PATH];
+    wchar_t sel_dir[OMM_MAX_PATH];
+    wchar_t pkg_src[OMM_MAX_PATH];
+    wchar_t img_src[OMM_MAX_PATH];
+    wchar_t txt_src[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {
@@ -229,7 +229,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_BROW1:
       // select the initial location for browsing start
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
       if(!wcslen(pkg_src)) {
         if(location) wcscpy(sel_dir, location->libraryDir().c_str());
       } else {
@@ -243,7 +243,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_BROW2:
       // select the initial location for browsing start
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
       if(!wcslen(pkg_src)) {
         if(location) wcscpy(sel_dir, location->libraryDir().c_str());
       } else {
@@ -304,7 +304,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     break;
 
     case IDC_EC_INPT3: // Dependencies EditControl
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, OMM_MAX_PATH);
       if(wcslen(dpn_buf)) {
         EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ADD), true);
       } else {
@@ -313,7 +313,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_ADD: // Add Dependency Button
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, OMM_MAX_PATH);
       if(wcslen(dpn_buf)) {
         SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_ADDSTRING, 0, (LPARAM)dpn_buf);
         SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"");
@@ -402,10 +402,10 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if(has_changed) {
       bool allow = true;
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, MAX_PATH);
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
       }
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD02), BM_GETCHECK, 0, 0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, MAX_PATH);
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
       }
       if(!wcslen(pkg_src)) allow = false;
 
@@ -422,14 +422,14 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 bool OmUiNewPkg::_apply()
 {
-  wchar_t sel_dir[MAX_PATH];
-  wchar_t pkg_src[MAX_PATH];
-  wchar_t pkg_dst[MAX_PATH];
+  wchar_t sel_dir[OMM_MAX_PATH];
+  wchar_t pkg_src[OMM_MAX_PATH];
+  wchar_t pkg_dst[OMM_MAX_PATH];
 
   bool rad01 = SendMessage(GetDlgItem(this->_hwnd,IDC_BC_RAD01),BM_GETCHECK,0,0);
 
   if(rad01) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, MAX_PATH);
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
     if(!Om_isDir(pkg_src)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid source path",
                                     L"The specified source path is not a "
@@ -437,7 +437,7 @@ bool OmUiNewPkg::_apply()
       return false;
     }
   } else {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, MAX_PATH);
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
     if(!Om_isFileZip(pkg_src)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid source file",
                                     L"The specified source Package is not a "
@@ -478,7 +478,7 @@ bool OmUiNewPkg::_apply()
 ///
 void OmUiNewPkg::_buildPkg_init(const wstring& path)
 {
-  wchar_t buf[MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   this->_buildPkg_zipLvl = 2;
   this->_buildPkg_source.clear();
@@ -486,15 +486,15 @@ void OmUiNewPkg::_buildPkg_init(const wstring& path)
   this->_buildPkg_desc.clear();
 
   if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, buf, MAX_PATH);
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
   } else {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, buf, MAX_PATH);
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
   }
-  this->_buildPkg_source = buf;
+  this->_buildPkg_source = wcbuf;
 
   // build the dependencies list
   if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-    wchar_t ident[MAX_PATH];
+    wchar_t ident[OMM_MAX_PATH];
     unsigned lb_count = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETCOUNT, 0, 0);
     if(lb_count) {
       for(unsigned i = 0; i < lb_count; ++i) {

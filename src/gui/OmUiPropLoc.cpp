@@ -79,21 +79,21 @@ bool OmUiPropLoc::checkChanges()
 
   bool changed = false;
 
-  wchar_t wcbuf[MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT1, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
     if(location->title() != wcbuf) changed = true;
   }
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT2, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
     if(location->installDir() != wcbuf) changed = true;
   }
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     bool chk01 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0);
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT3, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
     if(chk01) {
       if(location->libraryDir() != wcbuf || !location->hasCustLibraryDir()) changed = true;
     } else {
@@ -103,7 +103,7 @@ bool OmUiPropLoc::checkChanges()
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
     bool chk02 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK02), BM_GETCHECK, 0, 0);
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT4, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
     if(chk02) {
       if(location->backupDir() != wcbuf || !location->hasCustBackupDir()) changed = true;
     } else {
@@ -139,17 +139,17 @@ bool OmUiPropLoc::applyChanges()
   OmUiPropLocBck* uiPropLocBck  = reinterpret_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocStg* uiPropLocStg  = reinterpret_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
 
-  wchar_t inpt1[MAX_PATH];
-  wchar_t inpt2[MAX_PATH];
-  wchar_t inpt3[MAX_PATH];
-  wchar_t inpt4[MAX_PATH];
+  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t inpt2[OMM_MAX_PATH];
+  wchar_t inpt3[OMM_MAX_PATH];
+  wchar_t inpt4[OMM_MAX_PATH];
 
   bool chk01 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0);
   bool chk02 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK02), BM_GETCHECK, 0, 0);
 
   // Step 1, verify everything
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT1, inpt1, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
     if(!wcslen(inpt1)) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Location title",
                                 L"Please enter a title.");
@@ -158,7 +158,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT2, inpt2, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
     if(wcslen(inpt2)) {
       if(!Om_isDir(inpt2)) {
         Om_dialogBoxErr(this->_hwnd, L"Invalid Location Destination folder",
@@ -175,7 +175,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT3, inpt3, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
     if(chk01) { //< Custom Library folder Check-Box checked
       if(wcslen(inpt3)) {
         if(!Om_isDir(inpt3)) {
@@ -194,7 +194,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
-    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT4, inpt4, MAX_PATH);
+    GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
     if(chk02) { //< Custom Backup folder Check-Box checked
       if(wcslen(inpt4)) {
         if(!Om_isDir(inpt4)) {

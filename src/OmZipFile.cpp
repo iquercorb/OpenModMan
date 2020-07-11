@@ -64,24 +64,24 @@ inline static char* __toCchar(char* buf, const wstring& str)
 ///
 /// Convert the given wide string Windows path into multibyte Zip CDR path.
 ///
-/// \param[in]  buf   : Buffer to be as result of the conversion.
-/// \param[in]  str   : Wide string Windows path to convert
+/// \param[in]  cbuf  : Buffer to be as result of the conversion.
+/// \param[in]  wstr  : Wide string Windows path to convert
 ///
 /// \return The char pointer passed as buffer parameter
 ///
-inline static char* __toCDRpath(char* buf, const wstring& str)
+inline static char* __toCDRpath(char* cbuf, const wstring& wstr)
 {
-  wcstombs(buf, str.c_str(), ZMBUFF_SIZE);
+  wcstombs(cbuf, wstr.c_str(), ZMBUFF_SIZE);
 
   // paths for Zip file index (CDR) must have a forward slash separator
   // while Windows use backslash, so we need to replace all separators.
-  char* p = buf;
+  char* p = cbuf;
   while(*p != 0) {
     if(*p == '\\') { *p = '/'; }
     ++p;
   }
 
-  return buf;
+  return cbuf;
 }
 
 /// \brief Zip CDR to Windows path
@@ -93,19 +93,19 @@ inline static char* __toCDRpath(char* buf, const wstring& str)
 ///
 inline static void __fromCDRpath(wstring& ret, const char* str)
 {
-  wchar_t buf[281];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  mbstowcs(buf, str, 280);
+  mbstowcs(wcbuf, str, OMM_MAX_PATH);
 
   //  paths for Zip file index (CDR) must have a forward slash separator
   // while Windows use backslash, so we need to replace all separators.
-  wchar_t* p = buf;
+  wchar_t* p = wcbuf;
   while(*p != 0) {
     if(*p == L'/') { *p = L'\\'; }
     ++p;
   }
 
-  ret = buf;
+  ret = wcbuf;
 }
 
 

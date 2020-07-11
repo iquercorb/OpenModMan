@@ -53,14 +53,15 @@ void OmUiHelpAbout::_onShow()
   HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
   SendMessage(GetDlgItem(this->_hwnd, IDC_EC_ENT01), WM_SETFONT, (WPARAM)hFont, 1);
 
-  wchar_t buf[260];
-  swprintf(buf, 260, L"%ls (%ls)\nVersion %d.%d.%d - %ls\n"
-            "By %ls\n\nThis software is distributed "
-            "under terms and conditions of the GNU GPL v3.0 license:",
-  OMM_APP_NAME, OMM_APP_SHORT_NAME, OMM_APP_MAJ, OMM_APP_MIN, OMM_APP_REV,
-  OMM_APP_DATE, OMM_APP_AUTHOR);
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, OMM_MAX_PATH,
+      L"%ls (%ls)\nVersion %d.%d.%d (%ls) - %ls\nBy %ls\n\n"
+      "This software is distributed under terms and conditions of the "
+      "GNU GPL v3.0 license:",
+      OMM_APP_NAME, OMM_APP_SHORT_NAME, OMM_APP_MAJ, OMM_APP_MIN, OMM_APP_REV,
+      OMM_APP_ARCH, OMM_APP_DATE, OMM_APP_AUTHOR);
 
-  SetDlgItemTextW(this->_hwnd, IDC_SC_TEXT1, buf);
+  SetDlgItemTextW(this->_hwnd, IDC_SC_TEXT1, wcbuf);
 
   string gpl = Om_loadPlainText(L"LICENSE.TXT");
   SetDlgItemText(this->_hwnd, IDC_EC_ENT01, gpl.c_str());

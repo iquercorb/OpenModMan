@@ -200,14 +200,14 @@ bool OmUiNewBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    wchar_t inpt1[MAX_PATH];
+    wchar_t inpt1[OMM_MAX_PATH];
     int n_sel, lb_max, lb_sel;
     bool chk01;
 
     switch(LOWORD(wParam))
     {
     case IDC_EC_INPT1:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), wcslen(inpt1));
       break;
 
@@ -342,8 +342,8 @@ bool OmUiNewBat::_apply()
     loc_hash_lsts.push_back(hash_list);
   }
 
-  wchar_t title[MAX_PATH];
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, title, MAX_PATH);
+  wchar_t title[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, title, OMM_MAX_PATH);
 
   wstring msg;
 
@@ -386,7 +386,7 @@ void OmUiNewBat::_upPkg()
     if(lb_sel == 0)
       return;
 
-    wchar_t label[512];
+    wchar_t label[OMM_MAX_PATH];
 
     // retrieve the package List-Box label
     SendMessageW(hlsr, LB_GETTEXT, lb_sel - 1, (LPARAM)label);
@@ -441,7 +441,7 @@ void OmUiNewBat::_dnPkg()
     if(lb_sel == lb_max)
       return;
 
-    wchar_t label[512];
+    wchar_t label[OMM_MAX_PATH];
 
     // retrieve the package List-Box label
     SendMessageW(hlsr, LB_GETTEXT, lb_sel, (LPARAM)label);
@@ -495,7 +495,7 @@ void OmUiNewBat::_addPkg()
     SendMessageW(hlsl, LB_GETSELITEMS, n, (LPARAM)lb_sel);
 
     int index, pos;
-    wchar_t label[512];
+    wchar_t label[OMM_MAX_PATH];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < n; ++i) {
@@ -562,7 +562,7 @@ void OmUiNewBat::_remPkg()
     SendMessageW(hlsr, LB_GETSELITEMS, n, (LPARAM)lb_sel);
 
     int index, pos;
-    wchar_t label[512];
+    wchar_t label[OMM_MAX_PATH];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < n; ++i) {

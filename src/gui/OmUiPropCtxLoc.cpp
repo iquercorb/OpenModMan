@@ -88,16 +88,16 @@ void OmUiPropCtxLoc::_locationUp()
   if(lb_sel == 0)
     return;
 
-  wchar_t buf[512];
+  wchar_t wcbuf[OMM_MAX_PATH];
   int idx;
 
   // retrieve the package List-Box label
-  SendMessageW(hLb, LB_GETTEXT, lb_sel - 1, (LPARAM)buf);
+  SendMessageW(hLb, LB_GETTEXT, lb_sel - 1, (LPARAM)wcbuf);
   idx = SendMessageW(hLb, LB_GETITEMDATA, lb_sel - 1, 0);
 
   SendMessageW(hLb, LB_DELETESTRING, lb_sel - 1, 0);
 
-  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)buf);
+  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
 
   EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), (lb_sel > 1));
@@ -120,16 +120,16 @@ void OmUiPropCtxLoc::_locationDn()
   if(lb_sel == lb_max)
     return;
 
-  wchar_t buf[512];
+  wchar_t wcbuf[OMM_MAX_PATH];
   int idx;
 
-  SendMessageW(hLb, LB_GETTEXT, lb_sel, (LPARAM)buf);
+  SendMessageW(hLb, LB_GETTEXT, lb_sel, (LPARAM)wcbuf);
   idx = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
   SendMessageW(hLb, LB_DELETESTRING, lb_sel, 0);
 
   lb_sel++;
 
-  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)buf);
+  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
   SendMessageW(hLb, LB_SETCURSEL , true, (LPARAM)(lb_sel));
 

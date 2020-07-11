@@ -138,7 +138,7 @@ bool OmUiPropMan::applyChanges()
 
     int lb_cnt =  SendMessage(hLb, LB_GETCOUNT, 0, 0);
 
-    wchar_t wcbuf[MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     vector<wstring> start_files;
 

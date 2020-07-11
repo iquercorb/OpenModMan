@@ -39,7 +39,7 @@ OmVersion::OmVersion(const wstring& vstr) :
   _min(0),
   _rev(0)
 {
-  wchar_t num[16];
+  wchar_t num[32];
 
   unsigned j = 0;
   for(unsigned i = 0; i < vstr.size(); ++i) {
@@ -115,7 +115,7 @@ OmVersion::~OmVersion()
 ///
 bool OmVersion::parse(const wstring& vstr)
 {
-  wchar_t num[16];
+  wchar_t num[32];
 
   _maj = 0;
   _min = 0;
@@ -179,17 +179,17 @@ void OmVersion::define(unsigned maj, unsigned min, unsigned rev)
 
   _str.clear();
 
-  wchar_t buf[16];
+  wchar_t wcbuf[32];
 
-  swprintf(buf, 16, L"%u", _maj);
-  _str.push_back(buf);
+  swprintf(wcbuf, 32, L"%u", _maj);
+  _str.push_back(wcbuf);
 
-  swprintf(buf, 16, L"%u", _min);
-  _str.push_back(buf);
+  swprintf(wcbuf, 32, L"%u", _min);
+  _str.push_back(wcbuf);
 
   if(_rev > 0) {
-    swprintf(buf, 16, L"%u", _rev);
-    _str.push_back(buf);
+    swprintf(wcbuf, 32, L"%u", _rev);
+    _str.push_back(wcbuf);
   }
 }
 

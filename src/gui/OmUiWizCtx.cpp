@@ -86,27 +86,27 @@ void OmUiWizCtx::_onWizFinish()
   OmUiWizCtxCfg* uiWizCtxCfg = reinterpret_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG));
   OmUiWizCtxLoc* uiWizLocCfg = reinterpret_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG));
 
-  wchar_t ctx_titl[MAX_PATH];
-  wchar_t ctx_locp[MAX_PATH];
-  wchar_t loc_titl[MAX_PATH];
-  wchar_t loc_inst[MAX_PATH];
-  wchar_t loc_libd[MAX_PATH];
-  wchar_t loc_bckd[MAX_PATH];
+  wchar_t ctx_titl[OMM_MAX_PATH];
+  wchar_t ctx_locp[OMM_MAX_PATH];
+  wchar_t loc_titl[OMM_MAX_PATH];
+  wchar_t loc_inst[OMM_MAX_PATH];
+  wchar_t loc_libd[OMM_MAX_PATH];
+  wchar_t loc_bckd[OMM_MAX_PATH];
 
-  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT1, ctx_titl, MAX_PATH);
-  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT2, ctx_locp, MAX_PATH);
+  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT1, ctx_titl, OMM_MAX_PATH);
+  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT2, ctx_locp, OMM_MAX_PATH);
 
-  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT1, loc_titl, MAX_PATH);
-  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT2, loc_inst, MAX_PATH);
+  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT1, loc_titl, OMM_MAX_PATH);
+  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT2, loc_inst, OMM_MAX_PATH);
 
   if(SendMessage(GetDlgItem(uiWizLocCfg->hwnd(),IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT4, loc_libd, MAX_PATH);
+    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT4, loc_libd, OMM_MAX_PATH);
   } else {
     loc_libd[0] = L'\0';
   }
 
   if(SendMessage(GetDlgItem(uiWizLocCfg->hwnd(),IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT5, loc_bckd, MAX_PATH);
+    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT5, loc_bckd, OMM_MAX_PATH);
   } else {
     loc_bckd[0] = L'\0';
   }

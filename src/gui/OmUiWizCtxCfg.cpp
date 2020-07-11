@@ -53,11 +53,11 @@ long OmUiWizCtxCfg::id() const
 ///
 bool OmUiWizCtxCfg::hasValidParams() const
 {
-  wchar_t inpt1[MAX_PATH];
-  wchar_t inpt2[MAX_PATH];
-  wchar_t inpt3[MAX_PATH];
+  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t inpt2[OMM_MAX_PATH];
+  wchar_t inpt3[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
   if(wcslen(inpt1)) {
     if(!Om_isValidName(inpt1)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title",
@@ -70,7 +70,7 @@ bool OmUiWizCtxCfg::hasValidParams() const
                                   L"Please choose a Context title.");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
   if(wcslen(inpt2)) {
     if(!Om_isDir(inpt2)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context location folder",
@@ -84,7 +84,7 @@ bool OmUiWizCtxCfg::hasValidParams() const
                                   L"for new Context location");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
   if(wcslen(inpt3)) {
     if(!Om_isValidName(inpt3)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition file name",
@@ -116,10 +116,10 @@ void OmUiWizCtxCfg::_onShow()
 
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
-  wchar_t inpt1[MAX_PATH];
-  wchar_t inpt3[MAX_PATH];
+  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t inpt3[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
 
   // set default entry contents
   if(!wcslen(inpt1)) {
@@ -132,7 +132,7 @@ void OmUiWizCtxCfg::_onShow()
     reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
   } else {
     // enable or disable the Wizard Next button
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, MAX_PATH);
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
     if(wcslen(inpt3)) {
       if(Om_isValidName(inpt3)) {
         reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
@@ -191,20 +191,20 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
-  wchar_t inpt1[MAX_PATH];
-  wchar_t inpt2[MAX_PATH];
-  wchar_t inpt3[MAX_PATH];
+  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t inpt2[OMM_MAX_PATH];
+  wchar_t inpt3[OMM_MAX_PATH];
 
   if(uMsg == WM_COMMAND) {
     switch(LOWORD(wParam))
     {
     case IDC_EC_INPT1: // title
     case IDC_EC_INPT2: // Context location path
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
       if(wcslen(inpt1)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, MAX_PATH);
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
         if(wcslen(inpt2)) {
-          swprintf(inpt3, MAX_PATH, L"%ls\\%ls\\", inpt2, inpt1, OMM_CTX_FILE_EXT);
+          swprintf(inpt3, OMM_MAX_PATH, L"%ls\\%ls\\", inpt2, inpt1, OMM_CTX_FILE_EXT);
           SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
         } else {
           SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>");
@@ -215,7 +215,7 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BROW2:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
       if(Om_dialogBrowseDir(inpt2, this->_hwnd, L"Select folder where to create Context home", inpt2)) {
         SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2);
         manager->saveDefaultLocation(inpt2);
@@ -223,7 +223,7 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break; // case BTN_BROWSE1:
 
     case IDC_EC_INPT3: // resulting Context path
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt3, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt3, OMM_MAX_PATH);
       if(wcslen(inpt3)) {
         if(Om_isValidName(inpt3)) {
           reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);

@@ -119,8 +119,8 @@ void OmUiPropCtxStg::_onRefresh()
   SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, context->uuid().c_str());
   SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, context->title().c_str());
 
-  wchar_t icon_src[MAX_PATH];
-  GetDlgItemTextW(_hwnd, IDC_EC_INPT4, icon_src, MAX_PATH);
+  wchar_t icon_src[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, icon_src, OMM_MAX_PATH);
 
   // check if the path to icon is non empty
   if(wcslen(icon_src) && Om_isValidName(icon_src)) {
@@ -176,7 +176,7 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     HICON hIcon;
-    wchar_t icon_src[MAX_PATH];
+    wchar_t icon_src[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {

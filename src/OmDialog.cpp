@@ -319,8 +319,8 @@ void OmDialog::_createTooltip(unsigned id, const wstring& text)
                             this->_hins, nullptr);
 
   // copy text to local buffer
-  wchar_t wcbuf[MAX_PATH];
-  swprintf(wcbuf, MAX_PATH, L"%ls", text.c_str());
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, OMM_MAX_PATH, L"%ls", text.c_str());
 
   // associate the Tooltip with the target control.
   TTTOOLINFOW toolInfo = { 0 };

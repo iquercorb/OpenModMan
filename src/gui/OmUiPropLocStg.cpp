@@ -173,7 +173,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     bool chk01;
-    wchar_t buff[MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {
@@ -184,11 +184,11 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), chk01);
 
       if(chk01 && location->hasCustLibraryDir()) {
-        swprintf(buff, L"%ls", location->libraryDir().c_str());
+        swprintf(wcbuf, L"%ls", location->libraryDir().c_str());
       } else {
-        swprintf(buff, L"%ls\\library", location->home().c_str());
+        swprintf(wcbuf, L"%ls\\library", location->home().c_str());
       }
-      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, buff);
+      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
       break;
 
     case IDC_BC_CHK02: //< Check Box for custom Backup path
@@ -198,11 +198,11 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), chk01);
 
       if(chk01 && location->hasCustBackupDir()) {
-        swprintf(buff, L"%ls", location->backupDir().c_str());
+        swprintf(wcbuf, L"%ls", location->backupDir().c_str());
       } else {
-        swprintf(buff, L"%ls\\backup", location->home().c_str());
+        swprintf(wcbuf, L"%ls\\backup", location->home().c_str());
       }
-      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, buff);
+      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
       break;
 
     case IDC_EC_INPT1: //< Entry for Title
@@ -226,26 +226,26 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BROW2: //< Browse Button for Install folder
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, buff, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
 
-      if(Om_dialogBrowseDir(buff, this->_hwnd, L"Select packages Destination folder", buff)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, buff);
+      if(Om_dialogBrowseDir(wcbuf, this->_hwnd, L"Select packages Destination folder", wcbuf)) {
+        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf);
       }
       break;
 
     case IDC_BC_BROW3: //< Browse Button for Library folder
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, buff, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
 
-      if(Om_dialogBrowseDir(buff, this->_hwnd, L"Select custom packages Library folder", buff)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, buff);
+      if(Om_dialogBrowseDir(wcbuf, this->_hwnd, L"Select custom packages Library folder", wcbuf)) {
+        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
       }
       break;
 
     case IDC_BC_BROW4: //< Browse Button for Backup folder
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, buff, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
 
-      if(Om_dialogBrowseDir(buff, this->_hwnd, L"Select custom Backups location", buff)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, buff);
+      if(Om_dialogBrowseDir(wcbuf, this->_hwnd, L"Select custom Backups location", wcbuf)) {
+        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
       }
       break;
     }

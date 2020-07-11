@@ -1319,10 +1319,10 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 {
   if(this->_location != nullptr) {
 
-    wchar_t buff[128];
-    swprintf(buff, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
+    wchar_t wcbuf[1024];
+    swprintf(wcbuf, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
 
-    this->_location->log(level, buff, detail);
+    this->_location->log(level, wcbuf, detail);
   }
 }
 
@@ -1627,10 +1627,10 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   this->_type |= PKG_TYPE_BCK;
 
   // making report
-  wchar_t buff[64];
-  swprintf(buff, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  this->log(2, wstring(L"Package(")+this->_ident+L")", buff);
+  this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
   return true;
 }
@@ -1747,10 +1747,10 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
   }
 
   // making report
-  wchar_t buff[64];
-  swprintf(buff, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  this->log(2, wstring(L"Package(")+this->_ident+L")", buff);
+  this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
   return true;
 }
@@ -1932,10 +1932,10 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
   this->backupClear();
 
   // making report
-  wchar_t buff[64];
-  swprintf(buff, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, wstring(L"Package(")+this->_ident+L")", buff);
+  log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
   return true;
 }
@@ -2081,8 +2081,8 @@ void OmPackage::_undoInstall(HWND hPb)
   this->backupClear();
 
   // making report
-  wchar_t buff[64];
-  swprintf(buff, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, wstring(L"Package(")+this->_ident+L")", buff);
+  log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 }

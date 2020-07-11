@@ -61,10 +61,10 @@ bool OmUiPropBat::checkChanges()
 
   bool changed = false;
 
-  wchar_t wcbuf[MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Context title
-    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
     if(batch->title() != wcbuf) {
       changed = true;
     } else {
@@ -89,11 +89,11 @@ bool OmUiPropBat::applyChanges()
   OmBatch* batch = reinterpret_cast<OmBatch*>(this->_batch);
   OmUiPropBatStg* uiPropBatStg  = reinterpret_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
-  wchar_t title[MAX_PATH];
+  wchar_t title[OMM_MAX_PATH];
 
   // Step 1, verify everything
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, title, MAX_PATH);
+    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, title, OMM_MAX_PATH);
     if(!wcslen(title)) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Batch title",
                                    L"Please enter a valid title.");

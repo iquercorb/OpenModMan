@@ -79,10 +79,10 @@ bool OmUiPropCtx::checkChanges()
 
   bool changed = false;
 
-  wchar_t wcbuf[MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, wcbuf, MAX_PATH);
+    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
     if(context->title() != wcbuf) {
       changed = true;
     } else {
@@ -121,12 +121,12 @@ bool OmUiPropCtx::applyChanges()
   OmUiPropCtxLoc* uiPropCtxLoc  = reinterpret_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
   OmUiPropCtxBat* uiPropCtxBat  = reinterpret_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
-  wchar_t inpt3[MAX_PATH];
-  wchar_t inpt4[MAX_PATH];
+  wchar_t inpt3[OMM_MAX_PATH];
+  wchar_t inpt4[OMM_MAX_PATH];
 
   // Step 1, verify everything
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, inpt3, MAX_PATH);
+    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
     if(!wcslen(inpt3)) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Context title",
                                    L"Please enter a title.");
@@ -143,7 +143,7 @@ bool OmUiPropCtx::applyChanges()
   }
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT4, inpt4, MAX_PATH);
+    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
     if(wcslen(inpt4)) {
       if(Om_isFile(inpt4)) {
         context->setIcon(inpt4);

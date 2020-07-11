@@ -415,7 +415,7 @@ void OmUiMain::_reloadMenu()
 
   // add the recent file path or disable popup
   if(path.size()) {
-    wchar_t wcbuf[MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
     for(unsigned i = 0; i < path.size(); ++i) {
       swprintf(wcbuf, L"&%d %ls", path.size() - i, path[i].c_str());
       InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, wcbuf);
@@ -614,7 +614,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->openContext(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
     }
 
-    wchar_t wcbuf[MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {

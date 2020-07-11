@@ -129,7 +129,6 @@
 			<Add library="Gdiplus" />
 			<Add library="Ole32" />
 			<Add library="UxTheme" />
-			<Add library="libcurl.a" />
 			<Add directory="lib/curl" />
 		</Linker>
 		<Unit filename="include/OmBatch.h" />

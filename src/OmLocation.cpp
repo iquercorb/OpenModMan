@@ -442,9 +442,9 @@ bool OmLocation::libraryAccess(HWND hWnd)
   if(!access_ok) {
     this->log(0, L"Location("+this->_title+L")", this->_error);
     Om_dialogBoxWarn(hWnd, L"Library folder access error",
-                  L"The configured Library folder cannot be accessed, the "
-                  L"folder does not exists or have read permission "
-                  L"restriction. Please verify the Location's Library "
+                  L"The configured Library folder cannot be accessed, "
+                  L"the folder does not exists or have read permission "
+                  L"restriction.\n\nPlease verify the Location's Library "
                   L"folder settings and the folder permissions.");
     return false;
   }
@@ -493,11 +493,11 @@ bool OmLocation::backupAccess(HWND hWnd)
 
   if(!access_ok) {
     this->log(0, L"Location("+this->_title+L")", this->_error);
-    Om_dialogBoxWarn(hWnd, L"Backup location access error",
-                  L"The configured backup location cannot be accessed, the "
-                  L"folder does not exists or have write permission "
-                  L"restriction. Please verify the Location's Backup "
-                  L"location settings and the folder permissions.");
+    Om_dialogBoxWarn(hWnd, L"Backup folder access error",
+                  L"The configured Backup folder cannot be accessed, "
+                  L"the folder does not exists or have write permission "
+                  L"restriction.\n\nPlease verify the Location's Backup "
+                  L"folder settings and the folder permissions.");
     return false;
   }
 
@@ -537,7 +537,7 @@ bool OmLocation::installAccess(HWND hWnd)
     Om_dialogBoxWarn(hWnd, L"Destination folder access error",
                   L"The configured Destination folder cannot be accessed, "
                   L"the folder does not exists or have write permission "
-                  L"restriction. Please verify the Location's Destination "
+                  L"restriction.\n\nPlease verify the Location's Destination "
                   L"settings and the folder permissions.");
     return false;
   }
@@ -987,7 +987,7 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
     }
 
     // update dialog message
-    wchar_t desc[250];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     if(hSc)
       SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Analyzing backup folder...");
@@ -1017,8 +1017,8 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
 
       // update dialog message
       if(hSc) {
-        swprintf(desc, 250, L"Transfer backup %d/%d: %ls", i+1, ls.size(), ls[i].c_str());
-        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)desc);
+        swprintf(wcbuf, OMM_MAX_PATH, L"Transfer backup %d/%d: %ls", i+1, ls.size(), ls[i].c_str());
+        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
       }
 
       src = this->_backupDir + L"\\" + ls[i];
@@ -1085,7 +1085,7 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   }
 
   // update dialog message
-  wchar_t desc[250];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   if(hSc)
     SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Analyzing packageList...");
@@ -1160,8 +1160,8 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
 
     // update dialog message
     if(hSc) {
-      swprintf(desc, 250, L"Restoring backup %d/%d: %ls", i+1, uninst_list.size(), uninst_list[i]->name().c_str());
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)desc);
+      swprintf(wcbuf, OMM_MAX_PATH, L"Restoring backup %d/%d: %ls", i+1, uninst_list.size(), uninst_list[i]->name().c_str());
+      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
     }
 
     // check whether abort is requested
@@ -1797,8 +1797,8 @@ unsigned OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPa
 ///
 void OmLocation::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  wchar_t buff[128];
-  swprintf(buff, L"Context(%ls):: %ls", this->_context->title().c_str(), head.c_str());
+  wchar_t wcbuf[1024];
+  swprintf(wcbuf, L"Context(%ls):: %ls", this->_context->title().c_str(), head.c_str());
 
-  this->_context->log(level, buff, detail);
+  this->_context->log(level, wcbuf, detail);
 }

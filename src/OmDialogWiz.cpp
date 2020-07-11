@@ -65,6 +65,8 @@ void OmDialogWiz::_addPage(OmDialog* dialog)
 ///
 void OmDialogWiz::_onShow()
 {
+  this->_currPage = 0;
+
   if(this->_pageDial.size() && this->_hwnd) {
 
     for(unsigned i = 0; i < this->_pageDial.size(); ++i) {

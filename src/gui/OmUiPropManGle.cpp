@@ -171,7 +171,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_COMMAND) {
 
     int lb_sel;
-    wchar_t wcbuf[MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {
@@ -203,7 +203,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BROW1: //< Brows Button for startup Context
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
       if(Om_dialogOpenFile(wcbuf, this->_hwnd, L"Select file.", OMM_CTX_DEF_FILE_FILER, wcbuf)) {
         SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_STRLS), LB_ADDSTRING, 0, (LPARAM)wcbuf);
       }

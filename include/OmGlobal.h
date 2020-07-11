@@ -42,9 +42,14 @@
 
 #define OMM_APP_MAJ               0
 #define OMM_APP_MIN               9
-#define OMM_APP_REV               0
+#define OMM_APP_REV               1
+#ifdef _WIN64
+  #define OMM_APP_ARCH            L"x64"
+#else
+  #define OMM_APP_ARCH            L"x86"
+#endif
 #define OMM_APP_DATE              L"July 2020"
-#define OMM_APP_AUTHOR            L"Eric M."
+#define OMM_APP_AUTHOR            L"Eric M. \"Sedenion\""
 #define OMM_APP_CONTRIB           L""
 
 #define OMM_CFG_SIGN_APP          L"Open_Mod_Manager_Main"
@@ -70,6 +75,8 @@
 #define OMM_BAT_FILE_EXT          L"omb"
 
 #define OMM_PKG_THMB_SIZE         128
+
+#define OMM_MAX_PATH              1024
 
 // This enables a "Slow Mode" for debug purposes
 //#define DEBUG_SLOW          300         //< Sleep time (milliseconds)
@@ -132,9 +139,9 @@ uint64_t Om_getCRC64(const wstring& str);
 /// \return Hexadecimal string representation of 64 bits integer
 ///
 inline wstring Om_toHexString(uint64_t num) {
-  wchar_t buf[17];
-  swprintf(buf, 17, L"%llx", num);
-  return wstring(buf);
+  wchar_t wcbuf[32];
+  swprintf(wcbuf, 32, L"%llx", num);
+  return wstring(wcbuf);
 }
 
 /// \brief Get string representation of a 64 bits integer.
@@ -146,9 +153,9 @@ inline wstring Om_toHexString(uint64_t num) {
 /// \param[in]  num     : 64 bits unsigned integer.
 ///
 inline void Om_toHexString(wstring& str, uint64_t num) {
-  wchar_t buf[17];
-  swprintf(buf, 17, L"%llx", num);
-  str = buf;
+  wchar_t wcbuf[32];
+  swprintf(wcbuf, 32, L"%llx", num);
+  str = wcbuf;
 }
 
 /// \brief Get 64 bits integer from string.
@@ -598,12 +605,12 @@ inline int Om_dirDelete(const wstring& path) {
 ///
 inline int Om_dirDeleteRecursive(const wstring& path)
 {
-  wchar_t buff[262];
-  wcscpy(buff, path.c_str());
-  buff[path.size()+1] = 0; // the buffer must end with double null character
+  wchar_t wcbuf[512];
+  wcscpy(wcbuf, path.c_str());
+  wcbuf[path.size()+1] = 0; // the buffer must end with double null character
 
   SHFILEOPSTRUCTW fop = {};
-  fop.pFrom = buff;
+  fop.pFrom = wcbuf;
   fop.wFunc = FO_DELETE;
   fop.fFlags = FOF_NO_UI;
 
