@@ -2,7 +2,7 @@
 Open Mod Mananager
 ----------------------------------------------------------------------------------------
 
-Open source and generic Mod ("Modifications") manager. 
+Open source and generic Mod ("Modifications") manager.
 
 
 Version: 0.9.0 (beta)
@@ -15,12 +15,12 @@ The purpose of Open Mod Manager is to provide an easy and safety way to organize
 install, uninstall and create generic packages of third-party tweaks or add-ons (also
 called "mod") to be applied to any software (usually games).
 
-It provide an advanced "mod" management using "packages" paradigm with support for 
-dependencies and advanced automatic backup logics to prevent software's original files 
+It provide an advanced "mod" management using "packages" paradigm with support for
+dependencies and advanced automatic backup logics to prevent software's original files
 corruption.
 
-Accent is made to flexibility and modularity by providing an open configuration logics 
-based on human-readable XML files and simple folders architecture witch can be easily 
+Accent is made to flexibility and modularity by providing an open configuration logics
+based on human-readable XML files and simple folders architecture witch can be easily
 saved, deleted or altered.
 
 
@@ -37,7 +37,18 @@ Open Mod Mananager currently implements the following key features:
 - Backup data compressed as zip archives to save space (optional).
 - Batch mechanism for automatic Package installation sequences.
 
-
 Screenshots
 ----------------------------------------------------------------------------------------
 ![Open Mod Mananager Screenshot](snaps/screenshot.png)
+
+Version history
+----------------------------------------------------------------------------------------
+
+0.9.0 (07/11/2020)
+ - Fixed random string bug and crash caused by buffer overflow.
+ - Fixed Context creation wizard not properly reseted after cancel by user.
+ - Fixed missing application informations and icons within Windows Application list.
+ - Algorithm to check file and folder access permissions slightly modified.
+
+0.9.0 (07/08/2020)
+ - First public BETA release

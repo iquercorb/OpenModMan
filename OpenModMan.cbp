@@ -131,6 +131,7 @@
 			<Add library="UxTheme" />
 			<Add directory="lib/curl" />
 		</Linker>
+		<Unit filename="README.md" />
 		<Unit filename="include/OmBatch.h" />
 		<Unit filename="include/OmConfig.h" />
 		<Unit filename="include/OmContext.h" />
@@ -190,6 +191,9 @@
 		<Unit filename="include/thirdparty/xxhash/xxh3.h" />
 		<Unit filename="include/thirdparty/xxhash/xxhash.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="setup/header.nsh" />
+		<Unit filename="setup/setup-x64.nsi" />
+		<Unit filename="setup/setup-x86.nsi" />
 		<Unit filename="src/OmBatch.cpp" />
 		<Unit filename="src/OmConfig.cpp" />
 		<Unit filename="src/OmContext.cpp" />
@@ -238,9 +242,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>
