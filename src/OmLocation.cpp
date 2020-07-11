@@ -1797,8 +1797,8 @@ unsigned OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPa
 ///
 void OmLocation::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  wchar_t wcbuf[1024];
-  swprintf(wcbuf, L"Context(%ls):: %ls", this->_context->title().c_str(), head.c_str());
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, OMM_MAX_PATH, L"Context(%ls):: %ls", this->_context->title().c_str(), head.c_str());
 
   this->_context->log(level, wcbuf, detail);
 }

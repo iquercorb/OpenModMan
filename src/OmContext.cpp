@@ -796,8 +796,8 @@ void OmContext::sortBatches()
 ///
 void OmContext::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  wchar_t wcbuf[1024];
-  swprintf(wcbuf, L"Manager:: %ls", head.c_str());
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, OMM_MAX_PATH, L"Manager:: %ls", head.c_str());
 
   this->_manager->log(level, wcbuf, detail);
 }

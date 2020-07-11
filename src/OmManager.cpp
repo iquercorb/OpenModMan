@@ -696,7 +696,7 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
   wchar_t hour[32];
   wstring entry;
 
-  swprintf(hour, L"[%02d:%02d:%02d]", ltime->tm_hour, ltime->tm_min, ltime->tm_sec);
+  swprintf(hour, 32, L"[%02d:%02d:%02d]", ltime->tm_hour, ltime->tm_min, ltime->tm_sec);
   entry = hour;
 
   switch(level)

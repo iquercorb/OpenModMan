@@ -1319,8 +1319,8 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 {
   if(this->_location != nullptr) {
 
-    wchar_t wcbuf[1024];
-    swprintf(wcbuf, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
+    wchar_t wcbuf[OMM_MAX_PATH];
+    swprintf(wcbuf, OMM_MAX_PATH, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
 
     this->_location->log(level, wcbuf, detail);
   }
@@ -1628,7 +1628,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
 
   // making report
   wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  swprintf(wcbuf, OMM_MAX_PATH, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
   this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
@@ -1748,7 +1748,7 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
 
   // making report
   wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  swprintf(wcbuf, OMM_MAX_PATH, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
   this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
@@ -1933,7 +1933,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
 
   // making report
   wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  swprintf(wcbuf, OMM_MAX_PATH, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
   log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 
@@ -2082,7 +2082,7 @@ void OmPackage::_undoInstall(HWND hPb)
 
   // making report
   wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  swprintf(wcbuf, OMM_MAX_PATH, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
   log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
 }

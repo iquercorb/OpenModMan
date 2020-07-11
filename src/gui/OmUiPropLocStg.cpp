@@ -184,9 +184,9 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), chk01);
 
       if(chk01 && location->hasCustLibraryDir()) {
-        swprintf(wcbuf, L"%ls", location->libraryDir().c_str());
+        swprintf(wcbuf, OMM_MAX_PATH, L"%ls", location->libraryDir().c_str());
       } else {
-        swprintf(wcbuf, L"%ls\\library", location->home().c_str());
+        swprintf(wcbuf, OMM_MAX_PATH, L"%ls\\library", location->home().c_str());
       }
       SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
       break;
@@ -198,9 +198,9 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), chk01);
 
       if(chk01 && location->hasCustBackupDir()) {
-        swprintf(wcbuf, L"%ls", location->backupDir().c_str());
+        swprintf(wcbuf, OMM_MAX_PATH, L"%ls", location->backupDir().c_str());
       } else {
-        swprintf(wcbuf, L"%ls\\backup", location->home().c_str());
+        swprintf(wcbuf, OMM_MAX_PATH, L"%ls\\backup", location->home().c_str());
       }
       SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
       break;

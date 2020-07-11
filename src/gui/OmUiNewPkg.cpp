@@ -448,7 +448,7 @@ bool OmUiNewPkg::_apply()
 
   // create the file initial name based on source folder name
   if(rad01) {
-    swprintf(pkg_dst, L"%ls.zip", Om_getFilePart(pkg_src).c_str());
+    swprintf(pkg_dst, OMM_MAX_PATH, L"%ls.zip", Om_getFilePart(pkg_src).c_str());
   } else {
     wcscpy(pkg_dst, Om_getFilePart(pkg_src).c_str());
   }

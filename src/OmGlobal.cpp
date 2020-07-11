@@ -978,7 +978,7 @@ int Om_moveToTrash(const wstring& path)
 ///
 inline static bool __checkAccess(const wstring& path, DWORD reqMask)
 {
-  std::wcout << L"__checkAccess start for \"" << path <<"\" \n";
+  std::wcout << L"__checkAccess: start for \"" << path <<"\" \n";
   // Thanks to this article for giving some clues :
   // http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
 
@@ -1004,9 +1004,8 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
   sd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize+1]);
   // second call to get SECURITY_DESCRIPTOR data
   if(!GetFileSecurityW(path.c_str(), sdMask, sd, sdSize, &sdSize)) {
+    std::wcout << L"__checkAccess: GetFileSecurityW failed with code : " << GetLastError() << L"\n";
     delete sd;
-    DWORD err = GetLastError();
-    std::wcout << L"GetFileSecurityW failed with code : " << err << L"\n";
     return false;
   }
 
@@ -1016,9 +1015,8 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
                 | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
+    std::wcout << L"__checkAccess: OpenProcessToken failed with code : " << GetLastError() << L"\n";
     delete sd;
-    DWORD err = GetLastError();
-    std::wcout << L"OpenProcessToken failed with code : " << err << L"\n";
     return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
@@ -1026,9 +1024,9 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
   // impersonate it...
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
-    CloseHandle(hTokenProc); delete sd;
-    DWORD err = GetLastError();
-    std::wcout << L"DuplicateToken failed with code : " << err << L"\n";
+    std::wcout << L"__checkAccess: DuplicateToken failed with code : " << GetLastError() << L"\n";
+    CloseHandle(hTokenProc);
+    delete sd;
     return false;
   }
 
@@ -1041,15 +1039,14 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
   DWORD allowed = 0;      //< mask of allowed access
   BOOL  status = false;   //< access status according supplied GENERIC_MAPPING
   if(!AccessCheck(sd, hTokenUser, reqMask, &gm, &ps, &psSize, &allowed, &status)) {
-    DWORD err = GetLastError();
-    std::wcout << L"AccessCheck failed with code : " << err << L"\n";
+    std::wcout << L"__checkAccess: AccessCheck failed with code : " << GetLastError() << L"\n";
   }
 
   CloseHandle(hTokenProc);
   CloseHandle(hTokenUser);
   delete sd;
 
-  std::wcout << L"__checkAccess for \"" << path << L" returned " << (int)status << L"\n";
+  std::wcout << L"__checkAccess: \"" << path << L"\" returned " << (int)status << L"\n";
 
   return status;
 }

@@ -310,8 +310,8 @@ void OmBatch::log(unsigned level, const wstring& head, const wstring& detail)
 {
   if(this->_context != nullptr) {
 
-    wchar_t wcbuf[1024];
-    swprintf(wcbuf, L"Location(%ls):: %ls", this->_context->title().c_str(), head.c_str());
+    wchar_t wcbuf[OMM_MAX_PATH];
+    swprintf(wcbuf, OMM_MAX_PATH, L"Location(%ls):: %ls", this->_context->title().c_str(), head.c_str());
 
     this->_context->log(level, wcbuf, detail);
   }

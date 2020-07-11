@@ -417,7 +417,7 @@ void OmUiMain::_reloadMenu()
   if(path.size()) {
     wchar_t wcbuf[OMM_MAX_PATH];
     for(unsigned i = 0; i < path.size(); ++i) {
-      swprintf(wcbuf, L"&%d %ls", path.size() - i, path[i].c_str());
+      swprintf(wcbuf, OMM_MAX_PATH, L"&%d %ls", path.size() - i, path[i].c_str());
       InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, wcbuf);
     }
     // enable the "File > Recent Files" popup
