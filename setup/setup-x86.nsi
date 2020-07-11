@@ -8,40 +8,23 @@
 ;--------------------------------
 
 !include MUI2.nsh
+!include OpenModMan.nsh
 
-!define PRODUCT_NAME "Open Mod Manager"
-!define PRODUCT_VERSION "0.9.0"
-
-; MUI Settings
-!define MUI_ABORTWARNING
-!define MUI_ICON "..\include\gui\res\bitmap\inst_icon.ico"
-!define MUI_UNICON "..\include\gui\res\bitmap\unin_icon.ico"
+!define  AAP_ARCH         "x86"
 
 
-; The name of the installer
-Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-
-; The file to write
-OutFile "OpenModMan_0-9-0-x86_setup.exe"
-
-; Request application privileges for Windows Vista
-RequestExecutionLevel admin
-
-; Build Unicode installer
-Unicode True
-
-; The default installation directory
-InstallDir "$PROGRAMFILES\Open Mod Manager"
+InstallDir                "$PROGRAMFILES\${APP_NAME}"
+Name                      "${APP_NAME} ${AAP_MAJ}.${AAP_MIN}.${AAP_REV}"
+OutFile                   "${APP_SHORT_NAME}_${AAP_MAJ}-${AAP_MIN}-${AAP_REV}-${AAP_ARCH}_setup.exe"
+RequestExecutionLevel     admin
+LicenseData               "..\LICENSE.TXT"
 
 ; Registry key to check for directory (so if you install again, it will 
 ; overwrite the old one automatically)
-InstallDirRegKey HKLM "Software\Open_Mod_Manager" "Install_Dir"
+InstallDirRegKey HKLM "Software\${APP_REG_NAME}" "Install_Dir"
 
 ; Sets the text that is shown at the bottom of the install window
 BrandingText " "
-
-;LicenseText "..\LICENSE.TXT"
-LicenseData "..\LICENSE.TXT"
 
 ; Sets the background color of the license data.
 LicenseBkColor /windows
@@ -52,17 +35,12 @@ XPStyle on
 ShowInstDetails show
 ShowUnInstDetails show
 
-!define MUI_FINISHPAGE_RUN "$INSTDIR\OpenModMan.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Start Open Mod Manager"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE_NAME}.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
 
 ;--------------------------------
 
 ; Pages
-;Page license setBrandingImage
-;Page components
-;Page directory
-;Page instfiles
-
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE.TXT"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
@@ -78,7 +56,7 @@ ShowUnInstDetails show
 ;--------------------------------
 
 ; The stuff to install
-Section "OpenModMan (required)"
+Section "Install (required)"
 
   SectionIn RO
 
@@ -86,16 +64,19 @@ Section "OpenModMan (required)"
   SetOutPath $INSTDIR
 
   ; Put file there
-  File "..\bin\32-bit\Release\OpenModMan.exe"
+  File "/oname=${APP_EXE_NAME}.exe" "${REL_32_EXE}"
   
   ; Write the installation path into the registry
-  WriteRegStr HKLM SOFTWARE\Open_Mod_Manager "Install_Dir" "$INSTDIR"
+  WriteRegStr HKLM SOFTWARE\${APP_REG_NAME} "Install_Dir" "$INSTDIR"
   
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open_Mod_Manager" "DisplayName" "NSIS Example2"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open_Mod_Manager" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open_Mod_Manager" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open_Mod_Manager" "NoRepair" 1
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "DisplayName" "${APP_NAME}"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "DisplayIcon" "$INSTDIR\${APP_EXE_NAME}.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "DisplayVersion" "${AAP_MAJ}.${AAP_MIN}.${AAP_REV} (${AAP_ARCH})"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "Publisher"  '"Eric M. "Sedenion"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "NoRepair" 1
   WriteUninstaller "$INSTDIR\uninstall.exe"
   
 SectionEnd
@@ -103,9 +84,9 @@ SectionEnd
 ; Optional section (can be disabled by the user)
 Section "Start Menu Shortcuts"
 
-  CreateDirectory "$SMPROGRAMS\Open Mod Manager"
-  CreateShortcut "$SMPROGRAMS\Open Mod Manager\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortcut "$SMPROGRAMS\Open Mod Manager\Open Mod Manager.lnk" "$INSTDIR\OpenModMan.exe" "" "$INSTDIR\OpenModMan.exe" 0
+  CreateDirectory "$SMPROGRAMS\${APP_NAME}"
+  CreateShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE_NAME}.exe" "" "$INSTDIR\${APP_EXE_NAME}.exe" 0
   
 SectionEnd
 
@@ -116,17 +97,17 @@ SectionEnd
 Section "Uninstall"
   
   ; Remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open_Mod_Manager"
-  DeleteRegKey HKLM SOFTWARE\OpenModManager
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}"
+  DeleteRegKey HKLM SOFTWARE\${APP_REG_NAME}
 
   ; Remove files and uninstaller
   Delete $INSTDIR\*.*
 
   ; Remove shortcuts, if any
-  Delete "$SMPROGRAMS\Open Mod Manager\*.*"
+  Delete "$SMPROGRAMS\${APP_NAME}\*.*"
 
   ; Remove directories used
-  RMDir "$SMPROGRAMS\Open Mod Manager"
+  RMDir "$SMPROGRAMS\${APP_NAME}"
   RMDir "$INSTDIR"
 
 SectionEnd
