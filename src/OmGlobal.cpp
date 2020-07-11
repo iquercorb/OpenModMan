@@ -314,7 +314,7 @@ string Om_toMbString(const wstring& wcs)
 ///
 void Om_toMbString(string& mbs, const wstring& wcs)
 {
-  char buff[MBS_SIZE];
+  char cbuf[MBS_SIZE];
 
   size_t s = wcs.size();
   if(s > 0) {
@@ -323,13 +323,13 @@ void Om_toMbString(string& mbs, const wstring& wcs)
       mbs.clear();
       size_t r, p = 0;
       while(p < s-1) {
-        r = wcstombs(buff, &cstr[p], 1024); buff[r] = 0; p += r;
-        mbs.append(buff);
+        r = wcstombs(cbuf, &cstr[p], 1024); cbuf[r] = 0; p += r;
+        mbs.append(cbuf);
       }
       return;
     } else {
-      wcstombs(buff, wcs.c_str(), 1024);
-      mbs.assign(buff);
+      wcstombs(cbuf, wcs.c_str(), 1024);
+      mbs.assign(cbuf);
       return;
     }
   }
@@ -342,7 +342,7 @@ void Om_toMbString(string& mbs, const wstring& wcs)
 ///
 wstring Om_toWcString(const string& mbs)
 {
-  wchar_t buff[WCS_SIZE];
+  wchar_t wcbuf[WCS_SIZE];
 
   wstring result;
 
@@ -352,13 +352,13 @@ wstring Om_toWcString(const string& mbs)
       const char* cstr = mbs.c_str();
       size_t r, p = 0;
       while(p < s-1) {
-        r = mbstowcs(buff, &cstr[p], 1024); buff[r] = 0; p += r;
-        result.append(buff);
+        r = mbstowcs(wcbuf, &cstr[p], 1024); wcbuf[r] = 0; p += r;
+        result.append(wcbuf);
       }
       return result;
     } else {
-      mbstowcs(buff, mbs.c_str(), 1024);
-      result.assign(buff);
+      mbstowcs(wcbuf, mbs.c_str(), 1024);
+      result.assign(wcbuf);
       return result;
     }
   }
@@ -372,7 +372,7 @@ wstring Om_toWcString(const string& mbs)
 ///
 void Om_toWcString(wstring& wcs, const string& mbs)
 {
-  wchar_t buff[WCS_SIZE];
+  wchar_t wcbuf[WCS_SIZE];
 
   size_t s = mbs.size();
   if(s > 0) {
@@ -381,13 +381,13 @@ void Om_toWcString(wstring& wcs, const string& mbs)
       wcs.clear();
       size_t r, p = 0;
       while(p < s-1) {
-        r = mbstowcs(buff, &cstr[p], 1024); buff[r] = 0; p += r;
-        wcs.append(buff);
+        r = mbstowcs(wcbuf, &cstr[p], 1024); wcbuf[r] = 0; p += r;
+        wcs.append(wcbuf);
       }
       return;
     } else {
-      mbstowcs(buff, mbs.c_str(), 1024);
-      wcs.assign(buff);
+      mbstowcs(wcbuf, mbs.c_str(), 1024);
+      wcs.assign(wcbuf);
       return;
     }
   }
@@ -527,7 +527,7 @@ bool Om_isValidName(const wstring& name)
 ///
 wstring Om_sizeString(size_t bytes, bool octet)
 {
-  wchar_t buff[256];
+  wchar_t wcbuf[256];
   wchar_t unit = (octet) ? 'o' : 'B';
 
   double fbytes;
@@ -535,31 +535,31 @@ wstring Om_sizeString(size_t bytes, bool octet)
 
   if(bytes < 1024) { // 1 Ko
     if(octet) {
-      swprintf(buff, 256, L"%d Octet(s)", bytes);
+      swprintf(wcbuf, 256, L"%d Octet(s)", bytes);
     } else {
-      swprintf(buff, 256, L"%d Byte(s)", bytes);
+      swprintf(wcbuf, 256, L"%d Byte(s)", bytes);
     }
-    result = buff;
+    result = wcbuf;
     return result;
   }
 
   if(bytes < 1048576) { // 1 Mo
     fbytes = (double)bytes / 1024.0;
-    swprintf(buff, 256, L"%.1f Ki%lc", fbytes, unit);
-    result = buff;
+    swprintf(wcbuf, 256, L"%.1f Ki%lc", fbytes, unit);
+    result = wcbuf;
     return result;
   }
 
   if(bytes < 1073741824) { // 1 Go
     fbytes = (double)bytes / 1048576.0;
-    swprintf(buff, 256, L"%.1f Mi%lc", fbytes, unit);
-    result = buff;
+    swprintf(wcbuf, 256, L"%.1f Mi%lc", fbytes, unit);
+    result = wcbuf;
     return result;
   }
 
   fbytes = (double)bytes / 1073741824.0;
-  swprintf(buff, 256, L"%.1f Gi%lc", fbytes, unit);
-  result = buff;
+  swprintf(wcbuf, 256, L"%.1f Gi%lc", fbytes, unit);
+  result = wcbuf;
   return result;
 }
 
@@ -947,12 +947,12 @@ time_t Om_itemTime(const wstring& path)
 ///
 int Om_moveToTrash(const wstring& path)
 {
-  wchar_t buf[261];
-  wcscpy(buf, path.c_str());
-  buf[path.size()+1] = 0;
+  wchar_t wcbuf[512];
+  wcscpy(wcbuf, path.c_str());
+  wcbuf[path.size()+1] = 0;
 
   SHFILEOPSTRUCTW fop = {};
-  fop.pFrom = buf;
+  fop.pFrom = wcbuf;
   fop.wFunc = FO_DELETE;
   fop.fFlags = FOF_NO_UI|FOF_ALLOWUNDO;
 
@@ -978,6 +978,7 @@ int Om_moveToTrash(const wstring& path)
 ///
 inline static bool __checkAccess(const wstring& path, DWORD reqMask)
 {
+  std::wcout << L"__checkAccess start for \"" << path <<"\" \n";
   // Thanks to this article for giving some clues :
   // http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
 
@@ -1000,38 +1001,55 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
   // first call to get required SECURITY_DESCRIPTOR size
   GetFileSecurityW(path.c_str(), sdMask, nullptr, 0, &sdSize);
   // allocate new SECURITY_DESCRIPTOR of the proper size
-  sd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize]);
+  sd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize+1]);
   // second call to get SECURITY_DESCRIPTOR data
   if(!GetFileSecurityW(path.c_str(), sdMask, sd, sdSize, &sdSize)) {
-    delete sd; return false;
+    delete sd;
+    DWORD err = GetLastError();
+    std::wcout << L"GetFileSecurityW failed with code : " << err << L"\n";
+    return false;
   }
 
   // STEP 3 - creates a "security token" of the current application process
   //to be checked against the file or folder "security descriptor"
+  DWORD daMask =  TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE
+                | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
-  if(!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &hTokenProc)) {
-    delete sd; return false;
+  if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
+    delete sd;
+    DWORD err = GetLastError();
+    std::wcout << L"OpenProcessToken failed with code : " << err << L"\n";
+    return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
   // so we need to duplicate it to transform it into a standard "user" token by
   // impersonate it...
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
-    CloseHandle(hTokenProc); delete sd; return false;
+    CloseHandle(hTokenProc); delete sd;
+    DWORD err = GetLastError();
+    std::wcout << L"DuplicateToken failed with code : " << err << L"\n";
+    return false;
   }
 
   // STEP 4 - Finally check if "security token" have the requested
   // "generic mapping" access to the "security descriptor" of the specified file
   // or folder
-  PRIVILEGE_SET ps = {};
+  PRIVILEGE_SET ps;
+  memset(&ps, 0, sizeof(PRIVILEGE_SET)); // to be SURE well zeroing
   DWORD psSize = sizeof(PRIVILEGE_SET);
   DWORD allowed = 0;      //< mask of allowed access
   BOOL  status = false;   //< access status according supplied GENERIC_MAPPING
-  AccessCheck(sd, hTokenUser, reqMask, &gm, &ps, &psSize, &allowed, &status);
+  if(!AccessCheck(sd, hTokenUser, reqMask, &gm, &ps, &psSize, &allowed, &status)) {
+    DWORD err = GetLastError();
+    std::wcout << L"AccessCheck failed with code : " << err << L"\n";
+  }
 
   CloseHandle(hTokenProc);
   CloseHandle(hTokenUser);
   delete sd;
+
+  std::wcout << L"__checkAccess for \"" << path << L" returned " << (int)status << L"\n";
 
   return status;
 }
@@ -1185,7 +1203,7 @@ bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
 
   ofn.lpstrFile = result;
   ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = MAX_PATH;
+  ofn.nMaxFile = OMM_MAX_PATH;
 
   ofn.lpstrInitialDir = start;
 
@@ -1208,7 +1226,7 @@ bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
   ofn.lpstrFilter = filter;
 
   ofn.lpstrFile = result;
-  ofn.nMaxFile = MAX_PATH;
+  ofn.nMaxFile = OMM_MAX_PATH;
 
   ofn.lpstrInitialDir = start;
 
@@ -1587,10 +1605,10 @@ void* Om_loadShellBitmap(unsigned id, bool large)
 ///
 wstring Om_getErrorStr(int code) {
 
-  wchar_t buf[32];
-  swprintf(buf, 32, L"%x", code);
+  wchar_t wcbuf[256];
+  swprintf(wcbuf, 256, L"%x", code);
 
-  wstring ret = L"(0x"; ret += buf; ret += L") ";
+  wstring ret = L"(0x"; ret += wcbuf; ret += L") ";
 
   switch(code)
   {
