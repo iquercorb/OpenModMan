@@ -404,13 +404,13 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_UP:
       this->_locationUp();
       // user modified parameter, notify it
-      this->setChParam(CTX_PROP_LOC_, true);
+      this->setChParam(CTX_PROP_LOC_ORDER, true);
       break;
 
     case IDC_BC_DN:
       this->_locationDn();
       // user modified parameter, notify it
-      this->setChParam(CTX_PROP_LOC_, true);
+      this->setChParam(CTX_PROP_LOC_ORDER, true);
       break;
     }
   }

@@ -20,7 +20,7 @@
 
 #include "OmDialog.h"
 
-#define CTX_PROP_LOC_   0
+#define CTX_PROP_LOC_ORDER   0
 
 /// \brief Context Properties Locations Tab
 ///

@@ -176,7 +176,8 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     HICON hIcon;
-    wchar_t icon_src[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
+    wchar_t sldir[OMM_MAX_PATH];
 
     switch(LOWORD(wParam))
     {
@@ -186,12 +187,16 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BROW1: //< Brows Button for Context icon
-      if(Om_dialogOpenFile(icon_src, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, icon_src)) {
-        ExtractIconExW(icon_src, 0, &hIcon, nullptr, 1);
+      // get last valid path to start browsing
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
+      wcscpy(sldir, Om_getDirPart(wcbuf).c_str());
+
+      if(Om_dialogOpenFile(wcbuf, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, sldir)) {
+        ExtractIconExW(wcbuf, 0, &hIcon, nullptr, 1);
         if(hIcon) {
           SendMessage(GetDlgItem(this->_hwnd, IDC_SB_CTICO), STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
           RedrawWindow(GetDlgItem(this->_hwnd, IDC_SB_CTICO), nullptr, nullptr, RDW_INVALIDATE|RDW_ERASE); // force repaint
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, icon_src);
+          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
           DeleteObject(hIcon);
         }
         // user modified parameter, notify it
@@ -201,8 +206,7 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_DEL: //< Remove Button for Context icon
       // load default icon
-      //hIcon = (HICON)LoadImage(this->_hins, MAKEINTRESOURCE(IDC_SB_CTICO), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
-      hIcon = (HICON)Om_loadShellIcon(SIID_APPLICATION,true);
+      hIcon = (HICON)Om_loadShellIcon(SIID_APPLICATION, true);
       SendMessage(GetDlgItem(this->_hwnd, IDC_SB_CTICO), STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
       RedrawWindow(GetDlgItem(this->_hwnd, IDC_SB_CTICO), nullptr, nullptr, RDW_INVALIDATE|RDW_ERASE); // force repaint
       // set invalid path, this will remove link at validation
@@ -210,7 +214,7 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // change browse button text
       SetDlgItemTextW(this->_hwnd, IDC_BC_BROW1, L"Select...");
       // user modified parameter, notify it
-      this->setChParam(CTX_PROP_STG_ICON, (context->icon() != nullptr));
+      this->setChParam(CTX_PROP_STG_ICON, true);
       break;
     }
   }

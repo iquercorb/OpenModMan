@@ -65,43 +65,40 @@ void OmUiNewLoc::_onShow()
   this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
-  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
 
-  if(!wcslen(inpt1)) {
-
-    wchar_t path[OMM_MAX_PATH];
+  if(!wcslen(wcbuf)) {
 
     SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"Main Location");
 
-    swprintf(path, OMM_MAX_PATH, L"Main Location\\library");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, path);
+    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\library");
+    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
 
-    swprintf(path, OMM_MAX_PATH, L"Main Location\\backup");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, path);
+    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\backup");
+    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
 
     return;
   }
 
   bool allow = true;
 
-  wchar_t inpt2[OMM_MAX_PATH];
-  wchar_t inpt3[OMM_MAX_PATH];
-  wchar_t inpt4[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  if(Om_isValidName(wcbuf)) {
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+    if(wcslen(wcbuf)) {
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-  if(Om_isValidName(inpt1)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-    if(wcslen(inpt2)) {
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-        if(!wcslen(inpt3)) allow = false;
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
+        if(!wcslen(wcbuf)) allow = false;
       }
+
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-        if(!wcslen(inpt4)) allow = false;
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
+        if(!wcslen(wcbuf)) allow = false;
       }
+
     } else {
       allow = false;
     }

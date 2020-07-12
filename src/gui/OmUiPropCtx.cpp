@@ -94,7 +94,7 @@ bool OmUiPropCtx::checkChanges()
     changed = true;
   }
 
-  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_)) { // parameter for Location index order
+  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
     changed = true;
   }
 
@@ -134,8 +134,13 @@ bool OmUiPropCtx::applyChanges()
     }
   }
 
+  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
+    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
+  }
+
   // Step 2, save changes
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
+    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
     context->setTitle(inpt3);
 
     // Reset parameter as unmodified
@@ -143,7 +148,6 @@ bool OmUiPropCtx::applyChanges()
   }
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
     if(wcslen(inpt4)) {
       if(Om_isFile(inpt4)) {
         context->setIcon(inpt4);
@@ -158,7 +162,7 @@ bool OmUiPropCtx::applyChanges()
     uiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);
   }
 
-  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_)) { // parameter for Location index order
+  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
 
     // To prevent inconsistency we unselect location in the main dialog
     reinterpret_cast<OmUiMain*>(this->root())->setSafeEdit(true);
@@ -180,7 +184,7 @@ bool OmUiPropCtx::applyChanges()
     reinterpret_cast<OmUiMain*>(this->root())->setSafeEdit(false);
 
     // Reset parameter as unmodified
-    uiPropCtxLoc->setChParam(CTX_PROP_LOC_, false);
+    uiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);
   }
 
   if(uiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
@@ -197,7 +201,7 @@ bool OmUiPropCtx::applyChanges()
     context->sortBatches();
 
     // Reset parameter as unmodified
-    uiPropCtxBat->setChParam(CTX_PROP_LOC_, false);
+    uiPropCtxBat->setChParam(CTX_PROP_LOC_ORDER, false);
   }
 
   // disable Apply button

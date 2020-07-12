@@ -144,8 +144,7 @@ bool OmUiPropLoc::applyChanges()
   wchar_t inpt3[OMM_MAX_PATH];
   wchar_t inpt4[OMM_MAX_PATH];
 
-  bool chk01 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0);
-  bool chk02 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK02), BM_GETCHECK, 0, 0);
+  bool chk01, chk02;
 
   // Step 1, verify everything
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
@@ -176,6 +175,7 @@ bool OmUiPropLoc::applyChanges()
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
+    chk01 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0);
     if(chk01) { //< Custom Library folder Check-Box checked
       if(wcslen(inpt3)) {
         if(!Om_isDir(inpt3)) {
@@ -195,6 +195,7 @@ bool OmUiPropLoc::applyChanges()
 
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
     GetDlgItemTextW(uiPropLocStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
+    chk02 = SendMessage(GetDlgItem(uiPropLocStg->hwnd(), IDC_BC_CHK02), BM_GETCHECK, 0, 0);
     if(chk02) { //< Custom Backup folder Check-Box checked
       if(wcslen(inpt4)) {
         if(!Om_isDir(inpt4)) {

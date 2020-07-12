@@ -200,15 +200,15 @@ bool OmUiNewBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    wchar_t inpt1[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
     int n_sel, lb_max, lb_sel;
     bool chk01;
 
     switch(LOWORD(wParam))
     {
     case IDC_EC_INPT1:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-      EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), wcslen(inpt1));
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+      EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), wcslen(wcbuf));
       break;
 
     case IDC_BC_CHK01:
@@ -342,13 +342,11 @@ bool OmUiNewBat::_apply()
     loc_hash_lsts.push_back(hash_list);
   }
 
-  wchar_t title[OMM_MAX_PATH];
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, title, OMM_MAX_PATH);
-
-  wstring msg;
+  wchar_t wcbuf[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
 
   // try to create a new batch
-  if(!this->_context->makeBatch(title, loc_hash_lsts)) {
+  if(!this->_context->makeBatch(wcbuf, loc_hash_lsts)) {
     Om_dialogBoxErr(this->_hwnd, L"Batch creation failed", this->_context->lastError());
     return false;
   }
@@ -386,15 +384,15 @@ void OmUiNewBat::_upPkg()
     if(lb_sel == 0)
       return;
 
-    wchar_t label[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     // retrieve the package List-Box label
-    SendMessageW(hlsr, LB_GETTEXT, lb_sel - 1, (LPARAM)label);
+    SendMessageW(hlsr, LB_GETTEXT, lb_sel - 1, (LPARAM)wcbuf);
     int index = SendMessageW(hlsr, LB_GETITEMDATA, lb_sel - 1, 0);
 
     SendMessageW(hlsr, LB_DELETESTRING, lb_sel - 1, 0);
 
-    SendMessageW(hlsr, LB_INSERTSTRING, lb_sel, (LPARAM)label);
+    SendMessageW(hlsr, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
     SendMessageW(hlsr, LB_SETITEMDATA, lb_sel, (LPARAM)index);
 
     // swap package index to move up
@@ -441,17 +439,17 @@ void OmUiNewBat::_dnPkg()
     if(lb_sel == lb_max)
       return;
 
-    wchar_t label[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     // retrieve the package List-Box label
-    SendMessageW(hlsr, LB_GETTEXT, lb_sel, (LPARAM)label);
+    SendMessageW(hlsr, LB_GETTEXT, lb_sel, (LPARAM)wcbuf);
     int index = SendMessageW(hlsr, LB_GETITEMDATA, lb_sel, 0);
 
     SendMessageW(hlsr, LB_DELETESTRING, lb_sel, 0);
 
     lb_sel++;
 
-    SendMessageW(hlsr, LB_INSERTSTRING, lb_sel, (LPARAM)label);
+    SendMessageW(hlsr, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
     SendMessageW(hlsr, LB_SETITEMDATA, lb_sel, (LPARAM)index);
     SendMessageW(hlsr, LB_SETSEL , true, (LPARAM)(lb_sel));
 
@@ -495,13 +493,13 @@ void OmUiNewBat::_addPkg()
     SendMessageW(hlsl, LB_GETSELITEMS, n, (LPARAM)lb_sel);
 
     int index, pos;
-    wchar_t label[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < n; ++i) {
 
       // retrieve the package List-Box label
-      SendMessageW(hlsl, LB_GETTEXT, lb_sel[i], (LPARAM)label);
+      SendMessageW(hlsl, LB_GETTEXT, lb_sel[i], (LPARAM)wcbuf);
       // retrieve the package reference index (in Location package list)
       index = SendMessageW(hlsl, LB_GETITEMDATA, lb_sel[i], 0);
 
@@ -518,7 +516,7 @@ void OmUiNewBat::_addPkg()
       // get count of item in List-Box as index to for insertion
       pos = SendMessageW(hlsr, LB_GETCOUNT, 0, 0);
       // add item to the List-Box
-      SendMessageW(hlsr, LB_ADDSTRING, pos, (LPARAM)label);
+      SendMessageW(hlsr, LB_ADDSTRING, pos, (LPARAM)wcbuf);
       SendMessageW(hlsr, LB_SETITEMDATA, pos, (LPARAM)index);
     }
 
@@ -562,12 +560,12 @@ void OmUiNewBat::_remPkg()
     SendMessageW(hlsr, LB_GETSELITEMS, n, (LPARAM)lb_sel);
 
     int index, pos;
-    wchar_t label[OMM_MAX_PATH];
+    wchar_t wcbuf[OMM_MAX_PATH];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < n; ++i) {
       // retrieve the package List-Box label
-      SendMessageW(hlsr, LB_GETTEXT, lb_sel[i], (LPARAM)label);
+      SendMessageW(hlsr, LB_GETTEXT, lb_sel[i], (LPARAM)wcbuf);
       // retrieve the package reference index (in Location package list)
       index = SendMessageW(hlsr, LB_GETITEMDATA, lb_sel[i], 0);
 
@@ -584,7 +582,7 @@ void OmUiNewBat::_remPkg()
       // get count of item in List-Box as index to for insertion
       pos = SendMessageW(hlsl, LB_GETCOUNT, 0, 0);
       // add item to the List-Box
-      SendMessageW(hlsl, LB_ADDSTRING, pos, (LPARAM)label);
+      SendMessageW(hlsl, LB_ADDSTRING, pos, (LPARAM)wcbuf);
       SendMessageW(hlsl, LB_SETITEMDATA, pos, (LPARAM)index);
     }
 

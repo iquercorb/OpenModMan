@@ -53,13 +53,11 @@ long OmUiWizCtxCfg::id() const
 ///
 bool OmUiWizCtxCfg::hasValidParams() const
 {
-  wchar_t inpt1[OMM_MAX_PATH];
-  wchar_t inpt2[OMM_MAX_PATH];
-  wchar_t inpt3[OMM_MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-  if(wcslen(inpt1)) {
-    if(!Om_isValidName(inpt1)) {
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  if(wcslen(wcbuf)) {
+    if(!Om_isValidName(wcbuf)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title",
                                     L"The Context title contain "
                                     L"illegal character(s)");
@@ -70,9 +68,9 @@ bool OmUiWizCtxCfg::hasValidParams() const
                                   L"Please choose a Context title.");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-  if(wcslen(inpt2)) {
-    if(!Om_isDir(inpt2)) {
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+  if(wcslen(wcbuf)) {
+    if(!Om_isDir(wcbuf)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context location folder",
                                     L"Please choose an existing folder "
                                     L"for new Context location");
@@ -84,9 +82,9 @@ bool OmUiWizCtxCfg::hasValidParams() const
                                   L"for new Context location");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-  if(wcslen(inpt3)) {
-    if(!Om_isValidName(inpt3)) {
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
+  if(wcslen(wcbuf)) {
+    if(!Om_isValidName(wcbuf)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition file name",
                                     L"The Context definition file name "
                                     L"contain illegal character(s)");
@@ -116,32 +114,35 @@ void OmUiWizCtxCfg::_onShow()
 
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
-  wchar_t inpt1[OMM_MAX_PATH];
-  wchar_t inpt3[OMM_MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
 
   // set default entry contents
-  if(!wcslen(inpt1)) {
+  if(!wcslen(wcbuf)) {
+
     wstring path;
     manager->getDefaultLocation(path);
     if(path.size()) {
       SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, path.c_str());
     }
     SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>");
+
     reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+
   } else {
+
     // enable or disable the Wizard Next button
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-    if(wcslen(inpt3)) {
-      if(Om_isValidName(inpt3)) {
-        reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
-      } else {
-        reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
-      }
+    bool allow = true;
+
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
+    if(wcslen(wcbuf)) {
+      if(!Om_isValidName(wcbuf))  allow = false;
     } else {
-      reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+      allow = false;
     }
+
+    reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
   }
 }
 
@@ -195,6 +196,8 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   wchar_t inpt2[OMM_MAX_PATH];
   wchar_t inpt3[OMM_MAX_PATH];
 
+  bool allow;
+
   if(uMsg == WM_COMMAND) {
     switch(LOWORD(wParam))
     {
@@ -223,20 +226,18 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break; // case BTN_BROWSE1:
 
     case IDC_EC_INPT3: // resulting Context path
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt3, OMM_MAX_PATH);
+      allow = true;
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
       if(wcslen(inpt3)) {
-        if(Om_isValidName(inpt3)) {
-          reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
-        } else {
-          reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
-        }
+        if(!Om_isValidName(inpt3))
+          allow = false;
       } else {
-        reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+        allow = false;
       }
+      reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
       break;
     }
   }
-
 
   return false;
 }

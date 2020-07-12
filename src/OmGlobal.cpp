@@ -497,6 +497,9 @@ void Om_sortStrings(vector<wstring>* strings)
 ///
 bool Om_isValidName(const wchar_t* name)
 {
+  if(!wcslen(name))
+    return false;
+
   const wchar_t check[] = L"/*?\"<>|";
 
   for(unsigned i = 0; i < 7; ++i)

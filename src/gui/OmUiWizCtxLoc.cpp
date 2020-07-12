@@ -53,14 +53,11 @@ long OmUiWizCtxLoc::id() const
 ///
 bool OmUiWizCtxLoc::hasValidParams() const
 {
-  wchar_t inpt1[OMM_MAX_PATH];
-  wchar_t inpt2[OMM_MAX_PATH];
-  wchar_t inpt4[OMM_MAX_PATH];
-  wchar_t inpt5[OMM_MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-  if(wcslen(inpt1)) {
-    if(!Om_isValidName(inpt1)) {
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  if(wcslen(wcbuf)) {
+    if(!Om_isValidName(wcbuf)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
                                     L"The Location title contain "
                                     L"illegal character(s)");
@@ -71,9 +68,9 @@ bool OmUiWizCtxLoc::hasValidParams() const
                                   L"Please choose a Location title.");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-  if(wcslen(inpt2)) {
-    if(!Om_isDir(inpt2)) {
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+  if(wcslen(wcbuf)) {
+    if(!Om_isDir(wcbuf)) {
         Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
                                       L"Please select an existing folder for "
                                       L"Location Destination.");
@@ -86,9 +83,9 @@ bool OmUiWizCtxLoc::hasValidParams() const
     return false;
   }
   if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-    if(wcslen(inpt4)) {
-      if(!Om_isDir(inpt4)) {
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
+    if(wcslen(wcbuf)) {
+      if(!Om_isDir(wcbuf)) {
         Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
                                       L"Please choose an existing folder for "
                                       L"Location custom Library");
@@ -102,9 +99,9 @@ bool OmUiWizCtxLoc::hasValidParams() const
     }
   }
   if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT5, inpt5, OMM_MAX_PATH);
-    if(wcslen(inpt5)) {
-      if(!Om_isDir(inpt5)) {
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT5, wcbuf, OMM_MAX_PATH);
+    if(wcslen(wcbuf)) {
+      if(!Om_isDir(wcbuf)) {
         Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
                                       L"Please choose an existing folder for "
                                       L"Location custom Backup");
@@ -141,21 +138,18 @@ void OmUiWizCtxLoc::_onShow()
   this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
-  wchar_t inpt1[OMM_MAX_PATH];
+  wchar_t wcbuf[OMM_MAX_PATH];
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-
-  if(!wcslen(inpt1)) {
-
-    wchar_t path[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  if(!wcslen(wcbuf)) {
 
     SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"Main Location");
 
-    swprintf(path, OMM_MAX_PATH, L"Main Location\\library");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, path);
+    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\library");
+    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
 
-    swprintf(path, OMM_MAX_PATH, L"Main Location\\backup");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, path);
+    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\backup");
+    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
 
     reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
 
@@ -164,22 +158,21 @@ void OmUiWizCtxLoc::_onShow()
 
   bool allow = true;
 
-  wchar_t inpt2[OMM_MAX_PATH];
-  wchar_t inpt3[OMM_MAX_PATH];
-  wchar_t inpt4[OMM_MAX_PATH];
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  if(Om_isValidName(wcbuf)) {
+    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+    if(wcslen(wcbuf)) {
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-  if(Om_isValidName(inpt1)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-    if(wcslen(inpt2)) {
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-        if(!wcslen(inpt3)) allow = false;
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
+        if(!wcslen(wcbuf)) allow = false;
       }
+
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-        if(!wcslen(inpt4)) allow = false;
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
+        if(!wcslen(wcbuf)) allow = false;
       }
+
     } else {
       allow = false;
     }
