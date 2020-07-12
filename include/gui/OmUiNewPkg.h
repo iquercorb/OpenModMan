@@ -56,23 +56,11 @@ class OmUiNewPkg : public OmDialog
 
     bool                _apply();
 
-    HBITMAP             _hPictureBlank;
+    HBITMAP             _hBlankImg;
 
-    wstring             _buildPkg_save;
+    HBITMAP             _hImgSource;
 
-    wstring             _buildPkg_source;
-
-    HBITMAP             _buildPkg_picture;
-
-    vector<wstring>     _buildPkg_depends;
-
-    unsigned            _buildPkg_zipLvl;
-
-    string              _buildPkg_desc;
-
-    void                _buildPkg_init(const wstring& path);
-
-    void                _buildPkg_stop();
+    void                _buildPkg_end();
 
     void*               _buildPkg_hth;
 

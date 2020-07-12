@@ -17,6 +17,7 @@
 
 #include "OmManager.h"
 #include "OmDialog.h"
+#include "OmPackage.h"
 #include <time.h>
 
 

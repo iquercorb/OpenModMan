@@ -130,7 +130,7 @@ class OmUiMainLib : public OmDialog
 
     void                _onSelectBat();
 
-    HBITMAP             _hPictureBlank;
+    HBITMAP             _hBlankImg;
 
     void                _reloadLibEc();
 

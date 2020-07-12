@@ -567,6 +567,94 @@ wstring Om_sizeString(size_t bytes, bool octet)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_isVersionStr(const wstring& str)
+{
+  unsigned n = 0;
+  unsigned j = 0;
+
+  for(unsigned i = 0; i < str.size(); ++i) {
+
+    if(str[i] > 47 && str[i] < 58) { // 0123456789
+
+      if(j < 15) {
+        ++j;
+      } else {
+        return false;
+      }
+
+    } else {
+
+      if(str[i] == L'.') {
+        if(j > 0) {
+          n++; j = 0;
+        }
+      }
+
+      if(n > 2)
+        break;
+    }
+  }
+
+  return (j > 0 || n > 0);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, bool isfile, bool us2spc)
+{
+  wstring ident;
+
+  // Get the proper part of the full filename
+  if(isfile) {
+    // get file name without file extension
+    ident = Om_getNamePart(filename);
+  } else {
+    // this extract the folder name from the full path
+    ident = Om_getFilePart(filename);
+  }
+
+  // parse raw name to get display name and potential version
+  bool has_version = false;
+  // we search a version part in the name, this must be the letter V preceded
+  // by a common separator, like space, minus or underscore character, followed
+  // by a number
+  size_t v_pos = ident.find_last_of(L"vV");
+  if(v_pos > 0) {
+    // verify the V letter is preceded by a common separator
+    wchar_t wc = ident[v_pos - 1];
+    if(wc == L' ' || wc == L'_' || wc == L'-') {
+      // verify the V letter is followed by a number
+      wc = ident[v_pos + 1];
+      if(wc > 0x29 && wc < 0x40) { // 0123456789
+        // get the substring from v char to the end of string
+        vers = ident.substr(v_pos+1, -1);
+        has_version = Om_isVersionStr(vers);
+      }
+    }
+  }
+
+  if(has_version) {
+    // we extract the substring from the beginning to the version substring
+    name = ident.substr(0, v_pos);
+  } else {
+    vers.clear();
+    name = ident;
+  }
+
+  // replace all underscores by spaces
+  if(us2spc) {
+    std::replace(name.begin(), name.end(), L'_', L' ');
+  }
+
+  return has_version;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool Om_isFileZip(const wstring& path) {
 
   // Microsoft functions are ugly (this is not new) but they are proven to be
@@ -1279,10 +1367,6 @@ string Om_loadPlainText(const wstring& path)
 ///
 static inline bool __writeBmp(const char* path, unsigned w, unsigned h, unsigned d, const unsigned char* pixels)
 {
-  // Since Microsoft is not able to provide a correct function to save
-  // a BMP or PNG file ast 32 bits depth with alpha, I have to implement it
-  // myself. By chance, I done this time ago for another project...
-
   // Open for writing
   FILE* fp;
   fp = fopen(path, "wb");
@@ -1427,9 +1511,6 @@ HBITMAP Om_loadBitmap(const wstring& path, unsigned width, unsigned height, bool
       dst_bitmap = (Gdiplus::Bitmap*)src_bitmap->GetThumbnailImage(width, height, nullptr, nullptr);
     }
 
-    // GetHBITMAP request a "background color" for transparency...
-    // WHY, for the love of god, it don't use the RGB components of the image
-    // itself, instead of creating such ugly alpha artifacts ?!
     dst_bitmap->GetHBITMAP(Gdiplus::Color(0,0,0,0), &result);
 
     //delete bitmap;
@@ -1456,12 +1537,6 @@ HBITMAP Om_loadBitmap(const wstring& path, unsigned width, unsigned height, bool
 HBITMAP Om_loadBitmap(const void* data, size_t size, unsigned width, unsigned height, bool aspect)
 {
   HBITMAP result = nullptr;
-
-  // The 6 lines of code below is a typical example of why Microsoft developers
-  // should have consult a psychiatrist.
-  //
-  // How the heck all this garbage can be required to simply load a file from
-  // a buffer ? This is INSANE...
 
   HGLOBAL hMem = GlobalAlloc(GMEM_FIXED, size); //< Le memory allocation object
   void* pmem = GlobalLock(hMem);                //< Le pointer to locked memory area
@@ -1494,9 +1569,6 @@ HBITMAP Om_loadBitmap(const void* data, size_t size, unsigned width, unsigned he
       dst_bitmap = (Gdiplus::Bitmap*)src_bitmap->GetThumbnailImage(width, height, nullptr, nullptr);
     }
 
-    // GetHBITMAP request a "background color" for transparency...
-    // WHY, for the love of god, it don't use the RGB components of the image
-    // itself, instead of creating such ugly alpha artifacts ?!
     dst_bitmap->GetHBITMAP(Gdiplus::Color(0,0,0,0), &result);
 
     //delete bitmap;
@@ -1548,9 +1620,6 @@ HBITMAP Om_getBitmapThumbnail(HBITMAP hBmp, unsigned width, unsigned height, boo
     dst_bitmap = (Gdiplus::Bitmap*)src_bitmap->GetThumbnailImage(width, height, nullptr, nullptr);
   }
 
-  // GetHBITMAP request a "background color" for transparency...
-  // WHY, for the love of god, it don't use the RGB components of the image
-  // itself, instead of creating such ugly alpha artifacts ?!
   dst_bitmap->GetHBITMAP(Gdiplus::Color(0,0,0,0), &result);
 
   //delete bitmap;
@@ -1561,6 +1630,49 @@ HBITMAP Om_getBitmapThumbnail(HBITMAP hBmp, unsigned width, unsigned height, boo
   Gdiplus::GdiplusShutdown(gdiTok);
 
   return result;
+}
+
+#include "thirdparty/miniz/miniz.h"
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void* Om_getPngData(HBITMAP hBmp, size_t* size)
+{
+  // Copy the HBITMAP with DIB section
+  HBITMAP hDibBmp = static_cast<HBITMAP>(CopyImage(hBmp,IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
+
+  // retrieve HBITMAP raw pixels data
+  BITMAP bmp;
+  GetObject(hDibBmp, sizeof(BITMAP), &bmp);
+
+  // we copy the RGB data as we need to swap RGB to BGR
+  unsigned rgb_w = bmp.bmWidth;
+  unsigned rgb_h = bmp.bmHeight;
+  unsigned rgb_d = static_cast<unsigned>(bmp.bmBitsPixel/8);
+  size_t rgb_size = rgb_w * rgb_h * rgb_d;
+  unsigned char* rgb_data = new unsigned char[rgb_size];
+
+  memcpy(rgb_data, bmp.bmBits, rgb_size);
+
+  // don't need this anymore
+  DeleteObject(hDibBmp);
+
+  // swap R and B
+  for(unsigned i = 0; i < rgb_size - 2; i += rgb_d) {
+    rgb_data[i] ^= rgb_data[i+2] ^= rgb_data[i] ^= rgb_data[i+2]; //< BGR(A) => RGB(A)
+  }
+
+  // create a PNG image from raw pixel data
+  *size = 0;
+  void* data = tdefl_write_image_to_png_file_in_memory_ex(
+                      rgb_data, rgb_w, rgb_h, rgb_d,
+                      size, MZ_BEST_SPEED, MZ_TRUE); // flip vertically
+
+  // free rgb data
+  delete [] rgb_data;
+
+  return data;
 }
 
 

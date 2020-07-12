@@ -447,8 +447,8 @@ class OmPackage
     /// Restores the Package backup if it exists and cleanup
     /// destination directory.
     ///
-    /// \param[in]  hSc    : Optional Progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort  : Optional Pointer to boolean to cancel operation.
+    /// \param[in]  hSc    : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
@@ -459,8 +459,8 @@ class OmPackage
     /// Install Package files to the destination directory.
     ///
     /// \param[in]  zipLvl    : Zip compression level for backup.
-    /// \param[in]  hSc       : Optional Progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort    : Optional Pointer to boolean to cancel operation.
+    /// \param[in]  hSc       : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  pAbort    : Optional pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
     ///

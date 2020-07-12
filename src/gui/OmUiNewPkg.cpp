@@ -40,19 +40,14 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
-  _hPictureBlank(nullptr),
-  _buildPkg_save(),
-  _buildPkg_source(),
-  _buildPkg_picture(nullptr),
-  _buildPkg_depends(),
-  _buildPkg_zipLvl(0),
-  _buildPkg_desc(),
+  _hBlankImg(nullptr),
+  _hImgSource(nullptr),
   _buildPkg_hth(nullptr)
 {
   this->addChild(new OmUiProgress(hins)); //< for package creation process
 
   // load the package blank picture
-  this->_hPictureBlank = reinterpret_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE,0));
+  this->_hBlankImg = reinterpret_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE,0));
 }
 
 
@@ -61,7 +56,7 @@ OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiNewPkg::~OmUiNewPkg()
 {
-
+  DeleteObject(this->_hBlankImg);
 }
 
 
@@ -96,7 +91,7 @@ void OmUiNewPkg::_onShow()
   SendMessageW(hCb, CB_SETCURSEL, 2, 0);
 
   // set default snapshot
-  SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hPictureBlank);
+  SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
 
   // set font for readme
   HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
@@ -119,6 +114,7 @@ void OmUiNewPkg::_onResize()
   // From Folder EditControl & Brows Button
   this->_setControlPos(IDC_EC_INPT1, 10, 20, this->width()-38, 13);
   this->_setControlPos(IDC_BC_BROW1, this->width()-26, 20, 16, 13);
+
   // From existing Package RadioButton
   this->_setControlPos(IDC_BC_RAD02, 10, 40, 150, 9);
   // From existing Package EditControl & Brows Button
@@ -126,38 +122,53 @@ void OmUiNewPkg::_onResize()
   this->_setControlPos(IDC_BC_BROW2, this->width()-26, 50, 16, 13);
 
   // Dependencies CheckBox
-  this->_setControlPos(IDC_BC_CHK03, 10, 75, 112, 9);
+  this->_setControlPos(IDC_BC_CHK03, 10, 70, 112, 9);
   // Dependencies EditControl a Add Button
-  this->_setControlPos(IDC_EC_INPT3, 10, 90, this->width()-38, 13);
-  this->_setControlPos(IDC_BC_ADD, this->width()-26, 90, 16, 13);
+  this->_setControlPos(IDC_EC_INPT3, 10, 80, this->width()-38, 13);
+  this->_setControlPos(IDC_BC_ADD, this->width()-26, 80, 16, 13);
   // Dependencies ListBox & Del button
-  this->_setControlPos(IDC_LB_DPNDS, 10, 105, this->width()-38, 24);
-  this->_setControlPos(IDC_BC_DEL, this->width()-26, 105, 16, 13);
+  this->_setControlPos(IDC_LB_DPNDS, 10, 95, this->width()-38, 24);
+  this->_setControlPos(IDC_BC_DEL, this->width()-26, 95, 16, 13);
 
   // Picture CheckBox & Load button
-  this->_setControlPos(IDC_BC_CHK04, 10, 140, 120, 9);
-  this->_setControlPos(IDC_BC_BROW4, this->width()-60, 140, 50, 14);
+  this->_setControlPos(IDC_BC_CHK04, 10, 125, 120, 9);
+  this->_setControlPos(IDC_BC_BROW4, this->width()-60, 125, 50, 14);
   // Picture Bitmap & Label
-  this->_setControlPos(IDC_SB_PKIMG, 10, 155, 85, 78);
-  this->_setControlPos(IDC_SC_LBL04, 115, 185, 200, 9);
+  this->_setControlPos(IDC_SB_PKIMG, 10, 136, 85, 78);
+  this->_setControlPos(IDC_SC_LBL04, 115, 165, 200, 9);
 
   // Description CheckBox & Load button
-  this->_setControlPos(IDC_BC_CHK05, 10, 240, 120, 9);
-  this->_setControlPos(IDC_BC_BROW5, this->width()-60, 240, 50, 14);
+  this->_setControlPos(IDC_BC_CHK05, 10, 220, 120, 9);
+  this->_setControlPos(IDC_BC_BROW5, this->width()-60, 220, 50, 14);
   // Description EditControl
-  this->_setControlPos(IDC_EC_PKTXT, 10, 255, this->width()-20, this->height()-325);
+  this->_setControlPos(IDC_EC_PKTXT, 10, 235, this->width()-20, this->height()-360);
+
+  // Destination label
+  this->_setControlPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
+  // Destination file name
+  this->_setControlPos(IDC_EC_INPT4, 10, this->height()-105, this->width()-72, 14);
+  // Destination brows button
+  this->_setControlPos(IDC_BC_SAVE, this->width()-60, this->height()-105, 50, 14);
+
+  // Parsed name label & entry
+  this->_setControlPos(IDC_SC_LBL07, 10, this->height()-84, 50, 9);
+  this->_setControlPos(IDC_EC_INPT5, 60, this->height()-85, this->width()-175, 12);
+
+  // Parsed version label & entry
+  this->_setControlPos(IDC_SC_LBL08, this->width()-101, this->height()-84, 51, 9);
+  this->_setControlPos(IDC_EC_INPT6, this->width()-45, this->height()-85, 35, 12);
 
   // Zip Level Label
-  this->_setControlPos(IDC_SC_LBL06, 10, this->height()-60, 120, 9);
-  // Zip Level ListBox
+  this->_setControlPos(IDC_SC_LBL09, 10, this->height()-60, 120, 9);
+  // Zip Level ComboBox
   this->_setControlPos(IDC_CB_LEVEL, 10, this->height()-50, this->width()-20, 14);
 
   // ----- Separator
   this->_setControlPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
   // Save As... Button
-  this->_setControlPos(IDC_BC_SAVE, this->width()-108, this->height()-19, 50, 14);
+  this->_setControlPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
   // Close Button
-  this->_setControlPos(IDC_BC_CLOSE, this->width()-54, this->height()-19, 50, 14);
+  this->_setControlPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 }
 
 
@@ -175,7 +186,8 @@ void OmUiNewPkg::_onRefresh()
 ///
 void OmUiNewPkg::_onQuit()
 {
-
+  DeleteObject(this->_hImgSource);
+  this->_hImgSource = nullptr;
 }
 
 
@@ -188,7 +200,9 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_BUILDPKG_DONE) {
     // end the removing Location process
-    this->_buildPkg_stop();
+    this->_buildPkg_end();
+    // quit the dialog
+    this->quit();
     // refresh the main window dialog, this will also refresh this one
     this->root()->refresh();
   }
@@ -209,6 +223,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     wchar_t pkg_src[OMM_MAX_PATH];
     wchar_t img_src[OMM_MAX_PATH];
     wchar_t txt_src[OMM_MAX_PATH];
+    wchar_t pkg_dst[OMM_MAX_PATH];
+    wstring name, vers;
 
     switch(LOWORD(wParam))
     {
@@ -225,6 +241,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT2), true);
         EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW2), true);
       }
+      has_changed = true;
       break;
 
     case IDC_BC_BROW1:
@@ -266,8 +283,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           if(pkg.picture()) {
             SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK04), BM_SETCHECK, 1, 0);
             EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), true);
-            this->_buildPkg_picture = pkg.picture();
-            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_buildPkg_picture,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
+            this->_hImgSource = static_cast<HBITMAP>(CopyImage(pkg.picture(),IMAGE_BITMAP,0,0,0));
+            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_hImgSource,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
             SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
             DeleteObject(hBmp);
           }
@@ -312,8 +329,16 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
+    case IDC_LB_DPNDS: // Dependencies ListBox
+      if(SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETCURSEL, 0, 0) >= 0) {
+        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
+      } else {
+        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
+      }
+      break;
+
     case IDC_BC_ADD: // Add Dependency Button
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, OMM_MAX_PATH);
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, dpn_buf, 256);
       if(wcslen(dpn_buf)) {
         SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_ADDSTRING, 0, (LPARAM)dpn_buf);
         SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"");
@@ -321,19 +346,10 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_LB_DPNDS: // Dependencies ListBox
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETCURSEL, 0, 0);
-      if(lb_sel >= 0) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
-      } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
-      }
-      break;
-
     case IDC_BC_DEL: // Remove Dependency Button
       lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETCURSEL, 0, 0);
       if(lb_sel >= 0) {
-        SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_DELETESTRING, lb_sel, 0);
+        SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_DELETESTRING, lb_sel, 0);;
         EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
       }
       break;
@@ -343,25 +359,34 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), true);
         if(wcslen(img_src)) {
           if(Om_isFile(img_src)) {
-            this->_buildPkg_picture = static_cast<HBITMAP>(Om_loadBitmap(img_src));
-            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_buildPkg_picture,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
+            this->_hImgSource = static_cast<HBITMAP>(Om_loadBitmap(img_src));
+            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_hImgSource,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
             SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
             DeleteObject(hBmp);
           }
         }
       } else {
         EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), false);
-        this->_buildPkg_picture = nullptr;
-        SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hPictureBlank);
+        this->_hImgSource = nullptr;
+        SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
       }
       break;
 
     case IDC_BC_BROW4:
-      if(Om_dialogOpenFile(img_src, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, img_src)) {
+      // select the start directory from package source path
+      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
+        wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
+      } else {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
+        wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
+      }
+
+      if(Om_dialogOpenFile(img_src, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, sel_dir)) {
         if(wcslen(img_src)) {
           if(Om_isFile(img_src)) {
-            this->_buildPkg_picture = static_cast<HBITMAP>(Om_loadBitmap(img_src));
-            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_buildPkg_picture,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
+            this->_hImgSource = static_cast<HBITMAP>(Om_loadBitmap(img_src));
+            HBITMAP hBmp = static_cast<HBITMAP>(Om_getBitmapThumbnail(this->_hImgSource,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE));
             SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
             DeleteObject(hBmp);
           }
@@ -380,7 +405,16 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     break;
 
     case IDC_BC_BROW5:
-      if(Om_dialogOpenFile(txt_src, this->_hwnd, L"Open Text file", L"Text file (*.txt)\0*.TXT\0", txt_src)) {
+      // select the start directory from package source path
+      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
+        wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
+      } else {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
+        wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
+      }
+
+      if(Om_dialogOpenFile(txt_src, this->_hwnd, L"Open Text file", L"Text file (*.txt)\0*.TXT\0", sel_dir)) {
         if(wcslen(txt_src)) {
           if(Om_isFile(txt_src)) {
             string ascii = Om_loadPlainText(txt_src);
@@ -391,16 +425,56 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_SAVE:
+
+      // create the file initial name based on source folder name
+      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
+        swprintf(pkg_dst, OMM_MAX_PATH, L"%ls.zip", Om_getFilePart(pkg_src).c_str());
+      } else {
+        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
+        wcscpy(pkg_dst, Om_getFilePart(pkg_src).c_str());
+      }
+
+      // select the initial location for browsing start
+      if(location) {
+        wcscpy(sel_dir, location->libraryDir().c_str());
+      } else {
+        wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
+      }
+
+      if(Om_dialogSaveFile(pkg_dst, this->_hwnd, L"Save Package as...", OMM_PKG_FILES_FILTER, sel_dir)) {
+        if(Om_isValidName(pkg_dst)) {
+          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, pkg_dst);
+        } else {
+          Om_dialogBoxErr(this->_hwnd, L"Invalid file name", L"The specified file name is not valid.");
+        }
+      }
+      break;
+
+    case IDC_EC_INPT4:
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, pkg_dst, OMM_MAX_PATH);
+      if(wcslen(pkg_dst)) {
+        name.clear();
+        vers.clear();
+        Om_parsePkgIdent(name, vers, pkg_dst, true, true);
+        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT5, name.c_str());
+        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT6, vers.c_str());
+      }
+      has_changed = true;
+      break;
+
+    case IDC_BC_OK:
       this->_apply();
       break;
 
-    case IDC_BC_CLOSE:
+    case IDC_BC_CANCEL:
       this->quit();
       break;
     }
 
     if(has_changed) {
       bool allow = true;
+
       if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
         GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
       }
@@ -408,6 +482,10 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, pkg_src, OMM_MAX_PATH);
       }
       if(!wcslen(pkg_src)) allow = false;
+
+      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, pkg_dst, OMM_MAX_PATH);
+
+      if(!wcslen(pkg_dst)) allow = false;
 
       EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), allow);
     }
@@ -422,13 +500,11 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 bool OmUiNewPkg::_apply()
 {
-  wchar_t sel_dir[OMM_MAX_PATH];
   wchar_t pkg_src[OMM_MAX_PATH];
   wchar_t pkg_dst[OMM_MAX_PATH];
 
-  bool rad01 = SendMessage(GetDlgItem(this->_hwnd,IDC_BC_RAD01),BM_GETCHECK,0,0);
-
-  if(rad01) {
+  // Step 1, verify everything
+  if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_RAD01),BM_GETCHECK,0,0)) {
     GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, pkg_src, OMM_MAX_PATH);
     if(!Om_isDir(pkg_src)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid source path",
@@ -446,28 +522,28 @@ bool OmUiNewPkg::_apply()
     }
   }
 
-  // create the file initial name based on source folder name
-  if(rad01) {
-    swprintf(pkg_dst, OMM_MAX_PATH, L"%ls.zip", Om_getFilePart(pkg_src).c_str());
+  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, pkg_dst, OMM_MAX_PATH);
+  if(Om_isValidName(pkg_dst)) {
+    if(Om_isFile(pkg_dst)) {
+      wstring msg = L"The file \"" + Om_getFilePart(pkg_dst);
+      msg += L"\" already exists, do you want to overwrite the existing file ?";
+      if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", msg)) {
+        return false;
+      }
+    }
   } else {
-    wcscpy(pkg_dst, Om_getFilePart(pkg_src).c_str());
+    Om_dialogBoxErr(this->_hwnd,  L"Invalid file name",
+                                  L"The specified destination file "
+                                  L"name is not valid.");
+    return false;
   }
 
-  // select the initial location for browsing start
-  wcscpy(sel_dir, Om_getDirPart(pkg_src).c_str());
-  if(Om_dialogSaveFile(pkg_dst, this->_hwnd, L"Save Packages as...", OMM_PKG_FILES_FILTER, sel_dir)) {
-    if(Om_isValidName(pkg_dst)) {
-      if(Om_isFile(pkg_dst)) {
-        if(Om_dialogBoxQuerry(this->_hwnd, L"File already exists", L"Overwrite the existing file ?")) {
-          this->_buildPkg_init(pkg_dst);
-        }
-      } else {
-        this->_buildPkg_init(pkg_dst);
-      }
-    } else {
-      Om_dialogBoxErr(this->_hwnd, L"Invalid file name", L"The specified file name is not valid.");
-    }
-  }
+  // disable the OK button
+  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), false);
+
+  // start package building thread
+  DWORD dWid;
+  this->_buildPkg_hth = CreateThread(nullptr, 0, this->_buildPkg_fth, this, 0, &dWid);
 
   return true;
 }
@@ -476,78 +552,13 @@ bool OmUiNewPkg::_apply()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_buildPkg_init(const wstring& path)
-{
-  wchar_t wcbuf[OMM_MAX_PATH];
-
-  this->_buildPkg_zipLvl = 2;
-  this->_buildPkg_source.clear();
-  this->_buildPkg_depends.clear();
-  this->_buildPkg_desc.clear();
-
-  if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_RAD01), BM_GETCHECK, 0, 0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-  } else {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
-  }
-  this->_buildPkg_source = wcbuf;
-
-  // build the dependencies list
-  if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-    wchar_t ident[OMM_MAX_PATH];
-    unsigned lb_count = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETCOUNT, 0, 0);
-    if(lb_count) {
-      for(unsigned i = 0; i < lb_count; ++i) {
-        SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_DPNDS), LB_GETTEXT, i, (LPARAM)ident);
-        this->_buildPkg_depends.push_back(ident);
-      }
-    }
-  }
-
-  this->_buildPkg_zipLvl = SendMessageW(GetDlgItem(this->_hwnd, IDC_CB_LEVEL), CB_GETCURSEL, 0, 0);
-
-  // get description text
-  if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK03), BM_GETCHECK, 0, 0)) {
-    size_t s = SendMessageA(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), WM_GETTEXTLENGTH, 0, 0) + 1;
-    char* buff = nullptr;
-    try {
-      buff = new char[s];
-    } catch (std::bad_alloc& ba) {
-      // TODO: Add some dialog error here... one day
-      this->quit();
-    }
-    SendMessageA(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), WM_GETTEXT, s, (LPARAM)buff);
-    this->_buildPkg_desc = buff;
-    delete [] buff;
-  }
-
-  OmUiProgress* uiProgress = reinterpret_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
-
-  uiProgress->open(true);
-  uiProgress->setCaption(L"Building Package");
-  uiProgress->setTitle(L"Adding file(s) to Package...");
-
-  this->_buildPkg_save = path;
-
-  DWORD dWid;
-  this->_buildPkg_hth = CreateThread(nullptr, 0, this->_buildPkg_fth, this, 0, &dWid);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiNewPkg::_buildPkg_stop()
+void OmUiNewPkg::_buildPkg_end()
 {
   if(this->_buildPkg_hth) {
     WaitForSingleObject(this->_buildPkg_hth, INFINITE);
     CloseHandle(this->_buildPkg_hth);
     this->_buildPkg_hth = nullptr;
   }
-
-  OmUiProgress* uiProgress = reinterpret_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
-
-  uiProgress->quit();
 }
 
 
@@ -560,33 +571,95 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   OmUiProgress* uiProgress = reinterpret_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
-  HWND hPb = (HWND)uiProgress->getProgressBar();
-  HWND hSc = (HWND)uiProgress->getStaticComment();
+  // open the progress dialog
+  uiProgress->open(true);
+
+  uiProgress->setCaption(L"Building Package");
+  uiProgress->setTitle(L"Preparing data...");
+
+  wchar_t wcbuf[OMM_MAX_PATH];
 
   OmPackage package(nullptr);
-  package.sourceParse(self->_buildPkg_source);
 
-  if(self->_buildPkg_depends.size()) {
-    for(unsigned i = 0; i < self->_buildPkg_depends.size(); ++i) {
-      package.addDepend(self->_buildPkg_depends[i]);
+  // get source (either a folder or another package) and parse it
+  GetDlgItemTextW(self->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+  if(SendMessage(GetDlgItem(self->_hwnd,IDC_BC_RAD01),BM_GETCHECK,0,0)) {
+    GetDlgItemTextW(self->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  } else {
+    GetDlgItemTextW(self->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
+  }
+
+  if(!package.sourceParse(wcbuf)) {
+    // TODO: Add some dialog error here... one day
+    return 1;
+  }
+
+  // get package dependencies list
+  if(SendMessage(GetDlgItem(self->_hwnd, IDC_BC_CHK03), BM_GETCHECK, 0, 0)) {
+    unsigned lb_cnt = SendMessageW(GetDlgItem(self->_hwnd, IDC_LB_DPNDS), LB_GETCOUNT, 0, 0);
+    if(lb_cnt) {
+      for(unsigned i = 0; i < lb_cnt; ++i) {
+        SendMessageW(GetDlgItem(self->_hwnd, IDC_LB_DPNDS), LB_GETTEXT, i, (LPARAM)wcbuf);
+        package.addDepend(wcbuf);
+      }
     }
   }
 
-  if(!self->_buildPkg_desc.empty()) {
-    package.setDesc(Om_toWcString(self->_buildPkg_desc));
+  // get package picture data
+  if(SendMessage(GetDlgItem(self->_hwnd, IDC_BC_CHK04), BM_GETCHECK, 0, 0)) {
+    package.setPicture(self->_hImgSource);
   }
 
-  if(!self->_buildPkg_picture) {
-    package.setPicture(self->_buildPkg_picture);
-    DeleteObject(self->_buildPkg_picture);
+  // get package description text
+  if(SendMessage(GetDlgItem(self->_hwnd, IDC_BC_CHK05), BM_GETCHECK, 0, 0)) {
+    size_t len = SendMessageW(GetDlgItem(self->_hwnd, IDC_EC_PKTXT), WM_GETTEXTLENGTH, 0, 0);
+    wchar_t* wtxt = nullptr;
+    try {
+      wtxt = new wchar_t[len+1];
+    } catch (std::bad_alloc& ba) {
+      // TODO: Add some dialog error here... one day
+      return 1;
+    }
+    SendMessageW(GetDlgItem(self->_hwnd, IDC_EC_PKTXT), WM_GETTEXT, len+1, (LPARAM)wtxt);
+    package.setDesc(wtxt);
+    delete [] wtxt;
   }
 
-  if(!package.save(self->_buildPkg_save, self->_buildPkg_zipLvl, hPb, hSc, uiProgress->getAbortPtr())) {
+  // get package compression level
+  unsigned zlv = SendMessageW(GetDlgItem(self->_hwnd, IDC_CB_LEVEL), CB_GETCURSEL, 0, 0);
 
-    wstring str = L"An error occurred during Package creation:\n";
-    str += package.lastError();
+  // get destination filename
+  GetDlgItemTextW(self->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
+  wstring dst_path = wcbuf;
 
-    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", str);
+  // hide the main dialog
+  self->hide();
+
+  uiProgress->setTitle(L"Start building process...");
+
+  HWND hPb = (HWND)uiProgress->getProgressBar();
+  HWND hSc = (HWND)uiProgress->getStaticComment();
+
+  wstring msg;
+
+  if(!package.save(dst_path, zlv, hPb, hSc, uiProgress->getAbortPtr())) {
+
+    // show error dialog box
+    msg = L"An error occurred during Package creation:\n" + package.lastError();
+    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", msg);
+
+    // close the progress dialog
+    uiProgress->quit();
+
+  } else {
+
+    // close the progress dialog
+    uiProgress->quit();
+
+    // show success dialog box
+    msg = L"The Package \"" + Om_getFilePart(dst_path);
+    msg += L"\" was successfully created.";
+    Om_dialogBoxInfo(self->_hwnd, L"Package creation success", msg);
   }
 
   PostMessage(self->_hwnd, UWM_BUILDPKG_DONE, 0, 0);

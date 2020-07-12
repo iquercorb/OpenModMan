@@ -311,7 +311,7 @@ bool Om_isValidName(const wstring& name);
 /// \return Extracted extension without the separating dot.
 ///
 inline wstring Om_getExtensionPart(const wstring& path) {
-  size_t d = path.find_last_of(L".") + 1;
+  size_t d = path.find_last_of(L'.') + 1;
   return path.substr(d, wstring::npos);
 }
 
@@ -326,7 +326,7 @@ inline wstring Om_getExtensionPart(const wstring& path) {
 /// \return Extracted path part.
 ///
 inline wstring Om_getFilePart(const wstring& path){
-  size_t s = path.find_last_of(L"\\") + 1;
+  size_t s = path.find_last_of(L'\\') + 1;
   return path.substr(s, wstring::npos);
 }
 
@@ -342,7 +342,7 @@ inline wstring Om_getFilePart(const wstring& path){
 /// \return Extracted path part.
 ///
 inline wstring Om_getDirPart(const wstring& uri){
-  size_t e = uri.find_last_of(L"\\");
+  size_t e = uri.find_last_of(L'\\');
   return uri.substr(0, e);
 }
 
@@ -363,8 +363,8 @@ inline wstring Om_getDirPart(const wstring& uri){
 /// \return Extracted file name without extension.
 ///
 inline wstring Om_getNamePart(const wstring& uri){
-  size_t s = uri.find_last_of(L"\\") + 1;
-  size_t e = uri.find_last_of(L".");
+  size_t s = uri.find_last_of(L'\\') + 1;
+  size_t e = uri.find_last_of(L'.');
   return uri.substr(s, e-s);
 }
 
@@ -423,7 +423,7 @@ inline bool Om_namesMatches(const wstring& left, const wchar_t* right)
 ///
 inline bool Om_extensionMatches(const wstring& file, const wchar_t* ext)
 {
-  size_t d = file.find_last_of(L".") + 1;
+  size_t d = file.find_last_of(L'.') + 1;
   if(d > 0) {
     return (0 == file.compare(d, -1, ext));
   } else {
@@ -538,6 +538,31 @@ inline bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring&
 /// \return Formated string describing size.
 ///
 wstring Om_sizeString(size_t bytes, bool octet = false);
+
+/// \brief Check whether is version string
+///
+/// Checks whether the given string can be parsed as valid version number(s).
+///
+/// \param[in] str       : String to test.
+///
+/// \return True if the given string can be parsed as version number(s).
+///
+bool Om_isVersionStr(const wstring& str);
+
+/// \brief Parse Package filename
+///
+/// Parse the Packag display name and potential version substring from its
+/// file name.
+///
+/// \param[out] name      : Parsed display name.
+/// \param[out] vers      : Parsed version if any.
+/// \param[in]  filename  : Filename to be parsed.
+/// \param[in]  isfile    : Specify whether filename is file or a folder name.
+/// \param[in]  us2spc    : Specify whether underscores must be replaced by spaces.
+///
+/// \return True if version string candidate was found, false otherwise
+///
+bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, bool isfile = true, bool us2spc = true);
 
 /// \brief Check empty folder
 ///
@@ -1036,6 +1061,17 @@ HBITMAP Om_loadBitmap(const void* data, size_t size, unsigned width = 0, unsigne
 /// \return Handle (HBITMAP) to resized bitmap.
 ///
 HBITMAP Om_getBitmapThumbnail(HBITMAP hBmp, unsigned width, unsigned height, bool aspect = true);
+
+/// \brief Convert bitmap to PNG
+///
+/// Convert the given bitmap to PNG image data.
+///
+/// \param[in] hBmp    : Handle (HBITMAP) to bitmap image to convert.
+/// \param[out] size   : Size in byte of PNG data.
+///
+/// \return Pointer to PNG data.
+///
+void* Om_getPngData(HBITMAP hBmp, size_t* size);
 
 /// \brief Load stock shell icon
 ///

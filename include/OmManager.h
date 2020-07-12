@@ -346,12 +346,6 @@ class OmManager
     ///
     void closeCurrContext();
 
-    /// \brief Add log.
-    ///
-    /// Add entry to log file.
-    ///
-    void log(unsigned level, const wstring& head, const wstring& detail);
-
     /// \brief Set log output.
     ///
     /// Defines an Edit Control to output log in real time.
@@ -359,6 +353,12 @@ class OmManager
     /// \param[in]  hwnd      : Windows handle (HWND) to Edit Control.
     ///
     void setLogOutput(HWND hWnd);
+
+    /// \brief Add log.
+    ///
+    /// Add entry to log file.
+    ///
+    void log(unsigned level, const wstring& head, const wstring& detail);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

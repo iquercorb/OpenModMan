@@ -37,7 +37,7 @@
 OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _onProcess(false),
   _lvIconsSize(0),
-  _hPictureBlank(nullptr),
+  _hBlankImg(nullptr),
   _abortPending(false),
   _install_hth(nullptr),
   _uninstall_hth(nullptr),
@@ -55,7 +55,7 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   this->_monitor_hev[1] = nullptr;
 
   // load the package blank picture
-  this->_hPictureBlank = reinterpret_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
+  this->_hBlankImg = reinterpret_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
 }
 
 
@@ -67,7 +67,7 @@ OmUiMainLib::~OmUiMainLib()
   // stop Library folder changes monitoring
   this->_monitor_stop();
 
-  DeleteObject(this->_hPictureBlank);
+  DeleteObject(this->_hBlankImg);
 }
 
 
@@ -249,6 +249,9 @@ void OmUiMainLib::moveTrash()
       this->_reloadLibLv();
     }
   }
+
+  // update package selection
+  this->_onSelectPkg();
 }
 
 
@@ -470,7 +473,7 @@ void OmUiMainLib::_onSelectPkg()
 
       // set default blank picture
       ShowWindow(hSb, true);
-      SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hPictureBlank);
+      SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
 
       // disable the "view detail..." sub-menu
       EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
@@ -496,7 +499,7 @@ void OmUiMainLib::_onSelectPkg()
             SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmp);
             DeleteObject(hBmp);
           } else {
-            SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hPictureBlank);
+            SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
           }
 
           this->_setControlPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);

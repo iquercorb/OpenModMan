@@ -89,51 +89,6 @@ static void __OmPackage_getItemsFromDir(vector<OmPackageItem>* ls, const wstring
 }
 
 
-/// \brief Parse Package identity
-///
-/// Parse the Package identity to extract the display name and a potential
-/// version substring.
-///
-/// \param[out] name    : Parsed display name.
-/// \param[out] vers    : Parsed version if any.
-/// \param[in]  ident   : Package identity string to be parsed.
-///
-/// \return True if version string candidate was found, false otherwise
-///
-static inline bool __OmPackage_parseIdent(wstring& name, OmVersion& vers, const wstring& ident)
-{
-  // parse raw name to get display name and potential version
-  bool has_version = false;
-  // we search a version part in the name, this must be the letter V preceded
-  // by a common separator, like space, minus or underscore character, followed
-  // by a number
-  size_t v_pos = ident.find_last_of(L"vV");
-  if(v_pos > 0) {
-    // verify the V letter is preceded by a common separator
-    wchar_t wc = ident[v_pos - 1];
-    if(wc == L' ' || wc == L'_' || wc == L'-') {
-      // verify the V letter is followed by a number
-      wc = ident[v_pos + 1];
-      if(wc > 0x29 && wc < 0x40) { // 0123456789
-        // get the substring from v char to the end of string
-        if(vers.parse(ident.substr(v_pos+1, -1))) {
-          has_version = true;
-        }
-      }
-    }
-  }
-
-  if(has_version) {
-    // we extract the substring from the beginning to the version substring
-    name = ident.substr(0, v_pos);
-  } else {
-    name = ident;
-  }
-
-  return has_version;
-}
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -494,7 +449,10 @@ bool OmPackage::sourceParse(const wstring& path)
   }
 
   // parse raw name to get display name and potential version
-  __OmPackage_parseIdent(this->_name, this->_version, this->_ident);
+  wstring vers;
+  if(Om_parsePkgIdent(this->_name, vers, this->_source, this->isType(PKG_TYPE_ZIP), true)) {
+    this->_version.parse(vers);
+  }
 
   // create hash from file name
   this->_hash = Om_getXXHash3(Om_getFilePart(this->_source));
@@ -657,8 +615,14 @@ bool OmPackage::backupParse(const wstring& path)
     return false;
   }
 
-  // parse display name and version from identity
-  __OmPackage_parseIdent(this->_name, this->_version, this->_ident);
+  // If name and version was not previously parsed as source, pars here using
+  // the identity string saved in backup definition.
+  if(!this->isType(PKG_TYPE_SRC)) {
+    wstring vers;
+    if(Om_parsePkgIdent(this->_name, vers, this->_ident, false, true)) {
+      this->_version.parse(vers);
+    }
+  }
 
   this->_backupItem.clear();
   OmPackageItem bck_item;
@@ -962,8 +926,8 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
       if(!Om_checkAccessRead(this->_source)) {
         this->_error = L"Installation source files location folder \"";
         this->_error += this->_source + L"\" read permission denied.";
-          this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
-          return false;
+        this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
+        return false;
       }
     } else {
       this->_error = L"Installation source files location folder \"";
@@ -979,14 +943,14 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     return false;
   }
 
+  // create package identity according destination path
+  wstring pkg_ident = Om_getNamePart(path);
+
   OmZipFile src_zip;
 
   int result;
   bool has_failed = false;
   bool has_aborted = false;
-
-  // create package identity according destination path
-  wstring pkg_ident = Om_getNamePart(path);
 
   // do we got a Zip file or a legacy Folder
   if(this->_type & PKG_TYPE_ZIP) {
@@ -1013,7 +977,6 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     this->_error += Om_getDirPart(path) + L"\": ";
     this->_error += pkg_zip.lastErrorStr();
     this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
-
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
     return false;
@@ -1024,19 +987,13 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   OmXmlNode  def_xml = pkg_def.xml();
 
-  wstring pkg_name;
-  OmVersion pkg_vers;
+  wstring name, vers;
 
   // parse raw name to get display name and potential version
-  __OmPackage_parseIdent(pkg_name, pkg_vers, pkg_ident);
-
-  wstring hash_full = Om_toHexString(Om_getXXHash3(pkg_ident + L".zip"));
-  wstring hash_name = Om_toHexString(Om_getXXHash3(pkg_name));
+  Om_parsePkgIdent(name, vers, pkg_ident, false, true);
 
   // write base components to source definition
   def_xml.addChild(L"ident").setContent(pkg_ident);
-  def_xml.addChild(L"hash_full").setContent(hash_full);
-  def_xml.addChild(L"hash_name").setContent(hash_name);
 
   // defines the package source directory
   def_xml.addChild(L"install").setContent(pkg_ident);
@@ -1053,7 +1010,8 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
   uint8_t*  buff;
   size_t    s;
 
-  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+  for(size_t i = 0; i < this->_sourceItem.size(); ++i) {
+
     // check for abort request
     if(pAbort) {
       if(*pAbort) {
@@ -1061,10 +1019,12 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
         break;
       }
     }
+
     // update description
     if(hSc) {
       SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)this->_sourceItem[i].path.c_str());
     }
+
     // destination zip path, with mirror folder preceding
     Om_concatPaths(zcd_entry, pkg_ident, this->_sourceItem[i].path);
     // check if we have a file or folder to install
@@ -1130,6 +1090,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
         break;
       }
     }
+
     // step progress bar
     if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
     #ifdef DEBUG_SLOW
@@ -1171,19 +1132,11 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   // add picture to archive and source definition
   if(this->_picture != nullptr) {
-    // Copy the HBITMAP with DIB section
-    HBITMAP hBmp = static_cast<HBITMAP>(CopyImage(this->_picture,IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
-    // retrieve HBITMAP raw pixels data
-    BITMAP bmp;
-    GetObject(hBmp, sizeof(BITMAP), &bmp);
+
     // create a PNG image from raw pixel data
     size_t png_size = 0;
-    void* png_data = tdefl_write_image_to_png_file_in_memory_ex(
-                        bmp.bmBits, bmp.bmWidth, bmp.bmHeight,
-                        static_cast<int>(bmp.bmBitsPixel/8),
-                        &png_size, MZ_BEST_SPEED, MZ_TRUE); // flip vertically
-    // don't need this anymore
-    DeleteObject(hBmp);
+    void* png_data = Om_getPngData(this->_picture, &png_size);
+
     // add picture as PNG file in zip archive
     if(!pkg_zip.append(png_data, png_size, L"source_pic.png", zipLvl)) {
       this->_error = L"Unable to add PNG image to archive: ";
@@ -1193,15 +1146,16 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
       Om_fileDelete(pkg_tmp_path);
       return false;
     }
+
     // release png data
     mz_free(png_data);
+
     // add section to source definition
     def_xml.addChild(L"picture").setContent(L"source_pic.png");
   }
 
-
   // add a REAMDE.TXT file into archive
-  string pkg_readme = "Open Mod Package file for \"";
+  string pkg_readme = "Open Mod Manager Package file for \"";
   pkg_readme += Om_toMbString(pkg_ident);
   pkg_readme += "\" Mod.\r\n\r\n"
   "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
@@ -1219,13 +1173,13 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     pkg_readme += "\r\n";
   }
   pkg_readme += "\r\n"
-  "Once you made a backup of the genuine files, you can install the Mod by\r\n"
+  "Once you made a backup of the original files, you can install the Mod by\r\n"
   "extracting the content of the previously indicated folder into the\r\n"
-  "application/game installation folder, overwriting genuine files.\r\n\r\n"
+  "application/game installation folder, overwriting original files.\r\n\r\n"
 
   // TODO: update URL here...
   "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
-  "visit :\r\n\r\n   https://....";
+  "visit :\r\n\r\n   https://...";
 
   // add the REAMDE.TXT file in zip archive
   if(!pkg_zip.append(pkg_readme.c_str(), pkg_readme.size(), L"README.TXT", zipLvl)) {
