@@ -987,14 +987,6 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   OmXmlNode  def_xml = pkg_def.xml();
 
-  wstring name, vers;
-
-  // parse raw name to get display name and potential version
-  Om_parsePkgIdent(name, vers, pkg_ident, false, true);
-
-  // write base components to source definition
-  def_xml.addChild(L"ident").setContent(pkg_ident);
-
   // defines the package source directory
   def_xml.addChild(L"install").setContent(pkg_ident);
 
