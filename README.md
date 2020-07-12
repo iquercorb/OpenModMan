@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.1 (beta)
+Version: 0.9.2 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -44,7 +44,11 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
-0.9.0 (07/11/2020)
+0.9.2
+ - Rewritten Package building algorithm.
+ - Fixed Package "Save As" button never enabling.
+
+0.9.1 (07/11/2020)
  - Fixed random string bug and crash caused by buffer overflow.
  - Fixed Context creation wizard not properly reseted after cancel by user.
  - Fixed missing application informations and icons within Windows Application list.
