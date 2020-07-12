@@ -55,15 +55,13 @@ void OmUiHelpAbout::_onShow()
 
   wchar_t wcbuf[OMM_MAX_PATH];
   swprintf(wcbuf, OMM_MAX_PATH,
-      L"%ls (%ls)\nVersion %d.%d.%d (%ls) - %ls\nBy %ls\n\n"
-      "This software is distributed under terms and conditions of the "
-      "GNU GPL v3.0 license:",
+      L"%ls (%ls)\nVersion %d.%d.%d (%ls) - %ls\nBy %ls\n\n",
       OMM_APP_NAME, OMM_APP_SHORT_NAME, OMM_APP_MAJ, OMM_APP_MIN, OMM_APP_REV,
       OMM_APP_ARCH, OMM_APP_DATE, OMM_APP_AUTHOR);
 
   SetDlgItemTextW(this->_hwnd, IDC_SC_TEXT1, wcbuf);
 
-  string gpl = Om_loadPlainText(L"LICENSE.TXT");
+  string gpl = Om_loadPlainText(L"CREDITS.TXT");
   SetDlgItemText(this->_hwnd, IDC_EC_ENT01, gpl.c_str());
 }
 
@@ -74,7 +72,7 @@ void OmUiHelpAbout::_onShow()
 void OmUiHelpAbout::_onResize()
 {
   this->_setControlPos(IDC_SC_TEXT1, 5, 5, this->width()-10, 40);
-  this->_setControlPos(IDC_EC_ENT01, 5, 55, this->width()-10, this->height()-80);
+  this->_setControlPos(IDC_EC_ENT01, 5, 35, this->width()-10, this->height()-60);
   this->_setControlPos(IDC_BC_CLOSE, (0.5f*this->width())-25, this->height()-20, 50, 14);
 }
 

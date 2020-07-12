@@ -65,6 +65,8 @@ Section "Install (required)"
 
   ; Put file there
   File "/oname=${APP_EXE_NAME}.exe" "${REL_64_EXE}"
+  File "/oname=LICENSE.TXT" "..\LICENSE.TXT"
+  File "/oname=CREDITS.TXT" "..\CREDITS.TXT"
   
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\${APP_REG_NAME} "Install_Dir" "$INSTDIR"

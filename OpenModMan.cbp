@@ -131,6 +131,8 @@
 			<Add library="UxTheme" />
 			<Add directory="lib/curl" />
 		</Linker>
+		<Unit filename="CREDITS.TXT" />
+		<Unit filename="LICENSE.TXT" />
 		<Unit filename="README.md" />
 		<Unit filename="include/OmBatch.h" />
 		<Unit filename="include/OmConfig.h" />
