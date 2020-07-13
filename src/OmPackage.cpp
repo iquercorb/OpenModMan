@@ -195,33 +195,33 @@ bool OmPackage::sourceParse(const wstring& path)
 
         if(Om_extensionMatches(zcd_entry, OMM_PKG_FILE_EXT)) {
           // good candidate for Package definition, try to load it
-          char* buff = nullptr;
+          char* cbuf = nullptr;
           size_t s = src_zip.size(zcd_index);
           try {
-            buff = new char[s+1];
+            cbuf = new char[s+1];
           } catch (std::bad_alloc& ba) {
             this->_error = L"Unable to extract file \"";
             this->_error += zcd_entry + L"\" memory allocation error: ";
-            this->_error += Om_toWcString(ba.what());
+            this->_error += Om_toUtf16(ba.what());
             this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             src_zip.close();
             this->sourceClear();
             return false;
           }
-          if(!src_zip.extract(zcd_index, buff, s)) {
+          if(!src_zip.extract(zcd_index, cbuf, s)) {
             this->_error = L"Unable to extract \"";
             this->_error += zcd_entry + L"\" from zip archive: ";
             this->_error += src_zip.lastErrorStr();
             this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             src_zip.close();
-            delete [] buff;
+            delete [] cbuf;
             this->sourceClear();
             return false;
           }
-          buff[s] = 0;
-          if(src_def.parse(Om_toWcString(buff), OMM_CFG_SIGN_PKG)) {
+          cbuf[s] = 0;
+          if(src_def.parse(Om_toUtf16(cbuf), OMM_CFG_SIGN_PKG)) {
             has_def = true;
-            delete [] buff;
+            delete [] cbuf;
             break;
           } else {
             this->_error = L"Error parsing Package definition candidate \"";
@@ -229,7 +229,7 @@ bool OmPackage::sourceParse(const wstring& path)
             this->_error += src_def.lastErrorStr();
             this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
           }
-          delete [] buff;
+          delete [] cbuf;
         }
       }
 
@@ -277,40 +277,40 @@ bool OmPackage::sourceParse(const wstring& path)
         // check for Package description
         if(cfg_xml.hasChild(L"description")) {
           this->_desc = cfg_xml.child(L"description").content();
-            // the XML store text with simple LF as new line, so we need to
-            // replace back all simple LF into CRLF
-            size_t lf = this->_desc.find(L'\n'); // get first occurrence
-            while(lf != std::wstring::npos) {
-              this->_desc.replace(lf, 1, L"\r\n"); //< replace with CRLF
-              lf = this->_desc.find(L'\n', lf + 2); //< get next occurrence
-            }
+          // the XML store text with simple LF as new line, so we need to
+          // replace back all simple LF into CRLF
+          size_t lf = this->_desc.find(L'\n'); // get first occurrence
+          while(lf != std::wstring::npos) {
+            this->_desc.replace(lf, 1, L"\r\n"); //< replace with CRLF
+            lf = this->_desc.find(L'\n', lf + 2); //< get next occurrence
+          }
         }
         // check for Package picture
         if(cfg_xml.hasChild(L"picture")) {
           wstring pic_name = cfg_xml.child(L"picture").content();
           int zcrd_index = src_zip.locate(pic_name);
           if(zcrd_index >= 0) {
-            uint8_t* buff = nullptr;
+            uint8_t* data = nullptr;
             size_t s = src_zip.size(zcrd_index);
             try {
-              buff = new uint8_t[s];
+              data = new uint8_t[s];
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract file \"";
               this->_error += pic_name + L"\" memory allocation error: ";
-              this->_error += Om_toWcString(ba.what());
+              this->_error += Om_toUtf16(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
-            if(buff != nullptr) {
-              if(src_zip.extract(zcrd_index, buff, s)) {
+            if(data != nullptr) {
+              if(src_zip.extract(zcrd_index, data, s)) {
                 // finally load picture data
-                this->_picture = (HBITMAP)Om_loadBitmap(buff, s, 0, 0, true);
+                this->_picture = (HBITMAP)Om_loadBitmap(data, s, 0, 0, true);
               } else {
                 this->_error = L"Unable to extract referenced Package picture \"";
                 this->_error += pic_name + L"\" from archive : ";
                 this->_error += src_zip.lastErrorStr();
                 this->log(1, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
               }
-              delete [] buff;
+              delete [] data;
             }
           } else {
             this->_error = L"Referenced Package picture \"";
@@ -363,27 +363,27 @@ bool OmPackage::sourceParse(const wstring& path)
           }
           // lookup for a readme file to get description
           if(Om_namesMatches(zcd_entry, L"readme.txt")) {
-            char* buff = nullptr;
+            char* cbuf = nullptr;
             size_t s = src_zip.size(i);
             try {
-              buff = new char[s+1];
+              cbuf = new char[s+1];
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract README \"";
               this->_error += zcd_entry + L"\" memory allocation error : ";
-              this->_error += Om_toWcString(ba.what());
+              this->_error += Om_toUtf16(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
-            if(buff != nullptr) {
-              if(src_zip.extract(i, buff, s)) {
-                buff[s] = 0; //< add terminal null
-                this->_desc = Om_toWcString(buff);
+            if(cbuf != nullptr) {
+              if(src_zip.extract(i, cbuf, s)) {
+                cbuf[s] = 0; //< add terminal null
+                this->_desc = Om_toUtf16(cbuf);
               } else {
                 this->_error = L"Unable to extract README \"";
                 this->_error += zcd_entry + L"\" from zip archive : ";
                 this->_error += src_zip.lastErrorStr();
                 this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
               }
-              delete[] buff; //< do not forget to delete buffer
+              delete[] cbuf; //< do not forget to delete buffer
             }
           }
           // lookup for snapshot
@@ -392,26 +392,26 @@ bool OmPackage::sourceParse(const wstring& path)
              Om_namesMatches(zcd_entry, L"picture.bmp") ||
              Om_namesMatches(zcd_entry, L"picture.gif")) {
 
-            uint8_t* buff = nullptr;
+            uint8_t* data = nullptr;
             size_t s = src_zip.size(i);
             try {
-              buff = new uint8_t[s];
+              data = new uint8_t[s];
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract Picture \"";
               this->_error += zcd_entry + L"\" memory allocation error : ";
-              this->_error += Om_toWcString(ba.what());
+              this->_error += Om_toUtf16(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
-            if(buff != nullptr) {
-              if(src_zip.extract(i, buff, s)) {
-                this->_picture = (HBITMAP)Om_loadBitmap(buff, s, 0, 0, true);
+            if(data != nullptr) {
+              if(src_zip.extract(i, data, s)) {
+                this->_picture = (HBITMAP)Om_loadBitmap(data, s, 0, 0, true);
               } else {
                 this->_error = L"Unable to extract Picture \"";
                 this->_error += zcd_entry + L"\" from zip archive : ";
                 this->_error += src_zip.lastErrorStr();
                 this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
               }
-              delete [] buff; //< do not forget to delete buffer
+              delete [] data; //< do not forget to delete buffer
             }
           }
         }
@@ -502,33 +502,33 @@ bool OmPackage::backupParse(const wstring& path)
 
       if(Om_extensionMatches(zcd_entry, OMM_BCK_FILE_EXT)) {
         // good candidate for Package definition, try to load it
-        char* buff = nullptr;
+        char* cbuf = nullptr;
         size_t s = bck_zip.size(zcd_index);
         try {
-          buff = new char[s+1];
+          cbuf = new char[s+1];
         } catch (std::bad_alloc& ba) {
           this->_error = L"Unable to extract file \"";
           this->_error += zcd_entry + L"\" memory allocation error: ";
-          this->_error += Om_toWcString(ba.what());
+          this->_error += Om_toUtf16(ba.what());
           this->log(0, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
           bck_zip.close();
           this->backupClear();
           return false;
         }
-        if(!bck_zip.extract(zcd_index, buff, s)) {
+        if(!bck_zip.extract(zcd_index, cbuf, s)) {
           this->_error = L"Unable to extract \"";
           this->_error += zcd_entry + L"\" from zip archive: ";
           this->_error += bck_zip.lastErrorStr();
           this->log(0, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
           bck_zip.close();
-          delete [] buff;
+          delete [] cbuf;
           this->backupClear();
           return false;
         }
-        buff[s] = 0;
-        if(bck_def.parse(Om_toWcString(buff), OMM_CFG_SIGN_BCK)) {
+        cbuf[s] = 0;
+        if(bck_def.parse(Om_toUtf16(cbuf), OMM_CFG_SIGN_BCK)) {
           has_def = true;
-          delete [] buff;
+          delete [] cbuf;
           break;
         } else {
           this->_error = L"Error parsing Backup definition candidate \"";
@@ -536,7 +536,7 @@ bool OmPackage::backupParse(const wstring& path)
           this->_error += bck_def.lastErrorStr();
           this->log(1, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
         }
-        delete [] buff;
+        delete [] cbuf;
       }
     }
 
@@ -999,7 +999,8 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   wstring src_path, zcd_entry;
 
-  uint8_t*  buff;
+  wchar_t   wcbuf[OMM_MAX_PATH];
+  uint8_t*  data;
   size_t    s;
 
   for(size_t i = 0; i < this->_sourceItem.size(); ++i) {
@@ -1014,7 +1015,8 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
     // update description
     if(hSc) {
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)this->_sourceItem[i].path.c_str());
+      swprintf(wcbuf, OMM_MAX_PATH, L"Adding: %ls", this->_sourceItem[i].path.c_str());
+      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
     }
 
     // destination zip path, with mirror folder preceding
@@ -1027,7 +1029,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
         s = src_zip.size(this->_sourceItem[i].cdri);
         if(s) {
           try {
-            buff = new uint8_t[s];
+            data = new uint8_t[s];
           } catch (std::bad_alloc& ba) {
             this->_error = L"Unable to extract file \"";
             this->_error += this->_sourceItem[i].path + L"\" memory allocation error: ";
@@ -1037,26 +1039,26 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
             break;
           }
           // extract source zip content to buffer
-          if(!src_zip.extract(this->_sourceItem[i].cdri, buff, s)) {
+          if(!src_zip.extract(this->_sourceItem[i].cdri, data, s)) {
             this->_error = L"Unable to extract file \"";
             this->_error += this->_sourceItem[i].path + L"\" to destination: ";
             this->_error += src_zip.lastErrorStr();
             this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
             has_failed = true;
-            delete [] buff;
+            delete [] data;
             break;
           }
           // append data to destination zip archive
-          if(!pkg_zip.append(buff, s, zcd_entry, zipLvl)) {
+          if(!pkg_zip.append(data, s, zcd_entry, zipLvl)) {
             this->_error = L"Unable to add file \"";
             this->_error += zcd_entry + L"\" to archive: ";
             this->_error += pkg_zip.lastErrorStr();
             this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
             has_failed = true;
-            delete [] buff;
+            delete [] data;
             break;
           }
-          delete [] buff;
+          delete [] data;
         }
       } else {
         // path to item in package sub-directory
@@ -1148,20 +1150,20 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   // add a REAMDE.TXT file into archive
   string pkg_readme = "Open Mod Manager Package file for \"";
-  pkg_readme += Om_toMbString(pkg_ident);
+  pkg_readme += Om_toUtf8(pkg_ident);
   pkg_readme += "\" Mod.\r\n\r\n"
   "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
   "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
   "If you want to install this Mod manually, you will find the Mod files into\r\n"
   "the following folder : \r\n\r\n  \"";
-  pkg_readme += Om_toMbString(pkg_ident);
+  pkg_readme += Om_toUtf8(pkg_ident);
   pkg_readme += "\"\r\n\r\n"
   "Its content is respecting the destination folder tree and includes files to\r\n"
   "be overwritten or added :\r\n"
   "\r\n";
   for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
     pkg_readme += "   ";
-    pkg_readme += Om_toMbString(this->_sourceItem[i].path);
+    pkg_readme += Om_toUtf8(this->_sourceItem[i].path);
     pkg_readme += "\r\n";
   }
   pkg_readme += "\r\n"

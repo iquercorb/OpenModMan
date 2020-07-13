@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <stdint.h>
 #include <wctype.h>
+#include <locale>
+#include <codecvt>
 
 #define NTDDI_VERSION             0x06000000    // NTDDI_VISTA
 #define WINVER                    0x0600        // _WIN32_WINNT_VISTA
@@ -188,6 +190,44 @@ void Om_getRandBytes(uint8_t* dest, size_t size);
 /// \return 36 characters UUID version 4 string.
 ///
 wstring Om_genUUID();
+
+/// \brief UTF-8 to UTF-16 conversion.
+///
+/// Convert the given UTF-8 multibyte string into UTF-16 wide char string.
+///
+/// \param[in]  utf8    : UTF-8 multibyte string to convert.
+///
+/// \return UTF-16 wide char string conversion result.
+///
+wstring Om_toUtf16(const string& utf8);
+
+/// \brief UTF-8 to UTF-16 conversion.
+///
+/// Convert the given UTF-8 multibyte string into UTF-16 wide char string.
+///
+/// \param[in]  utf16   : Wide char string to get conversion result.
+/// \param[in]  utf8    : UTF-8 multibyte string to convert.
+///
+void Om_toUtf16(wstring& utf16, const string& utf8);
+
+/// \brief UTF-16 to UTF-8 conversion.
+///
+/// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
+///
+/// \param[in]  utf16   : UTF-16 wide char string to convert.
+///
+/// \return UTF-8 multibyte string conversion result.
+///
+string Om_toUtf8(const wstring& utf16);
+
+/// \brief UTF-16 to UTF-8 conversion.
+///
+/// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
+///
+/// \param[in]  utf8    : Multibyte string to get conversion result.
+/// \param[in]  utf16   : UTF-16 wide char string to convert.
+///
+void Om_toUtf8(string& utf8, const wstring& utf16);
 
 /// \brief Wide string to multibyte string conversion.
 ///
@@ -590,7 +630,6 @@ inline int Om_dirCreate(const wstring& path) {
   }
   return 0;
 }
-
 
 /// \brief Create folder recursively
 ///

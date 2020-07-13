@@ -468,7 +468,7 @@ OmXmlDoc& OmXmlDoc::operator=(const OmXmlDoc& other)
 bool OmXmlDoc::parse(const wstring& xml)
 {
   pugi::xml_parse_result result;
-  result = reinterpret_cast<pugi::xml_document*>(_data)->load(xml.c_str());
+  result = reinterpret_cast<pugi::xml_document*>(_data)->load_string(xml.c_str(), pugi::parse_default);
   if(!result) {
     _ercode = result.status;
     _erpoff = result.offset;
@@ -484,7 +484,7 @@ bool OmXmlDoc::parse(const wstring& xml)
 bool OmXmlDoc::load(const wstring& src)
 {
   pugi::xml_parse_result result;
-  result = reinterpret_cast<pugi::xml_document*>(_data)->load_file(src.c_str());
+  result = reinterpret_cast<pugi::xml_document*>(_data)->load_file(src.c_str(), pugi::parse_default, pugi::encoding_utf8);
   if(!result) {
     _ercode = result.status;
     _erpoff = result.offset;
@@ -497,9 +497,9 @@ bool OmXmlDoc::load(const wstring& src)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmXmlDoc::save(const wstring& src)
+bool OmXmlDoc::save(const wstring& dst)
 {
-  if(!reinterpret_cast<pugi::xml_document*>(_data)->save_file(src.c_str())) {
+  if(!reinterpret_cast<pugi::xml_document*>(_data)->save_file(dst.c_str(), L"\t", pugi::format_default, pugi::encoding_utf8)) {
     _ercode = 17;
     return false;
   }

@@ -271,11 +271,58 @@ wstring Om_genUUID()
 }
 
 
+typedef struct {
+  char mask;          // char data will be bitwise AND with this */
+  char lead;          // start bytes of current char in utf-8 encoded character */
+  uint32_t beg;       // beginning of codepoint range */
+  uint32_t end;       // end of codepoint range */
+  int bits_stored;    // the number of bits from the codepoint that fits in char */
+}utf_t;
+
 ///
 /// Buffer size definition for conversion functions
 ///
 #define MBS_SIZE 3120 //< Multibyte string buffer
 #define WCS_SIZE 1040  //< Wide string buffer
+
+wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> __ut8_cvt;
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_toUtf16(const string& utf8)
+{
+  wstring result = __ut8_cvt.from_bytes(utf8);
+  return result;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_toUtf16(wstring& utf16, const string& utf8)
+{
+  utf16 = __ut8_cvt.from_bytes(utf8);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+string Om_toUtf8(const wstring& utf16)
+{
+  string result = __ut8_cvt.to_bytes(utf16);
+  return result;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_toUtf8(string& utf8, const wstring& utf16)
+{
+  utf8 = __ut8_cvt.to_bytes(utf16);
+}
 
 
 ///
@@ -305,7 +352,6 @@ string Om_toMbString(const wstring& wcs)
   }
 
   return result;
-
 }
 
 
@@ -333,7 +379,6 @@ void Om_toMbString(string& mbs, const wstring& wcs)
       return;
     }
   }
-
 }
 
 

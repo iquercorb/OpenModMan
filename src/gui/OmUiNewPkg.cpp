@@ -212,10 +212,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     bool has_changed = false;
 
     OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
-    OmLocation* location = nullptr;
-
-    if(manager->curContext())
-      location = manager->curContext()->curLocation();
+    OmContext* curCtx = manager->curContext();
+    OmLocation* curLoc = curCtx ? curCtx->curLocation() : nullptr;
 
     int lb_sel;
     wchar_t wcbuf[OMM_MAX_PATH];
@@ -244,7 +242,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
       if(!wcslen(wcbuf)) {
-        if(location) wcscpy(sldir, location->libraryDir().c_str());
+        if(curLoc) wcscpy(sldir, curLoc->libraryDir().c_str());
       } else {
         wcscpy(sldir, Om_getDirPart(wcbuf).c_str());
       }
@@ -258,7 +256,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
       if(!wcslen(wcbuf)) {
-        if(location) wcscpy(sldir, location->libraryDir().c_str());
+        if(curLoc) wcscpy(sldir, curLoc->libraryDir().c_str());
       } else {
         wcscpy(sldir, Om_getDirPart(wcbuf).c_str());
       }
@@ -288,7 +286,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
             SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK05), BM_SETCHECK, 1, 0);
             EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW5), true);
             EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), true);
-            SetDlgItemTextA(this->_hwnd, IDC_EC_PKTXT, Om_toMbString(pkg.desc()).c_str());
+            SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, pkg.desc().c_str());
           }
         } else {
           wstring err = L"The file \""; err += fpath;
@@ -420,8 +418,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       // select the initial location for browsing start
-      if(location) {
-        wcscpy(sldir, location->libraryDir().c_str());
+      if(curLoc) {
+        wcscpy(sldir, curLoc->libraryDir().c_str());
       } else {
         wcscpy(sldir, Om_getDirPart(wcbuf).c_str());
       }
@@ -620,7 +618,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   // hide the main dialog
   self->hide();
 
-  uiProgress->setTitle(L"Start building process...");
+  uiProgress->setTitle(L"Add files to packages...");
 
   HWND hPb = (HWND)uiProgress->getProgressBar();
   HWND hSc = (HWND)uiProgress->getStaticComment();

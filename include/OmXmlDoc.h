@@ -74,7 +74,7 @@ class OmXmlNode
     /// Returns the node tag name.
     ///
     /// \return Node tag name.
-    ////
+    ///
     const wchar_t* name() const;
 
     /// \brief Get node content.

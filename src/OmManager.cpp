@@ -737,7 +737,8 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
   if(this->_logFile) {
     DWORD wb;
     string data;
-    Om_toMbString(data, entry);
+    //Om_toMbString(data, entry);
+    Om_toUtf8(data, entry);
     WriteFile(reinterpret_cast<HANDLE>(this->_logFile), data.c_str(), data.size(), &wb, nullptr);
   }
 
