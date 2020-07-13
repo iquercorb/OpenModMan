@@ -417,7 +417,7 @@ bool OmLocation::libraryAccess(HWND hWnd)
   // checks whether folder exists
   if(Om_isDir(this->_libraryDir)) {
     // checks for proper permissions on folder
-    if(!Om_checkAccessRead(this->_libraryDir)) {
+    if(!Om_checkAccess(this->_libraryDir, OMM_ACCESS_DIR_READ)) {
       this->_error = L"Library folder \"";
       this->_error += this->_libraryDir + L"\" read permission denied.";
       access_ok = false;
@@ -463,8 +463,8 @@ bool OmLocation::backupAccess(HWND hWnd)
   // checks whether folder exists
   if(Om_isDir(this->_backupDir)) {
     // checks for proper permissions on folder
-    if(Om_checkAccessRead(this->_backupDir)) {
-      if(!Om_checkAccessWrite(this->_backupDir)) {
+    if(Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_READ)) {
+      if(!Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_WRITE)) {
         this->_error = L"Backup folder \"";
         this->_error += this->_backupDir + L"\" write permission denied.";
         access_ok = false;
@@ -515,8 +515,8 @@ bool OmLocation::installAccess(HWND hWnd)
   // checks whether folder exists
   if(Om_isDir(this->_installDir)) {
     // checks for proper permissions on folder
-    if(Om_checkAccessRead(this->_installDir)) {
-      if(!Om_checkAccessWrite(this->_installDir)) {
+    if(Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_READ)) {
+      if(!Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_WRITE)) {
         this->_error = L"Destination folder \"";
         this->_error += this->_installDir + L"\" write permission denied.";
         access_ok = false;

@@ -1051,39 +1051,19 @@ int Om_moveToTrash(const wstring& path)
 }
 
 
-/// \brief check file permission
 ///
-/// Checks whether the current process application have the specified
-/// permissions on the given file or folder.
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-/// The possibles values for permission mask are the following:
-/// - \c FILE_GENERIC_READ
-/// - \c FILE_GENERIC_WRITE
-/// - \c FILE_GENERIC_EXECUTE
-/// - \c FILE_ALL_ACCESS
-///
-/// \param[in]  path    : Path to file or folder to check permission on.
-/// \param[in]  reqMask : Mask for requested permission.
-///
-/// \return True if requested permission are allowed, false otherwise
-///
-inline static bool __checkAccess(const wstring& path, DWORD reqMask)
+bool Om_checkAccess(const wstring& path, unsigned mask)
 {
-  std::wcout << L"__checkAccess: start for \"" << path <<"\" \n";
+  //return __checkAccess(path, mask);
+
   // Thanks to this article for giving some clues :
   // http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
 
-  // STEP 1 - creates an access "generic mapping", which is the access
-  // we want to check the reqMask against
-  GENERIC_MAPPING gm;                       //< Mask Map of Access to check for
-  gm.GenericRead =    FILE_GENERIC_READ;    //< check for FILE_GENERIC_READ
-  gm.GenericWrite =   FILE_GENERIC_WRITE;   //< check for FILE_GENERIC_WRITE
-  gm.GenericExecute = FILE_GENERIC_EXECUTE; //< check for FILE_GENERIC_EXECUTE
-  gm.GenericAll =     FILE_ALL_ACCESS;      //< check for FILE_ALL_ACCESS
-
-  // STEP 2 - retrieve the "security descriptor" (i.e owner, group, access
+  // STEP 1 - retrieve the "security descriptor" (i.e owner, group, access
   // rights, etc. ) of the specified file or folder.
-  SECURITY_DESCRIPTOR* sd;
+  SECURITY_DESCRIPTOR* pSd;
   DWORD sdSize;
   // here is the mask for file permission informations we want to retrieve it
   // seem to be the minimum required for an access check request
@@ -1092,81 +1072,80 @@ inline static bool __checkAccess(const wstring& path, DWORD reqMask)
   // first call to get required SECURITY_DESCRIPTOR size
   GetFileSecurityW(path.c_str(), sdMask, nullptr, 0, &sdSize);
   // allocate new SECURITY_DESCRIPTOR of the proper size
-  sd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize+1]);
+  pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize+1]);
   // second call to get SECURITY_DESCRIPTOR data
-  if(!GetFileSecurityW(path.c_str(), sdMask, sd, sdSize, &sdSize)) {
-    std::wcout << L"__checkAccess: GetFileSecurityW failed with code : " << GetLastError() << L"\n";
-    delete sd;
-    return false;
+  if(!GetFileSecurityW(path.c_str(), sdMask, pSd, sdSize, &sdSize)) {
+    delete pSd; return false;
   }
 
-  // STEP 3 - creates a "security token" of the current application process
+  // STEP 2 - creates a "security token" of the current application process
   //to be checked against the file or folder "security descriptor"
   DWORD daMask =  TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE
                 | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
-    std::wcout << L"__checkAccess: OpenProcessToken failed with code : " << GetLastError() << L"\n";
-    delete sd;
-    return false;
+    delete pSd; return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
   // so we need to duplicate it to transform it into a standard "user" token by
   // impersonate it...
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
-    std::wcout << L"__checkAccess: DuplicateToken failed with code : " << GetLastError() << L"\n";
-    CloseHandle(hTokenProc);
-    delete sd;
+    CloseHandle(hTokenProc); delete pSd;
     return false;
   }
 
-  // STEP 4 - Finally check if "security token" have the requested
-  // "generic mapping" access to the "security descriptor" of the specified file
+  // STEP 3 - Finally check if "security token" have the requested
+  // "mask" access to the "security descriptor" of the specified file
   // or folder
-  PRIVILEGE_SET ps;
-  memset(&ps, 0, sizeof(PRIVILEGE_SET)); // to be SURE well zeroing
+
+  // the GENERIC_MAPPING seem to be never used in most common scenarios,
+  // we set it here because the parameter is mandatory.
+  GENERIC_MAPPING gm = {GENERIC_READ,GENERIC_WRITE,GENERIC_EXECUTE,GENERIC_ALL};
+  PRIVILEGE_SET ps = {};
   DWORD psSize = sizeof(PRIVILEGE_SET);
   DWORD allowed = 0;      //< mask of allowed access
   BOOL  status = false;   //< access status according supplied GENERIC_MAPPING
-  if(!AccessCheck(sd, hTokenUser, reqMask, &gm, &ps, &psSize, &allowed, &status)) {
-    std::wcout << L"__checkAccess: AccessCheck failed with code : " << GetLastError() << L"\n";
+  AccessCheck(pSd, hTokenUser, mask, &gm, &ps, &psSize, &allowed, &status);
+
+  if(!status) {
+    std::wcout << L"__checkAccess: denied, allowed access (mask): \n";
+    AccessCheck(pSd, hTokenUser, FILE_READ_DATA, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_DATA + LIST_DIRECTORY\n";
+    AccessCheck(pSd, hTokenUser, FILE_WRITE_DATA, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_DATA + ADD_FILE\n";
+    AccessCheck(pSd, hTokenUser, FILE_APPEND_DATA, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_APPEND_DATA + ADD_SUBDIRECTORY\n";
+    AccessCheck(pSd, hTokenUser, FILE_READ_EA, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_EA\n";
+    AccessCheck(pSd, hTokenUser, FILE_WRITE_EA, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_EA\n";
+    AccessCheck(pSd, hTokenUser, FILE_EXECUTE, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_EXECUTE + TRAVERSE\n";
+    AccessCheck(pSd, hTokenUser, FILE_DELETE_CHILD, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_DELETE_CHILD\n";
+    AccessCheck(pSd, hTokenUser, FILE_READ_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_ATTRIBUTES\n";
+    AccessCheck(pSd, hTokenUser, FILE_WRITE_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_ATTRIBUTES\n";
+    AccessCheck(pSd, hTokenUser, DELETE, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  DELETE\n";
+    AccessCheck(pSd, hTokenUser, READ_CONTROL, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  READ_CONTROL\n";
+    AccessCheck(pSd, hTokenUser, WRITE_DAC, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  WRITE_DAC\n";
+    AccessCheck(pSd, hTokenUser, WRITE_OWNER, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  WRITE_OWNER\n";
+    AccessCheck(pSd, hTokenUser, SYNCHRONIZE, &gm, &ps, &psSize, &allowed, &status);
+    std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  SYNCHRONIZE\n";
+    status = 0;
   }
 
   CloseHandle(hTokenProc);
   CloseHandle(hTokenUser);
-  delete sd;
-
-  std::wcout << L"__checkAccess: \"" << path << L"\" returned " << (int)status << L"\n";
+  delete pSd;
 
   return status;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_checkAccessRead(const wstring& path)
-{
-  return __checkAccess(path, FILE_GENERIC_READ);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_checkAccessWrite(const wstring& path)
-{
-  return __checkAccess(path, FILE_GENERIC_WRITE);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_checkAccessReadWrite(const wstring& path)
-{
-  return __checkAccess(path, FILE_GENERIC_READ|FILE_GENERIC_WRITE);
 }
 
 

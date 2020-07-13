@@ -852,38 +852,47 @@ time_t Om_itemTime(const wstring& path);
 ///
 int Om_moveToTrash(const wstring& path);
 
-/// \brief Check read access
+/// \brief Read into directory access mask
 ///
-/// Checks whether application have read access to the specified
-/// file or folder.
+/// Access mask for directory read/traverse content
 ///
-/// \param[in]  path    : Item path.
-///
-/// \return True if application have read access, false otherwise.
-///
-bool Om_checkAccessRead(const wstring& path);
+#define OMM_ACCESS_DIR_READ     FILE_LIST_DIRECTORY|FILE_TRAVERSE|FILE_READ_ATTRIBUTES
 
-/// \brief Check write access
+/// \brief Write into directory access mask
 ///
-/// Checks whether application have write access to the specified
-/// file or folder.
+/// Access mask for directory write/add content
 ///
-/// \param[in]  path    : Item path.
-///
-/// \return True if application have write access, false otherwise.
-///
-bool Om_checkAccessWrite(const wstring& path);
+#define OMM_ACCESS_DIR_WRITE    FILE_ADD_FILE|FILE_ADD_SUBDIRECTORY|FILE_WRITE_ATTRIBUTES
 
-/// \brief Check read and write access
+/// \brief Execute file access mask
 ///
-/// Checks whether application have both read and write access to
-/// the specified file or folder.
+/// Access mask for fie execute
 ///
-/// \param[in]  path    : Item path.
+#define OMM_ACCESS_FILE_EXEC    FILE_EXECUTE
+
+/// \brief Read file access mask
 ///
-/// \return True if application have both read and write access, false otherwise.
+/// Access mask for file read data
 ///
-bool Om_checkAccessReadWrite(const wstring& path);
+#define OMM_ACCESS_FILE_READ    FILE_READ_DATA|FILE_READ_ATTRIBUTES
+
+/// \brief Write file access mask
+///
+/// Access mask for file write/append data
+///
+#define OMM_ACCESS_FILE_WRITE   FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES
+
+/// \brief check file or directory permission
+///
+/// Checks whether the current process application have the specified
+/// permissions on the given file or folder.
+///
+/// \param[in]  path  : Path to file or folder to check permission on.
+/// \param[in]  mask  : Mask for requested permission.
+///
+/// \return True if requested permission are allowed, false otherwise
+///
+bool Om_checkAccess(const wstring& path, unsigned mask);
 
 /// \brief Error message box.
 ///

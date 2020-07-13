@@ -923,7 +923,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 {
   if(!(this->_type & PKG_TYPE_ZIP)) {
     if(Om_isDir(this->_source)) {
-      if(!Om_checkAccessRead(this->_source)) {
+      if(!Om_checkAccess(this->_source, OMM_ACCESS_DIR_READ)) {
         this->_error = L"Installation source files location folder \"";
         this->_error += this->_source + L"\" read permission denied.";
         this->log(0, wstring(L"Package(")+path+L") Save", this->_error);
