@@ -69,7 +69,7 @@ void OmDialogWiz::_onShow()
 
   if(this->_pageDial.size() && this->_hwnd) {
 
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
       this->_pageDial[i]->modeless(false);
     }
 
@@ -131,7 +131,7 @@ void OmDialogWiz::_onResize()
     MapDialogRect(this->_hwnd, (LPRECT)&pos);
 
     // apply this for all dialogs
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
       SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
     }
   }
@@ -192,7 +192,7 @@ bool OmDialogWiz::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       // change page dialog visibility according selection
       if(this->_currPage >= 0) {
-        for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+        for(size_t i = 0; i < this->_pageDial.size(); ++i) {
           this->_pageDial[i]->hide();
         }
         this->_pageDial[this->_currPage]->show();

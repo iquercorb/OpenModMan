@@ -105,7 +105,7 @@ bool OmBatch::parse(const wstring& path)
   vector<OmXmlNode> loc_list;
   this->_config.xml().children(loc_list, L"location");
 
-  for(unsigned l = 0; l < loc_list.size(); ++l) {
+  for(size_t l = 0; l < loc_list.size(); ++l) {
 
     this->_locUuid.push_back(loc_list[l].attrAsString(L"uuid"));
 
@@ -116,7 +116,7 @@ bool OmBatch::parse(const wstring& path)
     vector<OmXmlNode> ins_list;
     loc_list[l].children(ins_list, L"install");
 
-    for(unsigned i = 0; i < ins_list.size(); ++i) {
+    for(size_t i = 0; i < ins_list.size(); ++i) {
       hash_list.push_back(Om_toUint64(ins_list[i].attrAsString(L"hash")));
       iden_list.push_back(ins_list[i].attrAsString(L"ident"));
     }
@@ -134,7 +134,7 @@ bool OmBatch::parse(const wstring& path)
 ///
 bool OmBatch::hasLocation(const wstring& uuid)
 {
-  for(unsigned i = 0; i < this->_locUuid.size(); ++i) {
+  for(size_t i = 0; i < this->_locUuid.size(); ++i) {
     if(this->_locUuid[i] == uuid)
       return true;
   }
@@ -148,7 +148,7 @@ bool OmBatch::hasLocation(const wstring& uuid)
 ///
 bool OmBatch::hasInstallHash(unsigned l, uint64_t hash)
 {
-  for(unsigned i = 0; i < this->_instHash[l].size(); ++i) {
+  for(size_t i = 0; i < this->_instHash[l].size(); ++i) {
     if(this->_instHash[l][i] == hash) return true;
   }
   return false;
@@ -160,7 +160,7 @@ bool OmBatch::hasInstallHash(unsigned l, uint64_t hash)
 ///
 bool OmBatch::hasInstallIdent(unsigned l, const wstring& ident)
 {
-  for(unsigned i = 0; i < this->_instIden[l].size(); ++i) {
+  for(size_t i = 0; i < this->_instIden[l].size(); ++i) {
     if(this->_instIden[l][i] == ident) return true;
   }
   return false;

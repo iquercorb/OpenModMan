@@ -299,7 +299,7 @@ void Om_fromUtf8(wstring& utf16, const string& utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_fromUtf8(wstring& wstr, const char* utf8)
+size_t Om_fromUtf8(wstring& wstr, const char* utf8)
 {
   // UTF-8 to UTF-16 implementation inspired from Thompson Lee
   // https://gist.github.com/tommai78101
@@ -307,7 +307,7 @@ unsigned Om_fromUtf8(wstring& wstr, const char* utf8)
   wstr.clear();
 
   const unsigned char* c = reinterpret_cast<const unsigned char*>(utf8);
-  unsigned p = 0;
+  size_t p = 0;
 
   while(c[p] != 0) {
 
@@ -374,47 +374,50 @@ void Om_toUtf8(string& utf8, const wstring& utf16)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
+size_t Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
 {
-  wchar_t wc;
-  uint32_t cp;
+  char16_t c;
+  uint32_t u;
+
   size_t p = 0;
 
   for(size_t i = 0; i < utf16.size(); ++i) {
 
-    wc = utf16[i];
+    c = utf16[i];
 
-    if(wc >= 0xd800 && wc <= 0xdbff) {
-      cp = ((wc - 0xd800) << 10) + 0x10000;
+    if(c >= 0xd800 && c <= 0xdbff) {
+      u = ((c - 0xd800) << 10) + 0x10000;
       continue; //< get next value
-    } else if(wc >= 0xdc00 && wc <= 0xdfff) {
-      cp |= wc - 0xdc00;
+    } else if(c >= 0xdc00 && c <= 0xdfff) {
+      u |= c - 0xdc00;
     } else {
-      cp = wc;
+      u = c;
     }
 
-    if(cp <= 0x7f) {
-      utf8[p++] = static_cast<char>(cp);
-    }else if (cp <= 0x7ff) {
+    if(u <= 0x7f) {
+      utf8[p] = static_cast<char>(u); ++p;
+    }else if (u <= 0x7ff) {
       if((p + 2) >= len) break;
-      utf8[p++] = static_cast<char>(0xc0 | ((cp >> 6) & 0x1f));
-      utf8[p++] = static_cast<char>(0x80 | ( cp       & 0x3f));
-    } else if (cp <= 0xffff) {
+      utf8[p] = static_cast<char>(0xc0 | ((u >> 6) & 0x1f)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ( u       & 0x3f)); ++p;
+    } else if (u <= 0xffff) {
       if((p + 3) >= len) break;
-      utf8[p++] = static_cast<char>(0xe0 | ((cp >> 12) & 0x0f));
-      utf8[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
-      utf8[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+      utf8[p] = static_cast<char>(0xe0 | ((u >> 12) & 0x0f)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3f)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ( u        & 0x3f)); ++p;
     } else {
-      utf8[p++] = static_cast<char>(0xf0 | ((cp >> 18) & 0x07));
-      utf8[p++] = static_cast<char>(0x80 | ((cp >> 12) & 0x3f));
-      utf8[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
-      utf8[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+      if((p + 4) >= len) break;
+      utf8[p] = static_cast<char>(0xf0 | ((u >> 18) & 0x07)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ((u >> 12) & 0x3f)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3f)); ++p;
+      utf8[p] = static_cast<char>(0x80 | ( u        & 0x3f)); ++p;
     }
 
-    cp = 0;
+    u = 0;
   }
 
   utf8[p] = '\0';
+
   return p;
 }
 
@@ -422,17 +425,18 @@ unsigned Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
+size_t Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
 {
   BOOL pBool;
-  return WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, ansi, len, nullptr, &pBool);
+  int n = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, ansi, len, nullptr, &pBool);
+  return (n > 0) ? static_cast<size_t>(n) : 0;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_toAnsiCp(string& ansi, const wstring& wstr)
+size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 {
   BOOL pBool;
   string result;
@@ -447,16 +451,18 @@ unsigned Om_toAnsiCp(string& ansi, const wstring& wstr)
 
     ansi = cbuf;
     delete [] cbuf;
+
+    return static_cast<size_t>(len);
   }
 
-  return len;
+  return 0;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_fromAnsiCp(wstring& wstr, const char* ansi)
+size_t Om_fromAnsiCp(wstring& wstr, const char* ansi)
 {
   wstring result;
 
@@ -470,16 +476,18 @@ unsigned Om_fromAnsiCp(wstring& wstr, const char* ansi)
 
     wstr = wcbuf;
     delete [] wcbuf;
+
+    return static_cast<size_t>(len);
   }
 
-  return len;
+  return 0;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
+size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 {
   char16_t c;
   uint32_t u;
@@ -537,7 +545,7 @@ unsigned Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_toZipCDR(string& cdr, const wstring& wstr)
+size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 {
   cdr.clear();
 
@@ -588,7 +596,7 @@ unsigned Om_toZipCDR(string& cdr, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_fromZipCDR(wstring& wstr, const char* cdr)
+size_t Om_fromZipCDR(wstring& wstr, const char* cdr)
 {
   // UTF-8 to UTF-16 implementation inspired from Thompson Lee
   // https://gist.github.com/tommai78101
@@ -596,7 +604,7 @@ unsigned Om_fromZipCDR(wstring& wstr, const char* cdr)
   wstr.clear();
 
   const unsigned char* c = reinterpret_cast<const unsigned char*>(cdr);
-  unsigned p = 0;
+  size_t p = 0;
 
   while(c[p] != 0) {
 

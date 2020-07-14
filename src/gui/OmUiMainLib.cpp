@@ -246,7 +246,7 @@ void OmUiMainLib::moveTrash()
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)", L"Move the selected package(s) to trash ?"))
       return;
 
-    for(unsigned i = 0; i < trash_list.size(); ++i) {
+    for(size_t i = 0; i < trash_list.size(); ++i) {
       Om_moveToTrash(trash_list[i]->sourcePath());
       this->_reloadLibLv();
     }
@@ -284,7 +284,7 @@ void OmUiMainLib::openExplore()
     }
   }
 
-  for(unsigned i = 0; i < explo_list.size(); ++i) {
+  for(size_t i = 0; i < explo_list.size(); ++i) {
 
     // the default behavior is to explore (open explorer with deployed folders)
     // however, it may happen that zip file are handled by an application
@@ -1034,7 +1034,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
         // to ensure we respect batch install order, we process one by one
         vector<unsigned> inst;
 
-        for(unsigned i = 0; i < inst_list.size(); ++i) {
+        for(size_t i = 0; i < inst_list.size(); ++i) {
 
           // clear and replace package index in vector
           inst.clear(); inst.push_back(inst_list[i]);

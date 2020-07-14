@@ -40,7 +40,7 @@ OmDialog::OmDialog(HINSTANCE hins) :
 ///
 OmDialog::~OmDialog()
 {
-  for(unsigned i = 0; i < this->_child.size(); ++i)
+  for(size_t i = 0; i < this->_child.size(); ++i)
      delete this->_child[i];
 }
 
@@ -59,7 +59,7 @@ long OmDialog::id() const
 ///
 OmDialog* OmDialog::childById(long id) const
 {
-  for(unsigned i = 0; i < this->_child.size(); ++i)
+  for(size_t i = 0; i < this->_child.size(); ++i)
      if(this->_child[i]->id() == id) return this->_child[i];
 
   return nullptr;
@@ -160,7 +160,7 @@ void OmDialog::refresh()
 
       this->_onRefresh();
 
-      for(unsigned i = 0; i < this->_child.size(); ++i)
+      for(size_t i = 0; i < this->_child.size(); ++i)
         this->_child[i]->refresh();
     }
   }
@@ -172,7 +172,7 @@ void OmDialog::refresh()
 ///
 void OmDialog::quit()
 {
-  for(unsigned i = 0; i < this->_child.size(); ++i) {
+  for(size_t i = 0; i < this->_child.size(); ++i) {
     this->_child[i]->quit();
   }
 
@@ -198,7 +198,7 @@ void OmDialog::quit()
 void OmDialog::addChild(OmDialog* dialog)
 {
   if(dialog->_parent) {
-    for(unsigned i = 0; i < dialog->_parent->_child.size(); ++i) {
+    for(size_t i = 0; i < dialog->_parent->_child.size(); ++i) {
       if(dialog->_parent->_child[i] == dialog) {
         dialog->_parent->_child.erase(dialog->_parent->_child.begin() + i);
         break;
@@ -220,7 +220,7 @@ void OmDialog::addChild(OmDialog* dialog)
 void OmDialog::setParent(OmDialog* dialog)
 {
   if(this->_parent) {
-    for(unsigned i = 0; i < this->_parent->_child.size(); ++i) {
+    for(size_t i = 0; i < this->_parent->_child.size(); ++i) {
       if(this->_parent->_child[i] == this) {
         this->_parent->_child.erase(this->_parent->_child.begin() + i);
         break;
@@ -253,7 +253,7 @@ void OmDialog::setAccelerator(long id)
 void OmDialog::setData(void* data)
 {
   this->_data = data;
-  for(unsigned i = 0; i < this->_child.size(); ++i)
+  for(size_t i = 0; i < this->_child.size(); ++i)
     this->_child[i]->setData(this->_data);
 }
 
@@ -264,7 +264,7 @@ void OmDialog::setData(void* data)
 bool OmDialog::sendMessage(MSG* msg) const
 {
   if(this->_hwnd) {
-    for(unsigned i = 0; i < this->_child.size(); ++i) {
+    for(size_t i = 0; i < this->_child.size(); ++i) {
       if(this->_child[i]->sendMessage(msg))
         return true;
     }
@@ -323,7 +323,7 @@ void OmDialog::_createTooltip(unsigned id, const wstring& text)
   swprintf(wcbuf, OMM_MAX_PATH, L"%ls", text.c_str());
 
   // associate the Tooltip with the target control.
-  TTTOOLINFOW toolInfo = { 0 };
+  TTTOOLINFOW toolInfo = { };
   toolInfo.cbSize = sizeof(toolInfo);
   toolInfo.hwnd = this->_hwnd;
   toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;

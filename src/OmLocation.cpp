@@ -551,7 +551,7 @@ bool OmLocation::installAccess(HWND hWnd)
 ///
 void OmLocation::packageListClear()
 {
-  for(unsigned i = 0; i < this->_package.size(); ++i)
+  for(size_t i = 0; i < this->_package.size(); ++i)
     delete this->_package[i];
   this->_package.clear();
 }
@@ -623,11 +623,11 @@ void OmLocation::packageListRefresh()
     bool in_list;
 
     // search for unavailable Packages Sources
-    for(unsigned p = 0; p < this->_package.size(); ++p) {
+    for(size_t p = 0; p < this->_package.size(); ++p) {
 
       // search this Package Source in Library folder item list
       in_list = false;
-      for(unsigned k = 0; k < ls.size(); ++k) {
+      for(size_t k = 0; k < ls.size(); ++k) {
         if(this->_package[p]->sourcePath() == ls[k]) { //< compare Source paths
           in_list = true; break;
         }
@@ -653,13 +653,13 @@ void OmLocation::packageListRefresh()
     uint64_t full_hash;
 
     // Search for new Packages Source
-    for(unsigned i = 0; i < ls.size(); ++i) {
+    for(size_t i = 0; i < ls.size(); ++i) {
       // search in all packages to found this file
       in_list = false;
 
       full_hash = Om_getXXHash3(Om_getFilePart(ls[i]));
 
-      for(unsigned p = 0; p < this->_package.size(); ++p) {
+      for(size_t p = 0; p < this->_package.size(); ++p) {
         // we first test against the Source Path
         if(ls[i] == this->_package[p]->sourcePath()) {
           in_list = true; break;
@@ -697,7 +697,7 @@ void OmLocation::packageListRefresh()
   Om_lsAll(&ls, this->_backupDir, true);
 
   // add all available and valid Backups
-  for(unsigned i = 0; i < ls.size(); ++i) {
+  for(size_t i = 0; i < ls.size(); ++i) {
     pkg = new OmPackage(this);
     if(pkg->backupParse(ls[i])) {
       this->_package.push_back(pkg);
@@ -717,10 +717,10 @@ void OmLocation::packageListRefresh()
   bool has_bck;
 
   // Link Sources to matching Backup, or add new Sources
-  for(unsigned i = 0; i < ls.size(); ++i) {
+  for(size_t i = 0; i < ls.size(); ++i) {
     has_bck = false;
     // check whether this Source matches an existing Backup
-    for(unsigned p = 0; p < this->_package.size(); p++) {
+    for(size_t p = 0; p < this->_package.size(); p++) {
       if(this->_package[p]->isBackupOf(ls[i])) {
         this->_package[p]->sourceParse(ls[i]);
         has_bck = true;
@@ -1005,7 +1005,7 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
     int result;
     wstring src, dst;
 
-    for(unsigned i = 0; i < ls.size(); ++i) {
+    for(size_t i = 0; i < ls.size(); ++i) {
 
       // check whether abort is requested
       if(pAbort) {
@@ -1094,7 +1094,7 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   // for standard uninstall list, but here we uninstall all packages.
 
   vector<unsigned> selec_list; //< our select list
-  for(unsigned i = 0; i < this->_package.size(); ++i) {
+  for(size_t i = 0; i < this->_package.size(); ++i) {
     if(this->_package[i]->hasBackup())
       selec_list.push_back(i);
   }
@@ -1117,7 +1117,7 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   // This stage explores the overlaps informations of all currently available
   // backups, in recursive way, to build a full dependencies list of package to
   // uninstall in order to prevent data corruption.
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // get the dependencies for this package, recursively. This will
     // also give us a uninstall list in the right order, built by tree
@@ -1134,12 +1134,12 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   // selection may already contain packages found during dependencies listing, the
   // second is to provide a concise list to warn user of additional package to
   // be uninstalled.
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // we add only if it is not already in the uninstall list created
     // from dependencies tree exploration
     unique = true;
-    for(unsigned j = 0; j < uninst_list.size(); ++j) {
+    for(size_t j = 0; j < uninst_list.size(); ++j) {
       if(this->_package[selec_list[i]] == uninst_list[j]) {
         unique = false; break;
       }
@@ -1156,7 +1156,7 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
     SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
   }
 
-  for(unsigned i = 0; i < uninst_list.size(); ++i) {
+  for(size_t i = 0; i < uninst_list.size(); ++i) {
 
     // update dialog message
     if(hSc) {
@@ -1255,7 +1255,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   bool unique;
 
   // so, we first get all dependency tree for packages selected by user
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // get the recursive dependency tree list for this package, this
     // will also give use an install list in the right order according
@@ -1272,7 +1272,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
       warn += L"\" have missing dependencies. The following package(s) are "
               L"required, but are not available in your library:\n";
 
-      for(unsigned i = 0; i < missg_list.size(); ++i) {
+      for(size_t i = 0; i < missg_list.size(); ++i) {
         warn += L"\n ";
         warn += missg_list[i];
       }
@@ -1290,12 +1290,12 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
 
     vector<OmPackage*> extra_list; //< packages to install not selected by user
 
-    for(unsigned i = 0; i < insta_list.size(); ++i) {
+    for(size_t i = 0; i < insta_list.size(); ++i) {
 
       // add only if the package is not in the user selection and
       // not already installed
       unique = true;
-      for(unsigned j = 0; j < selec_list.size(); ++j) {
+      for(size_t j = 0; j < selec_list.size(); ++j) {
         if(insta_list[i] == this->_package[selec_list[j]]) {
           unique = false; break;
         }
@@ -1315,7 +1315,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
       wstring warn = L"One or more selected package(s) have dependencies, the "
                      L"following package(s) also need to be installed:\n";
 
-      for(unsigned i = 0; i < extra_list.size(); ++i) {
+      for(size_t i = 0; i < extra_list.size(); ++i) {
         warn += L"\n ";
         warn += extra_list[i]->ident();
       }
@@ -1328,12 +1328,12 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   }
 
   // we now add the user selection into our real install list
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // we add only if it is not already in the installation list created
     // from dependencies tree exploration
     unique = true;
-    for(unsigned j = 0; j < insta_list.size(); ++j) {
+    for(size_t j = 0; j < insta_list.size(); ++j) {
       if(this->_package[selec_list[i]] == insta_list[j]) {
         unique = false; break;
       }
@@ -1352,7 +1352,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   lvi.mask = LVIF_IMAGE;
   lvi.iSubItem = 0;
 
-  for(unsigned i = 0; i < insta_list.size(); ++i) {
+  for(size_t i = 0; i < insta_list.size(); ++i) {
 
     // check whether abort is requested
     if(pAbort) {
@@ -1386,7 +1386,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
           warn += L"\" will overlaps and modify file(s) previously installed or "
                   L"modified by the following package(s):\n";
 
-          for(unsigned j = 0; j < olaps_list.size(); ++j) {
+          for(size_t j = 0; j < olaps_list.size(); ++j) {
             warn += L"\n ";
             warn += olaps_list[j]->name();
           }
@@ -1442,7 +1442,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   // global update of the list. We avoid recreating the list at this stage, this
   // more convenient than a full refresh.
   if(hLv) {
-    for(unsigned i = 0; i < this->_package.size(); ++i) {
+    for(size_t i = 0; i < this->_package.size(); ++i) {
       lvi.iItem = i;
       if(this->_package[i]->isType(PKG_TYPE_BCK)) {
         if(this->isBakcupOverlapped(this->_package[i])) {
@@ -1497,7 +1497,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   // This stage explores the overlaps informations of all currently available
   // backups, in recursive way, to build a full dependencies list of package to
   // uninstall in order to prevent data corruption.
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // get the dependencies for this package, recursively. This will
     // also give us a unsinstall list in the right order, built by tree
@@ -1518,11 +1518,11 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
 
     vector<OmPackage*> extra_list; //< package to uninstall not selected by user
 
-    for(unsigned i = 0; i < uninst_list.size(); ++i) {
+    for(size_t i = 0; i < uninst_list.size(); ++i) {
 
       // add only if the package is not in the user selection
       unique = true;
-      for(unsigned j = 0; j < selec_list.size(); ++j) {
+      for(size_t j = 0; j < selec_list.size(); ++j) {
         if(uninst_list[i] == this->_package[selec_list[j]]) {
           unique = false; break;
         }
@@ -1542,7 +1542,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
                      L"by other(s). To keep backups integrity the following "
                      L"Package(s) will also be uninstalled:\n";
 
-      for(unsigned i = 0; i < extra_list.size(); ++i) {
+      for(size_t i = 0; i < extra_list.size(); ++i) {
         warn += L"\n ";
         warn += extra_list[i]->name();
       }
@@ -1555,12 +1555,12 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   }
 
   // we now add the user selection into our real restoration list
-  for(unsigned i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < selec_list.size(); ++i) {
 
     // we add only if it is not already in the restoration list created
     // from dependencies tree exploration
     unique = true;
-    for(unsigned j = 0; j < uninst_list.size(); ++j) {
+    for(size_t j = 0; j < uninst_list.size(); ++j) {
       if(this->_package[selec_list[i]] == uninst_list[j]) {
         unique = false; break;
       }
@@ -1579,7 +1579,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   lvi.mask = LVIF_IMAGE;
   lvi.iSubItem = 0;
 
-  for(unsigned i = 0; i < uninst_list.size(); ++i) {
+  for(size_t i = 0; i < uninst_list.size(); ++i) {
 
     // check whether abort is requested
     if(pAbort) {
@@ -1645,7 +1645,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   // global update of the list. We avoid recreating the list at this stage, this
   // more convenient than a full refresh.
   if(hLv) {
-    for(unsigned i = 0; i < _package.size(); ++i) {
+    for(size_t i = 0; i < _package.size(); ++i) {
       lvi.iItem = i;
       if(this->_package[i]->isType(PKG_TYPE_BCK)) {
         if(this->isBakcupOverlapped(this->_package[i])) {
@@ -1665,11 +1665,11 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned OmLocation::getInstallOverlapList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
+size_t OmLocation::getInstallOverlapList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
 {
-  unsigned n = 0;
+  size_t n = 0;
 
-  for(unsigned i = 0; i < _package.size(); ++i) {
+  for(size_t i = 0; i < _package.size(); ++i) {
     if(package->couldOverlap(this->_package[i])) {
       pkg_list.push_back(this->_package[i]);
       ++n;
@@ -1683,11 +1683,11 @@ unsigned OmLocation::getInstallOverlapList(vector<OmPackage*>& pkg_list, const O
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned OmLocation::getInstallOverlapList(vector<uint64_t>& hash_list, const OmPackage* package) const
+size_t OmLocation::getInstallOverlapList(vector<uint64_t>& hash_list, const OmPackage* package) const
 {
-  unsigned n = 0;
+  size_t n = 0;
 
-  for(unsigned i = 0; i < _package.size(); ++i) {
+  for(size_t i = 0; i < _package.size(); ++i) {
     if(package->couldOverlap(this->_package[i])) {
       hash_list.push_back(this->_package[i]->hash());
       ++n;
@@ -1701,20 +1701,20 @@ unsigned OmLocation::getInstallOverlapList(vector<uint64_t>& hash_list, const Om
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned OmLocation::getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const
+size_t OmLocation::getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const
 {
-  unsigned n = 0;
+  size_t n = 0;
 
   bool unique;
   bool dpend_found;
   uint64_t file_hash;
 
-  for(unsigned i = 0; i < package->dependCount(); ++i) {
+  for(size_t i = 0; i < package->dependCount(); ++i) {
 
     file_hash = Om_getXXHash3(package->depend(i));
 
     dpend_found = false;
-    for(unsigned j = 0; j < this->_package.size(); ++j) {
+    for(size_t j = 0; j < this->_package.size(); ++j) {
 
       if(file_hash == this->_package[j]->hash()) {
 
@@ -1744,7 +1744,7 @@ unsigned OmLocation::getInstallExtraList(vector<OmPackage*>& pkg_list, vector<ws
       // dependency list for a bunch of package by calling this function for each
       // package without clearing the list */
       unique = true;
-      for(unsigned j = 0; j < miss_list.size(); ++j) {
+      for(size_t j = 0; j < miss_list.size(); ++j) {
         if(miss_list[j] == package->depend(i)) {
           unique = false; break;
         }
@@ -1762,11 +1762,11 @@ unsigned OmLocation::getInstallExtraList(vector<OmPackage*>& pkg_list, vector<ws
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
+size_t OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
 {
-  unsigned n = 0;
+  size_t n = 0;
   bool unique;
-  for(unsigned i = 0; i < this->_package.size(); ++i) {
+  for(size_t i = 0; i < this->_package.size(); ++i) {
     if(this->_package[i]->hasOverlap(package->_hash)) {
 
       // the function is recursive, we want the full list like a
@@ -1776,7 +1776,7 @@ unsigned OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPa
       // recursive way can produce doubles, we want to avoid it
       // so we add only if not already in the list
       unique = true;
-      for(unsigned j = 0; j < pkg_list.size(); ++j) {
+      for(size_t j = 0; j < pkg_list.size(); ++j) {
         if(pkg_list[j] == this->_package[i]) {
           unique = false; break;
         }

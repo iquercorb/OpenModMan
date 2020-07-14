@@ -237,7 +237,7 @@ class OmLocation
     ///
     /// \return Package count.
     ///
-    unsigned packageCount() const {
+    size_t packageCount() const {
       return _package.size();
     }
 
@@ -477,7 +477,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getInstallOverlapList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t getInstallOverlapList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief Get installation overlap list.
     ///
@@ -489,7 +489,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getInstallOverlapList(vector<uint64_t>& hash_list, const OmPackage* package) const;
+    size_t getInstallOverlapList(vector<uint64_t>& hash_list, const OmPackage* package) const;
 
     /// \brief Get installation dependency list.
     ///
@@ -501,7 +501,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
+    size_t getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
       return getInstallExtraList(pkg_list, miss_list, _package[i]);
     }
 
@@ -515,7 +515,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
+    size_t getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
 
     /// \brief Get restoration dependency list.
     ///
@@ -527,7 +527,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getUninstExtraList(vector<OmPackage*>& pkg_list, unsigned i) const {
+    size_t getUninstExtraList(vector<OmPackage*>& pkg_list, unsigned i) const {
       return getUninstExtraList(pkg_list, _package[i]);
     }
 
@@ -541,7 +541,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    unsigned getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief check backup overlap.
     ///
@@ -566,8 +566,8 @@ class OmLocation
     /// \return True if package is overlapped, false otherwise.
     ///
     bool isBakcupOverlapped(const OmPackage* package) const {
-      for(unsigned i = 0; i < this->_package.size(); ++i) {
-        if(this->_package[i]->hasOverlap(package->_hash))
+      for(size_t i = 0; i < _package.size(); ++i) {
+        if(_package[i]->hasOverlap(package->_hash))
           return true;
       }
       return false;

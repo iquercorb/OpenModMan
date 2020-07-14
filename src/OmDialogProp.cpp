@@ -77,7 +77,7 @@ void OmDialogProp::_pagesOnShow(unsigned tab_id)
     TCITEMW tcPage;
     tcPage.mask = TCIF_TEXT;
 
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
 
       tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
       SendMessageW(GetDlgItem(this->_hwnd, tab_id), TCM_INSERTITEMW, i, (LPARAM)&tcPage);
@@ -146,7 +146,7 @@ void OmDialogProp::_pagesOnResize(unsigned tab_id)
     pos[3] -= pos[1]; // height = bottom - top
 
     // apply this for all dialogs
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
       SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
     }
   }

@@ -129,7 +129,7 @@ class OmBatch
     ///
     /// \return Count of Location.
     ///
-    unsigned locationCount() {
+    size_t locationCount() {
       return this->_locUuid.size();
     }
 

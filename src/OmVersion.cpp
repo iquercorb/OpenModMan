@@ -42,7 +42,7 @@ OmVersion::OmVersion(const wstring& vstr) :
   wchar_t num[32];
 
   unsigned j = 0;
-  for(unsigned i = 0; i < vstr.size(); ++i) {
+  for(size_t i = 0; i < vstr.size(); ++i) {
 
     if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
 
@@ -95,7 +95,7 @@ OmVersion::OmVersion(const OmVersion& other) :
   _min(other._min),
   _rev(other._rev)
 {
-  for(unsigned i = 0; i < other._str.size(); ++i) {
+  for(size_t i = 0; i < other._str.size(); ++i) {
     _str.push_back(other._str[i]);
   }
 }
@@ -124,7 +124,7 @@ bool OmVersion::parse(const wstring& vstr)
   _str.clear();
 
   unsigned j = 0;
-  for(unsigned i = 0; i < vstr.size(); ++i) {
+  for(size_t i = 0; i < vstr.size(); ++i) {
 
     if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
 
@@ -203,7 +203,7 @@ OmVersion& OmVersion::operator=(const OmVersion& other)
   _min = other._min;
   _rev = other._rev;
 
-  for(unsigned i = 0; i < other._str.size(); ++i) {
+  for(size_t i = 0; i < other._str.size(); ++i) {
     _str.push_back(other._str[i]);
   }
 
@@ -225,7 +225,7 @@ OmVersion& OmVersion::operator=(const wstring& vstr)
   _str.clear();
 
   unsigned j = 0;
-  for(unsigned i = 0; i < vstr.size(); ++i) {
+  for(size_t i = 0; i < vstr.size(); ++i) {
 
     if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
 

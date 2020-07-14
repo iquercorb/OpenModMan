@@ -51,7 +51,7 @@ OmManager::OmManager() :
 ///
 OmManager::~OmManager()
 {
-  for(unsigned i = 0; i < this->_context.size(); ++i)
+  for(size_t i = 0; i < this->_context.size(); ++i)
     delete this->_context[i];
 
   // close log file
@@ -149,7 +149,7 @@ bool OmManager::init()
   this->getStartContexts(&autoload, start_files);
   if(autoload) {
     this->log(2, L"Manager", L"Load startup file(s)");
-    for(unsigned i = 0; i < start_files.size(); ++i) {
+    for(size_t i = 0; i < start_files.size(); ++i) {
       this->openContext(start_files[i]);
     }
     // select the last loaded Context
@@ -167,7 +167,7 @@ bool OmManager::quit()
 {
   this->log(2, L"Manager", L"Quit");
 
-  for(unsigned i = 0; i < this->_context.size(); ++i)
+  for(size_t i = 0; i < this->_context.size(); ++i)
     delete this->_context[i];
   this->_context.clear();
 
@@ -237,7 +237,7 @@ void OmManager::saveRecentFile(const wstring& path)
     vector<OmXmlNode> path_list;
     recent_list.children(path_list, L"path");
 
-    for(unsigned i = 0; i < path_list.size(); ++i) {
+    for(size_t i = 0; i < path_list.size(); ++i) {
       if(path == path_list[i].content()) {
         recent_list.remChild(path_list[i]);
         break;
@@ -297,7 +297,7 @@ void OmManager::loadRecentFiles(vector<wstring>& paths)
       recent_list.children(path_list, L"path");
 
       // verify each entries and remove ones which are no longer valid path
-      for(unsigned i = 0; i < path_list.size(); ++i) {
+      for(size_t i = 0; i < path_list.size(); ++i) {
         if(!Om_isFile(path_list[i].content())) {
           recent_list.remChild(path_list[i]);
         }
@@ -306,7 +306,7 @@ void OmManager::loadRecentFiles(vector<wstring>& paths)
       // retrieve (again) all <path> child in <recent_list> and fill path list
       path_list.clear();
       recent_list.children(path_list, L"path");
-      for(unsigned i = 0; i < path_list.size(); ++i) {
+      for(size_t i = 0; i < path_list.size(); ++i) {
         paths.push_back(path_list[i].content());
       }
 
@@ -366,11 +366,11 @@ void OmManager::saveStartContexts(bool enable, const vector<wstring>& path)
     start_list.children(start_file, L"file");
 
     // remove all current file list
-    for(unsigned i = 0; i < start_file.size(); ++i)
+    for(size_t i = 0; i < start_file.size(); ++i)
       start_list.remChild(start_file[i]);
 
     // add new list
-    for(unsigned i = 0; i < path.size(); ++i)
+    for(size_t i = 0; i < path.size(); ++i)
       start_list.addChild(L"file").setContent(path[i]);
 
     this->_config.save();
@@ -401,7 +401,7 @@ void OmManager::getStartContexts(bool* enable, vector<wstring>& path)
     start_list.children(start_file, L"file");
 
     // get list
-    for(unsigned i = 0; i < start_file.size(); ++i)
+    for(size_t i = 0; i < start_file.size(); ++i)
       path.push_back(start_file[i].content());
   }
 }
@@ -617,7 +617,7 @@ bool OmManager::makeContext(const wstring& title, const wstring& path, bool open
 bool OmManager::openContext(const wstring& path)
 {
   // check whether Context is already opened
-  for(unsigned i = 0; i < _context.size(); ++i) {
+  for(size_t i = 0; i < _context.size(); ++i) {
     if(path == _context[i]->path())
       return true;
   }
@@ -643,7 +643,7 @@ bool OmManager::openContext(const wstring& path)
 ///
 void OmManager::closeCurrContext()
 {
-  for(unsigned i = 0; i < this->_context.size(); ++i) {
+  for(size_t i = 0; i < this->_context.size(); ++i) {
     if(this->_curContext == this->_context[i]) {
       this->_context[i]->close();
       delete _context[i];

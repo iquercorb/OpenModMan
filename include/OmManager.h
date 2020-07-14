@@ -88,7 +88,7 @@ class OmManager
     ///
     /// \return Loaded Context count.
     ///
-    unsigned contextCount() const {
+    size_t contextCount() const {
       return _context.size();
     }
 

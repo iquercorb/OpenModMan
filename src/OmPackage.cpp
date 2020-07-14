@@ -565,7 +565,7 @@ bool OmPackage::backupParse(const wstring& path)
     vector<wstring> ls;
     Om_lsFile(&ls, this->_backup, true);
 
-    for(unsigned i = 0; i < ls.size(); ++i) {
+    for(size_t i = 0; i < ls.size(); ++i) {
       if(Om_extensionMatches(ls[i], OMM_BCK_FILE_EXT)) {
         if(bck_def.open(ls[i], OMM_CFG_SIGN_BCK)) {
           has_def = true;
@@ -868,9 +868,9 @@ bool OmPackage::couldOverlap(const OmPackage* other) const
 {
   if(other->_backupItem.size()) {
 
-    for(unsigned i = 0; i < _sourceItem.size(); ++i) {
+    for(size_t i = 0; i < _sourceItem.size(); ++i) {
 
-      for(unsigned j = 0; j < other->_backupItem.size(); ++j) {
+      for(size_t j = 0; j < other->_backupItem.size(); ++j) {
 
         // compare only if both are file or folder
         if(_sourceItem[i].type != other->_backupItem[j].type)
@@ -1114,7 +1114,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
   // add dependency to source definition
   if(this->_depends.size()) {
     OmXmlNode xml_dpnd = def_xml.addChild(L"dependencies");
-    for(unsigned i = 0; i < this->_depends.size(); ++i) {
+    for(size_t i = 0; i < this->_depends.size(); ++i) {
       xml_dpnd.addChild(L"ident").setContent(this->_depends[i]);
     }
   }
@@ -1161,7 +1161,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
   "Its content is respecting the destination folder tree and includes files to\r\n"
   "be overwritten or added :\r\n"
   "\r\n";
-  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+  for(size_t i = 0; i < this->_sourceItem.size(); ++i) {
     pkg_readme += "   ";
     pkg_readme += Om_toUtf8(this->_sourceItem[i].path);
     pkg_readme += "\r\n";
@@ -1391,7 +1391,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   OmXmlNode  xml_item;
   wstring app_file, bck_file, zcd_entry, bck_tree;
 
-  for(unsigned i = 0, z = 0; i < this->_sourceItem.size(); ++i) {
+  for(size_t i = 0, z = 0; i < this->_sourceItem.size(); ++i) {
     // check for abort request
     if(pAbort) {
       if(*pAbort) {
@@ -1533,7 +1533,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   // we add an overlap list
   if(ovlap_list.size()) {
     OmXmlNode xml_ovlap = def_xml.addChild(L"overlap");
-    for(unsigned i = 0; i < ovlap_list.size(); ++i) {
+    for(size_t i = 0; i < ovlap_list.size(); ++i) {
       xml_ovlap.addChild(L"hash").setContent(Om_toHexString(ovlap_list[i]));
     }
   }
@@ -1566,7 +1566,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
 
   // backup is done without error, we now can update the local overlap list
   if(ovlap_list.size()) {
-    for(unsigned i = 0; i < ovlap_list.size(); ++i) {
+    for(size_t i = 0; i < ovlap_list.size(); ++i) {
       this->_overlap.push_back(ovlap_list[i]);
     }
   }
@@ -1613,7 +1613,7 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
     }
   }
 
-  for(unsigned i = 0; i < this->_sourceItem.size(); ++i) {
+  for(size_t i = 0; i < this->_sourceItem.size(); ++i) {
     // check for abort request
     if(pAbort) {
       if(*pAbort) {
@@ -1731,7 +1731,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
     wstring app_file;
 
     // first we restore genuine files from zip
-    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+    for(size_t i = 0; i < this->_backupItem.size(); ++i) {
       // we are interested only by backup file to copy
       if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
         // path to installed file to be overwritten
@@ -1778,7 +1778,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
     wstring bck_file, app_file;
 
     // first we restore genuine files from zip
-    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+    for(size_t i = 0; i < this->_backupItem.size(); ++i) {
       // we are interested only by backup file to copy
       if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
         // path to file in the backup sub-directory
@@ -1825,7 +1825,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
 
   wstring del_file;
 
-  unsigned n = this->_backupItem.size();
+  size_t n = this->_backupItem.size();
   while(n--) {
     // we are interested only by file to cleanup
     if(this->_backupItem[n].dest == PKGITEM_DEST_DEL) {
@@ -1918,7 +1918,7 @@ void OmPackage::_undoInstall(HWND hPb)
     wstring bck_file, app_file, del_file;
 
     // first we restore genuine files from zip
-    for(unsigned i = 0; i < this->_backupItem.size(); ++i) {
+    for(size_t i = 0; i < this->_backupItem.size(); ++i) {
       // we are interested only by backup file to copy
       if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
         // path to file in the backup sub-directory
@@ -1965,7 +1965,7 @@ void OmPackage::_undoInstall(HWND hPb)
     // Otherwise, we may  have to request to delete folders before their
     // contents, which simply does not work.
 
-    unsigned n = this->_backupItem.size();
+    size_t n = this->_backupItem.size();
     while(n--) {
       // we are interested only by file to cleanup
       if(this->_backupItem[n].dest == PKGITEM_DEST_DEL) {

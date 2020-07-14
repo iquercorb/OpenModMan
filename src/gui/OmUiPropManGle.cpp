@@ -116,7 +116,7 @@ void OmUiPropManGle::_onShow()
   EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
 
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
-  for(unsigned i = 0; i < start_files.size(); ++i) {
+  for(size_t i = 0; i < start_files.size(); ++i) {
     SendMessageW(hLb, LB_ADDSTRING, 0, (LPARAM)start_files[i].c_str());
   }
 

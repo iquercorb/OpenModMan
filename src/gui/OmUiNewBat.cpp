@@ -329,7 +329,7 @@ bool OmUiNewBat::_apply()
     // new hash list
     vector<uint64_t> hash_list;
 
-    for(unsigned i = 0; i < this->_incLs[l].size(); ++i) {
+    for(size_t i = 0; i < this->_incLs[l].size(); ++i) {
 
       // retrieve package from stored index
       package = this->_context->location(l)->package(this->_incLs[l][i]);
@@ -396,7 +396,7 @@ void OmUiNewBat::_upPkg()
     SendMessageW(hlsr, LB_SETITEMDATA, lb_sel, (LPARAM)index);
 
     // swap package index to move up
-    for(unsigned k = 0; k < this->_incLs[l].size(); ++k) {
+    for(size_t k = 0; k < this->_incLs[l].size(); ++k) {
       if(this->_incLs[l][k] == index) {
         int temp = this->_incLs[l][k];
         this->_incLs[l][k] = this->_incLs[l][k+1];
@@ -454,7 +454,7 @@ void OmUiNewBat::_dnPkg()
     SendMessageW(hlsr, LB_SETSEL , true, (LPARAM)(lb_sel));
 
     // swap package index to move up
-    for(unsigned k = 0; k < this->_incLs[l].size(); ++k) {
+    for(size_t k = 0; k < this->_incLs[l].size(); ++k) {
       if(this->_incLs[l][k] == index) {
         int temp = this->_incLs[l][k];
         this->_incLs[l][k] = this->_incLs[l][k+1];
@@ -504,7 +504,7 @@ void OmUiNewBat::_addPkg()
       index = SendMessageW(hlsl, LB_GETITEMDATA, lb_sel[i], 0);
 
       // remove package index from left mirror list
-      for(unsigned k = 0; k < this->_excLs[l].size(); ++k) {
+      for(size_t k = 0; k < this->_excLs[l].size(); ++k) {
         if(this->_excLs[l][k] == index) {
           this->_excLs[l].erase(this->_excLs[l].begin()+k);
           break;
@@ -570,7 +570,7 @@ void OmUiNewBat::_remPkg()
       index = SendMessageW(hlsr, LB_GETITEMDATA, lb_sel[i], 0);
 
       // remove package index from right mirror list
-      for(unsigned k = 0; k < this->_incLs[l].size(); ++k) {
+      for(size_t k = 0; k < this->_incLs[l].size(); ++k) {
         if(this->_incLs[l][k] == index) {
           this->_incLs[l].erase(this->_incLs[l].begin()+k);
           break;
@@ -631,7 +631,7 @@ void OmUiNewBat::_rebuildPkgLb()
   SendMessageW(hlsl, LB_RESETCONTENT, 0, 0);
 
   // fill the left List-Box
-  for(unsigned i = 0; i < this->_excLs[l].size(); i++) {
+  for(size_t i = 0; i < this->_excLs[l].size(); i++) {
 
     p = this->_excLs[l][i];
     package = location->package(p);
@@ -645,7 +645,7 @@ void OmUiNewBat::_rebuildPkgLb()
   SendMessageW(hlsr, LB_RESETCONTENT, 0, 0);
 
   // fill the left List-Box
-  for(unsigned i = 0; i < this->_incLs[l].size(); i++) {
+  for(size_t i = 0; i < this->_incLs[l].size(); i++) {
 
     p = this->_incLs[l][i];
     package = location->package(p);

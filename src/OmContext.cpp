@@ -130,6 +130,7 @@ OmContext::OmContext(OmManager* manager) :
   _icon(nullptr),
   _location(),
   _curLocation(nullptr),
+  _batch(),
   _valid(false),
   _error()
 {
@@ -210,7 +211,7 @@ bool OmContext::open(const wstring& path)
 
     vector<wstring> omt_list;
 
-    for(unsigned i = 0; i < subdir.size(); ++i) {
+    for(size_t i = 0; i < subdir.size(); ++i) {
 
       // search for file(s) with the OMM_LOC_FILE_EXT extension within the sub-folder
       if(__OmContext_lsLocDef(omt_list, this->_home + L"\\" + subdir[i]) > 0) {
@@ -239,7 +240,7 @@ bool OmContext::open(const wstring& path)
 
   if(files.size()) {
 
-    for(unsigned i = 0; i < files.size(); ++i) {
+    for(size_t i = 0; i < files.size(); ++i) {
 
       this->log(2, L"Context("+this->_title+L")", L"Found Batch: \""+Om_getFilePart(files[i])+L"\"");
 
@@ -281,7 +282,7 @@ void OmContext::close()
 
     this->_config.close();
 
-    for(unsigned i = 0; i < this->_location.size(); ++i)
+    for(size_t i = 0; i < this->_location.size(); ++i)
       delete this->_location[i];
     this->_location.clear();
 
@@ -614,7 +615,7 @@ bool OmContext::purgeLocation(int i, HWND hWnd, HWND hPb, HWND hSc, const bool *
     this->_location.erase(this->_location.begin()+i);
 
     // update locations order indexing
-    for(unsigned i = 0; i < this->_location.size(); ++i) {
+    for(size_t i = 0; i < this->_location.size(); ++i) {
       this->_location[i]->setIndex(i);
     }
 
@@ -691,13 +692,13 @@ bool OmContext::makeBatch(const wstring& title, const vector<vector<uint64_t>>& 
   OmPackage* package;
   OmXmlNode xml_loc, xml_ins;
 
-  for(unsigned l = 0; l < this->_location.size(); ++l) {
+  for(size_t l = 0; l < this->_location.size(); ++l) {
 
     // add <location> entry
     xml_loc = def_xml.addChild(L"location");
     xml_loc.setAttr(L"uuid", this->_location[l]->uuid());
 
-    for(unsigned i = 0; i < hash_lsts[l].size(); ++i) {
+    for(size_t i = 0; i < hash_lsts[l].size(); ++i) {
 
       package = this->_location[l]->findPackage(hash_lsts[l][i]);
 
@@ -737,11 +738,11 @@ bool OmContext::makeBatch(const wstring& title, const vector<vector<uint64_t>>& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::deleteBatch(unsigned i)
+bool OmContext::deleteBatch(unsigned id)
 {
-  if(i < this->_batch.size()) {
+  if(id < this->_batch.size()) {
 
-    OmBatch* batch = this->_batch[i];
+    OmBatch* batch = this->_batch[id];
 
     wstring bat_path = batch->path();
 
@@ -763,10 +764,10 @@ bool OmContext::deleteBatch(unsigned i)
     delete batch;
 
     // remove from list
-    this->_batch.erase(this->_batch.begin()+i);
+    this->_batch.erase(this->_batch.begin()+id);
 
     // update batches order indexing
-    for(unsigned i = 0; i < this->_batch.size(); ++i) {
+    for(size_t i = 0; i < this->_batch.size(); ++i) {
       this->_batch[i]->setIndex(i);
     }
 

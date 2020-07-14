@@ -150,7 +150,7 @@ class OmContext
     ///
     /// \return Location count.
     ///
-    unsigned locationCount() {
+    size_t locationCount() {
       return _location.size();
     }
 
@@ -190,7 +190,7 @@ class OmContext
     ///
     /// \return Batch count.
     ///
-    unsigned batchCount() {
+    size_t batchCount() {
       return _batch.size();
     }
 

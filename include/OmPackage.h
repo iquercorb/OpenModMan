@@ -323,7 +323,7 @@ class OmPackage
     ///
     /// \return Count of item in backup tree list.
     ///
-    unsigned backupItemCount() const {
+    size_t backupItemCount() const {
       return _backupItem.size();
     }
 
@@ -345,7 +345,7 @@ class OmPackage
     ///
     /// \return Count of item in source tree list.
     ///
-    unsigned sourceItemCount() const {
+    size_t sourceItemCount() const {
       return _sourceItem.size();
     }
 
@@ -367,7 +367,7 @@ class OmPackage
     ///
     /// \return Count of source dependencies packages.
     ///
-    unsigned dependCount() const {
+    size_t dependCount() const {
       return _depends.size();
     }
 
@@ -390,7 +390,10 @@ class OmPackage
     /// \param[in]  name    : Dependency Package name to add
     ///
     void addDepend(const wstring& name) {
-      return _depends.push_back(name);
+      for(size_t i = 0; i < _depends.size(); ++i) {
+        if(name == _depends[i]) return;
+      }
+      _depends.push_back(name);
     }
 
     /// \brief Check installation overlapping.
@@ -411,7 +414,7 @@ class OmPackage
     ///
     /// \return Count of overlapped Package by this one.
     ///
-    unsigned overlapCount() const {
+    size_t overlapCount() const {
       return _overlap.size();
     }
 
@@ -436,7 +439,7 @@ class OmPackage
     /// \return Hash value of overlapped Package.
     ///
     bool hasOverlap(uint64_t hash) const {
-      for(unsigned i = 0; i < _overlap.size(); ++i) {
+      for(size_t i = 0; i < _overlap.size(); ++i) {
         if(hash == _overlap[i]) return true;
       }
       return false;

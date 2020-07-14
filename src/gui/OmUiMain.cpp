@@ -34,6 +34,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
+  _pageName(),
+  _pageDial(),
   _quitPending(false),
   _onProcess(false),
   _safeEdit(false),
@@ -264,7 +266,7 @@ void OmUiMain::_pagesOnShow(unsigned tab_id)
     TCITEMW tcPage;
     tcPage.mask = TCIF_TEXT;
 
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
 
       tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
       SendMessageW(GetDlgItem(this->_hwnd, tab_id), TCM_INSERTITEMW, i, (LPARAM)&tcPage);
@@ -333,7 +335,7 @@ void OmUiMain::_pagesOnResize(unsigned tab_id)
     pos[3] -= pos[1]; // height = bottom - top
 
     // apply this for all dialogs
-    for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
       SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
     }
   }
@@ -346,7 +348,7 @@ void OmUiMain::_pagesOnResize(unsigned tab_id)
 void OmUiMain::_pagesOnClose()
 {
   // send an abort message to all Tab child dialogs
-  for(unsigned i = 0; i < this->_pageDial.size(); ++i) {
+  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
     PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0), 0);
   }
 }
@@ -416,7 +418,7 @@ void OmUiMain::_reloadMenu()
   // add the recent file path or disable popup
   if(path.size()) {
     wchar_t wcbuf[OMM_MAX_PATH];
-    for(unsigned i = 0; i < path.size(); ++i) {
+    for(size_t i = 0; i < path.size(); ++i) {
       swprintf(wcbuf, OMM_MAX_PATH, L"&%d %ls", path.size() - i, path[i].c_str());
       InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, wcbuf);
     }

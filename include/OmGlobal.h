@@ -219,7 +219,7 @@ void Om_fromUtf8(wstring& wstr, const string& utf8);
 ///
 /// \return Count of read UTF-8 characters.
 ///
-unsigned Om_fromUtf8(wstring& wstr, const char* utf8);
+size_t Om_fromUtf8(wstring& wstr, const char* utf8);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
@@ -251,7 +251,7 @@ void Om_toUtf8(string& utf8, const wstring& wstr);
 ///
 /// \return Count of written ANSI characters.
 ///
-unsigned Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr);
+size_t Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr);
 
 /// \brief Conversion to ANSI multibyte.
 ///
@@ -263,7 +263,7 @@ unsigned Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr);
 ///
 /// \return Count of written ANSI characters.
 ///
-unsigned Om_toAnsiCp(string& ansi, const wstring& wstr);
+size_t Om_toAnsiCp(string& ansi, const wstring& wstr);
 
 /// \brief Conversion from ANSI multibyte.
 ///
@@ -275,7 +275,7 @@ unsigned Om_toAnsiCp(string& ansi, const wstring& wstr);
 ///
 /// \return Count of written wide characters.
 ///
-unsigned Om_fromAnsiCp(const wstring& wstr, const char* ansi);
+size_t Om_fromAnsiCp(const wstring& wstr, const char* ansi);
 
 /// \brief Zip CDR entry to Windows path conversion.
 ///
@@ -287,7 +287,7 @@ unsigned Om_fromAnsiCp(const wstring& wstr, const char* ansi);
 ///
 /// \return Count of read CDR entry characters.
 ///
-unsigned Om_fromZipCDR(wstring& wstr, const char* zcdr);
+size_t Om_fromZipCDR(wstring& wstr, const char* zcdr);
 
 /// \brief Windows path to Zip CDR entry conversion.
 ///
@@ -300,7 +300,7 @@ unsigned Om_fromZipCDR(wstring& wstr, const char* zcdr);
 ///
 /// \return Count of written CDR entry characters.
 ///
-unsigned Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
+size_t Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 
 /// \brief Windows path to Zip CDR entry conversion.
 ///
@@ -312,7 +312,7 @@ unsigned Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 ///
 /// \return Count of written CDR entry characters.
 ///
-unsigned Om_toZipCDR(string& zcdr, const wstring& wstr);
+size_t Om_toZipCDR(string& zcdr, const wstring& wstr);
 
 /// \brief Wide string to multibyte string conversion.
 ///
@@ -507,7 +507,7 @@ inline bool Om_namesMatches(const wstring& left, const wstring& right)
   if(left.size() != right.size())
     return false;
 
-  for(unsigned i = 0; i < left.size(); ++i) {
+  for(size_t i = 0; i < left.size(); ++i) {
     if(towupper(left[i]) != towupper(right[i]))
       return false;
   }
@@ -529,7 +529,7 @@ inline bool Om_namesMatches(const wstring& left, const wchar_t* right)
   if(left.size() != wcslen(right))
     return false;
 
-  for(unsigned i = 0; i < left.size(); ++i) {
+  for(size_t i = 0; i < left.size(); ++i) {
     if(towupper(left[i]) != towupper(right[i]))
       return false;
   }
