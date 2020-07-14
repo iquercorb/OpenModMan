@@ -271,6 +271,7 @@ wstring Om_genUUID()
 }
 
 
+
 ///
 /// UTF-8 <-> UTF-16 STL converter
 ///
@@ -298,42 +299,53 @@ void Om_fromUtf8(wstring& utf16, const string& utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_fromUtf8(wstring& utf16, const char* utf8)
+unsigned Om_fromUtf8(wstring& wstr, const char* utf8)
 {
-  unsigned char ch;
-  uint32_t cp;
-  size_t p = 0;
+  // UTF-8 to UTF-16 implementation inspired from Thompson Lee
+  // https://gist.github.com/tommai78101
 
-  utf16.clear();
+  wstr.clear();
 
-  while(utf8[p] != 0) {
+  const unsigned char* c = reinterpret_cast<const unsigned char*>(utf8);
+  unsigned p = 0;
 
-    ch = static_cast<unsigned char>(utf8[p]);
+  while(c[p] != 0) {
 
-    if(ch <= 0x7f) {
-      cp = ch;
-    } else if (ch <= 0xbf) {
-      cp = (cp << 6) | (ch & 0x3f);
-    } else if (ch <= 0xdf) {
-      cp = ch & 0x1f;
-    } else if (ch <= 0xef) {
-      cp = ch & 0x0f;
-    } else {
-      cp = ch & 0x07;
-    }
-
-    ++p;
-
-    if(((utf8[p] & 0xc0) != 0x80) && (cp <= 0x10ffff)) {
-
-      if(sizeof(wchar_t) > 2) {
-        utf16.push_back(static_cast<wchar_t>(cp));
-      } else if (cp > 0xffff) {
-        utf16.push_back(static_cast<wchar_t>(0xd800 + (cp >> 10)));
-        utf16.push_back(static_cast<wchar_t>(0xdc00 + (cp & 0x03ff)));
-      } else if (cp < 0xd800 || cp >= 0xe000) {
-        utf16.push_back(static_cast<wchar_t>(cp));
+    if(c[p] < 0x80) {
+      wstr.push_back(static_cast<wchar_t>(c[p])); ++p;
+    } else if(c[p] < 0xC0) { //< 0x80..0xBF reserved for UTF-8 encoding.
+      ++p;
+    } else if(c[p] < 0xE0) {
+      char16_t h =    static_cast<char16_t>(c[p] & 0x1F); p++;
+      char16_t l =    static_cast<char16_t>(c[p] & 0x3F); p++;
+      int32_t u = (h << 8) | l;
+      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
+        wstr.push_back(static_cast<wchar_t>(u));
       }
+    } else if(c[p] < 0xF0) {
+      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
+      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      int32_t u = (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
+      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
+        wstr.push_back(static_cast<wchar_t>(u));
+      }
+    } else if(c[p] < 0xF8) {
+      char16_t c6 =   static_cast<char16_t>(c[p] & 0x4) >> 2;
+      char16_t hc5 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc5 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
+      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      int32_t u = (c6 << 4) | (hc5 << 2) | lc5 | (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
+      wstr.push_back(static_cast<wchar_t>((u - 0x10000) % 0x400 + 0xDC00));
+      wstr.push_back(static_cast<wchar_t>((u - 0x10000) / 0x400 + 0xD800));
+    } else { //< invalid
+      p++;
     }
   }
 
@@ -469,50 +481,51 @@ unsigned Om_fromAnsiCp(wstring& wstr, const char* ansi)
 ///
 unsigned Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 {
-  wchar_t wc;
-  uint32_t cp;
+  char16_t c;
+  uint32_t u;
+
   size_t p = 0;
 
   for(size_t i = 0; i < wstr.size(); ++i) {
 
-    wc = wstr[i];
+    c = wstr[i];
 
     // convert back-slash to forward-slash
-    if(wc == L'\\') {
+    if(c == L'\\') {
       if((p + 1) == len) break;
-      cdr[p++] = '/';
+      cdr[p] = '/'; ++p;
       continue;
     }
 
-    if(wc >= 0xd800 && wc <= 0xdbff) {
-      cp = ((wc - 0xd800) << 10) + 0x10000;
-      continue; //< get next value
-    } else if(wc >= 0xdc00 && wc <= 0xdfff) {
-      cp |= wc - 0xdc00;
+    if(c >= 0xD800 && c <= 0xDBFF) {
+      u = ((c - 0xD800) << 10) + 0x10000; continue; //< get next char
+    } else if(c >= 0xDC00 && c <= 0xDFFF) {
+      u |= c - 0xDC00;
     } else {
-      cp = wc;
+      u = c;
     }
 
-    if(cp <= 0x7f) {
+    if(u <= 0x7F) {
       if((p + 1) == len) break;
-      cdr[p++] = static_cast<char>(cp);
-    }else if (cp <= 0x7ff) {
+      cdr[p] = static_cast<char>(u); ++p;
+    }else if(u <= 0x7FF) {
       if((p + 2) >= len) break;
-      cdr[p++] = static_cast<char>(0xc0 | ((cp >> 6) & 0x1f));
-      cdr[p++] = static_cast<char>(0x80 | ( cp       & 0x3f));
-    } else if (cp <= 0xffff) {
+      cdr[p] = static_cast<char>(0xC0 | ((u >> 6) & 0x1F)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ( u       & 0x3F)); ++p;
+    } else if(u <= 0xFFFF) {
       if((p + 3) >= len) break;
-      cdr[p++] = static_cast<char>(0xe0 | ((cp >> 12) & 0x0f));
-      cdr[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
-      cdr[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+      cdr[p] = static_cast<char>(0xE0 | ((u >> 12) & 0x0F)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3F)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ( u        & 0x3F)); ++p;
     } else {
-      cdr[p++] = static_cast<char>(0xf0 | ((cp >> 18) & 0x07));
-      cdr[p++] = static_cast<char>(0x80 | ((cp >> 12) & 0x3f));
-      cdr[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
-      cdr[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+      if((p + 4) >= len) break;
+      cdr[p] = static_cast<char>(0xF0 | ((u >> 18) & 0x07)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ((u >> 12) & 0x3F)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3F)); ++p;
+      cdr[p] = static_cast<char>(0x80 | ( u        & 0x3F)); ++p;
     }
 
-    cp = 0;
+    u = 0;
   }
 
   cdr[p] = '\0';
@@ -524,55 +537,115 @@ unsigned Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-unsigned Om_fromZipCDR(wstring& wstr, const char* cdr)
+unsigned Om_toZipCDR(string& cdr, const wstring& wstr)
 {
-  unsigned char ch;
-  uint32_t cp;
-  size_t p = 0;
+  cdr.clear();
 
-  wstr.clear();
+  char16_t c;
+  uint32_t u;
 
-  while(cdr[p] != 0) {
+  for(size_t i = 0; i < wstr.size(); ++i) {
 
-    ch = static_cast<unsigned char>(cdr[p]);
+    c = wstr[i];
 
-    // convert forward-slash to back-slash
-    if(ch == '/') {
-      wstr.push_back(L'\\');
-      ++p;
+    // convert back-slash to forward-slash
+    if(c == L'\\') {
+      cdr.push_back('/');
       continue;
     }
 
-    if(ch <= 0x7f) {
-      cp = ch;
-    } else if (ch <= 0xbf) {
-      cp = (cp << 6) | (ch & 0x3f);
-    } else if (ch <= 0xdf) {
-      cp = ch & 0x1f;
-    } else if (ch <= 0xef) {
-      cp = ch & 0x0f;
+    if(c >= 0xD800 && c <= 0xDBFF) {
+      u = ((c - 0xD800) << 10) + 0x10000; continue; //< get next char
+    } else if(c >= 0xDC00 && c <= 0xDFFF) {
+      u |= c - 0xDC00;
     } else {
-      cp = ch & 0x07;
+      u = c;
     }
 
-    ++p;
+    if(u <= 0x7F) {
+      cdr.push_back(static_cast<char>(u));
+    }else if(u <= 0x7FF) {
+      cdr.push_back(static_cast<char>(0xC0 | ((u >> 6) & 0x1F)));
+      cdr.push_back(static_cast<char>(0x80 | ( u       & 0x3F)));
+    } else if(u <= 0xFFFF) {
+      cdr.push_back(static_cast<char>(0xE0 | ((u >> 12) & 0x0F)));
+      cdr.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
+      cdr.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
+    } else {
+      cdr.push_back(static_cast<char>(0xF0 | ((u >> 18) & 0x07)));
+      cdr.push_back(static_cast<char>(0x80 | ((u >> 12) & 0x3F)));
+      cdr.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
+      cdr.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
+    }
 
-    if(((cdr[p] & 0xc0) != 0x80) && (cp <= 0x10ffff)) {
+    u = 0;
+  }
 
-      if(sizeof(wchar_t) > 2) {
-        wstr.push_back(static_cast<wchar_t>(cp));
-      } else if (cp > 0xffff) {
-        wstr.push_back(static_cast<wchar_t>(0xd800 + (cp >> 10)));
-        wstr.push_back(static_cast<wchar_t>(0xdc00 + (cp & 0x03ff)));
-      } else if (cp < 0xd800 || cp >= 0xe000) {
-        wstr.push_back(static_cast<wchar_t>(cp));
+  return cdr.size();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_fromZipCDR(wstring& wstr, const char* cdr)
+{
+  // UTF-8 to UTF-16 implementation inspired from Thompson Lee
+  // https://gist.github.com/tommai78101
+
+  wstr.clear();
+
+  const unsigned char* c = reinterpret_cast<const unsigned char*>(cdr);
+  unsigned p = 0;
+
+  while(c[p] != 0) {
+
+    // convert forward-slash to back-slash
+    if(c[p] == '/') {
+      wstr.push_back(L'\\'); ++p;
+      continue;
+    }
+
+    if(c[p] < 0x80) {
+      wstr.push_back(static_cast<wchar_t>(c[p])); ++p;
+    } else if(c[p] < 0xC0) { //< 0x80..0xBF reserved for UTF-8 encoding.
+      ++p;
+    } else if(c[p] < 0xE0) {
+      char16_t h =    static_cast<char16_t>(c[p] & 0x1F); p++;
+      char16_t l =    static_cast<char16_t>(c[p] & 0x3F); p++;
+      int32_t u = (h << 8) | l;
+      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
+        wstr.push_back(static_cast<wchar_t>(u));
       }
+    } else if(c[p] < 0xF0) {
+      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
+      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      int32_t u = (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
+      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
+        wstr.push_back(static_cast<wchar_t>(u));
+      }
+    } else if(c[p] < 0xF8) {
+      char16_t c6 =   static_cast<char16_t>(c[p] & 0x4) >> 2;
+      char16_t hc5 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc5 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
+      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
+      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
+      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
+      int32_t u = (c6 << 4) | (hc5 << 2) | lc5 | (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
+      wstr.push_back(static_cast<wchar_t>((u - 0x10000) % 0x400 + 0xDC00));
+      wstr.push_back(static_cast<wchar_t>((u - 0x10000) / 0x400 + 0xD800));
+    } else { //< invalid
+      p++;
     }
   }
 
   return p;
 }
-
 
 ///
 /// Buffer size definition for conversion functions

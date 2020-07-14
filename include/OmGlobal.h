@@ -302,6 +302,18 @@ unsigned Om_fromZipCDR(wstring& wstr, const char* zcdr);
 ///
 unsigned Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 
+/// \brief Windows path to Zip CDR entry conversion.
+///
+/// Convert the given standard back-slash Windows path (UTF-16) into its
+/// corresponding Unicode (UTF-8) Zip CDR entry.
+///
+/// \param[in]  zcdr    : Multibyte string to get conversion result.
+/// \param[in]  wstr    : Standard Windows path to convert.
+///
+/// \return Count of written CDR entry characters.
+///
+unsigned Om_toZipCDR(string& zcdr, const wstring& wstr);
+
 /// \brief Wide string to multibyte string conversion.
 ///
 /// Convert the given wide string into a multibyte string.
