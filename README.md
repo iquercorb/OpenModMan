@@ -39,7 +39,7 @@ Open Mod Mananager currently implements the following key features:
 
 Screenshots
 ----------------------------------------------------------------------------------------
-![Open Mod Mananager Screenshot](snaps/screenshot.png)
+![Open Mod Mananager Screenshot](screenshot.png)
 
 Version history
 ----------------------------------------------------------------------------------------
