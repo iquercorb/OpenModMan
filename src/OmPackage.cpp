@@ -650,13 +650,13 @@ bool OmPackage::backupParse(const wstring& path)
   }
 
   this->_overlap.clear();
-  // retrieve the backup overlap list, they are stored as a list of CRC64
-  // corresponding to package name
+  // retrieve the backup overlap list, they are stored as a list of Hash values
+  // corresponding to package file name
   if(def_xml.hasChild(L"overlap")) {
     OmXmlNode xml_ovlap = def_xml.child(L"overlap");
-    unsigned crc_count = xml_ovlap.childCount(L"crc");
-    for(unsigned i = 0; i < crc_count; ++i) {
-      xml_item = xml_ovlap.child(L"crc", i);
+    unsigned hash_count = xml_ovlap.childCount(L"hash");
+    for(unsigned i = 0; i < hash_count; ++i) {
+      xml_item = xml_ovlap.child(L"hash", i);
       this->_overlap.push_back(Om_toUint64(xml_item.content()));
     }
   }
@@ -1534,7 +1534,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   if(ovlap_list.size()) {
     OmXmlNode xml_ovlap = def_xml.addChild(L"overlap");
     for(unsigned i = 0; i < ovlap_list.size(); ++i) {
-      xml_ovlap.addChild(L"crc").setContent(Om_toHexString(ovlap_list[i]));
+      xml_ovlap.addChild(L"hash").setContent(Om_toHexString(ovlap_list[i]));
     }
   }
 

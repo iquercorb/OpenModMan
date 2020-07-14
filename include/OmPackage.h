@@ -417,27 +417,27 @@ class OmPackage
 
     /// \brief Get overlapped package.
     ///
-    /// Returns overlapped Package CRC64 at specified index.
+    /// Returns overlapped Package Hash value at specified index.
     ///
     /// \param[in]  i       : Index of overlapped Package.
     ///
-    /// \return CRC64 of overlapped Package.
+    /// \return Hash value of overlapped Package.
     ///
     uint64_t overlap(unsigned i) const {
       return _overlap[i];
     }
 
-    /// \brief Check overlapped package CRC64.
+    /// \brief Check overlapped package Hash.
     ///
     /// Checks whether this instance overlaps the specified Package.
     ///
-    /// \param[in]  crc     : Package CRC64 to check.
+    /// \param[in]  hash    : Package Hash to check.
     ///
-    /// \return CRC64 of overlapped Package.
+    /// \return Hash value of overlapped Package.
     ///
-    bool hasOverlap(uint64_t crc) const {
+    bool hasOverlap(uint64_t hash) const {
       for(unsigned i = 0; i < _overlap.size(); ++i) {
-        if(crc == _overlap[i]) return true;
+        if(hash == _overlap[i]) return true;
       }
       return false;
     }

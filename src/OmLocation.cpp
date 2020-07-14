@@ -569,10 +569,10 @@ void OmLocation::packageListRefresh()
   //
   // The "Source" refers to the Package itself, i.e, the Mod's files to be
   // installed into the Destination tree.
-  // The "Backup" refer to genuine application files saved in a safe
+  // The "Backup" refer to original application files saved in a safe place
   // before they were overwritten by the Mod's modified files.
   //
-  // So, the Package object has a double-side, one side is the "Backup", the
+  // So, the Package object is double-sided, one side is the "Backup", the
   // other is the "Source". It may have only one of the two, or both at the
   // same time, depending which element is actually available.
   //
@@ -581,14 +581,14 @@ void OmLocation::packageListRefresh()
   //            /        Object
   //   Source File/Dir
   //
-  // In this function, we create the package list the user will manipulate, and
+  // In this function, we create the Packages list the user will manipulate and
   // Package objects will be created with one, or both side depending what is
   // found in backup and library folders.
   //
-  // "Source" and "Backup" are linked together using a CRC64 value which is the
-  // CRS64 created from the "Source" Package file (or folder) name.
+  // "Source" and "Backup" are linked together using a unsigned 64 bit integer
+  // xxHash value created from the "Source" Package file (or folder) name.
   //
-  // When a "Source" is installed, this CRC64 is stored in a Backup definition
+  // When a "Source" is installed, this Hash is stored in a Backup definition
   // file within the Backup zip file or sub-folder, allowing to matches the
   // available Backups with available Sources.
   //
@@ -664,10 +664,10 @@ void OmLocation::packageListRefresh()
         if(ls[i] == this->_package[p]->sourcePath()) {
           in_list = true; break;
         }
-        // checks whether CRC64 corresponds
+        // checks whether Hash values matches
         if(full_hash == this->_package[p]->hash()) {
-          // this Package Source obviously corresponds to a currently
-          // installed one, since we got a Package with the same CRC but
+          // this Package Source obviously matches to a currently
+          // installed one, since we got a Package with the same Hash but
           // Source is missing, so we add the Source to this Package Backup
           this->_package[p]->sourceParse(ls[i]);
           in_list = true; break;
