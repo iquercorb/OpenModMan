@@ -50,6 +50,7 @@ Version history
  - Replace GPL text by credits in the "About" dialog.
  - Rewritten file/directory Access-Control check mechanisms.
  - Improved Unicode and non-ASCII characters support.
+ - Fixed incorrect packages list refresh after move to trash.
 
 0.9.1 (07/11/2020)
  - Fixed random string bug and crash caused by buffer overflow.
