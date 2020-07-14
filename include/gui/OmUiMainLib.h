@@ -134,7 +134,7 @@ class OmUiMainLib : public OmDialog
 
     void                _reloadLibEc();
 
-    void                _reloadLibLv();
+    void                _reloadLibLv(bool clear = false);
 
     void                _reloadBatLb();
 

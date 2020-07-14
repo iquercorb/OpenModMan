@@ -233,6 +233,8 @@ void OmUiMainLib::moveTrash()
 
   HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
 
+  this->setOnProcess(true);
+
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
   for(unsigned i = 0; i < n; ++i) {
     if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
@@ -249,6 +251,14 @@ void OmUiMainLib::moveTrash()
       this->_reloadLibLv();
     }
   }
+
+  // Unselect all items
+  LVITEM lvI = {};
+  lvI.mask = LVIF_STATE;
+  lvI.stateMask = LVIS_SELECTED;
+  SendMessage(hLv, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&lvI);
+
+  this->setOnProcess(false);
 
   // update package selection
   this->_onSelectPkg();
@@ -583,7 +593,7 @@ void OmUiMainLib::_reloadLibEc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_reloadLibLv()
+void OmUiMainLib::_reloadLibLv(bool clear)
 {
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
   OmLocation* location = nullptr;
@@ -606,6 +616,7 @@ void OmUiMainLib::_reloadLibLv()
       return;
 
     // force Location library refresh
+    if(clear) location->packageListClear(); //< clear to rebuild entirely
     location->packageListRefresh();
 
     // we enable the List-View
@@ -753,7 +764,7 @@ void OmUiMainLib::_reloadLocCb()
     if(cb_sel >= 0 && cb_sel < static_cast<int>(context->locationCount())) {
       SendMessageW(hCb, CB_SETCURSEL, cb_sel, 0);
       this->_reloadLibEc(); //< reload displayed library path
-      this->_reloadLibLv(); //< reload packages list
+      this->_reloadLibLv(true); //< reload + reparse packages list
     } else {
       SendMessageW(hCb, CB_SETCURSEL, 0, 0);
       // select the first Location by default
