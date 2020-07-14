@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.2 (beta)
+Version: 0.9.1 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -49,6 +49,7 @@ Version history
  - Fixed Package "Save As" button never enabling.
  - Replace GPL text by credits in the "About" dialog.
  - Rewritten file/directory Access-Control check mechanisms.
+ - Improved Unicode and non-ASCII characters support.
 
 0.9.1 (07/11/2020)
  - Fixed random string bug and crash caused by buffer overflow.
