@@ -202,7 +202,7 @@ bool OmPackage::sourceParse(const wstring& path)
           } catch (std::bad_alloc& ba) {
             this->_error = L"Unable to extract file \"";
             this->_error += zcd_entry + L"\" memory allocation error: ";
-            this->_error += Om_toUtf16(ba.what());
+            this->_error += Om_fromUtf8(ba.what());
             this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             src_zip.close();
             this->sourceClear();
@@ -219,7 +219,7 @@ bool OmPackage::sourceParse(const wstring& path)
             return false;
           }
           cbuf[s] = 0;
-          if(src_def.parse(Om_toUtf16(cbuf), OMM_CFG_SIGN_PKG)) {
+          if(src_def.parse(Om_fromUtf8(cbuf), OMM_CFG_SIGN_PKG)) {
             has_def = true;
             delete [] cbuf;
             break;
@@ -297,7 +297,7 @@ bool OmPackage::sourceParse(const wstring& path)
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract file \"";
               this->_error += pic_name + L"\" memory allocation error: ";
-              this->_error += Om_toUtf16(ba.what());
+              this->_error += Om_fromUtf8(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
             if(data != nullptr) {
@@ -370,13 +370,13 @@ bool OmPackage::sourceParse(const wstring& path)
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract README \"";
               this->_error += zcd_entry + L"\" memory allocation error : ";
-              this->_error += Om_toUtf16(ba.what());
+              this->_error += Om_fromUtf8(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
             if(cbuf != nullptr) {
               if(src_zip.extract(i, cbuf, s)) {
                 cbuf[s] = 0; //< add terminal null
-                this->_desc = Om_toUtf16(cbuf);
+                this->_desc = Om_fromUtf8(cbuf);
               } else {
                 this->_error = L"Unable to extract README \"";
                 this->_error += zcd_entry + L"\" from zip archive : ";
@@ -399,7 +399,7 @@ bool OmPackage::sourceParse(const wstring& path)
             } catch (std::bad_alloc& ba) {
               this->_error = L"Unable to extract Picture \"";
               this->_error += zcd_entry + L"\" memory allocation error : ";
-              this->_error += Om_toUtf16(ba.what());
+              this->_error += Om_fromUtf8(ba.what());
               this->log(0, wstring(L"Package(")+this->_ident+L") Parse Source", this->_error);
             }
             if(data != nullptr) {
@@ -509,7 +509,7 @@ bool OmPackage::backupParse(const wstring& path)
         } catch (std::bad_alloc& ba) {
           this->_error = L"Unable to extract file \"";
           this->_error += zcd_entry + L"\" memory allocation error: ";
-          this->_error += Om_toUtf16(ba.what());
+          this->_error += Om_fromUtf8(ba.what());
           this->log(0, wstring(L"Package(")+this->_ident+L") Parse Backup", this->_error);
           bck_zip.close();
           this->backupClear();
@@ -526,7 +526,7 @@ bool OmPackage::backupParse(const wstring& path)
           return false;
         }
         cbuf[s] = 0;
-        if(bck_def.parse(Om_toUtf16(cbuf), OMM_CFG_SIGN_BCK)) {
+        if(bck_def.parse(Om_fromUtf8(cbuf), OMM_CFG_SIGN_BCK)) {
           has_def = true;
           delete [] cbuf;
           break;

@@ -199,35 +199,108 @@ wstring Om_genUUID();
 ///
 /// \return UTF-16 wide char string conversion result.
 ///
-wstring Om_toUtf16(const string& utf8);
+wstring Om_fromUtf8(const string& utf8);
 
 /// \brief UTF-8 to UTF-16 conversion.
 ///
 /// Convert the given UTF-8 multibyte string into UTF-16 wide char string.
 ///
-/// \param[in]  utf16   : Wide char string to get conversion result.
+/// \param[in]  wstr    : Wide char string to get conversion result.
 /// \param[in]  utf8    : UTF-8 multibyte string to convert.
 ///
-void Om_toUtf16(wstring& utf16, const string& utf8);
+void Om_fromUtf8(wstring& wstr, const string& utf8);
+
+/// \brief UTF-8 to UTF-16 conversion.
+///
+/// Convert the given UTF-8 multibyte string into UTF-16 wide char string.
+///
+/// \param[in]  wstr    : Wide char string to get conversion result.
+/// \param[in]  utf8    : Pointer to null terminated UTF-8 char buffer to convert.
+///
+/// \return Count of read UTF-8 characters.
+///
+unsigned Om_fromUtf8(wstring& wstr, const char* utf8);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
 /// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
 ///
-/// \param[in]  utf16   : UTF-16 wide char string to convert.
+/// \param[in]  wstr    : Wide char string to convert.
 ///
 /// \return UTF-8 multibyte string conversion result.
 ///
-string Om_toUtf8(const wstring& utf16);
+string Om_toUtf8(const wstring& wstr);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
 /// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
 ///
 /// \param[in]  utf8    : Multibyte string to get conversion result.
-/// \param[in]  utf16   : UTF-16 wide char string to convert.
+/// \param[in]  wstr    : Wide char string to convert.
 ///
-void Om_toUtf8(string& utf8, const wstring& utf16);
+void Om_toUtf8(string& utf8, const wstring& wstr);
+
+/// \brief Conversion to ANSI multibyte.
+///
+/// Convert the given wide char string into multibyte string using the
+/// system default Windows ANSI code page.
+///
+/// \param[in]  ansi    : Pointer to char buffer to get conversion result.
+/// \param[in]  len     : Size of the supplied char buffer.
+/// \param[in]  wstr    : Wide char string to convert.
+///
+/// \return Count of written ANSI characters.
+///
+unsigned Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr);
+
+/// \brief Conversion to ANSI multibyte.
+///
+/// Convert the given wide char string into multibyte string using the
+/// system default Windows ANSI code page.
+///
+/// \param[in]  ansi    : Multibyte string to get conversion result.
+/// \param[in]  wstr    : Wide char string to convert.
+///
+/// \return Count of written ANSI characters.
+///
+unsigned Om_toAnsiCp(string& ansi, const wstring& wstr);
+
+/// \brief Conversion from ANSI multibyte.
+///
+/// Convert the given multibyte string into wide char string using the
+/// system default Windows ANSI code page.
+///
+/// \param[in]  wstr    : Wide char string to get conversion result.
+/// \param[in]  ansi    : Pointer to char buffer to convert.
+///
+/// \return Count of written wide characters.
+///
+unsigned Om_fromAnsiCp(const wstring& wstr, const char* ansi);
+
+/// \brief Zip CDR entry to Windows path conversion.
+///
+/// Convert the given Unicode (UTF-8) Zip CDR entry into its corresponding
+/// standard back-slash Windows path (UTF-16).
+///
+/// \param[in]  wstr    : Wide char string to get conversion result.
+/// \param[in]  zcdr    : Pointer to null terminated UTF-8 char buffer to convert.
+///
+/// \return Count of read CDR entry characters.
+///
+unsigned Om_fromZipCDR(wstring& wstr, const char* zcdr);
+
+/// \brief Windows path to Zip CDR entry conversion.
+///
+/// Convert the given standard back-slash Windows path (UTF-16) into its
+/// corresponding Unicode (UTF-8) Zip CDR entry.
+///
+/// \param[in]  zcdr    : Pointer to char buffer to get conversion result.
+/// \param[in]  len     : Size of the supplied char buffer.
+/// \param[in]  wstr    : Standard Windows path to convert.
+///
+/// \return Count of written CDR entry characters.
+///
+unsigned Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 
 /// \brief Wide string to multibyte string conversion.
 ///

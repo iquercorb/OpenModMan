@@ -271,38 +271,73 @@ wstring Om_genUUID()
 }
 
 
-typedef struct {
-  char mask;          // char data will be bitwise AND with this */
-  char lead;          // start bytes of current char in utf-8 encoded character */
-  uint32_t beg;       // beginning of codepoint range */
-  uint32_t end;       // end of codepoint range */
-  int bits_stored;    // the number of bits from the codepoint that fits in char */
-}utf_t;
-
 ///
-/// Buffer size definition for conversion functions
+/// UTF-8 <-> UTF-16 STL converter
 ///
-#define MBS_SIZE 3120 //< Multibyte string buffer
-#define WCS_SIZE 1040  //< Wide string buffer
+wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> __utf_cvt;
 
-wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> __ut8_cvt;
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_toUtf16(const string& utf8)
+wstring Om_fromUtf8(const string& utf8)
 {
-  wstring result = __ut8_cvt.from_bytes(utf8);
-  return result;
+  return __utf_cvt.from_bytes(utf8);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_toUtf16(wstring& utf16, const string& utf8)
+void Om_fromUtf8(wstring& utf16, const string& utf8)
 {
-  utf16 = __ut8_cvt.from_bytes(utf8);
+  utf16 = __utf_cvt.from_bytes(utf8);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_fromUtf8(wstring& utf16, const char* utf8)
+{
+  unsigned char ch;
+  uint32_t cp;
+  size_t p = 0;
+
+  utf16.clear();
+
+  while(utf8[p] != 0) {
+
+    ch = static_cast<unsigned char>(utf8[p]);
+
+    if(ch <= 0x7f) {
+      cp = ch;
+    } else if (ch <= 0xbf) {
+      cp = (cp << 6) | (ch & 0x3f);
+    } else if (ch <= 0xdf) {
+      cp = ch & 0x1f;
+    } else if (ch <= 0xef) {
+      cp = ch & 0x0f;
+    } else {
+      cp = ch & 0x07;
+    }
+
+    ++p;
+
+    if(((utf8[p] & 0xc0) != 0x80) && (cp <= 0x10ffff)) {
+
+      if(sizeof(wchar_t) > 2) {
+        utf16.push_back(static_cast<wchar_t>(cp));
+      } else if (cp > 0xffff) {
+        utf16.push_back(static_cast<wchar_t>(0xd800 + (cp >> 10)));
+        utf16.push_back(static_cast<wchar_t>(0xdc00 + (cp & 0x03ff)));
+      } else if (cp < 0xd800 || cp >= 0xe000) {
+        utf16.push_back(static_cast<wchar_t>(cp));
+      }
+    }
+  }
+
+  return p;
 }
 
 
@@ -311,8 +346,7 @@ void Om_toUtf16(wstring& utf16, const string& utf8)
 ///
 string Om_toUtf8(const wstring& utf16)
 {
-  string result = __ut8_cvt.to_bytes(utf16);
-  return result;
+  return __utf_cvt.to_bytes(utf16);
 }
 
 
@@ -321,8 +355,230 @@ string Om_toUtf8(const wstring& utf16)
 ///
 void Om_toUtf8(string& utf8, const wstring& utf16)
 {
-  utf8 = __ut8_cvt.to_bytes(utf16);
+  utf8 = __utf_cvt.to_bytes(utf16);
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
+{
+  wchar_t wc;
+  uint32_t cp;
+  size_t p = 0;
+
+  for(size_t i = 0; i < utf16.size(); ++i) {
+
+    wc = utf16[i];
+
+    if(wc >= 0xd800 && wc <= 0xdbff) {
+      cp = ((wc - 0xd800) << 10) + 0x10000;
+      continue; //< get next value
+    } else if(wc >= 0xdc00 && wc <= 0xdfff) {
+      cp |= wc - 0xdc00;
+    } else {
+      cp = wc;
+    }
+
+    if(cp <= 0x7f) {
+      utf8[p++] = static_cast<char>(cp);
+    }else if (cp <= 0x7ff) {
+      if((p + 2) >= len) break;
+      utf8[p++] = static_cast<char>(0xc0 | ((cp >> 6) & 0x1f));
+      utf8[p++] = static_cast<char>(0x80 | ( cp       & 0x3f));
+    } else if (cp <= 0xffff) {
+      if((p + 3) >= len) break;
+      utf8[p++] = static_cast<char>(0xe0 | ((cp >> 12) & 0x0f));
+      utf8[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
+      utf8[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+    } else {
+      utf8[p++] = static_cast<char>(0xf0 | ((cp >> 18) & 0x07));
+      utf8[p++] = static_cast<char>(0x80 | ((cp >> 12) & 0x3f));
+      utf8[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
+      utf8[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+    }
+
+    cp = 0;
+  }
+
+  utf8[p] = '\0';
+  return p;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
+{
+  BOOL pBool;
+  return WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, ansi, len, nullptr, &pBool);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_toAnsiCp(string& ansi, const wstring& wstr)
+{
+  BOOL pBool;
+  string result;
+
+  // get required buffer size for conversion
+  int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
+
+  // alloc new buffer then get converted string
+  if(len > 0) {
+    char* cbuf = new char[len];
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, cbuf, len, nullptr, &pBool);
+
+    ansi = cbuf;
+    delete [] cbuf;
+  }
+
+  return len;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_fromAnsiCp(wstring& wstr, const char* ansi)
+{
+  wstring result;
+
+  // get required buffer size for conversion
+  int len = MultiByteToWideChar(CP_ACP, 0, ansi, -1, nullptr, 0);
+
+  // alloc new buffer then get converted string
+  if(len > 0) {
+    wchar_t* wcbuf = new wchar_t[len];
+    MultiByteToWideChar(CP_ACP, 0, ansi, -1, wcbuf, len);
+
+    wstr = wcbuf;
+    delete [] wcbuf;
+  }
+
+  return len;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
+{
+  wchar_t wc;
+  uint32_t cp;
+  size_t p = 0;
+
+  for(size_t i = 0; i < wstr.size(); ++i) {
+
+    wc = wstr[i];
+
+    // convert back-slash to forward-slash
+    if(wc == L'\\') {
+      if((p + 1) == len) break;
+      cdr[p++] = '/';
+      continue;
+    }
+
+    if(wc >= 0xd800 && wc <= 0xdbff) {
+      cp = ((wc - 0xd800) << 10) + 0x10000;
+      continue; //< get next value
+    } else if(wc >= 0xdc00 && wc <= 0xdfff) {
+      cp |= wc - 0xdc00;
+    } else {
+      cp = wc;
+    }
+
+    if(cp <= 0x7f) {
+      if((p + 1) == len) break;
+      cdr[p++] = static_cast<char>(cp);
+    }else if (cp <= 0x7ff) {
+      if((p + 2) >= len) break;
+      cdr[p++] = static_cast<char>(0xc0 | ((cp >> 6) & 0x1f));
+      cdr[p++] = static_cast<char>(0x80 | ( cp       & 0x3f));
+    } else if (cp <= 0xffff) {
+      if((p + 3) >= len) break;
+      cdr[p++] = static_cast<char>(0xe0 | ((cp >> 12) & 0x0f));
+      cdr[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
+      cdr[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+    } else {
+      cdr[p++] = static_cast<char>(0xf0 | ((cp >> 18) & 0x07));
+      cdr[p++] = static_cast<char>(0x80 | ((cp >> 12) & 0x3f));
+      cdr[p++] = static_cast<char>(0x80 | ((cp >>  6) & 0x3f));
+      cdr[p++] = static_cast<char>(0x80 | ( cp        & 0x3f));
+    }
+
+    cp = 0;
+  }
+
+  cdr[p] = '\0';
+
+  return p;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+unsigned Om_fromZipCDR(wstring& wstr, const char* cdr)
+{
+  unsigned char ch;
+  uint32_t cp;
+  size_t p = 0;
+
+  wstr.clear();
+
+  while(cdr[p] != 0) {
+
+    ch = static_cast<unsigned char>(cdr[p]);
+
+    // convert forward-slash to back-slash
+    if(ch == '/') {
+      wstr.push_back(L'\\');
+      ++p;
+      continue;
+    }
+
+    if(ch <= 0x7f) {
+      cp = ch;
+    } else if (ch <= 0xbf) {
+      cp = (cp << 6) | (ch & 0x3f);
+    } else if (ch <= 0xdf) {
+      cp = ch & 0x1f;
+    } else if (ch <= 0xef) {
+      cp = ch & 0x0f;
+    } else {
+      cp = ch & 0x07;
+    }
+
+    ++p;
+
+    if(((cdr[p] & 0xc0) != 0x80) && (cp <= 0x10ffff)) {
+
+      if(sizeof(wchar_t) > 2) {
+        wstr.push_back(static_cast<wchar_t>(cp));
+      } else if (cp > 0xffff) {
+        wstr.push_back(static_cast<wchar_t>(0xd800 + (cp >> 10)));
+        wstr.push_back(static_cast<wchar_t>(0xdc00 + (cp & 0x03ff)));
+      } else if (cp < 0xd800 || cp >= 0xe000) {
+        wstr.push_back(static_cast<wchar_t>(cp));
+      }
+    }
+  }
+
+  return p;
+}
+
+
+///
+/// Buffer size definition for conversion functions
+///
+#define MBS_SIZE 3120   //< Multibyte string buffer
+#define WCS_SIZE 1040   //< Wide string buffer
 
 
 ///
