@@ -1033,7 +1033,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
           } catch (std::bad_alloc& ba) {
             this->_error = L"Unable to extract file \"";
             this->_error += this->_sourceItem[i].path + L"\" memory allocation error: ";
-            this->_error += Om_toWcString(ba.what());
+            this->_error += Om_fromUtf8(ba.what());
             this->log(0, wstring(L"Package(")+pkg_ident+L") Save", this->_error);
             has_failed = true;
             break;

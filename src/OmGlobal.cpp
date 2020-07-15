@@ -279,13 +279,12 @@ wstring Om_genUUID()
 /// here in cas this is needed.
 ///
 /// \param[in]  wstr    : Wide char string to receive conversion result.
-/// \param[out] utf8    : Multibyte string to convert.
+/// \param[out] utf8    : Pointer to null-terminated Multibyte string to convert.
 ///
-/// \return count of character written into wide char string
-///
-size_t __utf8_decode(wstring& wstr, const string& utf8)
+inline static void __utf8_decode(wstring& wstr, const char* utf8)
 {
   wstr.clear();
+  wstr.reserve(strlen(utf8));
 
   uint32_t u;
   unsigned char c;
@@ -318,8 +317,6 @@ size_t __utf8_decode(wstring& wstr, const string& utf8)
       }
     }
   }
-
-  return wstr.size();
 }
 
 
@@ -334,11 +331,10 @@ size_t __utf8_decode(wstring& wstr, const string& utf8)
 /// \param[out] utf8    : Multibyte string to receive conversion result.
 /// \param[in]  wstr    : Wide char string to convert.
 ///
-/// \return count of character written into multibyte string
-///
-size_t __utf8_encode(string& utf8, const wstring& wstr)
+inline static void __utf8_encode(string& utf8, const wstring& wstr)
 {
   utf8.clear();
+  utf8.reserve(wstr.size() * 4);
 
   char16_t c;
   uint32_t u;
@@ -374,54 +370,83 @@ size_t __utf8_encode(string& utf8, const wstring& wstr)
 
     u = 0;
   }
+}
 
-  return utf8.size();
+/// \brief Multibyte Decode
+///
+/// Static inlined function to convert the given multibyte string into wide
+/// char string assuming the specified encoding.
+///
+/// This function use the WinAPI MultiByteToWideChar implementation witch is
+/// currently the known fastest way.
+///
+/// \param[in]  cp      : Code page to use in performing the conversion.
+/// \param[in]  wstr    : Wide char string to receive conversion result.
+/// \param[out] utf8    : Pointer to null-terminated Multibyte string to convert.
+///
+inline static size_t __multibyte_decode(UINT cp, wstring& wstr, const char* utf8)
+{
+  int n = MultiByteToWideChar(cp, 0, utf8, -1, nullptr, 0);
+
+  if(n > 0) {
+    wstr.resize(n - 1);
+    // NOTICE: here bellow, the string object is used as C char buffer, in
+    // theory this is not allowed since std::string is not required to store
+    // its contents contiguously in memory.
+    //
+    // HOWEVER, in practice, there is no know situation where std::string does
+    // not store its content contiguous, so, this should work anyway.
+    //
+    // If some problem emerge from this function, change this implementation for
+    // a more regular approach.
+    return static_cast<size_t>(MultiByteToWideChar(cp, 0, utf8, -1, &wstr[0], n));
+  }
+
+  return 0;
+}
+
+
+/// \brief Multibyte encode
+///
+/// Static inlined function to convert the given wide char string to multibyte
+/// string using the specified encoding.
+///
+/// This function use the WinAPI MultiByteToWideChar implementation witch is
+/// currently the known fastest way.
+///
+/// \param[in]  cp      : Code page to use in performing the conversion.
+/// \param[out] utf8    : Multibyte string to receive conversion result.
+/// \param[in]  wstr    : Wide char string to convert.
+///
+inline static size_t __multibyte_encode(UINT cp, string& utf8, const wchar_t* wstr)
+{
+  BOOL pBool;
+  int n = WideCharToMultiByte(cp, 0, wstr, -1, nullptr, 0, nullptr, &pBool);
+  if(n > 0) {
+    utf8.resize(n - 1);
+    // NOTICE: here bellow, the string object is used as C char buffer, in
+    // theory this is not allowed since std::string is not required to store
+    // its contents contiguously in memory.
+    //
+    // HOWEVER, in practice, there is no know situation where std::string does
+    // not store its content contiguous, so, this should work anyway.
+    //
+    // If some problem emerge from this function, change this implementation for
+    // a more regular approach.
+    return static_cast<size_t>(WideCharToMultiByte(cp, 0, wstr, -1, &utf8[0], n, nullptr, &pBool));
+  }
+  return 0;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_fromUtf8(const string& utf8)
+wstring Om_fromUtf8(const char* utf8)
 {
   wstring result;
-
-  int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
-  result.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &result[0], len);
-
+  __multibyte_decode(CP_UTF8, result, utf8);
   return result;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_fromUtf8(wstring& wstr, const string& utf8)
-{
-  int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
-  wstr.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-
-  // get data
-  MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &wstr[0], len);
 }
 
 
@@ -430,20 +455,7 @@ void Om_fromUtf8(wstring& wstr, const string& utf8)
 ///
 size_t Om_fromUtf8(wstring& wstr, const char* utf8)
 {
-  int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
-  wstr.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &wstr[0], len);
-
-  return wstr.size();
+  return __multibyte_decode(CP_UTF8, wstr, utf8);
 }
 
 
@@ -465,21 +477,7 @@ size_t Om_toUtf8(char* utf8, size_t len, const wstring& wstr)
 string Om_toUtf8(const wstring& wstr)
 {
   string result;
-
-  BOOL pBool;
-  int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  result.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], len, nullptr, &pBool);
-
+  __multibyte_encode(CP_UTF8, result, wstr.c_str());
   return result;
 }
 
@@ -487,21 +485,9 @@ string Om_toUtf8(const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_toUtf8(string& utf8, const wstring& wstr)
+size_t Om_toUtf8(string& utf8, const wstring& wstr)
 {
-  BOOL pBool;
-  int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  utf8.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8[0], len, nullptr, &pBool);
+  return __multibyte_encode(CP_UTF8, utf8, wstr.c_str());
 }
 
 
@@ -522,21 +508,7 @@ size_t Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
 ///
 size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 {
-  BOOL pBool;
-  int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  ansi.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &ansi[0], len, nullptr, &pBool);
-
-  return ansi.size();
+  return __multibyte_encode(CP_ACP, ansi, wstr.c_str());
 }
 
 
@@ -545,20 +517,7 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 ///
 size_t Om_fromAnsiCp(wstring& wstr, const char* ansi)
 {
-  int len = MultiByteToWideChar(CP_ACP, 0, ansi, -1, nullptr, 0);
-  wstr.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  MultiByteToWideChar(CP_ACP, 0, ansi, -1, &wstr[0], len);
-
-  return wstr.size();
+  return __multibyte_decode(CP_ACP, wstr, ansi);
 }
 
 
@@ -584,19 +543,7 @@ size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 ///
 size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 {
-  BOOL pBool;
-  int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  cdr.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &cdr[0], len, nullptr, &pBool);
+  __multibyte_encode(CP_UTF8, cdr, wstr.c_str());
 
   for(size_t i = 0; i < cdr.size(); ++i) {
     if(cdr[i] == '\\') cdr[i] = '/';
@@ -610,18 +557,7 @@ size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 ///
 size_t Om_fromZipCDR(wstring& wstr, const char* cdr)
 {
-  int len = MultiByteToWideChar(CP_UTF8, 0, cdr, -1, nullptr, 0);
-  wstr.resize(len - 1);
-  // NOTICE: here bellow, the string object is used as C char buffer, in
-  // theory this is not allowed since std::string is not required to store
-  // its contents contiguously in memory.
-  //
-  // HOWEVER, in practice, there is no know situation where std::string does
-  // not store its content contiguous, so, this should work anyway.
-  //
-  // If some problem emerge from this function, change this implementation for
-  // a more regular approach.
-  MultiByteToWideChar(CP_UTF8, 0, cdr, -1, &wstr[0], len);
+  __multibyte_decode(CP_UTF8, wstr, cdr);
 
   for(size_t i = 0; i < wstr.size(); ++i) {
     if(wstr[i] == L'/') wstr[i] = L'\\';
@@ -629,179 +565,6 @@ size_t Om_fromZipCDR(wstring& wstr, const char* cdr)
 
   return wstr.size();
 }
-
-///
-/// Buffer size definition for conversion functions
-///
-#define MBS_SIZE 3120   //< Multibyte string buffer
-#define WCS_SIZE 1040   //< Wide string buffer
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-string Om_toMbString(const wstring& wcs)
-{
-  char buff[MBS_SIZE];
-
-  string result;
-
-  size_t s = wcs.size();
-  if(s > 0) {
-    if(s > 1024) {
-      const wchar_t* cstr = wcs.c_str();
-      size_t r, p = 0;
-      while(p < s-1) {
-        r = wcstombs(buff, &cstr[p], 1024); buff[r] = 0; p += r;
-        result.append(buff);
-      }
-      return result;
-    } else {
-      wcstombs(buff, wcs.c_str(), 1024);
-      result.assign(buff);
-      return result;
-    }
-  }
-
-  return result;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_toMbString(string& mbs, const wstring& wcs)
-{
-  char cbuf[MBS_SIZE];
-
-  size_t s = wcs.size();
-  if(s > 0) {
-    if(s > 1024) {
-      const wchar_t* cstr = wcs.c_str();
-      mbs.clear();
-      size_t r, p = 0;
-      while(p < s-1) {
-        r = wcstombs(cbuf, &cstr[p], 1024); cbuf[r] = 0; p += r;
-        mbs.append(cbuf);
-      }
-      return;
-    } else {
-      wcstombs(cbuf, wcs.c_str(), 1024);
-      mbs.assign(cbuf);
-      return;
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_toWcString(const string& mbs)
-{
-  wchar_t wcbuf[WCS_SIZE];
-
-  wstring result;
-
-  size_t s = mbs.size();
-  if(s > 0) {
-    if(s > 1024) {
-      const char* cstr = mbs.c_str();
-      size_t r, p = 0;
-      while(p < s-1) {
-        r = mbstowcs(wcbuf, &cstr[p], 1024); wcbuf[r] = 0; p += r;
-        result.append(wcbuf);
-      }
-      return result;
-    } else {
-      mbstowcs(wcbuf, mbs.c_str(), 1024);
-      result.assign(wcbuf);
-      return result;
-    }
-  }
-
-  return result;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_toWcString(wstring& wcs, const string& mbs)
-{
-  wchar_t wcbuf[WCS_SIZE];
-
-  size_t s = mbs.size();
-  if(s > 0) {
-    if(s > 1024) {
-      const char* cstr = mbs.c_str();
-      wcs.clear();
-      size_t r, p = 0;
-      while(p < s-1) {
-        r = mbstowcs(wcbuf, &cstr[p], 1024); wcbuf[r] = 0; p += r;
-        wcs.append(wcbuf);
-      }
-      return;
-    } else {
-      mbstowcs(wcbuf, mbs.c_str(), 1024);
-      wcs.assign(wcbuf);
-      return;
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_toZipPath(wstring& zpath, const wstring& path)
-{
-  if(path[0] == L'\\') {
-    zpath = path.substr(1,wstring::npos);
-  } else {
-    zpath = path;
-  }
-  replace(zpath.begin(), zpath.end(), L'\\', L'/');
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_toZipPath(const wstring& path)
-{
-  wstring zpath;
-  if(path[0] == L'\\') {
-    zpath = path.substr(1,wstring::npos);
-  } else {
-    zpath = path;
-  }
-  replace(zpath.begin(), zpath.end(), L'\\', L'/');
-  return zpath;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_fromZipPath(string& path, const string& zpath)
-{
-  path = "\\"; path += zpath;
-  replace(path.begin(), path.end(), L'/', L'\\');
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-string Om_fromZipPath(const string& zpath)
-{
-  string path;
-  path = "\\"; path += zpath;
-  replace(path.begin(), path.end(), L'/', L'\\');
-  return path;
-}
-
 
 
 /// \brief Sort comparison function
@@ -1675,7 +1438,7 @@ string Om_loadPlainText(const wstring& path)
     return result;
 
   DWORD rb;
-  char buff[MBS_SIZE];
+  char buff[2080];
 
   while(ReadFile(hFile, buff, 2048, &rb, nullptr)) {
 
@@ -1788,7 +1551,9 @@ static inline bool __writeBmp(const char* path, unsigned w, unsigned h, unsigned
 ///
 bool Om_saveBitmap(const wstring& path, unsigned w, unsigned h, unsigned d, const unsigned char* pixels)
 {
-  return __writeBmp(Om_toMbString(path).c_str(), w, h, d, pixels);
+  string ansi_path;
+  __multibyte_encode(CP_ACP, ansi_path, path.c_str()); //< convert to system code page
+  return __writeBmp(ansi_path.c_str(), w, h, d, pixels);
 }
 
 
@@ -1799,7 +1564,9 @@ bool Om_saveBitmap(const wstring& path, void* hBmp)
 {
   BITMAP bitmap;
   GetObject((HBITMAP)hBmp, sizeof(BITMAP), (LPVOID)&bitmap);
-  return __writeBmp(Om_toMbString(path).c_str(), bitmap.bmWidth, bitmap.bmHeight, bitmap.bmBitsPixel, (unsigned char*)bitmap.bmBits);
+  string ansi_path;
+  __multibyte_encode(CP_ACP, ansi_path, path.c_str()); //< convert to system code page
+  return __writeBmp(ansi_path.c_str(), bitmap.bmWidth, bitmap.bmHeight, bitmap.bmBitsPixel, (unsigned char*)bitmap.bmBits);
 }
 
 

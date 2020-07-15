@@ -30,10 +30,10 @@
 ///
 /// Zip compression level conversion map for Miniz.c
 ///
-static unsigned __mzlvl[] = {  0,    //< MZ_NO_COMPRESSION
-                                    1,    //< MZ_BEST_SPEED
-                                    6,    //< MZ_DEFAULT_LEVEL
-                                    9 };  //< MZ_BEST_COMPRESSION
+static unsigned __mzlvl[] = { 0,    //< MZ_NO_COMPRESSION
+                              1,    //< MZ_BEST_SPEED
+                              6,    //< MZ_DEFAULT_LEVEL
+                              9 };  //< MZ_BEST_COMPRESSION
 
 
 ///
@@ -84,8 +84,6 @@ bool OmZipFile::load(const wstring& path)
   string ansi_path;
 
   Om_toAnsiCp(ansi_path, path);
-
-  std::cout << "ansi_path : " << ansi_path.c_str() << L"\n";
 
   if(!mz_zip_reader_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
     return false;

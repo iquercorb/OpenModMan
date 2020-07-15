@@ -199,16 +199,7 @@ wstring Om_genUUID();
 ///
 /// \return UTF-16 wide char string conversion result.
 ///
-wstring Om_fromUtf8(const string& utf8);
-
-/// \brief UTF-8 to UTF-16 conversion.
-///
-/// Convert the given UTF-8 multibyte string into UTF-16 wide char string.
-///
-/// \param[in]  wstr    : Wide char string to get conversion result.
-/// \param[in]  utf8    : UTF-8 multibyte string to convert.
-///
-void Om_fromUtf8(wstring& wstr, const string& utf8);
+wstring Om_fromUtf8(const char* utf8);
 
 /// \brief UTF-8 to UTF-16 conversion.
 ///
@@ -250,7 +241,7 @@ string Om_toUtf8(const wstring& wstr);
 /// \param[in]  utf8    : Multibyte string to get conversion result.
 /// \param[in]  wstr    : Wide char string to convert.
 ///
-void Om_toUtf8(string& utf8, const wstring& wstr);
+size_t Om_toUtf8(string& utf8, const wstring& wstr);
 
 /// \brief Conversion to ANSI multibyte.
 ///
@@ -289,7 +280,6 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr);
 ///
 size_t Om_fromAnsiCp(const wstring& wstr, const char* ansi);
 
-
 /// \brief Zip CDR entry to Windows path conversion.
 ///
 /// Convert the given Unicode (UTF-8) Zip CDR entry into its corresponding
@@ -326,86 +316,6 @@ size_t Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 /// \return Count of written CDR entry characters.
 ///
 size_t Om_toZipCDR(string& zcdr, const wstring& wstr);
-
-/// \brief Wide string to multibyte string conversion.
-///
-/// Convert the given wide string into a multibyte string.
-///
-/// \param[in]  wcs     : Input wide string to convert.
-///
-/// \return Multibyte string conversion result.
-///
-string Om_toMbString(const wstring& wcs);
-
-/// \brief Wide string to multibyte string conversion.
-///
-/// Convert the given wide string into a multibyte string.
-///
-/// \param[out] mbs     : Multibyte string to get conversion result.
-/// \param[in]  wcs     : Input wide string to convert.
-///
-void Om_toMbString(string& mbs, const wstring& wcs);
-
-/// \brief Multibyte string to wide string conversion.
-///
-/// Convert the given multibyte string into a wide string.
-///
-/// \param[in]  mbs     : Input multibyte string to convert.
-///
-/// \return Wide string conversion result.
-///
-wstring Om_toWcString(const string& mbs);
-
-/// \brief Multibyte string to wide string conversion.
-///
-/// Convert the given multibyte string into a wide string.
-///
-/// \param[out] wcs     : Wide string to get conversion result.
-/// \param[in]  mbs     : Input multibyte string to convert.
-///
-void Om_toWcString(wstring& wcs, const string& mbs);
-
-/// \brief Convert path to Zip CDR entry
-///
-/// Convert the given standard path string into a properly formated Zip's
-/// Central Directory Record entry.
-///
-/// \param[in]  path    : Path string to convert.
-///
-/// \return Suitable Zip CDR entry string.
-///
-wstring Om_toZipPath(const wstring& path);
-
-/// \brief Convert path to Zip CDR entry
-///
-/// Convert the given standard path string into a properly formated Zip's
-/// Central Directory Record entry.
-///
-/// \param[out] zcdr    : String to get conversion result.
-/// \param[in]  path    : Path string to convert.
-///
-void Om_toZipPath(wstring& zcdr, const wstring& path);
-
-/// \brief Convert Zip CDR entry to path
-///
-/// Convert the given Zip Central Directory Record entry string into
-/// a standard Windows path format.
-///
-/// \param[in]  zcdr    : Zip CDR entry to convert.
-///
-/// \return Resulting Windows path version.
-///
-string Om_fromZipPath(const string& zcdr);
-
-/// \brief Convert Zip CDR entry to path
-///
-/// Convert the given Zip Central Directory Record entry string into
-/// a standard Windows path format.
-///
-/// \param[out] path    : String to get conversion result.
-/// \param[in]  zcdr    : Zip CDR entry to convert.
-///
-void Om_fromZipPath(string& path, const string& zcdr);
 
 /// \brief Sort strings
 ///
