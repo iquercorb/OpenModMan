@@ -225,6 +225,18 @@ size_t Om_fromUtf8(wstring& wstr, const char* utf8);
 ///
 /// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
 ///
+/// \param[in]  utf8    : Pointer to char buffer to get conversion result.
+/// \param[in]  len     : Size of the supplied char buffer.
+/// \param[in]  wstr    : Wide char string to convert.
+///
+/// \return Count of written ANSI characters.
+///
+size_t Om_toUtf8(char* utf8, size_t len, const wstring& wstr);
+
+/// \brief UTF-16 to UTF-8 conversion.
+///
+/// Convert the given UTF-16 wide char string into UTF-8 multibyte string.
+///
 /// \param[in]  wstr    : Wide char string to convert.
 ///
 /// \return UTF-8 multibyte string conversion result.
@@ -276,6 +288,7 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr);
 /// \return Count of written wide characters.
 ///
 size_t Om_fromAnsiCp(const wstring& wstr, const char* ansi);
+
 
 /// \brief Zip CDR entry to Windows path conversion.
 ///

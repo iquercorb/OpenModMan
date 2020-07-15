@@ -270,6 +270,114 @@ wstring Om_genUUID()
   return str;
 }
 
+/// \brief UTF-8 decode
+///
+/// Convert the given multibyte string into wide char string assuming UTF-8
+/// encoding.
+///
+/// This function si no longer used in current implementation but conserved
+/// here in cas this is needed.
+///
+/// \param[in]  wstr    : Wide char string to receive conversion result.
+/// \param[out] utf8    : Multibyte string to convert.
+///
+/// \return count of character written into wide char string
+///
+size_t __utf8_decode(wstring& wstr, const string& utf8)
+{
+  wstr.clear();
+
+  uint32_t u;
+  unsigned char c;
+  size_t p = 0;
+
+  while(utf8[p] != 0) {
+
+    c = utf8[p];
+
+    if(c <= 0x7F) {
+      u = c;
+    } else if(c <= 0xBF) {
+      u = (u << 6) | (c & 0x3F);
+    } else if(c <= 0xdf) {
+      u = c & 0x1F;
+    } else if(c <= 0xEF) {
+      u = c & 0x0F;
+    } else {
+      u = c & 0x07;
+    }
+
+    ++p;
+
+    if(((utf8[p] & 0xC0) != 0x80) && (u <= 0x10FFFF)) {
+      if(u > 0xFFFF)  {
+        wstr.push_back(static_cast<wchar_t>(0xD800 + (u >> 10)));
+        wstr.push_back(static_cast<wchar_t>(0xDC00 + (u & 0x03FF)));
+      } else if(u < 0xD800 || u >= 0xE000) {
+        wstr.push_back(static_cast<wchar_t>(u));
+      }
+    }
+  }
+
+  return wstr.size();
+}
+
+
+/// \brief UTF-8 encode
+///
+/// Convert the given wide char string to multibyte string using UTF-8
+/// encoding.
+///
+/// This function si no longer used in current implementation but conserved
+/// here in cas this is needed.
+///
+/// \param[out] utf8    : Multibyte string to receive conversion result.
+/// \param[in]  wstr    : Wide char string to convert.
+///
+/// \return count of character written into multibyte string
+///
+size_t __utf8_encode(string& utf8, const wstring& wstr)
+{
+  utf8.clear();
+
+  char16_t c;
+  uint32_t u;
+
+  for(size_t i = 0; i < wstr.size(); ++i) {
+
+    c = wstr[i];
+
+    if(c >= 0xD800 && c <= 0xDBFF) {
+      u = ((c - 0xD800) << 10) + 0x10000;
+      continue; //< get next char
+    } else if(c >= 0xDC00 && c <= 0xDFFF) {
+      u |= c - 0xDC00;
+    } else {
+      u = c;
+    }
+
+    if(u <= 0x7F) {
+      utf8.push_back(static_cast<char>(u));
+    }else if(u <= 0x7FF) {
+      utf8.push_back(static_cast<char>(0xC0 | ((u >> 6) & 0x1F)));
+      utf8.push_back(static_cast<char>(0x80 | ( u       & 0x3F)));
+    } else if(u <= 0xFFFF) {
+      utf8.push_back(static_cast<char>(0xE0 | ((u >> 12) & 0x0F)));
+      utf8.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
+      utf8.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
+    } else {
+      utf8.push_back(static_cast<char>(0xF0 | ((u >> 18) & 0x07)));
+      utf8.push_back(static_cast<char>(0x80 | ((u >> 12) & 0x3F)));
+      utf8.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
+      utf8.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
+    }
+
+    u = 0;
+  }
+
+  return utf8.size();
+}
+
 
 
 ///
@@ -283,16 +391,75 @@ wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> __utf_cvt;
 ///
 wstring Om_fromUtf8(const string& utf8)
 {
-  return __utf_cvt.from_bytes(utf8);
+  // The STL implementation is inexplicably SLOW...
+  //return __utf_cvt.from_bytes(utf8);
+
+  wstring result;
+  // we should normally call MultiByteToWideChar a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case.
+
+  int len = utf8.size();
+  result.reserve(len);
+
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &result[0], len);
+
+  // resize string to proper length
+  if(len > 0) {
+    result.resize(len);
+  } else {
+    std::wcout << L"Om_fromUtf8 :: MultiByteToWideChar failed with error: " << GetLastError() << L"\n";
+  }
+
+  return result;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_fromUtf8(wstring& utf16, const string& utf8)
+void Om_fromUtf8(wstring& wstr, const string& utf8)
 {
-  utf16 = __utf_cvt.from_bytes(utf8);
+  // The STL implementation is inexplicably SLOW...
+  //wstr = __utf_cvt.from_bytes(utf8);
+
+  // we should normally call MultiByteToWideChar a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case.
+
+  int len = utf8.size();
+  wstr.reserve(len);
+
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &wstr[0], len);
+
+  // resize string to proper length
+  if(len > 0) {
+    wstr.resize(len);
+  } else {
+    std::wcout << L"Om_fromUtf8 :: MultiByteToWideChar failed with error: " << GetLastError() << L"\n";
+  }
 }
 
 
@@ -301,124 +468,134 @@ void Om_fromUtf8(wstring& utf16, const string& utf8)
 ///
 size_t Om_fromUtf8(wstring& wstr, const char* utf8)
 {
-  // UTF-8 to UTF-16 implementation inspired from Thompson Lee
-  // https://gist.github.com/tommai78101
+  // we should normally call MultiByteToWideChar a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case.
 
-  wstr.clear();
+  int len = strlen(utf8) + 1;
+  wstr.reserve(len);
 
-  const unsigned char* c = reinterpret_cast<const unsigned char*>(utf8);
-  size_t p = 0;
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
 
-  while(c[p] != 0) {
+  // get data
+  len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &wstr[0], len);
 
-    if(c[p] < 0x80) {
-      wstr.push_back(static_cast<wchar_t>(c[p])); ++p;
-    } else if(c[p] < 0xC0) { //< 0x80..0xBF reserved for UTF-8 encoding.
-      ++p;
-    } else if(c[p] < 0xE0) {
-      char16_t h =    static_cast<char16_t>(c[p] & 0x1F); p++;
-      char16_t l =    static_cast<char16_t>(c[p] & 0x3F); p++;
-      int32_t u = (h << 8) | l;
-      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
-        wstr.push_back(static_cast<wchar_t>(u));
-      }
-    } else if(c[p] < 0xF0) {
-      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
-      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      int32_t u = (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
-      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
-        wstr.push_back(static_cast<wchar_t>(u));
-      }
-    } else if(c[p] < 0xF8) {
-      char16_t c6 =   static_cast<char16_t>(c[p] & 0x4) >> 2;
-      char16_t hc5 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc5 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
-      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      int32_t u = (c6 << 4) | (hc5 << 2) | lc5 | (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
-      wstr.push_back(static_cast<wchar_t>((u - 0x10000) % 0x400 + 0xDC00));
-      wstr.push_back(static_cast<wchar_t>((u - 0x10000) / 0x400 + 0xD800));
-    } else { //< invalid
-      p++;
-    }
+  // resize string to proper length
+  if(len > 0) {
+    wstr.resize(len);
+  } else {
+    std::wcout << L"Om_fromUtf8 :: MultiByteToWideChar failed with error: " << GetLastError() << L"\n";
   }
 
-  return p;
+  return wstr.size();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-string Om_toUtf8(const wstring& utf16)
+size_t Om_toUtf8(char* utf8, size_t len, const wstring& wstr)
 {
-  return __utf_cvt.to_bytes(utf16);
-}
+  // The WinAPI implementation is the fastest one at this time
+  BOOL pBool;
+  int n = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, utf8, len, nullptr, &pBool);
 
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_toUtf8(string& utf8, const wstring& utf16)
-{
-  utf8 = __utf_cvt.to_bytes(utf16);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-size_t Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
-{
-  char16_t c;
-  uint32_t u;
-
-  size_t p = 0;
-
-  for(size_t i = 0; i < utf16.size(); ++i) {
-
-    c = utf16[i];
-
-    if(c >= 0xd800 && c <= 0xdbff) {
-      u = ((c - 0xd800) << 10) + 0x10000;
-      continue; //< get next value
-    } else if(c >= 0xdc00 && c <= 0xdfff) {
-      u |= c - 0xdc00;
-    } else {
-      u = c;
-    }
-
-    if(u <= 0x7f) {
-      utf8[p] = static_cast<char>(u); ++p;
-    }else if (u <= 0x7ff) {
-      if((p + 2) >= len) break;
-      utf8[p] = static_cast<char>(0xc0 | ((u >> 6) & 0x1f)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ( u       & 0x3f)); ++p;
-    } else if (u <= 0xffff) {
-      if((p + 3) >= len) break;
-      utf8[p] = static_cast<char>(0xe0 | ((u >> 12) & 0x0f)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3f)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ( u        & 0x3f)); ++p;
-    } else {
-      if((p + 4) >= len) break;
-      utf8[p] = static_cast<char>(0xf0 | ((u >> 18) & 0x07)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ((u >> 12) & 0x3f)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3f)); ++p;
-      utf8[p] = static_cast<char>(0x80 | ( u        & 0x3f)); ++p;
-    }
-
-    u = 0;
+  if(n > 0) {
+    return static_cast<size_t>(n);
+  } else {
+    std::wcout << L"Om_toUtf8 :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
   }
 
-  utf8[p] = '\0';
+  return 0;
+}
 
-  return p;
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+string Om_toUtf8(const wstring& wstr)
+{
+  // The STL implementation is inexplicably SLOW...
+  //return __utf_cvt.to_bytes(wstr);
+
+  BOOL pBool;
+  // we should normally call WideCharToMultiByte a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case, where all character use up to four
+  // bytes, then resize it after the operation.
+
+  size_t len = wstr.size() * 4;
+  string result;
+  result.reserve(len);
+
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], len, nullptr, &pBool);
+
+  // resize string to proper length
+  if(len > 0) {
+    result.resize(len);
+  } else {
+    std::wcout << L"Om_toUtf8 :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
+  }
+
+  return result;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_toUtf8(string& utf8, const wstring& wstr)
+{
+  // The STL implementation is slower than the WinAPI one
+  //utf8 = __utf_cvt.to_bytes(wstr);
+
+  BOOL pBool;
+  // we should normally call WideCharToMultiByte a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case, where all character use up to four
+  // bytes, then resize it after the operation.
+
+  int len = wstr.size() * 4;
+  utf8.reserve(len);
+
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8[0], len, nullptr, &pBool);
+
+  // resize string to proper length
+  if(len > 0) {
+    utf8.resize(len);
+  } else {
+    std::wcout << L"Om_toUtf8 :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
+  }
 }
 
 
@@ -427,9 +604,17 @@ size_t Om_toUtf8(char* utf8, size_t len, const wstring& utf16)
 ///
 size_t Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
 {
+  // The WinAPI implementation is the fastest one at this time
   BOOL pBool;
   int n = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, ansi, len, nullptr, &pBool);
-  return (n > 0) ? static_cast<size_t>(n) : 0;
+
+  if(n > 0) {
+    return static_cast<size_t>(n);
+  } else {
+    std::wcout << L"Om_toAnsiCp :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
+  }
+
+  return 0;
 }
 
 
@@ -439,23 +624,36 @@ size_t Om_toAnsiCp(char* ansi, size_t len, const wstring& wstr)
 size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 {
   BOOL pBool;
-  string result;
 
-  // get required buffer size for conversion
-  int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
+  // we should normally call WideCharToMultiByte a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case, where all character use up to four
+  // bytes, then resize it after the operation.
 
-  // alloc new buffer then get converted string
+  int len = wstr.size() * 4;
+  ansi.reserve(len);
+
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &ansi[0], len, nullptr, &pBool);
+
+  // resize string to proper length
   if(len > 0) {
-    char* cbuf = new char[len];
-    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, cbuf, len, nullptr, &pBool);
-
-    ansi = cbuf;
-    delete [] cbuf;
-
-    return static_cast<size_t>(len);
+    ansi.resize(len);
+  } else {
+    std::wcout << L"Om_toAnsiCp :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
   }
 
-  return 0;
+  return ansi.size();
 }
 
 
@@ -464,20 +662,55 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 ///
 size_t Om_fromAnsiCp(wstring& wstr, const char* ansi)
 {
-  wstring result;
+  // we should normally call MultiByteToWideChar a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case.
 
-  // get required buffer size for conversion
-  int len = MultiByteToWideChar(CP_ACP, 0, ansi, -1, nullptr, 0);
+  int len = strlen(ansi) + 1;
+  wstr.reserve(len);
 
-  // alloc new buffer then get converted string
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
+
+  // get data
+  len = MultiByteToWideChar(CP_ACP, 0, ansi, -1, &wstr[0], len);
+
+  // resize string to proper length
   if(len > 0) {
-    wchar_t* wcbuf = new wchar_t[len];
-    MultiByteToWideChar(CP_ACP, 0, ansi, -1, wcbuf, len);
+    wstr.resize(len);
+  } else {
+    std::wcout << L"Om_fromAnsiCp :: MultiByteToWideChar failed with error: " << GetLastError() << L"\n";
+  }
 
-    wstr = wcbuf;
-    delete [] wcbuf;
+  return wstr.size();
+}
 
-    return static_cast<size_t>(len);
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
+{
+  // The WinAPI implementation is the fastest one at this time
+  BOOL pBool;
+  int n = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, cdr, len, nullptr, &pBool);
+
+  if(n > 0) {
+
+    for(size_t i = 0; cdr[i] != 0; ++i) {
+      if(cdr[i] == '\\') cdr[i] = '/';
+    }
+
+    return static_cast<size_t>(n);
+  } else {
+    std::wcout << L"Om_toZipCDR :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
   }
 
   return 0;
@@ -487,106 +720,42 @@ size_t Om_fromAnsiCp(wstring& wstr, const char* ansi)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
-{
-  char16_t c;
-  uint32_t u;
-
-  size_t p = 0;
-
-  for(size_t i = 0; i < wstr.size(); ++i) {
-
-    c = wstr[i];
-
-    // convert back-slash to forward-slash
-    if(c == L'\\') {
-      if((p + 1) == len) break;
-      cdr[p] = '/'; ++p;
-      continue;
-    }
-
-    if(c >= 0xD800 && c <= 0xDBFF) {
-      u = ((c - 0xD800) << 10) + 0x10000; continue; //< get next char
-    } else if(c >= 0xDC00 && c <= 0xDFFF) {
-      u |= c - 0xDC00;
-    } else {
-      u = c;
-    }
-
-    if(u <= 0x7F) {
-      if((p + 1) == len) break;
-      cdr[p] = static_cast<char>(u); ++p;
-    }else if(u <= 0x7FF) {
-      if((p + 2) >= len) break;
-      cdr[p] = static_cast<char>(0xC0 | ((u >> 6) & 0x1F)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ( u       & 0x3F)); ++p;
-    } else if(u <= 0xFFFF) {
-      if((p + 3) >= len) break;
-      cdr[p] = static_cast<char>(0xE0 | ((u >> 12) & 0x0F)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3F)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ( u        & 0x3F)); ++p;
-    } else {
-      if((p + 4) >= len) break;
-      cdr[p] = static_cast<char>(0xF0 | ((u >> 18) & 0x07)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ((u >> 12) & 0x3F)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ((u >>  6) & 0x3F)); ++p;
-      cdr[p] = static_cast<char>(0x80 | ( u        & 0x3F)); ++p;
-    }
-
-    u = 0;
-  }
-
-  cdr[p] = '\0';
-
-  return p;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 {
-  cdr.clear();
+  BOOL pBool;
+  // we should normally call WideCharToMultiByte a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case, where all character use up to four
+  // bytes, then resize it after the operation.
 
-  char16_t c;
-  uint32_t u;
+  int len = wstr.size() * 4;
+  cdr.reserve(len);
 
-  for(size_t i = 0; i < wstr.size(); ++i) {
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
 
-    c = wstr[i];
+  // get data
+  len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &cdr[0], len, nullptr, &pBool);
 
-    // convert back-slash to forward-slash
-    if(c == L'\\') {
-      cdr.push_back('/');
-      continue;
+  // resize string to proper length
+  if(len > 0) {
+    cdr.resize(len);
+
+    // std::replace is slower than naive implementation
+    //replace(cdr.begin(), cdr.end(), '\\', '/');
+
+    for(size_t i = 0; i < cdr.size(); ++i) {
+      if(cdr[i] == '\\') cdr[i] = '/';
     }
-
-    if(c >= 0xD800 && c <= 0xDBFF) {
-      u = ((c - 0xD800) << 10) + 0x10000; continue; //< get next char
-    } else if(c >= 0xDC00 && c <= 0xDFFF) {
-      u |= c - 0xDC00;
-    } else {
-      u = c;
-    }
-
-    if(u <= 0x7F) {
-      cdr.push_back(static_cast<char>(u));
-    }else if(u <= 0x7FF) {
-      cdr.push_back(static_cast<char>(0xC0 | ((u >> 6) & 0x1F)));
-      cdr.push_back(static_cast<char>(0x80 | ( u       & 0x3F)));
-    } else if(u <= 0xFFFF) {
-      cdr.push_back(static_cast<char>(0xE0 | ((u >> 12) & 0x0F)));
-      cdr.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
-      cdr.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
-    } else {
-      cdr.push_back(static_cast<char>(0xF0 | ((u >> 18) & 0x07)));
-      cdr.push_back(static_cast<char>(0x80 | ((u >> 12) & 0x3F)));
-      cdr.push_back(static_cast<char>(0x80 | ((u >>  6) & 0x3F)));
-      cdr.push_back(static_cast<char>(0x80 | ( u        & 0x3F)));
-    }
-
-    u = 0;
+  } else {
+    std::wcout << L"Om_toZipCDR :: WideCharToMultiByte failed with error: " << GetLastError() << L"\n";
   }
 
   return cdr.size();
@@ -598,61 +767,38 @@ size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 ///
 size_t Om_fromZipCDR(wstring& wstr, const char* cdr)
 {
-  // UTF-8 to UTF-16 implementation inspired from Thompson Lee
-  // https://gist.github.com/tommai78101
+  // we should normally call MultiByteToWideChar a first time with NULL buffer
+  // to poll the required size, however the function is slow, to gain time we
+  // allocate the string for the worst case.
 
-  wstr.clear();
+  int len = strlen(cdr) + 1;
+  wstr.reserve(len);
 
-  const unsigned char* c = reinterpret_cast<const unsigned char*>(cdr);
-  size_t p = 0;
+  // NOTICE: here bellow, the string object is used as C char buffer, in
+  // theory this is not allowed since std::string is not required to store
+  // its contents contiguously in memory.
+  //
+  // HOWEVER, in practice, there is no know situation where std::string does
+  // not store its content contiguous, so, this should work anyway.
+  //
+  // If some problem emerge from this function, change this implementation for
+  // a more regular approach.
 
-  while(c[p] != 0) {
+  // get data
+  len = MultiByteToWideChar(CP_UTF8, 0, cdr, -1, &wstr[0], len);
 
-    // convert forward-slash to back-slash
-    if(c[p] == '/') {
-      wstr.push_back(L'\\'); ++p;
-      continue;
+  // resize string to proper length
+  if(len > 0) {
+    wstr.resize(len);
+
+    for(size_t i = 0; i < wstr.size(); ++i) {
+      if(wstr[i] == L'/') wstr[i] = L'\\';
     }
-
-    if(c[p] < 0x80) {
-      wstr.push_back(static_cast<wchar_t>(c[p])); ++p;
-    } else if(c[p] < 0xC0) { //< 0x80..0xBF reserved for UTF-8 encoding.
-      ++p;
-    } else if(c[p] < 0xE0) {
-      char16_t h =    static_cast<char16_t>(c[p] & 0x1F); p++;
-      char16_t l =    static_cast<char16_t>(c[p] & 0x3F); p++;
-      int32_t u = (h << 8) | l;
-      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
-        wstr.push_back(static_cast<wchar_t>(u));
-      }
-    } else if(c[p] < 0xF0) {
-      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
-      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      int32_t u = (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
-      if((0 <= u && u <= 0xD7FF) || (0xE000 <= u && u <= 0xFFFF)) {
-        wstr.push_back(static_cast<wchar_t>(u));
-      }
-    } else if(c[p] < 0xF8) {
-      char16_t c6 =   static_cast<char16_t>(c[p] & 0x4) >> 2;
-      char16_t hc5 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc5 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c4 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      char16_t c3 =   static_cast<char16_t>(c[p] & 0x3C) >> 2;
-      char16_t hc2 =  static_cast<char16_t>(c[p] & 0x3); p++;
-      char16_t lc2 =  static_cast<char16_t>(c[p] & 0x30) >> 4;
-      char16_t c1 =   static_cast<char16_t>(c[p] & 0xF); p++;
-      int32_t u = (c6 << 4) | (hc5 << 2) | lc5 | (c4 << 12) | (c3 << 8) | (hc2 << 6) | (lc2 << 4) | c1;
-      wstr.push_back(static_cast<wchar_t>((u - 0x10000) % 0x400 + 0xDC00));
-      wstr.push_back(static_cast<wchar_t>((u - 0x10000) / 0x400 + 0xD800));
-    } else { //< invalid
-      p++;
-    }
+  } else {
+    std::wcout << L"Om_fromZipCDR :: MultiByteToWideChar failed with error: " << GetLastError() << L"\n";
   }
 
-  return p;
+  return wstr.size();
 }
 
 ///
