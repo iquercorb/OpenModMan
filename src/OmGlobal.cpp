@@ -387,7 +387,7 @@ wstring Om_fromUtf8(const string& utf8)
   wstring result;
 
   int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
-  result.resize(len);
+  result.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -409,7 +409,7 @@ wstring Om_fromUtf8(const string& utf8)
 void Om_fromUtf8(wstring& wstr, const string& utf8)
 {
   int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
-  wstr.resize(len);
+  wstr.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -431,7 +431,7 @@ void Om_fromUtf8(wstring& wstr, const string& utf8)
 size_t Om_fromUtf8(wstring& wstr, const char* utf8)
 {
   int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
-  wstr.resize(len);
+  wstr.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -468,7 +468,7 @@ string Om_toUtf8(const wstring& wstr)
 
   BOOL pBool;
   int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  result.resize(len);
+  result.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -491,7 +491,7 @@ void Om_toUtf8(string& utf8, const wstring& wstr)
 {
   BOOL pBool;
   int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  utf8.resize(len);
+  utf8.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -524,7 +524,7 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 {
   BOOL pBool;
   int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  ansi.resize(len);
+  ansi.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -546,7 +546,7 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr)
 size_t Om_fromAnsiCp(wstring& wstr, const char* ansi)
 {
   int len = MultiByteToWideChar(CP_ACP, 0, ansi, -1, nullptr, 0);
-  wstr.resize(len);
+  wstr.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -586,7 +586,7 @@ size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 {
   BOOL pBool;
   int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, &pBool);
-  cdr.resize(len);
+  cdr.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
@@ -611,7 +611,7 @@ size_t Om_toZipCDR(string& cdr, const wstring& wstr)
 size_t Om_fromZipCDR(wstring& wstr, const char* cdr)
 {
   int len = MultiByteToWideChar(CP_UTF8, 0, cdr, -1, nullptr, 0);
-  wstr.resize(len);
+  wstr.resize(len - 1);
   // NOTICE: here bellow, the string object is used as C char buffer, in
   // theory this is not allowed since std::string is not required to store
   // its contents contiguously in memory.
