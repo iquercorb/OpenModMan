@@ -35,10 +35,6 @@ static unsigned __mzlvl[] = {  0,    //< MZ_NO_COMPRESSION
                                     6,    //< MZ_DEFAULT_LEVEL
                                     9 };  //< MZ_BEST_COMPRESSION
 
-/// local static string conversion functions to optimize operations.
-///
-#define ZMBUFF_SIZE 1080
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -66,10 +62,11 @@ OmZipFile::~OmZipFile()
 ///
 bool OmZipFile::init(const wstring& path)
 {
-  char ansi_path[ZMBUFF_SIZE];
-  Om_toAnsiCp(ansi_path, ZMBUFF_SIZE, path);
+  string ansi_path;
 
-  if(!mz_zip_writer_init_file(static_cast<mz_zip_archive*>(_data), ansi_path, 0)) {
+  Om_toAnsiCp(ansi_path, path);
+
+  if(!mz_zip_writer_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
     return false;
   }
 
@@ -84,10 +81,13 @@ bool OmZipFile::init(const wstring& path)
 ///
 bool OmZipFile::load(const wstring& path)
 {
-  char ansi_path[ZMBUFF_SIZE];
-  Om_toAnsiCp(ansi_path, ZMBUFF_SIZE, path);
+  string ansi_path;
 
-  if(!mz_zip_reader_init_file(static_cast<mz_zip_archive*>(_data), ansi_path, 0)) {
+  Om_toAnsiCp(ansi_path, path);
+
+  std::cout << "ansi_path : " << ansi_path.c_str() << L"\n";
+
+  if(!mz_zip_reader_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
     return false;
   }
 
@@ -104,13 +104,13 @@ bool OmZipFile::append(const wstring& src, const wstring& dst, unsigned lvl)
 {
   if(_stat & ZIP_WRITER) {
 
-    char zcdr_dst[ZMBUFF_SIZE];
-    char ansi_src[ZMBUFF_SIZE];
+    string zcdr_dst;
+    string ansi_src;
 
-    Om_toZipCDR(zcdr_dst, ZMBUFF_SIZE, dst);
-    Om_toAnsiCp(ansi_src, ZMBUFF_SIZE, src);
+    Om_toZipCDR(zcdr_dst, dst);
+    Om_toAnsiCp(ansi_src, src);
 
-    if(mz_zip_writer_add_file(static_cast<mz_zip_archive*>(_data), zcdr_dst, ansi_src, nullptr, 0, __mzlvl[lvl])) {
+    if(mz_zip_writer_add_file(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), ansi_src.c_str(), nullptr, 0, __mzlvl[lvl])) {
       return true;
     }
 
@@ -127,10 +127,11 @@ bool OmZipFile::append(const void* data, size_t size, const wstring& dst, unsign
 {
   if(_stat & ZIP_WRITER) {
 
-    char zcdr_dst[ZMBUFF_SIZE];
-    Om_toZipCDR(zcdr_dst, ZMBUFF_SIZE, dst);
+    string zcdr_dst;
 
-    if(!mz_zip_writer_add_mem(static_cast<mz_zip_archive*>(_data), zcdr_dst, data, size, __mzlvl[lvl])) {
+    Om_toZipCDR(zcdr_dst, dst);
+
+    if(!mz_zip_writer_add_mem(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), data, size, __mzlvl[lvl])) {
       return false;
     }
 
@@ -206,10 +207,11 @@ int OmZipFile::locate(const wstring& src) const
 {
   if(_stat & ZIP_READER) {
 
-    char zcdr_src[ZMBUFF_SIZE];
-    Om_toZipCDR(zcdr_src, ZMBUFF_SIZE, src);
+    string zcdr_src;
 
-    return mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src, "", 0);
+    Om_toZipCDR(zcdr_src, src);
+
+    return mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
 
   }
   return -1;
@@ -223,15 +225,15 @@ bool OmZipFile::extract(const wstring& src, const wstring& dst) const
 {
   if(_stat & ZIP_READER) {
 
-    char zcdr_src[ZMBUFF_SIZE];
-    char ansi_dst[ZMBUFF_SIZE];
+    string zcdr_src;
+    string ansi_dst;
 
-    Om_toZipCDR(zcdr_src, ZMBUFF_SIZE, src);
-    Om_toAnsiCp(ansi_dst, ZMBUFF_SIZE, dst);
+    Om_toZipCDR(zcdr_src, src);
+    Om_toAnsiCp(ansi_dst, dst);
 
-    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src, "", 0);
+    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
-      if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst, 0)) {
+      if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst.c_str(), 0)) {
         return true;
       }
     }
@@ -248,11 +250,11 @@ bool OmZipFile::extract(unsigned i, const wstring& dst) const
 {
   if(_stat & ZIP_READER) {
 
-    char ansi_dst[ZMBUFF_SIZE];
+    string ansi_dst;
 
-    Om_toAnsiCp(ansi_dst, ZMBUFF_SIZE, dst);
+    Om_toAnsiCp(ansi_dst, dst);
 
-    if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst, 0)) {
+    if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst.c_str(), 0)) {
       return true;
     }
 
@@ -268,11 +270,11 @@ bool OmZipFile::extract(const wstring& src, void* buffer, size_t size) const
 {
   if(_stat & ZIP_READER) {
 
-    char zcdr_src[ZMBUFF_SIZE];
+    string zcdr_src;
 
-    Om_toZipCDR(zcdr_src, ZMBUFF_SIZE, src);
+    Om_toZipCDR(zcdr_src, src);
 
-    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src, "", 0);
+    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
       if(mz_zip_reader_extract_to_mem(static_cast<mz_zip_archive*>(_data), i, buffer, size, 0)) {
         return true;
@@ -319,11 +321,11 @@ size_t OmZipFile::size(const wstring& src) const
 {
   if(_stat & ZIP_READER) {
 
-    char zcdr_src[ZMBUFF_SIZE];
+    string zcdr_src;
 
-    Om_toZipCDR(zcdr_src, ZMBUFF_SIZE, src);
+    Om_toZipCDR(zcdr_src, src);
 
-    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src, "", 0);
+    int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
       mz_zip_archive_file_stat zf; // zip file stat struct
       if(mz_zip_reader_file_stat(static_cast<mz_zip_archive*>(_data), i, &zf)){
