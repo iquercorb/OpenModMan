@@ -51,7 +51,7 @@ long OmUiPropPkgBck::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPkgBck::_onShow()
+void OmUiPropPkgBck::_onInit()
 {
   OmPackage* package = reinterpret_cast<OmUiPropPkg*>(this->_parent)->package();
 
@@ -63,18 +63,20 @@ void OmUiPropPkgBck::_onShow()
   SendMessage(GetDlgItem(_hwnd, IDC_EC_ENT05), WM_SETFONT, (WPARAM)hFont, 1);
 
   if(package->isType(PKG_TYPE_BCK)) {
+
     // Type
     if(Om_isDir(package->backupPath())) {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT01, L"Sub-folder");
+      this->setItemText(IDC_EC_ENT01, L"Sub-folder");
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT01, L"Zip archive");
+      this->setItemText(IDC_EC_ENT01, L"Zip archive");
     }
 
     // Location
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT02, package->backupPath().c_str());
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT02), true);
+    this->enableItem(IDC_EC_ENT02, true);
+    this->setItemText(IDC_EC_ENT02, package->backupPath());
 
     // Overlap by
+    this->enableItem(IDC_EC_ENT03, true);
     if(package->overlapCount()) {
       wstring olap_str;
       unsigned n = package->overlapCount();
@@ -84,17 +86,17 @@ void OmUiPropPkgBck::_onShow()
           olap_str += L"; ";
         }
       }
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT03, olap_str.c_str());
+      this->setItemText(IDC_EC_ENT03, olap_str);
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT03, L"None");
+      this->setItemText(IDC_EC_ENT03, L"None");
     }
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT03), true);
 
     // Total Size
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT04, Om_sizeString(Om_itemSize(package->backupPath())).c_str());
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT04), true);
+    this->enableItem(IDC_EC_ENT04, true);
+    this->setItemText(IDC_EC_ENT04, Om_sizeString(Om_itemSize(package->backupPath())));
 
     // Installed Files
+    this->enableItem(IDC_EC_ENT05, true);
     if(package->backupItemCount()) {
       wstring inst_str;
       for(unsigned i = 0; i < package->backupItemCount(); ++i) {
@@ -106,27 +108,26 @@ void OmUiPropPkgBck::_onShow()
         inst_str += package->backupItem(i).path;
         inst_str += L"\r\n";
       }
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT05, inst_str.c_str());
+      this->setItemText(IDC_EC_ENT05, inst_str);
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT05, L"None");
+      this->setItemText(IDC_EC_ENT05, L"None");
     }
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT05), true);
 
   } else {
     // Type
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT01, L"None");
+    this->setItemText(IDC_EC_ENT01, L"None");
     // Location
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT02, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT02), false);
+    this->setItemText(IDC_EC_ENT02, L"N/A");
+    this->enableItem(IDC_EC_ENT02, false);
     // Overlap by
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT03, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT03), false);
+    this->setItemText(IDC_EC_ENT03, L"N/A");
+    this->enableItem(IDC_EC_ENT03, false);
     // Total Size
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT04, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT04), false);
+    this->setItemText(IDC_EC_ENT04, L"N/A");
+    this->enableItem(IDC_EC_ENT04, false);
     // Installed Files
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT05, L"");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT05), false);
+    this->setItemText(IDC_EC_ENT05, L"");
+    this->enableItem(IDC_EC_ENT05, false);
   }
 }
 
@@ -137,54 +138,27 @@ void OmUiPropPkgBck::_onShow()
 void OmUiPropPkgBck::_onResize()
 {
   // Package Backup Type Label & EditControl
-  this->_setControlPos(IDC_SC_LBL01, 5, 10, 64, 9);
-  this->_setControlPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
+  this->_setItemPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
   // Package Backup Location Label & EditControl
-  this->_setControlPos(IDC_SC_LBL02, 5, 30, 64, 9);
-  this->_setControlPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL02, 5, 30, 64, 9);
+  this->_setItemPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
 
   // separator
-  this->_setControlPos(IDC_SC_SEP01, 5, 55, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP01, 5, 55, this->width()-25, 1);
 
   // Package Backup Overlap Label & EditControl
-  this->_setControlPos(IDC_SC_LBL03, 5, 70, 64, 9);
-  this->_setControlPos(IDC_EC_ENT03, 70, 70, this->width()-90, 26);
+  this->_setItemPos(IDC_SC_LBL03, 5, 70, 64, 9);
+  this->_setItemPos(IDC_EC_ENT03, 70, 70, this->width()-90, 26);
 
   // separator
-  this->_setControlPos(IDC_SC_SEP02, 5, 105, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP02, 5, 105, this->width()-25, 1);
 
   // Package Backup Total size Label & EditControl
-  this->_setControlPos(IDC_SC_LBL04, 5, 120, 64, 9);
-  this->_setControlPos(IDC_EC_ENT04, 70, 120, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL04, 5, 120, 64, 9);
+  this->_setItemPos(IDC_EC_ENT04, 70, 120, this->width()-90, 13);
   // Package Backup Installed Files Label
-  this->_setControlPos(IDC_SC_LBL05, 5, 140, 64, 9);
+  this->_setItemPos(IDC_SC_LBL05, 5, 140, 64, 9);
   // Package Backup Installed Files EditControl
-  this->_setControlPos(IDC_EC_ENT05, 70, 140, this->width()-90, this->height()-150);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropPkgBck::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropPkgBck::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropPkgBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  return false;
+  this->_setItemPos(IDC_EC_ENT05, 70, 140, this->width()-90, this->height()-150);
 }

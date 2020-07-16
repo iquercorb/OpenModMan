@@ -61,11 +61,11 @@ bool OmUiPropBat::checkChanges()
 
   bool changed = false;
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wstring item_str;
 
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Context title
-    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-    if(batch->title() != wcbuf) {
+    uiPropBatStg->getItemText(IDC_EC_INPT1, item_str);
+    if(batch->title() != item_str) {
       changed = true;
     } else {
       uiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
@@ -73,9 +73,7 @@ bool OmUiPropBat::checkChanges()
   }
 
   // enable Apply button
-  if(IsWindowEnabled(GetDlgItem(this->_hwnd, IDC_BC_APPLY)) != changed) {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), changed);
-  }
+  this->enableItem(IDC_BC_APPLY, changed);
 
   return changed;
 }
@@ -89,12 +87,12 @@ bool OmUiPropBat::applyChanges()
   OmBatch* batch = reinterpret_cast<OmBatch*>(this->_batch);
   OmUiPropBatStg* uiPropBatStg  = reinterpret_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
-  wchar_t title[OMM_MAX_PATH];
+  wstring bat_name;
 
   // Step 1, verify everything
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    GetDlgItemTextW(uiPropBatStg->hwnd(), IDC_EC_INPT1, title, OMM_MAX_PATH);
-    if(!wcslen(title)) {
+    uiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
+    if(bat_name.empty()) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Batch title",
                                    L"Please enter a valid title.");
       return false;
@@ -102,7 +100,7 @@ bool OmUiPropBat::applyChanges()
     // Check whether name already exists
     OmContext* context = batch->context();
     for(unsigned i = 0; i < context->batchCount(); ++i) {
-      if(context->batch(i)->title() == title) {
+      if(context->batch(i)->title() == bat_name) {
         Om_dialogBoxErr(this->_hwnd, L"Not unique Batch title",
                                      L"A Batch with the same title already "
                                      L"exists. Please choose another title.");
@@ -113,114 +111,19 @@ bool OmUiPropBat::applyChanges()
 
   // Step 2, save changes
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    if(!batch->rename(title)) { //< rename Batch filename
+    if(!batch->rename(bat_name)) { //< rename Batch filename
       Om_dialogBoxErr(this->_hwnd, L"Batch rename failed", batch->lastError());
     }
-    batch->setTitle(title); //< change Batch title
+    batch->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified
     uiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
   }
 
   // disable Apply button
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
+  this->enableItem(IDC_BC_APPLY, false);
+
+  // refresh all tree from the main dialog
+  this->root()->refresh();
 
   return true;
-}
-
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropBat::_onShow()
-{
-  // Initialize TabControl with pages dialogs
-  this->_pagesOnShow(IDC_TC_TABS1);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropBat::_onResize()
-{
-  // TabControl
-  this->_setControlPos(IDC_TC_TABS1, 4, 5, this->width()-8, this->height()-28);
-  // Resize page dialogs according IDC_TC_TABS1
-  this->_pagesOnResize(IDC_TC_TABS1);
-
-  // OK Button
-  this->_setControlPos(IDC_BC_OK, this->width()-161, this->height()-19, 50, 14);
-  // Cancel Button
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-108, this->height()-19, 50, 14);
-  // Apply Button
-  this->_setControlPos(IDC_BC_APPLY, this->width()-54, this->height()-19, 50, 14);
-
-  // force buttons to redraw to prevent artifacts
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_OK), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_CANCEL), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_APPLY), nullptr, true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropBat::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropBat::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  if(uMsg == WM_NOTIFY) {
-    // handle TabControl page selection change
-    this->_pagesOnNotify(IDC_TC_TABS1, wParam, lParam);
-  }
-
-  if(uMsg == WM_COMMAND) {
-
-    switch(LOWORD(wParam))
-    {
-    case IDC_BC_APPLY:
-      if(this->applyChanges()) {
-        // refresh all tree from the main dialog
-        this->root()->refresh();
-      }
-      break;
-
-    case IDC_BC_OK:
-      if(this->checkChanges()) {
-        if(this->applyChanges()) {
-          // quit the dialog
-          this->quit();
-          // refresh all tree from the main dialog
-          this->root()->refresh();
-        }
-      } else {
-        // quit the dialog
-        this->quit();
-      }
-      break; // case BTN_OK:
-
-    case IDC_BC_CANCEL:
-      this->quit();
-      break; // case BTN_CANCEL:
-    }
-  }
-
-  return false;
 }

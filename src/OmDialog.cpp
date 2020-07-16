@@ -29,6 +29,7 @@ OmDialog::OmDialog(HINSTANCE hins) :
   _accel(nullptr),
   _rect(),
   _data(nullptr),
+  _init(true),
   _modal(false)
 {
 
@@ -102,11 +103,11 @@ void OmDialog::open(bool show)
   if(this->_hwnd)
     return;
 
-  this->_hwnd = CreateDialogParam(this->_hins,
-                                  MAKEINTRESOURCE(this->id()),
-                                  (this->_parent)?this->_parent->_hwnd:nullptr,
-                                  (DLGPROC)this->_wndproc,
-                                  (LPARAM)this);
+  this->_hwnd = CreateDialogParamW( this->_hins,
+                                    MAKEINTRESOURCEW(this->id()),
+                                    (this->_parent)?this->_parent->_hwnd:nullptr,
+                                    (DLGPROC)this->_wndproc,
+                                    (LPARAM)this);
 
   if(this->_hwnd != nullptr) {
 
@@ -134,11 +135,11 @@ void OmDialog::modeless(bool show)
   if(this->_hwnd)
     return;
 
-  this->_hwnd = CreateDialogParam(this->_hins,
-                            MAKEINTRESOURCE(this->id()),
-                            (this->_parent)?this->_parent->_hwnd:nullptr,
-                            (DLGPROC)this->_wndproc,
-                            (LPARAM)this);
+  this->_hwnd = CreateDialogParamW( this->_hins,
+                                    MAKEINTRESOURCEW(this->id()),
+                                    (this->_parent)?this->_parent->_hwnd:nullptr,
+                                    (DLGPROC)this->_wndproc,
+                                    (LPARAM)this);
 
   if(this->_hwnd != nullptr) {
 
@@ -297,7 +298,37 @@ void OmDialog::loopMessage() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::_setControlPos(unsigned id, long x, long y, long w, long h)
+void OmDialog::setItemText(unsigned id, const wstring& text)
+{
+  SendMessageW(GetDlgItem(this->_hwnd, id), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text.c_str()));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmDialog::getItemText(unsigned id, wstring& text) const
+{
+  int len = SendMessageW(GetDlgItem(this->_hwnd, id), WM_GETTEXTLENGTH , 0, 0);
+  if(len > 0) {
+    text.resize(len);
+    int n = SendMessageW(GetDlgItem(this->_hwnd, id), WM_GETTEXT , len + 1, reinterpret_cast<LPARAM>(&text[0]));
+    // Under certain conditions, the DefWindowProc function returns a value that is
+    // larger than the actual length of the text. This occurs with certain mixtures
+    // of ANSI and Unicode, and is due to the system allowing for the possible
+    // existence of double-byte character set (DBCS) characters within the text.
+    if(n < len) text.resize(n);
+    return n;
+  }
+  text.clear();
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h)
 {
   long rect[4] = {x, y, w, h};
   MapDialogRect(this->_hwnd, (LPRECT)&rect);
@@ -332,6 +363,15 @@ void OmDialog::_createTooltip(unsigned id, const wstring& text)
   toolInfo.lpszText = (LPWSTR)text.c_str();
 
   SendMessageW(hTtip, TTM_ADDTOOLW, 0, (LPARAM)&toolInfo);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_onInit()
+{
+
 }
 
 
@@ -412,6 +452,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     {
 
     case WM_INITDIALOG:
+      dialog->_init = true;
       return true; // case WM_INITDIALOG:
 
     case WM_SHOWWINDOW:
@@ -420,6 +461,12 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         GetWindowRect(hWnd, &dialog->_rect);
         dialog->_limit[0] = dialog->_rect.right - dialog->_rect.left;
         dialog->_limit[1] = dialog->_rect.bottom - dialog->_rect.top;
+
+        // if this is the first show after WM_INITDIALOG
+        if(dialog->_init) {
+          dialog->_init = false;
+          dialog->_onInit();
+        }
 
         // call user function
         dialog->_onShow();

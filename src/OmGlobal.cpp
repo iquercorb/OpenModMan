@@ -612,6 +612,13 @@ void Om_sortStrings(vector<wstring>* strings)
 }
 
 
+/// \brief Forbidden characters
+///
+/// List of forbidden characters to test validity of file name or path.
+///
+static const wchar_t __forbidden_chr[] = L"/*?\"<>|\\";
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -620,10 +627,8 @@ bool Om_isValidName(const wchar_t* name)
   if(!wcslen(name))
     return false;
 
-  const wchar_t check[] = L"/*?\"<>|";
-
-  for(unsigned i = 0; i < 7; ++i)
-    if(wcschr(name, check[i]))
+  for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
+    if(wcschr(name, __forbidden_chr[i]))
       return false;
 
   return true;
@@ -635,10 +640,43 @@ bool Om_isValidName(const wchar_t* name)
 ///
 bool Om_isValidName(const wstring& name)
 {
-  const wchar_t check[] = L"/*?\"<>|";
+  if(name.empty())
+    return false;
 
-  for(unsigned i = 0; i < 7; ++i)
-    if(name.find_first_of(check[i]) != wstring::npos)
+  for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
+    if(name.find_first_of(__forbidden_chr[i]) != wstring::npos)
+      return false;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidPath(const wchar_t* path)
+{
+  if(!wcslen(path))
+    return false;
+
+  for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
+    if(wcschr(path, __forbidden_chr[i]))
+      return false;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidPath(const wstring& path)
+{
+  if(path.empty())
+    return false;
+
+  for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
+    if(path.find_first_of(__forbidden_chr[i]) != wstring::npos)
       return false;
 
   return true;
@@ -1380,6 +1418,52 @@ bool Om_dialogBrowseDir(wchar_t* result, HWND hWnd, const wchar_t* title, const 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive)
+{
+  wchar_t wcbuf[OMM_MAX_PATH];
+
+  BROWSEINFOW br = {};
+  br.hwndOwner = hWnd;
+  br.lpszTitle = title;
+  br.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS;
+
+  if(captive) {
+    // this is the standard easy way to use SHBrowseForFolderW, this will
+    // set the "start" path as the root of browsing, so the user cannot go up
+    // to parent folder
+    if(start.size()) {
+      LPITEMIDLIST pIdl = nullptr;
+      SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
+      br.pidlRoot = pIdl;
+    }
+  } else {
+      // this is the advanced way to use SHBrowseForFolderW, here we use a
+      // callback function to handle the dialog window initialization, the "start"
+      // path object will be passed as lParam to the callback with the
+      // BFFM_INITIALIZED message.
+    if(start.size()) {
+      LPITEMIDLIST pIdl = nullptr;
+      SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
+      br.lpfn = __dialogBrowseDir_Proc;
+      br.lParam = (LPARAM)pIdl;
+    }
+  }
+
+  LPITEMIDLIST pIdl;
+  if((pIdl = SHBrowseForFolderW(&br)) != nullptr) {
+    if(SHGetPathFromIDListW(pIdl, wcbuf)) {
+      result = wcbuf;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start)
 {
   OPENFILENAMEW ofn = {};
@@ -1398,6 +1482,37 @@ bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
 
   return GetOpenFileNameW(&ofn);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
+{
+  wchar_t wcbuf[OMM_MAX_PATH];
+
+  OPENFILENAMEW ofn = {};
+  ofn.lStructSize = sizeof(OPENFILENAMEW);
+
+  ofn.hwndOwner = hWnd;
+  ofn.lpstrFilter = filter; //L"Mod archive (*.zip)\0*.ZIP;\0";
+
+  ofn.lpstrFile = wcbuf;
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = OMM_MAX_PATH;
+
+  ofn.lpstrInitialDir = start.c_str();
+
+  ofn.lpstrTitle = title;
+  ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
+
+  if(GetOpenFileNameW(&ofn)) {
+    result = wcbuf;
+    return true;
+  }
+
+  return false;
 }
 
 
@@ -1423,6 +1538,47 @@ bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
   return GetSaveFileNameW(&ofn);
 }
 
+/// \brief Load plan text.
+///
+/// Loads content of the specified file as plain-text into the given
+/// string object.
+///
+/// \param[in] text    : String to receive loaded text data.
+/// \param[in] path    : Path to text file to be loaded.
+///
+/// \return Count of bytes read.
+///
+inline static size_t __load_plaintxt(string& txt, const wchar_t* path)
+{
+  txt.clear();
+
+  HANDLE hFile = CreateFileW( path, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return 0;
+
+  DWORD rb;
+  size_t rt = 0;
+  char cbuf[1080];
+
+  while(ReadFile(hFile, cbuf, 1024, &rb, nullptr)) {
+
+    if(rb == 0)
+      break;
+
+    rt += rb;
+
+    cbuf[rb] = '\0';
+
+    txt.append(cbuf);
+  }
+
+  CloseHandle(hFile);
+
+  return rt;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1430,29 +1586,19 @@ bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
 string Om_loadPlainText(const wstring& path)
 {
   string result;
-
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr,
-                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-  if(hFile == INVALID_HANDLE_VALUE)
-    return result;
-
-  DWORD rb;
-  char buff[2080];
-
-  while(ReadFile(hFile, buff, 2048, &rb, nullptr)) {
-
-    if(rb == 0)
-      break;
-
-    buff[rb] = '\0';
-    result.append(buff);
-  }
-
-  CloseHandle(hFile);
-
+  __load_plaintxt(result, path.c_str());
   return result;
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t Om_loadPlainText(string& text, const wstring& path)
+{
+  return __load_plaintxt(text, path.c_str());
+}
+
 
 /// \brief Write a BMP file.
 ///

@@ -279,12 +279,79 @@ class OmDialog
       return this->_unit[1];
     }
 
+    /// \brief Get control handle
+    ///
+    /// Returns dialog control handle with the specified ID.
+    ///
+    /// \param[in]  id  : Control resource ID to retrieve handle.
+    ///
+    /// \return Dialog control handle.
+    ///
+    HWND getItem(unsigned id) {
+      return GetDlgItem(this->_hwnd, id);
+    }
+
+    /// \brief Set control text
+    ///
+    /// Define inner text for the specified dialog control.
+    ///
+    /// \param[in]  id    : Control resource ID to set text for.
+    /// \param[in]  text  : Text to set.
+    ///
+    void setItemText(unsigned id, const wstring& text);
+
+    /// \brief Set control text
+    ///
+    /// Define inner text for the specified dialog control.
+    ///
+    /// \param[in]  id    : Control resource ID to set text for.
+    /// \param[in]  text  : Wide char string to get text.
+    ///
+    /// \return Count of written characters.
+    ///
+    size_t getItemText(unsigned id, wstring& text) const;
+
+    /// \brief Send message to control
+    ///
+    /// Send the message with parameters to the specified dialog control.
+    ///
+    /// \param[in]  id      : Control resource ID to set text for.
+    /// \param[in]  uMsg    : The message to be sent.
+    /// \param[in]  wParam  : Additional message-specific information.
+    /// \param[in]  lParam  : Additional message-specific information.
+    ///
+    /// \return The return value specifies the result of the message processing.
+    ///
+    LRESULT msgItem(unsigned id, UINT uMsg, WPARAM wParam = 0, LPARAM lParam = 0) const {
+      return SendMessageW(GetDlgItem(this->_hwnd, id), uMsg, wParam, lParam);
+    }
+
+    /// \brief Enable or disable control
+    ///
+    /// Enable or disable the specified dialog control.
+    ///
+    /// \param[in]  id      : Control resource ID to set text for.
+    /// \param[in]  enable  : Enable or disable.
+    ///
+    /// \return The return value specifies the result of the message processing.
+    ///
+    void enableItem(unsigned id, bool enable) {
+      EnableWindow(GetDlgItem(this->_hwnd, id), enable);
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    /// \brief On initialize virtual function.
+    ///
+    /// Virtual function to be defined by derived class, called when
+    /// WM_INITIDALOG dialog message is received.
+    ///
+    virtual void _onInit();
 
     /// \brief On show virtual function.
     ///
     /// Virtual function to be defined by derived class, called when
-    /// WM_SHOW dialog message is received.
+    /// WM_SHOWWINDOW dialog message is received.
     ///
     virtual void _onShow();
 
@@ -293,7 +360,7 @@ class OmDialog
     /// \param[in] msg    Received window message.
     ///
     /// Virtual function to be defined by derived class, called when
-    /// WM_MOVE, WM_SIZE or WM_WINDOWPOSCHANGED dialog message is received.
+    /// WM_SIZE dialog message is received.
     ///
     virtual void _onResize();
 
@@ -341,11 +408,13 @@ class OmDialog
 
     void*               _data;      //< Dialog custom data
 
-    void                _setControlPos(unsigned, long, long, long, long);
+    void                _setItemPos(unsigned, long, long, long, long);
 
     void                _createTooltip(unsigned, const wstring&);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool                _init;      //< Dialog in initialization
 
     bool                _modal;     //< Dialog was created as modal
 

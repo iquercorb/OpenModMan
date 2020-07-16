@@ -86,7 +86,7 @@ class OmUiPropCtxBat : public OmDialog
 
     bool                _batchDel();
 
-    void                _onShow();
+    void                _onInit();
 
     void                _onResize();
 

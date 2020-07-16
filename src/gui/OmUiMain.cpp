@@ -529,11 +529,11 @@ void OmUiMain::_onShow()
 void OmUiMain::_onResize()
 {
   // Context Icon
-  this->_setControlPos(IDC_SB_CTICO, 6, 3, 19, 19);
+  this->_setItemPos(IDC_SB_CTICO, 6, 3, 19, 19);
   // Context list ComboBox
-  this->_setControlPos(IDC_CB_CTXLS, 32, 6, this->width()-38 , 12);
+  this->_setItemPos(IDC_CB_CTXLS, 32, 6, this->width()-38 , 12);
   // Main Tab Control
-  this->_setControlPos(IDC_TC_TABS1, 5, 25, this->width()-9, this->height()-30);
+  this->_setItemPos(IDC_TC_TABS1, 5, 25, this->width()-9, this->height()-30);
   // Resize page dialogs according IDC_TC_TABS1
   this->_pagesOnResize(IDC_TC_TABS1);
 }

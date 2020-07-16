@@ -110,65 +110,65 @@ void OmUiNewPkg::_onShow()
 void OmUiNewPkg::_onResize()
 {
   // From folder RadioButton
-  this->_setControlPos(IDC_BC_RAD01, 10, 10, 150, 9);
+  this->_setItemPos(IDC_BC_RAD01, 10, 10, 150, 9);
   // From Folder EditControl & Brows Button
-  this->_setControlPos(IDC_EC_INPT1, 10, 20, this->width()-38, 13);
-  this->_setControlPos(IDC_BC_BROW1, this->width()-26, 20, 16, 13);
+  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-38, 13);
+  this->_setItemPos(IDC_BC_BROW1, this->width()-26, 20, 16, 13);
 
   // From existing Package RadioButton
-  this->_setControlPos(IDC_BC_RAD02, 10, 40, 150, 9);
+  this->_setItemPos(IDC_BC_RAD02, 10, 40, 150, 9);
   // From existing Package EditControl & Brows Button
-  this->_setControlPos(IDC_EC_INPT2, 10, 50, this->width()-38, 13);
-  this->_setControlPos(IDC_BC_BROW2, this->width()-26, 50, 16, 13);
+  this->_setItemPos(IDC_EC_INPT2, 10, 50, this->width()-38, 13);
+  this->_setItemPos(IDC_BC_BROW2, this->width()-26, 50, 16, 13);
 
   // Dependencies CheckBox
-  this->_setControlPos(IDC_BC_CHK03, 10, 70, 112, 9);
+  this->_setItemPos(IDC_BC_CHK03, 10, 70, 112, 9);
   // Dependencies EditControl a Add Button
-  this->_setControlPos(IDC_EC_INPT3, 10, 80, this->width()-38, 13);
-  this->_setControlPos(IDC_BC_ADD, this->width()-26, 80, 16, 13);
+  this->_setItemPos(IDC_EC_INPT3, 10, 80, this->width()-38, 13);
+  this->_setItemPos(IDC_BC_ADD, this->width()-26, 80, 16, 13);
   // Dependencies ListBox & Del button
-  this->_setControlPos(IDC_LB_DPNDS, 10, 95, this->width()-38, 24);
-  this->_setControlPos(IDC_BC_DEL, this->width()-26, 95, 16, 13);
+  this->_setItemPos(IDC_LB_DPNDS, 10, 95, this->width()-38, 24);
+  this->_setItemPos(IDC_BC_DEL, this->width()-26, 95, 16, 13);
 
   // Picture CheckBox & Load button
-  this->_setControlPos(IDC_BC_CHK04, 10, 125, 120, 9);
-  this->_setControlPos(IDC_BC_BROW4, this->width()-60, 125, 50, 14);
+  this->_setItemPos(IDC_BC_CHK04, 10, 125, 120, 9);
+  this->_setItemPos(IDC_BC_BROW4, this->width()-60, 125, 50, 14);
   // Picture Bitmap & Label
-  this->_setControlPos(IDC_SB_PKIMG, 10, 136, 85, 78);
-  this->_setControlPos(IDC_SC_LBL04, 115, 165, 200, 9);
+  this->_setItemPos(IDC_SB_PKIMG, 10, 136, 85, 78);
+  this->_setItemPos(IDC_SC_LBL04, 115, 165, 200, 9);
 
   // Description CheckBox & Load button
-  this->_setControlPos(IDC_BC_CHK05, 10, 220, 120, 9);
-  this->_setControlPos(IDC_BC_BROW5, this->width()-60, 220, 50, 14);
+  this->_setItemPos(IDC_BC_CHK05, 10, 220, 120, 9);
+  this->_setItemPos(IDC_BC_BROW5, this->width()-60, 220, 50, 14);
   // Description EditControl
-  this->_setControlPos(IDC_EC_PKTXT, 10, 235, this->width()-20, this->height()-360);
+  this->_setItemPos(IDC_EC_PKTXT, 10, 235, this->width()-20, this->height()-360);
 
   // Destination label
-  this->_setControlPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
+  this->_setItemPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
   // Destination file name
-  this->_setControlPos(IDC_EC_INPT4, 10, this->height()-105, this->width()-72, 14);
+  this->_setItemPos(IDC_EC_INPT4, 10, this->height()-105, this->width()-72, 14);
   // Destination brows button
-  this->_setControlPos(IDC_BC_SAVE, this->width()-60, this->height()-105, 50, 14);
+  this->_setItemPos(IDC_BC_SAVE, this->width()-60, this->height()-105, 50, 14);
 
   // Parsed name label & entry
-  this->_setControlPos(IDC_SC_LBL07, 10, this->height()-84, 50, 9);
-  this->_setControlPos(IDC_EC_INPT5, 60, this->height()-85, this->width()-175, 12);
+  this->_setItemPos(IDC_SC_LBL07, 10, this->height()-84, 50, 9);
+  this->_setItemPos(IDC_EC_INPT5, 60, this->height()-85, this->width()-175, 12);
 
   // Parsed version label & entry
-  this->_setControlPos(IDC_SC_LBL08, this->width()-101, this->height()-84, 51, 9);
-  this->_setControlPos(IDC_EC_INPT6, this->width()-45, this->height()-85, 35, 12);
+  this->_setItemPos(IDC_SC_LBL08, this->width()-101, this->height()-84, 51, 9);
+  this->_setItemPos(IDC_EC_INPT6, this->width()-45, this->height()-85, 35, 12);
 
   // Zip Level Label
-  this->_setControlPos(IDC_SC_LBL09, 10, this->height()-60, 120, 9);
+  this->_setItemPos(IDC_SC_LBL09, 10, this->height()-60, 120, 9);
   // Zip Level ComboBox
-  this->_setControlPos(IDC_CB_LEVEL, 10, this->height()-50, this->width()-20, 14);
+  this->_setItemPos(IDC_CB_LEVEL, 10, this->height()-50, this->width()-20, 14);
 
   // ----- Separator
-  this->_setControlPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
   // Save As... Button
-  this->_setControlPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
   // Close Button
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 }
 
 

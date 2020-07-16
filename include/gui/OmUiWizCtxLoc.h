@@ -64,6 +64,8 @@ class OmUiWizCtxLoc : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    void                _onInit();
+
     void                _onShow();
 
     void                _onResize();

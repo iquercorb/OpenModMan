@@ -86,39 +86,32 @@ void OmUiWizCtx::_onWizFinish()
   OmUiWizCtxCfg* uiWizCtxCfg = reinterpret_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG));
   OmUiWizCtxLoc* uiWizLocCfg = reinterpret_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG));
 
-  wchar_t ctx_titl[OMM_MAX_PATH];
-  wchar_t ctx_locp[OMM_MAX_PATH];
-  wchar_t loc_titl[OMM_MAX_PATH];
-  wchar_t loc_inst[OMM_MAX_PATH];
-  wchar_t loc_libd[OMM_MAX_PATH];
-  wchar_t loc_bckd[OMM_MAX_PATH];
+  // Retrieve Context parameters
+  wstring ctx_name, ctx_home;
+  uiWizCtxCfg->getItemText(IDC_EC_INPT1, ctx_name);
+  uiWizCtxCfg->getItemText(IDC_EC_INPT2, ctx_home);
 
-  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT1, ctx_titl, OMM_MAX_PATH);
-  GetDlgItemTextW(uiWizCtxCfg->hwnd(), IDC_EC_INPT2, ctx_locp, OMM_MAX_PATH);
+  // Retrieve Location parameters
+  wstring loc_name, loc_dst, loc_lib, loc_bck;
+  uiWizLocCfg->getItemText(IDC_EC_INPT1, loc_name);
+  uiWizLocCfg->getItemText(IDC_EC_INPT2, loc_dst);
 
-  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT1, loc_titl, OMM_MAX_PATH);
-  GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT2, loc_inst, OMM_MAX_PATH);
-
-  if(SendMessage(GetDlgItem(uiWizLocCfg->hwnd(),IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT4, loc_libd, OMM_MAX_PATH);
-  } else {
-    loc_libd[0] = L'\0';
+  if(uiWizLocCfg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    uiWizLocCfg->getItemText(IDC_EC_INPT3, loc_lib);
   }
 
-  if(SendMessage(GetDlgItem(uiWizLocCfg->hwnd(),IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(uiWizLocCfg->hwnd(), IDC_EC_INPT5, loc_bckd, OMM_MAX_PATH);
-  } else {
-    loc_bckd[0] = L'\0';
+  if(uiWizLocCfg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    uiWizLocCfg->getItemText(IDC_EC_INPT4, loc_bck);
   }
 
   this->quit();
 
   // create the new Context, if an error occur, error message
-  if(manager->makeContext(ctx_titl, ctx_locp)) {
+  if(manager->makeContext(ctx_name, ctx_home)) {
     // get last created Context
     OmContext* context = manager->context(manager->contextCount()-1);
     // create new Location in Context
-    if(!context->makeLocation(loc_titl, loc_inst, loc_libd, loc_bckd)) {
+    if(!context->makeLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
       Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
     }
   } else {
@@ -127,31 +120,4 @@ void OmUiWizCtx::_onWizFinish()
 
   // refresh all tree from the main dialog
   this->root()->refresh();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiWizCtx::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiWizCtx::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiWizCtx::_onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  return false;
 }

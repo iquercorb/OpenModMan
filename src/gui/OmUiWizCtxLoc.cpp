@@ -53,11 +53,11 @@ long OmUiWizCtxLoc::id() const
 ///
 bool OmUiWizCtxLoc::hasValidParams() const
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wstring item_str;
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-  if(wcslen(wcbuf)) {
-    if(!Om_isValidName(wcbuf)) {
+  this->getItemText(IDC_EC_INPT1, item_str);
+  if(!item_str.empty()) {
+    if(!Om_isValidName(item_str)) {
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
                                     L"The Location title contain "
                                     L"illegal character(s)");
@@ -68,9 +68,9 @@ bool OmUiWizCtxLoc::hasValidParams() const
                                   L"Please choose a Location title.");
     return false;
   }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
-  if(wcslen(wcbuf)) {
-    if(!Om_isDir(wcbuf)) {
+  this->getItemText(IDC_EC_INPT2, item_str);
+  if(!item_str.empty()) {
+    if(!Om_isDir(item_str)) {
         Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
                                       L"Please select an existing folder for "
                                       L"Location Destination.");
@@ -82,10 +82,11 @@ bool OmUiWizCtxLoc::hasValidParams() const
                                     L"Destination folder.");
     return false;
   }
-  if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
-    if(wcslen(wcbuf)) {
-      if(!Om_isDir(wcbuf)) {
+
+  if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    this->getItemText(IDC_EC_INPT3, item_str);
+    if(!item_str.empty()) {
+      if(!Om_isDir(item_str)) {
         Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
                                       L"Please choose an existing folder for "
                                       L"Location custom Library");
@@ -98,10 +99,11 @@ bool OmUiWizCtxLoc::hasValidParams() const
       return false;
     }
   }
-  if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT5, wcbuf, OMM_MAX_PATH);
-    if(wcslen(wcbuf)) {
-      if(!Om_isDir(wcbuf)) {
+
+  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    this->getItemText(IDC_EC_INPT4, item_str);
+    if(!item_str.empty()) {
+      if(!Om_isDir(item_str)) {
         Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
                                       L"Please choose an existing folder for "
                                       L"Location custom Backup");
@@ -122,7 +124,7 @@ bool OmUiWizCtxLoc::hasValidParams() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizCtxLoc::_onShow()
+void OmUiWizCtxLoc::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
@@ -138,41 +140,39 @@ void OmUiWizCtxLoc::_onShow()
   this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  // set default start values
+  this->setItemText(IDC_EC_INPT1, L"Main Location");
+  this->setItemText(IDC_EC_INPT2, L"");
+  this->setItemText(IDC_EC_INPT3, L"Main Location\\library");
+  this->setItemText(IDC_EC_INPT4, L"Main Location\\backup");
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-  if(!wcslen(wcbuf)) {
+  // disable "next" button
+  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+}
 
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"Main Location");
 
-    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\library");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizCtxLoc::_onShow()
+{
+  wstring item_str;
 
-    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\backup");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
-
-    reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
-
-    return;
-  }
-
+  // enable or disable "next" button according values
   bool allow = true;
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-  if(Om_isValidName(wcbuf)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
-    if(wcslen(wcbuf)) {
-
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
-        if(!wcslen(wcbuf)) allow = false;
+  this->getItemText(IDC_EC_INPT1, item_str);
+  if(Om_isValidName(item_str)) {
+    this->getItemText(IDC_EC_INPT2, item_str);
+    if(Om_isValidPath(item_str)) {
+      if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INPT3, item_str);
+        if(item_str.empty()) allow = false;
       }
-
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
-        if(!wcslen(wcbuf)) allow = false;
+      if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INPT4, item_str);
+        if(item_str.empty()) allow = false;
       }
-
     } else {
       allow = false;
     }
@@ -190,22 +190,22 @@ void OmUiWizCtxLoc::_onShow()
 void OmUiWizCtxLoc::_onResize()
 {
   // Introduction text
-  this->_setControlPos(IDC_SC_TEXT1, 10, 5, 190, 25);
+  this->_setItemPos(IDC_SC_TEXT1, 10, 5, 190, 25);
   // Location title Label & EditControl
-  this->_setControlPos(IDC_SC_LBL01, 10, 40, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT1, 10, 50, this->width()-25, 13);
+  this->_setItemPos(IDC_SC_LBL01, 10, 40, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT1, 10, 50, this->width()-25, 13);
   // Location Install Label & EditControl & Browse button
-  this->_setControlPos(IDC_SC_LBL02, 10, 80, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT2, 10, 90, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW2, this->width()-31, 90, 16, 13);
+  this->_setItemPos(IDC_SC_LBL02, 10, 80, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT2, 10, 90, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW2, this->width()-31, 90, 16, 13);
   // Custom Library Label & EditControl & Browse buttonben ess
-  this->_setControlPos(IDC_BC_CHK01, 10, 120, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT3, 10, 130, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW3, this->width()-31, 130, 16, 13);
+  this->_setItemPos(IDC_BC_CHK01, 10, 120, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT3, 10, 130, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW3, this->width()-31, 130, 16, 13);
   // Custom Library Label & EditControl & Browse button
-  this->_setControlPos(IDC_BC_CHK02, 10, 150, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT4, 10, 160, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW4, this->width()-31, 160, 16, 13);
+  this->_setItemPos(IDC_BC_CHK02, 10, 150, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT4, 10, 160, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW4, this->width()-31, 160, 16, 13);
 }
 
 
@@ -236,90 +236,86 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    wchar_t inpt1[OMM_MAX_PATH];
-    wchar_t inpt3[OMM_MAX_PATH];
-    wchar_t inpt2[OMM_MAX_PATH];
-    wchar_t inpt4[OMM_MAX_PATH];
+    bool bm_chk;
+
+    wstring item_str, brow_str;
 
     switch(LOWORD(wParam))
     {
 
     case IDC_EC_INPT1: // Title
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-      if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-          swprintf(inpt3, OMM_MAX_PATH, L"%ls\\library", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+      this->getItemText(IDC_EC_INPT1, item_str);
+      if(Om_isValidName(item_str)) {
+        if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT3, item_str + L"\\library");
         }
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-          swprintf(inpt4, OMM_MAX_PATH, L"%ls\\backup", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+        if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT4, item_str + L"\\backup");
         }
       } else {
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>\\library");
+        if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT3, L"<invalid path>\\library");
         }
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"<invalid path>\\backup");
+        if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT4, L"<invalid path>\\backup");
         }
       }
       has_changed = true;
       break;
 
-    case IDC_BC_BROW2:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt2, this->_hwnd, L"Select installation Location folder", inpt2)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2);
+    case IDC_BC_BROW2: // browse destination
+      this->getItemText(IDC_EC_INPT2, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select installation destination folder", item_str)) {
+        this->setItemText(IDC_EC_INPT2, brow_str);
       }
       break;
 
-    case IDC_BC_CHK01:
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT3), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), true);
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"");
+    case IDC_BC_CHK01: // custom library check box
+      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+      this->enableItem(IDC_BC_BROW3, bm_chk);
+      this->enableItem(IDC_EC_INPT3, bm_chk);
+      if(bm_chk) {
+        item_str = L"";
       } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT3), false);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), false);
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-        if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-          swprintf(inpt3, OMM_MAX_PATH, L"%ls\\library", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+        this->getItemText(IDC_EC_INPT1, item_str);
+        if(Om_isValidName(item_str)) {
+          item_str += L"\\library";
         } else {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>\\library");
+          item_str = L"<invalid path>\\library";
         }
       }
+      this->setItemText(IDC_EC_INPT3, item_str);
     break;
 
-    case IDC_BC_BROW3:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt3, this->_hwnd, L"Select custom packages Library", inpt3)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+    case IDC_BC_BROW3: // browse custom library
+      this->getItemText(IDC_EC_INPT3, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select packages library custom folder", item_str)) {
+        this->setItemText(IDC_EC_INPT3, brow_str);
       }
       break;
 
-    case IDC_BC_CHK02:
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT4), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), true);
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"");
+    case IDC_BC_CHK02: // custom backup check box
+      bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+      this->enableItem(IDC_BC_BROW4, bm_chk);
+      this->enableItem(IDC_EC_INPT4, bm_chk);
+      if(bm_chk) {
+        item_str = L"";
       } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT4), false);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), false);
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-        if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-          swprintf(inpt4, OMM_MAX_PATH, L"%ls\\backup", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+        this->getItemText(IDC_EC_INPT1, item_str);
+        if(Om_isValidName(item_str)) {
+          item_str += L"\\backup";
         } else {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"<invalid path>\\backup");
+          item_str = L"<invalid path>\\backup";
         }
       }
+      this->setItemText(IDC_EC_INPT4, item_str);
+
     break;
 
-    case IDC_BC_BROW4:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt4, this->_hwnd, L"Select custom Backups location", inpt4)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+    case IDC_BC_BROW4: // browse custom library
+      this->getItemText(IDC_EC_INPT4, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select backup data custom folder", item_str)) {
+        this->setItemText(IDC_EC_INPT4, brow_str);
       }
       break;
 
@@ -330,19 +326,21 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
     }
 
+    // enable or disable "next" button according values
     if(has_changed) {
       bool allow = true;
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-      if(Om_isValidName(inpt1)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-        if(wcslen(inpt2)) {
-          if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-            GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-            if(!wcslen(inpt3)) allow = false;
+
+      this->getItemText(IDC_EC_INPT1, item_str);
+      if(Om_isValidName(item_str)) {
+        this->getItemText(IDC_EC_INPT2, item_str);
+        if(Om_isValidPath(item_str)) {
+          if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+            this->getItemText(IDC_EC_INPT3, item_str);
+            if(item_str.empty()) allow = false;
           }
-          if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-            GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-            if(!wcslen(inpt4)) allow = false;
+          if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+            this->getItemText(IDC_EC_INPT4, item_str);
+            if(item_str.empty()) allow = false;
           }
         } else {
           allow = false;
@@ -350,9 +348,9 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         allow = false;
       }
+
       reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
     }
-
   }
 
   return false;

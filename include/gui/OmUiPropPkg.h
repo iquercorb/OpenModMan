@@ -76,18 +76,6 @@ class OmUiPropPkg : public OmDialogProp
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmPackage*          _package;
-
-    void                _onShow();
-
-    void                _onResize();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-
 };
 
 #endif // OMUIPROPPKG_H

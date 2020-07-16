@@ -89,31 +89,17 @@ class OmUiPropLoc : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*          _location;
-
-    wstring             _moveBackup_dest;
-
-    bool                _moveBackup_cust;
+    OmLocation*         _location;
 
     void*               _moveBackup_hth;
 
-    void                _moveBackup_init(const wstring& path, bool custom);
+    void                _moveBackup_init();
 
     void                _moveBackup_stop();
 
     static DWORD WINAPI _moveBackup_fth(void*);
 
-    bool                _saveChanges();
-
-    void                _onShow();
-
-    void                _onResize();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    bool                _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPLOC_H

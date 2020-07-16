@@ -64,7 +64,7 @@ bool OmUiPropMan::checkChanges()
 
   if(uiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
 
-    int cb_sel = SendMessageW(GetDlgItem(uiPropManGle->hwnd(), IDC_CB_ISIZE), CB_GETCURSEL, 0, 0);
+    int cb_sel = uiPropManGle->msgItem(IDC_CB_ISIZE, CB_GETCURSEL, 0, 0);
 
     switch(cb_sel)
     {
@@ -92,9 +92,7 @@ bool OmUiPropMan::checkChanges()
   }
 
   // enable Apply button
-  if(IsWindowEnabled(GetDlgItem(this->_hwnd, IDC_BC_APPLY)) != changed) {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), changed);
-  }
+  this->enableItem(IDC_BC_APPLY, changed);
 
   return changed;
 }
@@ -112,7 +110,7 @@ bool OmUiPropMan::applyChanges()
   // Parameter: Icons size for packages List-View
   if(uiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
 
-    int cb_sel = SendMessageW(GetDlgItem(uiPropManGle->hwnd(), IDC_CB_ISIZE), CB_GETCURSEL, 0, 0);
+    int cb_sel = uiPropManGle->msgItem(IDC_CB_ISIZE, CB_GETCURSEL);
 
     switch(cb_sel)
     {
@@ -134,7 +132,7 @@ bool OmUiPropMan::applyChanges()
   // Parameter: Open Context(s) at startup
   if(uiPropManGle->hasChParam(MAN_PROP_GLE_STARTUP_CONTEXTS)) {
 
-    HWND hLb = GetDlgItem(uiPropManGle->hwnd(), IDC_LB_STRLS);
+    HWND hLb = uiPropManGle->getItem(IDC_LB_STRLS);
 
     int lb_cnt =  SendMessage(hLb, LB_GETCOUNT, 0, 0);
 
@@ -147,7 +145,7 @@ bool OmUiPropMan::applyChanges()
       start_files.push_back(wcbuf);
     }
 
-    bool chk01 = SendMessage(GetDlgItem(uiPropManGle->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0);
+    bool chk01 = uiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
     manager->saveStartContexts(chk01, start_files);
 
@@ -157,115 +155,23 @@ bool OmUiPropMan::applyChanges()
 
   // Parameter: Various Packages options
   if(uiPropManPkg->hasChParam(MAN_PROP_PKG_PACKAGE_FLAGS)) {
-    manager->setLegacySupport(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK01), BM_GETCHECK, 0, 0));
-    manager->setWarnOverlaps(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK02), BM_GETCHECK, 0, 0));
-    manager->setWarnExtraInst(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK03), BM_GETCHECK, 0, 0));
-    manager->setWarnMissDpnd(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK04), BM_GETCHECK, 0, 0));
-    manager->setWarnExtraUnin(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK05), BM_GETCHECK, 0, 0));
-    manager->setQuietBatches(SendMessage(GetDlgItem(uiPropManPkg->hwnd(), IDC_BC_CHK06), BM_GETCHECK, 0, 0));
+
+    manager->setLegacySupport(uiPropManPkg->msgItem(IDC_BC_CHK01, BM_GETCHECK));
+    manager->setWarnOverlaps(uiPropManPkg->msgItem(IDC_BC_CHK02, BM_GETCHECK));
+    manager->setWarnExtraInst(uiPropManPkg->msgItem(IDC_BC_CHK03, BM_GETCHECK));
+    manager->setWarnMissDpnd(uiPropManPkg->msgItem(IDC_BC_CHK04, BM_GETCHECK));
+    manager->setWarnExtraUnin(uiPropManPkg->msgItem(IDC_BC_CHK05, BM_GETCHECK));
+    manager->setQuietBatches(uiPropManPkg->msgItem(IDC_BC_CHK06, BM_GETCHECK));
 
     // Reset parameter as unmodified
     uiPropManPkg->setChParam(MAN_PROP_PKG_PACKAGE_FLAGS, false);
   }
 
   // disable Apply button
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
+  this->enableItem(IDC_BC_APPLY, false);
+
+  // refresh all tree from the main dialog
+  this->root()->refresh();
 
   return true;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropMan::_onShow()
-{
-  // Initialize TabControl with pages dialogs
-  this->_pagesOnShow(IDC_TC_TABS1);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropMan::_onResize()
-{
-  // TabControl
-  this->_setControlPos(IDC_TC_TABS1, 4, 5, this->width()-8, this->height()-28);
-  // Resize page dialogs according IDC_TC_TABS1
-  this->_pagesOnResize(IDC_TC_TABS1);
-  // OK Button
-  this->_setControlPos(IDC_BC_OK, this->width()-161, this->height()-19, 50, 14);
-  // Cancel Button
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-108, this->height()-19, 50, 14);
-  // Apply Button
-  this->_setControlPos(IDC_BC_APPLY, this->width()-54, this->height()-19, 50, 14);
-
-  // force buttons to redraw to prevent artifacts
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_OK), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_CANCEL), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_APPLY), nullptr, true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropMan::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropMan::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  if(uMsg == WM_NOTIFY) {
-    // handle TabControl page selection change
-    this->_pagesOnNotify(IDC_TC_TABS1, wParam, lParam);
-  }
-
-  if(uMsg == WM_COMMAND) {
-
-    switch(LOWORD(wParam))
-    {
-    case IDC_BC_APPLY:
-      if(this->applyChanges()) {
-        // refresh all tree from the main dialog
-        this->root()->refresh();
-      }
-      break;
-
-    case IDC_BC_OK:
-      if(this->checkChanges()) {
-        if(this->applyChanges()) {
-          // quit the dialog
-          this->quit();
-          // refresh all tree from the main dialog
-          this->root()->refresh();
-        }
-      } else {
-        // quit the dialog
-        this->quit();
-      }
-      break; // case BTN_OK:
-
-    case IDC_BC_CANCEL:
-      this->quit();
-      break; // case BTN_CANCEL:
-    }
-  }
-
-  return false;
 }

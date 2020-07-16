@@ -63,7 +63,7 @@ void OmUiPropManGle::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onShow()
+void OmUiPropManGle::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_CB_ISIZE,  L"Packages list icon size");
@@ -76,7 +76,7 @@ void OmUiPropManGle::_onShow()
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
   // add items in combo box
-  HWND hCb = GetDlgItem(this->_hwnd, IDC_CB_ISIZE);
+  HWND hCb = this->getItem(IDC_CB_ISIZE);
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
@@ -101,7 +101,7 @@ void OmUiPropManGle::_onShow()
   vector<wstring> start_files;
   manager->getStartContexts(&enable, start_files);
 
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_STRLS);
+  HWND hLb = this->getItem(IDC_LB_STRLS);
 
   if(enable) {
     SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_SETCHECK, 1, 0);
@@ -113,14 +113,14 @@ void OmUiPropManGle::_onShow()
     EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW1), false);
   }
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
+  this->enableItem(IDC_BC_DEL, false);
 
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   for(size_t i = 0; i < start_files.size(); ++i) {
     SendMessageW(hLb, LB_ADDSTRING, 0, (LPARAM)start_files[i].c_str());
   }
 
-  SetFocus(GetDlgItem(this->_hwnd, IDC_CB_ISIZE));
+  SetFocus(hCb);
 }
 
 
@@ -130,36 +130,18 @@ void OmUiPropManGle::_onShow()
 void OmUiPropManGle::_onResize()
 {
   // Icon size Label & ComboBox
-  this->_setControlPos(IDC_SC_LBL01, 50, 20, 100, 9);
-  this->_setControlPos(IDC_CB_ISIZE, 50, 30, this->width()-100, 14);
+  this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
+  this->_setItemPos(IDC_CB_ISIZE, 50, 30, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(GetDlgItem(this->_hwnd, IDC_CB_ISIZE), nullptr, true);
 
   // Startup Contexts list CheckBox & ListBox
-  this->_setControlPos(IDC_BC_CHK01, 50, 59, 100, 9);
-  this->_setControlPos(IDC_LB_STRLS, 50, 70, this->width()-100, this->height()-130);
+  this->_setItemPos(IDC_BC_CHK01, 50, 59, 100, 9);
+  this->_setItemPos(IDC_LB_STRLS, 50, 70, this->width()-100, this->height()-130);
 
   // Startup Contexts list Add and Remove... buttons
-  this->_setControlPos(IDC_BC_BROW1, 50, this->height()-58, 50, 14);
-  this->_setControlPos(IDC_BC_DEL, 102, this->height()-58, 50, 14);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManGle::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManGle::_onQuit()
-{
-
+  this->_setItemPos(IDC_BC_BROW1, 50, this->height()-58, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 102, this->height()-58, 50, 14);
 }
 
 
@@ -171,7 +153,9 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_COMMAND) {
 
     int lb_sel;
-    wchar_t wcbuf[OMM_MAX_PATH];
+    bool bm_chk;
+    wstring item_str;
+    wstring brow_str;
 
     switch(LOWORD(wParam))
     {
@@ -181,48 +165,36 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CHK01: //< Check-Box for Open Context(s) at startup
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_LB_STRLS), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW1), true);
-      } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_LB_STRLS), false);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW1), false);
-      }
+      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+      this->enableItem(IDC_LB_STRLS, bm_chk);
+      this->enableItem(IDC_BC_BROW1, bm_chk);
       // user modified parameter, notify it
       this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
       break;
 
     case IDC_LB_STRLS: //< List-Box for startup Context(s) list
       if(HIWORD(wParam) == LBN_SELCHANGE) {
-        if(SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_STRLS), LB_GETCURSEL, 0, 0) >= 0) {
-          EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
-        } else {
-          EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
-        }
+        lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+        this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
       }
       break;
 
     case IDC_BC_BROW1: //< Brows Button for startup Context
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-      if(Om_dialogOpenFile(wcbuf, this->_hwnd, L"Select file.", OMM_CTX_DEF_FILE_FILER, wcbuf)) {
-        SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_STRLS), LB_ADDSTRING, 0, (LPARAM)wcbuf);
+      this->getItemText(IDC_EC_INPT1, item_str);
+      if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Select Context file", OMM_CTX_DEF_FILE_FILER, item_str)) {
+        // add file path to startup context list
+        this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, (LPARAM)brow_str.c_str());
       }
       // user modified parameter, notify it
       this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
       break; // case BTN_BROWSE1:
 
     case IDC_BC_DEL: //< Remove Button for startup Context
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_STRLS), LB_GETCURSEL, 0, 0);
-      if(lb_sel >= 0) {
-        SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_STRLS), LB_DELETESTRING, lb_sel, 0);
-      }
+      lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+      if(lb_sel >= 0) this->msgItem(IDC_LB_STRLS, LB_DELETESTRING, lb_sel);
       // user modified parameter, notify it
       this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
       break; // case BTN_BROWSE1:
-
-    case IDOK:
-      this->quit();
-      break;
     }
   }
 

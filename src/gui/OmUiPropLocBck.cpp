@@ -63,17 +63,16 @@ void OmUiPropLocBck::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLocBck::_onShow()
+void OmUiPropLocBck::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_BC_CHK01,  L"Store backup data as zip archives");
-
   this->_createTooltip(IDC_CB_LEVEL,  L"Compression level for backup zip files");
 
   OmLocation* location = reinterpret_cast<OmUiPropLoc*>(this->_parent)->location();
 
   // add items in combo box
-  HWND hCb = GetDlgItem(this->_hwnd, IDC_CB_LEVEL);
+  HWND hCb = this->getItem(IDC_CB_LEVEL);
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
@@ -90,7 +89,7 @@ void OmUiPropLocBck::_onShow()
 
   if(comp_levl >= 0) {
 
-    SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01), BM_SETCHECK, 1, 0);
+    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
 
     EnableWindow(hCb, true);
 
@@ -112,7 +111,7 @@ void OmUiPropLocBck::_onShow()
 
   } else {
 
-    SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01), BM_SETCHECK, 0, 0);
+    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
 
     EnableWindow(hCb, false);
 
@@ -127,30 +126,12 @@ void OmUiPropLocBck::_onShow()
 void OmUiPropLocBck::_onResize()
 {
   // Compressed Backup CheckBox
-  this->_setControlPos(IDC_BC_CHK01, 50, 20, 120, 9);
+  this->_setItemPos(IDC_BC_CHK01, 50, 20, 120, 9);
   // Compression level Label & ComboBox
-  this->_setControlPos(IDC_SC_LBL01, 50, 40, 120, 9);
-  this->_setControlPos(IDC_CB_LEVEL, 50, 50, this->width()-100, 14);
+  this->_setItemPos(IDC_SC_LBL01, 50, 40, 120, 9);
+  this->_setItemPos(IDC_CB_LEVEL, 50, 50, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(GetDlgItem(this->_hwnd, IDC_CB_LEVEL), nullptr, true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropLocBck::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropLocBck::_onQuit()
-{
-
 }
 
 
@@ -161,15 +142,13 @@ bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
+    bool bm_chk;
+
     switch(LOWORD(wParam))
     {
     case IDC_BC_CHK01:
-      if(SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd,IDC_CB_LEVEL), true);
-        SendMessageW(GetDlgItem(this->_hwnd,IDC_CB_LEVEL), CB_SETCURSEL, 0, 0);
-      } else {
-        EnableWindow(GetDlgItem(this->_hwnd,IDC_CB_LEVEL), false);
-      }
+      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+      this->enableItem(IDC_CB_LEVEL, bm_chk);
       this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
       break;
 

@@ -66,7 +66,7 @@ void OmUiPropBatStg::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropBatStg::_onShow()
+void OmUiPropBatStg::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INPT1,  L"Batch name");
@@ -81,8 +81,8 @@ void OmUiPropBatStg::_onShow()
 void OmUiPropBatStg::_onResize()
 {
   // Batch Title Label & EditControl
-  this->_setControlPos(IDC_SC_LBL01, 5, 60, 64, 9);
-  this->_setControlPos(IDC_EC_INPT1, 70, 60, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 5, 60, 64, 9);
+  this->_setItemPos(IDC_EC_INPT1, 70, 60, this->width()-90, 13);
 }
 
 
@@ -96,17 +96,7 @@ void OmUiPropBatStg::_onRefresh()
   if(batch == nullptr)
     return;
 
-  SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, batch->title().c_str());
-}
-
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropBatStg::_onQuit()
-{
-
+  this->setItemText(IDC_EC_INPT1, batch->title());
 }
 
 
@@ -133,6 +123,3 @@ bool OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   return false;
 }
-
-
-

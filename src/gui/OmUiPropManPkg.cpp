@@ -63,7 +63,7 @@ void OmUiPropManPkg::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManPkg::_onShow()
+void OmUiPropManPkg::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_BC_CHK01,  L"Show and treat folders as packages");
@@ -92,38 +92,18 @@ void OmUiPropManPkg::_onShow()
 void OmUiPropManPkg::_onResize()
 {
   // Legacy support CheckBox
-  this->_setControlPos(IDC_BC_CHK01, 50, 20, 170, 9);
-  //SetWindowPos(GetDlgItem(this->_hwnd, IDC_BC_CHK01), nullptr, 75, 30, this->_rect.right-140, 21, SWP_NOZORDER);
+  this->_setItemPos(IDC_BC_CHK01, 50, 20, 170, 9);
 
   // Enable warnings Label
-  this->_setControlPos(IDC_SC_LBL01, 50, 40, 170, 9);
+  this->_setItemPos(IDC_SC_LBL01, 50, 40, 170, 9);
   // Enable warnings CheckBoxes
-  this->_setControlPos(IDC_BC_CHK02, 65, 52, 170, 9);
-  this->_setControlPos(IDC_BC_CHK03, 65, 62, 170, 9);
-  this->_setControlPos(IDC_BC_CHK04, 65, 72, 170, 9);
-  this->_setControlPos(IDC_BC_CHK05, 65, 82, 170, 9);
+  this->_setItemPos(IDC_BC_CHK02, 65, 52, 170, 9);
+  this->_setItemPos(IDC_BC_CHK03, 65, 62, 170, 9);
+  this->_setItemPos(IDC_BC_CHK04, 65, 72, 170, 9);
+  this->_setItemPos(IDC_BC_CHK05, 65, 82, 170, 9);
 
   // Ignore Batches warnings CheckBox
-  this->_setControlPos(IDC_BC_CHK06, 50, 110, 170, 9);
-  //SetWindowPos(GetDlgItem(this->_hwnd, IDC_BC_CHK06), nullptr, 75, 180, this->_rect.right-140, 21, SWP_NOZORDER);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManPkg::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManPkg::_onQuit()
-{
-
+  this->_setItemPos(IDC_BC_CHK06, 50, 110, 170, 9);
 }
 
 

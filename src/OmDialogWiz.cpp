@@ -59,11 +59,10 @@ void OmDialogWiz::_addPage(OmDialog* dialog)
 }
 
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogWiz::_onShow()
+void OmDialogWiz::_onInit()
 {
   this->_currPage = 0;
 
@@ -93,6 +92,17 @@ void OmDialogWiz::_onShow()
   // set splash image
   HBITMAP hBmp = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_WIZ_SPLASH), IMAGE_BITMAP, 0, 0, 0);
   SendMessage(GetDlgItem(this->_hwnd, IDC_SB_IMAGE), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
+
+  this->_onWizInit();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialogWiz::_onShow()
+{
+  this->_onWizShow();
 }
 
 
@@ -102,15 +112,15 @@ void OmDialogWiz::_onShow()
 void OmDialogWiz::_onResize()
 {
   // Lateral Banner
-  this->_setControlPos(IDC_SB_IMAGE, 5, 5, 68, 189);
+  this->_setItemPos(IDC_SB_IMAGE, 5, 5, 68, 189);
   SetWindowPos(GetDlgItem(this->_hwnd, IDC_SB_IMAGE), 0, 0, 0, 110, 310, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
   // ---- separator
-  this->_setControlPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
   // Back, Next and Cancel buttons
-  this->_setControlPos(IDC_BC_BACK, this->width()-161, this->height()-19, 50, 14);
-  this->_setControlPos(IDC_BC_NEXT, this->width()-110, this->height()-19, 50, 14);
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_BACK, this->width()-161, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_NEXT, this->width()-110, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 
   // force buttons to redraw to prevent artifacts
   InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_BACK), nullptr, true);
@@ -135,6 +145,8 @@ void OmDialogWiz::_onResize()
       SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
     }
   }
+
+  this->_onWizResize();
 }
 
 
@@ -202,6 +214,15 @@ bool OmDialogWiz::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   }
 
   return this->_onWizMsg(uMsg, wParam, lParam);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialogWiz::_onWizInit()
+{
+
 }
 
 

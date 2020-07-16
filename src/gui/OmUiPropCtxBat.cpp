@@ -68,7 +68,7 @@ void OmUiPropCtxBat::setChParam(unsigned i, bool en)
 ///
 void OmUiPropCtxBat::_batchUp()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // get selected item (index)
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -89,8 +89,8 @@ void OmUiPropCtxBat::_batchUp()
   SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), (lb_sel > 1));
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), true);
+  this->enableItem(IDC_BC_UP, (lb_sel > 1));
+  this->enableItem(IDC_BC_DN, true);
 }
 
 ///
@@ -98,7 +98,7 @@ void OmUiPropCtxBat::_batchUp()
 ///
 void OmUiPropCtxBat::_batchDn()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // get selected item (index)
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -122,8 +122,8 @@ void OmUiPropCtxBat::_batchDn()
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
   SendMessageW(hLb, LB_SETCURSEL , true, (LPARAM)(lb_sel));
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), true);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), (lb_sel < lb_max));
+  this->enableItem(IDC_BC_UP, true);
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
 }
 
 
@@ -132,7 +132,7 @@ void OmUiPropCtxBat::_batchDn()
 ///
 bool OmUiPropCtxBat::_batchDel()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // get selected item (index)
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -171,7 +171,7 @@ bool OmUiPropCtxBat::_batchDel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropCtxBat::_onShow()
+void OmUiPropCtxBat::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_LB_BATLS,  L"Context's batches");
@@ -187,19 +187,22 @@ void OmUiPropCtxBat::_onShow()
   HBITMAP hBm;
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_ADD), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_ADD, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_DEL), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_MOD), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_EDIT), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_EDIT, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_UP), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_UP, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_DN), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_DN, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+
+  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_EDIT, false);
 
   this->_onRefresh();
 }
@@ -211,18 +214,18 @@ void OmUiPropCtxBat::_onShow()
 void OmUiPropCtxBat::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setControlPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setControlPos(IDC_LB_BATLS, 70, 20, this->width()-107, 85);
+  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
+  this->_setItemPos(IDC_LB_BATLS, 70, 20, this->width()-107, 85);
   // Up and Down buttons
-  this->_setControlPos(IDC_BC_UP, this->width()-35, 49, 16, 15);
-  this->_setControlPos(IDC_BC_DN, this->width()-35, 65, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-35, 49, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-35, 65, 16, 15);
 
 
   // Remove & Modify Buttons
-  this->_setControlPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setControlPos(IDC_BC_EDIT, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
+  this->_setItemPos(IDC_BC_EDIT, 122, 110, 50, 14);
   // Add button
-  this->_setControlPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
 }
 
 
@@ -231,15 +234,12 @@ void OmUiPropCtxBat::_onResize()
 ///
 void OmUiPropCtxBat::_onRefresh()
 {
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_EDIT), false);
-
   OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
 
   if(context == nullptr)
     return;
 
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   SendMessage(hLb, LB_RESETCONTENT, 0, 0);
   if(context) {
@@ -279,13 +279,13 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case IDC_LB_BATLS: //< Location(s) list List-Box
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_BATLS), LB_GETCURSEL, 0, 0);
+      lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
       if(lb_sel >= 0) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_EDIT), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), (lb_sel > 0));
-        lb_max = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_BATLS), LB_GETCOUNT, 0, 0) - 1;
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), (lb_sel < lb_max));
+        this->enableItem(IDC_BC_DEL, true);
+        this->enableItem(IDC_BC_EDIT, true);
+        this->enableItem(IDC_BC_UP, (lb_sel > 0));
+        lb_max = this->msgItem(IDC_LB_BATLS, LB_GETCOUNT) - 1;
+        this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
       }
       break;
 
@@ -298,10 +298,10 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_EDIT:
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_BATLS), LB_GETCURSEL, 0, 0);
+      lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
       if(lb_sel >= 0 && lb_sel < (int)context->batchCount()) {
         // open the Location Properties dialog
-        int bat_id = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_BATLS), LB_GETITEMDATA, lb_sel, 0);
+        int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
         OmUiPropBat* uiPropBat = reinterpret_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
         uiPropBat->setBatch(context->batch(bat_id));
         uiPropBat->open();

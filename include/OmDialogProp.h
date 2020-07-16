@@ -65,14 +65,31 @@ class OmDialogProp : public OmDialog
 
     void                _addPage(const wstring& name, OmDialog* dialog);
 
-    void                _pagesOnShow(unsigned tab_id);
-
-    void                _pagesOnNotify(unsigned tab_id, WPARAM wParam, LPARAM lParam);
-
-    void                _pagesOnResize(unsigned tab_id);
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    HWND                _hTab;
+
+    HWND                _hBcOk;
+
+    HWND                _hBcApply;
+
+    HWND                _hBcCancel;
+
+    void                _onInit();
+
+    void                _onShow();
+
+    void                _onResize();
+
+    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    virtual void        _onPropInit();
+
+    virtual void        _onPropShow();
+
+    virtual void        _onPropResize();
+
+    virtual bool        _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMDIALOGPROP_H

@@ -48,18 +48,20 @@ long OmUiWizCtxBeg::id() const
 }
 
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizCtxBeg::_onInit()
+{
+
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiWizCtxBeg::_onShow()
 {
-
-  // set "help" icon
-  //HICON hIcon = (HICON)Om_loadShellIcon(SIID_HELP, true);
-  //SendMessage(GetDlgItem(this->_hwnd, IDC_SB_WHELP), STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-  //InvalidateRect(GetDlgItem(this->_hwnd, IDC_SB_WHELP), nullptr, true);
-
   // enable the Wizard Next button
   reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
 }
@@ -71,11 +73,7 @@ void OmUiWizCtxBeg::_onShow()
 void OmUiWizCtxBeg::_onResize()
 {
   // Intro paragraph
-  this->_setControlPos(IDC_SC_TEXT1, 10, 5, 190, 60);
-  // Help Icon
-  //this->_setControlPos(IDC_SB_WHELP, 10, 80, 21, 20);
-  // Help paragraph
-  //this->_setControlPos(IDC_SC_TEXT2, 10, 110, 190, 60);
+  this->_setItemPos(IDC_SC_TEXT1, 10, 5, 190, 60);
 }
 
 

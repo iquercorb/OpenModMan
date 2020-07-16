@@ -50,19 +50,33 @@ long OmUiHelpAbout::id() const
 ///
 void OmUiHelpAbout::_onShow()
 {
+  wstring about = OMM_APP_NAME;
+  about.append(L" - version ");
+  about.append(to_wstring(OMM_APP_MAJ)); about.push_back(L'.');
+  about.append(to_wstring(OMM_APP_MIN)); about.push_back(L'.');
+  about.append(to_wstring(OMM_APP_REV));
+  about.append(L" ( "); about.append(OMM_APP_ARCH); about.append(L" )\n\n");
+  about.append(OMM_APP_DATE); about.append(L"  by ");
+  about.append(OMM_APP_AUTHOR);
+  this->setItemText(IDC_SC_TEXT1, about);
+
+  wstring home_url = L"<a href=\"";
+  home_url.append(OMM_APP_URL); home_url.append(L"\">");
+  home_url.append(OMM_APP_URL); home_url.append(L"</a>");
+  this->setItemText(IDC_LM_LNK01, home_url);
+
+  wstring repo_url = L"<a href=\"";
+  repo_url.append(OMM_APP_GIT); repo_url.append(L"\">");
+  repo_url.append(OMM_APP_GIT); repo_url.append(L"</a>");
+  this->setItemText(IDC_LM_LNK02, repo_url);
+
   HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
   SendMessage(GetDlgItem(this->_hwnd, IDC_EC_ENT01), WM_SETFONT, (WPARAM)hFont, 1);
 
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH,
-      L"%ls (%ls)\nVersion %d.%d.%d (%ls) - %ls\nBy %ls\n\n",
-      OMM_APP_NAME, OMM_APP_SHORT_NAME, OMM_APP_MAJ, OMM_APP_MIN, OMM_APP_REV,
-      OMM_APP_ARCH, OMM_APP_DATE, OMM_APP_AUTHOR);
-
-  SetDlgItemTextW(this->_hwnd, IDC_SC_TEXT1, wcbuf);
-
-  string gpl = Om_loadPlainText(L"CREDITS.TXT");
-  SetDlgItemText(this->_hwnd, IDC_EC_ENT01, gpl.c_str());
+  string txt;
+  if(Om_loadPlainText(txt, L"CREDITS.TXT")) {
+    SetDlgItemText(this->_hwnd, IDC_EC_ENT01, txt.c_str());
+  }
 }
 
 
@@ -71,9 +85,21 @@ void OmUiHelpAbout::_onShow()
 ///
 void OmUiHelpAbout::_onResize()
 {
-  this->_setControlPos(IDC_SC_TEXT1, 5, 5, this->width()-10, 40);
-  this->_setControlPos(IDC_EC_ENT01, 5, 35, this->width()-10, this->height()-60);
-  this->_setControlPos(IDC_BC_CLOSE, (0.5f*this->width())-25, this->height()-20, 50, 14);
+  unsigned half_width = static_cast<unsigned>(this->width() * 0.5f);
+
+  this->_setItemPos(IDC_SC_TEXT1, 5, 5, this->width()-10, 25);
+
+  this->_setItemPos(IDC_SC_LBL01, half_width - 100, 35, 60, 9);
+  this->_setItemPos(IDC_LM_LNK01, half_width - 35, 35, 200, 9);
+
+  this->_setItemPos(IDC_SC_LBL02, half_width - 100, 50, 60, 9);
+  this->_setItemPos(IDC_LM_LNK02, half_width - 35, 50, 200, 9);
+
+  this->_setItemPos(IDC_EC_ENT01, 5, 65, this->width()-10, this->height()-90);
+  this->_setItemPos(IDC_BC_CLOSE, half_width - 25, this->height()-20, 50, 14);
+
+  // force buttons to redraw
+  InvalidateRect(GetDlgItem(this->_hwnd, IDC_SC_TEXT1), nullptr, true);
 }
 
 
@@ -100,6 +126,23 @@ void OmUiHelpAbout::_onQuit()
 ///
 bool OmUiHelpAbout::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  if(uMsg == WM_NOTIFY) {
+
+    NMHDR* pNmhdr = reinterpret_cast<NMHDR*>(lParam);
+
+    switch(LOWORD(wParam))
+    {
+      case IDC_LM_LNK01:
+      case IDC_LM_LNK02:
+        // check for a "selection changed" notify
+        if(pNmhdr->code == NM_CLICK) {
+            NMLINK* pNmlink = reinterpret_cast<NMLINK*>(lParam);
+            ShellExecuteW(NULL, L"open", pNmlink->item.szUrl, nullptr, nullptr, SW_SHOW);
+        }
+        break;
+    }
+  }
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))

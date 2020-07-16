@@ -63,11 +63,15 @@ class OmDialogWiz : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    void                _onInit();
+
     void                _onShow();
 
     void                _onResize();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    virtual void        _onWizInit();
 
     virtual void        _onWizShow();
 

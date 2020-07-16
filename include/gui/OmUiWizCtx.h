@@ -54,12 +54,6 @@ class OmUiWizCtx : public OmDialogWiz
     bool                _onWizNext();
 
     void                _onWizFinish();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    bool                _onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIWIZNEWCTX_H

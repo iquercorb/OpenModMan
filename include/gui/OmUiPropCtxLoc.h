@@ -92,13 +92,11 @@ class OmUiPropCtxLoc : public OmDialog
 
     static DWORD WINAPI _remLocation_fth(void*);
 
-    void                _onShow();
+    void                _onInit();
 
     void                _onResize();
 
     void                _onRefresh();
-
-    void                _onQuit();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

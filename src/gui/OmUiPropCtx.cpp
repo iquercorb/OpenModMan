@@ -79,11 +79,11 @@ bool OmUiPropCtx::checkChanges()
 
   bool changed = false;
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wstring item_str;
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
-    if(context->title() != wcbuf) {
+    uiPropCtxStg->getItemText(IDC_EC_INPT3, item_str);
+    if(context->title() != item_str) {
       changed = true;
     } else {
       uiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
@@ -103,9 +103,7 @@ bool OmUiPropCtx::checkChanges()
   }
 
   // enable Apply button
-  if(IsWindowEnabled(GetDlgItem(this->_hwnd, IDC_BC_APPLY)) != changed) {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), changed);
-  }
+  this->enableItem(IDC_BC_APPLY, changed);
 
   return changed;
 }
@@ -121,36 +119,34 @@ bool OmUiPropCtx::applyChanges()
   OmUiPropCtxLoc* uiPropCtxLoc  = reinterpret_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
   OmUiPropCtxBat* uiPropCtxBat  = reinterpret_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
-  wchar_t inpt3[OMM_MAX_PATH];
-  wchar_t inpt4[OMM_MAX_PATH];
+  wstring ctx_name, ctx_icon;
 
   // Step 1, verify everything
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-    if(!wcslen(inpt3)) {
-      Om_dialogBoxErr(this->_hwnd, L"Invalid Context title",
+    uiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
+    if(ctx_name.empty()) {
+      Om_dialogBoxErr(this->_hwnd, L"Empty Context title",
                                    L"Please enter a title.");
       return false;
     }
   }
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
+    uiPropCtxStg->getItemText(IDC_EC_INPT4, ctx_icon);
   }
 
   // Step 2, save changes
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    GetDlgItemTextW(uiPropCtxStg->hwnd(), IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-    context->setTitle(inpt3);
+    context->setTitle(ctx_name);
 
     // Reset parameter as unmodified
     uiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
   }
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    if(wcslen(inpt4)) {
-      if(Om_isFile(inpt4)) {
-        context->setIcon(inpt4);
+    if(!ctx_icon.empty()) {
+      if(Om_isFile(ctx_icon)) {
+        context->setIcon(ctx_icon);
       } else {
         context->remIcon();
       }
@@ -167,7 +163,7 @@ bool OmUiPropCtx::applyChanges()
     // To prevent inconsistency we unselect location in the main dialog
     reinterpret_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
-    HWND hLb = GetDlgItem(uiPropCtxLoc->hwnd(), IDC_LB_LOCLS);
+    HWND hLb = uiPropCtxLoc->getItem(IDC_LB_LOCLS);
 
     unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
     for(unsigned i = 0; i < n; ++i) {
@@ -189,7 +185,7 @@ bool OmUiPropCtx::applyChanges()
 
   if(uiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
 
-    HWND hLb = GetDlgItem(uiPropCtxBat->hwnd(), IDC_LB_BATLS);
+    HWND hLb = uiPropCtxBat->getItem(IDC_LB_BATLS);
 
     unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
     for(unsigned i = 0; i < n; ++i) {
@@ -205,104 +201,10 @@ bool OmUiPropCtx::applyChanges()
   }
 
   // disable Apply button
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
+  this->enableItem(IDC_BC_APPLY, false);
+
+  // refresh all tree from the main dialog
+  this->root()->refresh();
 
   return true;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropCtx::_onShow()
-{
-  // Initialize TabControl with pages dialogs
-  this->_pagesOnShow(IDC_TC_TABS1);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropCtx::_onResize()
-{
-  // TabControl
-  this->_setControlPos(IDC_TC_TABS1, 4, 5, this->width()-8, this->height()-28);
-  // Resize page dialogs according IDC_TC_TABS1
-  this->_pagesOnResize(IDC_TC_TABS1);
-
-  // OK Button
-  this->_setControlPos(IDC_BC_OK, this->width()-161, this->height()-19, 50, 14);
-  // Cancel Button
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-108, this->height()-19, 50, 14);
-  // Apply Button
-  this->_setControlPos(IDC_BC_APPLY, this->width()-54, this->height()-19, 50, 14);
-
-  // force buttons to redraw to prevent artifacts
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_OK), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_CANCEL), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_APPLY), nullptr, true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropCtx::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropCtx::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropCtx::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  if(uMsg == WM_NOTIFY) {
-    // handle TabControl page selection change
-    this->_pagesOnNotify(IDC_TC_TABS1, wParam, lParam);
-  }
-
-  if(uMsg == WM_COMMAND) {
-
-    switch(LOWORD(wParam))
-    {
-    case IDC_BC_APPLY:
-      if(this->applyChanges()) {
-        // refresh all tree from the main dialog
-        this->root()->refresh();
-      }
-      break;
-
-    case IDC_BC_OK:
-      if(this->checkChanges()) {
-        if(this->applyChanges()) {
-          // quit the dialog
-          this->quit();
-          // refresh all tree from the main dialog
-          this->root()->refresh();
-        }
-      } else {
-        // quit the dialog
-        this->quit();
-      }
-      break; // case BTN_OK:
-
-    case IDC_BC_CANCEL:
-      this->quit();
-      break; // case BTN_CANCEL:
-    }
-  }
-
-  return false;
 }

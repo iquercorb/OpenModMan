@@ -51,8 +51,11 @@
   #define OMM_APP_ARCH            L"x86"
 #endif
 #define OMM_APP_DATE              L"July 2020"
-#define OMM_APP_AUTHOR            L"Eric M. \"Sedenion\""
+#define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
+#define OMM_APP_C_YEAR            L"2020"
+#define OMM_APP_GIT               L"https://github.com/sedenion/OpenModMan"
+#define OMM_APP_URL               L"https://"
 
 #define OMM_CFG_SIGN_APP          L"Open_Mod_Manager_Main"
 #define OMM_CFG_SIGN_CTX          L"Open_Mod_Manager_Context"
@@ -325,29 +328,49 @@ size_t Om_toZipCDR(string& zcdr, const wstring& wstr);
 ///
 void Om_sortStrings(vector<wstring>* strings);
 
-/// \brief Check file name or path validity
+/// \brief Check file name validity
 ///
-/// Checks whether the given string is suitable for file name/path or
+/// Checks whether the given string is suitable for file name or
 /// contains illegal character(s).
 ///
-/// \param[in]  name    : File name or path to check.
+/// \param[in]  name    : File name to check.
 ///
-/// \return True if the given string is suitable for file name or path,
-///         false otherwise
+/// \return True if the given string is suitable for file name, false otherwise.
 ///
 bool Om_isValidName(const wchar_t* name);
 
-/// \brief Check file name or path validity
+/// \brief Check file name validity
 ///
-/// Checks whether the given string is suitable for Windows file name/path or
+/// Checks whether the given string is suitable for Windows file name or
 /// contains illegal character(s).
 ///
-/// \param[in]  name    : File name or path to check.
+/// \param[in]  name    : File name to check.
 ///
-/// \return True if the given string is suitable for file name or path,
-///         false otherwise
+/// \return True if the given string is suitable for file name, false otherwise.
 ///
 bool Om_isValidName(const wstring& name);
+
+/// \brief Check file path validity
+///
+/// Checks whether the given string is suitable for file path or
+/// contains illegal character(s).
+///
+/// \param[in]  path    : File path to check.
+///
+/// \return True if the given string is suitable for file path, false otherwise.
+///
+bool Om_isValidPath(const wchar_t* path);
+
+/// \brief Check file path validity
+///
+/// Checks whether the given string is suitable for Windows file path or
+/// contains illegal character(s).
+///
+/// \param[in]  path    : File path to check.
+///
+/// \return True if the given string is suitable for file path, false otherwise.
+///
+bool Om_isValidPath(const wstring& path);
 
 /// \brief Extract file extension from path
 ///
@@ -1011,6 +1034,21 @@ bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& det
 ///
 bool Om_dialogBrowseDir(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* start, bool captive = false);
 
+/// \brief Select folder dialog box.
+///
+/// Opens a folder selection dialog box.
+///
+/// \param[out] result  : Buffer to receive the selected folder path.
+/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
+/// \param[in]  title   : Dialog window title.
+/// \param[in]  start   : Path to default location where to begin browsing.
+/// \param[in]  captive : If true, the default start location is set as root
+///                       and user cannot browse up to parent folder.
+///
+/// \return True if succeed, false if user canceled or an error occurred.
+///
+bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive = false);
+
 /// \brief Open file dialog box.
 ///
 /// Opens a file open selection dialog box.
@@ -1024,6 +1062,20 @@ bool Om_dialogBrowseDir(wchar_t* result, HWND hWnd, const wchar_t* title, const 
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
 bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start);
+
+/// \brief Open file dialog box.
+///
+/// Opens a file open selection dialog box.
+///
+/// \param[out] result  : Buffer to receive the selected folder path.
+/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
+/// \param[in]  title   : Dialog window title.
+/// \param[in]  filter  : File type and extension filter string.
+/// \param[in]  start   : Path to default location where to begin browsing.
+///
+/// \return True if succeed, false if user canceled or an error occurred.
+///
+bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
 
 /// \brief Save file dialog box.
 ///
@@ -1043,11 +1095,22 @@ bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const w
 ///
 /// Loads the specified file as plain text file.
 ///
-/// \param[in] path    : Source file path to open.
+/// \param[in] path    : Path to text file to be loaded.
 ///
 /// \return String of file content
 ///
 string Om_loadPlainText(const wstring& path);
+
+/// \brief Load plan text.
+///
+/// Loads the specified file as plain text file.
+///
+/// \param[in] text    : String to receive loaded text data.
+/// \param[in] path    : Path to text file to be loaded.
+///
+/// \return Count of bytes read.
+///
+size_t Om_loadPlainText(string& text, const wstring& path);
 
 /// \brief Save as BMP file.
 ///

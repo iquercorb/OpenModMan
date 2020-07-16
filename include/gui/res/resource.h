@@ -119,6 +119,7 @@
 #define IDC_BC_OK                               40341
 #define IDC_BC_CANCEL                           40342
 #define IDC_TC_TABS1                            40400
+#define IDC_TC_PROP                             40401
 #define IDC_CB_CTXLS                            40410
 #define IDC_CB_LOCLS                            40411
 #define IDC_CB_LEVEL                            40412
@@ -143,6 +144,8 @@
 #define IDC_BC_CHK06                            40705
 #define IDC_BC_RAD01                            40710
 #define IDC_BC_RAD02                            40711
+#define IDC_LM_LNK01                            40720
+#define IDC_LM_LNK02                            40721
 #define IDM_FILE_NEW_CTX                        40800
 #define IDM_FILE_NEW_PKG                        40802
 #define IDM_FILE_OPEN                           40810

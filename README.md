@@ -46,6 +46,7 @@ Version history
 
 0.9.3 (work in progress)
  - Update pugixml API to version 1.10
+ - Fixed new Context Wizzard custom library and bakcup folder incorrectly created.
 
 0.9.2 (07/15/2020)
  - Rewritten Package building algorithm.

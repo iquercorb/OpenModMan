@@ -91,16 +91,6 @@ class OmUiPropCtx : public OmDialogProp
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmContext*          _context;
-
-    void                _onShow();
-
-    void                _onResize();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPCTX_H

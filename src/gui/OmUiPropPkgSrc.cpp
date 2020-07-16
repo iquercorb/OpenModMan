@@ -51,7 +51,7 @@ long OmUiPropPkgSrc::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPkgSrc::_onShow()
+void OmUiPropPkgSrc::_onInit()
 {
   OmPackage* package = reinterpret_cast<OmUiPropPkg*>(this->_parent)->package();
 
@@ -65,23 +65,29 @@ void OmUiPropPkgSrc::_onShow()
   wstring hash_str;
 
   // Ident
-  SetDlgItemTextW(this->_hwnd, IDC_EC_ENT01, package->ident().c_str());
+  this->setItemText(IDC_EC_ENT01, package->ident());
   // Name
-  SetDlgItemTextW(this->_hwnd, IDC_EC_ENT02, package->name().c_str());
+  this->setItemText(IDC_EC_ENT02, package->name());
   // Parsed Version
-  SetDlgItemTextW(this->_hwnd, IDC_EC_ENT03, package->version().asString().c_str());
+  this->setItemText(IDC_EC_ENT03, package->version().asString());
   // Computed Hash
-  hash_str = Om_toHexString(package->hash());
-  SetDlgItemTextW(this->_hwnd, IDC_EC_ENT04, hash_str.c_str());
+  this->setItemText(IDC_EC_ENT04, Om_toHexString(package->hash()));
 
   if(package->isType(PKG_TYPE_SRC)) {
+
     // Type
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT06, package->isType(PKG_TYPE_ZIP)?L"Zip archive":L"Sub-folder");
+    if(package->isType(PKG_TYPE_ZIP)) {
+      this->setItemText(IDC_EC_ENT06, L"Zip archive");
+    } else {
+      this->setItemText(IDC_EC_ENT06, L"Sub-folder");
+    }
+
     // Location
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT07, package->sourcePath().c_str());
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT04), true);
+    this->enableItem(IDC_EC_ENT07, true);
+    this->setItemText(IDC_EC_ENT07, package->sourcePath());
 
     // Dependencies
+    this->enableItem(IDC_EC_ENT08, true);
     if(package->dependCount()) {
       wstring dpn_str;
       for(unsigned i = 0; i < package->dependCount(); ++i) {
@@ -90,43 +96,45 @@ void OmUiPropPkgSrc::_onShow()
           dpn_str += L"; ";
         }
       }
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT08, dpn_str.c_str());
+      this->setItemText(IDC_EC_ENT08, dpn_str);
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_ENT08, L"None");
+      this->setItemText(IDC_EC_ENT08, L"None");
     }
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT08), true);
+
+
 
     // Snapshot image
     if(package->picture()) {
-      SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)package->picture());
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)package->picture());
     } else {
-      HBITMAP hBmp = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK), IMAGE_BITMAP, 0, 0, 0);
-      SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
+      HBITMAP hBmp = (HBITMAP)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0);
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)hBmp);
       DeleteObject(hBmp);
     }
 
     // Package description
+    this->enableItem(IDC_EC_PKTXT, true);
     if(package->desc().size()) {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, package->desc().c_str());
+      this->setItemText(IDC_EC_PKTXT, package->desc());
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, L"");
+      this->setItemText(IDC_EC_PKTXT, L"");
     }
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), true);
 
   } else {
+
     // Type
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT06, L"None");
+    this->setItemText(IDC_EC_ENT06, L"None");
     // Location
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT07, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT04), false);
+    this->setItemText(IDC_EC_ENT07, L"N/A");
+    this->enableItem(IDC_EC_ENT07, false);
     // Dependencies
-    SetDlgItemTextW(this->_hwnd, IDC_EC_ENT08, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_ENT08), false);
+    this->setItemText(IDC_EC_ENT08, L"N/A");
+    this->enableItem(IDC_EC_ENT08, false);
     // Snapshot image
-    SendMessage(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)nullptr);
+    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)nullptr);
     // Package description
-    SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, L"N/A");
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), false);
+    this->setItemText(IDC_EC_PKTXT, L"N/A");
+    this->enableItem(IDC_EC_PKTXT, false);
   }
 }
 
@@ -137,75 +145,48 @@ void OmUiPropPkgSrc::_onShow()
 void OmUiPropPkgSrc::_onResize()
 {
   // Package Identity Label & EditControl
-  this->_setControlPos(IDC_SC_LBL01, 5, 10, 64, 9);
-  this->_setControlPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
+  this->_setItemPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
   // Package Display Name Label & EditControl
-  this->_setControlPos(IDC_SC_LBL02, 5, 30, 64, 9);
-  this->_setControlPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL02, 5, 30, 64, 9);
+  this->_setItemPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
   // Package Parsed Version Label & EditControl
-  this->_setControlPos(IDC_SC_LBL03, 5, 50, 64, 9);
-  this->_setControlPos(IDC_EC_ENT03, 70, 50, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL03, 5, 50, 64, 9);
+  this->_setItemPos(IDC_EC_ENT03, 70, 50, this->width()-90, 13);
   // Package Computed UID Label & EditControl
-  this->_setControlPos(IDC_SC_LBL04, 5, 70, 64, 9);
-  this->_setControlPos(IDC_EC_ENT04, 70, 70, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL04, 5, 70, 64, 9);
+  this->_setItemPos(IDC_EC_ENT04, 70, 70, this->width()-90, 13);
 
     // Package Computed CRC Label & EditControl
-  //this->_setControlPos(IDC_SC_LBL05, 5, 90, 64, 9);
-  //this->_setControlPos(IDC_EC_ENT05, 70, 90, this->width()-90, 13);
+  //this->_setItemPos(IDC_SC_LBL05, 5, 90, 64, 9);
+  //this->_setItemPos(IDC_EC_ENT05, 70, 90, this->width()-90, 13);
 
   // separator
-  this->_setControlPos(IDC_SC_SEP01, 5, 95, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP01, 5, 95, this->width()-25, 1);
 
   // Package Source Type Label & EditControl
-  this->_setControlPos(IDC_SC_LBL06, 5, 110, 64, 9);
-  this->_setControlPos(IDC_EC_ENT06, 70, 110, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL06, 5, 110, 64, 9);
+  this->_setItemPos(IDC_EC_ENT06, 70, 110, this->width()-90, 13);
   // Package Source Location Label & EditControl
-  this->_setControlPos(IDC_SC_LBL07, 5, 130, 64, 9);
-  this->_setControlPos(IDC_EC_ENT07, 70, 130, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL07, 5, 130, 64, 9);
+  this->_setItemPos(IDC_EC_ENT07, 70, 130, this->width()-90, 13);
 
   // separator
-  this->_setControlPos(IDC_SC_SEP02, 5, 155, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP02, 5, 155, this->width()-25, 1);
 
   // Package Source Dependencies Label & EditControl
-  this->_setControlPos(IDC_SC_LBL08, 5, 170, 64, 9);
-  this->_setControlPos(IDC_EC_ENT08, 70, 170, this->width()-90, 26);
+  this->_setItemPos(IDC_SC_LBL08, 5, 170, 64, 9);
+  this->_setItemPos(IDC_EC_ENT08, 70, 170, this->width()-90, 26);
 
   // separator
-  this->_setControlPos(IDC_SC_SEP03, 5, 205, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP03, 5, 205, this->width()-25, 1);
 
   // Package Source Snapshot Label
-  this->_setControlPos(IDC_SC_LBL09, 5, 220, 64, 9);
+  this->_setItemPos(IDC_SC_LBL09, 5, 220, 64, 9);
   // Package Source Snapshot Image
-  this->_setControlPos(IDC_SB_PKIMG, 70, 220, 42, 38);
+  this->_setItemPos(IDC_SB_PKIMG, 70, 220, 42, 38);
   // Package Source Description Label
-  this->_setControlPos(IDC_SC_LBL10, 5, 265, 64, 9);
+  this->_setItemPos(IDC_SC_LBL10, 5, 265, 64, 9);
   // Package Source Description EditControl
-  this->_setControlPos(IDC_EC_PKTXT, 70, 265, this->width()-90, this->height()-275);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropPkgSrc::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropPkgSrc::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropPkgSrc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  return false;
+  this->_setItemPos(IDC_EC_PKTXT, 70, 265, this->width()-90, this->height()-275);
 }

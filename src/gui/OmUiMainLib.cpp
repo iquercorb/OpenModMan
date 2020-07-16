@@ -512,7 +512,7 @@ void OmUiMainLib::_onSelectPkg()
             SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
           }
 
-          this->_setControlPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
+          this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 
           ShowWindow(GetDlgItem(this->_hwnd, IDC_SC_TITLE), true);
           ShowWindow(hSb, true);
@@ -1220,11 +1220,11 @@ void OmUiMainLib::_onShow()
 void OmUiMainLib::_onResize()
 {
   // Locations Combo-Box
-  this->_setControlPos(IDC_CB_LOCLS, 5, 5, this->width()-161, 12);
+  this->_setItemPos(IDC_CB_LOCLS, 5, 5, this->width()-161, 12);
   // Library path EditControl
-  this->_setControlPos(IDC_EC_INPT1, 5, 20, this->width()-161, 12);
+  this->_setItemPos(IDC_EC_INPT1, 5, 20, this->width()-161, 12);
   // Package List ListView
-  this->_setControlPos(IDC_LV_PKGLS, 5, 35, this->width()-161, this->height()-151);
+  this->_setItemPos(IDC_LV_PKGLS, 5, 35, this->width()-161, this->height()-151);
   // Resize the ListView column
   LONG size[4];
   HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
@@ -1232,30 +1232,30 @@ void OmUiMainLib::_onResize()
   SendMessage(hLv, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
 
   // Install and Uninstall buttons
-  this->_setControlPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
-  this->_setControlPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
+  this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
+  this->_setItemPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setControlPos(IDC_PB_PGRES, 107, this->height()-113, this->width()-315, 12);
+  this->_setItemPos(IDC_PB_PGRES, 107, this->height()-113, this->width()-315, 12);
   // Abort button
-  this->_setControlPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
+  this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
-  this->_setControlPos(IDC_SC_TITLE, 5, this->height()-96, this->width()-161, 12);
+  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-96, this->width()-161, 12);
   // Package snapshot
-  this->_setControlPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
   // Package description
-  this->_setControlPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
 
   // Vertical separator
-  this->_setControlPos(IDC_SC_SEPAR, this->width()-150, 5, 1, this->height()-105);
+  this->_setItemPos(IDC_SC_SEPAR, this->width()-150, 5, 1, this->height()-105);
 
   // Batches label
-  this->_setControlPos(IDC_SC_LBL01, this->width()-143, 8, 136, 12);
+  this->_setItemPos(IDC_SC_LBL01, this->width()-143, 8, 136, 12);
   // Batches List-Box
-  this->_setControlPos(IDC_LB_BATLS, this->width()-143, 20, 136, this->height()-137);
+  this->_setItemPos(IDC_LB_BATLS, this->width()-143, 20, 136, this->height()-137);
   // Batches Apply, New.. and Delete buttons
-  this->_setControlPos(IDC_BC_APPLY, this->width()-143, this->height()-114, 45, 14);
-  this->_setControlPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
-  this->_setControlPos(IDC_BC_DEL, this->width()-51, this->height()-114, 45, 14);
+  this->_setItemPos(IDC_BC_APPLY, this->width()-143, this->height()-114, 45, 14);
+  this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
+  this->_setItemPos(IDC_BC_DEL, this->width()-51, this->height()-114, 45, 14);
 
 
   InvalidateRect(this->_hwnd, nullptr, true);

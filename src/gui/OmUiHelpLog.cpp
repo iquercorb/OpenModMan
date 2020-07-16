@@ -65,7 +65,7 @@ void OmUiHelpLog::_onShow()
 ///
 void OmUiHelpLog::_onResize()
 {
-  this->_setControlPos(IDC_EC_ENT01, 5, 5, this->width()-10, this->height()-10);
+  this->_setItemPos(IDC_EC_ENT01, 5, 5, this->width()-10, this->height()-10);
 }
 
 

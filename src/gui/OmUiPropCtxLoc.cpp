@@ -79,7 +79,7 @@ void OmUiPropCtxLoc::setChParam(unsigned i, bool en)
 ///
 void OmUiPropCtxLoc::_locationUp()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_LOCLS);
+  HWND hLb = this->getItem(IDC_LB_LOCLS);
 
   // get selected item (index)
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -100,8 +100,8 @@ void OmUiPropCtxLoc::_locationUp()
   SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), (lb_sel > 1));
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), true);
+  this->enableItem(IDC_BC_UP, (lb_sel > 1));
+  this->enableItem(IDC_BC_DN, true);
 }
 
 ///
@@ -109,7 +109,7 @@ void OmUiPropCtxLoc::_locationUp()
 ///
 void OmUiPropCtxLoc::_locationDn()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_LOCLS);
+  HWND hLb = this->getItem(IDC_LB_LOCLS);
 
   // get selected item (index)
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -133,8 +133,8 @@ void OmUiPropCtxLoc::_locationDn()
   SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
   SendMessageW(hLb, LB_SETCURSEL , true, (LPARAM)(lb_sel));
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), true);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), (lb_sel < lb_max));
+  this->enableItem(IDC_BC_UP, true);
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
 }
 
 
@@ -193,8 +193,8 @@ DWORD WINAPI OmUiPropCtxLoc::_remLocation_fth(void* arg)
   HWND hPb = (HWND)uiProgress->getProgressBar();
   HWND hSc = (HWND)uiProgress->getStaticComment();
 
-  int lb_sel = SendMessageW(GetDlgItem(self->_hwnd, IDC_LB_LOCLS), LB_GETCURSEL, 0, 0);
-  int loc_id = SendMessageW(GetDlgItem(self->_hwnd, IDC_LB_LOCLS), LB_GETITEMDATA, lb_sel, 0);
+  int lb_sel = self->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
+  int loc_id = self->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
 
   if(!context->purgeLocation(loc_id, uiProgress->hwnd(), hPb, hSc, uiProgress->getAbortPtr())) {
 
@@ -214,7 +214,7 @@ DWORD WINAPI OmUiPropCtxLoc::_remLocation_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropCtxLoc::_onShow()
+void OmUiPropCtxLoc::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOCLS,  L"Context's locations");
@@ -226,23 +226,33 @@ void OmUiPropCtxLoc::_onShow()
   this->_createTooltip(IDC_BC_ADD,    L"Add new location");
   this->_createTooltip(IDC_BC_EDIT,   L"Location properties");
 
-
   HBITMAP hBm;
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_ADD), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_ADD, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_DEL), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_MOD), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_EDIT), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_EDIT, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_UP), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_UP, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_DN), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_DN, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+
+  this->setItemText(IDC_EC_INPT2, L"<no Location selected>");
+  this->setItemText(IDC_EC_INPT3, L"<no Location selected>");
+  this->setItemText(IDC_EC_INPT4, L"<no Location selected>");
+
+  this->enableItem(IDC_EC_INPT2, false);
+  this->enableItem(IDC_EC_INPT3, false);
+  this->enableItem(IDC_EC_INPT4, false);
+
+  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_EDIT, false);
 
   this->_onRefresh();
 }
@@ -254,25 +264,25 @@ void OmUiPropCtxLoc::_onShow()
 void OmUiPropCtxLoc::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setControlPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setControlPos(IDC_LB_LOCLS, 70, 20, this->width()-107, 30);
+  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
+  this->_setItemPos(IDC_LB_LOCLS, 70, 20, this->width()-107, 30);
   // Up and Down buttons
-  this->_setControlPos(IDC_BC_UP, this->width()-35, 20, 16, 15);
-  this->_setControlPos(IDC_BC_DN, this->width()-35, 36, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-35, 20, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-35, 36, 16, 15);
   // Location Destination Label & EditControl
-  this->_setControlPos(IDC_SC_LBL02, 71, 60, 40, 9);
-  this->_setControlPos(IDC_EC_INPT2, 115, 60, this->width()-125, 13);
+  this->_setItemPos(IDC_SC_LBL02, 71, 60, 40, 9);
+  this->_setItemPos(IDC_EC_INPT2, 115, 60, this->width()-125, 13);
   // Location Library Label & EditControl
-  this->_setControlPos(IDC_SC_LBL03, 71, 75, 40, 9);
-  this->_setControlPos(IDC_EC_INPT3, 115, 75, this->width()-125, 13);
+  this->_setItemPos(IDC_SC_LBL03, 71, 75, 40, 9);
+  this->_setItemPos(IDC_EC_INPT3, 115, 75, this->width()-125, 13);
   // Location Backup Label & EditControl
-  this->_setControlPos(IDC_SC_LBL04, 71, 90, 40, 9);
-  this->_setControlPos(IDC_EC_INPT4, 115, 90, this->width()-125, 13);
+  this->_setItemPos(IDC_SC_LBL04, 71, 90, 40, 9);
+  this->_setItemPos(IDC_EC_INPT4, 115, 90, this->width()-125, 13);
   // Remove & Modify Buttons
-  this->_setControlPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setControlPos(IDC_BC_EDIT, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
+  this->_setItemPos(IDC_BC_EDIT, 122, 110, 50, 14);
   // Add button
-  this->_setControlPos(IDC_BC_ADD, this->width()-70, 110, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-70, 110, 50, 14);
 }
 
 
@@ -281,23 +291,12 @@ void OmUiPropCtxLoc::_onResize()
 ///
 void OmUiPropCtxLoc::_onRefresh()
 {
-  SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, L"<no Location selected>");
-  SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<no Location selected>");
-  SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"<no Location selected>");
-
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT2), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT3), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT4), false);
-
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_EDIT), false);
-
   OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
 
   if(context == nullptr)
     return;
 
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_LOCLS);
+  HWND hLb = this->getItem(IDC_LB_LOCLS);
 
   SendMessage(hLb, LB_RESETCONTENT, 0, 0);
   if(context) {
@@ -306,15 +305,6 @@ void OmUiPropCtxLoc::_onRefresh()
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropCtxLoc::_onQuit()
-{
-
 }
 
 
@@ -345,18 +335,18 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case IDC_LB_LOCLS: //< Location(s) list List-Box
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETCURSEL, 0, 0);
+      lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
       if(lb_sel >= 0) {
-        int loc_id = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETITEMDATA, lb_sel, 0);
+        int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
         OmLocation* location = context->location(loc_id);
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, location->installDir().c_str());
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, location->libraryDir().c_str());
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, location->backupDir().c_str());
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_EDIT), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UP), (lb_sel > 0));
-        lb_max = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETCOUNT, 0, 0) - 1;
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DN), (lb_sel < lb_max));
+        this->setItemText(IDC_EC_INPT2, location->installDir());
+        this->setItemText(IDC_EC_INPT3, location->libraryDir());
+        this->setItemText(IDC_EC_INPT4, location->backupDir());
+        this->enableItem(IDC_BC_DEL, true);
+        this->enableItem(IDC_BC_EDIT, true);
+        this->enableItem(IDC_BC_UP, (lb_sel > 0));
+        lb_max = this->msgItem(IDC_LB_LOCLS, LB_GETCOUNT) - 1;
+        this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
       }
       break;
 
@@ -369,9 +359,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_EDIT:
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETCURSEL, 0, 0);
+      lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
       if(lb_sel >= 0 && lb_sel < (int)context->locationCount()) {
-        int loc_id = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETITEMDATA, lb_sel, 0);
+        int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
         // open the Location Properties dialog
         OmUiPropLoc* uiPropLoc = reinterpret_cast<OmUiPropLoc*>(this->siblingById(IDD_PROP_LOC));
         uiPropLoc->setLocation(context->location(loc_id));
@@ -380,9 +370,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_DEL: //< Remove button for Location(s) list
-      lb_sel = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETCURSEL, 0, 0);
+      lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
       if(lb_sel >= 0) {
-        int loc_id = SendMessageW(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), LB_GETITEMDATA, lb_sel, 0);
+        int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);;
         // warns the user before committing the irreparable
         wstring msg;
         msg = L"The operation will permanently delete the Location "

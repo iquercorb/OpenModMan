@@ -123,35 +123,35 @@ void OmUiNewBat::_onResize()
   int half_width = this->width() * 0.5f;
 
   // Title label
-  this->_setControlPos(IDC_SC_LBL01, 10, 10, 150, 9);
+  this->_setItemPos(IDC_SC_LBL01, 10, 10, 150, 9);
   // Title entry
-  this->_setControlPos(IDC_EC_INPT1, 10, 20, this->width()-20, 13);
+  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-20, 13);
 
   // Crate from stat CheckBox
-  this->_setControlPos(IDC_BC_CHK01, 10, 50, 150, 9);
+  this->_setItemPos(IDC_BC_CHK01, 10, 50, 150, 9);
   // Location list ComboBox
-  this->_setControlPos(IDC_CB_LOCLS, 10, 65, this->width()-20, 12);
+  this->_setItemPos(IDC_CB_LOCLS, 10, 65, this->width()-20, 12);
   // Not-Installed label
-  this->_setControlPos(IDC_SC_LBL02, 10, 85, 150, 9);
+  this->_setItemPos(IDC_SC_LBL02, 10, 85, 150, 9);
   // Not-Installed ListBox
-  this->_setControlPos(IDC_LB_EXC, 10, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_EXC, 10, 95, half_width-35, this->height()-130);
   // Add and Rem buttons
-  this->_setControlPos(IDC_BC_ADD, half_width-20, 180, 16, 15);
-  this->_setControlPos(IDC_BC_DEL, half_width-20, 195, 16, 15);
+  this->_setItemPos(IDC_BC_ADD, half_width-20, 180, 16, 15);
+  this->_setItemPos(IDC_BC_DEL, half_width-20, 195, 16, 15);
   // Installed label
-  this->_setControlPos(IDC_SC_LBL03, half_width, 85, 150, 9);
+  this->_setItemPos(IDC_SC_LBL03, half_width, 85, 150, 9);
   // Installed ListBox
-  this->_setControlPos(IDC_LB_INC, half_width, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_INC, half_width, 95, half_width-35, this->height()-130);
   // Up and Down buttons
-  this->_setControlPos(IDC_BC_UP, this->width()-30, 180, 16, 15);
-  this->_setControlPos(IDC_BC_DN, this->width()-30, 195, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-30, 180, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-30, 195, 16, 15);
 
   // ----- Separator
-  this->_setControlPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
   // Save As... Button
-  this->_setControlPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
   // Close Button
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 
 }
 

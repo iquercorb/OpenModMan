@@ -116,29 +116,29 @@ void OmUiNewLoc::_onShow()
 void OmUiNewLoc::_onResize()
 {
   // Location title Label & EditControl
-  this->_setControlPos(IDC_SC_LBL01, 10, 10, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT1, 10, 20, this->width()-25, 13);
+  this->_setItemPos(IDC_SC_LBL01, 10, 10, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-25, 13);
 
   // Location Install Label & EditControl & Browse button
-  this->_setControlPos(IDC_SC_LBL02, 10, 50, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT2, 10, 60, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW2, this->width()-31, 60, 16, 13);
+  this->_setItemPos(IDC_SC_LBL02, 10, 50, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT2, 10, 60, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW2, this->width()-31, 60, 16, 13);
 
   // Custom Library Label & EditControl & Browse buttonben ess
-  this->_setControlPos(IDC_BC_CHK01, 10, 110, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT3, 10, 120, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW3, this->width()-31, 120, 16, 13);
+  this->_setItemPos(IDC_BC_CHK01, 10, 110, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT3, 10, 120, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW3, this->width()-31, 120, 16, 13);
 
   // Custom Library Label & EditControl & Browse button
-  this->_setControlPos(IDC_BC_CHK02, 10, 140, this->width()-25, 9);
-  this->_setControlPos(IDC_EC_INPT4, 10, 150, this->width()-45, 13);
-  this->_setControlPos(IDC_BC_BROW4, this->width()-31, 150, 16, 13);
+  this->_setItemPos(IDC_BC_CHK02, 10, 140, this->width()-25, 9);
+  this->_setItemPos(IDC_EC_INPT4, 10, 150, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BROW4, this->width()-31, 150, 16, 13);
 
   // ---- separator
-  this->_setControlPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
   // Ok and Cancel buttons
-  this->_setControlPos(IDC_BC_OK, this->width()-110, this->height()-19, 50, 14);
-  this->_setControlPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_OK, this->width()-110, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 }
 
 
