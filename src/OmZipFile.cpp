@@ -189,7 +189,7 @@ void OmZipFile::index(wstring& path, unsigned i) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmZipFile::indexOm_isDir(unsigned i) const
+bool OmZipFile::indexIsDir(unsigned i) const
 {
   if(_stat & ZIP_READER) {
     return mz_zip_reader_is_file_a_directory(static_cast<mz_zip_archive*>(_data), i);

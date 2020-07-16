@@ -260,7 +260,7 @@ bool OmPackage::sourceParse(const wstring& path)
           if(Om_getRelativePath(pkg_item.path, this->_sourceDir, zcd_entry)) {
             // we got one, lets add it to the package tree
             pkg_item.cdri = i; //< keep Zip CDR index
-            pkg_item.type = src_zip.indexOm_isDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
+            pkg_item.type = src_zip.indexIsDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
             this->_sourceItem.push_back(pkg_item);
           }
         }
@@ -358,7 +358,7 @@ bool OmPackage::sourceParse(const wstring& path)
           if(Om_getRelativePath(pkg_item.path, this->_ident, zcd_entry)) {
             // we got one, lets add it to the package tree
             pkg_item.cdri = i; //< keep Zip CDR index
-            pkg_item.type = src_zip.indexOm_isDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
+            pkg_item.type = src_zip.indexIsDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
             this->_sourceItem.push_back(pkg_item);
           }
           // lookup for a readme file to get description

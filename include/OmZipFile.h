@@ -126,7 +126,7 @@ class OmZipFile
     /// \return True if the specified index correspond to a directory, false
     /// otherwise
     ///
-    bool indexOm_isDir(unsigned i) const;
+    bool indexIsDir(unsigned i) const;
 
     /// \brief Locate index from path.
     ///
