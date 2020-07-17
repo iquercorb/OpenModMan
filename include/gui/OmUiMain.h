@@ -153,14 +153,6 @@ class OmUiMain : public OmDialog
 
     void                _addPage(const wstring& name, OmDialog* dialog);
 
-    void                _pagesOnShow(unsigned tab_id);
-
-    void                _pagesOnNotify(unsigned tab_id, WPARAM wParam, LPARAM lParam);
-
-    void                _pagesOnResize(unsigned tab_id);
-
-    void                _pagesOnClose();
-
     bool                _quitPending;
 
     bool                _onProcess;
@@ -181,7 +173,7 @@ class OmUiMain : public OmDialog
 
     void                _reloadCaption();
 
-    void                _onShow();
+    void                _onInit();
 
     void                _onResize();
 

@@ -45,7 +45,7 @@ OmDialogWiz::~OmDialogWiz()
 ///
 void OmDialogWiz::setNextAllowed(bool allow)
 {
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_NEXT), allow);
+  this->enableItem(IDC_BC_NEXT, allow);
 }
 
 
@@ -77,21 +77,17 @@ void OmDialogWiz::_onInit()
 
   // change next button text if we are at the last page
   if((this->_currPage + 1) < static_cast<int>(this->_pageDial.size())) {
-    SetWindowTextW(GetDlgItem(this->_hwnd, IDC_BC_NEXT), L"Next >");
+    this->setItemText(IDC_BC_NEXT, L"Next >");
   } else {
-    SetWindowTextW(GetDlgItem(this->_hwnd, IDC_BC_NEXT), L"Finish");
+    this->setItemText(IDC_BC_NEXT, L"Finish");
   }
 
   // disable back button if we are at the first page
-  if(this->_currPage > 0) {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BACK), true);
-  } else {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BACK), false);
-  }
+  this->enableItem(IDC_BC_BACK, (this->_currPage > 0));
 
   // set splash image
-  HBITMAP hBmp = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_WIZ_SPLASH), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_SB_IMAGE), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
+  HBITMAP hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_WIZ_SPLASH), IMAGE_BITMAP, 0, 0, 0);
+  this->msgItem(IDC_SB_IMAGE, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   this->_onWizInit();
 }
@@ -113,7 +109,7 @@ void OmDialogWiz::_onResize()
 {
   // Lateral Banner
   this->_setItemPos(IDC_SB_IMAGE, 5, 5, 68, 189);
-  SetWindowPos(GetDlgItem(this->_hwnd, IDC_SB_IMAGE), 0, 0, 0, 110, 310, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
+  SetWindowPos(this->getItem(IDC_SB_IMAGE), 0, 0, 0, 110, 310, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -123,9 +119,9 @@ void OmDialogWiz::_onResize()
   this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
 
   // force buttons to redraw to prevent artifacts
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_BACK), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_NEXT), nullptr, true);
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_BC_CANCEL), nullptr, true);
+  InvalidateRect(this->getItem(IDC_BC_BACK), nullptr, true);
+  InvalidateRect(this->getItem(IDC_BC_NEXT), nullptr, true);
+  InvalidateRect(this->getItem(IDC_BC_CANCEL), nullptr, true);
 
   if(this->_pageDial.size()) {
 
@@ -190,17 +186,13 @@ bool OmDialogWiz::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       // change next button text if we are at the last page
       if((this->_currPage + 1) < static_cast<int>(this->_pageDial.size())) {
-        SetWindowTextW(GetDlgItem(this->_hwnd, IDC_BC_NEXT), L"Next >");
+        this->setItemText(IDC_BC_NEXT, L"Next >");
       } else {
-        SetWindowTextW(GetDlgItem(this->_hwnd, IDC_BC_NEXT), L"Finish");
+        this->setItemText(IDC_BC_NEXT, L"Finish");
       }
 
       // disable back button if we are at the first page
-      if(this->_currPage > 0) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BACK), true);
-      } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BACK), false);
-      }
+      this->enableItem(IDC_BC_BACK, (this->_currPage > 0));
 
       // change page dialog visibility according selection
       if(this->_currPage >= 0) {

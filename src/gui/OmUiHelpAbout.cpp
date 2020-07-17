@@ -48,7 +48,7 @@ long OmUiHelpAbout::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiHelpAbout::_onShow()
+void OmUiHelpAbout::_onInit()
 {
   wstring about = OMM_APP_NAME;
   about.append(L" - version ");
@@ -71,7 +71,7 @@ void OmUiHelpAbout::_onShow()
   this->setItemText(IDC_LM_LNK02, repo_url);
 
   HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  SendMessage(GetDlgItem(this->_hwnd, IDC_EC_ENT01), WM_SETFONT, (WPARAM)hFont, 1);
+  this->msgItem(IDC_EC_ENT01, WM_SETFONT, (WPARAM)hFont, 1);
 
   string txt;
   if(Om_loadPlainText(txt, L"CREDITS.TXT")) {
@@ -99,25 +99,7 @@ void OmUiHelpAbout::_onResize()
   this->_setItemPos(IDC_BC_CLOSE, half_width - 25, this->height()-20, 50, 14);
 
   // force buttons to redraw
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_SC_TEXT1), nullptr, true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiHelpAbout::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiHelpAbout::_onQuit()
-{
-
+  InvalidateRect(this->getItem(IDC_SC_TEXT1), nullptr, true);
 }
 
 

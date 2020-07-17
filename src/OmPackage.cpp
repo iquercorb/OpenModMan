@@ -770,9 +770,9 @@ bool OmPackage::uninst(HWND hPb, const bool *pAbort)
 
   // initialize the progress bar
   if(hPb) {
-    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_backupItem.size()));
-    SendMessage(hPb, PBM_SETSTEP, (WPARAM) 1, 0);
-    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_backupItem.size()));
+    SendMessageW(hPb, PBM_SETSTEP, (WPARAM) 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
   }
 
   // it still time to abort
@@ -821,9 +821,9 @@ bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
 
   // initialize the progress bar
   if(hPb) {
-    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, 2*this->_sourceItem.size()));
-    SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, 2*this->_sourceItem.size()));
+    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
   }
 
   // it still time to abort
@@ -992,9 +992,9 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   // initialize the progress bar
   if(hPb) {
-    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_sourceItem.size()));
-    SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_sourceItem.size()));
+    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
   }
 
   wstring src_path, zcd_entry;
@@ -1086,7 +1086,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     }
 
     // step progress bar
-    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
     #endif
@@ -1480,7 +1480,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
           }
         }
         // step progress bar
-        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
         #ifdef DEBUG_SLOW
         Sleep(DEBUG_SLOW); //< for debug
         #endif
@@ -1503,7 +1503,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
     // set destination path of this entry in backup definition
     xml_item.setContent(this->_sourceItem[i].path);
     // step progress bar
-    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
     #endif
@@ -1667,7 +1667,7 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
       }
     }
     // step progress bar
-    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
     #endif
@@ -1744,7 +1744,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
           this->log(0, wstring(L"Package(")+this->_ident+L") Uninstall", this->_error);
         }
         // step progress bar
-        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
         #ifdef DEBUG_SLOW
         Sleep(DEBUG_SLOW); //< for debug
         #endif
@@ -1806,7 +1806,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
           this->log(0, wstring(L"Package(")+this->_ident+L") Uinstall", this->_error);
         }
         // step progress bar
-        if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
         #ifdef DEBUG_SLOW
         Sleep(DEBUG_SLOW); //< for debug
         #endif
@@ -1850,7 +1850,7 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
         }
       }
       // step progress bar
-      if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+      if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
       #ifdef DEBUG_SLOW
       Sleep(DEBUG_SLOW); //< for debug
       #endif
@@ -1947,8 +1947,8 @@ void OmPackage::_undoInstall(HWND hPb)
         }
         // step the progress bar backward
         if(hPb) {
-          int p = SendMessage(hPb, PBM_GETPOS, 0, 0);
-          SendMessage(hPb, PBM_SETPOS, p-1, 0);
+          int p = SendMessageW(hPb, PBM_GETPOS, 0, 0);
+          SendMessageW(hPb, PBM_SETPOS, p-1, 0);
         }
         #ifdef DEBUG_SLOW
         Sleep(DEBUG_SLOW); //< for debug
@@ -1995,8 +1995,8 @@ void OmPackage::_undoInstall(HWND hPb)
         }
         // step the progress bar backward
         if(hPb) {
-          int p = SendMessage(hPb, PBM_GETPOS, 0, 0);
-          SendMessage(hPb, PBM_SETPOS, p-1, 0);
+          int p = SendMessageW(hPb, PBM_GETPOS, 0, 0);
+          SendMessageW(hPb, PBM_SETPOS, p-1, 0);
         }
         #ifdef DEBUG_SLOW
         Sleep(DEBUG_SLOW); //< for debug

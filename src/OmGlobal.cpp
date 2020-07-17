@@ -1363,55 +1363,12 @@ bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& det
 /// WindowProc to select a default start folder when dialog window is
 /// initialized.
 ///
-INT CALLBACK __dialogBrowseDir_Proc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
   if(uMsg == BFFM_INITIALIZED) { //< Brother dialog windows is initialized
-    SendMessage((HWND)hwnd, BFFM_SETSELECTION, false, lpData);  //< set the selected folder
+    SendMessageW(hWnd, BFFM_SETSELECTION, false, lpData);  //< set the selected folder
   }
   return 0;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_dialogBrowseDir(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* start, bool captive)
-{
-  BROWSEINFOW br = {};
-  br.hwndOwner = hWnd;
-  br.lpszTitle = title;
-  br.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS;
-
-  if(captive) {
-    // this is the standard easy way to use SHBrowseForFolderW, this will
-    // set the "start" path as the root of browsing, so the user cannot go up
-    // to parent folder
-    if(start != nullptr) {
-      LPITEMIDLIST pIdl = nullptr;
-      SHParseDisplayName(start, nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      br.pidlRoot = pIdl;
-    }
-  } else {
-      // this is the advanced way to use SHBrowseForFolderW, here we use a
-      // callback function to handle the dialog window initialization, the "start"
-      // path object will be passed as lParam to the callback with the
-      // BFFM_INITIALIZED message.
-    if(start != nullptr) {
-      LPITEMIDLIST pIdl = nullptr;
-      SHParseDisplayName(start, nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      br.lpfn = __dialogBrowseDir_Proc;
-      br.lParam = (LPARAM)pIdl;
-    }
-  }
-
-  LPITEMIDLIST pIdl;
-  if((pIdl = SHBrowseForFolderW(&br)) != nullptr) {
-    if(SHGetPathFromIDListW(pIdl, result)) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 
@@ -1464,30 +1421,6 @@ bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start)
-{
-  OPENFILENAMEW ofn = {};
-  ofn.lStructSize = sizeof(OPENFILENAMEW);
-
-  ofn.hwndOwner = hWnd;
-  ofn.lpstrFilter = filter; //L"Mod archive (*.zip)\0*.ZIP;\0";
-
-  ofn.lpstrFile = result;
-  ofn.lpstrFile[0] = '\0';
-  ofn.nMaxFile = OMM_MAX_PATH;
-
-  ofn.lpstrInitialDir = start;
-
-  ofn.lpstrTitle = title;
-  ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
-
-  return GetOpenFileNameW(&ofn);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
 {
   wchar_t wcbuf[OMM_MAX_PATH];
@@ -1519,24 +1452,33 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start)
+bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
 {
+  wchar_t wcbuf[OMM_MAX_PATH];
+  swprintf(wcbuf, OMM_MAX_PATH, L"%ls", result.c_str());
+
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
 
   ofn.hwndOwner = hWnd;
   ofn.lpstrFilter = filter;
 
-  ofn.lpstrFile = result;
+  ofn.lpstrFile = wcbuf;
   ofn.nMaxFile = OMM_MAX_PATH;
 
-  ofn.lpstrInitialDir = start;
+  ofn.lpstrInitialDir = start.c_str();
 
   ofn.lpstrTitle = title;
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
 
-  return GetSaveFileNameW(&ofn);
+  if(GetSaveFileNameW(&ofn)) {
+    result = wcbuf;
+    return true;
+  }
+
+  return false;
 }
+
 
 /// \brief Load plan text.
 ///
@@ -1931,33 +1873,36 @@ void* Om_getPngData(HBITMAP hBmp, size_t* size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void* Om_loadShellIcon(unsigned id, bool large)
+HICON Om_loadShellIcon(unsigned id, bool large)
 {
-  SHSTOCKICONINFO sii = {};
-  sii.cbSize = sizeof(SHSTOCKICONINFO);
+  SHSTOCKICONINFO sIi = {};
+  sIi.cbSize = sizeof(SHSTOCKICONINFO);
 
   SHGetStockIconInfo(static_cast<SHSTOCKICONID>(id),
                     (large) ? SHGSI_ICON|SHGSI_LARGEICON : SHGSI_ICON|SHGSI_SMALLICON,
-                    &sii);
-  return sii.hIcon;
+                    &sIi);
+  return sIi.hIcon;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void* Om_loadShellBitmap(unsigned id, bool large)
+HBITMAP Om_loadShellBitmap(unsigned id, bool large)
 {
-  SHSTOCKICONINFO sii = {};
-  sii.cbSize = sizeof(SHSTOCKICONINFO);
+  SHSTOCKICONINFO sIi = {};
+  sIi.cbSize = sizeof(SHSTOCKICONINFO);
 
   SHGetStockIconInfo(static_cast<SHSTOCKICONID>(id),
                     (large) ? SHGSI_ICON|SHGSI_LARGEICON : SHGSI_ICON|SHGSI_SMALLICON,
-                    &sii);
+                    &sIi);
 
-  ICONINFO ici = {};
-  GetIconInfo(sii.hIcon, &ici);
-  return CopyImage(ici.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION|LR_COPYDELETEORG);
+  ICONINFO iCi = {};
+  GetIconInfo(sIi.hIcon, &iCi);
+  HBITMAP result = static_cast<HBITMAP>(CopyImage(iCi.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION|LR_COPYDELETEORG));
+  DestroyIcon(sIi.hIcon);
+
+  return result;
 }
 
 

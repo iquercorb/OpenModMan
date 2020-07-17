@@ -128,7 +128,7 @@ void OmUiMainLib::selLocation(int i)
   this->_reloadLibLv();
 
   // forces control to select item
-  HWND hCb = GetDlgItem(this->_hwnd, IDC_CB_LOCLS);
+  HWND hCb = this->getItem(IDC_CB_LOCLS);
 
   if(i != SendMessageW(hCb, CB_GETCURSEL, 0, 0))
     SendMessageW(hCb, CB_SETCURSEL, i, 0);
@@ -143,7 +143,7 @@ void OmUiMainLib::toggle()
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   DWORD dwid;
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
@@ -203,7 +203,7 @@ void OmUiMainLib::viewDetails()
   OmLocation* location = manager->curContext()->curLocation();
   OmPackage* package = nullptr;
 
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
   for(unsigned i = 0; i < n; ++i) {
@@ -231,7 +231,7 @@ void OmUiMainLib::moveTrash()
 
   vector<OmPackage*> trash_list;
 
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   this->setOnProcess(true);
 
@@ -256,7 +256,7 @@ void OmUiMainLib::moveTrash()
   LVITEM lvI = {};
   lvI.mask = LVIF_STATE;
   lvI.stateMask = LVIS_SELECTED;
-  SendMessage(hLv, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&lvI);
+  SendMessageW(hLv, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&lvI);
 
   this->setOnProcess(false);
 
@@ -275,7 +275,7 @@ void OmUiMainLib::openExplore()
 
   vector<OmPackage*> explo_list;
 
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
   for(unsigned i = 0; i < n; ++i) {
@@ -318,7 +318,7 @@ void OmUiMainLib::batch()
 ///
 bool OmUiMainLib::deleteBatch()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
 
@@ -362,23 +362,29 @@ void OmUiMainLib::setOnProcess(bool enable)
   // handle to "Edit > Package" sub-menu
   HMENU hMenu = reinterpret_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
 
+  // enable/disable Location combo-box
+  this->enableItem(IDC_CB_LOCLS, !enable);
+
+  // enable/disable install and uninstall button
+  this->enableItem(IDC_BC_INST, !enable);
+  this->enableItem(IDC_BC_UNIN, !enable);
+  // enable/disable the package list
+  this->enableItem(IDC_LV_PKGLS, !enable);
+
+  // disable/enable abort button
+  this->enableItem(IDC_BC_ABORT, enable);
+
+  // enable/disable the batches list
+  this->enableItem(IDC_LB_BATLS, !enable);
+
   if(enable) {
+
     this->_onProcess = true;
 
-    // disable Location combo-box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_CB_LOCLS), false);
-
-    // disable install and uninstall button
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_INST), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UNIN), false);
-    // disable the package list
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_LV_PKGLS), false);
-
-    // disable batches lisb-box and buttons
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_LB_BATLS), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_NEW), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
+    // disable batches buttons
+    this->enableItem(IDC_BC_APPLY, false);
+    this->enableItem(IDC_BC_NEW, false);
+    this->enableItem(IDC_BC_DEL, false);
 
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
     EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
@@ -386,33 +392,18 @@ void OmUiMainLib::setOnProcess(bool enable)
     EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
 
-    // enable abort button
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ABORT), true);
-
   } else {
 
     OmContext* context = manager->curContext();
 
-    HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
-    HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+    HWND hLv = this->getItem(IDC_LV_PKGLS);
+    HWND hLb = this->getItem(IDC_LB_BATLS);
 
-    // enable Location combo-box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_CB_LOCLS), true);
-
-    // enable install and uninstall button
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_INST), true);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UNIN), true);
-    // disable abort button
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ABORT), false);
-    // enable the package list
-    EnableWindow(hLv, true);
-    // disable batches lisb-box and buttons
-    EnableWindow(hLb, true);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_NEW), (context != nullptr));
+    this->enableItem(IDC_BC_NEW, (context != nullptr));
 
     bool lb_has_sel = (SendMessageW(hLb, LB_GETCURSEL, 0, 0) >= 0);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), lb_has_sel);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), lb_has_sel);
+    this->enableItem(IDC_BC_DEL, lb_has_sel);
+    this->enableItem(IDC_BC_APPLY, lb_has_sel);
 
     // enable the "Edit > Package" sub-items
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_ENABLED);
@@ -451,16 +442,16 @@ void OmUiMainLib::_onSelectPkg()
   // handle to "Edit > Package" sub-menu
   HMENU hMenu = uiMain->getMenuEdit(1);
 
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
-  HWND hSb = GetDlgItem(this->_hwnd, IDC_SB_PKIMG);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
+  HWND hSb = this->getItem(IDC_SB_PKIMG);
 
   // get count of selected item
-  unsigned lv_nsl = SendMessage(hLv, LVM_GETSELECTEDCOUNT, 0, 0);
+  unsigned lv_nsl = SendMessageW(hLv, LVM_GETSELECTEDCOUNT, 0, 0);
 
   if(lv_nsl > 0) {
     // at least one, we enable buttons
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_INST), true);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UNIN), true);
+    this->enableItem(IDC_BC_INST, true);
+    this->enableItem(IDC_BC_UNIN, true);
 
     // enable the "Edit > Package" sub-items
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, 0);
@@ -475,15 +466,15 @@ void OmUiMainLib::_onSelectPkg()
     if(lv_nsl > 1) {
 
       // multiple selection, we cannot display readme and snapshot
-      ShowWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), false);
+      ShowWindow(this->getItem(IDC_EC_PKTXT), false);
 
       // set title default message
-      ShowWindow(GetDlgItem(this->_hwnd, IDC_SC_TITLE), true);
-      SetDlgItemTextW(this->_hwnd, IDC_SC_TITLE, L"<Multiple selection>");
+      ShowWindow(this->getItem(IDC_SC_TITLE), true);
+      this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
 
       // set default blank picture
       ShowWindow(hSb, true);
-      SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
+      SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
 
       // disable the "view detail..." sub-menu
       EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
@@ -491,44 +482,44 @@ void OmUiMainLib::_onSelectPkg()
     } else {
 
       // get the select item id
-      unsigned itm_count = SendMessage(hLv, LVM_GETITEMCOUNT, 0, 0);
+      unsigned itm_count = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
       for(unsigned i = 0; i < itm_count; ++i) {
 
-        if(SendMessage(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+        if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
 
-          SetDlgItemTextW(this->_hwnd, IDC_SC_TITLE, location->package(i)->name().c_str());
+          this->setItemText(IDC_SC_TITLE, location->package(i)->name());
 
           if(location->package(i)->desc().size()) {
-            SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, location->package(i)->desc().c_str());
+            this->setItemText(IDC_EC_PKTXT, location->package(i)->desc());
           } else {
-            SetDlgItemTextW(this->_hwnd, IDC_EC_PKTXT, L"<no description available>");
+            this->setItemText(IDC_EC_PKTXT, L"<no description available>");
           }
 
           if(location->package(i)->picture()) {
             HBITMAP hBmp = Om_getBitmapThumbnail(location->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-            SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmp);
+            SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmp);
             DeleteObject(hBmp);
           } else {
-            SendMessage(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
+            SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
           }
 
           this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 
-          ShowWindow(GetDlgItem(this->_hwnd, IDC_SC_TITLE), true);
+          ShowWindow(this->getItem(IDC_SC_TITLE), true);
           ShowWindow(hSb, true);
-          ShowWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), true);
+          ShowWindow(this->getItem(IDC_EC_PKTXT), true);
 
         }
       }
     }
   } else {
     // nothing selected, we disable all
-    ShowWindow(GetDlgItem(this->_hwnd, IDC_SC_TITLE), false);
+    ShowWindow(this->getItem(IDC_SC_TITLE), false);
     ShowWindow(hSb, false);
-    ShowWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), false);
+    ShowWindow(this->getItem(IDC_EC_PKTXT), false);
 
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_INST), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UNIN), false);
+    this->enableItem(IDC_BC_INST, false);
+    this->enableItem(IDC_BC_UNIN, false);
 
     // disable the "Edit > Package" sub-items
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
@@ -548,17 +539,10 @@ void OmUiMainLib::_onSelectPkg()
 ///
 void OmUiMainLib::_onSelectBat()
 {
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
 
-  int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
-
-  if(lb_sel >= 0) {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), true);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), true);
-  } else {
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
-  }
+  this->enableItem(IDC_BC_APPLY, (lb_sel >= 0));
+  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
 }
 
 
@@ -578,14 +562,14 @@ void OmUiMainLib::_reloadLibEc()
     // check for Library folder validity
     if(location->libraryAccess(this->_hwnd)) {
       // set the library path
-      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, location->libraryDir().c_str());
+      this->setItemText(IDC_EC_INPT1, location->libraryDir());
     } else {
-      SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"<folder access error>");
+      this->setItemText(IDC_EC_INPT1, L"<folder access error>");
     }
 
   } else {
     // empty library path
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"<no Location selected>");
+    this->setItemText(IDC_EC_INPT1, L"<no Location selected>");
   }
 }
 
@@ -602,7 +586,7 @@ void OmUiMainLib::_reloadLibLv(bool clear)
     location = manager->curContext()->curLocation();
 
   // get List view control
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   if(location) {
 
@@ -697,10 +681,10 @@ void OmUiMainLib::_reloadBatLb()
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
   OmContext* context = manager->curContext();
 
-  HWND hLb = GetDlgItem(this->_hwnd, IDC_LB_BATLS);
+  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // empty List-Box
-  SendMessage(hLb, LB_RESETCONTENT, 0, 0);
+  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
 
   if(context) {
 
@@ -721,7 +705,7 @@ void OmUiMainLib::_reloadLocCb()
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
   OmContext* context = manager->curContext();
 
-  HWND hCb = GetDlgItem(this->_hwnd, IDC_CB_LOCLS);
+  HWND hCb = this->getItem(IDC_CB_LOCLS);
 
   if(context == nullptr) {
     // no Location, disable the List-Box
@@ -799,7 +783,7 @@ void OmUiMainLib::_reloadIcons()
   this->_lvIconsSize = manager->iconsSize();
 
    // hold the HWND of our list view control */
-  HWND hLv = GetDlgItem(_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   // We add an image list to the list-view control, the image list will
   // contain all icons we needs.
@@ -843,8 +827,8 @@ void OmUiMainLib::_reloadIcons()
     DeleteObject(hBm[i]);
   }
 
-  SendMessage(hLv, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)hImgList);
-  SendMessage(hLv, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)hImgList);
+  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)hImgList);
+  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)hImgList);
 
   DeleteObject(hImgList);
 }
@@ -876,8 +860,8 @@ DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
   OmManager* manager = static_cast<OmManager*>(self->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
-  HWND hPb = GetDlgItem(self->_hwnd, IDC_PB_PGRES);
-  HWND hLv = GetDlgItem(self->_hwnd, IDC_LV_PKGLS);
+  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hLv = self->getItem(IDC_LV_PKGLS);
 
   // enable on-process state
   self->setOnProcess(true);
@@ -917,8 +901,8 @@ DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
   OmManager* manager = static_cast<OmManager*>(self->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
-  HWND hPb = GetDlgItem(self->_hwnd, IDC_PB_PGRES);
-  HWND hLv = GetDlgItem(self->_hwnd, IDC_LV_PKGLS);
+  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hLv = self->getItem(IDC_LV_PKGLS);
 
   // enable on-process state
   self->setOnProcess(true);
@@ -959,12 +943,12 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
   OmContext* context = manager->curContext();
   OmLocation* location;
 
-  HWND hPb = GetDlgItem(self->_hwnd, IDC_PB_PGRES);
-  HWND hLv = GetDlgItem(self->_hwnd, IDC_LV_PKGLS);
-  HWND hLb = GetDlgItem(self->_hwnd, IDC_LB_BATLS);
+  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hLv = self->getItem(IDC_LV_PKGLS);
+  HWND hLb = self->getItem(IDC_LB_BATLS);
 
   // get current selected location
-  int cb_sel = SendMessageW(GetDlgItem(self->_hwnd, IDC_CB_LOCLS), CB_GETCURSEL, 0, 0);
+  int cb_sel = self->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
 
   // get current select batch
   int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
@@ -972,9 +956,9 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
   if(lb_sel >= 0) {
 
     // hide package details
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_SB_PKIMG), false);
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_EC_PKTXT), false);
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_SC_TITLE), false);
+    ShowWindow(self->getItem(IDC_SB_PKIMG), false);
+    ShowWindow(self->getItem(IDC_EC_PKTXT), false);
+    ShowWindow(self->getItem(IDC_SC_TITLE), false);
 
     // retrieve the batch object from current selection
     OmBatch* batch = context->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
@@ -1049,9 +1033,9 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
     }
 
     // restore package details
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_SB_PKIMG), true);
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_EC_PKTXT), true);
-    ShowWindow(GetDlgItem(self->_hwnd, IDC_SC_TITLE), true);
+    ShowWindow(self->getItem(IDC_SB_PKIMG), true);
+    ShowWindow(self->getItem(IDC_EC_PKTXT), true);
+    ShowWindow(self->getItem(IDC_SC_TITLE), true);
   }
 
   // Select previously selected location
@@ -1147,30 +1131,29 @@ void OmUiMainLib::_onShow()
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
 
   HBITMAP hBm;
-
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_NEW), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_NEW, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_DEL), BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   // hold the HWND of our list view control
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   // the _onShow() function is called each time the dialog receive the "Show"
   // message, which happen every the the corresponding Tab is selected. To prevent
   // the List-View to be rebuilt and adding columns each time, we must check the
   // List-View header content.
-  HWND hLvHead = (HWND)SendMessage(hLv,LVM_GETHEADER,0,0);
+  HWND hLvHead = (HWND)SendMessageW(hLv,LVM_GETHEADER,0,0);
 
   // create columns only if list-view header is empty
-  if(SendMessage(hLvHead, HDM_GETITEMCOUNT, 0, 0L) <= 0) {
+  if(SendMessageW(hLvHead, HDM_GETITEMCOUNT, 0, 0) <= 0) {
 
     DWORD dwExStyle = LVS_EX_FULLROWSELECT|
                       LVS_EX_SUBITEMIMAGES|
                       LVS_EX_DOUBLEBUFFER;
 
-    SendMessage(hLv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dwExStyle);
+    SendMessageW(hLv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dwExStyle);
 
 
     // we now add columns into our list-view control
@@ -1185,28 +1168,28 @@ void OmUiMainLib::_onShow()
     lvCol.fmt = LVCFMT_RIGHT;
     lvCol.cx = 43;
     lvCol.iSubItem = 0;
-    SendMessage(hLv, LVM_INSERTCOLUMN, 0, (LPARAM)&lvCol);
+    SendMessageW(hLv, LVM_INSERTCOLUMN, 0, (LPARAM)&lvCol);
 
     lvCol.pszText = (LPWSTR)"Name";
     lvCol.fmt = LVCFMT_LEFT;
     lvCol.cx = 550;
     lvCol.iSubItem = 1;
-    SendMessage(hLv, LVM_INSERTCOLUMN, 1, (LPARAM)&lvCol);
+    SendMessageW(hLv, LVM_INSERTCOLUMN, 1, (LPARAM)&lvCol);
 
     lvCol.pszText = (LPWSTR)"Version";
     lvCol.fmt = LVCFMT_LEFT;
     lvCol.cx = 80;
     lvCol.iSubItem = 2;
-    SendMessage(hLv, LVM_INSERTCOLUMN, 2, (LPARAM)&lvCol);
+    SendMessageW(hLv, LVM_INSERTCOLUMN, 2, (LPARAM)&lvCol);
 
     HFONT hFont;
 
     // defines fonts for package description, title, and log output
     hFont = CreateFont(14,0,0,0,700,false,false,false,1,0,0,5,0,"Consolas");
-    SendMessage(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), WM_SETFONT, (WPARAM)hFont, 1);
+    this->msgItem(IDC_EC_PKTXT, WM_SETFONT, (WPARAM)hFont, 1);
 
     hFont = CreateFont(18,0,0,0,800,false,false,false,1,0,0,5,0,"Ms Shell Dlg");
-    SendMessage(GetDlgItem(this->_hwnd, IDC_SC_TITLE), WM_SETFONT, (WPARAM)hFont, 1);
+    this->msgItem(IDC_SC_TITLE, WM_SETFONT, (WPARAM)hFont, 1);
   }
 
   // force refresh
@@ -1227,9 +1210,9 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_LV_PKGLS, 5, 35, this->width()-161, this->height()-151);
   // Resize the ListView column
   LONG size[4];
-  HWND hLv = GetDlgItem(this->_hwnd, IDC_LV_PKGLS);
+  HWND hLv = this->getItem(IDC_LV_PKGLS);
   GetClientRect(hLv, (LPRECT)&size);
-  SendMessage(hLv, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
+  SendMessageW(hLv, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
@@ -1271,24 +1254,24 @@ void OmUiMainLib::_onRefresh()
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
   // disable all packages buttons
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ABORT), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_INST), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_UNIN), false);
+  this->enableItem(IDC_BC_ABORT, false);
+  this->enableItem(IDC_BC_INST, false);
+  this->enableItem(IDC_BC_UNIN, false);
 
   // hide package details
-  ShowWindow(GetDlgItem(this->_hwnd, IDC_SC_TITLE), false);
-  ShowWindow(GetDlgItem(this->_hwnd, IDC_EC_PKTXT), false);
-  ShowWindow(GetDlgItem(this->_hwnd, IDC_SB_PKIMG), false);
+  ShowWindow(this->getItem(IDC_SC_TITLE), false);
+  ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+  ShowWindow(this->getItem(IDC_SB_PKIMG), false);
 
   // disable the Progress-Bar
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_PB_PGRES), false);
+  this->enableItem(IDC_PB_PGRES, false);
 
   this->_reloadLocCb(); //< reload Location Combo-Box
 
   // disable all batches buttons
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_APPLY), false);
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_NEW), (manager->curContext() != nullptr));
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_DEL), false);
+  this->enableItem(IDC_BC_APPLY, false);
+  this->enableItem(IDC_BC_NEW, (manager->curContext() != nullptr));
+  this->enableItem(IDC_BC_DEL, false);
 
   this->_reloadBatLb(); //< reload Batches list
 }
@@ -1404,7 +1387,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_CB_LOCLS:
       if(HIWORD(wParam) == CBN_SELCHANGE) {
-        this->selLocation(SendMessageW(GetDlgItem(this->_hwnd, IDC_CB_LOCLS), CB_GETCURSEL, 0, 0));
+        this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
       }
       break;
 
@@ -1427,7 +1410,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ABORT:
       this->_abortPending = true;
-      EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ABORT), false);
+      this->enableItem(IDC_BC_ABORT, false);
       break;
 
     case IDC_BC_NEW:

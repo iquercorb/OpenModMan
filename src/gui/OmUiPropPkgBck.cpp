@@ -60,7 +60,7 @@ void OmUiPropPkgBck::_onInit()
 
   // defines fonts for package description, title, and log output
   HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  SendMessage(GetDlgItem(_hwnd, IDC_EC_ENT05), WM_SETFONT, (WPARAM)hFont, 1);
+  this->msgItem(IDC_EC_ENT05, WM_SETFONT, (WPARAM)hFont, 1);
 
   if(package->isType(PKG_TYPE_BCK)) {
 

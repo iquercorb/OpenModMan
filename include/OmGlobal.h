@@ -1032,36 +1032,7 @@ bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& det
 ///
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
-bool Om_dialogBrowseDir(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* start, bool captive = false);
-
-/// \brief Select folder dialog box.
-///
-/// Opens a folder selection dialog box.
-///
-/// \param[out] result  : Buffer to receive the selected folder path.
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  title   : Dialog window title.
-/// \param[in]  start   : Path to default location where to begin browsing.
-/// \param[in]  captive : If true, the default start location is set as root
-///                       and user cannot browse up to parent folder.
-///
-/// \return True if succeed, false if user canceled or an error occurred.
-///
 bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive = false);
-
-/// \brief Open file dialog box.
-///
-/// Opens a file open selection dialog box.
-///
-/// \param[out] result  : Buffer to receive the selected folder path.
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  title   : Dialog window title.
-/// \param[in]  filter  : File type and extension filter string.
-/// \param[in]  start   : Path to default location where to begin browsing.
-///
-/// \return True if succeed, false if user canceled or an error occurred.
-///
-bool Om_dialogOpenFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start);
 
 /// \brief Open file dialog box.
 ///
@@ -1089,7 +1060,7 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 ///
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
-bool Om_dialogSaveFile(wchar_t* result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* start);
+bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
 
 /// \brief Load plan text.
 ///
@@ -1201,7 +1172,7 @@ void* Om_getPngData(HBITMAP hBmp, size_t* size);
 ///
 /// \return Icon handle (HICON) of the specified Shell Stock icon
 ///
-void* Om_loadShellIcon(unsigned id, bool large = false);
+HICON Om_loadShellIcon(unsigned id, bool large = false);
 
 /// \brief Load stock shell icon as HBITMAP
 ///
@@ -1212,7 +1183,7 @@ void* Om_loadShellIcon(unsigned id, bool large = false);
 ///
 /// \return Bitmap handle (HBITMAP) of the specified Shell Stock icon
 ///
-void* Om_loadShellBitmap(unsigned id, bool large = false);
+HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
 
 /// \brief Get Windows error string
 ///

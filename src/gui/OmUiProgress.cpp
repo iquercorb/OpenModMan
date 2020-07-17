@@ -96,7 +96,7 @@ void* OmUiProgress::getStaticComment() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::_onShow()
+void OmUiProgress::_onInit()
 {
   this->_abort = false;
 }
@@ -107,28 +107,10 @@ void OmUiProgress::_onShow()
 ///
 void OmUiProgress::_onResize()
 {
-  SetWindowPos(GetDlgItem(this->_hwnd, IDC_SC_TITLE), nullptr, 20, 10, this->_rect.right-40, 16, SWP_NOZORDER);
-  SetWindowPos(GetDlgItem(this->_hwnd, IDC_PB_PGRES), nullptr, 20, 35, this->_rect.right-40, 21, SWP_NOZORDER);
-  SetWindowPos(GetDlgItem(this->_hwnd, IDC_SC_DESC1), nullptr, 20, 65, this->_rect.right-40, 16, SWP_NOZORDER);
-  SetWindowPos(GetDlgItem(this->_hwnd, IDC_BC_ABORT),  nullptr, this->_rect.right-85, this->_rect.bottom-35, 75, 23, SWP_NOZORDER);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiProgress::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiProgress::_onQuit()
-{
-
+  this->_setItemPos(IDC_SC_TITLE, 10, 10, this->width()-20, 9);
+  this->_setItemPos(IDC_PB_PGRES, 10, 25, this->width()-20, 12);
+  this->_setItemPos(IDC_SC_DESC1, 10, 40, this->width()-20, 9);
+  this->_setItemPos(IDC_BC_ABORT, this->width()-60, this->height()-24, 50, 14);
 }
 
 
@@ -143,7 +125,7 @@ bool OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case IDC_BC_ABORT:
       this->_abort = true;
-      EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_ABORT), false);
+      this->enableItem(IDC_BC_ABORT, false);
       break;
     }
 

@@ -49,10 +49,102 @@ long OmUiNewLoc::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewLoc::_onShow()
+bool OmUiNewLoc::_apply()
+{
+  OmContext* context = this->_context;
+
+  if(context == nullptr)
+    return false;
+
+  bool cust_lib, cust_bck;
+
+  wstring loc_name, loc_dst, loc_lib, loc_bck;
+
+  this->getItemText(IDC_EC_INPT1, loc_name);
+  if(!loc_name.empty()) {
+    if(!Om_isValidName(loc_name)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
+                                    L"The Location title contain "
+                                    L"illegal character(s)");
+      return false;
+    }
+  } else {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
+                                  L"Please choose a Location title.");
+    return false;
+  }
+  this->getItemText(IDC_EC_INPT2, loc_dst);
+  if(!loc_dst.empty()) {
+    if(!Om_isDir(loc_dst)) {
+        Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
+                                      L"Please select an existing folder for "
+                                      L"Location Destination.");
+      return false;
+    }
+  } else {
+      Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination path",
+                                    L"Please enter a valid path for Location "
+                                    L"Destination folder.");
+    return false;
+  }
+
+  cust_lib = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  if(cust_lib) {
+    this->getItemText(IDC_EC_INPT3, loc_lib);
+    if(!loc_lib.empty()) {
+      if(!Om_isDir(loc_lib)) {
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
+                                      L"Please choose an existing folder for "
+                                      L"Location custom Library");
+        return false;
+      }
+    } else {
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
+                                      L"Please enter a valid path for Location "
+                                      L"custom Library folder");
+      return false;
+    }
+  }
+
+  cust_bck = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+  if(cust_bck) {
+    this->getItemText(IDC_EC_INPT4, loc_bck);
+    if(!loc_bck.empty()) {
+      if(!Om_isDir(loc_bck)) {
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
+                                      L"Please choose an existing folder for "
+                                      L"Location custom Backup");
+        return false;
+      }
+    } else {
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
+                                      L"Please enter a valid path for Location "
+                                      L"custom Backup folder");
+      return false;
+    }
+  }
+
+  this->quit();
+
+  // create new Location in Context
+  if(!context->makeLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
+  }
+
+  // refresh all tree from the main dialog
+  this->root()->refresh();
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiNewLoc::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Location main identifier");
+  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
 
   this->_createTooltip(IDC_EC_INPT2,  L"Package installation destination path");
   this->_createTooltip(IDC_BC_BROW2,  L"Select destination folder");
@@ -65,40 +157,29 @@ void OmUiNewLoc::_onShow()
   this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  // set default start values
+  this->setItemText(IDC_EC_INPT1, L"Main Location");
+  this->setItemText(IDC_EC_INPT2, L"");
+  this->setItemText(IDC_EC_INPT3, L"Main Location\\library");
+  this->setItemText(IDC_EC_INPT4, L"Main Location\\backup");
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
+  wstring item_str;
 
-  if(!wcslen(wcbuf)) {
-
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, L"Main Location");
-
-    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\library");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf);
-
-    swprintf(wcbuf, OMM_MAX_PATH, L"Main Location\\backup");
-    SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf);
-
-    return;
-  }
-
+  // enable or disable "OK" button according values
   bool allow = true;
 
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, wcbuf, OMM_MAX_PATH);
-  if(Om_isValidName(wcbuf)) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, wcbuf, OMM_MAX_PATH);
-    if(wcslen(wcbuf)) {
-
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, wcbuf, OMM_MAX_PATH);
-        if(!wcslen(wcbuf)) allow = false;
+  this->getItemText(IDC_EC_INPT1, item_str);
+  if(Om_isValidName(item_str)) {
+    this->getItemText(IDC_EC_INPT2, item_str);
+    if(Om_isValidPath(item_str)) {
+      if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INPT3, item_str);
+        if(item_str.empty()) allow = false;
       }
-
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, wcbuf, OMM_MAX_PATH);
-        if(!wcslen(wcbuf)) allow = false;
+      if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INPT4, item_str);
+        if(item_str.empty()) allow = false;
       }
-
     } else {
       allow = false;
     }
@@ -106,7 +187,7 @@ void OmUiNewLoc::_onShow()
     allow = false;
   }
 
-  EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), allow);
+  this->enableItem(IDC_BC_OK, allow);
 }
 
 
@@ -145,114 +226,92 @@ void OmUiNewLoc::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewLoc::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiNewLoc::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 bool OmUiNewLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
     bool has_changed = false;
 
-    wchar_t inpt1[OMM_MAX_PATH];
-    wchar_t inpt3[OMM_MAX_PATH];
-    wchar_t inpt2[OMM_MAX_PATH];
-    wchar_t inpt4[OMM_MAX_PATH];
+    bool bm_chk;
+
+    wstring item_str, brow_str;
 
     switch(LOWORD(wParam))
     {
 
     case IDC_EC_INPT1: // Title
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-      if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-          swprintf(inpt3, OMM_MAX_PATH, L"%ls\\library", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+      this->getItemText(IDC_EC_INPT1, item_str);
+      if(Om_isValidName(item_str)) {
+        if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT3, item_str + L"\\library");
         }
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-          swprintf(inpt4, OMM_MAX_PATH, L"%ls\\backup", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+        if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT4, item_str + L"\\backup");
         }
       } else {
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>\\library");
+        if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT3, L"<invalid path>\\library");
         }
-        if(!SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"<invalid path>\\backup");
+        if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+          this->setItemText(IDC_EC_INPT4, L"<invalid path>\\backup");
         }
       }
       has_changed = true;
       break;
 
-    case IDC_BC_BROW2:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt2, this->_hwnd, L"Select installation Location folder", inpt2)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2);
+    case IDC_BC_BROW2: // browse destination
+      this->getItemText(IDC_EC_INPT2, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select installation destination folder", item_str)) {
+        this->setItemText(IDC_EC_INPT2, brow_str);
       }
       break;
 
-    case IDC_BC_CHK01:
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT3), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), true);
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"");
+    case IDC_BC_CHK01: // custom library check box
+      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+      this->enableItem(IDC_BC_BROW3, bm_chk);
+      this->enableItem(IDC_EC_INPT3, bm_chk);
+      if(bm_chk) {
+        item_str = L"";
       } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT3), false);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW3), false);
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-        if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-          swprintf(inpt3, OMM_MAX_PATH, L"%ls\\library", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+        this->getItemText(IDC_EC_INPT1, item_str);
+        if(Om_isValidName(item_str)) {
+          item_str += L"\\library";
         } else {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, L"<invalid path>\\library");
+          item_str = L"<invalid path>\\library";
         }
       }
+      this->setItemText(IDC_EC_INPT3, item_str);
     break;
 
-    case IDC_BC_BROW3:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt3, this->_hwnd, L"Select custom packages Library", inpt3)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3);
+    case IDC_BC_BROW3: // browse custom library
+      this->getItemText(IDC_EC_INPT3, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select packages library custom folder", item_str)) {
+        this->setItemText(IDC_EC_INPT3, brow_str);
       }
       break;
 
-    case IDC_BC_CHK02:
-      if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02), BM_GETCHECK, 0, 0)) {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT4), true);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), true);
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"");
+    case IDC_BC_CHK02: // custom backup check box
+      bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+      this->enableItem(IDC_BC_BROW4, bm_chk);
+      this->enableItem(IDC_EC_INPT4, bm_chk);
+      if(bm_chk) {
+        item_str = L"";
       } else {
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_EC_INPT4), false);
-        EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW4), false);
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-        if(wcslen(inpt1) && Om_isValidName(inpt1)) {
-          swprintf(inpt4, OMM_MAX_PATH, L"%ls\\backup", inpt1);
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+        this->getItemText(IDC_EC_INPT1, item_str);
+        if(Om_isValidName(item_str)) {
+          item_str += L"\\backup";
         } else {
-          SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, L"<invalid path>\\backup");
+          item_str = L"<invalid path>\\backup";
         }
       }
+      this->setItemText(IDC_EC_INPT4, item_str);
+
     break;
 
-    case IDC_BC_BROW4:
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-      if(Om_dialogBrowseDir(inpt4, this->_hwnd, L"Select custom Backups location", inpt4)) {
-        SetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4);
+    case IDC_BC_BROW4: // browse custom library
+      this->getItemText(IDC_EC_INPT4, item_str);
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select backup data custom folder", item_str)) {
+        this->setItemText(IDC_EC_INPT4, brow_str);
       }
       break;
 
@@ -264,27 +323,28 @@ bool OmUiNewLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_OK:
       this->_apply();
-      break; // case IDC_BC_OK:
+      break;
 
     case IDC_BC_CANCEL:
       this->quit();
-      break; // case IDC_BC_CANCEL:
-
+      break;
     }
 
+    // enable or disable "OK" button according values
     if(has_changed) {
       bool allow = true;
-      GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, inpt1, OMM_MAX_PATH);
-      if(Om_isValidName(inpt1)) {
-        GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, inpt2, OMM_MAX_PATH);
-        if(wcslen(inpt2)) {
-          if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01),BM_GETCHECK,0,0)) {
-            GetDlgItemTextW(this->_hwnd, IDC_EC_INPT3, inpt3, OMM_MAX_PATH);
-            if(!wcslen(inpt3)) allow = false;
+
+      this->getItemText(IDC_EC_INPT1, item_str);
+      if(Om_isValidName(item_str)) {
+        this->getItemText(IDC_EC_INPT2, item_str);
+        if(Om_isValidPath(item_str)) {
+          if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+            this->getItemText(IDC_EC_INPT3, item_str);
+            if(item_str.empty()) allow = false;
           }
-          if(SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02),BM_GETCHECK,0,0)) {
-            GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, inpt4, OMM_MAX_PATH);
-            if(!wcslen(inpt4)) allow = false;
+          if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+            this->getItemText(IDC_EC_INPT4, item_str);
+            if(item_str.empty()) allow = false;
           }
         } else {
           allow = false;
@@ -292,108 +352,10 @@ bool OmUiNewLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         allow = false;
       }
-      EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_OK), allow);
+
+      this->enableItem(IDC_BC_OK, allow);
     }
   }
 
   return false;
 }
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiNewLoc::_apply()
-{
-  OmContext* context = this->_context;
-
-  if(context == nullptr)
-    return false;
-
-  bool chk01, chk02;
-  wchar_t loc_titl[OMM_MAX_PATH];
-  wchar_t loc_inst[OMM_MAX_PATH];
-  wchar_t loc_libd[OMM_MAX_PATH];
-  wchar_t loc_bckd[OMM_MAX_PATH];
-
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT1, loc_titl, OMM_MAX_PATH);
-  if(wcslen(loc_titl)) {
-    if(!Om_isValidName(loc_titl)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                    L"The Location title contain "
-                                    L"illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                  L"Please choose a Location title.");
-    return false;
-  }
-  GetDlgItemTextW(this->_hwnd, IDC_EC_INPT2, loc_inst, OMM_MAX_PATH);
-  if(wcslen(loc_inst)) {
-    if(!Om_isDir(loc_inst)) {
-        Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
-                                      L"Please select an existing folder for "
-                                      L"Location Destination.");
-      return false;
-    }
-  } else {
-      Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination path",
-                                    L"Please enter a valid path for Location "
-                                    L"Destination folder.");
-    return false;
-  }
-
-  chk01 = SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK01),BM_GETCHECK,0,0);
-  if(chk01) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT4, loc_libd, OMM_MAX_PATH);
-    if(wcslen(loc_libd)) {
-      if(!Om_isDir(loc_libd)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Library");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Library folder");
-      return false;
-    }
-  } else {
-    loc_libd[0] = L'\0'; //< disable custom library folder
-  }
-
-  chk02 = SendMessage(GetDlgItem(this->_hwnd,IDC_BC_CHK02),BM_GETCHECK,0,0);
-  if(chk02) {
-    GetDlgItemTextW(this->_hwnd, IDC_EC_INPT5, loc_bckd, OMM_MAX_PATH);
-    if(wcslen(loc_bckd)) {
-      if(!Om_isDir(loc_bckd)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Backup");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Backup folder");
-      return false;
-    }
-  } else {
-    loc_bckd[0] = L'\0'; //< disable custom backup folder
-  }
-
-  this->quit();
-
-  // create new Location in Context
-  if(!context->makeLocation(loc_titl, loc_inst, loc_libd, loc_bckd)) {
-    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
-  }
-
-  // refresh all tree from the main dialog
-  this->root()->refresh();
-
-  return true;
-}
-

@@ -678,8 +678,8 @@ void OmManager::setLogOutput(HWND hWnd) {
   this->_logHwnd = hWnd;
 
   if(this->_logHwnd) {
-    SendMessage((HWND)this->_logHwnd, EM_SETLIMITTEXT, 0, 0);
-    SendMessageW((HWND)this->_logHwnd, WM_SETTEXT, 0, (LPARAM)this->_log.c_str());
+    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_SETLIMITTEXT, 0, 0);
+    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(this->_log.c_str()));
   }
 
 }
@@ -694,9 +694,9 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
   time(&rtime);
   struct tm *ltime = localtime(&rtime);
 
-  wchar_t hour[32];
   wstring entry;
 
+  wchar_t hour[32];
   swprintf(hour, 32, L"[%02d:%02d:%02d]", ltime->tm_hour, ltime->tm_min, ltime->tm_sec);
   entry = hour;
 
@@ -723,11 +723,11 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
 
   // output to log window
   if(this->_logHwnd) {
-    unsigned s = SendMessageW((HWND)this->_logHwnd, WM_GETTEXTLENGTH, 0, 0);
-    SendMessage((HWND)this->_logHwnd, EM_SETSEL, s, s);
-    SendMessageW((HWND)this->_logHwnd, EM_REPLACESEL, 0, (LPARAM)entry.c_str());
-    SendMessage((HWND)this->_logHwnd, WM_VSCROLL, SB_BOTTOM, (LPARAM)0);
-    RedrawWindow((HWND)this->_logHwnd, nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+    unsigned s = SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_GETTEXTLENGTH, 0, 0);
+    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_SETSEL, s, s);
+    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
+    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_VSCROLL, SB_BOTTOM, 0);
+    RedrawWindow(reinterpret_cast<HWND>(this->_logHwnd), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
   }
 
   // output to standard output
@@ -737,7 +737,6 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
   if(this->_logFile) {
     DWORD wb;
     string data;
-    //Om_toMbString(data, entry);
     Om_toUtf8(data, entry);
     WriteFile(reinterpret_cast<HANDLE>(this->_logFile), data.c_str(), data.size(), &wb, nullptr);
   }

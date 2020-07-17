@@ -54,19 +54,23 @@ class OmUiNewPkg : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    bool                _apply();
-
     HBITMAP             _hBlankImg;
 
     HBITMAP             _hImgSource;
 
-    void                _buildPkg_end();
+    bool                _parsePkg(const wstring& path);
+
+    void                _buildPkg_init();
+
+    void                _buildPkg_stop();
 
     void*               _buildPkg_hth;
 
     static DWORD WINAPI _buildPkg_fth(void*);
 
-    void                _onShow();
+    bool                _apply();
+
+    void                _onInit();
 
     void                _onResize();
 

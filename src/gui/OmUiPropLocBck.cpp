@@ -76,10 +76,10 @@ void OmUiPropLocBck::_onInit()
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
-    SendMessage(hCb, CB_ADDSTRING, 0, (LPARAM)"None ( very fast )");
-    SendMessage(hCb, CB_ADDSTRING, 0, (LPARAM)"Low ( fast )");
-    SendMessage(hCb, CB_ADDSTRING, 0, (LPARAM)"Normal ( slow )");
-    SendMessage(hCb, CB_ADDSTRING, 0, (LPARAM)"Best ( very slow )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"None ( very fast )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Low ( fast )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Normal ( slow )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Best ( very slow )");
   }
 
   if(location == nullptr)
@@ -131,7 +131,7 @@ void OmUiPropLocBck::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 50, 40, 120, 9);
   this->_setItemPos(IDC_CB_LEVEL, 50, 50, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_CB_LEVEL), nullptr, true);
+  InvalidateRect(this->getItem(IDC_CB_LEVEL), nullptr, true);
 }
 
 

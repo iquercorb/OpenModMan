@@ -298,7 +298,7 @@ void OmUiPropCtxLoc::_onRefresh()
 
   HWND hLb = this->getItem(IDC_LB_LOCLS);
 
-  SendMessage(hLb, LB_RESETCONTENT, 0, 0);
+  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   if(context) {
     for(unsigned i = 0; i < context->locationCount(); ++i) {
       SendMessageW(hLb, LB_ADDSTRING, i, (LPARAM)context->location(i)->title().c_str());

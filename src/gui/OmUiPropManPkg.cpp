@@ -77,12 +77,12 @@ void OmUiPropManPkg::_onInit()
 
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_SETCHECK, manager->legacySupport(), 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK02), BM_SETCHECK, manager->warnOverlaps(), 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK03), BM_SETCHECK, manager->warnExtraInst(), 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK04), BM_SETCHECK, manager->warnMissDpnd(), 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK05), BM_SETCHECK, manager->warnExtraUnin(), 0);
-  SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK06), BM_SETCHECK, manager->quietBatches(), 0);
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, manager->legacySupport());
+  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, manager->warnOverlaps());
+  this->msgItem(IDC_BC_CHK03, BM_SETCHECK, manager->warnExtraInst());
+  this->msgItem(IDC_BC_CHK04, BM_SETCHECK, manager->warnMissDpnd());
+  this->msgItem(IDC_BC_CHK05, BM_SETCHECK, manager->warnExtraUnin());
+  this->msgItem(IDC_BC_CHK06, BM_SETCHECK, manager->quietBatches());
 }
 
 

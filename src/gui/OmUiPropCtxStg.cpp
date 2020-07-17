@@ -174,9 +174,6 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     wstring item_str, brow_str;
 
-    wchar_t wcbuf[OMM_MAX_PATH];
-    wchar_t sldir[OMM_MAX_PATH];
-
     switch(LOWORD(wParam))
     {
     case IDC_EC_INPT3: //< Entry for Context title
@@ -192,10 +189,9 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(Om_dialogOpenFile(brow_str, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, item_str)) {
         ExtractIconExW(brow_str.c_str(), 0, &hIcon, nullptr, 1);
         if(hIcon) {
-          this->msgItem(IDC_SB_CTICO,STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hIcon);
-          RedrawWindow(this->getItem(IDC_SB_CTICO), nullptr, nullptr, RDW_INVALIDATE|RDW_ERASE); // force repaint
+          this->msgItem(IDC_SB_CTICO, STM_SETICON,(WPARAM)hIcon);
+          InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
           this->setItemText(IDC_EC_INPT4, brow_str);
-          DeleteObject(hIcon);
         }
         // user modified parameter, notify it
         this->setChParam(CTX_PROP_STG_ICON, true);
@@ -204,9 +200,8 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_DEL: //< Remove Button for Context icon
       // load default icon
-      hIcon = (HICON)Om_loadShellIcon(SIID_APPLICATION, true);
-      this->msgItem(IDC_SB_CTICO,STM_SETIMAGE,(WPARAM)IMAGE_ICON,(LPARAM)hIcon);
-      RedrawWindow(this->getItem(IDC_SB_CTICO), nullptr, nullptr, RDW_INVALIDATE|RDW_ERASE); // force repaint
+      this->msgItem(IDC_SB_CTICO, STM_SETICON,(WPARAM)Om_loadShellIcon(SIID_APPLICATION, true));
+      InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
       this->setItemText(IDC_EC_INPT4, L"<delete>"); //< set invalid path
       this->setItemText(IDC_BC_BROW1, L"Select..."); //< change browse button text
       // user modified parameter, notify it

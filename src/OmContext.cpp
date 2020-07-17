@@ -277,7 +277,7 @@ void OmContext::close()
     this->_home.clear();
     this->_title.clear();
 
-    if(this->_icon) DeleteObject(this->_icon);
+    if(this->_icon) DestroyIcon(this->_icon);
     this->_icon = nullptr;
 
     this->_config.close();
@@ -382,7 +382,7 @@ void OmContext::remIcon()
 {
   if(this->_config.valid()) {
 
-    if(this->_icon) DeleteObject(this->_icon);
+    if(this->_icon) DestroyIcon(this->_icon);
     this->_icon = nullptr;
 
     if(this->_config.xml().hasChild(L"icon")) {

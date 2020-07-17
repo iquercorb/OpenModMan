@@ -85,14 +85,12 @@ long OmUiMain::id() const
 ///
 void OmUiMain::setOnProcess(bool enable)
 {
+  this->enableItem(IDC_TC_MAIN, !enable);
+  this->enableItem(IDC_CB_CTXLS, !enable);
+  this->enableItem(IDC_LB_LOCLS, !enable);
+
   if(enable) {
     this->_onProcess = true;
-    // disable the Tab_Control
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_TC_TABS1), false);
-    // disable the Context Combo_Box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_CB_CTXLS), false);
-    // disable the Location List_Box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), false);
   } else {
     this->_onProcess = false;
     // if close was requested, we quit the dialog
@@ -100,12 +98,6 @@ void OmUiMain::setOnProcess(bool enable)
       this->quit();
       return;
     }
-    // enable the Tab_Control
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_TC_TABS1), true);
-    // enable the Context Combo_Box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_CB_CTXLS), true);
-    // enable the Location List_Box
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_LB_LOCLS), true);
   }
 }
 
@@ -162,9 +154,9 @@ void OmUiMain::selContext(int i)
   if(uiMainLib) uiMainLib->refresh();
 
   // forces control to select item
-  HWND hCb = GetDlgItem(this->_hwnd,IDC_CB_CTXLS);
-  if(i != SendMessageW(hCb,CB_GETCURSEL,0,0)) {
-    SendMessageW(hCb,CB_SETCURSEL,i,0);
+  HWND hCb = this->getItem(IDC_CB_CTXLS);
+  if(i != SendMessageW(hCb, CB_GETCURSEL, 0, 0)) {
+    SendMessageW(hCb, CB_SETCURSEL, i, 0);
   }
 }
 
@@ -259,104 +251,6 @@ void OmUiMain::_addPage(const wstring& title, OmDialog* dialog)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::_pagesOnShow(unsigned tab_id)
-{
-  if(this->_pageDial.size() && this->_hwnd) {
-
-    TCITEMW tcPage;
-    tcPage.mask = TCIF_TEXT;
-
-    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-
-      tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
-      SendMessageW(GetDlgItem(this->_hwnd, tab_id), TCM_INSERTITEMW, i, (LPARAM)&tcPage);
-
-      this->_pageDial[i]->modeless(false);
-      EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
-    }
-
-    this->_pageDial[0]->show();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::_pagesOnNotify(unsigned tab_id, WPARAM wParam, LPARAM lParam)
-{
-  if(this->_pageDial.size()) {
-
-    // check for notify from the specified TabControl
-    if(LOWORD(wParam) == tab_id) {
-      // check for a "selection changed" notify
-      if(((LPNMHDR)lParam)->code == TCN_SELCHANGE) {
-
-        // get TabControl current selection
-        int tab_sel = SendMessageW(GetDlgItem(this->_hwnd, tab_id), TCM_GETCURSEL, 0, 0);
-
-        // change page dialog visibility according selection
-        if(tab_sel >= 0) {
-          for(int i = 0; i < static_cast<int>(this->_pageDial.size()); ++i) {
-            if(i == tab_sel) {
-              this->_pageDial[i]->show();
-            } else {
-              this->_pageDial[i]->hide();
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::_pagesOnResize(unsigned tab_id)
-{
-  if(this->_pageDial.size()) {
-
-    LONG pos[4];
-
-    // get TabControl local coordinates
-    GetWindowRect(GetDlgItem(this->_hwnd, tab_id), (LPRECT)&pos);
-    MapWindowPoints(HWND_DESKTOP, this->_hwnd, (LPPOINT)&pos, 2);
-
-    // convert into base unit and adjust to keep inside the TabControl
-    pos[0] = MulDiv(pos[0], 4, this->unitX()) + 1;
-    pos[1] = MulDiv(pos[1], 8, this->unitY()) + 14;
-    pos[2] = MulDiv(pos[2], 4, this->unitX()) - 2;
-    pos[3] = MulDiv(pos[3], 8, this->unitY()) - 2;
-
-    // Map again in pixels
-    MapDialogRect(this->_hwnd, (LPRECT)&pos);
-    pos[2] -= pos[0]; // width = right - left
-    pos[3] -= pos[1]; // height = bottom - top
-
-    // apply this for all dialogs
-    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-      SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::_pagesOnClose()
-{
-  // send an abort message to all Tab child dialogs
-  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-    PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0), 0);
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiMain::_reloadCaption()
 {
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
@@ -381,15 +275,15 @@ void OmUiMain::_reloadCtxIcon()
 
   if(manager->curContext()) {
     if(manager->curContext()->icon()) {
-      SendMessage(GetDlgItem(this->_hwnd, IDC_SB_CTICO), STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)manager->curContext()->icon());
+      this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)manager->curContext()->icon());
     } else {
-      HICON hicon = (HICON)Om_loadShellIcon(SIID_APPLICATION, true);
-      SendMessage(GetDlgItem(this->_hwnd, IDC_SB_CTICO), STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+      this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)Om_loadShellIcon(SIID_APPLICATION,true));
     }
   } else {
-    HICON hicon = (HICON)Om_loadShellIcon(SIID_APPLICATION, true);
-    SendMessage(GetDlgItem(this->_hwnd, IDC_SB_CTICO), STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hicon);
+    this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)Om_loadShellIcon(SIID_APPLICATION,true));
   }
+
+  InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
 }
 
 
@@ -438,7 +332,7 @@ void OmUiMain::_reloadCtxCb()
 {
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
-  HWND hCb = GetDlgItem(this->_hwnd, IDC_CB_CTXLS);
+  HWND hCb = this->getItem(IDC_CB_CTXLS);
 
   // save current selection
   int cb_sel = SendMessageW(hCb, CB_GETCURSEL, 0, 0);
@@ -446,7 +340,7 @@ void OmUiMain::_reloadCtxCb()
   // empty the Combo-Box
   SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
 
-  wstring label;
+  wstring item_str;
 
   // add Context(s) to Combo-Box
   if(manager->contextCount()) {
@@ -455,11 +349,11 @@ void OmUiMain::_reloadCtxCb()
 
     for(unsigned i = 0; i < manager->contextCount(); ++i) {
 
-      label = manager->context(i)->title();
-      label += L" - ";
-      label += manager->context(i)->home();
+      item_str = manager->context(i)->title();
+      item_str += L" - ";
+      item_str += manager->context(i)->home();
 
-      SendMessageW(hCb, CB_ADDSTRING, i, (LPARAM)label.c_str());
+      SendMessageW(hCb, CB_ADDSTRING, i, (LPARAM)item_str.c_str());
     }
 
     // select the the previously selected Context
@@ -483,7 +377,7 @@ void OmUiMain::_reloadCtxCb()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::_onShow()
+void OmUiMain::_onInit()
 {
   this->_createTooltip(IDC_CB_CTXLS, L"Select active context");
 
@@ -495,10 +389,9 @@ void OmUiMain::_onShow()
 
   // set window icon
   HICON hIcon = (HICON)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0);
-  SendMessage(this->_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-
+  SendMessageW(this->_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
   hIcon = (HICON)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0);
-  SendMessage(this->_hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+  SendMessageW(this->_hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
@@ -516,7 +409,22 @@ void OmUiMain::_onShow()
   }
 
   // initialize TabControl with pages dialogs
-  this->_pagesOnShow(IDC_TC_TABS1);
+  if(this->_pageDial.size() && this->_hwnd) {
+
+    TCITEMW tcPage;
+    tcPage.mask = TCIF_TEXT;
+
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+
+      tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
+      this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, (LPARAM)&tcPage );
+
+      this->_pageDial[i]->modeless(false);
+      EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
+    }
+
+    this->_pageDial[0]->show();
+  }
 
   // refresh all elements
   this->_onRefresh();
@@ -532,10 +440,35 @@ void OmUiMain::_onResize()
   this->_setItemPos(IDC_SB_CTICO, 6, 3, 19, 19);
   // Context list ComboBox
   this->_setItemPos(IDC_CB_CTXLS, 32, 6, this->width()-38 , 12);
+
   // Main Tab Control
-  this->_setItemPos(IDC_TC_TABS1, 5, 25, this->width()-9, this->height()-30);
-  // Resize page dialogs according IDC_TC_TABS1
-  this->_pagesOnResize(IDC_TC_TABS1);
+  this->_setItemPos(IDC_TC_MAIN, 5, 25, this->width()-9, this->height()-30);
+
+  // Resize page dialogs according IDC_TC_MAIN
+  if(this->_pageDial.size()) {
+
+    LONG pos[4];
+
+    // get TabControl local coordinates
+    GetWindowRect(this->getItem(IDC_TC_MAIN), (LPRECT)&pos);
+    MapWindowPoints(HWND_DESKTOP, this->_hwnd, (LPPOINT)&pos, 2);
+
+    // convert into base unit and adjust to keep inside the TabControl
+    pos[0] = MulDiv(pos[0], 4, this->unitX()) + 1;
+    pos[1] = MulDiv(pos[1], 8, this->unitY()) + 14;
+    pos[2] = MulDiv(pos[2], 4, this->unitX()) - 2;
+    pos[3] = MulDiv(pos[3], 8, this->unitY()) - 2;
+
+    // Map again in pixels
+    MapDialogRect(this->_hwnd, (LPRECT)&pos);
+    pos[2] -= pos[0]; // width = right - left
+    pos[3] -= pos[1]; // height = bottom - top
+
+    // apply this for all dialogs
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+      SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
+    }
+  }
 }
 
 
@@ -569,7 +502,9 @@ void OmUiMain::_onClose()
     // notify a close was requested
     this->_quitPending = true;
     // send an abort message to all Tab child dialogs
-    this->_pagesOnClose();
+    for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+      PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0), 0);
+    }
   } else {
     this->quit();
   }
@@ -600,8 +535,29 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
   if(uMsg == WM_NOTIFY) {
+
     // handle TabControl page selection change
-    this->_pagesOnNotify(IDC_TC_TABS1, wParam, lParam);
+    if(this->_pageDial.size()) {
+
+      // check for notify from the specified TabControl
+      if(LOWORD(wParam) == IDC_TC_MAIN) {
+        // check for a "selection changed" notify
+        if(((LPNMHDR)lParam)->code == TCN_SELCHANGE) {
+          // get TabControl current selection
+          int tc_sel = this->msgItem(IDC_TC_MAIN, TCM_GETCURSEL);
+          // change page dialog visibility according selection
+          if(tc_sel >= 0) {
+            for(int i = 0; i < static_cast<int>(this->_pageDial.size()); ++i) {
+              if(i == tc_sel) {
+                this->_pageDial[i]->show();
+              } else {
+                this->_pageDial[i]->hide();
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   if(uMsg == WM_COMMAND) {
@@ -616,14 +572,14 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->openContext(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
     }
 
-    wchar_t wcbuf[OMM_MAX_PATH];
+    wstring item_str;
 
     switch(LOWORD(wParam))
     {
 
     case IDC_CB_CTXLS:
       if(HIWORD(wParam) == CBN_SELCHANGE) {
-        this->selContext(SendMessageW(GetDlgItem(this->_hwnd, IDC_CB_CTXLS), CB_GETCURSEL, 0, 0));
+        this->selContext(this->msgItem(IDC_CB_CTXLS, CB_GETCURSEL));
       }
       break;
 
@@ -636,8 +592,8 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_FILE_OPEN:
-      if(Om_dialogOpenFile(wcbuf, this->_hwnd, L"Select file.", OMM_CTX_DEF_FILE_FILER, wcbuf)) {
-        this->openContext(wcbuf);
+      if(Om_dialogOpenFile(item_str, this->_hwnd, L"Select Context file.", OMM_CTX_DEF_FILE_FILER, item_str)) {
+        this->openContext(item_str);
       }
       break;
 

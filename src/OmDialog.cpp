@@ -309,10 +309,11 @@ void OmDialog::setItemText(unsigned id, const wstring& text)
 ///
 size_t OmDialog::getItemText(unsigned id, wstring& text) const
 {
-  int len = SendMessageW(GetDlgItem(this->_hwnd, id), WM_GETTEXTLENGTH , 0, 0);
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  int len = SendMessageW(hCtrl, WM_GETTEXTLENGTH , 0, 0);
   if(len > 0) {
     text.resize(len);
-    int n = SendMessageW(GetDlgItem(this->_hwnd, id), WM_GETTEXT , len + 1, reinterpret_cast<LPARAM>(&text[0]));
+    int n = SendMessageW(hCtrl, WM_GETTEXT , len + 1, reinterpret_cast<LPARAM>(&text[0]));
     // Under certain conditions, the DefWindowProc function returns a value that is
     // larger than the actual length of the text. This occurs with certain mixtures
     // of ANSI and Unicode, and is due to the system allowing for the possible

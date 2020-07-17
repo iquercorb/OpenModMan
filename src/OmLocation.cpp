@@ -997,9 +997,9 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
 
     // initialize the progress bar
     if(hSc) {
-      SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, ls.size()));
-      SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-      SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+      SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, ls.size()));
+      SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+      SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
     }
 
     int result;
@@ -1035,7 +1035,7 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
       }
 
       // step progress bar
-      if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+      if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
 
       #ifdef DEBUG_SLOW
       Sleep(DEBUG_SLOW); //< for debug
@@ -1151,9 +1151,9 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
 
   // initialize the progress bar
   if(hPb) {
-    SendMessage(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, uninst_list.size()));
-    SendMessage(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, uninst_list.size()));
+    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
+    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
   }
 
   for(size_t i = 0; i < uninst_list.size(); ++i) {
@@ -1187,7 +1187,7 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
     }
 
     // step progress bar
-    if(hPb) SendMessage(hPb, PBM_STEPIT, 0, 0);
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
 
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
@@ -1364,7 +1364,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
     // no other choice
     lvi.iItem = packageIndex(insta_list[i]);
     lvi.iImage = 4; // IDB_PKG_PRC
-    if(hLv) SendMessage(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
 
     if(insta_list[i]->hasSource() && !insta_list[i]->hasBackup()) {
 
@@ -1424,10 +1424,10 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
       }
     }
 
-    if(hLv) SendMessage(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
 
     // reset progress bar
-    if(hPb) SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
 
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
@@ -1435,7 +1435,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   }
 
   // reset progress bar
-  if(hPb) SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
 
   // package status may change after installation or backup restoration of
   // others, to ensure all icons are reflect the real status, we make an final
@@ -1453,7 +1453,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
       } else {
         lvi.iImage = -1; //< none
       }
-      SendMessage(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+      SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
     }
   }
 
@@ -1591,7 +1591,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
     // no other choice
     lvi.iItem = packageIndex(uninst_list[i]);
     lvi.iImage = 4;
-    if(hLv) SendMessage(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
 
     if(uninst_list[i]->hasBackup()) { // <- this should be always the case
 
@@ -1627,10 +1627,10 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
       }
     }
 
-    if(hLv) SendMessage(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
 
     // reset progress bar
-    if(hPb) SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
 
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
@@ -1638,7 +1638,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   }
 
   // reset progress bar
-  if(hPb) SendMessage(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
 
   // package status may change after installation or backup restoration of
   // others, to ensure all icons are reflect the real status, we make an final
@@ -1656,7 +1656,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
       } else {
         lvi.iImage = -1; //< none
       }
-      SendMessage(hLv ,LVM_SETITEM, 0, (LPARAM)&lvi);
+      SendMessageW(hLv ,LVM_SETITEM, 0, (LPARAM)&lvi);
     }
   }
 }

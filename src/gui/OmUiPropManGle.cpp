@@ -80,9 +80,9 @@ void OmUiPropManGle::_onInit()
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
-    SendMessage(hCb, CB_ADDSTRING, 0, (LPARAM)"Small");
-    SendMessage(hCb, CB_ADDSTRING, 1, (LPARAM)"Medium");
-    SendMessage(hCb, CB_ADDSTRING, 2, (LPARAM)"Large");
+    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Small");
+    SendMessageW(hCb, CB_ADDSTRING, 1, (LPARAM)L"Medium");
+    SendMessageW(hCb, CB_ADDSTRING, 2, (LPARAM)L"Large");
   }
 
   switch(manager->iconsSize()) {
@@ -101,24 +101,17 @@ void OmUiPropManGle::_onInit()
   vector<wstring> start_files;
   manager->getStartContexts(&enable, start_files);
 
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, enable);
+  this->enableItem(IDC_BC_BROW1, enable);
+
   HWND hLb = this->getItem(IDC_LB_STRLS);
-
-  if(enable) {
-    SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_SETCHECK, 1, 0);
-    EnableWindow(hLb, true);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW1), true);
-  } else {
-    SendMessage(GetDlgItem(this->_hwnd, IDC_BC_CHK01), BM_SETCHECK, 0, 0);
-    EnableWindow(hLb, false);
-    EnableWindow(GetDlgItem(this->_hwnd, IDC_BC_BROW1), false);
-  }
-
-  this->enableItem(IDC_BC_DEL, false);
-
+  EnableWindow(hLb, enable);
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   for(size_t i = 0; i < start_files.size(); ++i) {
     SendMessageW(hLb, LB_ADDSTRING, 0, (LPARAM)start_files[i].c_str());
   }
+
+  this->enableItem(IDC_BC_DEL, false);
 
   SetFocus(hCb);
 }
@@ -133,7 +126,7 @@ void OmUiPropManGle::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
   this->_setItemPos(IDC_CB_ISIZE, 50, 30, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(GetDlgItem(this->_hwnd, IDC_CB_ISIZE), nullptr, true);
+  InvalidateRect(this->getItem(IDC_CB_ISIZE), nullptr, true);
 
   // Startup Contexts list CheckBox & ListBox
   this->_setItemPos(IDC_BC_CHK01, 50, 59, 100, 9);

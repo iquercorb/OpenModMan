@@ -220,7 +220,6 @@ void OmUiPropCtxBat::_onResize()
   this->_setItemPos(IDC_BC_UP, this->width()-35, 49, 16, 15);
   this->_setItemPos(IDC_BC_DN, this->width()-35, 65, 16, 15);
 
-
   // Remove & Modify Buttons
   this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
   this->_setItemPos(IDC_BC_EDIT, 122, 110, 50, 14);
@@ -241,7 +240,7 @@ void OmUiPropCtxBat::_onRefresh()
 
   HWND hLb = this->getItem(IDC_LB_BATLS);
 
-  SendMessage(hLb, LB_RESETCONTENT, 0, 0);
+  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   if(context) {
     for(unsigned i = 0; i < context->batchCount(); ++i) {
       SendMessageW(hLb, LB_ADDSTRING, i, (LPARAM)context->batch(i)->title().c_str());

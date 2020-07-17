@@ -98,13 +98,9 @@ class OmUiNewBat : public OmDialog
 
     bool                      _apply();
 
-    void                      _onShow();
+    void                      _onInit();
 
     void                      _onResize();
-
-    void                      _onRefresh();
-
-    void                      _onQuit();
 
     bool                      _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

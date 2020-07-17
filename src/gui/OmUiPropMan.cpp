@@ -134,7 +134,7 @@ bool OmUiPropMan::applyChanges()
 
     HWND hLb = uiPropManGle->getItem(IDC_LB_STRLS);
 
-    int lb_cnt =  SendMessage(hLb, LB_GETCOUNT, 0, 0);
+    int lb_cnt =  SendMessageW(hLb, LB_GETCOUNT, 0, 0);
 
     wchar_t wcbuf[OMM_MAX_PATH];
 

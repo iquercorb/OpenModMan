@@ -118,7 +118,7 @@
 #define IDC_BC_APPLY                            40340
 #define IDC_BC_OK                               40341
 #define IDC_BC_CANCEL                           40342
-#define IDC_TC_TABS1                            40400
+#define IDC_TC_MAIN                             40400
 #define IDC_TC_PROP                             40401
 #define IDC_CB_CTXLS                            40410
 #define IDC_CB_LOCLS                            40411
