@@ -53,6 +53,8 @@ class OmUiPropPkgSrc : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    HBITMAP             _hPicThumb;
+
     void                _onInit();
 
     void                _onResize();

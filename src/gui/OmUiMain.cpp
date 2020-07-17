@@ -39,6 +39,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   _quitPending(false),
   _onProcess(false),
   _safeEdit(false),
+  _hDefIcon(nullptr),
   _hMenuFile(nullptr),
   _hMenuEdit(nullptr),
   _hMenuHelp(nullptr)
@@ -57,6 +58,9 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiNewBat(hins));     //< Dialog for new Batch
   this->addChild(new OmUiNewLoc(hins));     //< Dialog for adding Location
 
+  // Load the default Context icon
+  this->_hDefIcon = Om_loadShellIcon(SIID_APPLICATION, true);
+
   // set the accelerator table for the dialog
   this->setAccelerator(IDR_ACCEL);
 }
@@ -67,7 +71,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMain::~OmUiMain()
 {
-
+  DestroyIcon(this->_hDefIcon);
 }
 
 
@@ -273,16 +277,19 @@ void OmUiMain::_reloadCtxIcon()
 {
   OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
 
+  HICON hIcon;
+
   if(manager->curContext()) {
     if(manager->curContext()->icon()) {
-      this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)manager->curContext()->icon());
+      hIcon = manager->curContext()->icon();
     } else {
-      this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)Om_loadShellIcon(SIID_APPLICATION,true));
+      hIcon = this->_hDefIcon;
     }
   } else {
-    this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)Om_loadShellIcon(SIID_APPLICATION,true));
+    hIcon = this->_hDefIcon;
   }
 
+  HICON hOld = (HICON)this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)hIcon);
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
 }
 

@@ -159,6 +159,8 @@ class OmUiMain : public OmDialog
 
     bool                _safeEdit;
 
+    HICON               _hDefIcon;
+
     HMENU               _hMenuFile;
 
     HMENU               _hMenuEdit;

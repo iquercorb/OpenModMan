@@ -141,24 +141,24 @@ void OmUiPropPkgBck::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
   this->_setItemPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
   // Package Backup Location Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, 5, 30, 64, 9);
-  this->_setItemPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL02, 5, 26, 64, 9);
+  this->_setItemPos(IDC_EC_ENT02, 70, 26, this->width()-90, 13);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP01, 5, 55, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP01, 5, 47, this->width()-25, 1);
 
   // Package Backup Overlap Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 5, 70, 64, 9);
-  this->_setItemPos(IDC_EC_ENT03, 70, 70, this->width()-90, 26);
+  this->_setItemPos(IDC_SC_LBL03, 5, 58, 64, 9);
+  this->_setItemPos(IDC_EC_ENT03, 70, 58, this->width()-90, 26);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP02, 5, 105, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP02, 5, 95, this->width()-25, 1);
 
   // Package Backup Total size Label & EditControl
-  this->_setItemPos(IDC_SC_LBL04, 5, 120, 64, 9);
-  this->_setItemPos(IDC_EC_ENT04, 70, 120, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL04, 5, 106, 64, 9);
+  this->_setItemPos(IDC_EC_ENT04, 70, 106, this->width()-90, 13);
   // Package Backup Installed Files Label
-  this->_setItemPos(IDC_SC_LBL05, 5, 140, 64, 9);
+  this->_setItemPos(IDC_SC_LBL05, 5, 122, 64, 9);
   // Package Backup Installed Files EditControl
-  this->_setItemPos(IDC_EC_ENT05, 70, 140, this->width()-90, this->height()-150);
+  this->_setItemPos(IDC_EC_ENT05, 70, 122, this->width()-90, this->height()-132);
 }

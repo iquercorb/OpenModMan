@@ -436,6 +436,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     OmContext* curCtx = manager->curContext();
     OmLocation* curLoc = curCtx ? curCtx->curLocation() : nullptr;
 
+    HBITMAP hBm;
+
     bool bm_chk;
 
     int lb_sel;
@@ -533,8 +535,12 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->enableItem(IDC_BC_BROW4, true);
       } else {
         this->enableItem(IDC_BC_BROW4, false);
+        // Properly delete image
+        hBm = this->_hBlankImg;
+        hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
+        if(hBm != this->_hBlankImg) DeleteObject(hBm);
+        if(this->_hImgSource) DeleteObject(this->_hImgSource);
         this->_hImgSource = nullptr;
-        this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
       }
       break;
 
@@ -549,10 +555,11 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, item_str)) {
         if(Om_isFile(brow_str)) {
+          if(this->_hImgSource) DeleteObject(this->_hImgSource);
           this->_hImgSource = Om_loadBitmap(brow_str);
-          HBITMAP hBm = Om_getBitmapThumbnail(this->_hImgSource, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-          this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-          DeleteObject(hBm);
+          hBm = Om_getBitmapThumbnail(this->_hImgSource, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
+          if(hBm != this->_hBlankImg) DeleteObject(hBm);
         }
       }
       break;

@@ -24,9 +24,10 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins)
+OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
+  _hPicThumb(nullptr)
 {
-  //ctor
+
 }
 
 
@@ -35,7 +36,7 @@ OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropPkgSrc::~OmUiPropPkgSrc()
 {
-  //dtor
+  if(this->_hPicThumb) DeleteObject(this->_hPicThumb);
 }
 
 
@@ -105,12 +106,11 @@ void OmUiPropPkgSrc::_onInit()
 
     // Snapshot image
     if(package->picture()) {
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)package->picture());
+      this->_hPicThumb = Om_getBitmapThumbnail(package->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
     } else {
-      HBITMAP hBmp = (HBITMAP)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0);
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)hBmp);
-      DeleteObject(hBmp);
+      this->_hPicThumb = (HBITMAP)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0);
     }
+    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP,(LPARAM)this->_hPicThumb);
 
     // Package description
     this->enableItem(IDC_EC_PKTXT, true);
@@ -148,45 +148,46 @@ void OmUiPropPkgSrc::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
   this->_setItemPos(IDC_EC_ENT01, 70, 10, this->width()-90, 13);
   // Package Display Name Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, 5, 30, 64, 9);
-  this->_setItemPos(IDC_EC_ENT02, 70, 30, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL02, 5, 26, 64, 9);
+  this->_setItemPos(IDC_EC_ENT02, 70, 26, this->width()-90, 13);
   // Package Parsed Version Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 5, 50, 64, 9);
-  this->_setItemPos(IDC_EC_ENT03, 70, 50, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL03, 5, 42, 64, 9);
+  this->_setItemPos(IDC_EC_ENT03, 70, 42, this->width()-90, 13);
   // Package Computed UID Label & EditControl
-  this->_setItemPos(IDC_SC_LBL04, 5, 70, 64, 9);
-  this->_setItemPos(IDC_EC_ENT04, 70, 70, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL04, 5, 58, 64, 9);
+  this->_setItemPos(IDC_EC_ENT04, 70, 58, this->width()-90, 13);
 
     // Package Computed CRC Label & EditControl
   //this->_setItemPos(IDC_SC_LBL05, 5, 90, 64, 9);
   //this->_setItemPos(IDC_EC_ENT05, 70, 90, this->width()-90, 13);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP01, 5, 95, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP01, 5, 79, this->width()-25, 1);
 
   // Package Source Type Label & EditControl
-  this->_setItemPos(IDC_SC_LBL06, 5, 110, 64, 9);
-  this->_setItemPos(IDC_EC_ENT06, 70, 110, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL06, 5, 92, 64, 9);
+  this->_setItemPos(IDC_EC_ENT06, 70, 92, this->width()-90, 13);
   // Package Source Location Label & EditControl
-  this->_setItemPos(IDC_SC_LBL07, 5, 130, 64, 9);
-  this->_setItemPos(IDC_EC_ENT07, 70, 130, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL07, 5, 108, 64, 9);
+  this->_setItemPos(IDC_EC_ENT07, 70, 108, this->width()-90, 13);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP02, 5, 155, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP02, 5, 129, this->width()-25, 1);
 
   // Package Source Dependencies Label & EditControl
-  this->_setItemPos(IDC_SC_LBL08, 5, 170, 64, 9);
-  this->_setItemPos(IDC_EC_ENT08, 70, 170, this->width()-90, 26);
+  this->_setItemPos(IDC_SC_LBL08, 5, 140, 64, 9);
+  this->_setItemPos(IDC_EC_ENT08, 70, 140, this->width()-90, 26);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP03, 5, 205, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP03, 5, 177, this->width()-25, 1);
 
   // Package Source Snapshot Label
-  this->_setItemPos(IDC_SC_LBL09, 5, 220, 64, 9);
+  this->_setItemPos(IDC_SC_LBL09, 5, 188, 64, 9);
   // Package Source Snapshot Image
-  this->_setItemPos(IDC_SB_PKIMG, 70, 220, 42, 38);
+  this->_setItemPos(IDC_SB_PKIMG, 70, 188, 85, 78);
+
   // Package Source Description Label
-  this->_setItemPos(IDC_SC_LBL10, 5, 265, 64, 9);
+  this->_setItemPos(IDC_SC_LBL10, 5, 275, 64, 9);
   // Package Source Description EditControl
-  this->_setItemPos(IDC_EC_PKTXT, 70, 265, this->width()-90, this->height()-275);
+  this->_setItemPos(IDC_EC_PKTXT, 70, 275, this->width()-90, this->height()-285);
 }

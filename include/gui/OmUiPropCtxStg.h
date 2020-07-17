@@ -79,9 +79,11 @@ class OmUiPropCtxStg : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-
     bool                _chParam[8];
+
+    HICON               _hDefIcon;
+
+    void                _setIcon(const wstring& path);
 
     void                _onInit();
 

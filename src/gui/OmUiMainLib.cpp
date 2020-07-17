@@ -445,6 +445,9 @@ void OmUiMainLib::_onSelectPkg()
   HWND hLv = this->getItem(IDC_LV_PKGLS);
   HWND hSb = this->getItem(IDC_SB_PKIMG);
 
+  // Handle to bitmap for package picture
+  HBITMAP hBm  = this->_hBlankImg;
+
   // get count of selected item
   unsigned lv_nsl = SendMessageW(hLv, LVM_GETSELECTEDCOUNT, 0, 0);
 
@@ -474,7 +477,6 @@ void OmUiMainLib::_onSelectPkg()
 
       // set default blank picture
       ShowWindow(hSb, true);
-      SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
 
       // disable the "view detail..." sub-menu
       EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
@@ -496,19 +498,12 @@ void OmUiMainLib::_onSelectPkg()
           }
 
           if(location->package(i)->picture()) {
-            HBITMAP hBmp = Om_getBitmapThumbnail(location->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-            SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmp);
-            DeleteObject(hBmp);
-          } else {
-            SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
+            hBm = Om_getBitmapThumbnail(location->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
           }
-
-          this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 
           ShowWindow(this->getItem(IDC_SC_TITLE), true);
           ShowWindow(hSb, true);
           ShowWindow(this->getItem(IDC_EC_PKTXT), true);
-
         }
       }
     }
@@ -531,6 +526,12 @@ void OmUiMainLib::_onSelectPkg()
     // disable "Edit > Package" sub-menu
     uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
   }
+
+  // Update the selected picture
+  hBm = reinterpret_cast<HBITMAP>(SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
+  if(hBm != this->_hBlankImg) DeleteObject(hBm);
+
+  this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 }
 
 
@@ -786,7 +787,7 @@ void OmUiMainLib::_reloadIcons()
   HWND hLv = this->getItem(IDC_LV_PKGLS);
 
   // We add an image list to the list-view control, the image list will
-  // contain all icons we needs.
+  // contain all icons we need.
   HBITMAP hBm[7];
 
   switch(this->_lvIconsSize)
