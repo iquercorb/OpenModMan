@@ -56,7 +56,7 @@ long OmUiPropManGle::id() const
 void OmUiPropManGle::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -73,16 +73,16 @@ void OmUiPropManGle::_onInit()
   this->_createTooltip(IDC_BC_BROW1,  L"Select a context file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove the selected entry");
 
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // add items in combo box
   HWND hCb = this->getItem(IDC_CB_ISIZE);
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Small");
-    SendMessageW(hCb, CB_ADDSTRING, 1, (LPARAM)L"Medium");
-    SendMessageW(hCb, CB_ADDSTRING, 2, (LPARAM)L"Large");
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
+    SendMessageW(hCb, CB_ADDSTRING, 1, reinterpret_cast<LPARAM>(L"Medium"));
+    SendMessageW(hCb, CB_ADDSTRING, 2, reinterpret_cast<LPARAM>(L"Large"));
   }
 
   switch(manager->iconsSize()) {
@@ -108,7 +108,7 @@ void OmUiPropManGle::_onInit()
   EnableWindow(hLb, enable);
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   for(size_t i = 0; i < start_files.size(); ++i) {
-    SendMessageW(hLb, LB_ADDSTRING, 0, (LPARAM)start_files[i].c_str());
+    SendMessageW(hLb, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(start_files[i].c_str()));
   }
 
   this->enableItem(IDC_BC_DEL, false);
@@ -176,7 +176,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->getItemText(IDC_EC_INPT1, item_str);
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Select Context file", OMM_CTX_DEF_FILE_FILER, item_str)) {
         // add file path to startup context list
-        this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, (LPARAM)brow_str.c_str());
+        this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(brow_str.c_str()));
       }
       // user modified parameter, notify it
       this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);

@@ -56,9 +56,9 @@ long OmUiPropMan::id() const
 ///
 bool OmUiPropMan::checkChanges()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
-  OmUiPropManGle* uiPropManGle  = reinterpret_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
-  OmUiPropManPkg* uiPropManPkg  = reinterpret_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
+  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmUiPropManGle* uiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
+  OmUiPropManPkg* uiPropManPkg  = static_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
 
   bool changed = false;
 
@@ -103,9 +103,9 @@ bool OmUiPropMan::checkChanges()
 ///
 bool OmUiPropMan::applyChanges()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
-  OmUiPropManGle* uiPropManGle  = reinterpret_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
-  OmUiPropManPkg* uiPropManPkg  = reinterpret_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
+  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmUiPropManGle* uiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
+  OmUiPropManPkg* uiPropManPkg  = static_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
 
   // Parameter: Icons size for packages List-View
   if(uiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
@@ -136,18 +136,18 @@ bool OmUiPropMan::applyChanges()
 
     int lb_cnt =  SendMessageW(hLb, LB_GETCOUNT, 0, 0);
 
-    wchar_t wcbuf[OMM_MAX_PATH];
+    wstring item_str;
 
     vector<wstring> start_files;
 
     for(int i = 0; i < lb_cnt; ++i) {
-      SendMessageW(hLb, LB_GETTEXT, i, (LPARAM)wcbuf);
-      start_files.push_back(wcbuf);
+      uiPropManGle->getItemText(IDC_LB_STRLS, item_str);
+      start_files.push_back(item_str);
     }
 
-    bool chk01 = uiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+    bool bm_chk = uiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
-    manager->saveStartContexts(chk01, start_files);
+    manager->saveStartContexts(bm_chk, start_files);
 
     // Reset parameter as unmodified
     uiPropManGle->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, false);

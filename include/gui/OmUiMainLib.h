@@ -130,7 +130,15 @@ class OmUiMainLib : public OmDialog
 
     void                _onSelectBat();
 
-    HBITMAP             _hBlankImg;
+    HFONT               _hFtTitle;
+
+    HFONT               _hFtMonos;
+
+    HBITMAP             _hBmBlank;
+
+    HBITMAP             _hBmBcNew;
+
+    HBITMAP             _hBmBcDel;
 
     void                _reloadLibEc();
 
@@ -168,7 +176,7 @@ class OmUiMainLib : public OmDialog
 
     void                _monitor_stop();
 
-    void                _onShow();
+    void                _onInit();
 
     void                _onResize();
 

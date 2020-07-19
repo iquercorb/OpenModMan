@@ -72,10 +72,10 @@ long OmUiPropCtx::id() const
 ///
 bool OmUiPropCtx::checkChanges()
 {
-  OmContext* context = reinterpret_cast<OmContext*>(this->_context);
-  OmUiPropCtxStg* uiPropCtxStg  = reinterpret_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
-  OmUiPropCtxLoc* uiPropCtxLoc  = reinterpret_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
-  OmUiPropCtxBat* uiPropCtxBat  = reinterpret_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
+  OmContext* context = static_cast<OmContext*>(this->_context);
+  OmUiPropCtxStg* uiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
+  OmUiPropCtxLoc* uiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
+  OmUiPropCtxBat* uiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
   bool changed = false;
 
@@ -114,19 +114,18 @@ bool OmUiPropCtx::checkChanges()
 ///
 bool OmUiPropCtx::applyChanges()
 {
-  OmContext* context = reinterpret_cast<OmContext*>(this->_context);
-  OmUiPropCtxStg* uiPropCtxStg  = reinterpret_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
-  OmUiPropCtxLoc* uiPropCtxLoc  = reinterpret_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
-  OmUiPropCtxBat* uiPropCtxBat  = reinterpret_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
+  OmContext* context = static_cast<OmContext*>(this->_context);
+  OmUiPropCtxStg* uiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
+  OmUiPropCtxLoc* uiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
+  OmUiPropCtxBat* uiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
   wstring ctx_name, ctx_icon;
 
   // Step 1, verify everything
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     uiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
-    if(ctx_name.empty()) {
-      Om_dialogBoxErr(this->_hwnd, L"Empty Context title",
-                                   L"Please enter a title.");
+    if(Om_isValidName(ctx_name)) {
+      Om_dialogBoxErr(this->_hwnd, L"Invalid Context title", OMM_STR_ERR_VALIDNAME);
       return false;
     }
   }
@@ -138,7 +137,6 @@ bool OmUiPropCtx::applyChanges()
   // Step 2, save changes
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     context->setTitle(ctx_name);
-
     // Reset parameter as unmodified
     uiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
   }
@@ -153,7 +151,6 @@ bool OmUiPropCtx::applyChanges()
     } else {
       context->remIcon();
     }
-
     // Reset parameter as unmodified
     uiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);
   }
@@ -161,7 +158,7 @@ bool OmUiPropCtx::applyChanges()
   if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
 
     // To prevent inconsistency we unselect location in the main dialog
-    reinterpret_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+    static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
     HWND hLb = uiPropCtxLoc->getItem(IDC_LB_LOCLS);
 
@@ -177,7 +174,7 @@ bool OmUiPropCtx::applyChanges()
     context->sortLocations();
 
     // restore main dialog to normal state
-    reinterpret_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+    static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
 
     // Reset parameter as unmodified
     uiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);

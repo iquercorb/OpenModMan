@@ -27,7 +27,12 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropCtxBat::OmUiPropCtxBat(HINSTANCE hins) : OmDialog(hins)
+OmUiPropCtxBat::OmUiPropCtxBat(HINSTANCE hins) : OmDialog(hins),
+  _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcMod(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_MOD), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcUp(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcDn(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0)))
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i) {
@@ -40,7 +45,11 @@ OmUiPropCtxBat::OmUiPropCtxBat(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropCtxBat::~OmUiPropCtxBat()
 {
-
+  DeleteObject(this->_hBmBcNew);
+  DeleteObject(this->_hBmBcDel);
+  DeleteObject(this->_hBmBcMod);
+  DeleteObject(this->_hBmBcUp);
+  DeleteObject(this->_hBmBcDn);
 }
 
 
@@ -59,7 +68,7 @@ long OmUiPropCtxBat::id() const
 void OmUiPropCtxBat::setChParam(unsigned i, bool en)
 {
   this->_chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -77,17 +86,17 @@ void OmUiPropCtxBat::_batchUp()
   if(lb_sel == 0)
     return;
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wchar_t item_buf[OMM_ITM_BUFF];
   int idx;
 
   // retrieve the package List-Box label
-  SendMessageW(hLb, LB_GETTEXT, lb_sel - 1, (LPARAM)wcbuf);
+  SendMessageW(hLb, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
   idx = SendMessageW(hLb, LB_GETITEMDATA, lb_sel - 1, 0);
 
   SendMessageW(hLb, LB_DELETESTRING, lb_sel - 1, 0);
 
-  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
-  SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
+  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  SendMessageW(hLb, LB_SETITEMDATA, lb_sel, idx);
 
   this->enableItem(IDC_BC_UP, (lb_sel > 1));
   this->enableItem(IDC_BC_DN, true);
@@ -109,18 +118,18 @@ void OmUiPropCtxBat::_batchDn()
   if(lb_sel == lb_max)
     return;
 
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wchar_t item_buf[OMM_ITM_BUFF];
   int idx;
 
-  SendMessageW(hLb, LB_GETTEXT, lb_sel, (LPARAM)wcbuf);
+  SendMessageW(hLb, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
   idx = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
   SendMessageW(hLb, LB_DELETESTRING, lb_sel, 0);
 
   lb_sel++;
 
-  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, (LPARAM)wcbuf);
-  SendMessageW(hLb, LB_SETITEMDATA, lb_sel, (LPARAM)idx);
-  SendMessageW(hLb, LB_SETCURSEL , true, (LPARAM)(lb_sel));
+  SendMessageW(hLb, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  SendMessageW(hLb, LB_SETITEMDATA, lb_sel, idx);
+  SendMessageW(hLb, LB_SETCURSEL, true, lb_sel);
 
   this->enableItem(IDC_BC_UP, true);
   this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -141,15 +150,14 @@ bool OmUiPropCtxBat::_batchDel()
 
     unsigned bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
 
-    OmContext* ctx = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* ctx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
     // warns the user before committing the irreparable
-    wstring msg;
-    msg = L"Are your sure you want to delete the Batch '";
-    msg += ctx->batch(bat_id)->title();
-    msg += L"' ?";
+    wstring qry = L"Are your sure you want to delete the Batch \"";
+    qry += ctx->batch(bat_id)->title();
+    qry += L"\" ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", msg)) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
       return false;
     }
 
@@ -173,7 +181,14 @@ bool OmUiPropCtxBat::_batchDel()
 ///
 void OmUiPropCtxBat::_onInit()
 {
-  // define controls tool-tips
+  // Set buttons inner icons
+  this->msgItem(IDC_BC_ADD,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
+  this->msgItem(IDC_BC_DEL,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
+  this->msgItem(IDC_BC_EDIT,  BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
+  this->msgItem(IDC_BC_UP,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
+  this->msgItem(IDC_BC_DN,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
+
+  // Define controls tool-tips
   this->_createTooltip(IDC_LB_BATLS,  L"Context's batches");
 
   this->_createTooltip(IDC_BC_UP,     L"Move up");
@@ -183,27 +198,11 @@ void OmUiPropCtxBat::_onInit()
   this->_createTooltip(IDC_BC_ADD,    L"Create new batch");
   this->_createTooltip(IDC_BC_EDIT,   L"Batch properties");
 
-
-  HBITMAP hBm;
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_ADD, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_MOD), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_EDIT, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_UP, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_DN, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
+  // Set controls default states and parameters
   this->enableItem(IDC_BC_DEL, false);
   this->enableItem(IDC_BC_EDIT, false);
 
+  // Update values
   this->_onRefresh();
 }
 
@@ -233,7 +232,7 @@ void OmUiPropCtxBat::_onResize()
 ///
 void OmUiPropCtxBat::_onRefresh()
 {
-  OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
   if(context == nullptr)
     return;
@@ -243,7 +242,7 @@ void OmUiPropCtxBat::_onRefresh()
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
   if(context) {
     for(unsigned i = 0; i < context->batchCount(); ++i) {
-      SendMessageW(hLb, LB_ADDSTRING, i, (LPARAM)context->batch(i)->title().c_str());
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(context->batch(i)->title().c_str()));
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
@@ -267,7 +266,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
     if(context == nullptr)
       return false;
@@ -290,7 +289,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewBat* uiNewBat = reinterpret_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        OmUiNewBat* uiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
         uiNewBat->setContext(context);
         uiNewBat->open(true);
       }
@@ -301,7 +300,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(lb_sel >= 0 && lb_sel < (int)context->batchCount()) {
         // open the Location Properties dialog
         int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
-        OmUiPropBat* uiPropBat = reinterpret_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
+        OmUiPropBat* uiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
         uiPropBat->setBatch(context->batch(bat_id));
         uiPropBat->open();
       }

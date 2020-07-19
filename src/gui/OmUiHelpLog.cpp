@@ -22,9 +22,10 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiHelpLog::OmUiHelpLog(HINSTANCE hins) : OmDialog(hins)
+OmUiHelpLog::OmUiHelpLog(HINSTANCE hins) : OmDialog(hins),
+  _hFtMonos(nullptr)
 {
-
+  this->_hFtMonos = Om_createFont(14, 400, L"Consolas");
 }
 
 
@@ -33,7 +34,9 @@ OmUiHelpLog::OmUiHelpLog(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiHelpLog::~OmUiHelpLog()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  if(this->_hFtMonos) DeleteObject(this->_hFtMonos);
+
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   manager->setLogOutput(nullptr);
 }
 
@@ -53,10 +56,9 @@ long OmUiHelpLog::id() const
 ///
 void OmUiHelpLog::_onInit()
 {
-  HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  this->msgItem(IDC_EC_ENT01, WM_SETFONT, (WPARAM)hFont, 1);
+  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   manager->setLogOutput(this->getItem(IDC_EC_ENT01));
 }
 

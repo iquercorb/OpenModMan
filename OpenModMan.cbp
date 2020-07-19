@@ -23,7 +23,6 @@
 				<Option compiler="mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-pedantic" />
-					<Add option="-Wextra" />
 					<Add option="-Wall" />
 					<Add option="-m64" />
 					<Add option="-g" />
@@ -48,7 +47,6 @@
 					<Add option="-pedantic" />
 					<Add option="-Wall" />
 					<Add option="-Wextra" />
-					<Add option="-Weffc++" />
 					<Add option="-m64" />
 					<Add directory="include/Core" />
 					<Add directory="include/Gui" />
@@ -90,8 +88,8 @@
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-pedantic" />
-					<Add option="-Wextra" />
 					<Add option="-Wall" />
+					<Add option="-Wextra" />
 					<Add option="-m32" />
 					<Add directory="include/Core" />
 					<Add directory="include/Gui" />
@@ -128,6 +126,8 @@
 			<Add library="Comdlg32" />
 			<Add library="Gdiplus" />
 			<Add library="Ole32" />
+			<Add library="Shell32" />
+			<Add library="Uuid" />
 			<Add library="UxTheme" />
 			<Add directory="lib/curl" />
 		</Linker>
@@ -144,6 +144,7 @@
 		<Unit filename="include/OmLocation.h" />
 		<Unit filename="include/OmManager.h" />
 		<Unit filename="include/OmPackage.h" />
+		<Unit filename="include/OmStrings.h" />
 		<Unit filename="include/OmVersion.h" />
 		<Unit filename="include/OmXmlDoc.h" />
 		<Unit filename="include/OmZipFile.h" />

@@ -232,7 +232,13 @@ void Om_getRandBytes(uint8_t* dest, size_t size)
   }
 }
 
+
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
 static const wchar_t __hex_digit[] = L"0123456789abcdef";
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -612,11 +618,11 @@ void Om_sortStrings(vector<wstring>* strings)
 }
 
 
-/// \brief Forbidden characters
+/// \brief Illegal characters
 ///
 /// List of forbidden characters to test validity of file name or path.
 ///
-static const wchar_t __forbidden_chr[] = L"/*?\"<>|\\";
+static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
 
 
 ///
@@ -628,7 +634,7 @@ bool Om_isValidName(const wchar_t* name)
     return false;
 
   for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
-    if(wcschr(name, __forbidden_chr[i]))
+    if(wcschr(name, __illegal_chr[i]))
       return false;
 
   return true;
@@ -644,7 +650,7 @@ bool Om_isValidName(const wstring& name)
     return false;
 
   for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
-    if(name.find_first_of(__forbidden_chr[i]) != wstring::npos)
+    if(name.find_first_of(__illegal_chr[i]) != wstring::npos)
       return false;
 
   return true;
@@ -660,7 +666,7 @@ bool Om_isValidPath(const wchar_t* path)
     return false;
 
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
-    if(wcschr(path, __forbidden_chr[i]))
+    if(wcschr(path, __illegal_chr[i]))
       return false;
 
   return true;
@@ -676,7 +682,7 @@ bool Om_isValidPath(const wstring& path)
     return false;
 
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
-    if(path.find_first_of(__forbidden_chr[i]) != wstring::npos)
+    if(path.find_first_of(__illegal_chr[i]) != wstring::npos)
       return false;
 
   return true;
@@ -688,7 +694,7 @@ bool Om_isValidPath(const wstring& path)
 ///
 wstring Om_sizeString(size_t bytes, bool octet)
 {
-  wchar_t wcbuf[256];
+  wchar_t swp_buf[64];
   wchar_t unit = (octet) ? 'o' : 'B';
 
   double fbytes;
@@ -696,31 +702,22 @@ wstring Om_sizeString(size_t bytes, bool octet)
 
   if(bytes < 1024) { // 1 Ko
     if(octet) {
-      swprintf(wcbuf, 256, L"%d Octet(s)", bytes);
+      swprintf(swp_buf, 64, L"%d Octet(s)", bytes);
     } else {
-      swprintf(wcbuf, 256, L"%d Byte(s)", bytes);
+      swprintf(swp_buf, 64, L"%d Byte(s)", bytes);
     }
-    result = wcbuf;
-    return result;
-  }
-
-  if(bytes < 1048576) { // 1 Mo
+  } else if(bytes < 1048576) { // 1 Mo
     fbytes = (double)bytes / 1024.0;
-    swprintf(wcbuf, 256, L"%.1f Ki%lc", fbytes, unit);
-    result = wcbuf;
-    return result;
-  }
-
-  if(bytes < 1073741824) { // 1 Go
+    swprintf(swp_buf, 64, L"%.1f Ki%lc", fbytes, unit);
+  } else if(bytes < 1073741824) { // 1 Go
     fbytes = (double)bytes / 1048576.0;
-    swprintf(wcbuf, 256, L"%.1f Mi%lc", fbytes, unit);
-    result = wcbuf;
-    return result;
+    swprintf(swp_buf, 64, L"%.1f Mi%lc", fbytes, unit);
+  } else {
+    fbytes = (double)bytes / 1073741824.0;
+    swprintf(swp_buf, 64, L"%.1f Gi%lc", fbytes, unit);
   }
 
-  fbytes = (double)bytes / 1073741824.0;
-  swprintf(wcbuf, 256, L"%.1f Gi%lc", fbytes, unit);
-  result = wcbuf;
+  result = swp_buf;
   return result;
 }
 
@@ -810,6 +807,36 @@ bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, boo
   }
 
   return has_version;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int Om_dirDeleteRecursive(const wstring& path)
+{
+  wchar_t* path_buf = nullptr;
+
+  try {
+    path_buf = new wchar_t[path.size()+2];
+  } catch(std::bad_alloc& ba) {
+    std::cerr << "Om_dirDeleteRecursive:: bad_alloc : " << ba.what();
+    return 1;
+  }
+
+  wcscpy(path_buf, path.c_str());
+  path_buf[path.size()+1] = 0; // the buffer must end with double null character
+
+  SHFILEOPSTRUCTW fop = {};
+  fop.pFrom = path_buf;
+  fop.wFunc = FO_DELETE;
+  fop.fFlags = FOF_NO_UI;
+
+  int result = SHFileOperationW(&fop);
+
+  delete [] path_buf;
+
+  return result;
 }
 
 
@@ -1196,16 +1223,28 @@ time_t Om_itemTime(const wstring& path)
 ///
 int Om_moveToTrash(const wstring& path)
 {
-  wchar_t wcbuf[512];
-  wcscpy(wcbuf, path.c_str());
-  wcbuf[path.size()+1] = 0;
+  wchar_t* path_buf = nullptr;
+
+  try {
+    path_buf = new wchar_t[path.size()+2];
+  } catch(std::bad_alloc& ba) {
+    std::cerr << "Om_moveToTrash:: bad_alloc :" << ba.what();
+    return 1;
+  }
+
+  wcscpy(path_buf, path.c_str());
+  path_buf[path.size()+1] = 0;
 
   SHFILEOPSTRUCTW fop = {};
-  fop.pFrom = wcbuf;
+  fop.pFrom = path_buf;
   fop.wFunc = FO_DELETE;
   fop.fFlags = FOF_NO_UI|FOF_ALLOWUNDO;
 
-  return SHFileOperationW(&fop);
+  int result = SHFileOperationW(&fop);
+
+  delete [] path_buf;
+
+  return result;
 }
 
 
@@ -1377,21 +1416,19 @@ INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM 
 ///
 bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive)
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
-
-  BROWSEINFOW br = {};
-  br.hwndOwner = hWnd;
-  br.lpszTitle = title;
-  br.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS;
+  BROWSEINFOW bI = {};
+  bI.hwndOwner = hWnd;
+  bI.lpszTitle = title;
+  bI.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS|BIF_VALIDATE;
 
   if(captive) {
     // this is the standard easy way to use SHBrowseForFolderW, this will
     // set the "start" path as the root of browsing, so the user cannot go up
     // to parent folder
     if(start.size()) {
-      LPITEMIDLIST pIdl = nullptr;
+      PIDLIST_ABSOLUTE pIdl = nullptr;
       SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      br.pidlRoot = pIdl;
+      bI.pidlRoot = pIdl;
     }
   } else {
       // this is the advanced way to use SHBrowseForFolderW, here we use a
@@ -1399,22 +1436,30 @@ bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const 
       // path object will be passed as lParam to the callback with the
       // BFFM_INITIALIZED message.
     if(start.size()) {
-      LPITEMIDLIST pIdl = nullptr;
+      PIDLIST_ABSOLUTE pIdl = nullptr;
       SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      br.lpfn = __dialogBrowseDir_Proc;
-      br.lParam = (LPARAM)pIdl;
+      bI.lpfn = __dialogBrowseDir_Proc;
+      bI.lParam = reinterpret_cast<LPARAM>(pIdl);
     }
   }
+
+  bool suceess = false;
 
   LPITEMIDLIST pIdl;
-  if((pIdl = SHBrowseForFolderW(&br)) != nullptr) {
-    if(SHGetPathFromIDListW(pIdl, wcbuf)) {
-      result = wcbuf;
-      return true;
+  if((pIdl = SHBrowseForFolderW(&bI)) != nullptr) {
+
+    wchar_t psz_path[OMM_MAX_PATH];
+
+    psz_path[0] = 0;
+    if(SHGetPathFromIDListEx(pIdl, psz_path, OMM_MAX_PATH, GPFIDL_DEFAULT)) {
+      result = psz_path;
+      suceess = true;
     }
   }
 
-  return false;
+  CoTaskMemFree(pIdl);
+
+  return suceess;
 }
 
 
@@ -1423,7 +1468,7 @@ bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const 
 ///
 bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wchar_t str_file[OMM_MAX_PATH];
 
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -1431,7 +1476,7 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
   ofn.hwndOwner = hWnd;
   ofn.lpstrFilter = filter; //L"Mod archive (*.zip)\0*.ZIP;\0";
 
-  ofn.lpstrFile = wcbuf;
+  ofn.lpstrFile = str_file;
   ofn.lpstrFile[0] = '\0';
   ofn.nMaxFile = OMM_MAX_PATH;
 
@@ -1441,7 +1486,7 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
 
   if(GetOpenFileNameW(&ofn)) {
-    result = wcbuf;
+    result = str_file;
     return true;
   }
 
@@ -1454,8 +1499,8 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 ///
 bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"%ls", result.c_str());
+  wchar_t str_file[OMM_MAX_PATH];
+  swprintf(str_file, OMM_MAX_PATH, L"%ls", result.c_str());
 
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -1463,7 +1508,7 @@ bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const w
   ofn.hwndOwner = hWnd;
   ofn.lpstrFilter = filter;
 
-  ofn.lpstrFile = wcbuf;
+  ofn.lpstrFile = str_file;
   ofn.nMaxFile = OMM_MAX_PATH;
 
   ofn.lpstrInitialDir = start.c_str();
@@ -1472,7 +1517,7 @@ bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const w
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
 
   if(GetSaveFileNameW(&ofn)) {
-    result = wcbuf;
+    result = str_file;
     return true;
   }
 
@@ -1909,75 +1954,58 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name)
+{
+  return CreateFontW( pt, 0, 0, 0, weight,
+                      false, false, false,
+                      ANSI_CHARSET,
+                      OUT_TT_PRECIS, 0, CLEARTYPE_QUALITY, 0,
+                      name);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 wstring Om_getErrorStr(int code) {
 
-  wchar_t wcbuf[256];
-  swprintf(wcbuf, 256, L"%x", code);
+  wchar_t num_buf[32];
+  swprintf(num_buf, 32, L"%x", code);
 
-  wstring ret = L"(0x"; ret += wcbuf; ret += L") ";
+  wstring ret = L"(0x"; ret.append(num_buf); ret.append(L") ");
 
   switch(code)
   {
-  case ERROR_FILE_NOT_FOUND:
-    ret += L"FILE_NOT_FOUND"; break;
-  case ERROR_PATH_NOT_FOUND:
-    ret += L"PATH_NOT_FOUND"; break;
-  case ERROR_TOO_MANY_OPEN_FILES:
-    ret += L"TOO_MANY_OPEN_FILES"; break;
-  case ERROR_ACCESS_DENIED:
-    ret += L"ACCESS_DENIED"; break;
-  case ERROR_ARENA_TRASHED:
-    ret += L"ARENA_TRASHED"; break;
-  case ERROR_NOT_ENOUGH_MEMORY:
-    ret += L"NOT_ENOUGH_MEMORY"; break;
-  case ERROR_INVALID_BLOCK:
-    ret += L"INVALID_BLOCK"; break;
-  case ERROR_INVALID_ACCESS:
-    ret += L"INVALID_ACCESS"; break;
-  case ERROR_INVALID_DATA:
-    ret += L"INVALID_DATA"; break;
-  case ERROR_OUTOFMEMORY:
-    ret += L"OUTOFMEMORY"; break;
-  case ERROR_INVALID_DRIVE:
-    ret += L"INVALID_DRIVE"; break;
-  case ERROR_CURRENT_DIRECTORY:
-    ret += L"CURRENT_DIRECTORY"; break;
-  case ERROR_NOT_SAME_DEVICE:
-    ret += L"NOT_SAME_DEVICE"; break;
-  case ERROR_WRITE_PROTECT:
-    ret += L"WRITE_PROTECT"; break;
-  case ERROR_CRC:
-    ret += L"ERROR_CRC"; break;
-  case ERROR_SEEK:
-    ret += L"ERROR_SEEK"; break;
-  case ERROR_WRITE_FAULT:
-    ret += L"WRITE_FAULT"; break;
-  case ERROR_READ_FAULT:
-    ret += L"READ_FAULT"; break;
-  case ERROR_SHARING_VIOLATION:
-    ret += L"SHARING_VIOLATION"; break;
-  case ERROR_LOCK_VIOLATION:
-    ret += L"LOCK_VIOLATION"; break;
-  case ERROR_WRONG_DISK:
-    ret += L"WRONG_DISK"; break;
-  case ERROR_HANDLE_DISK_FULL:
-    ret += L"HANDLE_DISK_FULL"; break;
-  case ERROR_FILE_EXISTS:
-    ret += L"FILE_EXISTS"; break;
-  case ERROR_DRIVE_LOCKED:
-    ret += L"DRIVE_LOCKED"; break;
-  case ERROR_OPEN_FAILED:
-    ret += L"OPEN_FAILED"; break;
-  case ERROR_BUFFER_OVERFLOW:
-    ret += L"BUFFER_OVERFLOW"; break;
-  case ERROR_DISK_FULL:
-    ret += L"DISK_FULL"; break;
-  case ERROR_INVALID_NAME:
-    ret += L"INVALID_NAME"; break;
-  case ERROR_DIR_NOT_EMPTY:
-    ret += L"DIR_NOT_EMPTY"; break;
-  case ERROR_ALREADY_EXISTS:
-    ret += L"ALREADY_EXISTS"; break;
+  case ERROR_FILE_NOT_FOUND: ret.append(L"FILE_NOT_FOUND"); break;
+  case ERROR_PATH_NOT_FOUND: ret.append(L"PATH_NOT_FOUND"); break;
+  case ERROR_TOO_MANY_OPEN_FILES: ret.append(L"TOO_MANY_OPEN_FILES"); break;
+  case ERROR_ACCESS_DENIED: ret.append(L"ACCESS_DENIED"); break;
+  case ERROR_ARENA_TRASHED: ret.append(L"ARENA_TRASHED"); break;
+  case ERROR_NOT_ENOUGH_MEMORY: ret.append(L"NOT_ENOUGH_MEMORY"); break;
+  case ERROR_INVALID_BLOCK: ret.append(L"INVALID_BLOCK"); break;
+  case ERROR_INVALID_ACCESS: ret.append(L"INVALID_ACCESS"); break;
+  case ERROR_INVALID_DATA: ret.append(L"INVALID_DATA"); break;
+  case ERROR_OUTOFMEMORY: ret.append(L"OUTOFMEMORY"); break;
+  case ERROR_INVALID_DRIVE: ret.append(L"INVALID_DRIVE"); break;
+  case ERROR_CURRENT_DIRECTORY: ret.append(L"CURRENT_DIRECTORY"); break;
+  case ERROR_NOT_SAME_DEVICE: ret.append(L"NOT_SAME_DEVICE"); break;
+  case ERROR_WRITE_PROTECT: ret.append(L"WRITE_PROTECT"); break;
+  case ERROR_CRC: ret.append(L"ERROR_CRC"); break;
+  case ERROR_SEEK: ret.append(L"ERROR_SEEK"); break;
+  case ERROR_WRITE_FAULT: ret.append(L"WRITE_FAULT"); break;
+  case ERROR_READ_FAULT: ret.append(L"READ_FAULT"); break;
+  case ERROR_SHARING_VIOLATION: ret.append(L"SHARING_VIOLATION"); break;
+  case ERROR_LOCK_VIOLATION: ret.append(L"LOCK_VIOLATION"); break;
+  case ERROR_WRONG_DISK: ret.append(L"WRONG_DISK"); break;
+  case ERROR_HANDLE_DISK_FULL: ret.append(L"HANDLE_DISK_FULL"); break;
+  case ERROR_FILE_EXISTS: ret.append(L"FILE_EXISTS"); break;
+  case ERROR_DRIVE_LOCKED: ret.append(L"DRIVE_LOCKED"); break;
+  case ERROR_OPEN_FAILED: ret.append(L"OPEN_FAILED"); break;
+  case ERROR_BUFFER_OVERFLOW: ret.append(L"BUFFER_OVERFLOW"); break;
+  case ERROR_DISK_FULL: ret.append(L"DISK_FULL"); break;
+  case ERROR_INVALID_NAME: ret.append(L"INVALID_NAME"); break;
+  case ERROR_DIR_NOT_EMPTY: ret.append(L"DIR_NOT_EMPTY"); break;
+  case ERROR_ALREADY_EXISTS: ret.append(L"ALREADY_EXISTS"); break;
   }
 
   return ret;

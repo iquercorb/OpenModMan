@@ -88,6 +88,7 @@
 #define IDC_SC_SEP01                            40191
 #define IDC_SC_SEP02                            40192
 #define IDC_SC_SEP03                            40193
+#define IDC_SC_HEAD                             40195
 #define IDC_EC_INPT1                            40200
 #define IDC_EC_INPT2                            40201
 #define IDC_EC_INPT3                            40202

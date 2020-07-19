@@ -63,6 +63,8 @@ class OmDialogWiz : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    HBITMAP             _hBmSplash;
+
     void                _onInit();
 
     void                _onShow();

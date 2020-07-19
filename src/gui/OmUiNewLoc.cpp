@@ -61,47 +61,22 @@ bool OmUiNewLoc::_apply()
   wstring loc_name, loc_dst, loc_lib, loc_bck;
 
   this->getItemText(IDC_EC_INPT1, loc_name);
-  if(!loc_name.empty()) {
-    if(!Om_isValidName(loc_name)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                    L"The Location title contain "
-                                    L"illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                  L"Please choose a Location title.");
+  if(!Om_isValidName(loc_name)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
     return false;
   }
+
   this->getItemText(IDC_EC_INPT2, loc_dst);
-  if(!loc_dst.empty()) {
-    if(!Om_isDir(loc_dst)) {
-        Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
-                                      L"Please select an existing folder for "
-                                      L"Location Destination.");
-      return false;
-    }
-  } else {
-      Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination path",
-                                    L"Please enter a valid path for Location "
-                                    L"Destination folder.");
+  if(!Om_isDir(loc_dst)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", OMM_STR_ERR_ISDIR(loc_dst));
     return false;
   }
 
   cust_lib = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
   if(cust_lib) {
     this->getItemText(IDC_EC_INPT3, loc_lib);
-    if(!loc_lib.empty()) {
-      if(!Om_isDir(loc_lib)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Library");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Library folder");
+    if(!Om_isDir(loc_lib)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", OMM_STR_ERR_ISDIR(loc_lib));
       return false;
     }
   }
@@ -109,17 +84,8 @@ bool OmUiNewLoc::_apply()
   cust_bck = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
   if(cust_bck) {
     this->getItemText(IDC_EC_INPT4, loc_bck);
-    if(!loc_bck.empty()) {
-      if(!Om_isDir(loc_bck)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Backup");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Backup folder");
+    if(!Om_isDir(loc_bck)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", OMM_STR_ERR_ISDIR(loc_bck));
       return false;
     }
   }
@@ -128,7 +94,8 @@ bool OmUiNewLoc::_apply()
 
   // create new Location in Context
   if(!context->makeLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
-    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
+    Om_dialogBoxErr(this->_hwnd,  L"Location creation failed",
+                                  context->lastError());
   }
 
   // refresh all tree from the main dialog
@@ -169,20 +136,25 @@ void OmUiNewLoc::_onInit()
   bool allow = true;
 
   this->getItemText(IDC_EC_INPT1, item_str);
-  if(Om_isValidName(item_str)) {
+  if(!item_str.empty()) {
+
     this->getItemText(IDC_EC_INPT2, item_str);
-    if(Om_isValidPath(item_str)) {
+    if(!item_str.empty()) {
+
       if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INPT3, item_str);
         if(item_str.empty()) allow = false;
       }
+
       if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INPT4, item_str);
         if(item_str.empty()) allow = false;
       }
+
     } else {
       allow = false;
     }
+
   } else {
     allow = false;
   }
@@ -332,23 +304,29 @@ bool OmUiNewLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     // enable or disable "OK" button according values
     if(has_changed) {
+
       bool allow = true;
 
       this->getItemText(IDC_EC_INPT1, item_str);
-      if(Om_isValidName(item_str)) {
+      if(!item_str.empty()) {
+
         this->getItemText(IDC_EC_INPT2, item_str);
-        if(Om_isValidPath(item_str)) {
+        if(!item_str.empty()) {
+
           if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INPT3, item_str);
             if(item_str.empty()) allow = false;
           }
+
           if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INPT4, item_str);
             if(item_str.empty()) allow = false;
           }
+
         } else {
           allow = false;
         }
+
       } else {
         allow = false;
       }

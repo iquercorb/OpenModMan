@@ -84,6 +84,10 @@ class OmUiNewBat : public OmDialog
 
     vector<vector<int>>       _incLs;
 
+    HBITMAP                   _hBmBcUp;
+
+    HBITMAP                   _hBmBcDn;
+
     void                      _rebuildPkgLb();
 
     void                      _qucikFromCur();

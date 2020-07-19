@@ -59,7 +59,7 @@ long OmUiPropBatStg::id() const
 void OmUiPropBatStg::setChParam(unsigned i, bool en)
 {
   this->_chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -91,7 +91,7 @@ void OmUiPropBatStg::_onResize()
 ///
 void OmUiPropBatStg::_onRefresh()
 {
-  OmBatch* batch = reinterpret_cast<OmUiPropBat*>(this->_parent)->batch();
+  OmBatch* batch = static_cast<OmUiPropBat*>(this->_parent)->batch();
 
   if(batch == nullptr)
     return;
@@ -107,7 +107,7 @@ bool OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmBatch* batch = reinterpret_cast<OmUiPropBat*>(this->_parent)->batch();
+    OmBatch* batch = static_cast<OmUiPropBat*>(this->_parent)->batch();
 
     if(batch == nullptr)
       return false;

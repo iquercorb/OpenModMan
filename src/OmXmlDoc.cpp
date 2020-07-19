@@ -35,7 +35,7 @@ OmXmlNode::OmXmlNode() :
 OmXmlNode::OmXmlNode(const OmXmlNode& other) :
   _data(new pugi::xml_node)
 {
-  *reinterpret_cast<pugi::xml_node*>(_data) = *reinterpret_cast<pugi::xml_node*>(other._data);
+  *static_cast<pugi::xml_node*>(_data) = *static_cast<pugi::xml_node*>(other._data);
 }
 
 
@@ -44,7 +44,7 @@ OmXmlNode::OmXmlNode(const OmXmlNode& other) :
 ///
 OmXmlNode::~OmXmlNode()
 {
-  delete reinterpret_cast<pugi::xml_node*>(_data);
+  delete static_cast<pugi::xml_node*>(_data);
 }
 
 
@@ -53,7 +53,7 @@ OmXmlNode::~OmXmlNode()
 ///
 OmXmlNode& OmXmlNode::operator=(const OmXmlNode& other)
 {
-  *reinterpret_cast<pugi::xml_node*>(_data) = *reinterpret_cast<pugi::xml_node*>(other._data);
+  *static_cast<pugi::xml_node*>(_data) = *static_cast<pugi::xml_node*>(other._data);
   return *this;
 }
 
@@ -63,7 +63,7 @@ OmXmlNode& OmXmlNode::operator=(const OmXmlNode& other)
 ///
 bool OmXmlNode::empty() const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->empty();
+  return static_cast<pugi::xml_node*>(_data)->empty();
 }
 
 
@@ -73,7 +73,7 @@ bool OmXmlNode::empty() const
 OmXmlNode OmXmlNode::parent() const
 {
   OmXmlNode parent;
-  *reinterpret_cast<pugi::xml_node*>(parent._data) = reinterpret_cast<pugi::xml_node*>(_data)->parent();
+  *static_cast<pugi::xml_node*>(parent._data) = static_cast<pugi::xml_node*>(_data)->parent();
   return parent;
 }
 
@@ -83,7 +83,7 @@ OmXmlNode OmXmlNode::parent() const
 ///
 const wchar_t* OmXmlNode::name() const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->name();
+  return static_cast<pugi::xml_node*>(_data)->name();
 }
 
 
@@ -92,7 +92,7 @@ const wchar_t* OmXmlNode::name() const
 ///
 const wchar_t* OmXmlNode::content() const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->child_value();
+  return static_cast<pugi::xml_node*>(_data)->child_value();
 }
 
 
@@ -101,7 +101,7 @@ const wchar_t* OmXmlNode::content() const
 ///
 bool OmXmlNode::hasAttr(const wstring& attr) const
 {
-  return !(reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).empty());
+  return !(static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).empty());
 }
 
 
@@ -110,7 +110,7 @@ bool OmXmlNode::hasAttr(const wstring& attr) const
 ///
 const wchar_t* OmXmlNode::attrAsString(const wstring& attr) const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).value();
+  return static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).value();
 }
 
 
@@ -119,7 +119,7 @@ const wchar_t* OmXmlNode::attrAsString(const wstring& attr) const
 ///
 int OmXmlNode::attrAsInt(const wstring& attr) const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_int();
+  return static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_int();
 }
 
 
@@ -128,7 +128,7 @@ int OmXmlNode::attrAsInt(const wstring& attr) const
 ///
 float OmXmlNode::attrAsFloat(const wstring& attr) const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_float();
+  return static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_float();
 }
 
 
@@ -137,7 +137,7 @@ float OmXmlNode::attrAsFloat(const wstring& attr) const
 ///
 double OmXmlNode::attrAsDouble(const wstring& attr) const
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_double();
+  return static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_double();
 }
 
 
@@ -146,7 +146,7 @@ double OmXmlNode::attrAsDouble(const wstring& attr) const
 ///
 void OmXmlNode::setName(const wstring& value)
 {
-  reinterpret_cast<pugi::xml_node*>(_data)->set_name(value.c_str());
+  static_cast<pugi::xml_node*>(_data)->set_name(value.c_str());
 }
 
 
@@ -155,10 +155,10 @@ void OmXmlNode::setName(const wstring& value)
 ///
 void OmXmlNode::setContent(const wstring& value)
 {
-  if(reinterpret_cast<pugi::xml_node*>(_data)->first_child().type() == pugi::node_pcdata) {
-    reinterpret_cast<pugi::xml_node*>(_data)->first_child().set_value(value.c_str());
+  if(static_cast<pugi::xml_node*>(_data)->first_child().type() == pugi::node_pcdata) {
+    static_cast<pugi::xml_node*>(_data)->first_child().set_value(value.c_str());
   } else {
-    reinterpret_cast<pugi::xml_node*>(_data)->append_child(pugi::node_pcdata).set_value(value.c_str());
+    static_cast<pugi::xml_node*>(_data)->append_child(pugi::node_pcdata).set_value(value.c_str());
   }
 }
 
@@ -168,9 +168,9 @@ void OmXmlNode::setContent(const wstring& value)
 ///
 void OmXmlNode::setAttr(const wstring& attr, const wstring& value)
 {
-  pugi::xml_attribute attribute = reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
   if(attribute.empty()) {
-    attribute = reinterpret_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
   attribute.set_value(value.c_str());
 }
@@ -181,9 +181,9 @@ void OmXmlNode::setAttr(const wstring& attr, const wstring& value)
 ///
 void OmXmlNode::setAttr(const wstring& attr, int value)
 {
-  pugi::xml_attribute attribute = reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
   if(attribute.empty()) {
-    attribute = reinterpret_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
   attribute.set_value(value);
 }
@@ -194,9 +194,9 @@ void OmXmlNode::setAttr(const wstring& attr, int value)
 ///
 void OmXmlNode::setAttr(const wstring& attr, float value)
 {
-  pugi::xml_attribute attribute = reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
   if(attribute.empty()) {
-    attribute = reinterpret_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
   attribute.set_value(value);
 }
@@ -207,9 +207,9 @@ void OmXmlNode::setAttr(const wstring& attr, float value)
 ///
 void OmXmlNode::setAttr(const wstring& attr, double value)
 {
-  pugi::xml_attribute attribute = reinterpret_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
   if(attribute.empty()) {
-    attribute = reinterpret_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
   attribute.set_value(value);
 }
@@ -221,7 +221,7 @@ void OmXmlNode::setAttr(const wstring& attr, double value)
 unsigned OmXmlNode::childCount() const
 {
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     ++n;
   }
   return n;
@@ -235,9 +235,9 @@ OmXmlNode OmXmlNode::child(unsigned i) const
 {
   OmXmlNode result;
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(n == i) {
-      *reinterpret_cast<pugi::xml_node*>(result._data) = child;
+      *static_cast<pugi::xml_node*>(result._data) = child;
       return result;
     }
     ++n;
@@ -253,9 +253,9 @@ vector<OmXmlNode> OmXmlNode::children() const
 {
   vector<OmXmlNode> result;
 
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     OmXmlNode node;
-    *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+    *static_cast<pugi::xml_node*>(node._data) = child;
     result.push_back(node);
   }
   return result;
@@ -268,9 +268,9 @@ vector<OmXmlNode> OmXmlNode::children() const
 void OmXmlNode::children(vector<OmXmlNode>& result) const
 {
   result.clear();
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     OmXmlNode node;
-    *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+    *static_cast<pugi::xml_node*>(node._data) = child;
     result.push_back(node);
   }
 }
@@ -281,7 +281,7 @@ void OmXmlNode::children(vector<OmXmlNode>& result) const
 ///
 bool OmXmlNode::hasChild(const wstring& name) const
 {
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       return true;
     }
@@ -296,7 +296,7 @@ bool OmXmlNode::hasChild(const wstring& name) const
 unsigned OmXmlNode::childCount(const wstring& name) const
 {
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       ++n;
     }
@@ -313,10 +313,10 @@ OmXmlNode OmXmlNode::child(const wstring& name, unsigned i) const
   OmXmlNode result;
 
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       if(n == i) {
-        *reinterpret_cast<pugi::xml_node*>(result._data) = child;
+        *static_cast<pugi::xml_node*>(result._data) = child;
         return result;
       }
       ++n;
@@ -334,10 +334,10 @@ vector<OmXmlNode> OmXmlNode::children(const wstring& name) const
 {
   vector<OmXmlNode> result;
 
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       OmXmlNode node;
-      *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+      *static_cast<pugi::xml_node*>(node._data) = child;
       result.push_back(node);
     }
   }
@@ -351,10 +351,10 @@ vector<OmXmlNode> OmXmlNode::children(const wstring& name) const
 void OmXmlNode::children(vector<OmXmlNode>& result, const wstring& name) const
 {
   result.clear();
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_node*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       OmXmlNode node;
-      *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+      *static_cast<pugi::xml_node*>(node._data) = child;
       result.push_back(node);
     }
   }
@@ -367,7 +367,7 @@ void OmXmlNode::children(vector<OmXmlNode>& result, const wstring& name) const
 OmXmlNode OmXmlNode::addChild(const wstring& name)
 {
   OmXmlNode result;
-  *reinterpret_cast<pugi::xml_node*>(result._data) = reinterpret_cast<pugi::xml_node*>(_data)->append_child(name.c_str());
+  *static_cast<pugi::xml_node*>(result._data) = static_cast<pugi::xml_node*>(_data)->append_child(name.c_str());
   return result;
 }
 
@@ -377,7 +377,7 @@ OmXmlNode OmXmlNode::addChild(const wstring& name)
 ///
 bool OmXmlNode::remChild(const OmXmlNode& child)
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->remove_child(*reinterpret_cast<pugi::xml_node*>(child._data));
+  return static_cast<pugi::xml_node*>(_data)->remove_child(*static_cast<pugi::xml_node*>(child._data));
 }
 
 
@@ -386,7 +386,7 @@ bool OmXmlNode::remChild(const OmXmlNode& child)
 ///
 bool OmXmlNode::remChild(const wstring& name)
 {
-  return reinterpret_cast<pugi::xml_node*>(_data)->remove_child(name.c_str());
+  return static_cast<pugi::xml_node*>(_data)->remove_child(name.c_str());
 }
 
 
@@ -395,7 +395,7 @@ bool OmXmlNode::remChild(const wstring& name)
 ///
 void OmXmlNode::clear()
 {
-  delete reinterpret_cast<pugi::xml_node*>(_data);
+  delete static_cast<pugi::xml_node*>(_data);
   _data = new pugi::xml_node;
 }
 
@@ -411,7 +411,7 @@ typedef struct _Xml_wstring_writer: pugi::xml_writer
 {
   string result;
   virtual void write(const void* data, size_t size) {
-    result.append(reinterpret_cast<const char*>(data), size);
+    result.append(static_cast<const char*>(data), size);
   }
 } _Xml_wstring_writer;
 
@@ -436,7 +436,7 @@ OmXmlDoc::OmXmlDoc(const OmXmlDoc& other) :
   _ercode(0),
   _erpoff(0)
 {
-  reinterpret_cast<pugi::xml_document*>(_data)->reset(*reinterpret_cast<pugi::xml_document*>(other._data));
+  static_cast<pugi::xml_document*>(_data)->reset(*static_cast<pugi::xml_document*>(other._data));
 }
 
 
@@ -445,7 +445,7 @@ OmXmlDoc::OmXmlDoc(const OmXmlDoc& other) :
 ///
 OmXmlDoc::~OmXmlDoc()
 {
-  delete reinterpret_cast<pugi::xml_document*>(_data);
+  delete static_cast<pugi::xml_document*>(_data);
 }
 
 
@@ -454,7 +454,7 @@ OmXmlDoc::~OmXmlDoc()
 ///
 OmXmlDoc& OmXmlDoc::operator=(const OmXmlDoc& other)
 {
-  reinterpret_cast<pugi::xml_document*>(_data)->reset(*reinterpret_cast<pugi::xml_document*>(other._data));
+  static_cast<pugi::xml_document*>(_data)->reset(*static_cast<pugi::xml_document*>(other._data));
   _ercode = 0;
   _erpoff = 0;
 
@@ -468,7 +468,7 @@ OmXmlDoc& OmXmlDoc::operator=(const OmXmlDoc& other)
 bool OmXmlDoc::parse(const wstring& xml)
 {
   pugi::xml_parse_result result;
-  result = reinterpret_cast<pugi::xml_document*>(_data)->load_string(xml.c_str(), pugi::parse_default);
+  result = static_cast<pugi::xml_document*>(_data)->load_string(xml.c_str(), pugi::parse_default);
   if(!result) {
     _ercode = result.status;
     _erpoff = result.offset;
@@ -484,7 +484,7 @@ bool OmXmlDoc::parse(const wstring& xml)
 bool OmXmlDoc::load(const wstring& src)
 {
   pugi::xml_parse_result result;
-  result = reinterpret_cast<pugi::xml_document*>(_data)->load_file(src.c_str(), pugi::parse_default, pugi::encoding_utf8);
+  result = static_cast<pugi::xml_document*>(_data)->load_file(src.c_str(), pugi::parse_default, pugi::encoding_utf8);
   if(!result) {
     _ercode = result.status;
     _erpoff = result.offset;
@@ -499,7 +499,7 @@ bool OmXmlDoc::load(const wstring& src)
 ///
 bool OmXmlDoc::save(const wstring& dst)
 {
-  if(!reinterpret_cast<pugi::xml_document*>(_data)->save_file(dst.c_str(), L"\t", pugi::format_default, pugi::encoding_utf8)) {
+  if(!static_cast<pugi::xml_document*>(_data)->save_file(dst.c_str(), L"\t", pugi::format_default, pugi::encoding_utf8)) {
     _ercode = 17;
     return false;
   }
@@ -513,7 +513,7 @@ bool OmXmlDoc::save(const wstring& dst)
 string OmXmlDoc::data()
 {
   _Xml_wstring_writer writer;
-  reinterpret_cast<pugi::xml_document*>(_data)->print(writer);
+  static_cast<pugi::xml_document*>(_data)->print(writer);
   return writer.result;
 }
 
@@ -523,7 +523,7 @@ string OmXmlDoc::data()
 ///
 bool OmXmlDoc::empty() const
 {
-  return reinterpret_cast<pugi::xml_document*>(_data)->empty();
+  return static_cast<pugi::xml_document*>(_data)->empty();
 }
 
 
@@ -533,7 +533,7 @@ bool OmXmlDoc::empty() const
 OmXmlNode OmXmlDoc::root() const
 {
   OmXmlNode node;
-  *reinterpret_cast<pugi::xml_node*>(node._data) = reinterpret_cast<pugi::xml_document*>(_data)->root();
+  *static_cast<pugi::xml_node*>(node._data) = static_cast<pugi::xml_document*>(_data)->root();
   return node;
 }
 
@@ -544,7 +544,7 @@ OmXmlNode OmXmlDoc::root() const
 unsigned OmXmlDoc::childCount() const
 {
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling())
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling())
     ++n;
   return n;
 }
@@ -557,9 +557,9 @@ OmXmlNode OmXmlDoc::child(unsigned i) const
 {
   OmXmlNode result;
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(n == i) {
-      *reinterpret_cast<pugi::xml_node*>(result._data) = child;
+      *static_cast<pugi::xml_node*>(result._data) = child;
       return result;
     }
     ++n;
@@ -575,9 +575,9 @@ vector<OmXmlNode> OmXmlDoc::children() const
 {
   vector<OmXmlNode> result;
 
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     OmXmlNode node;
-    *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+    *static_cast<pugi::xml_node*>(node._data) = child;
     result.push_back(node);
   }
   return result;
@@ -590,9 +590,9 @@ vector<OmXmlNode> OmXmlDoc::children() const
 void OmXmlDoc::children(vector<OmXmlNode>& result) const
 {
   result.clear();
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     OmXmlNode node;
-    *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+    *static_cast<pugi::xml_node*>(node._data) = child;
     result.push_back(node);
   }
 }
@@ -603,7 +603,7 @@ void OmXmlDoc::children(vector<OmXmlNode>& result) const
 ///
 bool OmXmlDoc::hasChild(const wstring& name) const
 {
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       return true;
     }
@@ -618,7 +618,7 @@ bool OmXmlDoc::hasChild(const wstring& name) const
 unsigned OmXmlDoc::childCount(const wstring& name) const
 {
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       ++n;
     }
@@ -635,10 +635,10 @@ OmXmlNode OmXmlDoc::child(const wstring& name, unsigned i) const
   OmXmlNode result;
 
   unsigned n = 0;
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       if(n == i) {
-        *reinterpret_cast<pugi::xml_node*>(result._data) = child;
+        *static_cast<pugi::xml_node*>(result._data) = child;
         return result;
       }
       ++n;
@@ -656,10 +656,10 @@ vector<OmXmlNode> OmXmlDoc::children(const wstring& name) const
 {
   vector<OmXmlNode> result;
 
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       OmXmlNode node;
-      *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+      *static_cast<pugi::xml_node*>(node._data) = child;
       result.push_back(node);
     }
   }
@@ -673,10 +673,10 @@ vector<OmXmlNode> OmXmlDoc::children(const wstring& name) const
 void OmXmlDoc::children(vector<OmXmlNode>& result, const wstring& name) const
 {
   result.clear();
-  for(pugi::xml_node child = reinterpret_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
     if(!wcscmp(name.c_str(), child.name())) {
       OmXmlNode node;
-      *reinterpret_cast<pugi::xml_node*>(node._data) = child;
+      *static_cast<pugi::xml_node*>(node._data) = child;
       result.push_back(node);
     }
   }
@@ -689,7 +689,7 @@ void OmXmlDoc::children(vector<OmXmlNode>& result, const wstring& name) const
 OmXmlNode OmXmlDoc::addChild(const wstring& name)
 {
   OmXmlNode result;
-  *reinterpret_cast<pugi::xml_node*>(result._data) = reinterpret_cast<pugi::xml_document*>(_data)->append_child(name.c_str());
+  *static_cast<pugi::xml_node*>(result._data) = static_cast<pugi::xml_document*>(_data)->append_child(name.c_str());
   return result;
 }
 
@@ -699,7 +699,7 @@ OmXmlNode OmXmlDoc::addChild(const wstring& name)
 ///
 bool OmXmlDoc::remChild(const OmXmlNode& child)
 {
-  return reinterpret_cast<pugi::xml_document*>(_data)->remove_child(*reinterpret_cast<pugi::xml_node*>(child._data));
+  return static_cast<pugi::xml_document*>(_data)->remove_child(*static_cast<pugi::xml_node*>(child._data));
 }
 
 
@@ -708,7 +708,7 @@ bool OmXmlDoc::remChild(const OmXmlNode& child)
 ///
 bool OmXmlDoc::remChild(const wstring& name)
 {
-  return reinterpret_cast<pugi::xml_document*>(_data)->remove_child(name.c_str());
+  return static_cast<pugi::xml_document*>(_data)->remove_child(name.c_str());
 }
 
 
@@ -717,7 +717,7 @@ bool OmXmlDoc::remChild(const wstring& name)
 ///
 void OmXmlDoc::clear()
 {
-  reinterpret_cast<pugi::xml_document*>(_data)->reset();
+  static_cast<pugi::xml_document*>(_data)->reset();
 }
 
 

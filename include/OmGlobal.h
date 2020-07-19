@@ -29,6 +29,8 @@
 #include <locale>
 #include <codecvt>
 
+#include "OmStrings.h"
+
 #define NTDDI_VERSION             0x06000000    // NTDDI_VISTA
 #define WINVER                    0x0600        // _WIN32_WINNT_VISTA
 
@@ -44,7 +46,7 @@
 
 #define OMM_APP_MAJ               0
 #define OMM_APP_MIN               9
-#define OMM_APP_REV               2
+#define OMM_APP_REV               3
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
 #else
@@ -82,6 +84,7 @@
 #define OMM_PKG_THMB_SIZE         128
 
 #define OMM_MAX_PATH              1024
+#define OMM_ITM_BUFF              256
 
 // This enables a "Slow Mode" for debug purposes
 //#define DEBUG_SLOW          300         //< Sleep time (milliseconds)
@@ -144,9 +147,9 @@ uint64_t Om_getCRC64(const wstring& str);
 /// \return Hexadecimal string representation of 64 bits integer
 ///
 inline wstring Om_toHexString(uint64_t num) {
-  wchar_t wcbuf[32];
-  swprintf(wcbuf, 32, L"%llx", num);
-  return wstring(wcbuf);
+  wchar_t num_buf[17];
+  swprintf(num_buf, 17, L"%llx", num);
+  return wstring(num_buf);
 }
 
 /// \brief Get string representation of a 64 bits integer.
@@ -158,9 +161,9 @@ inline wstring Om_toHexString(uint64_t num) {
 /// \param[in]  num     : 64 bits unsigned integer.
 ///
 inline void Om_toHexString(wstring& str, uint64_t num) {
-  wchar_t wcbuf[32];
-  swprintf(wcbuf, 32, L"%llx", num);
-  str = wcbuf;
+  wchar_t num_buf[17];
+  swprintf(num_buf, 17, L"%llx", num);
+  str = num_buf;
 }
 
 /// \brief Get 64 bits integer from string.
@@ -698,19 +701,7 @@ inline int Om_dirDelete(const wstring& path) {
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-inline int Om_dirDeleteRecursive(const wstring& path)
-{
-  wchar_t wcbuf[512];
-  wcscpy(wcbuf, path.c_str());
-  wcbuf[path.size()+1] = 0; // the buffer must end with double null character
-
-  SHFILEOPSTRUCTW fop = {};
-  fop.pFrom = wcbuf;
-  fop.wFunc = FO_DELETE;
-  fop.fFlags = FOF_NO_UI;
-
-  return SHFileOperationW(&fop);
-}
+int Om_dirDeleteRecursive(const wstring& path);
 
 /// \brief Copy file
 ///
@@ -1184,6 +1175,19 @@ HICON Om_loadShellIcon(unsigned id, bool large = false);
 /// \return Bitmap handle (HBITMAP) of the specified Shell Stock icon
 ///
 HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
+
+/// \brief Create font object
+///
+/// Create and returns a font object according the specified parameters.
+///
+/// \param[in] pt      : Font size
+/// \param[in] weight  : Font weight
+/// \param[in] style   : Font style
+/// \param[in] name    : Font name
+///
+/// \return Font handle (HFONT) of the created font
+///
+HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name);
 
 /// \brief Get Windows error string
 ///

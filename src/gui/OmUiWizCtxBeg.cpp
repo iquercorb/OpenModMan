@@ -63,7 +63,7 @@ void OmUiWizCtxBeg::_onInit()
 void OmUiWizCtxBeg::_onShow()
 {
   // enable the Wizard Next button
-  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
+  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
 }
 
 

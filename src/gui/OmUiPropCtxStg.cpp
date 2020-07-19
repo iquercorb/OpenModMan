@@ -33,7 +33,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins),
-  _hDefIcon(nullptr)
+  _hIcBlank(nullptr)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i) {
@@ -41,7 +41,7 @@ OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins),
   }
 
   // Load the default Context icon
-  this->_hDefIcon = Om_loadShellIcon(SIID_APPLICATION, true);
+  this->_hIcBlank = Om_loadShellIcon(SIID_APPLICATION, true);
 }
 
 
@@ -50,7 +50,7 @@ OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropCtxStg::~OmUiPropCtxStg()
 {
-  DestroyIcon(this->_hDefIcon);
+  DestroyIcon(this->_hIcBlank);
 }
 
 
@@ -69,7 +69,7 @@ long OmUiPropCtxStg::id() const
 void OmUiPropCtxStg::setChParam(unsigned i, bool en)
 {
   this->_chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -84,11 +84,11 @@ void OmUiPropCtxStg::_setIcon(const wstring& path)
   if(Om_isValidPath(path)) {
     ExtractIconExW(path.c_str(), 0, &hIcon, nullptr, 1);
   } else {
-    hIcon = this->_hDefIcon;
+    hIcon = this->_hIcBlank;
   }
 
-  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)hIcon));
-  if(hIcon != this->_hDefIcon) DestroyIcon(hIcon);
+  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon)));
+  if(hIcon != this->_hIcBlank) DestroyIcon(hIcon);
 
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
 }
@@ -105,7 +105,7 @@ void OmUiPropCtxStg::_onInit()
   this->_createTooltip(IDC_BC_BROW1,  L"Select application or icon file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
 
-  OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
   if(context == nullptr)
     return;
@@ -146,7 +146,7 @@ void OmUiPropCtxStg::_onResize()
 ///
 void OmUiPropCtxStg::_onRefresh()
 {
-  OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
   if(context == nullptr)
     return;
@@ -168,13 +168,13 @@ void OmUiPropCtxStg::_onRefresh()
       hIcon = context->icon();
       this->setItemText(IDC_BC_BROW1, L"Change...");
     } else {
-      hIcon = this->_hDefIcon;
+      hIcon = this->_hIcBlank;
       this->setItemText(IDC_BC_BROW1, L"Select...");
     }
   }
 
-  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)hIcon));
-  if(hIcon != this->_hDefIcon) DestroyIcon(hIcon);
+  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon)));
+  if(hIcon != this->_hIcBlank) DestroyIcon(hIcon);
 
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
 }
@@ -187,7 +187,7 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmContext* context = reinterpret_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
     if(context == nullptr)
       return false;

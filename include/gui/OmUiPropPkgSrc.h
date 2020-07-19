@@ -53,7 +53,9 @@ class OmUiPropPkgSrc : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HBITMAP             _hPicThumb;
+    HFONT               _hFtMonos;
+
+    HBITMAP             _hBmThumb;
 
     void                _onInit();
 

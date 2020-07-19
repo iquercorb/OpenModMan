@@ -24,7 +24,8 @@
 ///
 OmDialogWiz::OmDialogWiz(HINSTANCE hins) : OmDialog(hins),
   _pageDial(),
-  _currPage(0)
+  _currPage(0),
+  _hBmSplash(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_WIZ_SPLASH),IMAGE_BITMAP,0,0,0)))
 {
 
 }
@@ -35,7 +36,7 @@ OmDialogWiz::OmDialogWiz(HINSTANCE hins) : OmDialog(hins),
 ///
 OmDialogWiz::~OmDialogWiz()
 {
-
+  DeleteObject(this->_hBmSplash);
 }
 
 
@@ -64,6 +65,9 @@ void OmDialogWiz::_addPage(OmDialog* dialog)
 ///
 void OmDialogWiz::_onInit()
 {
+  // set splash image
+  this->msgItem(IDC_SB_IMAGE, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmSplash));
+
   this->_currPage = 0;
 
   if(this->_pageDial.size() && this->_hwnd) {
@@ -84,10 +88,6 @@ void OmDialogWiz::_onInit()
 
   // disable back button if we are at the first page
   this->enableItem(IDC_BC_BACK, (this->_currPage > 0));
-
-  // set splash image
-  HBITMAP hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_WIZ_SPLASH), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_SB_IMAGE, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
 
   this->_onWizInit();
 }
@@ -134,7 +134,7 @@ void OmDialogWiz::_onResize()
     pos[3] = this->height() - 26;
 
     // Map in pixels
-    MapDialogRect(this->_hwnd, (LPRECT)&pos);
+    MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
 
     // apply this for all dialogs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {

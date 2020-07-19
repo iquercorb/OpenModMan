@@ -56,7 +56,7 @@ long OmUiPropLocBck::id() const
 void OmUiPropLocBck::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -69,17 +69,17 @@ void OmUiPropLocBck::_onInit()
   this->_createTooltip(IDC_BC_CHK01,  L"Store backup data as zip archives");
   this->_createTooltip(IDC_CB_LEVEL,  L"Compression level for backup zip files");
 
-  OmLocation* location = reinterpret_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
   // add items in combo box
   HWND hCb = this->getItem(IDC_CB_LEVEL);
 
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"None ( very fast )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Low ( fast )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Normal ( slow )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Best ( very slow )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
   }
 
   if(location == nullptr)

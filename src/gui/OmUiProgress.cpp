@@ -24,7 +24,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiProgress::OmUiProgress(HINSTANCE hins) : OmDialog(hins),
-  _abort(false)
+  _abort(false),
+  _hFtDesc(Om_createFont(16, 700, L"Ms Shell Dlg"))
 {
 
 }
@@ -35,7 +36,7 @@ OmUiProgress::OmUiProgress(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiProgress::~OmUiProgress()
 {
-
+  DeleteObject(this->_hFtDesc);
 }
 
 
@@ -51,7 +52,7 @@ long OmUiProgress::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setCaption(const wchar_t* wstr) const
+void OmUiProgress::setTitle(const wchar_t* wstr) const
 {
   SetWindowTextW(this->_hwnd, wstr);
 }
@@ -60,7 +61,7 @@ void OmUiProgress::setCaption(const wchar_t* wstr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setTitle(const wchar_t* wstr) const
+void OmUiProgress::setDesc(const wchar_t* wstr) const
 {
   SetDlgItemTextW(this->_hwnd, IDC_SC_TITLE, wstr);
 }
@@ -69,7 +70,16 @@ void OmUiProgress::setTitle(const wchar_t* wstr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void* OmUiProgress::getProgressBar() const
+void OmUiProgress::setDetail(const wchar_t* wstr) const
+{
+  SetDlgItemTextW(this->_hwnd, IDC_SC_DESC1, wstr);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HWND OmUiProgress::getPbHandle() const
 {
   return GetDlgItem(this->_hwnd, IDC_PB_PGRES);
 }
@@ -78,7 +88,7 @@ void* OmUiProgress::getProgressBar() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void* OmUiProgress::getStaticTitle() const
+HWND OmUiProgress::getDescScHandle() const
 {
   return GetDlgItem(this->_hwnd, IDC_SC_TITLE);
 }
@@ -87,7 +97,7 @@ void* OmUiProgress::getStaticTitle() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void* OmUiProgress::getStaticComment() const
+HWND OmUiProgress::getDetailScHandle() const
 {
   return GetDlgItem(this->_hwnd, IDC_SC_DESC1);
 }
@@ -98,6 +108,11 @@ void* OmUiProgress::getStaticComment() const
 ///
 void OmUiProgress::_onInit()
 {
+  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtDesc), true);
+  SetWindowTextW(this->_hwnd, L"");
+  this->setItemText(IDC_SC_TITLE, L"");
+  this->setItemText(IDC_SC_DESC1, L"");
+
   this->_abort = false;
 }
 
@@ -107,10 +122,12 @@ void OmUiProgress::_onInit()
 ///
 void OmUiProgress::_onResize()
 {
-  this->_setItemPos(IDC_SC_TITLE, 10, 10, this->width()-20, 9);
-  this->_setItemPos(IDC_PB_PGRES, 10, 25, this->width()-20, 12);
-  this->_setItemPos(IDC_SC_DESC1, 10, 40, this->width()-20, 9);
-  this->_setItemPos(IDC_BC_ABORT, this->width()-60, this->height()-24, 50, 14);
+  int half_height = static_cast<int>(this->height() * 0.5f);
+
+  this->_setItemPos(IDC_SC_TITLE, 10, 8, this->width()-20, 12);
+  this->_setItemPos(IDC_SC_DESC1, 10, half_height-15, this->width()-20, 9);
+  this->_setItemPos(IDC_PB_PGRES, 10, half_height, this->width()-20, 11);
+  this->_setItemPos(IDC_BC_ABORT, this->width()-70, this->height()-24, 60, 14);
 }
 
 

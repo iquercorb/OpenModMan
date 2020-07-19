@@ -81,7 +81,7 @@ class OmUiPropCtxStg : public OmDialog
 
     bool                _chParam[8];
 
-    HICON               _hDefIcon;
+    HICON               _hIcBlank;
 
     void                _setIcon(const wstring& path);
 

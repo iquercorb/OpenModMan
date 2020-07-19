@@ -56,7 +56,7 @@ long OmUiPropLocStg::id() const
 void OmUiPropLocStg::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -118,7 +118,7 @@ void OmUiPropLocStg::_onResize()
 ///
 void OmUiPropLocStg::_onRefresh()
 {
-  OmLocation* location = reinterpret_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
   if(location == nullptr)
     return;
@@ -145,7 +145,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmLocation* location = reinterpret_cast<OmUiPropLoc*>(this->_parent)->location();
+    OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
     if(location == nullptr)
       return false;

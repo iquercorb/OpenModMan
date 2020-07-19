@@ -771,8 +771,8 @@ bool OmPackage::uninst(HWND hPb, const bool *pAbort)
   // initialize the progress bar
   if(hPb) {
     SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_backupItem.size()));
-    SendMessageW(hPb, PBM_SETSTEP, (WPARAM) 1, 0);
-    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
 
   // it still time to abort
@@ -822,8 +822,8 @@ bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
   // initialize the progress bar
   if(hPb) {
     SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, 2*this->_sourceItem.size()));
-    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
 
   // it still time to abort
@@ -993,13 +993,12 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
   // initialize the progress bar
   if(hPb) {
     SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_sourceItem.size()));
-    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
 
   wstring src_path, zcd_entry;
 
-  wchar_t   wcbuf[OMM_MAX_PATH];
   uint8_t*  data;
   size_t    s;
 
@@ -1014,10 +1013,13 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     }
 
     // update description
-    if(hSc) {
-      swprintf(wcbuf, OMM_MAX_PATH, L"Adding: %ls", this->_sourceItem[i].path.c_str());
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
-    }
+    if(hSc) SetWindowTextW(hSc, this->_sourceItem[i].path.c_str());
+
+    // step progress bar
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
+    #ifdef DEBUG_SLOW
+    Sleep(DEBUG_SLOW); //< for debug
+    #endif
 
     // destination zip path, with mirror folder preceding
     Om_concatPaths(zcd_entry, pkg_ident, this->_sourceItem[i].path);
@@ -1084,12 +1086,6 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
         break;
       }
     }
-
-    // step progress bar
-    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-    #ifdef DEBUG_SLOW
-    Sleep(DEBUG_SLOW); //< for debug
-    #endif
   }
 
   // do not need the source zip anymore
@@ -1099,7 +1095,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
     // update description
-    if(hSc) SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"operation failed");
+    if(hSc) SetWindowTextW(hSc, L"Process failed");
     return false;
   }
 
@@ -1107,7 +1103,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
     // update description
-    if(hSc) SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"operation aborted");
+    if(hSc) SetWindowTextW(hSc, L"Process aborted");
     return true;
   }
 
@@ -1267,10 +1263,10 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 {
   if(this->_location != nullptr) {
 
-    wchar_t wcbuf[OMM_MAX_PATH];
-    swprintf(wcbuf, OMM_MAX_PATH, L"Location(%ls):: %ls", this->_location->title().c_str(), head.c_str());
+    wstring log_str = L"Location("; log_str.append(this->_location->title());
+    log_str.append(L"):: "); log_str.append(head);
 
-    this->_location->log(level, wcbuf, detail);
+    this->_location->log(level, log_str, detail);
   }
 }
 
@@ -1575,10 +1571,10 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   this->_type |= PKG_TYPE_BCK;
 
   // making report
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t log_buf[64];
+  swprintf(log_buf, 64, L"Backup created in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
+  this->log(2, wstring(L"Package(")+this->_ident+L")", log_buf);
 
   return true;
 }
@@ -1695,10 +1691,10 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
   }
 
   // making report
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t log_buf[64];
+  swprintf(log_buf, 64, L"Installed in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  this->log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
+  this->log(2, wstring(L"Package(")+this->_ident+L")", log_buf);
 
   return true;
 }
@@ -1880,10 +1876,10 @@ bool OmPackage::_doUninst(HWND hPb, const bool *pAbort)
   this->backupClear();
 
   // making report
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t log_buf[64];
+  swprintf(log_buf, 64, L"Backup restored in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
+  log(2, wstring(L"Package(")+this->_ident+L")", log_buf);
 
   return true;
 }
@@ -2029,8 +2025,8 @@ void OmPackage::_undoInstall(HWND hPb)
   this->backupClear();
 
   // making report
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+  wchar_t log_buf[64];
+  swprintf(log_buf, 64, L"Install undone in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, wstring(L"Package(")+this->_ident+L")", wcbuf);
+  log(2, wstring(L"Package(")+this->_ident+L")", log_buf);
 }

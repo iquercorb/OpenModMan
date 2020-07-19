@@ -93,7 +93,7 @@ void OmDialogProp::_onInit()
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
 
       tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
-      SendMessageW(this->_hTab, TCM_INSERTITEMW, i, (LPARAM)&tcPage);
+      SendMessageW(this->_hTab, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&tcPage));
 
       this->_pageDial[i]->modeless(false);
       EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
@@ -132,8 +132,8 @@ void OmDialogProp::_onResize()
     LONG pos[4];
 
     // get TabControl local coordinates
-    GetWindowRect(hTab, (LPRECT)&pos);
-    MapWindowPoints(HWND_DESKTOP, this->_hwnd, (LPPOINT)&pos, 2);
+    GetWindowRect(hTab, reinterpret_cast<LPRECT>(&pos));
+    MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&pos), 2);
 
     // convert into base unit and adjust to keep inside the TabControl
     pos[0] = MulDiv(pos[0], 4, this->unitX()) + 3;
@@ -142,7 +142,7 @@ void OmDialogProp::_onResize()
     pos[3] = MulDiv(pos[3], 8, this->unitY()) - 3;
 
     // Map again in pixels
-    MapDialogRect(this->_hwnd, (LPRECT)&pos);
+    MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
     pos[2] -= pos[0]; // width = right - left
     pos[3] -= pos[1]; // height = bottom - top
 

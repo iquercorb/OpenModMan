@@ -54,9 +54,15 @@ class OmUiNewPkg : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HBITMAP             _hBlankImg;
+    HFONT               _hFtMonos;
 
-    HBITMAP             _hImgSource;
+    HBITMAP             _hBmBlank;
+
+    HBITMAP             _hBmImage;
+
+    HBITMAP             _hBmBcNew;
+
+    HBITMAP             _hBmBcDel;
 
     bool                _parsePkg(const wstring& path);
 

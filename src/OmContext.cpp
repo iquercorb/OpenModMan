@@ -54,6 +54,8 @@ static inline int __OmContext_lsLocDef(vector<wstring>& omt_list, const wstring&
   return n;
 }
 
+
+/*
 /// \brief Location name comparison callback
 ///
 /// std::sort callback comparison function for sorting Locations
@@ -86,6 +88,8 @@ static bool __OmContext_locCompareName(const OmLocation* a, const OmLocation* b)
 
   return false;
 }
+*/
+
 
 /// \brief Location index comparison callback
 ///
@@ -102,6 +106,7 @@ static bool __OmContext_locCompareIndex(const OmLocation* a, const OmLocation* b
   return (a->index() < b->index());
 }
 
+
 /// \brief OmBatch index comparison callback
 ///
 /// std::sort callback comparison function for sorting Locations
@@ -116,6 +121,9 @@ static bool __OmContext_batCompareIndex(const OmBatch* a, const OmBatch* b)
 {
   return (a->index() < b->index());
 }
+
+
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -624,10 +632,10 @@ bool OmContext::purgeLocation(int i, HWND hWnd, HWND hPb, HWND hSc, const bool *
       sort(this->_location.begin(), this->_location.end(), __OmContext_locCompareIndex);
 
     if(has_error) {
-      Om_dialogBoxWarn(hWnd, L"Location purge error(s)",
-                              L"The Location purge process has "
-                              L"encountered one or more error(s), "
-                              L"see the log output for more details.");
+      wchar_t str[] = L"The Location purge process has encountered one or "
+                      L"more error(s), see the log output for more details.";
+
+      Om_dialogBoxWarn(hWnd, L"Location purge error(s)", str);
     }
 
     return !has_error;
@@ -797,8 +805,7 @@ void OmContext::sortBatches()
 ///
 void OmContext::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Manager:: %ls", head.c_str());
+  wstring log_str = L"Manager:: "; log_str.append(head);
 
-  this->_manager->log(level, wcbuf, detail);
+  this->_manager->log(level, log_str, detail);
 }

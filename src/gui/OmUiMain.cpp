@@ -29,17 +29,18 @@
 #include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewPkg.h"
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
+  _hIcAppS(static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0))),
+  _hIcAppL(static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0))),
   _pageName(),
   _pageDial(),
   _quitPending(false),
   _onProcess(false),
   _safeEdit(false),
-  _hDefIcon(nullptr),
+  _hIcBlank(Om_loadShellIcon(SIID_APPLICATION, true)),
   _hMenuFile(nullptr),
   _hMenuEdit(nullptr),
   _hMenuHelp(nullptr)
@@ -58,9 +59,6 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiNewBat(hins));     //< Dialog for new Batch
   this->addChild(new OmUiNewLoc(hins));     //< Dialog for adding Location
 
-  // Load the default Context icon
-  this->_hDefIcon = Om_loadShellIcon(SIID_APPLICATION, true);
-
   // set the accelerator table for the dialog
   this->setAccelerator(IDR_ACCEL);
 }
@@ -71,7 +69,9 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMain::~OmUiMain()
 {
-  DestroyIcon(this->_hDefIcon);
+  DestroyIcon(this->_hIcAppS);
+  DestroyIcon(this->_hIcAppL);
+  DestroyIcon(this->_hIcBlank);
 }
 
 
@@ -134,7 +134,7 @@ void OmUiMain::setSafeEdit(bool enable)
 ///
 void OmUiMain::selContext(int i)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // select the requested Context
   manager->selContext(i);
@@ -154,7 +154,7 @@ void OmUiMain::selContext(int i)
   this->_reloadCaption();
 
   // refresh library tab
-  OmUiMainLib* uiMainLib = reinterpret_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB));
+  OmUiMainLib* uiMainLib = static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB));
   if(uiMainLib) uiMainLib->refresh();
 
   // forces control to select item
@@ -170,7 +170,7 @@ void OmUiMain::selContext(int i)
 ///
 void OmUiMain::openContext(const wstring& path)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // Try to open Context
   if(manager->openContext(path)) {
@@ -257,7 +257,7 @@ void OmUiMain::_addPage(const wstring& title, OmDialog* dialog)
 ///
 void OmUiMain::_reloadCaption()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   wstring title = L"";
   if(manager->curContext()) {
@@ -275,7 +275,7 @@ void OmUiMain::_reloadCaption()
 ///
 void OmUiMain::_reloadCtxIcon()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   HICON hIcon;
 
@@ -283,14 +283,13 @@ void OmUiMain::_reloadCtxIcon()
     if(manager->curContext()->icon()) {
       hIcon = manager->curContext()->icon();
     } else {
-      hIcon = this->_hDefIcon;
+      hIcon = this->_hIcBlank;
     }
   } else {
-    hIcon = this->_hDefIcon;
+    hIcon = this->_hIcBlank;
   }
 
-  HICON hOld = (HICON)this->msgItem(IDC_SB_CTICO, STM_SETICON, (WPARAM)hIcon);
-  InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
+  this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
 }
 
 
@@ -299,7 +298,7 @@ void OmUiMain::_reloadCtxIcon()
 ///
 void OmUiMain::_reloadMenu()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // handle to "File > Recent files" popup
   HMENU hMenu = this->getMenuFile(3); //< "File > Recent files" Menu-item
@@ -318,10 +317,15 @@ void OmUiMain::_reloadMenu()
 
   // add the recent file path or disable popup
   if(path.size()) {
-    wchar_t wcbuf[OMM_MAX_PATH];
+
+    wstring item_str;
+
     for(size_t i = 0; i < path.size(); ++i) {
-      swprintf(wcbuf, OMM_MAX_PATH, L"&%d %ls", path.size() - i, path[i].c_str());
-      InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, wcbuf);
+
+      item_str = to_wstring(path.size() - i);
+      item_str.append(L" "); item_str.append(path[i]);
+
+      InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, item_str.c_str());
     }
     // enable the "File > Recent Files" popup
     this->setMenuFile(3, MF_BYPOSITION|MF_ENABLED);
@@ -337,7 +341,7 @@ void OmUiMain::_reloadMenu()
 ///
 void OmUiMain::_reloadCtxCb()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   HWND hCb = this->getItem(IDC_CB_CTXLS);
 
@@ -360,7 +364,7 @@ void OmUiMain::_reloadCtxCb()
       item_str += L" - ";
       item_str += manager->context(i)->home();
 
-      SendMessageW(hCb, CB_ADDSTRING, i, (LPARAM)item_str.c_str());
+      SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     }
 
     // select the the previously selected Context
@@ -386,6 +390,10 @@ void OmUiMain::_reloadCtxCb()
 ///
 void OmUiMain::_onInit()
 {
+  // set window icon
+  SendMessageW(this->_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(this->_hIcAppS));
+  SendMessageW(this->_hwnd, WM_SETICON, ICON_BIG,   reinterpret_cast<LPARAM>(this->_hIcAppL));
+
   this->_createTooltip(IDC_CB_CTXLS, L"Select active context");
 
   // Get handle to menu
@@ -394,13 +402,7 @@ void OmUiMain::_onInit()
   this->_hMenuEdit = GetSubMenu(hMenu, 1);
   this->_hMenuHelp = GetSubMenu(hMenu, 2);
 
-  // set window icon
-  HICON hIcon = (HICON)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0);
-  SendMessageW(this->_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-  hIcon = (HICON)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0);
-  SendMessageW(this->_hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   RECT rect = {0,0,0,0};
   // set window to saved position and size
@@ -424,7 +426,7 @@ void OmUiMain::_onInit()
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
 
       tcPage.pszText = (LPWSTR)this->_pageName[i].c_str();
-      this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, (LPARAM)&tcPage );
+      this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&tcPage));
 
       this->_pageDial[i]->modeless(false);
       EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
@@ -457,8 +459,8 @@ void OmUiMain::_onResize()
     LONG pos[4];
 
     // get TabControl local coordinates
-    GetWindowRect(this->getItem(IDC_TC_MAIN), (LPRECT)&pos);
-    MapWindowPoints(HWND_DESKTOP, this->_hwnd, (LPPOINT)&pos, 2);
+    GetWindowRect(this->getItem(IDC_TC_MAIN), reinterpret_cast<LPRECT>(&pos));
+    MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&pos), 2);
 
     // convert into base unit and adjust to keep inside the TabControl
     pos[0] = MulDiv(pos[0], 4, this->unitX()) + 1;
@@ -467,7 +469,7 @@ void OmUiMain::_onResize()
     pos[3] = MulDiv(pos[3], 8, this->unitY()) - 2;
 
     // Map again in pixels
-    MapDialogRect(this->_hwnd, (LPRECT)&pos);
+    MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
     pos[2] -= pos[0]; // width = right - left
     pos[3] -= pos[1]; // height = bottom - top
 
@@ -523,7 +525,7 @@ void OmUiMain::_onClose()
 ///
 void OmUiMain::_onQuit()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   RECT rec;
   GetWindowRect(this->_hwnd, &rec);
@@ -539,7 +541,7 @@ void OmUiMain::_onQuit()
 ///
 bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   if(uMsg == WM_NOTIFY) {
 
@@ -621,7 +623,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_CTX_PROP:
       if(manager->curContext()) {
-        OmUiPropCtx* uiPropCtx = reinterpret_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
+        OmUiPropCtx* uiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
         uiPropCtx->setContext(manager->curContext());
         uiPropCtx->open(true);
       }
@@ -629,7 +631,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_CTX_ADDL:
       if(manager->curContext()) {
-        OmUiNewLoc* uiNewLoc = reinterpret_cast<OmUiNewLoc*>(this->childById(IDD_NEW_LOC));
+        OmUiNewLoc* uiNewLoc = static_cast<OmUiNewLoc*>(this->childById(IDD_NEW_LOC));
         uiNewLoc->setContext(manager->curContext());
         uiNewLoc->open(true);
       }

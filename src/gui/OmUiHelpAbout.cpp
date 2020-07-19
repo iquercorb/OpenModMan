@@ -21,7 +21,8 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiHelpAbout::OmUiHelpAbout(HINSTANCE hins) : OmDialog(hins)
+OmUiHelpAbout::OmUiHelpAbout(HINSTANCE hins) : OmDialog(hins),
+  _hFtMonos(Om_createFont(14, 400, L"Consolas"))
 {
 
 }
@@ -70,8 +71,7 @@ void OmUiHelpAbout::_onInit()
   repo_url.append(OMM_APP_GIT); repo_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK02, repo_url);
 
-  HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  this->msgItem(IDC_EC_ENT01, WM_SETFONT, (WPARAM)hFont, 1);
+  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
   string txt;
   if(Om_loadPlainText(txt, L"CREDITS.TXT")) {

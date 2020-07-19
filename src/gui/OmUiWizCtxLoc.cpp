@@ -56,63 +56,29 @@ bool OmUiWizCtxLoc::hasValidParams() const
   wstring item_str;
 
   this->getItemText(IDC_EC_INPT1, item_str);
-  if(!item_str.empty()) {
-    if(!Om_isValidName(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                    L"The Location title contain "
-                                    L"illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title",
-                                  L"Please choose a Location title.");
+  if(!Om_isValidName(item_str)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
     return false;
   }
+
   this->getItemText(IDC_EC_INPT2, item_str);
-  if(!item_str.empty()) {
-    if(!Om_isDir(item_str)) {
-        Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination folder",
-                                      L"Please select an existing folder for "
-                                      L"Location Destination.");
-      return false;
-    }
-  } else {
-      Om_dialogBoxErr(this->_hwnd,  L"Invalid Location Destination path",
-                                    L"Please enter a valid path for Location "
-                                    L"Destination folder.");
+  if(!Om_isDir(item_str)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", OMM_STR_ERR_ISDIR(item_str));
     return false;
   }
 
   if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT3, item_str);
-    if(!item_str.empty()) {
-      if(!Om_isDir(item_str)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Library");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Library folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Library folder");
+    if(!Om_isDir(item_str)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", OMM_STR_ERR_ISDIR(item_str));
       return false;
     }
   }
 
   if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT4, item_str);
-    if(!item_str.empty()) {
-      if(!Om_isDir(item_str)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please choose an existing folder for "
-                                      L"Location custom Backup");
-        return false;
-      }
-    } else {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid Location Backup folder",
-                                      L"Please enter a valid path for Location "
-                                      L"custom Backup folder");
+    if(!Om_isDir(item_str)) {
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", OMM_STR_ERR_ISDIR(item_str));
       return false;
     }
   }
@@ -147,7 +113,7 @@ void OmUiWizCtxLoc::_onInit()
   this->setItemText(IDC_EC_INPT4, L"Main Location\\backup");
 
   // disable "next" button
-  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
 }
 
 
@@ -162,25 +128,30 @@ void OmUiWizCtxLoc::_onShow()
   bool allow = true;
 
   this->getItemText(IDC_EC_INPT1, item_str);
-  if(Om_isValidName(item_str)) {
+  if(!item_str.empty()) {
+
     this->getItemText(IDC_EC_INPT2, item_str);
-    if(Om_isValidPath(item_str)) {
+    if(!item_str.empty()) {
+
       if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INPT3, item_str);
         if(item_str.empty()) allow = false;
       }
+
       if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INPT4, item_str);
         if(item_str.empty()) allow = false;
       }
+
     } else {
       allow = false;
     }
+
   } else {
     allow = false;
   }
 
-  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
+  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
 }
 
 
@@ -331,25 +302,30 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       bool allow = true;
 
       this->getItemText(IDC_EC_INPT1, item_str);
-      if(Om_isValidName(item_str)) {
+      if(!item_str.empty()) {
+
         this->getItemText(IDC_EC_INPT2, item_str);
-        if(Om_isValidPath(item_str)) {
+        if(!item_str.empty()) {
+
           if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INPT3, item_str);
             if(item_str.empty()) allow = false;
           }
+
           if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INPT4, item_str);
             if(item_str.empty()) allow = false;
           }
+
         } else {
           allow = false;
         }
+
       } else {
         allow = false;
       }
 
-      reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
+      static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
     }
   }
 

@@ -56,7 +56,7 @@ long OmUiPropManPkg::id() const
 void OmUiPropManPkg::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
-  reinterpret_cast<OmDialogProp*>(this->_parent)->checkChanges();
+  static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
 
@@ -75,7 +75,7 @@ void OmUiPropManPkg::_onInit()
 
   this->_createTooltip(IDC_BC_CHK06,  L"Ignore installation warnings for batches");
 
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, manager->legacySupport());
   this->msgItem(IDC_BC_CHK02, BM_SETCHECK, manager->warnOverlaps());

@@ -216,7 +216,7 @@ OmVersion& OmVersion::operator=(const OmVersion& other)
 ///
 OmVersion& OmVersion::operator=(const wstring& vstr)
 {
-  wchar_t num[16];
+  wchar_t digits[16];
 
   _maj = 0;
   _min = 0;
@@ -230,7 +230,7 @@ OmVersion& OmVersion::operator=(const wstring& vstr)
     if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
 
       if(j < 15) {
-        num[j] = vstr[i]; ++j;
+        digits[j] = vstr[i]; ++j;
       } else {
         return *this;
       }
@@ -239,8 +239,8 @@ OmVersion& OmVersion::operator=(const wstring& vstr)
 
       if(vstr[i] == L'.') {
         if(j > 0) {
-          num[j] = 0;
-          _str.push_back(num);
+          digits[j] = 0;
+          _str.push_back(digits);
           j = 0;
         }
       }
@@ -251,7 +251,7 @@ OmVersion& OmVersion::operator=(const wstring& vstr)
   }
 
   if(j > 0) {
-    num[j] = 0; _str.push_back(num);
+    digits[j] = 0; _str.push_back(digits);
   }
 
   if(_str.size() > 0) {

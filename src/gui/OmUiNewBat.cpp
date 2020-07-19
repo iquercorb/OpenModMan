@@ -25,7 +25,9 @@
 OmUiNewBat::OmUiNewBat(HINSTANCE hins) : OmDialog(hins),
   _context(nullptr),
   _excLs(),
-  _incLs()
+  _incLs(),
+  _hBmBcUp(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcDn(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0)))
 {
 
 }
@@ -36,7 +38,8 @@ OmUiNewBat::OmUiNewBat(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiNewBat::~OmUiNewBat()
 {
-
+  DeleteObject(this->_hBmBcUp);
+  DeleteObject(this->_hBmBcDn);
 }
 
 
@@ -84,8 +87,8 @@ void OmUiNewBat::_rebuildPkgLb()
     package = location->package(p);
 
     item_str = Om_getFilePart(package->sourcePath());
-    SendMessageW(hLsl, LB_ADDSTRING, i, (LPARAM)item_str.c_str());
-    SendMessageW(hLsl, LB_SETITEMDATA, i, (LPARAM)p);
+    SendMessageW(hLsl, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    SendMessageW(hLsl, LB_SETITEMDATA, i, p);
   }
 
   // reset List-Box control
@@ -98,8 +101,8 @@ void OmUiNewBat::_rebuildPkgLb()
     package = location->package(p);
 
     item_str = Om_getFilePart(package->sourcePath());
-    SendMessageW(hLsr, LB_ADDSTRING, i, (LPARAM)item_str.c_str());
-    SendMessageW(hLsr, LB_SETITEMDATA, i, (LPARAM)p);
+    SendMessageW(hLsr, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    SendMessageW(hLsr, LB_SETITEMDATA, i, p);
   }
 
 }
@@ -163,22 +166,22 @@ void OmUiNewBat::_upPkg()
 
     // get list of selected item (index)
     int lb_sel;
-    SendMessageW(hLsr, LB_GETSELITEMS, 1, (LPARAM)&lb_sel);
+    SendMessageW(hLsr, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
 
     // check whether we can move up
     if(lb_sel == 0)
       return;
 
-    wchar_t item_buf[OMM_MAX_PATH];
+    wchar_t item_buf[OMM_ITM_BUFF];
 
     // retrieve the package List-Box label
-    SendMessageW(hLsr, LB_GETTEXT, lb_sel - 1, (LPARAM)item_buf);
+    SendMessageW(hLsr, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
     int index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel - 1, 0);
 
     SendMessageW(hLsr, LB_DELETESTRING, lb_sel - 1, 0);
 
-    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, (LPARAM)item_buf);
-    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, (LPARAM)index);
+    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, index);
 
     // swap package index to move up
     for(size_t k = 0; k < this->_incLs[cb_sel].size(); ++k) {
@@ -218,25 +221,25 @@ void OmUiNewBat::_dnPkg()
 
     // get list of selected item (index)
     int lb_sel;
-    SendMessageW(hLsr, LB_GETSELITEMS, 1, (LPARAM)&lb_sel);
+    SendMessageW(hLsr, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
 
     // check whether we can move down
     if(lb_sel == lb_max)
       return;
 
-    wchar_t item_buf[OMM_MAX_PATH];
+    wchar_t item_buf[OMM_ITM_BUFF];
 
     // retrieve the package List-Box label
-    SendMessageW(hLsr, LB_GETTEXT, lb_sel, (LPARAM)item_buf);
+    SendMessageW(hLsr, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
     int index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel, 0);
 
     SendMessageW(hLsr, LB_DELETESTRING, lb_sel, 0);
 
     lb_sel++;
 
-    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, (LPARAM)item_buf);
-    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, (LPARAM)index);
-    SendMessageW(hLsr, LB_SETSEL , true, (LPARAM)(lb_sel));
+    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, index);
+    SendMessageW(hLsr, LB_SETSEL, true, lb_sel);
 
     // swap package index to move up
     for(size_t k = 0; k < this->_incLs[cb_sel].size(); ++k) {
@@ -275,16 +278,16 @@ void OmUiNewBat::_addPkg()
 
     // get list of selected items (index)
     int* lb_sel = new int[sel_cnt];
-    SendMessageW(hLsl, LB_GETSELITEMS, sel_cnt, (LPARAM)lb_sel);
+    SendMessageW(hLsl, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
 
     int index, pos;
-    wchar_t item_buf[OMM_MAX_PATH];
+    wchar_t item_buf[OMM_ITM_BUFF];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < sel_cnt; ++i) {
 
       // retrieve the package List-Box label
-      SendMessageW(hLsl, LB_GETTEXT, lb_sel[i], (LPARAM)item_buf);
+      SendMessageW(hLsl, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
       // retrieve the package reference index (in Location package list)
       index = SendMessageW(hLsl, LB_GETITEMDATA, lb_sel[i], 0);
 
@@ -301,8 +304,8 @@ void OmUiNewBat::_addPkg()
       // get count of item in List-Box as index to for insertion
       pos = SendMessageW(hLsr, LB_GETCOUNT, 0, 0);
       // add item to the List-Box
-      SendMessageW(hLsr, LB_ADDSTRING, pos, (LPARAM)item_buf);
-      SendMessageW(hLsr, LB_SETITEMDATA, pos, (LPARAM)index);
+      SendMessageW(hLsr, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
+      SendMessageW(hLsr, LB_SETITEMDATA, pos, index);
     }
 
     // remove items from List-Box in reverse order to prevent indexing issues
@@ -342,15 +345,15 @@ void OmUiNewBat::_remPkg()
 
     // get list of selected items (index)
     int* lb_sel = new int[sel_cnt];
-    SendMessageW(hLsr, LB_GETSELITEMS, sel_cnt, (LPARAM)lb_sel);
+    SendMessageW(hLsr, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
 
     int index, pos;
-    wchar_t item_buf[OMM_MAX_PATH];
+    wchar_t item_buf[OMM_ITM_BUFF];
 
     // copy selected items from one list to the other list
     for(int i = 0; i < sel_cnt; ++i) {
       // retrieve the package List-Box label
-      SendMessageW(hLsr, LB_GETTEXT, lb_sel[i], (LPARAM)item_buf);
+      SendMessageW(hLsr, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
       // retrieve the package reference index (in Location package list)
       index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel[i], 0);
 
@@ -367,8 +370,8 @@ void OmUiNewBat::_remPkg()
       // get count of item in List-Box as index to for insertion
       pos = SendMessageW(hLsl, LB_GETCOUNT, 0, 0);
       // add item to the List-Box
-      SendMessageW(hLsl, LB_ADDSTRING, pos, (LPARAM)item_buf);
-      SendMessageW(hLsl, LB_SETITEMDATA, pos, (LPARAM)index);
+      SendMessageW(hLsl, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
+      SendMessageW(hLsl, LB_SETITEMDATA, pos, index);
     }
 
     // remove items from List-Box in reverse order to prevent indexing issues
@@ -422,7 +425,8 @@ bool OmUiNewBat::_apply()
 
   // try to create a new batch
   if(!this->_context->makeBatch(bat_name, loc_hash_lsts)) {
-    Om_dialogBoxErr(this->_hwnd, L"Batch creation failed", this->_context->lastError());
+    Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed",
+                                  this->_context->lastError());
     return false;
   }
 
@@ -438,23 +442,23 @@ bool OmUiNewBat::_apply()
 ///
 void OmUiNewBat::_onInit()
 {
-    // define controls tool-tips
+  // Set icons for Up and Down buttons
+  this->msgItem(IDC_BC_UP, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
+  this->msgItem(IDC_BC_DN, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
+
+  // define controls tool-tips
   this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+
   this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
+
   this->_createTooltip(IDC_BC_ADD,    L"Add to install list");
   this->_createTooltip(IDC_BC_DEL,    L"Remove from install list");
+
   this->_createTooltip(IDC_BC_UP,     L"Move up");
   this->_createTooltip(IDC_BC_DN,     L"Move down");
 
-  // Set icons for Up and Down buttons
-  HBITMAP hBm;
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_UP, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_DN, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
+  // Set controls default states and parameters
   this->setItemText(IDC_EC_INPT1, L"New Batch");
 
   // Enable Quick create from current state
@@ -475,7 +479,7 @@ void OmUiNewBat::_onInit()
     item_str += L" - ";
     item_str += this->_context->location(i)->home();
 
-    SendMessageW(hCb, CB_ADDSTRING, i, (LPARAM)item_str.c_str());
+    SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
 
     // initialize a new install list per Location
     this->_excLs.push_back(vector<int>());
@@ -561,15 +565,11 @@ bool OmUiNewBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    wchar_t wcbuf[OMM_MAX_PATH];
-
     bool bm_chk;
 
     int sel_cnt, lb_max, lb_sel;
 
     wstring item_str;
-
-    bool chk01;
 
     switch(LOWORD(wParam))
     {
@@ -628,7 +628,7 @@ bool OmUiNewBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         if(sel_cnt == 1) {
-          this->msgItem(IDC_LB_INC, LB_GETSELITEMS, 1, (LPARAM)&lb_sel);
+          this->msgItem(IDC_LB_INC, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
           lb_max = this->msgItem(IDC_LB_INC, LB_GETCOUNT) - 1;
           this->enableItem(IDC_BC_UP, (lb_sel > 0));
           this->enableItem(IDC_BC_DN, (lb_sel < lb_max));

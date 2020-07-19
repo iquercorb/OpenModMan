@@ -57,16 +57,25 @@ class OmUiProgress : public OmDialog
     ///
     /// \param[in]  str   : Caption to set.
     ///
-    void setCaption(const wchar_t* str) const;
+    void setTitle(const wchar_t* str) const;
 
-    /// \brief Set dialog title
+    /// \brief Set progress description
     ///
-    /// Set the dialog title, which is the main text
-    /// appearing above the Progress Bar control.
+    /// Set the progress description text, which is the main text
+    /// appearing at top of dialog window.
     ///
     /// \param[in]  str   : Title to set.
     ///
-    void setTitle(const wchar_t* str) const;
+    void setDesc(const wchar_t* str) const;
+
+    /// \brief Set progress details
+    ///
+    /// Set the progress details, which is the current processed item text
+    /// appearing above the progress bar.ils
+    ///
+    /// \param[in]  str   : Title to set.
+    ///
+    void setDetail(const wchar_t* wstr) const;
 
     /// \brief Get abort pointer
     ///
@@ -85,7 +94,7 @@ class OmUiProgress : public OmDialog
     ///
     /// \return Handle (HWND) to dialog progress bar control
     ///
-    void* getProgressBar() const;
+    HWND getPbHandle() const;
 
     /// \brief Get static title control
     ///
@@ -93,7 +102,7 @@ class OmUiProgress : public OmDialog
     ///
     /// \return Handle (HWND) to dialog title Static control
     ///
-    void* getStaticTitle() const;
+    HWND getDescScHandle() const;
 
     /// \brief Get static comment control
     ///
@@ -101,17 +110,19 @@ class OmUiProgress : public OmDialog
     ///
     /// \return Handle (HWND) to dialog comment Static control
     ///
-    void* getStaticComment() const;
+    HWND getDetailScHandle() const;
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool                _abort;
+
+    HFONT               _hFtDesc;
 
     void                _onInit();
 
     void                _onResize();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-    bool                _abort;
 };
 
 #endif // OMUIPROCPGRS_H

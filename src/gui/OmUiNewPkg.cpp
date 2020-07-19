@@ -40,14 +40,14 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
-  _hBlankImg(nullptr),
-  _hImgSource(nullptr),
+  _hFtMonos(Om_createFont(14, 400, L"Consolas")),
+  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0))),
+  _hBmImage(nullptr),
+  _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
+  _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0))),
   _buildPkg_hth(nullptr)
 {
   this->addChild(new OmUiProgress(hins)); //< for package creation process
-
-  // load the package blank picture
-  this->_hBlankImg = reinterpret_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,OMM_PKG_THMB_SIZE,OMM_PKG_THMB_SIZE,0));
 }
 
 
@@ -56,7 +56,11 @@ OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiNewPkg::~OmUiNewPkg()
 {
-  DeleteObject(this->_hBlankImg);
+  DeleteObject(this->_hFtMonos);
+  DeleteObject(this->_hBmBlank);
+  if(this->_hBmImage) DeleteObject(this->_hBmImage);
+  DeleteObject(this->_hBmBcNew);
+  DeleteObject(this->_hBmBcDel);
 }
 
 
@@ -85,16 +89,16 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
       this->enableItem(IDC_LB_DPNDS, true);
       this->enableItem(IDC_EC_INPT3, true);
       for(unsigned i = 0; i < package.dependCount(); ++i) {
-        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, i, (LPARAM)package.depend(i).c_str());
+        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(package.depend(i).c_str()));
       }
     }
 
     if(package.picture()) {
       this->msgItem(IDC_BC_CHK04, BM_SETCHECK, 1);
       this->enableItem(IDC_BC_BROW4, true);
-      this->_hImgSource = static_cast<HBITMAP>(CopyImage(package.picture(),IMAGE_BITMAP,0,0,0));
-      HBITMAP hBm = Om_getBitmapThumbnail(this->_hImgSource, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
+      this->_hBmImage = static_cast<HBITMAP>(CopyImage(package.picture(),IMAGE_BITMAP,0,0,0));
+      HBITMAP hBm = Om_getBitmapThumbnail(this->_hBmImage, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm));
       DeleteObject(hBm);
     }
 
@@ -106,9 +110,16 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
     }
 
     return true;
-  }
 
-  return false;
+  } else {
+
+    wstring err = L"The file \"";
+    err += path;
+    err += L"\" is not valid Package file.";
+    Om_dialogBoxErr(this->_hwnd, L"Error parsing Package file", err);
+
+    return false;
+  }
 }
 
 
@@ -117,12 +128,12 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
 ///
 void OmUiNewPkg::_buildPkg_init()
 {
-  OmUiProgress* uiProgress = reinterpret_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
+  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
   // open the progress dialog
   uiProgress->open(true);
-  uiProgress->setCaption(L"Building Package");
-  uiProgress->setTitle(L"Preparing data...");
+  uiProgress->setTitle(L"Package creation");
+  uiProgress->setDesc(L"Preparing data");
 
   // start package building thread
   DWORD dWid;
@@ -140,9 +151,6 @@ void OmUiNewPkg::_buildPkg_stop()
     CloseHandle(this->_buildPkg_hth);
     this->_buildPkg_hth = nullptr;
   }
-
-  // Close progress dialog
-  reinterpret_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
 }
 
 
@@ -151,9 +159,9 @@ void OmUiNewPkg::_buildPkg_stop()
 ///
 DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 {
-  OmUiNewPkg* self = reinterpret_cast<OmUiNewPkg*>(arg);
+  OmUiNewPkg* self = static_cast<OmUiNewPkg*>(arg);
 
-  OmUiProgress* uiProgress = reinterpret_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
+  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
   wstring item_str;
 
@@ -178,7 +186,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
       size_t n;
       for(int i = 0; i < lb_cnt; ++i) {
         item_str.resize(self->msgItem(IDC_LB_DPNDS, LB_GETTEXTLEN, i));
-        n = self->msgItem(IDC_LB_DPNDS, LB_GETTEXT, i, (LPARAM)&item_str[0]);
+        n = self->msgItem(IDC_LB_DPNDS, LB_GETTEXT, i, reinterpret_cast<LPARAM>(&item_str[0]));
         if(n < item_str.size()) item_str.resize(n);
         package.addDepend(item_str);
       }
@@ -187,7 +195,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   // get package picture data
   if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
-    package.setPicture(self->_hImgSource);
+    package.setPicture(self->_hBmImage);
   }
 
   // get package description text
@@ -205,31 +213,27 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   // hide the main dialog
   self->hide();
 
-  uiProgress->setTitle(L"Adding files to package...");
+  uiProgress->setDesc(L"Adding files to package");
 
-  HWND hPb = (HWND)uiProgress->getProgressBar();
-  HWND hSc = (HWND)uiProgress->getStaticComment();
-
-  wstring msg;
+  HWND hPb = uiProgress->getPbHandle();
+  HWND hSc = uiProgress->getDetailScHandle();
 
   if(!package.save(item_str, zip_lvl, hPb, hSc, uiProgress->getAbortPtr())) {
-
     // show error dialog box
-    msg = L"An error occurred during Package creation:\n" + package.lastError();
-    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", msg);
+    wstring err = L"An error occurred during Package creation:\n";
+    err += package.lastError();
+    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", err);
 
     // close the progress dialog
     uiProgress->quit();
-
   } else {
-
     // close the progress dialog
     uiProgress->quit();
 
     // show success dialog box
-    msg = L"The Package \"" + Om_getFilePart(item_str);
-    msg += L"\" was successfully created.";
-    Om_dialogBoxInfo(self->_hwnd, L"Package creation success", msg);
+    wstring info = L"The Package \"" + Om_getFilePart(item_str);
+    info += L"\" was successfully created.";
+    Om_dialogBoxInfo(self->_hwnd, L"Package creation success", info);
   }
 
   PostMessage(self->_hwnd, UWM_BUILDPKG_DONE, 0, 0);
@@ -249,34 +253,29 @@ bool OmUiNewPkg::_apply()
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT1, item_str);
     if(!Om_isDir(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid source path",
-                                    L"The specified source path is "
-                                    L"not a valid folder.");
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid source path", OMM_STR_ERR_ISDIR(item_str));
       return false;
     }
   } else {
     this->getItemText(IDC_EC_INPT2, item_str);
     if(!Om_isFileZip(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid source file",
-                                    L"The specified source file is "
-                                    L"not a valid zip file.");
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid source file", OMM_STR_ERR_ISFILEZIP(item_str));
       return false;
     }
   }
 
   this->getItemText(IDC_EC_INPT4, item_str);
-  if(Om_isValidName(item_str)) {
+  if(Om_isValidPath(item_str)) {
     if(Om_isFile(item_str)) {
-      wstring msg = L"The file \"" + Om_getFilePart(item_str);
-      msg += L"\" already exists, do you want to overwrite the existing file ?";
-      if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", msg)) {
+      wstring qry = L"The file \"";
+      qry += Om_getFilePart(item_str);
+      qry += L"\" already exists, do you want to overwrite the existing file ?";
+      if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
         return false;
       }
     }
   } else {
-    Om_dialogBoxErr(this->_hwnd,  L"Invalid file name",
-                                  L"The specified destination file "
-                                  L"contains illegal characters.");
+    Om_dialogBoxErr(this->_hwnd, L"Invalid destination filename", OMM_STR_ERR_VALIDPATH);
     return false;
   }
 
@@ -294,6 +293,14 @@ bool OmUiNewPkg::_apply()
 ///
 void OmUiNewPkg::_onInit()
 {
+  // Set font for description
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  // Set default package picture
+  this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
+  // Set buttons inner icons
+  this->msgItem(IDC_BC_ADD,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
+  this->msgItem(IDC_BC_DEL,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
+
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);
 
@@ -303,25 +310,12 @@ void OmUiNewPkg::_onInit()
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
 
   if(!cb_cnt) {
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"None ( very fast )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Low ( fast )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Normal ( slow )");
-    SendMessageW(hCb, CB_ADDSTRING, 0, (LPARAM)L"Best ( very slow )");
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
   }
   SendMessageW(hCb, CB_SETCURSEL, 2, 0);
-
-  // set default snapshot
-  this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)this->_hBlankImg);
-
-  // set font for readme
-  HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, (WPARAM)hFont, true);
-
-  // Set Dependencies Add and Rem buttons "icon"
-  this->setItemText(IDC_BC_ADD, L"\u2795"); // Heavy Plus Sign +
-  //this->setItemText(IDC_BC_DEL, L"\u274C"); // Cross Mark
-  this->setItemText(IDC_BC_DEL, L"\u2796"); // Heavy Minus Sign -
-
 }
 
 
@@ -407,8 +401,8 @@ void OmUiNewPkg::_onRefresh()
 ///
 void OmUiNewPkg::_onQuit()
 {
-  DeleteObject(this->_hImgSource);
-  this->_hImgSource = nullptr;
+  DeleteObject(this->_hBmImage);
+  this->_hBmImage = nullptr;
 }
 
 
@@ -432,7 +426,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+    OmManager* manager = static_cast<OmManager*>(this->_data);
     OmContext* curCtx = manager->curContext();
     OmLocation* curLoc = curCtx ? curCtx->curLocation() : nullptr;
 
@@ -481,10 +475,6 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, item_str)) {
         if(this->_parsePkg(brow_str)) { //< try to parse package
           this->setItemText(IDC_EC_INPT2, brow_str);
-        } else {
-          wstring err = L"The file \""; err += brow_str;
-          err += L"\" is not valid Open Mod Manager Package.";
-          Om_dialogBoxErr(this->_hwnd, L"Error parsing Package", err);
         }
       }
       break;
@@ -516,7 +506,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_ADD: // Add Dependency Button
       this->getItemText(IDC_EC_INPT3, item_str);
       if(!item_str.empty()) {
-        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, 0, (LPARAM)item_str.c_str());
+        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item_str.c_str()));
         this->setItemText(IDC_EC_INPT3, L"");
       }
       this->enableItem(IDC_BC_ADD, false);
@@ -536,11 +526,11 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         this->enableItem(IDC_BC_BROW4, false);
         // Properly delete image
-        hBm = this->_hBlankImg;
-        hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
-        if(hBm != this->_hBlankImg) DeleteObject(hBm);
-        if(this->_hImgSource) DeleteObject(this->_hImgSource);
-        this->_hImgSource = nullptr;
+        hBm = this->_hBmBlank;
+        hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
+        if(hBm != this->_hBmBlank) DeleteObject(hBm);
+        if(this->_hBmImage) DeleteObject(this->_hBmImage);
+        this->_hBmImage = nullptr;
       }
       break;
 
@@ -555,11 +545,11 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, item_str)) {
         if(Om_isFile(brow_str)) {
-          if(this->_hImgSource) DeleteObject(this->_hImgSource);
-          this->_hImgSource = Om_loadBitmap(brow_str);
-          hBm = Om_getBitmapThumbnail(this->_hImgSource, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
-          if(hBm != this->_hBlankImg) DeleteObject(hBm);
+          if(this->_hBmImage) DeleteObject(this->_hBmImage);
+          this->_hBmImage = Om_loadBitmap(brow_str);
+          hBm = Om_getBitmapThumbnail(this->_hBmImage, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
+          if(hBm != this->_hBmBlank) DeleteObject(hBm);
         }
       }
       break;
@@ -605,11 +595,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       if(Om_dialogSaveFile(brow_str, this->_hwnd, L"Save Package as...", OMM_PKG_FILES_FILTER, item_str)) {
-        if(Om_isValidName(brow_str)) {
-          this->setItemText(IDC_EC_INPT4, brow_str);
-        } else {
-          Om_dialogBoxErr(this->_hwnd, L"Invalid file name", L"The specified file name is not valid.");
-        }
+        this->setItemText(IDC_EC_INPT4, brow_str);
       }
       break;
 
@@ -641,10 +627,14 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         this->getItemText(IDC_EC_INPT2, item_str);
       }
-      if(item_str.empty()) allow = false;
+      if(!item_str.empty()) {
 
-      this->getItemText(IDC_EC_INPT4, item_str);
-      if(item_str.empty()) allow = false;
+        this->getItemText(IDC_EC_INPT4, item_str);
+        if(item_str.empty()) allow = false;
+
+      } else {
+        allow = false;
+      }
 
       this->enableItem(IDC_BC_OK, allow);
     }

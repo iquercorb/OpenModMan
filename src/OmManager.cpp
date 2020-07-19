@@ -56,7 +56,7 @@ OmManager::~OmManager()
 
   // close log file
   if(this->_logFile) {
-    CloseHandle(reinterpret_cast<HANDLE>(this->_logFile));
+    CloseHandle(this->_logFile);
   }
 }
 
@@ -67,11 +67,10 @@ OmManager::~OmManager()
 bool OmManager::init()
 {
   // Create application folder if does not exists
-  wchar_t wcbuf[OMM_MAX_PATH];
-  SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, wcbuf);
-  this->_home = wcbuf;
-  this->_home += L"\\";
-  this->_home += OMM_APP_NAME;
+  wchar_t psz_path[MAX_PATH];
+  SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, psz_path);
+  this->_home = psz_path; this->_home.append(L"\\");
+  this->_home.append(OMM_APP_NAME);
 
   // for application home directory creation result
   int result;
@@ -90,8 +89,8 @@ bool OmManager::init()
   }
 
   // initialize log file
-  swprintf(wcbuf, OMM_MAX_PATH, L"%ls\\log.txt", this->_home.c_str());
-  this->_logFile = CreateFileW(wcbuf, GENERIC_WRITE, 0, nullptr,
+  wstring log_path = this->_home + L"\\log.txt";
+  this->_logFile = CreateFileW(log_path.c_str(), GENERIC_WRITE, 0, nullptr,
                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
   // first log line
   this->log(2, L"Manager", L"Initialization");
@@ -340,9 +339,9 @@ void OmManager::getDefaultLocation(wstring& path)
     if(this->_config.xml().hasChild(L"default_location")) {
       path = this->_config.xml().child(L"default_location").content();
     } else {
-      wchar_t wcbuf[OMM_MAX_PATH];
-      SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, wcbuf);
-      path = wcbuf;
+      wchar_t psz_path[MAX_PATH];
+      SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, psz_path);
+      path = psz_path;
     }
   }
 }
@@ -678,8 +677,8 @@ void OmManager::setLogOutput(HWND hWnd) {
   this->_logHwnd = hWnd;
 
   if(this->_logHwnd) {
-    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_SETLIMITTEXT, 0, 0);
-    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(this->_log.c_str()));
+    SendMessageW(static_cast<HWND>(this->_logHwnd), EM_SETLIMITTEXT, 0, 0);
+    SendMessageW(static_cast<HWND>(this->_logHwnd), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(this->_log.c_str()));
   }
 
 }
@@ -723,11 +722,11 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
 
   // output to log window
   if(this->_logHwnd) {
-    unsigned s = SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_GETTEXTLENGTH, 0, 0);
-    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_SETSEL, s, s);
-    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
-    SendMessageW(reinterpret_cast<HWND>(this->_logHwnd), WM_VSCROLL, SB_BOTTOM, 0);
-    RedrawWindow(reinterpret_cast<HWND>(this->_logHwnd), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+    unsigned s = SendMessageW(static_cast<HWND>(this->_logHwnd), WM_GETTEXTLENGTH, 0, 0);
+    SendMessageW(static_cast<HWND>(this->_logHwnd), EM_SETSEL, s, s);
+    SendMessageW(static_cast<HWND>(this->_logHwnd), EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
+    SendMessageW(static_cast<HWND>(this->_logHwnd), WM_VSCROLL, SB_BOTTOM, 0);
+    RedrawWindow(static_cast<HWND>(this->_logHwnd), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
   }
 
   // output to standard output
@@ -738,7 +737,7 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
     DWORD wb;
     string data;
     Om_toUtf8(data, entry);
-    WriteFile(reinterpret_cast<HANDLE>(this->_logFile), data.c_str(), data.size(), &wb, nullptr);
+    WriteFile(static_cast<HANDLE>(this->_logFile), data.c_str(), data.size(), &wb, nullptr);
   }
 
   this->_log += entry;

@@ -147,6 +147,10 @@ class OmUiMain : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    HICON               _hIcAppS;
+
+    HICON               _hIcAppL;
+
     vector<wstring>     _pageName;
 
     vector<OmDialog*>   _pageDial;
@@ -159,7 +163,7 @@ class OmUiMain : public OmDialog
 
     bool                _safeEdit;
 
-    HICON               _hDefIcon;
+    HICON               _hIcBlank;
 
     HMENU               _hMenuFile;
 

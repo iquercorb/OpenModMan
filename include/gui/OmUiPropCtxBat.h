@@ -80,6 +80,16 @@ class OmUiPropCtxBat : public OmDialog
 
     bool                _chParam[8];
 
+    HBITMAP             _hBmBcNew;
+
+    HBITMAP             _hBmBcDel;
+
+    HBITMAP             _hBmBcMod;
+
+    HBITMAP             _hBmBcUp;
+
+    HBITMAP             _hBmBcDn;
+
     void                _batchUp();
 
     void                _batchDn();

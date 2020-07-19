@@ -440,12 +440,14 @@ bool OmLocation::libraryAccess(HWND hWnd)
   }
 
   if(!access_ok) {
+
     this->log(0, L"Location("+this->_title+L")", this->_error);
-    Om_dialogBoxWarn(hWnd, L"Library folder access error",
-                  L"The configured Library folder cannot be accessed, "
-                  L"the folder does not exists or have read permission "
-                  L"restriction.\n\nPlease verify the Location's Library "
-                  L"folder settings and the folder permissions.");
+
+    Om_dialogBoxWarn(hWnd,  L"Library folder access error",
+                            L"The configured Library folder cannot be accessed, "
+                            L"the folder does not exists or have read permission "
+                            L"restriction.\n\nPlease verify the Location's Library "
+                            L"folder settings and the folder permissions.");
     return false;
   }
 
@@ -477,7 +479,7 @@ bool OmLocation::backupAccess(HWND hWnd)
   } else {
     if(this->_custBackupDir) {
       this->_error = L"Custom Backup folder \"";
-      this->_error += this->_backupDir + L"\" doesn't exists.";
+      this->_error += this->_backupDir + L"\" does not exists.";
       access_ok = false;
     } else {
       // try to create it
@@ -493,11 +495,13 @@ bool OmLocation::backupAccess(HWND hWnd)
 
   if(!access_ok) {
     this->log(0, L"Location("+this->_title+L")", this->_error);
-    Om_dialogBoxWarn(hWnd, L"Backup folder access error",
-                  L"The configured Backup folder cannot be accessed, "
-                  L"the folder does not exists or have write permission "
-                  L"restriction.\n\nPlease verify the Location's Backup "
-                  L"folder settings and the folder permissions.");
+
+    Om_dialogBoxWarn(hWnd,  L"Backup folder access error",
+                            L"The configured Backup folder cannot be accessed, "
+                            L"the folder does not exists or have write permission "
+                            L"restriction.\n\nPlease verify the Location's Backup "
+                            L"folder settings and the folder permissions.");
+
     return false;
   }
 
@@ -534,11 +538,13 @@ bool OmLocation::installAccess(HWND hWnd)
 
   if(!access_ok) {
     this->log(0, L"Location("+this->_title+L")", this->_error);
-    Om_dialogBoxWarn(hWnd, L"Destination folder access error",
-                  L"The configured Destination folder cannot be accessed, "
-                  L"the folder does not exists or have write permission "
-                  L"restriction.\n\nPlease verify the Location's Destination "
-                  L"settings and the folder permissions.");
+
+    Om_dialogBoxWarn(hWnd,  L"Destination folder access error",
+                            L"The configured Destination folder cannot be accessed, "
+                            L"the folder does not exists or have write permission "
+                            L"restriction.\n\nPlease verify the Location's Destination "
+                            L"settings and the folder permissions.");
+
     return false;
   }
 
@@ -987,19 +993,18 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
     }
 
     // update dialog message
-    wchar_t wcbuf[OMM_MAX_PATH];
+    wstring item_str;
 
-    if(hSc)
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Analyzing backup folder...");
+    if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
     vector<wstring> ls;
     Om_lsAll(&ls, this->_backupDir, false);
 
     // initialize the progress bar
-    if(hSc) {
+    if(hPb) {
       SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, ls.size()));
-      SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-      SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+      SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+      SendMessageW(hPb, PBM_SETPOS, 0, 0);
     }
 
     int result;
@@ -1010,16 +1015,20 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
       // check whether abort is requested
       if(pAbort) {
         if(*pAbort) {
-          this->log(1, L"Location("+this->_title+L")", L"Backup data transfer aborted.");
+          this->log(1, L"Location("+this->_title+L")", L"Process aborted");
+          SetWindowTextW(hSc, L"Process aborted");
           break;
         }
       }
 
       // update dialog message
-      if(hSc) {
-        swprintf(wcbuf, OMM_MAX_PATH, L"Transfer backup %d/%d: %ls", i+1, ls.size(), ls[i].c_str());
-        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
-      }
+      if(hSc) SetWindowTextW(hSc, ls[i].c_str());
+
+      // step progress bar
+      if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
+      #ifdef DEBUG_SLOW
+      Sleep(DEBUG_SLOW); //< for debug
+      #endif
 
       src = this->_backupDir + L"\\" + ls[i];
       dst = path + L"\\" + ls[i];
@@ -1031,27 +1040,18 @@ void OmLocation::moveBackups(const wstring& path, HWND hWnd, HWND hPb, HWND hSc,
         this->_error += dst + L"\" :";
         this->_error += Om_getErrorStr(result);
         this->log(1, L"Location("+this->_title+L")", this->_error);
-        Om_dialogBoxWarn(hWnd, L"Move Backup item failed", this->_error);
+        Om_dialogBoxWarn(hWnd, L"Backup data transfer error", this->_error);
       }
-
-      // step progress bar
-      if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-
-      #ifdef DEBUG_SLOW
-      Sleep(DEBUG_SLOW); //< for debug
-      #endif
     }
 
     // update dialog message
     if(hSc) {
       if(pAbort) {
-        if(*pAbort == true) {
-          SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup data transfer aborted.");
-        } else {
-          SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup data transfer completed.");
+        if(*pAbort != true) {
+          SetWindowTextW(hSc, L"Process completed");
         }
       } else {
-        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup data transfer completed.");
+        SetWindowTextW(hSc, L"Process completed");
       }
     }
 
@@ -1085,10 +1085,9 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   }
 
   // update dialog message
-  wchar_t wcbuf[OMM_MAX_PATH];
+  wstring item_str;
 
-  if(hSc)
-    SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Analyzing packageList...");
+  if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
   // first we gather all installed package, we will use the same algorithm than
   // for standard uninstall list, but here we uninstall all packages.
@@ -1100,10 +1099,6 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   }
 
   vector<OmPackage*> uninst_list; //< our real uninstall list
-
-  // update dialog message
-  if(hSc)
-    SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Creating uinstall list...");
 
   // Build the real packages uinstall list including dependencies created
   // when packages installation overlaps others:
@@ -1152,22 +1147,20 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   // initialize the progress bar
   if(hPb) {
     SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, uninst_list.size()));
-    SendMessageW(hPb, PBM_SETSTEP, (WPARAM)1, 0);
-    SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
 
   for(size_t i = 0; i < uninst_list.size(); ++i) {
 
     // update dialog message
-    if(hSc) {
-      swprintf(wcbuf, OMM_MAX_PATH, L"Restoring backup %d/%d: %ls", i+1, uninst_list.size(), uninst_list[i]->name().c_str());
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)wcbuf);
-    }
+    if(hSc) SetWindowTextW(hSc, uninst_list[i]->name().c_str());
 
     // check whether abort is requested
     if(pAbort) {
       if(*pAbort) {
         this->log(1, L"Location("+this->_title+L")", L"Backup purge aborted.");
+        SetWindowTextW(hSc, L"Process aborted");
         break;
       }
     }
@@ -1178,11 +1171,11 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
       // uninstall since our uninstall list is already ordered according
       // dependency tree
       if(!uninst_list[i]->uninst(nullptr, pAbort)) {
-        wstring warn;
-        warn =  L"The backup of \"" + uninst_list[i]->name() + "\" has not been "
-                L"properly restored because the following error occurred:\n\n";
-        warn += uninst_list[i]->lastError();
-        Om_dialogBoxErr(hWnd, L"Backup restoration failed", warn);
+        wstring err = L"The backup of \"";
+        err += uninst_list[i]->name();
+        err += L"\" has not been properly restored because the following error occurred:\n\n";
+        err += uninst_list[i]->lastError();
+        Om_dialogBoxErr(hWnd, L"Backup restoration failed", err);
       }
     }
 
@@ -1197,13 +1190,11 @@ void OmLocation::purgeBackups(HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort)
   // update dialog message
   if(hSc) {
     if(pAbort) {
-      if(*pAbort == true) {
-        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup purge aborted.");
-      } else {
-        SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup purge completed.");
+      if(*pAbort != true) {
+        SetWindowTextW(hSc, L"Process completed");
       }
     } else {
-      SendMessageW((HWND)hSc, WM_SETTEXT, 0, (LPARAM)L"Backup purge completed.");
+      SetWindowTextW(hSc, L"Process completed");
     }
   }
 
@@ -1267,19 +1258,19 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
     // force installation anyway
     if(!quiet && this->_context->_manager->warnMissDpnd() && missg_list.size()) {
 
-      wstring warn = L"The package \"";
-      warn += this->_package[selec_list[i]]->name();
-      warn += L"\" have missing dependencies. The following package(s) are "
+      wstring qry = L"The package \"";
+      qry += this->_package[selec_list[i]]->name();
+      qry += L"\" have missing dependencies. The following package(s) are "
               L"required, but are not available in your library:\n";
 
       for(size_t i = 0; i < missg_list.size(); ++i) {
-        warn += L"\n ";
-        warn += missg_list[i];
+        qry += L"\n ";
+        qry += missg_list[i];
       }
 
-      warn += L"\n\nDo you want to continue and force installation anyway ?";
+      qry += L"\n\nDo you want to continue and force installation anyway ?";
 
-      if(!Om_dialogBoxQuerryWarn(hWnd, L"Dependencies missing", warn))
+      if(!Om_dialogBoxQuerryWarn(hWnd, L"Dependencies missing", qry))
         return;
     }
   }
@@ -1312,17 +1303,17 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
 
       // we have some additional package to install, we warn the user
       // and ask him if he want to continue
-      wstring warn = L"One or more selected package(s) have dependencies, the "
+      wstring qry = L"One or more selected package(s) have dependencies, the "
                      L"following package(s) also need to be installed:\n";
 
       for(size_t i = 0; i < extra_list.size(); ++i) {
-        warn += L"\n ";
-        warn += extra_list[i]->ident();
+        qry += L"\n ";
+        qry += extra_list[i]->ident();
       }
 
-      warn += L"\n\nContinue installation ?";
+      qry += L"\n\nContinue installation ?";
 
-      if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation dependencies", warn))
+      if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation dependencies", qry))
         return;
     }
   }
@@ -1364,7 +1355,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
     // no other choice
     lvi.iItem = packageIndex(insta_list[i]);
     lvi.iImage = 4; // IDB_PKG_PRC
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     if(insta_list[i]->hasSource() && !insta_list[i]->hasBackup()) {
 
@@ -1381,23 +1372,25 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
         // the installation
         if(olaps_list.size()) {
 
-          wstring warn = L"Installing the package \"";
-          warn += insta_list[i]->name();
-          warn += L"\" will overlaps and modify file(s) previously installed or "
+          wstring qry = L"Installing the package \"";
+          qry += insta_list[i]->name();
+          qry += L"\" will overlaps and modify file(s) previously installed or "
                   L"modified by the following package(s):\n";
 
           for(size_t j = 0; j < olaps_list.size(); ++j) {
-            warn += L"\n ";
-            warn += olaps_list[j]->name();
+            qry += L"\n ";
+            qry += olaps_list[j]->name();
           }
 
-          warn += L"\n\nDo you want to continue installation anyway ?";
+          qry += L"\n\nDo you want to continue installation anyway ?";
 
-          if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation overlap", warn)) {
+          if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation overlap", qry)) {
             break;
           }
         }
       }
+
+
 
       if(insta_list[i]->install(this->_backupZipLevel, hPb, pAbort)) { //< pass Progress Bar Handle
 
@@ -1415,19 +1408,19 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
         }
 
       } else {
-        wstring warn;
-        warn =  L"The package \"" + insta_list[i]->name() + "\" has not been "
-                L"installed because the following error occurred:\n\n";
-        warn += insta_list[i]->lastError();
-        Om_dialogBoxErr(hWnd, L"Package install failed", warn);
+        wstring err = L"The package \"";
+        err += insta_list[i]->name();
+        err += L"\" has not been installed because the following error occurred:\n\n";
+        err += insta_list[i]->lastError();
+        Om_dialogBoxErr(hWnd, L"Package install failed", err);
         lvi.iImage = -1; //< not installed
       }
     }
 
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     // reset progress bar
-    if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
 
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
@@ -1435,7 +1428,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
   }
 
   // reset progress bar
-  if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
 
   // package status may change after installation or backup restoration of
   // others, to ensure all icons are reflect the real status, we make an final
@@ -1453,7 +1446,7 @@ void OmLocation::installSelection(const vector<unsigned>& selec_list, bool quiet
       } else {
         lvi.iImage = -1; //< none
       }
-      SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+      SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
     }
   }
 
@@ -1538,18 +1531,18 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
 
       // we have some additional package to uninstall, we warn the user
       // and ask him if he want to continue
-      wstring warn = L"One or more selected package(s) are currently overlapped "
-                     L"by other(s). To keep backups integrity the following "
-                     L"Package(s) will also be uninstalled:\n";
+      wstring qry = L"One or more selected package(s) are currently overlapped "
+                    L"by other(s). To keep backups integrity the following "
+                    L"Package(s) will also be uninstalled:\n";
 
       for(size_t i = 0; i < extra_list.size(); ++i) {
-        warn += L"\n ";
-        warn += extra_list[i]->name();
+        qry += L"\n ";
+        qry += extra_list[i]->name();
       }
 
-      warn += L"\n\nDo you want to continue anyway ?";
+      qry += L"\n\nDo you want to continue anyway ?";
 
-      if(!Om_dialogBoxQuerryWarn(hWnd, L"Backup(s) restoration overlap", warn))
+      if(!Om_dialogBoxQuerryWarn(hWnd, L"Backup(s) restoration overlap", qry))
         return;
     }
   }
@@ -1591,7 +1584,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
     // no other choice
     lvi.iItem = packageIndex(uninst_list[i]);
     lvi.iImage = 4;
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     if(uninst_list[i]->hasBackup()) { // <- this should be always the case
 
@@ -1613,11 +1606,11 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
         }
 
       } else {
-        wstring warn;
-        warn =  L"The backup of \"" + uninst_list[i]->name() + "\" has not been "
-                L"properly restored because the following error occurred:\n\n";
-        warn += uninst_list[i]->lastError();
-        Om_dialogBoxErr(hWnd, L"Package uninstall failed", warn);
+        wstring err = L"The backup of \"";
+        err += uninst_list[i]->name();
+        err += L"\" has not been properly restored because the following error occurred:\n\n";
+        err += uninst_list[i]->lastError();
+        Om_dialogBoxErr(hWnd, L"Package uninstall failed", err);
         if(this->isBakcupOverlapped(uninst_list[i])) {
           lvi.iImage = 6; //< IDB_PKG_OWR
         } else {
@@ -1627,10 +1620,10 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
       }
     }
 
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, (LPARAM)&lvi);
+    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     // reset progress bar
-    if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+    if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
 
     #ifdef DEBUG_SLOW
     Sleep(DEBUG_SLOW); //< for debug
@@ -1638,7 +1631,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
   }
 
   // reset progress bar
-  if(hPb) SendMessageW(hPb, PBM_SETPOS, (WPARAM)0, 0);
+  if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
 
   // package status may change after installation or backup restoration of
   // others, to ensure all icons are reflect the real status, we make an final
@@ -1656,7 +1649,7 @@ void OmLocation::uninstSelection(const vector<unsigned>& selec_list, bool quiet,
       } else {
         lvi.iImage = -1; //< none
       }
-      SendMessageW(hLv ,LVM_SETITEM, 0, (LPARAM)&lvi);
+      SendMessageW(hLv ,LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
     }
   }
 }
@@ -1797,8 +1790,8 @@ size_t OmLocation::getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPack
 ///
 void OmLocation::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"Context(%ls):: %ls", this->_context->title().c_str(), head.c_str());
+  wstring log_str = L"Context("; log_str.append(this->_context->title());
+  log_str.append(L"):: "); log_str.append(head);
 
-  this->_context->log(level, wcbuf, detail);
+  this->_context->log(level, log_str, detail);
 }

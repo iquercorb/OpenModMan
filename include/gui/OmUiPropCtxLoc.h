@@ -80,6 +80,16 @@ class OmUiPropCtxLoc : public OmDialog
 
     bool                _chParam[8];
 
+    HBITMAP             _hBmBcNew;
+
+    HBITMAP             _hBmBcDel;
+
+    HBITMAP             _hBmBcMod;
+
+    HBITMAP             _hBmBcUp;
+
+    HBITMAP             _hBmBcDn;
+
     void                _locationUp();
 
     void                _locationDn();

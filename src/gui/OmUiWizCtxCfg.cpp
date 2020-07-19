@@ -56,46 +56,20 @@ bool OmUiWizCtxCfg::hasValidParams() const
   wstring item_str;
 
   this->getItemText(IDC_EC_INPT1, item_str);
-  if(!item_str.empty()) {
-    if(!Om_isValidName(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title",
-                                    L"The Context title contain "
-                                    L"illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Empty Context title",
-                                  L"Please choose a Context title.");
+  if(!Om_isValidName(item_str)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", OMM_STR_ERR_VALIDNAME);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT2, item_str);
-  if(!item_str.empty()) {
-    if(!Om_isValidPath(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title",
-                                    L"The Context title contain "
-                                    L"illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Empty Context home",
-                                  L"Please choose an existing folder "
-                                  L"for new Context home");
+  if(!Om_isValidPath(item_str)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context home path", OMM_STR_ERR_VALIDPATH);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT3, item_str);
-  if(!item_str.empty()) {
-    if(!Om_isValidPath(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition filename",
-                                    L"The Context definition filename "
-                                    L"contain illegal character(s)");
-      return false;
-    }
-  } else {
-    Om_dialogBoxWarn(this->_hwnd, L"Empty Context definition filename",
-                                  L"Please enter a valid filename "
-                                  L"for Context definition");
+  if(!Om_isValidPath(item_str)) {
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition filename", OMM_STR_ERR_VALIDPATH);
     return false;
   }
 
@@ -120,7 +94,7 @@ void OmUiWizCtxCfg::_onInit()
   this->setItemText(IDC_EC_INPT3, L"<invalid path>");
 
   // disable "next" button
-  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
+  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
 }
 
 
@@ -134,10 +108,24 @@ void OmUiWizCtxCfg::_onShow()
   // enable or disable "next" button according values
   bool allow = true;
 
-  this->getItemText(IDC_EC_INPT3, item_str);
-  if(!Om_isValidPath(item_str)) allow = false;
+  this->getItemText(IDC_EC_INPT1, item_str);
+  if(!item_str.empty()) {
 
-  reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
+    this->getItemText(IDC_EC_INPT2, item_str);
+    if(!item_str.empty()) {
+
+      this->getItemText(IDC_EC_INPT3, item_str);
+      if(!Om_isValidPath(item_str)) allow = false;
+
+    } else {
+      allow = false;
+    }
+
+  } else {
+    allow = false;
+  }
+
+  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
 }
 
 
@@ -184,8 +172,6 @@ void OmUiWizCtxCfg::_onQuit()
 ///
 bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
-
   if(uMsg == WM_COMMAND) {
 
     bool has_changed = false;
@@ -226,10 +212,25 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     // enable or disable "next" button according values
     if(has_changed) {
       bool allow = true;
-      this->getItemText(IDC_EC_INPT3, item_st1);
-      if(!Om_isValidPath(item_st1)) allow = false;
 
-      reinterpret_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
+      this->getItemText(IDC_EC_INPT1, item_st1);
+      if(!item_st1.empty()) {
+
+        this->getItemText(IDC_EC_INPT2, item_st1);
+        if(!item_st1.empty()) {
+
+          this->getItemText(IDC_EC_INPT3, item_st1);
+          if(!Om_isValidPath(item_st1)) allow = false;
+
+        } else {
+          allow = false;
+        }
+
+      } else {
+        allow = false;
+      }
+
+      static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
     }
   }
 

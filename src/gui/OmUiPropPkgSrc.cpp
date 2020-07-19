@@ -25,7 +25,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
-  _hPicThumb(nullptr)
+  _hFtMonos(Om_createFont(14, 400, L"Consolas")),
+  _hBmThumb(nullptr)
 {
 
 }
@@ -36,7 +37,8 @@ OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropPkgSrc::~OmUiPropPkgSrc()
 {
-  if(this->_hPicThumb) DeleteObject(this->_hPicThumb);
+  DeleteObject(this->_hFtMonos);
+  if(this->_hBmThumb) DeleteObject(this->_hBmThumb);
 }
 
 
@@ -54,16 +56,11 @@ long OmUiPropPkgSrc::id() const
 ///
 void OmUiPropPkgSrc::_onInit()
 {
-  OmPackage* package = reinterpret_cast<OmUiPropPkg*>(this->_parent)->package();
-
-  if(package == nullptr)
-    return;
-
   // defines fonts for package description, title, and log output
-  HFONT hFont = CreateFont(14,0,0,0,400,false,false,false,1,0,0,5,0,"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, (WPARAM)hFont, 1);
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), 1);
 
-  wstring hash_str;
+  OmPackage* package = static_cast<OmUiPropPkg*>(this->_parent)->package();
+  if(package == nullptr) return;
 
   // Ident
   this->setItemText(IDC_EC_ENT01, package->ident());
@@ -102,15 +99,13 @@ void OmUiPropPkgSrc::_onInit()
       this->setItemText(IDC_EC_ENT08, L"None");
     }
 
-
-
     // Snapshot image
     if(package->picture()) {
-      this->_hPicThumb = Om_getBitmapThumbnail(package->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+      this->_hBmThumb = Om_getBitmapThumbnail(package->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
     } else {
-      this->_hPicThumb = (HBITMAP)LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0);
+      this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
     }
-    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP,(LPARAM)this->_hPicThumb);
+    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmThumb));
 
     // Package description
     this->enableItem(IDC_EC_PKTXT, true);
@@ -131,7 +126,7 @@ void OmUiPropPkgSrc::_onInit()
     this->setItemText(IDC_EC_ENT08, L"N/A");
     this->enableItem(IDC_EC_ENT08, false);
     // Snapshot image
-    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE,(WPARAM)IMAGE_BITMAP,(LPARAM)nullptr);
+    this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmThumb));
     // Package description
     this->setItemText(IDC_EC_PKTXT, L"N/A");
     this->enableItem(IDC_EC_PKTXT, false);

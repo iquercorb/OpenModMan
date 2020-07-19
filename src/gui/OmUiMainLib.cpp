@@ -37,7 +37,11 @@
 OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _onProcess(false),
   _lvIconsSize(0),
-  _hBlankImg(nullptr),
+  _hFtTitle(Om_createFont(18, 800, L"Ms Shell Dlg")),
+  _hFtMonos(Om_createFont(14, 700, L"Consolas")),
+  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),0,0,0,0))),
+  _hBmBcNew(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),0,0,0,0))),
+  _hBmBcDel(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),0,0,0,0))),
   _abortPending(false),
   _install_hth(nullptr),
   _uninstall_hth(nullptr),
@@ -53,9 +57,6 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   // elements for real-time directory monitoring thread
   this->_monitor_hev[0] = CreateEvent(nullptr, true, false, nullptr); //< custom event to notify thread must exit
   this->_monitor_hev[1] = nullptr;
-
-  // load the package blank picture
-  this->_hBlankImg = reinterpret_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
 }
 
 
@@ -67,7 +68,11 @@ OmUiMainLib::~OmUiMainLib()
   // stop Library folder changes monitoring
   this->_monitor_stop();
 
-  DeleteObject(this->_hBlankImg);
+  DeleteObject(this->_hBmBlank);
+  DeleteObject(this->_hBmBcNew);
+  DeleteObject(this->_hBmBcDel);
+  DeleteObject(this->_hFtTitle);
+  DeleteObject(this->_hFtMonos);
 }
 
 
@@ -85,7 +90,7 @@ long OmUiMainLib::id() const
 ///
 void OmUiMainLib::selLocation(int i)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // stop Library folder monitoring
   this->_monitor_stop();
@@ -110,7 +115,7 @@ void OmUiMainLib::selLocation(int i)
     }
   }
 
-  OmUiMain* uiMain = reinterpret_cast<OmUiMain*>(this->_parent);
+  OmUiMain* uiMain = static_cast<OmUiMain*>(this->_parent);
 
   // disable "Edit > Package" in main menu
   uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
@@ -140,7 +145,7 @@ void OmUiMainLib::selLocation(int i)
 ///
 void OmUiMainLib::toggle()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
   HWND hLv = this->getItem(IDC_LV_PKGLS);
@@ -150,7 +155,7 @@ void OmUiMainLib::toggle()
   for(unsigned i = 0; i < n; ++i) {
     if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
       // enable the On-Process state of parent window
-      reinterpret_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
+      static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
 
       this->_abortPending = false;
 
@@ -173,7 +178,7 @@ void OmUiMainLib::install()
   this->_abortPending = false;
 
   // enable the On-Process state of parent window
-  reinterpret_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
+  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
 
   this->_install_hth = CreateThread(nullptr, 0, this->_install_fth, this, 0, &dwId);
 }
@@ -188,7 +193,7 @@ void OmUiMainLib::uninstall()
   this->_abortPending = false;
 
   // enable the On-Process state of parent window
-  reinterpret_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
+  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
 
   this->_uninstall_hth = CreateThread(nullptr, 0, this->_uninstall_fth, this, 0, &dwId);
 }
@@ -199,7 +204,7 @@ void OmUiMainLib::uninstall()
 ///
 void OmUiMainLib::viewDetails()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = manager->curContext()->curLocation();
   OmPackage* package = nullptr;
 
@@ -226,7 +231,7 @@ void OmUiMainLib::viewDetails()
 ///
 void OmUiMainLib::moveTrash()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
   vector<OmPackage*> trash_list;
@@ -243,7 +248,8 @@ void OmUiMainLib::moveTrash()
   }
 
   if(trash_list.size()) {
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)", L"Move the selected package(s) to trash ?"))
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)",
+                                            L"Move the selected package(s) to trash ?"))
       return;
 
     for(size_t i = 0; i < trash_list.size(); ++i) {
@@ -256,7 +262,7 @@ void OmUiMainLib::moveTrash()
   LVITEM lvI = {};
   lvI.mask = LVIF_STATE;
   lvI.stateMask = LVIS_SELECTED;
-  SendMessageW(hLv, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&lvI);
+  SendMessageW(hLv, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
   this->setOnProcess(false);
 
@@ -270,7 +276,7 @@ void OmUiMainLib::moveTrash()
 ///
 void OmUiMainLib::openExplore()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = manager->curContext()->curLocation();
 
   vector<OmPackage*> explo_list;
@@ -307,7 +313,7 @@ void OmUiMainLib::batch()
   this->_abortPending = false;
 
   // enable the On-Process state of parent window
-  reinterpret_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
+  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
 
   this->_batch_hth = CreateThread(nullptr, 0, this->_batch_fth, this, 0, &dwId);
 }
@@ -326,16 +332,15 @@ bool OmUiMainLib::deleteBatch()
 
     unsigned bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
 
-    OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+    OmManager* manager = static_cast<OmManager*>(this->_data);
     OmContext* curCtx = manager->curContext();
 
     // warns the user before committing the irreparable
-    wstring msg;
-    msg = L"Are your sure you want to delete the Batch '";
-    msg += curCtx->batch(bat_id)->title();
-    msg += L"' ?";
+    wstring qry = L"Are your sure you want to delete the Batch \"";
+    qry += curCtx->batch(bat_id)->title();
+    qry += L"\" ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", msg)) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
       return false;
     }
 
@@ -357,10 +362,10 @@ bool OmUiMainLib::deleteBatch()
 ///
 void OmUiMainLib::setOnProcess(bool enable)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // handle to "Edit > Package" sub-menu
-  HMENU hMenu = reinterpret_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
+  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
 
   // enable/disable Location combo-box
   this->enableItem(IDC_CB_LOCLS, !enable);
@@ -424,7 +429,7 @@ void OmUiMainLib::setOnProcess(bool enable)
 ///
 void OmUiMainLib::_onSelectPkg()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = nullptr;
 
   if(manager->curContext())
@@ -434,7 +439,7 @@ void OmUiMainLib::_onSelectPkg()
     return;
 
   // keep handle to main dialog
-  OmUiMain* uiMain = reinterpret_cast<OmUiMain*>(this->_parent);
+  OmUiMain* uiMain = static_cast<OmUiMain*>(this->_parent);
 
   // disable "Edit > Package" in main menu
   uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
@@ -446,7 +451,7 @@ void OmUiMainLib::_onSelectPkg()
   HWND hSb = this->getItem(IDC_SB_PKIMG);
 
   // Handle to bitmap for package picture
-  HBITMAP hBm  = this->_hBlankImg;
+  HBITMAP hBm  = this->_hBmBlank;
 
   // get count of selected item
   unsigned lv_nsl = SendMessageW(hLv, LVM_GETSELECTEDCOUNT, 0, 0);
@@ -528,8 +533,8 @@ void OmUiMainLib::_onSelectPkg()
   }
 
   // Update the selected picture
-  hBm = reinterpret_cast<HBITMAP>(SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBm));
-  if(hBm != this->_hBlankImg) DeleteObject(hBm);
+  hBm = reinterpret_cast<HBITMAP>(SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
+  if(hBm != this->_hBmBlank) DeleteObject(hBm);
 
   this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 }
@@ -552,7 +557,7 @@ void OmUiMainLib::_onSelectBat()
 ///
 void OmUiMainLib::_reloadLibEc()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = nullptr;
 
   if(manager->curContext())
@@ -580,7 +585,7 @@ void OmUiMainLib::_reloadLibEc()
 ///
 void OmUiMainLib::_reloadLibLv(bool clear)
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmLocation* location = nullptr;
 
   if(manager->curContext())
@@ -612,7 +617,7 @@ void OmUiMainLib::_reloadLibLv(bool clear)
 
     // Save list-view scroll position to lvRect
     RECT lvRec;
-    SendMessageW(hLv, LVM_GETVIEWRECT, 0, (LPARAM)&lvRec);
+    SendMessageW(hLv, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
 
     // add item to list view
     OmPackage* package;
@@ -634,7 +639,7 @@ void OmUiMainLib::_reloadLibLv(bool clear)
       } else {
         lvItem.iImage = -1; // none
       }
-      lvItem.iItem = SendMessageW(hLv, LVM_INSERTITEMW, 0, (LPARAM)&lvItem);
+      lvItem.iItem = SendMessageW(hLv, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
       // Second column, the package name and type, here we set the subitem
       lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
@@ -653,13 +658,13 @@ void OmUiMainLib::_reloadLibLv(bool clear)
         lvItem.iImage = 0; // IDB_PKG_ERR
       }
       lvItem.pszText = (LPWSTR)location->package(i)->name().c_str();
-      SendMessageW(hLv, LVM_SETITEMW, 0, (LPARAM)&lvItem);
+      SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
       // Third column, the package version, we set the subitem
       lvItem.mask = LVIF_TEXT;
       lvItem.iSubItem = 2;
       lvItem.pszText = (LPWSTR)location->package(i)->version().asString().c_str();
-      SendMessageW(hLv, LVM_SETITEMW, 0, (LPARAM)&lvItem);
+      SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
     }
 
     // restore list-view scroll position from lvmRect
@@ -679,7 +684,7 @@ void OmUiMainLib::_reloadLibLv(bool clear)
 ///
 void OmUiMainLib::_reloadBatLb()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmContext* context = manager->curContext();
 
   HWND hLb = this->getItem(IDC_LB_BATLS);
@@ -688,10 +693,8 @@ void OmUiMainLib::_reloadBatLb()
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
 
   if(context) {
-
     for(unsigned i = 0; i < context->batchCount(); ++i) {
-
-      SendMessageW(hLb, LB_ADDSTRING, i, (LPARAM)context->batch(i)->title().c_str());
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(context->batch(i)->title().c_str()));
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
@@ -703,7 +706,7 @@ void OmUiMainLib::_reloadBatLb()
 ///
 void OmUiMainLib::_reloadLocCb()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmContext* context = manager->curContext();
 
   HWND hCb = this->getItem(IDC_CB_LOCLS);
@@ -742,7 +745,7 @@ void OmUiMainLib::_reloadLocCb()
         label += L"<folder access error>";
       }
 
-      SendMessageW(hCb, CB_ADDSTRING, i, (LPARAM)label.c_str());
+      SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
 
     // select the the previously selected Context
@@ -761,11 +764,11 @@ void OmUiMainLib::_reloadLocCb()
     // unselect Location
     this->selLocation(-1);
     // if Context have no Location, we ask user to create at least one
-    wchar_t str[] = L"The current Context does not have any configured "
-                    L"Location. A Context needs at least one Location.\n\n"
-                    L"Do you want to configure a new Location now ?";
+    wstring qry = L"The current Context does not have any configured "
+                  L"Location. A Context needs at least one Location.\n\n"
+                  L"Do you want to configure a new Location now ?";
 
-    if(Om_dialogBoxQuerry(this->_hwnd, L"No Location found", str)) {
+    if(Om_dialogBoxQuerry(this->_hwnd, L"No Location found", qry)) {
       // TODO : adapter ceci
       this->childById(IDD_WIZ_LOC)->open(true);
     }
@@ -778,7 +781,7 @@ void OmUiMainLib::_reloadLocCb()
 ///
 void OmUiMainLib::_reloadIcons()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // update size
   this->_lvIconsSize = manager->iconsSize();
@@ -828,8 +831,8 @@ void OmUiMainLib::_reloadIcons()
     DeleteObject(hBm[i]);
   }
 
-  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)hImgList);
-  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)hImgList);
+  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgList));
+  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgList));
 
   DeleteObject(hImgList);
 }
@@ -841,7 +844,7 @@ void OmUiMainLib::_reloadIcons()
 void OmUiMainLib::_showPkgPopup()
 {
   // get handle to "Edit > Packages..." sub-menu
-  HMENU hMenu = reinterpret_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
+  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
 
   // get mouse cursor position
   POINT pt;
@@ -1123,75 +1126,55 @@ DWORD WINAPI OmUiMainLib::_monitor_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_onShow()
+void OmUiMainLib::_onInit()
 {
+  // Defines fonts for package description, title, and log output
+  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtTitle), true);
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  // Set batches New and Delete buttons icons
+  this->msgItem(IDC_BC_NEW, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
+  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
+
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOCLS,  L"Select active location");
   this->_createTooltip(IDC_BC_INST,   L"Install selected package(s)");
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected package(s)");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
 
-  HBITMAP hBm;
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_NEW, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  hBm = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0);
-  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBm);
-
-  // hold the HWND of our list view control
+  // Initialize the ListView control
   HWND hLv = this->getItem(IDC_LV_PKGLS);
 
-  // the _onShow() function is called each time the dialog receive the "Show"
-  // message, which happen every the the corresponding Tab is selected. To prevent
-  // the List-View to be rebuilt and adding columns each time, we must check the
-  // List-View header content.
-  HWND hLvHead = (HWND)SendMessageW(hLv,LVM_GETHEADER,0,0);
+  DWORD dwExStyle = LVS_EX_FULLROWSELECT|
+                    LVS_EX_SUBITEMIMAGES|
+                    LVS_EX_DOUBLEBUFFER;
 
-  // create columns only if list-view header is empty
-  if(SendMessageW(hLvHead, HDM_GETITEMCOUNT, 0, 0) <= 0) {
+  SendMessageW(hLv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
 
-    DWORD dwExStyle = LVS_EX_FULLROWSELECT|
-                      LVS_EX_SUBITEMIMAGES|
-                      LVS_EX_DOUBLEBUFFER;
+  // we now add columns into our list-view control
+  LVCOLUMNW lvCol;
+  lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
 
-    SendMessageW(hLv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dwExStyle);
+  //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
+  // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
+  // mysterious ways... So, don't try to fix this.
 
+  lvCol.pszText = const_cast<LPWSTR>(L"Status");
+  lvCol.fmt = LVCFMT_RIGHT;
+  lvCol.cx = 43;
+  lvCol.iSubItem = 0;
+  SendMessageW(hLv, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
 
-    // we now add columns into our list-view control
-    LVCOLUMNW lvCol;
-    lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
+  lvCol.pszText = const_cast<LPWSTR>(L"Name");
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 550;
+  lvCol.iSubItem = 1;
+  SendMessageW(hLv, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
 
-    //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
-    // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
-    // mysterious ways... So, don't try to fix this.
-
-    lvCol.pszText = (LPWSTR)"Status";
-    lvCol.fmt = LVCFMT_RIGHT;
-    lvCol.cx = 43;
-    lvCol.iSubItem = 0;
-    SendMessageW(hLv, LVM_INSERTCOLUMN, 0, (LPARAM)&lvCol);
-
-    lvCol.pszText = (LPWSTR)"Name";
-    lvCol.fmt = LVCFMT_LEFT;
-    lvCol.cx = 550;
-    lvCol.iSubItem = 1;
-    SendMessageW(hLv, LVM_INSERTCOLUMN, 1, (LPARAM)&lvCol);
-
-    lvCol.pszText = (LPWSTR)"Version";
-    lvCol.fmt = LVCFMT_LEFT;
-    lvCol.cx = 80;
-    lvCol.iSubItem = 2;
-    SendMessageW(hLv, LVM_INSERTCOLUMN, 2, (LPARAM)&lvCol);
-
-    HFONT hFont;
-
-    // defines fonts for package description, title, and log output
-    hFont = CreateFont(14,0,0,0,700,false,false,false,1,0,0,5,0,"Consolas");
-    this->msgItem(IDC_EC_PKTXT, WM_SETFONT, (WPARAM)hFont, 1);
-
-    hFont = CreateFont(18,0,0,0,800,false,false,false,1,0,0,5,0,"Ms Shell Dlg");
-    this->msgItem(IDC_SC_TITLE, WM_SETFONT, (WPARAM)hFont, 1);
-  }
+  lvCol.pszText = const_cast<LPWSTR>(L"Version");
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 80;
+  lvCol.iSubItem = 2;
+  SendMessageW(hLv, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
 
   // force refresh
   this->_onRefresh();
@@ -1212,7 +1195,7 @@ void OmUiMainLib::_onResize()
   // Resize the ListView column
   LONG size[4];
   HWND hLv = this->getItem(IDC_LV_PKGLS);
-  GetClientRect(hLv, (LPRECT)&size);
+  GetClientRect(hLv, reinterpret_cast<LPRECT>(&size));
   SendMessageW(hLv, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
 
   // Install and Uninstall buttons
@@ -1252,7 +1235,7 @@ void OmUiMainLib::_onResize()
 ///
 void OmUiMainLib::_onRefresh()
 {
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -1319,12 +1302,12 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_uninstall_hth = nullptr;
     }
     // disable the On-Process state of parent window
-    reinterpret_cast<OmUiMain*>(this->_parent)->setOnProcess(false);
+    static_cast<OmUiMain*>(this->_parent)->setOnProcess(false);
     // Refresh Package list
     this->_reloadLibLv();
   }
 
-  OmManager* manager = reinterpret_cast<OmManager*>(this->_data);
+  OmManager* manager = static_cast<OmManager*>(this->_data);
   OmContext* curCtx = manager->curContext();
 
   OmLocation* curLoc = (curCtx) ? curCtx->curLocation() : nullptr;
@@ -1416,7 +1399,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_NEW:
       {
-        OmUiNewBat* uiNewBat = reinterpret_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        OmUiNewBat* uiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
         uiNewBat->setContext(curCtx);
         uiNewBat->open(true);
       }

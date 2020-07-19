@@ -106,12 +106,12 @@ void OmDialog::open(bool show)
   this->_hwnd = CreateDialogParamW( this->_hins,
                                     MAKEINTRESOURCEW(this->id()),
                                     (this->_parent)?this->_parent->_hwnd:nullptr,
-                                    (DLGPROC)this->_wndproc,
-                                    (LPARAM)this);
+                                    reinterpret_cast<DLGPROC>(this->_wndproc),
+                                    reinterpret_cast<LPARAM>(this));
 
   if(this->_hwnd != nullptr) {
 
-    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     if(this->_parent) {
       EnableWindow(this->_parent->_hwnd, false);
@@ -137,13 +137,13 @@ void OmDialog::modeless(bool show)
 
   this->_hwnd = CreateDialogParamW( this->_hins,
                                     MAKEINTRESOURCEW(this->id()),
-                                    (this->_parent)?this->_parent->_hwnd:nullptr,
-                                    (DLGPROC)this->_wndproc,
-                                    (LPARAM)this);
+                                    (this->_parent) ? this->_parent->_hwnd : nullptr,
+                                    reinterpret_cast<DLGPROC>(this->_wndproc),
+                                    reinterpret_cast<LPARAM>(this));
 
   if(this->_hwnd != nullptr) {
 
-    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     if(show)
       ShowWindow(this->_hwnd, SW_SHOW);
@@ -332,7 +332,7 @@ size_t OmDialog::getItemText(unsigned id, wstring& text) const
 void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h)
 {
   long rect[4] = {x, y, w, h};
-  MapDialogRect(this->_hwnd, (LPRECT)&rect);
+  MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
   SetWindowPos(GetDlgItem(this->_hwnd, id), 0, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
 }
 
@@ -350,20 +350,15 @@ void OmDialog::_createTooltip(unsigned id, const wstring& text)
                             this->_hwnd, nullptr,
                             this->_hins, nullptr);
 
-  // copy text to local buffer
-  wchar_t wcbuf[OMM_MAX_PATH];
-  swprintf(wcbuf, OMM_MAX_PATH, L"%ls", text.c_str());
-
   // associate the Tooltip with the target control.
   TTTOOLINFOW toolInfo = { };
   toolInfo.cbSize = sizeof(toolInfo);
   toolInfo.hwnd = this->_hwnd;
   toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-  toolInfo.uId = (UINT_PTR)GetDlgItem(this->_hwnd, id);
-  //toolInfo.lpszText = wcbuf;
-  toolInfo.lpszText = (LPWSTR)text.c_str();
+  toolInfo.uId = reinterpret_cast<UINT_PTR>(GetDlgItem(this->_hwnd, id));
+  toolInfo.lpszText = const_cast<LPWSTR>(text.c_str());
 
-  SendMessageW(hTtip, TTM_ADDTOOLW, 0, (LPARAM)&toolInfo);
+  SendMessageW(hTtip, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&toolInfo));
 }
 
 
@@ -439,10 +434,10 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
   OmDialog* dialog;
 
   if(uMsg == WM_INITDIALOG ) {
-    SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)lParam );
+    SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
     dialog = reinterpret_cast<OmDialog*>(lParam);
   } else {
-    dialog = reinterpret_cast<OmDialog*>((LPARAM)GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    dialog = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
   }
 
   if(dialog) {
@@ -476,7 +471,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         // controls alignments
         GetClientRect(hWnd, &dialog->_rect);
         // Calculate the dialog base unit
-        MapDialogRect(dialog->_hwnd, (LPRECT)&size);
+        MapDialogRect(dialog->_hwnd, reinterpret_cast<LPRECT>(&size));
         dialog->_unit[0] = size[2];
         dialog->_unit[1] = size[3];
         // calculate dialog size in base unit
@@ -497,7 +492,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_SIZE:
       GetClientRect(hWnd, &dialog->_rect);
       // Calculate the dialog base unit
-      MapDialogRect(dialog->_hwnd, (LPRECT)&size);
+      MapDialogRect(dialog->_hwnd, reinterpret_cast<LPRECT>(&size));
       dialog->_unit[0] = size[2];
       dialog->_unit[1] = size[3];
       // calculate dialog size in base unit
@@ -510,8 +505,8 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
     case WM_GETMINMAXINFO:
       // Set minimum window size as initial window size
-      ((LPMINMAXINFO)lParam)->ptMinTrackSize.x = dialog->_limit[0];
-      ((LPMINMAXINFO)lParam)->ptMinTrackSize.y = dialog->_limit[1];
+      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.x = dialog->_limit[0];
+      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.y = dialog->_limit[1];
       return false; // case WM_GETMINMAXINFO:
 
     case 736: // WM_DPICHANGED
