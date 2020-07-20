@@ -111,7 +111,7 @@ void OmUiWizCtx::_onWizFinish()
     // get last created Context
     OmContext* context = manager->context(manager->contextCount()-1);
     // create new Location in Context
-    if(!context->makeLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+    if(!context->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
       Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
     }
   } else {

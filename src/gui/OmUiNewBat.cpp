@@ -424,7 +424,7 @@ bool OmUiNewBat::_apply()
   this->getItemText(IDC_EC_INPT1, bat_name);
 
   // try to create a new batch
-  if(!this->_context->makeBatch(bat_name, loc_hash_lsts)) {
+  if(!this->_context->addBatch(bat_name, loc_hash_lsts)) {
     Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed",
                                   this->_context->lastError());
     return false;

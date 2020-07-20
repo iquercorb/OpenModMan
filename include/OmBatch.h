@@ -258,7 +258,7 @@ class OmBatch
     ///
     /// \param[in]  name   : New Batch file name without extension.
     ///
-    bool rename(const wstring& name);
+    bool renameHome(const wstring& name);
 
     /// \brief Close batch file
     ///

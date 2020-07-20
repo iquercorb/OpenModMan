@@ -198,6 +198,74 @@ class OmLocation
     ///
     bool installAccess(HWND hWnd = nullptr);
 
+    /// \brief Open Location.
+    ///
+    /// Load Location from specified file.
+    ///
+    /// \param[in]  path    : File path of Location to be loaded.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool open(const wstring& path);
+
+    /// \brief Close Location.
+    ///
+    /// Close and empty the current instance.
+    ///
+    void close();
+
+    /// \brief Set Location title.
+    ///
+    /// Defines and save Location title.
+    ///
+    /// \param[in]  title   : Title to defines and save
+    ///
+    void setTitle(const wstring& title);
+
+    /// \brief Set Location index.
+    ///
+    /// Defines and save Location index for ordering.
+    ///
+    /// \param[in]  index   : Index number to defines and save
+    ///
+    void setIndex(unsigned index);
+
+    /// \brief Set Location destination path.
+    ///
+    /// Defines and save Location installation destination path.
+    ///
+    /// \param[in]  path    : destination path to save.
+    ///
+    void setInstallDir(const wstring& path);
+
+    /// \brief Set custom Library folder.
+    ///
+    /// Defines and save a custom package Library folder. If custom
+    /// Library folder is not defined, the default location is used:
+    /// <Location path>\library
+    ///
+    /// \param[in]  path    : Custom Library folder path to save.
+    ///
+    void setCustLibraryDir(const wstring& path);
+
+    /// \brief Check for custom Library.
+    ///
+    /// Checks whether this instance currently has and use a custom
+    /// Library folder path.
+    ///
+    /// \return True if a custom Library path is used, false otherwise.
+    ///
+    bool hasCustLibraryDir() const {
+      return _custLibraryDir;
+    }
+
+    /// \brief Remove custom Backup.
+    ///
+    /// Removes the current custom Backup configuration and reset to
+    /// default settings.
+    ///
+    void remCustLibraryDir();
+
     /// \brief Clear Location package list.
     ///
     /// Resets Location package list.
@@ -298,74 +366,6 @@ class OmLocation
       return -1;
     }
 
-    /// \brief Open Location.
-    ///
-    /// Load Location from specified file.
-    ///
-    /// \param[in]  path    : File path of Location to be loaded.
-    ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    bool open(const wstring& path);
-
-    /// \brief Close Location.
-    ///
-    /// Close and empty the current instance.
-    ///
-    void close();
-
-    /// \brief Set Location title.
-    ///
-    /// Defines and save Location title.
-    ///
-    /// \param[in]  title   : Title to defines and save
-    ///
-    void setTitle(const wstring& title);
-
-    /// \brief Set Location index.
-    ///
-    /// Defines and save Location index for ordering.
-    ///
-    /// \param[in]  index   : Index number to defines and save
-    ///
-    void setIndex(unsigned index);
-
-    /// \brief Set Location destination path.
-    ///
-    /// Defines and save Location installation destination path.
-    ///
-    /// \param[in]  path    : destination path to save.
-    ///
-    void setInstallDir(const wstring& path);
-
-    /// \brief Set custom Library folder.
-    ///
-    /// Defines and save a custom package Library folder. If custom
-    /// Library folder is not defined, the default location is used:
-    /// <Location path>\library
-    ///
-    /// \param[in]  path    : Custom Library folder path to save.
-    ///
-    void setCustLibraryDir(const wstring& path);
-
-    /// \brief Check for custom Library.
-    ///
-    /// Checks whether this instance currently has and use a custom
-    /// Library folder path.
-    ///
-    /// \return True if a custom Library path is used, false otherwise.
-    ///
-    bool hasCustLibraryDir() const {
-      return _custLibraryDir;
-    }
-
-    /// \brief Remove custom Backup.
-    ///
-    /// Removes the current custom Backup configuration and reset to
-    /// default settings.
-    ///
-    void remCustLibraryDir();
-
     /// \brief Set custom Backup folder.
     ///
     /// Defines and save a custom package Backup folder. If custom
@@ -406,14 +406,23 @@ class OmLocation
     /// \brief Rename Location
     ///
     /// Truly rename Location definition name and home folder according
-    /// the new title.
+    /// the given new name.
     ///
-    /// \param[in]  title   : Destination folder to move backup data to.
-    /// \param[in]  hWnd    : Parent window handle (HWND) for warning messages.
+    /// \param[in]  name   : New name to rename subfolder and definition file.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool rename(const wstring& title, HWND hWnd = nullptr);
+    bool renameHome(const wstring& name);
+
+
+    /// \brief Check whether has backup data
+    ///
+    /// Checks whether the Location currently has one or more backup data
+    /// to be restored.
+    ///
+    /// \return True Location currently has backup data, false otherwise.
+    ///
+    bool hasBackupData();
 
     /// \brief Move backup
     ///
@@ -424,22 +433,27 @@ class OmLocation
     /// current Backup folder path. This function should be used in conjunction
     /// with Location.setCustBackup or Location.remCustBackup.
     ///
-    /// \param[in]  dest    : Destination folder to move backup data to.
-    /// \param[in]  hWnd    : Parent window handle (HWND) for warning messages.
-    /// \param[in]  hSc    : Progress Bar control handle (HWND) to be updated during process.
+    /// \param[in]  dest      : Destination folder to move backup data to.
+    /// \param[in]  hPb       : Progress Bar control handle to be updated during process.
+    /// \param[in]  hSc       : Static Label control handle to be updated during process.
+    /// \param[in]  pAbort    : Pointer to boolean to cancel operation.
     ///
-    void moveBackups(const wstring& dest, HWND hWnd = nullptr, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    /// \return True if operation succeed, false is error occurred.
+    ///
+    bool backupsMove(const wstring& dest, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Cleanup backup data.
     ///
     /// Uninstall all installed package package(s) to cleanup all backup data.
     ///
-    /// \param[in]  hWnd       : Parent window handle (HWND) for warning messages.
-    /// \param[in]  hSc        : Progress Bar control handle (HWND) to be updated during process.
-    /// \param[in]  hSc        : Static Label control handle (HWND) to be updated during process.
+    /// \param[in]  hWnd       : Parent window handle for warning messages.
+    /// \param[in]  hPb        : Progress Bar control handle to be updated during process.
+    /// \param[in]  hSc        : Static Label control handle to be updated during process.
     /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
     ///
-    void purgeBackups(HWND hWnd, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    /// \return True if operation succeed, false is error occurred.
+    ///
+    bool backupsPurge(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Install package(s).
     ///
@@ -447,12 +461,13 @@ class OmLocation
     ///
     /// \param[in]  selec_list  : List of package index to install.
     /// \param[in]  quiet       : Do not throw warning messages.
-    /// \param[in]  hWnd        : Parent window handle (HWND) for warning messages.
-    /// \param[in]  hLv         : List View control handle (HWND) to be updated during process.
-    /// \param[in]  hSc         : Progress Bar control handle (HWND) to be updated during process.
+    /// \param[in]  hWnd        : Parent window handle for warning messages.
+    /// \param[in]  hLv         : List View control handle to be updated during process.
+    /// \param[in]  hPb         : Progress Bar control handle to be updated during process.
+    /// \param[in]  hSc         : Progress Bar control handle to be updated during process.
     /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
     ///
-    void installSelection(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    void packagesInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Uninstall package(s).
     ///
@@ -465,7 +480,7 @@ class OmLocation
     /// \param[in]  hSc         : Progress Bar control handle (HWND) to be updated during process.
     /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
     ///
-    void uninstSelection(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    void packagesUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Get installation overlap list.
     ///
@@ -477,7 +492,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstallOverlapList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t getInstOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief Get installation overlap list.
     ///
@@ -489,7 +504,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstallOverlapList(vector<uint64_t>& hash_list, const OmPackage* package) const;
+    size_t getInstOwList(vector<uint64_t>& hash_list, const OmPackage* package) const;
 
     /// \brief Get installation dependency list.
     ///
@@ -501,8 +516,8 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
-      return getInstallExtraList(pkg_list, miss_list, _package[i]);
+    size_t getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
+      return getInstDpList(pkg_list, miss_list, _package[i]);
     }
 
     /// \brief Get installation dependency list.
@@ -515,7 +530,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstallExtraList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
+    size_t getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
 
     /// \brief Get restoration dependency list.
     ///
@@ -527,8 +542,8 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getUninstExtraList(vector<OmPackage*>& pkg_list, unsigned i) const {
-      return getUninstExtraList(pkg_list, _package[i]);
+    size_t getUninOwList(vector<OmPackage*>& pkg_list, unsigned i) const {
+      return getUninOwList(pkg_list, _package[i]);
     }
 
     /// \brief Get restoration dependency list.
@@ -541,7 +556,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getUninstExtraList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t getUninOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief check backup overlap.
     ///

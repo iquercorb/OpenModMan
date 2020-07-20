@@ -258,7 +258,7 @@ void OmBatch::remLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::rename(const wstring& name)
+bool OmBatch::renameHome(const wstring& name)
 {
   wstring title = this->_title;
   wstring old_path = this->_path;

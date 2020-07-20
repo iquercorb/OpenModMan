@@ -57,20 +57,26 @@ bool OmUiWizCtxLoc::hasValidParams() const
 
   this->getItemText(IDC_EC_INPT1, item_str);
   if(!Om_isValidName(item_str)) {
+    wstring wrn = L"Title";
+    wrn += OMM_STR_ERR_VALIDNAME;
     Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT2, item_str);
   if(!Om_isDir(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", OMM_STR_ERR_ISDIR(item_str));
+    wstring wrn = L"The folder \""+item_str+L"\"";
+    wrn += OMM_STR_ERR_ISDIR;
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
     return false;
   }
 
   if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT3, item_str);
     if(!Om_isDir(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", OMM_STR_ERR_ISDIR(item_str));
+      wstring wrn = L"The folder \""+item_str+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
       return false;
     }
   }
@@ -78,7 +84,9 @@ bool OmUiWizCtxLoc::hasValidParams() const
   if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT4, item_str);
     if(!Om_isDir(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", OMM_STR_ERR_ISDIR(item_str));
+      wstring wrn = L"The folder \""+item_str+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
       return false;
     }
   }

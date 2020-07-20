@@ -601,11 +601,10 @@ class OmPackage
     /// Sub-routine for uninstall and backup data restoration
     ///
     /// \param[in]  hSc      : Optional Progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort   : Optional Pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doUninst(HWND hPb = nullptr, const bool *pAbort = nullptr);
+    bool _doUninst(HWND hPb = nullptr);
 
     /// \brief Undo backup data.
     ///

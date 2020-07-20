@@ -108,7 +108,7 @@ class OmUiMainLib : public OmDialog
     ///
     /// Public function to delete the selected batch if any.
     ///
-    bool deleteBatch();
+    bool remBatch();
 
     /// \brief Set dialog on-process state.
     ///

@@ -62,13 +62,17 @@ bool OmUiNewLoc::_apply()
 
   this->getItemText(IDC_EC_INPT1, loc_name);
   if(!Om_isValidName(loc_name)) {
+    wstring wrn = L"Title";
+    wrn += OMM_STR_ERR_VALIDNAME;
     Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT2, loc_dst);
   if(!Om_isDir(loc_dst)) {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", OMM_STR_ERR_ISDIR(loc_dst));
+    wstring wrn = L"The folder \""+loc_dst+L"\"";
+    wrn += OMM_STR_ERR_ISDIR;
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
     return false;
   }
 
@@ -76,7 +80,9 @@ bool OmUiNewLoc::_apply()
   if(cust_lib) {
     this->getItemText(IDC_EC_INPT3, loc_lib);
     if(!Om_isDir(loc_lib)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", OMM_STR_ERR_ISDIR(loc_lib));
+      wstring wrn = L"The folder \""+loc_lib+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
       return false;
     }
   }
@@ -85,7 +91,9 @@ bool OmUiNewLoc::_apply()
   if(cust_bck) {
     this->getItemText(IDC_EC_INPT4, loc_bck);
     if(!Om_isDir(loc_bck)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", OMM_STR_ERR_ISDIR(loc_bck));
+      wstring wrn = L"The folder \""+loc_bck+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
       return false;
     }
   }
@@ -93,7 +101,7 @@ bool OmUiNewLoc::_apply()
   this->quit();
 
   // create new Location in Context
-  if(!context->makeLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+  if(!context->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
     Om_dialogBoxErr(this->_hwnd,  L"Location creation failed",
                                   context->lastError());
   }

@@ -134,15 +134,23 @@ class OmContext
       return _icon;
     }
 
-    /// \brief Get current Location.
+    /// \brief Set Context title.
     ///
-    /// Returns current active Location.
+    /// Defines and save Context title.
     ///
-    /// \return Current active Location or nullptr if none is active.
+    /// \param[in]  title   : Title to defines and save
     ///
-    OmLocation* curLocation() {
-      return _curLocation;
-    }
+    void setTitle(const wstring& title);
+
+    /// \brief Set Context icon.
+    ///
+    /// Defines the Context icon source file. This must be a valid path to
+    /// an icon or executable file or empty string to remove current setting.
+    ///
+    /// \param[in]  src     : Path to file to extract or empty
+    ///                       string to remove current.
+    ///
+    void setIcon(const wstring& src);
 
     /// \brief Get Context Location count.
     ///
@@ -158,13 +166,19 @@ class OmContext
     ///
     /// Returns Location at index.
     ///
-    /// \param[in]  i       : Location index.
+    /// \param[in]  id      : Location index.
     ///
     /// \return Location object at index.
     ///
-    OmLocation* location(unsigned i) {
-      return _location[i];
+    OmLocation* location(unsigned id) {
+      return _location[id];
     }
+
+    /// \brief Sort Location list.
+    ///
+    /// Sort Location list according Location ordering index.
+    ///
+    void sortLocations();
 
     /// \brief Find Location.
     ///
@@ -180,9 +194,43 @@ class OmContext
     ///
     /// Sets the specified Location as active one.
     ///
-    /// \param[in]  i       : Location index or -1 to unselect.
+    /// \param[in]  id      : Location index or -1 to unselect.
     ///
-    void selLocation(int i);
+    void selLocation(int id);
+
+    /// \brief Get current Location.
+    ///
+    /// Returns current active Location.
+    ///
+    /// \return Current active Location or nullptr if none is active.
+    ///
+    OmLocation* curLocation() {
+      return _curLocation;
+    }
+
+    /// \brief Make new Location.
+    ///
+    /// Creates a new Location within the Context.
+    ///
+    /// \param[in]  title     : Title of new Location to be created.
+    /// \param[in]  install   : Package installation destination folder path.
+    /// \param[in]  library   : Custom package Library folder path.
+    /// \param[in]  backup    : Custom package Backup folder path.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool addLocation(const wstring& title, const wstring& install, const wstring& library, const wstring& backup);
+
+    /// \brief Purge existing Location.
+    ///
+    /// Cleanup and removes a Location. Notice that this operation actually delete
+    /// the Location folder and configuration files.
+    ///
+    /// \param[in]  id         : Location index to be removed.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool remLocation(unsigned id);
 
     /// \brief Get Context Batch count.
     ///
@@ -198,69 +246,19 @@ class OmContext
     ///
     /// Returns Batch at index.
     ///
-    /// \param[in]  i       : Batch index.
+    /// \param[in]  id      : Batch index.
     ///
     /// \return Batch object at index.
     ///
-    OmBatch* batch(unsigned i) {
-      return _batch[i];
+    OmBatch* batch(unsigned id) {
+      return _batch[id];
     }
 
-    /// \brief Set Context title.
+    /// \brief Sort Batches list.
     ///
-    /// Defines and save Context title.
+    /// Sort Batches list according Location ordering index.
     ///
-    /// \param[in]  title   : Title to defines and save
-    ///
-    void setTitle(const wstring& title);
-
-    /// \brief Set Context icon.
-    ///
-    /// Defines and save Context icon.
-    ///
-    /// \param[in]  src     : Source image file to save as icon.
-    ///
-    void setIcon(const wstring& src);
-
-    /// \brief Remove Context icon.
-    ///
-    /// Remove configured Context icon.
-    ///
-    void remIcon();
-
-    /// \brief Make new Location.
-    ///
-    /// Creates a new Location within the Context.
-    ///
-    /// \param[in]  title     : Title of new Location to be created.
-    /// \param[in]  install   : Package installation destination folder path.
-    /// \param[in]  library   : Custom package Library folder path.
-    /// \param[in]  backup    : Custom package Backup folder path.
-    ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    bool makeLocation(const wstring& title, const wstring& install, const wstring& library, const wstring& backup);
-
-    /// \brief Purge existing Location.
-    ///
-    /// Cleanup and removes a Location. Notice that this operation actually delete
-    /// the Location folder and configuration files.
-    ///
-    /// \param[in]  i          : Location index to be removed.
-    /// \param[in]  hWnd       : Parent window handle (HWND) for warning messages.
-    /// \param[in]  hPb        : Progress Bar control handle (HWND) to be updated during process.
-    /// \param[in]  hSc        : Static Label control handle (HWND) to be updated during process.
-    /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
-    ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    bool purgeLocation(int i, HWND hWnd, HWND hPb, HWND hSc, const bool *pAbort);
-
-    /// \brief Sort Location list.
-    ///
-    /// Sort Location list according Location ordering index.
-    ///
-    void sortLocations();
+    void sortBatches();
 
     /// \brief Make new Batch.
     ///
@@ -271,23 +269,17 @@ class OmContext
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool makeBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts);
+    bool addBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts);
 
     /// \brief Delete Batch.
     ///
     /// Delete batch definition file and remove it from list.
     ///
-    /// \param[in]  i     : Index of Batch to delete
+    /// \param[in]  id    : Index of Batch to delete
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool deleteBatch(unsigned i);
-
-    /// \brief Sort Batches list.
-    ///
-    /// Sort Batches list according Location ordering index.
-    ///
-    void sortBatches();
+    bool remBatch(unsigned id);
 
     /// \brief Add log.
     ///

@@ -146,10 +146,30 @@ void OmUiNewPkg::_buildPkg_init()
 ///
 void OmUiNewPkg::_buildPkg_stop()
 {
+  DWORD exitCode;
+
   if(this->_buildPkg_hth) {
     WaitForSingleObject(this->_buildPkg_hth, INFINITE);
+    GetExitCodeThread(this->_buildPkg_hth, &exitCode);
     CloseHandle(this->_buildPkg_hth);
     this->_buildPkg_hth = nullptr;
+  }
+
+  // quit the progress dialog
+  static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
+
+  // show a reassuring dialog message
+  if(exitCode == 0) {
+
+    wstring item_str;
+
+    // get destination filename
+    this->getItemText(IDC_EC_INPT4, item_str);
+
+    wstring info = L"The Package \"" + Om_getFilePart(item_str);
+    info += L"\" was successfully created.";
+
+    Om_dialogBoxInfo(this->_hwnd, L"Package creation success", info);
   }
 }
 
@@ -175,7 +195,10 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   }
 
   if(!package.sourceParse(item_str)) {
-    // TODO: Add some dialog error here... one day
+    // show error dialog box
+    wstring err = L"Source data parsing failed.\n\n";
+    err += package.lastError();
+    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", err);
     return 1;
   }
 
@@ -218,27 +241,20 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   HWND hPb = uiProgress->getPbHandle();
   HWND hSc = uiProgress->getDetailScHandle();
 
+  DWORD exitCode = 0;
+
   if(!package.save(item_str, zip_lvl, hPb, hSc, uiProgress->getAbortPtr())) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += package.lastError();
     Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", err);
 
-    // close the progress dialog
-    uiProgress->quit();
-  } else {
-    // close the progress dialog
-    uiProgress->quit();
-
-    // show success dialog box
-    wstring info = L"The Package \"" + Om_getFilePart(item_str);
-    info += L"\" was successfully created.";
-    Om_dialogBoxInfo(self->_hwnd, L"Package creation success", info);
+    exitCode = 1;
   }
 
   PostMessage(self->_hwnd, UWM_BUILDPKG_DONE, 0, 0);
 
-  return 0;
+  return exitCode;
 }
 
 
@@ -253,13 +269,17 @@ bool OmUiNewPkg::_apply()
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INPT1, item_str);
     if(!Om_isDir(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid source path", OMM_STR_ERR_ISDIR(item_str));
+      wstring wrn = L"The folder \""+item_str+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid source path", wrn);
       return false;
     }
   } else {
     this->getItemText(IDC_EC_INPT2, item_str);
     if(!Om_isFileZip(item_str)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid source file", OMM_STR_ERR_ISFILEZIP(item_str));
+      wstring wrn = L"The file \""+item_str+L"\"";
+      wrn += OMM_STR_ERR_ISFILEZIP;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid source file", wrn);
       return false;
     }
   }
@@ -267,15 +287,16 @@ bool OmUiNewPkg::_apply()
   this->getItemText(IDC_EC_INPT4, item_str);
   if(Om_isValidPath(item_str)) {
     if(Om_isFile(item_str)) {
-      wstring qry = L"The file \"";
-      qry += Om_getFilePart(item_str);
-      qry += L"\" already exists, do you want to overwrite the existing file ?";
+      wstring qry = L"The file \""+Om_getFilePart(item_str)+L"\"";
+      qry += OMM_STR_QRY_OVERWRITE;
       if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
         return false;
       }
     }
   } else {
-    Om_dialogBoxErr(this->_hwnd, L"Invalid destination filename", OMM_STR_ERR_VALIDPATH);
+    wstring err = L"Destination filename";
+    err += OMM_STR_ERR_VALIDPATH;
+    Om_dialogBoxErr(this->_hwnd, L"Invalid destination filename", err);
     return false;
   }
 

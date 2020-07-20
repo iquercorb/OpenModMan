@@ -80,10 +80,9 @@ bool OmManager::init()
 
     result = Om_dirCreate(this->_home);
     if(result != 0) {
-      this->_error = L"Unable to create home directory \"";
-      this->_error += this->_home + L"\": ";
-      this->_error += Om_getErrorStr(result);
-      Om_dialogBoxErr(nullptr, L"Manager Initialization error", this->_error);
+      this->_error =  L"Application home folder \""+this->_home+L"\"";
+      this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+      Om_dialogBoxErr(nullptr, L"Initialization error", this->_error);
       return false;
     }
   }
@@ -93,19 +92,20 @@ bool OmManager::init()
   this->_logFile = CreateFileW(log_path.c_str(), GENERIC_WRITE, 0, nullptr,
                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
   // first log line
-  this->log(2, L"Manager", L"Initialization");
+  this->log(2, L"Manager() Init", L"Start");
 
   // Load existing configuration or create a new one
   if(!this->_config.open(this->_home + L"\\config.xml", OMM_CFG_SIGN_APP)) {
 
-    this->log(2, L"Manager", L"Create new configuration file from scratch.");
+    this->log(2, L"Manager() Init", L"Create new configuration file");
 
-    if(!_config.init(this->_home + L"\\config.xml", OMM_CFG_SIGN_APP)) {
-      this->_error = L"Unable to initialize main configuration file \"";
-      this->_error += this->_home + L"\\config.xml\": ";
-      this->_error += this->_config.lastErrorStr();
-      this->log(1, L"Manager", this->_error);
-      Om_dialogBoxWarn(nullptr, L"Manager Initialization error", this->_error);
+    wstring conf_path = this->_home + L"\\config.xml";
+
+    if(!_config.init(conf_path, OMM_CFG_SIGN_APP)) {
+      this->_error =  L"Configuration file \""+conf_path+L"\"";
+      this->_error += OMM_STR_ERR_DEFINIT(this->_config.lastErrorStr());
+      this->log(1, L"Manager() Init", this->_error);
+      Om_dialogBoxWarn(nullptr, L"Initialization error", this->_error);
       // this is not a fatal error, but this will surely be a problem...
     }
     // default icons size
@@ -147,7 +147,7 @@ bool OmManager::init()
   vector<wstring> start_files;
   this->getStartContexts(&autoload, start_files);
   if(autoload) {
-    this->log(2, L"Manager", L"Load startup file(s)");
+    this->log(2, L"Manager() Init", L"Load startup Context file(s)");
     for(size_t i = 0; i < start_files.size(); ++i) {
       this->openContext(start_files[i]);
     }
@@ -164,7 +164,7 @@ bool OmManager::init()
 ///
 bool OmManager::quit()
 {
-  this->log(2, L"Manager", L"Quit");
+  this->log(2, L"Manager() Quit", L"");
 
   for(size_t i = 0; i < this->_context.size(); ++i)
     delete this->_context[i];
@@ -551,12 +551,12 @@ void OmManager::setQuietBatches(bool enable)
 ///
 bool OmManager::makeContext(const wstring& title, const wstring& path, bool open)
 {
+
   // check whether install path exists
   if(!Om_isDir(path)) {
-    this->_error = L"error creating Context in \"";
-    this->_error += path + L"\": ";
-    this->_error += L"path doesn't exists or is not a directory";
-    this->log(0, L"Manager", this->_error);
+    this->_error =  L"Path \""+path+L"\"";
+    this->_error += OMM_STR_ERR_ISDIR;
+    this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
 
@@ -566,10 +566,9 @@ bool OmManager::makeContext(const wstring& title, const wstring& path, bool open
   // create Context home folder
   int result = Om_dirCreate(ctx_home);
   if(result != 0) {
-    this->_error = L"error creating Context \"";
-    this->_error += ctx_home + L"\": ";
-    this->_error += Om_getErrorStr(result);
-    this->log(0, L"Manager", this->_error);
+    this->_error =  L"Home folder \""+ctx_home+L"\"";
+    this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+    this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
 
@@ -580,10 +579,9 @@ bool OmManager::makeContext(const wstring& title, const wstring& path, bool open
   // initialize an empty Context definition file
   OmConfig ctx_def;
   if(!ctx_def.init(ctx_def_path, OMM_CFG_SIGN_CTX)) {
-    this->_error = L"error creating Context definition \"";
-    this->_error += ctx_def_path + L"\": ";
-    this->_error += ctx_def.lastErrorStr();
-    this->log(0, L"Manager", this->_error);
+    this->_error =  L"Definition file \""+ctx_def_path+L"\"";
+    this->_error += L"initialization error: "+ctx_def.lastErrorStr();
+    this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
 
@@ -662,7 +660,7 @@ void OmManager::selContext(int i)
 {
   if(i >= 0 && i < (int)this->_context.size()) {
     this->_curContext = _context[i];
-    this->log(2, L"Manager", L"Select Context("+this->_curContext->title()+L")");
+    this->log(2, L"Manager", L"Select Context: \""+this->_curContext->title()+L"\".");
   } else {
     this->_curContext = nullptr;
   }

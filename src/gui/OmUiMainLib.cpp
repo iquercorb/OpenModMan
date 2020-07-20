@@ -258,13 +258,15 @@ void OmUiMainLib::moveTrash()
     }
   }
 
+  this->setOnProcess(false);
+
   // Unselect all items
   LVITEM lvI = {};
   lvI.mask = LVIF_STATE;
   lvI.stateMask = LVIS_SELECTED;
   SendMessageW(hLv, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  this->setOnProcess(false);
+  this->_reloadLibLv(true);
 
   // update package selection
   this->_onSelectPkg();
@@ -322,7 +324,7 @@ void OmUiMainLib::batch()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainLib::deleteBatch()
+bool OmUiMainLib::remBatch()
 {
   HWND hLb = this->getItem(IDC_LB_BATLS);
 
@@ -344,7 +346,7 @@ bool OmUiMainLib::deleteBatch()
       return false;
     }
 
-    if(!curCtx->deleteBatch(bat_id)) {
+    if(!curCtx->remBatch(bat_id)) {
       Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", curCtx->lastError());
       return false;
     }
@@ -883,7 +885,7 @@ DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
   }
 
   // Launch install process
-  location->installSelection(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+  location->packagesInst(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
 
   // disable on-process state
   self->setOnProcess(false);
@@ -924,7 +926,7 @@ DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
   }
 
   // Launch uninstall process
-  location->uninstSelection(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+  location->packagesUnin(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
 
   // disable on-process state
   self->setOnProcess(false);
@@ -1014,7 +1016,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 
       if(uins_list.size()) {
         // Launch uninstall process
-        location->uninstSelection(uins_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+        location->packagesUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
       }
 
       if(inst_list.size()) {
@@ -1028,7 +1030,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
           inst.clear(); inst.push_back(inst_list[i]);
 
           // Launch install process
-          location->installSelection(inst, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+          location->packagesInst(inst, false, self->_hwnd, hLv, hPb, &self->_abortPending);
         }
       }
 
@@ -1058,7 +1060,9 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 void OmUiMainLib::_monitor_init(const wstring& path)
 {
   // create a new folder change notification event
-  DWORD mask =  FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME;
+  DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
+  mask |= FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
+
   this->_monitor_hev[1] = FindFirstChangeNotificationW(path.c_str(), false, mask);
 
   // launch new thread to handle notifications
@@ -1410,7 +1414,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_DEL:
-      this->deleteBatch();
+      this->remBatch();
       break;
 
     case IDM_EDIT_PKG_INST:

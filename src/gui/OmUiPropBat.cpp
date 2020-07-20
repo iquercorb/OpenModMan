@@ -110,7 +110,7 @@ bool OmUiPropBat::applyChanges()
 
   // Step 2, save changes
   if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    if(!batch->rename(bat_name)) { //< rename Batch filename
+    if(!batch->renameHome(bat_name)) { //< rename Batch filename
       Om_dialogBoxErr(this->_hwnd,  L"Batch rename failed",
                                     batch->lastError());
     }

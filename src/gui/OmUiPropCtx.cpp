@@ -142,14 +142,10 @@ bool OmUiPropCtx::applyChanges()
   }
 
   if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    if(!ctx_icon.empty()) {
-      if(Om_isFile(ctx_icon)) {
-        context->setIcon(ctx_icon);
-      } else {
-        context->remIcon();
-      }
+    if(Om_isValidPath(ctx_icon)) {
+      context->setIcon(ctx_icon);
     } else {
-      context->remIcon();
+      context->setIcon(L""); //< remove current icon
     }
     // Reset parameter as unmodified
     uiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);

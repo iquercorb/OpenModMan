@@ -94,13 +94,15 @@ class OmUiPropCtxLoc : public OmDialog
 
     void                _locationDn();
 
-    void                _remLocation_init();
+    void                _locationDel();
 
-    void                _remLocation_stop();
+    void                _backupPurge_init();
 
-    void*               _remLocation_hth;
+    void                _backupPurge_stop();
 
-    static DWORD WINAPI _remLocation_fth(void*);
+    void*               _backupPurge_hth;
+
+    static DWORD WINAPI _backupPurge_fth(void*);
 
     void                _onInit();
 

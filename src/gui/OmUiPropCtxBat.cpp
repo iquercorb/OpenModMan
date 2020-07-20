@@ -161,7 +161,7 @@ bool OmUiPropCtxBat::_batchDel()
       return false;
     }
 
-    if(!ctx->deleteBatch(bat_id)) {
+    if(!ctx->remBatch(bat_id)) {
       Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", ctx->lastError());
       return false;
     }

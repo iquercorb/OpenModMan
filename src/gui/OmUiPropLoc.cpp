@@ -142,6 +142,8 @@ bool OmUiPropLoc::applyChanges()
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
     uiPropLocStg->getItemText(IDC_EC_INPT1, loc_name);
     if(!Om_isValidName(loc_name)) {
+      wstring wrn = L"Title";
+      wrn += OMM_STR_ERR_VALIDNAME;
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
       return false;
     }
@@ -150,7 +152,9 @@ bool OmUiPropLoc::applyChanges()
   if(uiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
     uiPropLocStg->getItemText(IDC_EC_INPT2, loc_dst);
     if(!Om_isDir(loc_dst)) {
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", OMM_STR_ERR_ISDIR(loc_dst));
+      wstring wrn = L"The folder \""+loc_dst+L"\"";
+      wrn += OMM_STR_ERR_ISDIR;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
       return false;
     }
   }
@@ -160,7 +164,9 @@ bool OmUiPropLoc::applyChanges()
     if(cust_lib) { //< Custom Library folder Check-Box checked
       uiPropLocStg->getItemText(IDC_EC_INPT3, loc_lib);
       if(!Om_isDir(loc_lib)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", OMM_STR_ERR_ISDIR(loc_lib));
+        wstring wrn = L"The folder \""+loc_lib+L"\"";
+        wrn += OMM_STR_ERR_ISDIR;
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
         return false;
       }
     }
@@ -171,7 +177,9 @@ bool OmUiPropLoc::applyChanges()
     if(cust_bck) { //< Custom Backup folder Check-Box checked
       uiPropLocStg->getItemText(IDC_EC_INPT4, loc_bck);
       if(!Om_isDir(loc_bck)) {
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", OMM_STR_ERR_ISDIR(loc_bck));
+        wstring wrn = L"The folder \""+loc_bck+L"\"";
+        wrn += OMM_STR_ERR_ISDIR;
+        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
         return false;
       }
     }
@@ -246,7 +254,9 @@ bool OmUiPropLoc::applyChanges()
       // To prevent crash during operation we unselect location in the main dialog
       static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
-      location->rename(loc_name, this->_hwnd);
+      if(!location->renameHome(loc_name)) {
+        Om_dialogBoxErr(this->_hwnd, L"Location rename failed", location->lastError());
+      }
 
       // Back to main dialog window to normal state
       static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
@@ -342,7 +352,9 @@ DWORD WINAPI OmUiPropLoc::_moveBackup_fth(void* arg)
     HWND hPb = uiProgress->getPbHandle();
     HWND hSc = uiProgress->getDetailScHandle();
 
-    location->moveBackups(bck_dest, uiProgress->hwnd(), hPb, hSc, uiProgress->getAbortPtr());
+    if(!location->backupsMove(bck_dest, hPb, hSc, uiProgress->getAbortPtr())) {
+      Om_dialogBoxWarn(uiProgress->hwnd(), L"Backup data transfer error", location->lastError());
+    }
   }
 
   // modify the backup path for the Location
