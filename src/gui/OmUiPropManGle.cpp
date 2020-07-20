@@ -73,7 +73,7 @@ void OmUiPropManGle::_onInit()
   this->_createTooltip(IDC_BC_BROW1,  L"Select a context file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove the selected entry");
 
-  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // add items in combo box
   HWND hCb = this->getItem(IDC_CB_ISIZE);
@@ -85,7 +85,7 @@ void OmUiPropManGle::_onInit()
     SendMessageW(hCb, CB_ADDSTRING, 2, reinterpret_cast<LPARAM>(L"Large"));
   }
 
-  switch(manager->iconsSize()) {
+  switch(pMgr->iconsSize()) {
   case 16:
     SendMessageW(hCb, CB_SETCURSEL, 0, 0);
     break;
@@ -99,7 +99,7 @@ void OmUiPropManGle::_onInit()
 
   bool enable;
   vector<wstring> start_files;
-  manager->getStartContexts(&enable, start_files);
+  pMgr->getStartContexts(&enable, start_files);
 
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, enable);
   this->enableItem(IDC_BC_BROW1, enable);

@@ -67,14 +67,14 @@ void OmUiNewBat::_rebuildPkgLb()
     return;
 
   // get Location corresponding to current selection
-  OmLocation* location = this->_context->location(cb_sel);
+  OmLocation* pLoc = this->_context->location(cb_sel);
 
   // hold handle to List-Box controls
   HWND hLsl = this->getItem(IDC_LB_EXC);
   HWND hLsr = this->getItem(IDC_LB_INC);
 
   unsigned p;
-  OmPackage* package;
+  OmPackage* pPkg;
   wstring item_str;
 
   // reset List-Box control
@@ -84,9 +84,9 @@ void OmUiNewBat::_rebuildPkgLb()
   for(size_t i = 0; i < this->_excLs[cb_sel].size(); i++) {
 
     p = this->_excLs[cb_sel][i];
-    package = location->package(p);
+    pPkg = pLoc->package(p);
 
-    item_str = Om_getFilePart(package->sourcePath());
+    item_str = Om_getFilePart(pPkg->sourcePath());
     SendMessageW(hLsl, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     SendMessageW(hLsl, LB_SETITEMDATA, i, p);
   }
@@ -98,13 +98,12 @@ void OmUiNewBat::_rebuildPkgLb()
   for(size_t i = 0; i < this->_incLs[cb_sel].size(); i++) {
 
     p = this->_incLs[cb_sel][i];
-    package = location->package(p);
+    pPkg = pLoc->package(p);
 
-    item_str = Om_getFilePart(package->sourcePath());
+    item_str = Om_getFilePart(pPkg->sourcePath());
     SendMessageW(hLsr, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     SendMessageW(hLsr, LB_SETITEMDATA, i, p);
   }
-
 }
 
 
@@ -116,26 +115,26 @@ void OmUiNewBat::_qucikFromCur()
   if(this->_context == nullptr)
     return;
 
-  OmLocation* location;
-  OmPackage* package;
+  OmLocation* pLoc;
+  OmPackage* pPkg;
 
   // add Location(s) to Combo-Box
-  for(unsigned l = 0; l < this->_context->locationCount(); ++l) {
+  for(size_t k = 0; k < this->_context->locationCount(); ++k) {
 
-    location = this->_context->location(l);
+    pLoc = this->_context->location(k);
 
-    this->_excLs[l].clear();
-    this->_incLs[l].clear();
+    this->_excLs[k].clear();
+    this->_incLs[k].clear();
 
-    for(unsigned p = 0; p < location->packageCount(); ++p) {
+    for(size_t i = 0; i < pLoc->packageCount(); ++i) {
 
-      package = location->package(p);
+      pPkg = pLoc->package(i);
 
-      if(package->hasSource()) {
-        if(package->hasBackup()) {
-          this->_incLs[l].push_back(p);
+      if(pPkg->hasSource()) {
+        if(pPkg->hasBackup()) {
+          this->_incLs[k].push_back(i);
         } else {
-          this->_excLs[l].push_back(p);
+          this->_excLs[k].push_back(i);
         }
       }
     }
@@ -399,7 +398,7 @@ bool OmUiNewBat::_apply()
   // build the per-Location hash lists
   vector<vector<uint64_t>> loc_hash_lsts;
 
-  OmPackage* package;
+  OmPackage* pPkg;
 
   for(size_t k = 0; k < this->_context->locationCount(); ++k) {
 
@@ -409,10 +408,10 @@ bool OmUiNewBat::_apply()
     for(size_t i = 0; i < this->_incLs[k].size(); ++i) {
 
       // retrieve package from stored index
-      package = this->_context->location(k)->package(this->_incLs[k][i]);
+      pPkg = this->_context->location(k)->package(this->_incLs[k][i]);
 
       // add <install> entry with package hash
-      hash_list.push_back(package->hash());
+      hash_list.push_back(pPkg->hash());
     }
 
     // add hash list

@@ -67,10 +67,10 @@ class OmUiPropPkg : public OmDialogProp
     /// work with and on. A valid Package must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  pkg   : Package object to associate.
+    /// \param[in]  pPkg  : Package object to associate.
     ///
-    void setPackage(OmPackage* pkg) {
-      _package = pkg;
+    void setPackage(OmPackage* pPkg) {
+      _package = pPkg;
     }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -

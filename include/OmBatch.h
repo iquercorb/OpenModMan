@@ -43,7 +43,7 @@ class OmBatch
     ///
     /// \param[in]  ctx     : Related Context for the Batch.
     ///
-    OmBatch(OmContext* ctx);
+    OmBatch(OmContext* pCtx);
 
     /// \brief Destructor.
     ///

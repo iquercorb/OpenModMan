@@ -41,8 +41,8 @@ OmBatch::OmBatch() :
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmBatch::OmBatch(OmContext* ctx) :
-  _context(ctx),
+OmBatch::OmBatch(OmContext* pCtx) :
+  _context(pCtx),
   _config(),
   _path(),
   _uuid(),

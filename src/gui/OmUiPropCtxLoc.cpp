@@ -151,9 +151,9 @@ void OmUiPropCtxLoc::_locationDn()
 ///
 void OmUiPropCtxLoc::_locationDel()
 {
-  OmContext* ctx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-  if(ctx == nullptr)
+  if(pCtx == nullptr)
     return;
 
   int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
@@ -161,16 +161,16 @@ void OmUiPropCtxLoc::_locationDel()
 
   if(loc_id >= 0) {
 
-    OmLocation* loc = ctx->location(loc_id);
+    OmLocation* pLoc = pCtx->location(loc_id);
 
     // check whether we need to purge backup data
-    if(!loc->hasBackupData()) {
+    if(!pLoc->hasBackupData()) {
 
       // To prevent crash during operation we unselect location in the main dialog
       static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
       // no backup to purge, delete Location now
-      if(!ctx->remLocation(loc_id)) {
+      if(!pCtx->remLocation(loc_id)) {
 
         wstring wrn = L"One or more error occurred during Location deletion "
                       L"deletion process.\n\n"
@@ -198,11 +198,11 @@ void OmUiPropCtxLoc::_backupPurge_init()
   // To prevent crash during operation we unselect location in the main dialog
   static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
-  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
-  uiProgress->open(true);
-  uiProgress->setTitle(L"Purge Location backup data");
-  uiProgress->setDesc(L"Backup data restoration");
+  pUiProgress->open(true);
+  pUiProgress->setTitle(L"Purge Location backup data");
+  pUiProgress->setDesc(L"Backup data restoration");
 
   DWORD dwId;
   this->_backupPurge_hth = CreateThread(nullptr, 0, this->_backupPurge_fth, this, 0, &dwId);
@@ -244,15 +244,15 @@ DWORD WINAPI OmUiPropCtxLoc::_backupPurge_fth(void* arg)
 {
   OmUiPropCtxLoc* self = static_cast<OmUiPropCtxLoc*>(arg);
 
-  OmContext* ctx = static_cast<OmUiPropCtx*>(self->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(self->_parent)->context();
 
-  if(ctx == nullptr)
+  if(pCtx == nullptr)
     return 1;
 
-  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
 
-  HWND hPb = uiProgress->getPbHandle();
-  HWND hSc = uiProgress->getDetailScHandle();
+  HWND hPb = pUiProgress->getPbHandle();
+  HWND hSc = pUiProgress->getDetailScHandle();
 
   int lb_sel = self->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
   int loc_id = self->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
@@ -261,12 +261,12 @@ DWORD WINAPI OmUiPropCtxLoc::_backupPurge_fth(void* arg)
 
   if(loc_id >= 0) {
 
-    OmLocation* loc = ctx->location(loc_id);
+    OmLocation* pLoc = pCtx->location(loc_id);
 
     // launch backup data purge process
-    if(!loc->backupsPurge(hPb, hSc, uiProgress->getAbortPtr())) {
+    if(!pLoc->backupsPurge(hPb, hSc, pUiProgress->getAbortPtr())) {
       // we encounter error during backup data purge
-      Om_dialogBoxErr(uiProgress->hwnd(), L"Backup data purge error", loc->lastError());
+      Om_dialogBoxErr(pUiProgress->hwnd(), L"Backup data purge error", pLoc->lastError());
       exitCode = 1;
     }
   }
@@ -350,17 +350,17 @@ void OmUiPropCtxLoc::_onResize()
 ///
 void OmUiPropCtxLoc::_onRefresh()
 {
-  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-  if(context == nullptr)
+  if(pCtx == nullptr)
     return;
 
   HWND hLb = this->getItem(IDC_LB_LOCLS);
 
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
-  if(context) {
-    for(unsigned i = 0; i < context->locationCount(); ++i) {
-      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(context->location(i)->title().c_str()));
+  if(pCtx) {
+    for(unsigned i = 0; i < pCtx->locationCount(); ++i) {
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->location(i)->title().c_str()));
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
@@ -383,9 +383,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    OmContext* ctx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-    if(ctx == nullptr)
+    if(pCtx == nullptr)
       return false;
 
     int lb_sel, loc_id;
@@ -397,10 +397,10 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
       loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
       if(loc_id >= 0) {
-        OmLocation* loc = ctx->location(loc_id);
-        this->setItemText(IDC_EC_INPT2, loc->installDir());
-        this->setItemText(IDC_EC_INPT3, loc->libraryDir());
-        this->setItemText(IDC_EC_INPT4, loc->backupDir());
+        OmLocation* pLoc = pCtx->location(loc_id);
+        this->setItemText(IDC_EC_INPT2, pLoc->installDir());
+        this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
+        this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
         this->enableItem(IDC_BC_DEL, true);
         this->enableItem(IDC_BC_EDIT, true);
         this->enableItem(IDC_BC_UP, (lb_sel > 0));
@@ -411,9 +411,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewLoc* uiNewLoc = static_cast<OmUiNewLoc*>(this->siblingById(IDD_NEW_LOC));
-        uiNewLoc->setContext(ctx);
-        uiNewLoc->open(true);
+        OmUiNewLoc* pUiNewLoc = static_cast<OmUiNewLoc*>(this->siblingById(IDD_NEW_LOC));
+        pUiNewLoc->setContext(pCtx);
+        pUiNewLoc->open(true);
       }
       break;
 
@@ -422,9 +422,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
       if(loc_id >= 0) {
         // open the Location Properties dialog
-        OmUiPropLoc* uiPropLoc = static_cast<OmUiPropLoc*>(this->siblingById(IDD_PROP_LOC));
-        uiPropLoc->setLocation(ctx->location(loc_id));
-        uiPropLoc->open();
+        OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->siblingById(IDD_PROP_LOC));
+        pUiPropLoc->setLocation(pCtx->location(loc_id));
+        pUiPropLoc->open();
       }
       break;
 
@@ -433,14 +433,14 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
       if(loc_id >= 0) {
 
-        OmLocation* loc = ctx->location(loc_id);
+        OmLocation* pLoc = pCtx->location(loc_id);
 
         // warns the user before committing the irreparable
         wstring wrn = L"The operation will permanently delete the Location "
                       L"definition file and related configuration.";
 
         wrn += L"\n\nDelete the Location \"";
-        wrn += loc->title();
+        wrn += pLoc->title();
         wrn += L"\" ?";
 
         if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Location", wrn)) {

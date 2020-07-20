@@ -69,7 +69,7 @@ void OmUiPropLocBck::_onInit()
   this->_createTooltip(IDC_BC_CHK01,  L"Store backup data as zip archives");
   this->_createTooltip(IDC_CB_LEVEL,  L"Compression level for backup zip files");
 
-  OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
   // add items in combo box
   HWND hCb = this->getItem(IDC_CB_LEVEL);
@@ -82,10 +82,10 @@ void OmUiPropLocBck::_onInit()
     SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
   }
 
-  if(location == nullptr)
+  if(pLoc == nullptr)
     return;
 
-  int comp_levl = location->backupZipLevel();
+  int comp_levl = pLoc->backupZipLevel();
 
   if(comp_levl >= 0) {
 

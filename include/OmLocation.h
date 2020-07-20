@@ -44,7 +44,7 @@ class OmLocation
     ///
     /// Default constructor.
     ///
-    OmLocation(OmContext* context);
+    OmLocation(OmContext* pCtx);
 
     /// \brief Destructor.
     ///
@@ -340,13 +340,13 @@ class OmLocation
     ///
     /// Returns package index in list.
     ///
-    /// \param[in]  pkg     : Package to get index of.
+    /// \param[in]  pPkg    : Package to get index of.
     ///
     /// \return Package index or -1 if not found.
     ///
-    int packageIndex(const OmPackage* pkg) const {
+    int packageIndex(const OmPackage* pPkg) const {
       for(size_t i = 0; i < _package.size(); ++i) {
-        if(pkg == _package[i]) return i;
+        if(pPkg == _package[i]) return i;
       }
       return -1;
     }

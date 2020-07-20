@@ -150,19 +150,19 @@ bool OmUiPropCtxBat::_batchDel()
 
     unsigned bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
 
-    OmContext* ctx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
     // warns the user before committing the irreparable
     wstring qry = L"Are your sure you want to delete the Batch \"";
-    qry += ctx->batch(bat_id)->title();
+    qry += pCtx->batch(bat_id)->title();
     qry += L"\" ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
       return false;
     }
 
-    if(!ctx->remBatch(bat_id)) {
-      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", ctx->lastError());
+    if(!pCtx->remBatch(bat_id)) {
+      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", pCtx->lastError());
       return false;
     }
 
@@ -232,17 +232,17 @@ void OmUiPropCtxBat::_onResize()
 ///
 void OmUiPropCtxBat::_onRefresh()
 {
-  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-  if(context == nullptr)
+  if(pCtx == nullptr)
     return;
 
   HWND hLb = this->getItem(IDC_LB_BATLS);
 
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
-  if(context) {
-    for(unsigned i = 0; i < context->batchCount(); ++i) {
-      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(context->batch(i)->title().c_str()));
+  if(pCtx) {
+    for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
@@ -266,9 +266,9 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
+    OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-    if(context == nullptr)
+    if(pCtx == nullptr)
       return false;
 
     int lb_sel, lb_max;
@@ -289,20 +289,20 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewBat* uiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
-        uiNewBat->setContext(context);
-        uiNewBat->open(true);
+        OmUiNewBat* pUiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        pUiNewBat->setContext(pCtx);
+        pUiNewBat->open(true);
       }
       break;
 
     case IDC_BC_EDIT:
       lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
-      if(lb_sel >= 0 && lb_sel < (int)context->batchCount()) {
+      if(lb_sel >= 0 && lb_sel < (int)pCtx->batchCount()) {
         // open the Location Properties dialog
         int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
-        OmUiPropBat* uiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
-        uiPropBat->setBatch(context->batch(bat_id));
-        uiPropBat->open();
+        OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
+        pUiPropBat->setBatch(pCtx->batch(bat_id));
+        pUiPropBat->open();
       }
       break;
 

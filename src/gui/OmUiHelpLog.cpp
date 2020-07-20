@@ -36,8 +36,8 @@ OmUiHelpLog::~OmUiHelpLog()
 {
   if(this->_hFtMonos) DeleteObject(this->_hFtMonos);
 
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  manager->setLogOutput(nullptr);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  pMgr->setLogOutput(nullptr);
 }
 
 
@@ -58,8 +58,8 @@ void OmUiHelpLog::_onInit()
 {
   this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  manager->setLogOutput(this->getItem(IDC_EC_ENT01));
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  pMgr->setLogOutput(this->getItem(IDC_EC_ENT01));
 }
 
 

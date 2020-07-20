@@ -59,22 +59,22 @@ void OmUiPropPkgSrc::_onInit()
   // defines fonts for package description, title, and log output
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), 1);
 
-  OmPackage* package = static_cast<OmUiPropPkg*>(this->_parent)->package();
-  if(package == nullptr) return;
+  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
+  if(pPkg == nullptr) return;
 
   // Ident
-  this->setItemText(IDC_EC_ENT01, package->ident());
+  this->setItemText(IDC_EC_ENT01, pPkg->ident());
   // Name
-  this->setItemText(IDC_EC_ENT02, package->name());
+  this->setItemText(IDC_EC_ENT02, pPkg->name());
   // Parsed Version
-  this->setItemText(IDC_EC_ENT03, package->version().asString());
+  this->setItemText(IDC_EC_ENT03, pPkg->version().asString());
   // Computed Hash
-  this->setItemText(IDC_EC_ENT04, Om_toHexString(package->hash()));
+  this->setItemText(IDC_EC_ENT04, Om_toHexString(pPkg->hash()));
 
-  if(package->isType(PKG_TYPE_SRC)) {
+  if(pPkg->isType(PKG_TYPE_SRC)) {
 
     // Type
-    if(package->isType(PKG_TYPE_ZIP)) {
+    if(pPkg->isType(PKG_TYPE_ZIP)) {
       this->setItemText(IDC_EC_ENT06, L"Zip archive");
     } else {
       this->setItemText(IDC_EC_ENT06, L"Sub-folder");
@@ -82,15 +82,15 @@ void OmUiPropPkgSrc::_onInit()
 
     // Location
     this->enableItem(IDC_EC_ENT07, true);
-    this->setItemText(IDC_EC_ENT07, package->sourcePath());
+    this->setItemText(IDC_EC_ENT07, pPkg->sourcePath());
 
     // Dependencies
     this->enableItem(IDC_EC_ENT08, true);
-    if(package->dependCount()) {
+    if(pPkg->dependCount()) {
       wstring dpn_str;
-      for(unsigned i = 0; i < package->dependCount(); ++i) {
-        dpn_str += package->depend(i);
-        if(i < (package->dependCount() - 1)) {
+      for(unsigned i = 0; i < pPkg->dependCount(); ++i) {
+        dpn_str += pPkg->depend(i);
+        if(i < (pPkg->dependCount() - 1)) {
           dpn_str += L"; ";
         }
       }
@@ -100,8 +100,8 @@ void OmUiPropPkgSrc::_onInit()
     }
 
     // Snapshot image
-    if(package->picture()) {
-      this->_hBmThumb = Om_getBitmapThumbnail(package->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+    if(pPkg->picture()) {
+      this->_hBmThumb = Om_getBitmapThumbnail(pPkg->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
     } else {
       this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
     }
@@ -109,8 +109,8 @@ void OmUiPropPkgSrc::_onInit()
 
     // Package description
     this->enableItem(IDC_EC_PKTXT, true);
-    if(package->desc().size()) {
-      this->setItemText(IDC_EC_PKTXT, package->desc());
+    if(pPkg->desc().size()) {
+      this->setItemText(IDC_EC_PKTXT, pPkg->desc());
     } else {
       this->setItemText(IDC_EC_PKTXT, L"");
     }

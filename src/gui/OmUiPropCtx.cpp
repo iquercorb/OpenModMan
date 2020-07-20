@@ -72,33 +72,33 @@ long OmUiPropCtx::id() const
 ///
 bool OmUiPropCtx::checkChanges()
 {
-  OmContext* context = static_cast<OmContext*>(this->_context);
-  OmUiPropCtxStg* uiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
-  OmUiPropCtxLoc* uiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
-  OmUiPropCtxBat* uiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
+  OmContext* pCtx = static_cast<OmContext*>(this->_context);
+  OmUiPropCtxStg* pUiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
+  OmUiPropCtxLoc* pUiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
+  OmUiPropCtxBat* pUiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
   bool changed = false;
 
   wstring item_str;
 
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
-    uiPropCtxStg->getItemText(IDC_EC_INPT3, item_str);
-    if(context->title() != item_str) {
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
+    pUiPropCtxStg->getItemText(IDC_EC_INPT3, item_str);
+    if(pCtx->title() != item_str) {
       changed = true;
     } else {
-      uiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
+      pUiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
     }
   }
 
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
     changed = true;
   }
 
-  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
     changed = true;
   }
 
-  if(uiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
     changed = true;
   }
 
@@ -114,83 +114,83 @@ bool OmUiPropCtx::checkChanges()
 ///
 bool OmUiPropCtx::applyChanges()
 {
-  OmContext* context = static_cast<OmContext*>(this->_context);
-  OmUiPropCtxStg* uiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
-  OmUiPropCtxLoc* uiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
-  OmUiPropCtxBat* uiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
+  OmContext* pCtx = static_cast<OmContext*>(this->_context);
+  OmUiPropCtxStg* pUiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
+  OmUiPropCtxLoc* pUiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
+  OmUiPropCtxBat* pUiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
   wstring ctx_name, ctx_icon;
 
   // Step 1, verify everything
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    uiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
+    pUiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
     if(Om_isValidName(ctx_name)) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Context title", OMM_STR_ERR_VALIDNAME);
       return false;
     }
   }
 
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    uiPropCtxStg->getItemText(IDC_EC_INPT4, ctx_icon);
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
+    pUiPropCtxStg->getItemText(IDC_EC_INPT4, ctx_icon);
   }
 
   // Step 2, save changes
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    context->setTitle(ctx_name);
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
+    pCtx->setTitle(ctx_name);
     // Reset parameter as unmodified
-    uiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
+    pUiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
   }
 
-  if(uiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
+  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
     if(Om_isValidPath(ctx_icon)) {
-      context->setIcon(ctx_icon);
+      pCtx->setIcon(ctx_icon);
     } else {
-      context->setIcon(L""); //< remove current icon
+      pCtx->setIcon(L""); //< remove current icon
     }
     // Reset parameter as unmodified
-    uiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);
+    pUiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);
   }
 
-  if(uiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
 
     // To prevent inconsistency we unselect location in the main dialog
     static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
 
-    HWND hLb = uiPropCtxLoc->getItem(IDC_LB_LOCLS);
+    HWND hLb = pUiPropCtxLoc->getItem(IDC_LB_LOCLS);
 
     unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      context->location(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
+      pCtx->location(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
     }
 
     // unselect Location in context
-    context->selLocation(-1);
+    pCtx->selLocation(-1);
     // sort Location list
-    context->sortLocations();
+    pCtx->sortLocations();
 
     // restore main dialog to normal state
     static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
 
     // Reset parameter as unmodified
-    uiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);
+    pUiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);
   }
 
-  if(uiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
 
-    HWND hLb = uiPropCtxBat->getItem(IDC_LB_BATLS);
+    HWND hLb = pUiPropCtxBat->getItem(IDC_LB_BATLS);
 
     unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      context->batch(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
+      pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
     }
 
     // sort Location list
-    context->sortBatches();
+    pCtx->sortBatches();
 
     // Reset parameter as unmodified
-    uiPropCtxBat->setChParam(CTX_PROP_LOC_ORDER, false);
+    pUiPropCtxBat->setChParam(CTX_PROP_LOC_ORDER, false);
   }
 
   // disable Apply button

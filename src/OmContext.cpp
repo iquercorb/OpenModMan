@@ -128,8 +128,8 @@ static bool __OmContext_batCompareIndex(const OmBatch* a, const OmBatch* b)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmContext::OmContext(OmManager* manager) :
-  _manager(manager),
+OmContext::OmContext(OmManager* pMgr) :
+  _manager(pMgr),
   _config(),
   _path(),
   _uuid(),
@@ -232,12 +232,12 @@ bool OmContext::open(const wstring& path)
         verbose += Om_getFilePart(omt_list[0]) + L"\".";
         this->log(2, L"Context("+this->_title+L") Load", verbose);
 
-        OmLocation* location = new OmLocation(this);
+        OmLocation* pLoc = new OmLocation(this);
 
-        if(location->open(omt_list[0])) {
-          this->_location.push_back(location);
+        if(pLoc->open(omt_list[0])) {
+          this->_location.push_back(pLoc);
         } else {
-          delete location;
+          delete pLoc;
           verbose =  L"Ignoring Location (open failed): \"";
           verbose += Om_getFilePart(omt_list[0]) + L"\".";
           this->log(1, L"Context("+this->_title+L") Load", verbose);
@@ -541,9 +541,9 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   this->log(2, L"Context("+this->_title+L") Create Location", L"Location \""+title+L")\" created.");
 
   // load the newly created Location
-  OmLocation* location = new OmLocation(this);
-  location->open(loc_def_path);
-  this->_location.push_back(location);
+  OmLocation* pLoc = new OmLocation(this);
+  pLoc->open(loc_def_path);
+  this->_location.push_back(pLoc);
 
   // sort locations by index
   this->sortLocations();
@@ -560,10 +560,10 @@ bool OmContext::remLocation(unsigned id)
   if(id >= this->_location.size())
     return false;
 
-  OmLocation* location = this->_location[id];
+  OmLocation* pLoc = this->_location[id];
 
-  if(location->hasBackupData()) {
-    this->_error = L"The Location \""+location->title()+L"\"";
+  if(pLoc->hasBackupData()) {
+    this->_error = L"The Location \""+pLoc->title()+L"\"";
     this->_error += L" cannot be deleted: Location still has backup data";
     this->_error += L"to be restored.";
     this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
@@ -573,11 +573,11 @@ bool OmContext::remLocation(unsigned id)
   bool has_error = false;
 
   // keep Location paths
-  wstring loc_home = location->home();
-  wstring loc_path = location->path();
+  wstring loc_home = pLoc->home();
+  wstring loc_path = pLoc->path();
 
   // close Location
-  location->close();
+  pLoc->close();
 
   // remove the default backup folder
   wstring bck_path = loc_home + L"\\backup";
@@ -631,10 +631,10 @@ bool OmContext::remLocation(unsigned id)
     this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
   }
 
-  this->log(2, L"Context("+this->_title+L") Delete Location", L"Location \""+location->title()+L"\" deleted.");
+  this->log(2, L"Context("+this->_title+L") Delete Location", L"Location \""+pLoc->title()+L"\" deleted.");
 
   // delete object
-  delete location;
+  delete pLoc;
 
   // remove from list
   this->_location.erase(this->_location.begin()+id);
@@ -703,25 +703,25 @@ bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& h
   def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batch.size()));
 
   // useful variables
-  OmPackage* package;
+  OmPackage* pPkg;
   OmXmlNode xml_loc, xml_ins;
 
-  for(size_t l = 0; l < this->_location.size(); ++l) {
+  for(size_t k = 0; k < this->_location.size(); ++k) {
 
     // add <location> entry
     xml_loc = def_xml.addChild(L"location");
-    xml_loc.setAttr(L"uuid", this->_location[l]->uuid());
+    xml_loc.setAttr(L"uuid", this->_location[k]->uuid());
 
-    for(size_t i = 0; i < hash_lsts[l].size(); ++i) {
+    for(size_t i = 0; i < hash_lsts[k].size(); ++i) {
 
-      package = this->_location[l]->findPackage(hash_lsts[l][i]);
+      pPkg = this->_location[k]->findPackage(hash_lsts[k][i]);
 
-      if(package) {
+      if(pPkg) {
         xml_ins = xml_loc.addChild(L"install");
-        xml_ins.setAttr(L"ident", package->ident());
-        xml_ins.setAttr(L"hash", Om_toHexString(package->hash()));
+        xml_ins.setAttr(L"ident", pPkg->ident());
+        xml_ins.setAttr(L"hash", Om_toHexString(pPkg->hash()));
       } else {
-        this->_error = L"Package with hash "+Om_toHexString(hash_lsts[l][i]);
+        this->_error = L"Package with hash "+Om_toHexString(hash_lsts[k][i]);
         this->_error += L" was not found in Location.";
         this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
       }

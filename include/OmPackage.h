@@ -126,9 +126,9 @@ class OmPackage
     ///
     /// Constructor with Location.
     ///
-    /// \param[in]  loc     : Related Location for the Package.
+    /// \param[in]  pLoc    : Related Location for the Package.
     ///
-    OmPackage(OmLocation* loc);
+    OmPackage(OmLocation* pLoc);
 
     /// \brief Destructor.
     ///

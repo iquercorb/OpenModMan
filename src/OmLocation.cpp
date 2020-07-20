@@ -103,8 +103,8 @@ static bool __OmLocation_pkgCompareStat(const OmPackage* a, const OmPackage* b)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmLocation::OmLocation(OmContext* context) :
-  _context(context),
+OmLocation::OmLocation(OmContext* pCtx) :
+  _context(pCtx),
   _config(),
   _uuid(),
   _title(),
@@ -583,7 +583,7 @@ void OmLocation::packageListRefresh()
   // changes in Backup folder by third-party.
 
   vector<wstring> ls;
-  OmPackage* pkg;
+  OmPackage* pPkg;
 
   // our package list is not empty, we will check for added or removed item
   if(this->_package.size()) {
@@ -650,11 +650,11 @@ void OmLocation::packageListRefresh()
       }
       // This is a new Package Source
       if(!in_list) {
-        pkg = new OmPackage(this);
-        if(pkg->sourceParse(ls[i])) {
-          this->_package.push_back(pkg);
+        pPkg = new OmPackage(this);
+        if(pPkg->sourceParse(ls[i])) {
+          this->_package.push_back(pPkg);
         } else {
-          delete pkg;
+          delete pPkg;
         }
       }
     }
@@ -673,11 +673,11 @@ void OmLocation::packageListRefresh()
 
   // add all available and valid Backups
   for(size_t i = 0; i < ls.size(); ++i) {
-    pkg = new OmPackage(this);
-    if(pkg->backupParse(ls[i])) {
-      this->_package.push_back(pkg);
+    pPkg = new OmPackage(this);
+    if(pPkg->backupParse(ls[i])) {
+      this->_package.push_back(pPkg);
     } else {
-      delete pkg;
+      delete pPkg;
     }
   }
 
@@ -704,11 +704,11 @@ void OmLocation::packageListRefresh()
     }
     // non Backup found for this Source, adding new Source
     if(!has_bck) {
-      pkg = new OmPackage(this);
-      if(pkg->sourceParse(ls[i])) {
-        this->_package.push_back(pkg);
+      pPkg = new OmPackage(this);
+      if(pPkg->sourceParse(ls[i])) {
+        this->_package.push_back(pPkg);
       } else {
-        delete pkg;
+        delete pPkg;
       }
     }
   }

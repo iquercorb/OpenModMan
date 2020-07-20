@@ -57,18 +57,18 @@ long OmUiPropBat::id() const
 bool OmUiPropBat::checkChanges()
 {
   OmBatch* batch = static_cast<OmBatch*>(this->_batch);
-  OmUiPropBatStg* uiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
+  OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
   bool changed = false;
 
   wstring item_str;
 
-  if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Context title
-    uiPropBatStg->getItemText(IDC_EC_INPT1, item_str);
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Context title
+    pUiPropBatStg->getItemText(IDC_EC_INPT1, item_str);
     if(batch->title() != item_str) {
       changed = true;
     } else {
-      uiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
+      pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
     }
   }
 
@@ -85,21 +85,21 @@ bool OmUiPropBat::checkChanges()
 bool OmUiPropBat::applyChanges()
 {
   OmBatch* batch = static_cast<OmBatch*>(this->_batch);
-  OmUiPropBatStg* uiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
+  OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
   wstring bat_name;
 
   // Step 1, verify everything
-  if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    uiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
+    pUiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
     if(Om_isValidName(bat_name)) {
       Om_dialogBoxErr(this->_hwnd, L"Invalid Batch title", OMM_STR_ERR_VALIDNAME);
       return false;
     }
     // Check whether name already exists
-    OmContext* context = batch->context();
-    for(unsigned i = 0; i < context->batchCount(); ++i) {
-      if(context->batch(i)->title() == bat_name) {
+    OmContext* pCtx = batch->context();
+    for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
+      if(pCtx->batch(i)->title() == bat_name) {
         Om_dialogBoxErr(this->_hwnd, L"Not unique Batch title",
                                      L"A Batch with the same title already "
                                      L"exists. Please choose another title.");
@@ -109,14 +109,14 @@ bool OmUiPropBat::applyChanges()
   }
 
   // Step 2, save changes
-  if(uiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
     if(!batch->renameHome(bat_name)) { //< rename Batch filename
       Om_dialogBoxErr(this->_hwnd,  L"Batch rename failed",
                                     batch->lastError());
     }
     batch->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified
-    uiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
+    pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
   }
 
   // disable Apply button

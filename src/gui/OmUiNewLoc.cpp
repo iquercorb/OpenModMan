@@ -51,9 +51,9 @@ long OmUiNewLoc::id() const
 ///
 bool OmUiNewLoc::_apply()
 {
-  OmContext* context = this->_context;
+  OmContext* pCtx = this->_context;
 
-  if(context == nullptr)
+  if(pCtx == nullptr)
     return false;
 
   bool cust_lib, cust_bck;
@@ -101,9 +101,8 @@ bool OmUiNewLoc::_apply()
   this->quit();
 
   // create new Location in Context
-  if(!context->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
-    Om_dialogBoxErr(this->_hwnd,  L"Location creation failed",
-                                  context->lastError());
+  if(!pCtx->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", pCtx->lastError());
   }
 
   // refresh all tree from the main dialog

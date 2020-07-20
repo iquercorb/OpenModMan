@@ -69,10 +69,10 @@ class OmUiPropCtx : public OmDialogProp
     /// work with and on. A valid Context must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  ctx   : Context object to associate.
+    /// \param[in]  pCtx  : Context object to associate.
     ///
-    void setContext(OmContext* ctx) {
-      _context = ctx;
+    void setContext(OmContext* pCtx) {
+      _context = pCtx;
     }
 
     /// \brief Check for properties changes

@@ -68,10 +68,10 @@ class OmUiPropLoc : public OmDialogProp
     /// work with and on. A valid Location must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  loc   : Location object to associate.
+    /// \param[in]  pLoc  : Location object to associate.
     ///
-    void setLocation(OmLocation* loc) {
-      _location = loc;
+    void setLocation(OmLocation* pLoc) {
+      _location = pLoc;
     }
 
     /// \brief Check for properties changes

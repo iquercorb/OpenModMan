@@ -105,14 +105,14 @@ void OmUiPropCtxStg::_onInit()
   this->_createTooltip(IDC_BC_BROW1,  L"Select application or icon file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
 
-  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-  if(context == nullptr)
+  if(pCtx == nullptr)
     return;
 
-  this->setItemText(IDC_EC_INPT1, context->home());
-  this->setItemText(IDC_EC_INPT2, context->uuid());
-  this->setItemText(IDC_EC_INPT3, context->title());
+  this->setItemText(IDC_EC_INPT1, pCtx->home());
+  this->setItemText(IDC_EC_INPT2, pCtx->uuid());
+  this->setItemText(IDC_EC_INPT3, pCtx->title());
 
   this->setItemText(IDC_EC_INPT4, L"<invalid>"); //< hidden icon path
 
@@ -146,9 +146,9 @@ void OmUiPropCtxStg::_onResize()
 ///
 void OmUiPropCtxStg::_onRefresh()
 {
-  OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
 
-  if(context == nullptr)
+  if(pCtx == nullptr)
     return;
 
   wstring ctx_icon;
@@ -164,8 +164,8 @@ void OmUiPropCtxStg::_onRefresh()
     this->setItemText(IDC_BC_BROW1, L"Change...");
   } else {
     // check whether Context already have an icon configured
-    if(context->icon()) {
-      hIcon = context->icon();
+    if(pCtx->icon()) {
+      hIcon = pCtx->icon();
       this->setItemText(IDC_BC_BROW1, L"Change...");
     } else {
       hIcon = this->_hIcBlank;
@@ -186,11 +186,6 @@ void OmUiPropCtxStg::_onRefresh()
 bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
-
-    OmContext* context = static_cast<OmUiPropCtx*>(this->_parent)->context();
-
-    if(context == nullptr)
-      return false;
 
     wstring item_str, brow_str;
 

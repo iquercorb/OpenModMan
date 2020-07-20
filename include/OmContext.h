@@ -40,7 +40,7 @@ class OmContext
     ///
     /// Default constructor.
     ///
-    OmContext(OmManager* manager);
+    OmContext(OmManager* pMgr);
 
     /// \brief Destructor.
     ///

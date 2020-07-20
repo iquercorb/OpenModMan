@@ -57,13 +57,13 @@ void OmUiPropPkgBck::_onInit()
   // defines fonts for package description, title, and log output
   this->msgItem(IDC_EC_ENT05, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
-  OmPackage* package = static_cast<OmUiPropPkg*>(this->_parent)->package();
-  if(package == nullptr) return;
+  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
+  if(pPkg == nullptr) return;
 
-  if(package->isType(PKG_TYPE_BCK)) {
+  if(pPkg->isType(PKG_TYPE_BCK)) {
 
     // Type
-    if(Om_isDir(package->backupPath())) {
+    if(Om_isDir(pPkg->backupPath())) {
       this->setItemText(IDC_EC_ENT01, L"Sub-folder");
     } else {
       this->setItemText(IDC_EC_ENT01, L"Zip archive");
@@ -71,15 +71,15 @@ void OmUiPropPkgBck::_onInit()
 
     // Location
     this->enableItem(IDC_EC_ENT02, true);
-    this->setItemText(IDC_EC_ENT02, package->backupPath());
+    this->setItemText(IDC_EC_ENT02, pPkg->backupPath());
 
     // Overlap by
     this->enableItem(IDC_EC_ENT03, true);
-    if(package->overlapCount()) {
+    if(pPkg->overlapCount()) {
       wstring olap_str;
-      unsigned n = package->overlapCount();
+      unsigned n = pPkg->overlapCount();
       for(unsigned i = 0; i < n; ++i) {
-        olap_str += Om_toHexString(package->overlap(i));
+        olap_str += Om_toHexString(pPkg->overlap(i));
         if(i < (n - 1)) {
           olap_str += L"; ";
         }
@@ -91,19 +91,19 @@ void OmUiPropPkgBck::_onInit()
 
     // Total Size
     this->enableItem(IDC_EC_ENT04, true);
-    this->setItemText(IDC_EC_ENT04, Om_sizeString(Om_itemSize(package->backupPath())));
+    this->setItemText(IDC_EC_ENT04, Om_sizeString(Om_itemSize(pPkg->backupPath())));
 
     // Installed Files
     this->enableItem(IDC_EC_ENT05, true);
-    if(package->backupItemCount()) {
+    if(pPkg->backupItemCount()) {
       wstring inst_str;
-      for(unsigned i = 0; i < package->backupItemCount(); ++i) {
-        if(package->backupItem(i).dest == PKGITEM_DEST_DEL) {
+      for(unsigned i = 0; i < pPkg->backupItemCount(); ++i) {
+        if(pPkg->backupItem(i).dest == PKGITEM_DEST_DEL) {
           inst_str += L"+  ";
         } else {
           inst_str += L"≠  ";
         }
-        inst_str += package->backupItem(i).path;
+        inst_str += pPkg->backupItem(i).path;
         inst_str += L"\r\n";
       }
       this->setItemText(IDC_EC_ENT05, inst_str);

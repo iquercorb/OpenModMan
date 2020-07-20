@@ -619,15 +619,15 @@ bool OmManager::openContext(const wstring& path)
       return true;
   }
 
-  OmContext* context = new OmContext(this);
+  OmContext* pCtx = new OmContext(this);
 
-  if(!context->open(path)) {
-    this->_error = context->lastError();
-    delete context;
+  if(!pCtx->open(path)) {
+    this->_error = pCtx->lastError();
+    delete pCtx;
     return false;
   }
 
-  this->_context.push_back(context);
+  this->_context.push_back(pCtx);
 
   this->saveRecentFile(path);
 

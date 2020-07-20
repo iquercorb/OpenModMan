@@ -128,12 +128,12 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
 ///
 void OmUiNewPkg::_buildPkg_init()
 {
-  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
   // open the progress dialog
-  uiProgress->open(true);
-  uiProgress->setTitle(L"Package creation");
-  uiProgress->setDesc(L"Preparing data");
+  pUiProgress->open(true);
+  pUiProgress->setTitle(L"Package creation");
+  pUiProgress->setDesc(L"Preparing data");
 
   // start package building thread
   DWORD dWid;
@@ -156,7 +156,7 @@ void OmUiNewPkg::_buildPkg_stop()
   }
 
   // quit the progress dialog
-  static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
+  static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
 
   // show a reassuring dialog message
   if(exitCode == 0) {
@@ -181,7 +181,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 {
   OmUiNewPkg* self = static_cast<OmUiNewPkg*>(arg);
 
-  OmUiProgress* uiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
   wstring item_str;
 
@@ -198,7 +198,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
     // show error dialog box
     wstring err = L"Source data parsing failed.\n\n";
     err += package.lastError();
-    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", err);
+    Om_dialogBoxErr(pUiProgress->hwnd(), L"Package creation error", err);
     return 1;
   }
 
@@ -236,18 +236,18 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   // hide the main dialog
   self->hide();
 
-  uiProgress->setDesc(L"Adding files to package");
+  pUiProgress->setDesc(L"Adding files to package");
 
-  HWND hPb = uiProgress->getPbHandle();
-  HWND hSc = uiProgress->getDetailScHandle();
+  HWND hPb = pUiProgress->getPbHandle();
+  HWND hSc = pUiProgress->getDetailScHandle();
 
   DWORD exitCode = 0;
 
-  if(!package.save(item_str, zip_lvl, hPb, hSc, uiProgress->getAbortPtr())) {
+  if(!package.save(item_str, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += package.lastError();
-    Om_dialogBoxErr(uiProgress->hwnd(), L"Package creation error", err);
+    Om_dialogBoxErr(pUiProgress->hwnd(), L"Package creation error", err);
 
     exitCode = 1;
   }
@@ -447,9 +447,9 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    OmManager* manager = static_cast<OmManager*>(this->_data);
-    OmContext* curCtx = manager->curContext();
-    OmLocation* curLoc = curCtx ? curCtx->curLocation() : nullptr;
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->curContext();
+    OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
 
     HBITMAP hBm;
 
@@ -475,7 +475,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       this->getItemText(IDC_EC_INPT1, item_str);
       if(item_str.empty()) {
-        item_str = curLoc->libraryDir();
+        item_str = pLoc->libraryDir();
       } else {
         item_str = Om_getDirPart(item_str);
       }
@@ -488,7 +488,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       this->getItemText(IDC_EC_INPT2, item_str);
       if(item_str.empty()) {
-        item_str = curLoc->libraryDir();
+        item_str = pLoc->libraryDir();
       } else {
         item_str = Om_getDirPart(item_str);
       }
@@ -609,8 +609,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       // select the initial location for browsing start
-      if(curLoc) {
-        item_str = curLoc->libraryDir();
+      if(pLoc) {
+        item_str = pLoc->libraryDir();
       } else {
         item_str = Om_getDirPart(item_str);
       }

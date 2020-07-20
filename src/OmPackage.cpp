@@ -118,7 +118,7 @@ OmPackage::OmPackage() :
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmPackage::OmPackage(OmLocation* location) :
+OmPackage::OmPackage(OmLocation* pLoc) :
   _type(0),
   _ident(),
   _hash(0),
@@ -134,7 +134,7 @@ OmPackage::OmPackage(OmLocation* location) :
   _desc(),
   _version(),
   _picture(nullptr),
-  _location(location),
+  _location(pLoc),
   _error()
 {
 
@@ -849,12 +849,12 @@ bool OmPackage::couldOverlap(const OmPackage* other) const
 {
   if(other->_backupItem.size()) {
 
-    for(size_t i = 0; i < _sourceItem.size(); ++i) {
+    for(size_t i = 0; i < this->_sourceItem.size(); ++i) {
 
       for(size_t j = 0; j < other->_backupItem.size(); ++j) {
 
         // compare only if both are file or folder
-        if(_sourceItem[i].type != other->_backupItem[j].type)
+        if(this->_sourceItem[i].type != other->_backupItem[j].type)
           continue;
 
         // Directories to be cleaned need to be empty first, so we also
@@ -868,7 +868,7 @@ bool OmPackage::couldOverlap(const OmPackage* other) const
         }
 
         // same path mean overlap
-        if(_sourceItem[i].path == other->_backupItem[j].path) {
+        if(this->_sourceItem[i].path == other->_backupItem[j].path) {
           return true;
         }
       }

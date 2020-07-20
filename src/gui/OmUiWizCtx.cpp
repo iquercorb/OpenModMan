@@ -20,6 +20,7 @@
 #include "gui/OmUiWizCtxBeg.h"
 #include "gui/OmUiWizCtxCfg.h"
 #include "gui/OmUiWizCtxLoc.h"
+#include "gui/OmUiMain.h"
 #include "OmManager.h"
 #include "OmContext.h"
 
@@ -82,42 +83,45 @@ bool OmUiWizCtx::_onWizNext()
 ///
 void OmUiWizCtx::_onWizFinish()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmUiWizCtxCfg* uiWizCtxCfg = static_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG));
-  OmUiWizCtxLoc* uiWizLocCfg = static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG));
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmUiWizCtxCfg* pUiWizCtxCfg = static_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG));
+  OmUiWizCtxLoc* pUiWizLocCfg = static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG));
 
   // Retrieve Context parameters
   wstring ctx_name, ctx_home;
-  uiWizCtxCfg->getItemText(IDC_EC_INPT1, ctx_name);
-  uiWizCtxCfg->getItemText(IDC_EC_INPT2, ctx_home);
+  pUiWizCtxCfg->getItemText(IDC_EC_INPT1, ctx_name);
+  pUiWizCtxCfg->getItemText(IDC_EC_INPT2, ctx_home);
 
   // Retrieve Location parameters
   wstring loc_name, loc_dst, loc_lib, loc_bck;
-  uiWizLocCfg->getItemText(IDC_EC_INPT1, loc_name);
-  uiWizLocCfg->getItemText(IDC_EC_INPT2, loc_dst);
+  pUiWizLocCfg->getItemText(IDC_EC_INPT1, loc_name);
+  pUiWizLocCfg->getItemText(IDC_EC_INPT2, loc_dst);
 
-  if(uiWizLocCfg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-    uiWizLocCfg->getItemText(IDC_EC_INPT3, loc_lib);
+  if(pUiWizLocCfg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    pUiWizLocCfg->getItemText(IDC_EC_INPT3, loc_lib);
   }
 
-  if(uiWizLocCfg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-    uiWizLocCfg->getItemText(IDC_EC_INPT4, loc_bck);
+  if(pUiWizLocCfg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    pUiWizLocCfg->getItemText(IDC_EC_INPT4, loc_bck);
   }
 
   this->quit();
 
   // create the new Context, if an error occur, error message
-  if(manager->makeContext(ctx_name, ctx_home)) {
+  if(pMgr->makeContext(ctx_name, ctx_home)) {
     // get last created Context
-    OmContext* context = manager->context(manager->contextCount()-1);
+    OmContext* pCtx = pMgr->context(pMgr->contextCount()-1);
     // create new Location in Context
-    if(!context->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
-      Om_dialogBoxErr(this->_hwnd, L"Location creation failed", context->lastError());
+    if(!pCtx->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+      Om_dialogBoxErr(this->_hwnd, L"Location creation failed", pCtx->lastError());
     }
   } else {
-    Om_dialogBoxErr(this->_hwnd, L"Context creation failed", manager->lastError());
+    Om_dialogBoxErr(this->_hwnd, L"Context creation failed", pMgr->lastError());
   }
 
-  // refresh all tree from the main dialog
+  // Unselect current context, this will force de select last one at next refresh
+  static_cast<OmUiMain*>(this->root())->selContext(-1);
+
+  // Refresh all tree from the main dialog
   this->root()->refresh();
 }

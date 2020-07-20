@@ -90,38 +90,40 @@ long OmUiMainLib::id() const
 ///
 void OmUiMainLib::selLocation(int i)
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // stop Library folder monitoring
   this->_monitor_stop();
 
   // select the requested Location
-  if(manager->curContext()) {
+  if(pMgr->curContext()) {
 
-    manager->curContext()->selLocation(i);
+    OmContext* pCtx = pMgr->curContext();
 
-    OmLocation* location = manager->curContext()->curLocation();
+    pCtx->selLocation(i);
 
-    if(location) {
+    if(pCtx->curLocation()) {
 
-      location->installAccess(this->_hwnd);
+      OmLocation* pLoc = pCtx->curLocation();
 
-      location->backupAccess(this->_hwnd);
+      pLoc->installAccess(this->_hwnd);
 
-      if(location->libraryAccess(this->_hwnd)) {
+      pLoc->backupAccess(this->_hwnd);
+
+      if(pLoc->libraryAccess(this->_hwnd)) {
         // start Library folder monitoring
-        this->_monitor_init(location->libraryDir());
+        this->_monitor_init(pLoc->libraryDir());
       }
     }
   }
 
-  OmUiMain* uiMain = static_cast<OmUiMain*>(this->_parent);
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
   // disable "Edit > Package" in main menu
-  uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
+  pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
 
   // disable the "Edit > Package > []" elements
-  HMENU hMenu = uiMain->getMenuEdit(1);
+  HMENU hMenu = pUiMain->getMenuEdit(1);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
@@ -145,8 +147,8 @@ void OmUiMainLib::selLocation(int i)
 ///
 void OmUiMainLib::toggle()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->curContext()->curLocation();
 
   HWND hLv = this->getItem(IDC_LV_PKGLS);
 
@@ -159,7 +161,7 @@ void OmUiMainLib::toggle()
 
       this->_abortPending = false;
 
-      if(location->package(i)->hasBackup()) {
+      if(pLoc->package(i)->hasBackup()) {
         this->_uninstall_hth = CreateThread(nullptr, 0, this->_uninstall_fth, this, 0, &dwid);
       } else {
         this->_install_hth = CreateThread(nullptr, 0, this->_install_fth, this, 0, &dwid);
@@ -204,24 +206,24 @@ void OmUiMainLib::uninstall()
 ///
 void OmUiMainLib::viewDetails()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = manager->curContext()->curLocation();
-  OmPackage* package = nullptr;
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->curContext()->curLocation();
+  OmPackage* pPkg = nullptr;
 
   HWND hLv = this->getItem(IDC_LV_PKGLS);
 
-  unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-  for(unsigned i = 0; i < n; ++i) {
+  unsigned lv_cnt = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
+  for(unsigned i = 0; i < lv_cnt; ++i) {
     if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      package = location->package(i);
+      pPkg = pLoc->package(i);
       break;
     }
   }
 
-  if(package) {
-    OmUiPropPkg* uiPropPkg = static_cast<OmUiPropPkg*>(this->childById(IDD_PROP_PKG));
-    uiPropPkg->setPackage(package);
-    uiPropPkg->open(true);
+  if(pPkg) {
+    OmUiPropPkg* pUiPropPkg = static_cast<OmUiPropPkg*>(this->childById(IDD_PROP_PKG));
+    pUiPropPkg->setPackage(pPkg);
+    pUiPropPkg->open(true);
   }
 }
 
@@ -231,8 +233,8 @@ void OmUiMainLib::viewDetails()
 ///
 void OmUiMainLib::moveTrash()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->curContext()->curLocation();
 
   vector<OmPackage*> trash_list;
 
@@ -243,7 +245,7 @@ void OmUiMainLib::moveTrash()
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
   for(unsigned i = 0; i < n; ++i) {
     if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      trash_list.push_back(location->package(i));
+      trash_list.push_back(pLoc->package(i));
     }
   }
 
@@ -278,8 +280,8 @@ void OmUiMainLib::moveTrash()
 ///
 void OmUiMainLib::openExplore()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->curContext()->curLocation();
 
   vector<OmPackage*> explo_list;
 
@@ -288,7 +290,7 @@ void OmUiMainLib::openExplore()
   unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
   for(unsigned i = 0; i < n; ++i) {
     if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      explo_list.push_back(location->package(i));
+      explo_list.push_back(pLoc->package(i));
     }
   }
 
@@ -334,20 +336,20 @@ bool OmUiMainLib::remBatch()
 
     unsigned bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
 
-    OmManager* manager = static_cast<OmManager*>(this->_data);
-    OmContext* curCtx = manager->curContext();
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->curContext();
 
     // warns the user before committing the irreparable
     wstring qry = L"Are your sure you want to delete the Batch \"";
-    qry += curCtx->batch(bat_id)->title();
+    qry += pCtx->batch(bat_id)->title();
     qry += L"\" ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
       return false;
     }
 
-    if(!curCtx->remBatch(bat_id)) {
-      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", curCtx->lastError());
+    if(!pCtx->remBatch(bat_id)) {
+      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", pCtx->lastError());
       return false;
     }
   }
@@ -364,7 +366,7 @@ bool OmUiMainLib::remBatch()
 ///
 void OmUiMainLib::setOnProcess(bool enable)
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // handle to "Edit > Package" sub-menu
   HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
@@ -401,12 +403,12 @@ void OmUiMainLib::setOnProcess(bool enable)
 
   } else {
 
-    OmContext* context = manager->curContext();
+    OmContext* pCtx = pMgr->curContext();
 
     HWND hLv = this->getItem(IDC_LV_PKGLS);
     HWND hLb = this->getItem(IDC_LB_BATLS);
 
-    this->enableItem(IDC_BC_NEW, (context != nullptr));
+    this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
 
     bool lb_has_sel = (SendMessageW(hLb, LB_GETCURSEL, 0, 0) >= 0);
     this->enableItem(IDC_BC_DEL, lb_has_sel);
@@ -431,23 +433,20 @@ void OmUiMainLib::setOnProcess(bool enable)
 ///
 void OmUiMainLib::_onSelectPkg()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = nullptr;
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
 
-  if(manager->curContext())
-    location = manager->curContext()->curLocation();
-
-  if(location == nullptr)
+  if(pLoc == nullptr)
     return;
 
   // keep handle to main dialog
-  OmUiMain* uiMain = static_cast<OmUiMain*>(this->_parent);
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
   // disable "Edit > Package" in main menu
-  uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
+  pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
 
   // handle to "Edit > Package" sub-menu
-  HMENU hMenu = uiMain->getMenuEdit(1);
+  HMENU hMenu = pUiMain->getMenuEdit(1);
 
   HWND hLv = this->getItem(IDC_LV_PKGLS);
   HWND hSb = this->getItem(IDC_SB_PKIMG);
@@ -471,7 +470,7 @@ void OmUiMainLib::_onSelectPkg()
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, 0);
 
     // enable "Edit > Package" sub-menu
-    uiMain->setMenuEdit(1, MF_BYPOSITION|MF_ENABLED);
+    pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_ENABLED);
 
     if(lv_nsl > 1) {
 
@@ -496,16 +495,16 @@ void OmUiMainLib::_onSelectPkg()
 
         if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
 
-          this->setItemText(IDC_SC_TITLE, location->package(i)->name());
+          this->setItemText(IDC_SC_TITLE, pLoc->package(i)->name());
 
-          if(location->package(i)->desc().size()) {
-            this->setItemText(IDC_EC_PKTXT, location->package(i)->desc());
+          if(pLoc->package(i)->desc().size()) {
+            this->setItemText(IDC_EC_PKTXT, pLoc->package(i)->desc());
           } else {
             this->setItemText(IDC_EC_PKTXT, L"<no description available>");
           }
 
-          if(location->package(i)->picture()) {
-            hBm = Om_getBitmapThumbnail(location->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+          if(pLoc->package(i)->picture()) {
+            hBm = Om_getBitmapThumbnail(pLoc->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
           }
 
           ShowWindow(this->getItem(IDC_SC_TITLE), true);
@@ -531,7 +530,7 @@ void OmUiMainLib::_onSelectPkg()
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
 
     // disable "Edit > Package" sub-menu
-    uiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
+    pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
   }
 
   // Update the selected picture
@@ -559,18 +558,15 @@ void OmUiMainLib::_onSelectBat()
 ///
 void OmUiMainLib::_reloadLibEc()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = nullptr;
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;;
 
-  if(manager->curContext())
-    location = manager->curContext()->curLocation();
-
-  if(location) {
+  if(pLoc != nullptr) {
 
     // check for Library folder validity
-    if(location->libraryAccess(this->_hwnd)) {
+    if(pLoc->libraryAccess(this->_hwnd)) {
       // set the library path
-      this->setItemText(IDC_EC_INPT1, location->libraryDir());
+      this->setItemText(IDC_EC_INPT1, pLoc->libraryDir());
     } else {
       this->setItemText(IDC_EC_INPT1, L"<folder access error>");
     }
@@ -587,29 +583,26 @@ void OmUiMainLib::_reloadLibEc()
 ///
 void OmUiMainLib::_reloadLibLv(bool clear)
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmLocation* location = nullptr;
-
-  if(manager->curContext())
-    location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
 
   // get List view control
   HWND hLv = this->getItem(IDC_LV_PKGLS);
 
-  if(location) {
+  if(pLoc != nullptr) {
 
     // if icon size changed, reload
-    if(this->_lvIconsSize != manager->iconsSize()) {
+    if(this->_lvIconsSize != pMgr->iconsSize()) {
       this->_reloadIcons();
     }
 
     // return now if library folder cannot be accessed
-    if(!location->libraryAccess(this->_hwnd))
+    if(!pLoc->libraryAccess(this->_hwnd))
       return;
 
     // force Location library refresh
-    if(clear) location->packageListClear(); //< clear to rebuild entirely
-    location->packageListRefresh();
+    if(clear) pLoc->packageListClear(); //< clear to rebuild entirely
+    pLoc->packageListRefresh();
 
     // we enable the List-View
     EnableWindow(hLv, true);
@@ -622,18 +615,18 @@ void OmUiMainLib::_reloadLibLv(bool clear)
     SendMessageW(hLv, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
 
     // add item to list view
-    OmPackage* package;
+    OmPackage* pPkg;
     LVITEMW lvItem;
-    for(unsigned i = 0; i < location->packageCount(); ++i) {
+    for(unsigned i = 0; i < pLoc->packageCount(); ++i) {
 
-      package = location->package(i);
+      pPkg = pLoc->package(i);
 
       // the first colum, package status, here we INSERT the new item
       lvItem.iItem = i;
       lvItem.mask = LVIF_IMAGE;
       lvItem.iSubItem = 0;
-      if(package->isType(PKG_TYPE_BCK)) {
-        if(location->isBakcupOverlapped(package)) {
+      if(pPkg->isType(PKG_TYPE_BCK)) {
+        if(pLoc->isBakcupOverlapped(pPkg)) {
           lvItem.iImage = 6; // IDB_PKG_OWR
         } else {
           lvItem.iImage = 5; // IDB_PKG_BCK
@@ -646,9 +639,9 @@ void OmUiMainLib::_reloadLibLv(bool clear)
       // Second column, the package name and type, here we set the subitem
       lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
       lvItem.iSubItem = 1;
-      if(package->isType(PKG_TYPE_SRC)) {
-        if(package->isType(PKG_TYPE_ZIP)) {
-          if(package->dependCount()) {
+      if(pPkg->isType(PKG_TYPE_SRC)) {
+        if(pPkg->isType(PKG_TYPE_ZIP)) {
+          if(pPkg->dependCount()) {
             lvItem.iImage = 3; // IDB_PKG_DPN
           } else {
             lvItem.iImage = 2; // IDB_PKG_ZIP
@@ -659,13 +652,13 @@ void OmUiMainLib::_reloadLibLv(bool clear)
       } else {
         lvItem.iImage = 0; // IDB_PKG_ERR
       }
-      lvItem.pszText = (LPWSTR)location->package(i)->name().c_str();
+      lvItem.pszText = const_cast<LPWSTR>(pLoc->package(i)->name().c_str());
       SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
       // Third column, the package version, we set the subitem
       lvItem.mask = LVIF_TEXT;
       lvItem.iSubItem = 2;
-      lvItem.pszText = (LPWSTR)location->package(i)->version().asString().c_str();
+      lvItem.pszText = const_cast<LPWSTR>(pLoc->package(i)->version().asString().c_str());
       SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
     }
 
@@ -686,17 +679,17 @@ void OmUiMainLib::_reloadLibLv(bool clear)
 ///
 void OmUiMainLib::_reloadBatLb()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmContext* context = manager->curContext();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->curContext();
 
   HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // empty List-Box
   SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
 
-  if(context) {
-    for(unsigned i = 0; i < context->batchCount(); ++i) {
-      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(context->batch(i)->title().c_str()));
+  if(pCtx) {
+    for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
@@ -708,12 +701,12 @@ void OmUiMainLib::_reloadBatLb()
 ///
 void OmUiMainLib::_reloadLocCb()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmContext* context = manager->curContext();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->curContext();
 
   HWND hCb = this->getItem(IDC_CB_LOCLS);
 
-  if(context == nullptr) {
+  if(pCtx == nullptr) {
     // no Location, disable the List-Box
     EnableWindow(hCb, false);
     // unselect Location
@@ -729,20 +722,20 @@ void OmUiMainLib::_reloadLocCb()
   SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
 
   // add Context(s) to Combo-Box
-  if(context->locationCount()) {
+  if(pCtx->locationCount()) {
 
     wstring label;
 
     EnableWindow(hCb, true);
 
-    for(unsigned i = 0; i < context->locationCount(); ++i) {
+    for(unsigned i = 0; i < pCtx->locationCount(); ++i) {
 
-      label = context->location(i)->title();
+      label = pCtx->location(i)->title();
       label += L" - ";
 
       // checks whether installation destination path is valid
-      if(context->location(i)->installAccess(this->_hwnd)) {
-        label += context->location(i)->installDir();
+      if(pCtx->location(i)->installAccess(this->_hwnd)) {
+        label += pCtx->location(i)->installDir();
       } else {
         label += L"<folder access error>";
       }
@@ -751,7 +744,7 @@ void OmUiMainLib::_reloadLocCb()
     }
 
     // select the the previously selected Context
-    if(cb_sel >= 0 && cb_sel < static_cast<int>(context->locationCount())) {
+    if(cb_sel >= 0) {
       SendMessageW(hCb, CB_SETCURSEL, cb_sel, 0);
       this->_reloadLibEc(); //< reload displayed library path
       this->_reloadLibLv(true); //< reload + reparse packages list
@@ -783,10 +776,10 @@ void OmUiMainLib::_reloadLocCb()
 ///
 void OmUiMainLib::_reloadIcons()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // update size
-  this->_lvIconsSize = manager->iconsSize();
+  this->_lvIconsSize = pMgr->iconsSize();
 
    // hold the HWND of our list view control */
   HWND hLv = this->getItem(IDC_LV_PKGLS);
@@ -863,8 +856,11 @@ DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
 {
   OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
 
-  OmManager* manager = static_cast<OmManager*>(self->_data);
-  OmLocation* location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
+
+  if(pLoc == nullptr)
+    return 0;
 
   HWND hPb = self->getItem(IDC_PB_PGRES);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
@@ -885,7 +881,7 @@ DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
   }
 
   // Launch install process
-  location->packagesInst(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+  pLoc->packagesInst(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
 
   // disable on-process state
   self->setOnProcess(false);
@@ -904,8 +900,11 @@ DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
 {
   OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
 
-  OmManager* manager = static_cast<OmManager*>(self->_data);
-  OmLocation* location = manager->curContext()->curLocation();
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
+
+  if(pLoc == nullptr)
+    return 0;
 
   HWND hPb = self->getItem(IDC_PB_PGRES);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
@@ -926,7 +925,7 @@ DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
   }
 
   // Launch uninstall process
-  location->packagesUnin(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+  pLoc->packagesUnin(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
 
   // disable on-process state
   self->setOnProcess(false);
@@ -945,9 +944,8 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 {
   OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
 
-  OmManager* manager = static_cast<OmManager*>(self->_data);
-  OmContext* context = manager->curContext();
-  OmLocation* location;
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmContext* pCtx = pMgr->curContext();
 
   HWND hPb = self->getItem(IDC_PB_PGRES);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
@@ -967,15 +965,17 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
     ShowWindow(self->getItem(IDC_SC_TITLE), false);
 
     // retrieve the batch object from current selection
-    OmBatch* batch = context->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
+    OmBatch* batch = pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
+
+    OmLocation* pLoc;
 
     for(unsigned l = 0; l < batch->locationCount(); l++) {
 
       // Select the location
-      self->selLocation(context->findLocation(batch->getLocationUuid(l)));
-      location = context->curLocation();
+      self->selLocation(pCtx->findLocation(batch->getLocationUuid(l)));
+      pLoc = pCtx->curLocation();
 
-      if(location == nullptr) {
+      if(pLoc == nullptr) {
         // warning here
         continue;
       }
@@ -993,10 +993,10 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 
       for(unsigned i = 0; i < n; ++i) {
 
-        p = location->findPackageIndex(batch->getInstallHash(l, i));
+        p = pLoc->findPackageIndex(batch->getInstallHash(l, i));
 
         if(p >= 0) {
-          if(!location->package(p)->hasBackup()) {
+          if(!pLoc->package(p)->hasBackup()) {
             inst_list.push_back(p);
           }
         }
@@ -1004,11 +1004,11 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
       }
 
       // create the uninstall list, here we do not care order
-      n = location->packageCount();
+      n = pLoc->packageCount();
       for(unsigned i = 0; i < n; ++i) {
 
-        if(!batch->hasInstallHash(l, location->package(i)->hash())) {
-          if(location->package(i)->hasBackup()) {
+        if(!batch->hasInstallHash(l, pLoc->package(i)->hash())) {
+          if(pLoc->package(i)->hasBackup()) {
             uins_list.push_back(i);
           }
         }
@@ -1016,7 +1016,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 
       if(uins_list.size()) {
         // Launch uninstall process
-        location->packagesUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+        pLoc->packagesUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
       }
 
       if(inst_list.size()) {
@@ -1030,7 +1030,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
           inst.clear(); inst.push_back(inst_list[i]);
 
           // Launch install process
-          location->packagesInst(inst, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+          pLoc->packagesInst(inst, false, self->_hwnd, hLv, hPb, &self->_abortPending);
         }
       }
 
@@ -1101,7 +1101,7 @@ void OmUiMainLib::_monitor_stop()
 DWORD WINAPI OmUiMainLib::_monitor_fth(void* arg)
 {
   OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
-  OmManager* manager = static_cast<OmManager*>(self->_data);
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
 
   DWORD dwObj;
 
@@ -1114,7 +1114,7 @@ DWORD WINAPI OmUiMainLib::_monitor_fth(void* arg)
 
     if(dwObj == 1) { //< folder content changed event
 
-      if(manager->curContext()->curLocation()) {
+      if(pMgr->curContext()->curLocation()) {
         // reload the package list
         self->_reloadLibLv();
       }
@@ -1239,7 +1239,7 @@ void OmUiMainLib::_onResize()
 ///
 void OmUiMainLib::_onRefresh()
 {
-  OmManager* manager = static_cast<OmManager*>(this->_data);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -1258,7 +1258,7 @@ void OmUiMainLib::_onRefresh()
 
   // disable all batches buttons
   this->enableItem(IDC_BC_APPLY, false);
-  this->enableItem(IDC_BC_NEW, (manager->curContext() != nullptr));
+  this->enableItem(IDC_BC_NEW, (pMgr->curContext() != nullptr));
   this->enableItem(IDC_BC_DEL, false);
 
   this->_reloadBatLb(); //< reload Batches list
@@ -1311,12 +1311,11 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     this->_reloadLibLv();
   }
 
-  OmManager* manager = static_cast<OmManager*>(this->_data);
-  OmContext* curCtx = manager->curContext();
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->curContext();
+  OmLocation* pLoc = (pCtx) ? pCtx->curLocation() : nullptr;
 
-  OmLocation* curLoc = (curCtx) ? curCtx->curLocation() : nullptr;
-
-  if(curLoc == nullptr)
+  if(pLoc == nullptr)
     return false;
 
   if(uMsg == WM_NOTIFY) {
@@ -1353,13 +1352,13 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch(pNmlv->iSubItem)
         {
         case 0:
-          curLoc->setPackageSorting(PKG_SORTING_STAT);
+          pLoc->setPackageSorting(PKG_SORTING_STAT);
           break;
         case 2:
-          curLoc->setPackageSorting(PKG_SORTING_VERS);
+          pLoc->setPackageSorting(PKG_SORTING_VERS);
           break;
         default:
-          curLoc->setPackageSorting(PKG_SORTING_NAME);
+          pLoc->setPackageSorting(PKG_SORTING_NAME);
           break;
         }
         this->refresh();
@@ -1403,9 +1402,9 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_NEW:
       {
-        OmUiNewBat* uiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
-        uiNewBat->setContext(curCtx);
-        uiNewBat->open(true);
+        OmUiNewBat* pUiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        pUiNewBat->setContext(pCtx);
+        pUiNewBat->open(true);
       }
       break;
 

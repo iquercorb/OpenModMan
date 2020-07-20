@@ -118,23 +118,23 @@ void OmUiPropLocStg::_onResize()
 ///
 void OmUiPropLocStg::_onRefresh()
 {
-  OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
-  if(location == nullptr)
+  if(pLoc == nullptr)
     return;
 
-  this->setItemText(IDC_EC_INPT1, location->title());
-  this->setItemText(IDC_EC_INPT2, location->installDir());
+  this->setItemText(IDC_EC_INPT1, pLoc->title());
+  this->setItemText(IDC_EC_INPT2, pLoc->installDir());
 
-  this->setItemText(IDC_EC_INPT3, location->libraryDir());
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, location->hasCustLibraryDir());
-  this->enableItem(IDC_EC_INPT3, location->hasCustLibraryDir());
-  this->enableItem(IDC_BC_BROW3, location->hasCustLibraryDir());
+  this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pLoc->hasCustLibraryDir());
+  this->enableItem(IDC_EC_INPT3, pLoc->hasCustLibraryDir());
+  this->enableItem(IDC_BC_BROW3, pLoc->hasCustLibraryDir());
 
-  this->setItemText(IDC_EC_INPT4, location->backupDir());
-  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, location->hasCustBackupDir());
-  this->enableItem(IDC_EC_INPT4, location->hasCustBackupDir());
-  this->enableItem(IDC_BC_BROW4, location->hasCustBackupDir());
+  this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
+  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBackupDir());
+  this->enableItem(IDC_EC_INPT4, pLoc->hasCustBackupDir());
+  this->enableItem(IDC_BC_BROW4, pLoc->hasCustBackupDir());
 }
 
 
@@ -145,9 +145,9 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmLocation* location = static_cast<OmUiPropLoc*>(this->_parent)->location();
+    OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
 
-    if(location == nullptr)
+    if(pLoc == nullptr)
       return false;
 
     bool bm_chk;
@@ -160,10 +160,10 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
       this->enableItem(IDC_EC_INPT3, bm_chk);
       this->enableItem(IDC_BC_BROW3, bm_chk);
-      if(bm_chk && location->hasCustLibraryDir()) {
-        this->setItemText(IDC_EC_INPT3, location->libraryDir());
+      if(bm_chk && pLoc->hasCustLibraryDir()) {
+        this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
       } else {
-        this->setItemText(IDC_EC_INPT3, location->home() + L"\\library");
+        this->setItemText(IDC_EC_INPT3, pLoc->home() + L"\\library");
       }
       break;
 
@@ -171,10 +171,10 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
       this->enableItem(IDC_EC_INPT4, bm_chk);
       this->enableItem(IDC_BC_BROW4, bm_chk);
-      if(bm_chk && location->hasCustBackupDir()) {
-        this->setItemText(IDC_EC_INPT4, location->backupDir());
+      if(bm_chk && pLoc->hasCustBackupDir()) {
+        this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
       } else {
-        this->setItemText(IDC_EC_INPT4, location->home() + L"\\backup");
+        this->setItemText(IDC_EC_INPT4, pLoc->home() + L"\\backup");
       }
       break;
 
