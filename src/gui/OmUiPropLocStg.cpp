@@ -212,7 +212,6 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INPT4: //< Entry for Backup
       // user modified parameter, notify it
-      std::cout << "this->setChParam(LOC_PROP_STG_BACKUP, true)\n";
       this->setChParam(LOC_PROP_STG_BACKUP, true);
       break;
 

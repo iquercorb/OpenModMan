@@ -1013,7 +1013,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
     this->log(2, L"Location("+this->_title+L") Move backup", L"Data transfered to \""+path+L"\".");
   }
 
-  return has_error;
+  return !has_error;
 }
 
 

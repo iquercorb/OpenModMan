@@ -237,6 +237,9 @@ void OmUiPropCtxLoc::_backupPurge_stop()
 
   // Back to main dialog window to normal state
   static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+
+  // refresh all dialogs from root (Main dialog)
+  this->root()->refresh();
 }
 
 
@@ -303,17 +306,9 @@ void OmUiPropCtxLoc::_onInit()
   this->_createTooltip(IDC_BC_ADD,    L"Add new location");
   this->_createTooltip(IDC_BC_EDIT,   L"Location properties");
 
-  // Set controls default states and parameters
-  this->setItemText(IDC_EC_INPT2, L"<no Location selected>");
-  this->setItemText(IDC_EC_INPT3, L"<no Location selected>");
-  this->setItemText(IDC_EC_INPT4, L"<no Location selected>");
-
   this->enableItem(IDC_EC_INPT2, false);
   this->enableItem(IDC_EC_INPT3, false);
   this->enableItem(IDC_EC_INPT4, false);
-
-  this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_EDIT, false);
 
   // Update values
   this->_onRefresh();
@@ -367,6 +362,14 @@ void OmUiPropCtxLoc::_onRefresh()
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
+
+  // Set controls default states and parameters
+  this->setItemText(IDC_EC_INPT2, L"<no Location selected>");
+  this->setItemText(IDC_EC_INPT3, L"<no Location selected>");
+  this->setItemText(IDC_EC_INPT4, L"<no Location selected>");
+
+  this->enableItem(IDC_BC_DEL,  false);
+  this->enableItem(IDC_BC_EDIT, false);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;

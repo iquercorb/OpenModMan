@@ -17,8 +17,8 @@
 
 #include "gui/res/resource.h"
 #include "OmManager.h"
-#include "OmUiPropBat.h"
-#include "OmUiPropBatStg.h"
+#include "gui/OmUiPropBat.h"
+#include "gui/OmUiPropBatStg.h"
 
 
 ///
@@ -92,8 +92,10 @@ bool OmUiPropBat::applyChanges()
   // Step 1, verify everything
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
     pUiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
-    if(Om_isValidName(bat_name)) {
-      Om_dialogBoxErr(this->_hwnd, L"Invalid Batch title", OMM_STR_ERR_VALIDNAME);
+    if(!Om_isValidName(bat_name)) {
+      wstring wrn = L"The title";
+      wrn += OMM_STR_ERR_VALIDNAME;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid Batch title", wrn);
       return false;
     }
     // Check whether name already exists
@@ -122,7 +124,7 @@ bool OmUiPropBat::applyChanges()
   // disable Apply button
   this->enableItem(IDC_BC_APPLY, false);
 
-  // refresh all tree from the main dialog
+  // refresh all dialogs from root (Main dialog)
   this->root()->refresh();
 
   return true;

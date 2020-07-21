@@ -173,7 +173,8 @@ void OmDialogProp::_onResize()
 ///
 void OmDialogProp::_onQuit()
 {
-  this->_onPropQuit();
+  // refresh all dialogs from root (Main dialog)
+  this->root()->refresh();
 }
 
 

@@ -122,6 +122,6 @@ void OmUiWizCtx::_onWizFinish()
   // Unselect current context, this will force de select last one at next refresh
   static_cast<OmUiMain*>(this->root())->selContext(-1);
 
-  // Refresh all tree from the main dialog
-  this->root()->refresh();
+  // force parent dialog to refresh
+  this->_parent->refresh();
 }

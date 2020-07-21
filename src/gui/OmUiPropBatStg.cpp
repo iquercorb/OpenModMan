@@ -18,8 +18,8 @@
 #include "gui/res/resource.h"
 #include "OmBatch.h"
 #include "OmDialogProp.h"
-#include "OmUiPropBat.h"
-#include "OmUiPropBatStg.h"
+#include "gui/OmUiPropBat.h"
+#include "gui/OmUiPropBatStg.h"
 
 
 
@@ -72,9 +72,6 @@ void OmUiPropBatStg::_onInit()
   this->_createTooltip(IDC_EC_INPT1,  L"Batch name");
 
   this->_onRefresh();
-
-  // reset modified parameters flags
-  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 
@@ -100,6 +97,9 @@ void OmUiPropBatStg::_onRefresh()
     return;
 
   this->setItemText(IDC_EC_INPT1, batch->title());
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

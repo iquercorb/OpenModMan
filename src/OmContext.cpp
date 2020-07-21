@@ -573,6 +573,7 @@ bool OmContext::remLocation(unsigned id)
   bool has_error = false;
 
   // keep Location paths
+  wstring loc_title = pLoc->title();
   wstring loc_home = pLoc->home();
   wstring loc_path = pLoc->path();
 
@@ -631,7 +632,7 @@ bool OmContext::remLocation(unsigned id)
     this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
   }
 
-  this->log(2, L"Context("+this->_title+L") Delete Location", L"Location \""+pLoc->title()+L"\" deleted.");
+  this->log(2, L"Context("+this->_title+L") Delete Location", L"Location \""+loc_title+L"\" deleted.");
 
   // delete object
   delete pLoc;

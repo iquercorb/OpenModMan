@@ -170,7 +170,7 @@ bool OmUiPropMan::applyChanges()
   // disable Apply button
   this->enableItem(IDC_BC_APPLY, false);
 
-  // refresh all tree from the main dialog
+  // refresh all dialogs from root (Main dialog)
   this->root()->refresh();
 
   return true;

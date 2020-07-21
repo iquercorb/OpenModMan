@@ -64,7 +64,7 @@ bool OmUiNewLoc::_apply()
   if(!Om_isValidName(loc_name)) {
     wstring wrn = L"Title";
     wrn += OMM_STR_ERR_VALIDNAME;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
     return false;
   }
 
@@ -132,10 +132,10 @@ void OmUiNewLoc::_onInit()
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"Main Location");
+  this->setItemText(IDC_EC_INPT1, L"New Location");
   this->setItemText(IDC_EC_INPT2, L"");
-  this->setItemText(IDC_EC_INPT3, L"Main Location\\library");
-  this->setItemText(IDC_EC_INPT4, L"Main Location\\backup");
+  this->setItemText(IDC_EC_INPT3, L"New Location\\library");
+  this->setItemText(IDC_EC_INPT4, L"New Location\\backup");
 
   wstring item_str;
 

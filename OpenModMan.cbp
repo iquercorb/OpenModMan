@@ -27,13 +27,9 @@
 					<Add option="-m64" />
 					<Add option="-g" />
 					<Add option="-DDEBUG" />
-					<Add directory="include/Core" />
-					<Add directory="include/Gui" />
-					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
-					<Add directory="lib/curl/64-bit" />
 				</Linker>
 			</Target>
 			<Target title="64-bit Release">
@@ -48,14 +44,10 @@
 					<Add option="-Wall" />
 					<Add option="-Wextra" />
 					<Add option="-m64" />
-					<Add directory="include/Core" />
-					<Add directory="include/Gui" />
-					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m64" />
-					<Add directory="lib/curl/64-bit" />
 				</Linker>
 			</Target>
 			<Target title="32-bit Debug">
@@ -70,13 +62,9 @@
 					<Add option="-m32" />
 					<Add option="-g" />
 					<Add option="-DDEBUG" />
-					<Add directory="include/Core" />
-					<Add directory="include/Gui" />
-					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
-					<Add directory="lib/curl/32-bit" />
 				</Linker>
 			</Target>
 			<Target title="32-bit Release">
@@ -91,27 +79,17 @@
 					<Add option="-Wall" />
 					<Add option="-Wextra" />
 					<Add option="-m32" />
-					<Add directory="include/Core" />
-					<Add directory="include/Gui" />
-					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m32" />
-					<Add directory="lib/curl/32-bit" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add directory="include" />
-			<Add directory="include/Gui" />
-			<Add directory="include/Engine" />
-			<Add directory="include/Core" />
 			<Add directory="include/thirdparty/miniz" />
 			<Add directory="include/thirdparty/pugixml" />
-			<Add directory="include/thirdparty/zlib" />
-			<Add directory="include/thirdparty/zlib/contrib/minizip" />
-			<Add directory="include/thirdparty/curl" />
 			<Add directory="include/thirdparty/xxhash" />
 		</Compiler>
 		<ResourceCompiler>
@@ -129,7 +107,6 @@
 			<Add library="Shell32" />
 			<Add library="Uuid" />
 			<Add library="UxTheme" />
-			<Add directory="lib/curl" />
 		</Linker>
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />

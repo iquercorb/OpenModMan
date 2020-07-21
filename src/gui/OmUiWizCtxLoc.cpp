@@ -15,11 +15,10 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "OmUiWizCtxLoc.h"
 #include "gui/res/resource.h"
 #include "gui/OmUiWizCtx.h"
+#include "gui/OmUiWizCtxLoc.h"
 #include "OmManager.h"
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -59,7 +58,7 @@ bool OmUiWizCtxLoc::hasValidParams() const
   if(!Om_isValidName(item_str)) {
     wstring wrn = L"Title";
     wrn += OMM_STR_ERR_VALIDNAME;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
     return false;
   }
 
@@ -115,10 +114,10 @@ void OmUiWizCtxLoc::_onInit()
   this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"Main Location");
+  this->setItemText(IDC_EC_INPT1, L"New Location");
   this->setItemText(IDC_EC_INPT2, L"");
-  this->setItemText(IDC_EC_INPT3, L"Main Location\\library");
-  this->setItemText(IDC_EC_INPT4, L"Main Location\\backup");
+  this->setItemText(IDC_EC_INPT3, L"New Location\\library");
+  this->setItemText(IDC_EC_INPT4, L"New Location\\backup");
 
   // disable "next" button
   static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);

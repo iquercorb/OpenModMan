@@ -63,7 +63,6 @@ class OmUiPropMan : public OmDialogProp
     bool applyChanges();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 };
 
 #endif // OMUIPROPMAN_H

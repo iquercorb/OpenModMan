@@ -142,9 +142,9 @@ bool OmUiPropLoc::applyChanges()
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
     pUiPropLocStg->getItemText(IDC_EC_INPT1, loc_name);
     if(!Om_isValidName(loc_name)) {
-      wstring wrn = L"Title";
+      wstring wrn = L"The title";
       wrn += OMM_STR_ERR_VALIDNAME;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", OMM_STR_ERR_VALIDNAME);
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
       return false;
     }
   }
@@ -224,7 +224,6 @@ bool OmUiPropLoc::applyChanges()
     // dedicates thread
     if(pLoc->backupDir() != loc_bck) {
 
-      std::wcout << pLoc->backupDir() << L" != " << loc_bck << L"\n";
       this->_moveBackup_init();
 
       // if backup transfer thread is running, we do not quit since it will
@@ -237,10 +236,10 @@ bool OmUiPropLoc::applyChanges()
       // uncheck the unnecessary "custom" flag
       if(!cust_bck && pLoc->hasCustBackupDir())
         pLoc->remCustBackupDir();
-    }
 
-    // Reset parameter as unmodified
-    pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
+      // Reset parameter as unmodified
+      pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
+    }
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
@@ -270,8 +269,8 @@ bool OmUiPropLoc::applyChanges()
   // disable Apply button
   this->enableItem(IDC_BC_APPLY, false);
 
-  // refresh all tree from the main dialog
-  this->refresh();
+  // refresh all dialogs from root (Main dialog)
+  this->root()->refresh();
 
   return true;
 }
@@ -311,6 +310,16 @@ void OmUiPropLoc::_moveBackup_stop()
 
   // Close progress dialog
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
+
+  // disable Apply button
+  this->enableItem(IDC_BC_APPLY, false);
+
+  // Reset parameter as unmodified
+  OmUiPropLocStg* pUiPropLocStg = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
+  pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
+
+  // Call apply again in case it still changes to be applied
+  this->applyChanges();
 }
 
 
@@ -357,16 +366,6 @@ DWORD WINAPI OmUiPropLoc::_moveBackup_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLoc::_onPropQuit()
-{
-  // refresh all tree from the main dialog
-  this->_parent->refresh();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_MOVEBACKUP_DONE is a custom message sent from backup transfer thread
@@ -374,8 +373,6 @@ bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == UWM_MOVEBACKUP_DONE) {
     // end the backup transfer process
     this->_moveBackup_stop();
-    // refresh dialog
-    this->refresh();
   }
 
   return false;

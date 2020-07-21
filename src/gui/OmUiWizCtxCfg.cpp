@@ -57,19 +57,25 @@ bool OmUiWizCtxCfg::hasValidParams() const
 
   this->getItemText(IDC_EC_INPT1, item_str);
   if(!Om_isValidName(item_str)) {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", OMM_STR_ERR_VALIDNAME);
+    wstring wrn = L"The title";
+    wrn += OMM_STR_ERR_VALIDNAME;
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", wrn);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT2, item_str);
   if(!Om_isValidPath(item_str)) {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context home path", OMM_STR_ERR_VALIDPATH);
+    wstring wrn = L"The path";
+    wrn += OMM_STR_ERR_VALIDPATH;
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context home path", wrn);
     return false;
   }
 
   this->getItemText(IDC_EC_INPT3, item_str);
   if(!Om_isValidPath(item_str)) {
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition filename", OMM_STR_ERR_VALIDPATH);
+    wstring wrn = L"The filename";
+    wrn += OMM_STR_ERR_VALIDPATH;
+    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition filename", wrn);
     return false;
   }
 
