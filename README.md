@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.2 (beta)
+Version: 0.9.3 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -44,7 +44,7 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
-0.9.3 (work in progress)
+0.9.3 (07/21/2020)
  - Update pugixml API to version 1.10
  - Fixed new Context Wizzard custom library and bakcup folder incorrectly created.
  - Fixed multiple bugs in various dialogs.
