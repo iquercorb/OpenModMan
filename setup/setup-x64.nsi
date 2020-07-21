@@ -37,6 +37,7 @@ ShowUnInstDetails show
 
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE_NAME}.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "..\include\gui\res\bitmap\setup_splash.bmp"
 
 ;--------------------------------
 
