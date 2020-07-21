@@ -117,6 +117,9 @@ void OmUiPropLocBck::_onInit()
 
     SendMessageW(hCb, CB_SETCURSEL, 0, 0);
   }
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

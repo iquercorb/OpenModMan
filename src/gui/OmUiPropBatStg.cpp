@@ -72,6 +72,9 @@ void OmUiPropBatStg::_onInit()
   this->_createTooltip(IDC_EC_INPT1,  L"Batch name");
 
   this->_onRefresh();
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

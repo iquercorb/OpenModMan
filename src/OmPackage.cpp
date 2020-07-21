@@ -146,6 +146,15 @@ OmPackage::OmPackage(OmLocation* pLoc) :
 ///
 OmPackage::~OmPackage()
 {
+  this->_source.clear();
+  this->_backup.clear();
+  this->_backupDir.clear();
+  this->_sourceDir.clear();
+  this->_sourceItem.clear();
+  this->_backupItem.clear();
+  this->_overlap.clear();
+  this->_depends.clear();
+
   if(this->_picture) DeleteObject(this->_picture);
 }
 
@@ -906,7 +915,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
     if(Om_isDir(this->_source)) {
       if(!Om_checkAccess(this->_source, OMM_ACCESS_DIR_READ)) {
         this->_error = L"Source folder \""+this->_source+L"\"";
-        this->_error += OMM_STR_ERR_ACCESS_R;
+        this->_error += OMM_STR_ERR_READ;
         this->log(0, L"Package("+path+L") Save", this->_error);
         return false;
       }

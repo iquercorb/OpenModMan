@@ -135,6 +135,9 @@ void OmUiPropLocStg::_onRefresh()
   this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBackupDir());
   this->enableItem(IDC_EC_INPT4, pLoc->hasCustBackupDir());
   this->enableItem(IDC_BC_BROW4, pLoc->hasCustBackupDir());
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 
@@ -209,6 +212,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INPT4: //< Entry for Backup
       // user modified parameter, notify it
+      std::cout << "this->setChParam(LOC_PROP_STG_BACKUP, true)\n";
       this->setChParam(LOC_PROP_STG_BACKUP, true);
       break;
 

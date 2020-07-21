@@ -168,11 +168,9 @@ class OmLocation
     /// not valid, the function prompt a message dialog box to warn user and
     /// select a valid folder.
     ///
-    /// \param[in]  hwnd    : Parent window handle (HWND) for dialog boxes.
-    ///
     /// \return True if Library folder is accessible, false otherwise.
     ///
-    bool libraryAccess(HWND hWnd = nullptr);
+    bool checkAccessLib();
 
     /// \brief Verify Backup folder access.
     ///
@@ -180,11 +178,9 @@ class OmLocation
     /// not valid, the function prompt a message dialog box to warn user and
     /// select a valid folder.
     ///
-    /// \param[in]  hwnd    : Parent window handle (HWND) for dialog boxes.
-    ///
     /// \return True if Backup folder is accessible, false otherwise.
     ///
-    bool backupAccess(HWND hWnd = nullptr);
+    bool checkAccessBck();
 
     /// \brief Verify Location folder access.
     ///
@@ -192,11 +188,9 @@ class OmLocation
     /// not valid, the function prompt a message dialog box to warn user and
     /// select a valid folder.
     ///
-    /// \param[in]  hwnd    : Parent window handle (HWND) for dialog boxes.
-    ///
     /// \return True if Location folder is accessible, false otherwise.
     ///
-    bool installAccess(HWND hWnd = nullptr);
+    bool checkAccessDst();
 
     /// \brief Open Location.
     ///

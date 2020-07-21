@@ -19,6 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiMainLib.h"
 #include "gui/OmUiPropPkg.h"
+#include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewBat.h"
 #include "gui/OmUiMain.h"
 
@@ -106,13 +107,28 @@ void OmUiMainLib::selLocation(int i)
 
       OmLocation* pLoc = pCtx->curLocation();
 
-      pLoc->installAccess(this->_hwnd);
+      if(!pLoc->checkAccessDst()) {
+        wstring wrn = L"Configured Location's destination folder \"";
+        wrn += pLoc->installDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += L"\n\nPlease check Location's settings and folder permissions.";
+        Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", wrn);
+      }
 
-      pLoc->backupAccess(this->_hwnd);
+      if(!pLoc->checkAccessBck()) {
+        wstring wrn = L"Configured Location's backup folder \"";
+        wrn += pLoc->backupDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += L"\n\nPlease check Location's settings and folder permissions.";
+        Om_dialogBoxWarn(this->_hwnd, L"Backup folder access error", wrn);
+      }
 
-      if(pLoc->libraryAccess(this->_hwnd)) {
+      if(pLoc->checkAccessLib()) {
         // start Library folder monitoring
         this->_monitor_init(pLoc->libraryDir());
+      } else {
+        wstring wrn = L"Configured Location's library folder \"";
+        wrn += pLoc->backupDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += L"\n\nPlease check Location's settings and folder permissions.";
+        Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", wrn);
       }
     }
   }
@@ -249,6 +265,12 @@ void OmUiMainLib::moveTrash()
     }
   }
 
+  // Unselect all items
+  LVITEM lvI = {};
+  lvI.mask = LVIF_STATE;
+  lvI.stateMask = LVIS_SELECTED;
+  SendMessageW(hLv, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
+
   if(trash_list.size()) {
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)",
                                             L"Move the selected package(s) to trash ?"))
@@ -256,19 +278,10 @@ void OmUiMainLib::moveTrash()
 
     for(size_t i = 0; i < trash_list.size(); ++i) {
       Om_moveToTrash(trash_list[i]->sourcePath());
-      this->_reloadLibLv();
     }
   }
 
   this->setOnProcess(false);
-
-  // Unselect all items
-  LVITEM lvI = {};
-  lvI.mask = LVIF_STATE;
-  lvI.stateMask = LVIS_SELECTED;
-  SendMessageW(hLv, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
-
-  this->_reloadLibLv(true);
 
   // update package selection
   this->_onSelectPkg();
@@ -564,7 +577,7 @@ void OmUiMainLib::_reloadLibEc()
   if(pLoc != nullptr) {
 
     // check for Library folder validity
-    if(pLoc->libraryAccess(this->_hwnd)) {
+    if(pLoc->checkAccessLib()) {
       // set the library path
       this->setItemText(IDC_EC_INPT1, pLoc->libraryDir());
     } else {
@@ -597,11 +610,14 @@ void OmUiMainLib::_reloadLibLv(bool clear)
     }
 
     // return now if library folder cannot be accessed
-    if(!pLoc->libraryAccess(this->_hwnd))
+    if(!pLoc->checkAccessLib()) {
       return;
+    }
 
     // force Location library refresh
-    if(clear) pLoc->packageListClear(); //< clear to rebuild entirely
+    if(clear) {
+      pLoc->packageListClear(); //< clear to rebuild entirely
+    }
     pLoc->packageListRefresh();
 
     // we enable the List-View
@@ -734,10 +750,16 @@ void OmUiMainLib::_reloadLocCb()
       label += L" - ";
 
       // checks whether installation destination path is valid
-      if(pCtx->location(i)->installAccess(this->_hwnd)) {
+      if(pCtx->location(i)->checkAccessDst()) {
         label += pCtx->location(i)->installDir();
       } else {
         label += L"<folder access error>";
+
+        wstring wrn = L"Configured Location's Destination folder \"";
+        wrn += pCtx->location(i)->installDir()+L"\"";
+        wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += L"\n\nPlease check Location's settings and folder permissions.";
+        Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", wrn);
       }
 
       SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
@@ -758,15 +780,18 @@ void OmUiMainLib::_reloadLocCb()
     EnableWindow(hCb, false);
     // unselect Location
     this->selLocation(-1);
+
     // if Context have no Location, we ask user to create at least one
     wstring qry = L"The current Context does not have any configured "
                   L"Location. A Context needs at least one Location.\n\n"
                   L"Do you want to configure a new Location now ?";
 
     if(Om_dialogBoxQuerry(this->_hwnd, L"No Location found", qry)) {
-      // TODO : adapter ceci
-      this->childById(IDD_WIZ_LOC)->open(true);
+      OmUiNewLoc* pUiNewLoc = static_cast<OmUiNewLoc*>(this->siblingById(IDD_NEW_LOC));
+      pUiNewLoc->setContext(pCtx);
+      pUiNewLoc->open(true);
     }
+
   }
 }
 
@@ -1059,6 +1084,11 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 ///
 void OmUiMainLib::_monitor_init(const wstring& path)
 {
+  // first stops any running monitor
+  if(this->_monitor_hth) {
+    this->_monitor_stop();
+  }
+
   // create a new folder change notification event
   DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
   mask |= FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
@@ -1240,6 +1270,12 @@ void OmUiMainLib::_onResize()
 void OmUiMainLib::_onRefresh()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  // check whether a context is selected
+  if(!pMgr->curContext()) {
+    // unselect location
+    this->selLocation(-1);
+  }
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);

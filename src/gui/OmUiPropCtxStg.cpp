@@ -116,6 +116,7 @@ void OmUiPropCtxStg::_onInit()
 
   this->setItemText(IDC_EC_INPT4, L"<invalid>"); //< hidden icon path
 
+  // refresh with default values
   this->_onRefresh();
 }
 
@@ -177,6 +178,9 @@ void OmUiPropCtxStg::_onRefresh()
   if(hIcon != this->_hIcBlank) DestroyIcon(hIcon);
 
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

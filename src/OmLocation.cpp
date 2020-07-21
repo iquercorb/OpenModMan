@@ -372,7 +372,7 @@ void OmLocation::close()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::libraryAccess(HWND hWnd)
+bool OmLocation::checkAccessLib()
 {
   bool access_ok = true;
 
@@ -381,7 +381,7 @@ bool OmLocation::libraryAccess(HWND hWnd)
     // checks for proper permissions on folder
     if(!Om_checkAccess(this->_libraryDir, OMM_ACCESS_DIR_READ)) {
       this->_error =  L"Library folder \""+this->_libraryDir+L"\"";
-      this->_error += OMM_STR_ERR_ACCESS_R;
+      this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
@@ -404,14 +404,6 @@ bool OmLocation::libraryAccess(HWND hWnd)
 
     this->log(0, L"Location("+this->_title+L") Library access", this->_error);
 
-    if(hWnd) {
-      Om_dialogBoxWarn(hWnd,  L"Library folder access error",
-                              L"The configured Library folder cannot be accessed, "
-                              L"the folder does not exists or have read permission "
-                              L"restriction.\n\nPlease verify the Location's Library "
-                              L"folder settings and the folder permissions.");
-    }
-
     return false;
   }
 
@@ -422,7 +414,7 @@ bool OmLocation::libraryAccess(HWND hWnd)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::backupAccess(HWND hWnd)
+bool OmLocation::checkAccessBck()
 {
   bool access_ok = true;
 
@@ -432,12 +424,12 @@ bool OmLocation::backupAccess(HWND hWnd)
     if(Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_READ)) {
       if(!Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_WRITE)) {
         this->_error = L"Backup folder \""+this->_backupDir+L"\"";
-        this->_error += OMM_STR_ERR_ACCESS_W;
+        this->_error += OMM_STR_ERR_WRITE;
         access_ok = false;
       }
     } else {
       this->_error = L"Backup folder \""+this->_backupDir+L"\"";
-      this->_error += OMM_STR_ERR_ACCESS_R;
+      this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
@@ -460,14 +452,6 @@ bool OmLocation::backupAccess(HWND hWnd)
 
     this->log(0, L"Location("+this->_title+L") Backup access", this->_error);
 
-    if(hWnd) {
-      Om_dialogBoxWarn(hWnd,  L"Backup folder access error",
-                              L"The configured Backup folder cannot be accessed, "
-                              L"the folder does not exists or have write permission "
-                              L"restriction.\n\nPlease verify the Location's Backup "
-                              L"folder settings and the folder permissions.");
-    }
-
     return false;
   }
 
@@ -478,7 +462,7 @@ bool OmLocation::backupAccess(HWND hWnd)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::installAccess(HWND hWnd)
+bool OmLocation::checkAccessDst()
 {
   bool access_ok = true;
 
@@ -488,12 +472,12 @@ bool OmLocation::installAccess(HWND hWnd)
     if(Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_READ)) {
       if(!Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_WRITE)) {
         this->_error = L"Destination folder \""+this->_installDir+L"\"";
-        this->_error += OMM_STR_ERR_ACCESS_W;
+        this->_error += OMM_STR_ERR_WRITE;
         access_ok = false;
       }
     } else {
       this->_error = L"Destination folder \""+this->_installDir+L"\"";
-      this->_error += OMM_STR_ERR_ACCESS_R;
+      this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
@@ -505,14 +489,6 @@ bool OmLocation::installAccess(HWND hWnd)
   if(!access_ok) {
 
     this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
-
-    if(hWnd) {
-      Om_dialogBoxWarn(hWnd,  L"Destination folder access error",
-                              L"The configured Destination folder cannot be accessed, "
-                              L"the folder does not exists or have write permission "
-                              L"restriction.\n\nPlease verify the Location's Destination "
-                              L"settings and the folder permissions.");
-    }
 
     return false;
   }
@@ -903,6 +879,8 @@ bool OmLocation::renameHome(const wstring& name)
   // Close Location to safe rename and reload it after
   this->close();
 
+  bool has_error = false;
+
   // compose new Location definition file name
   wstring new_file = name; new_file += L"."; new_file += OMM_LOC_FILE_EXT;
 
@@ -912,14 +890,18 @@ bool OmLocation::renameHome(const wstring& name)
     this->_error =  L"Definition file \""+old_path+L"\"";
     this->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));
     this->log(0, L"Location("+title+L") Rename", this->_error);
-    return false;
+    // get back the old file name to restore Location properly
+    new_file = Om_getFilePart(old_path);
+    has_error = true;
+  } else {
+    this->log(2, L"Location("+title+L") Rename", L"definition file renamed to \""+new_file+L"\"");
   }
-
-  this->log(2, L"Location("+title+L") Rename", L"definition file renamed to \""+new_file+L"\"");
 
   // compose new Location home folder
   wstring new_home = old_home.substr(0, old_home.find_last_of(L"\\") + 1);
   new_home += name;
+
+  std::wcout << new_home << L"\n";
 
   // Rename Location home folder
   result = Om_fileMove(old_home, new_home);
@@ -927,17 +909,23 @@ bool OmLocation::renameHome(const wstring& name)
     this->_error =  L"Location subfolder \""+old_home+L"\"";
     this->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));
     this->log(0, L"Location("+title+L") Rename", this->_error);
-    return false;
+    // get back the old home folder to restore Location properly
+    new_home = old_home;
+    has_error = true;
+  } else {
+    this->log(2, L"Location("+title+L") Rename", L"subfolder renamed to \""+new_home+L"\"");
   }
-
-  this->log(2, L"Location("+title+L") Rename", L"subfolder renamed to \""+new_home+L"\"");
 
   // Reload location
   this->open(new_home + L"\\" + new_file);
 
-  this->log(2, L"Location("+title+L") Rename", L"Success");
+  if(has_error) {
+    this->log(2, L"Location("+title+L") Rename", L"Failed");
+  } else {
+    this->log(2, L"Location("+title+L") Rename", L"Success");
+  }
 
-  return true;
+  return !has_error;
 }
 
 
@@ -951,9 +939,9 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
   if(path != this->_backupDir) {
 
     // checks whether we have a valid old Backup folder
-    if(!this->backupAccess(nullptr)) {
+    if(!this->checkAccessBck()) {
       this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
-      this->_error += L" is no longer accessible.";
+      this->_error += OMM_STR_ERR_DIRACCESS;
       this->log(1, L"Location("+this->_title+L") Move backup", this->_error);
       return false;
     }
@@ -1048,17 +1036,17 @@ bool OmLocation::hasBackupData()
 bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
-  if(!this->installAccess(nullptr)) {
+  if(!this->checkAccessDst()) {
     this->_error =  L"Destination folder \""+this->_installDir+L"\"";
-    this->_error += L" is no longer accessible.";
+    this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backup", this->_error);
     return false;
   }
 
   // checks whether we have a valid Backup folder
-  if(!this->backupAccess(nullptr)) {
+  if(!this->checkAccessBck()) {
     this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
-    this->_error += L" is no longer accessible.";
+    this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backup", this->_error);
     return false;
   }
@@ -1195,29 +1183,29 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
 void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
-  if(!this->installAccess(hWnd)) {
+  if(!this->checkAccessDst()) {
     this->_error =  L"Destination folder \""+this->_installDir+L"\"";
-    this->_error += L" is no longer accessible.";
-    this->log(1, L"Location("+this->_title+L") Package(s) Install", this->_error);
-    Om_dialogBoxErr(hWnd, L"Package(s) install aborted", this->_error);
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
+    Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
     return;
   }
 
   // checks whether we have a valid Library folder
-  if(!this->libraryAccess(hWnd)) {
+  if(!this->checkAccessLib()) {
     this->_error =  L"Library folder \""+this->_libraryDir+L"\"";
-    this->_error += L" is no longer accessible.";
-    this->log(1, L"Location("+this->_title+L") Package(s) Install", this->_error);
-    Om_dialogBoxErr(hWnd, L"Package(s) install aborted", this->_error);
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
+    Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
     return;
   }
 
   // checks whether we have a valid Backup folder
-  if(!this->backupAccess(hWnd)) {
+  if(!this->checkAccessBck()) {
     this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
-    this->_error += L" is no longer accessible.";
-    this->log(1, L"Location("+this->_title+L") Package(s) Install", this->_error);
-    Om_dialogBoxErr(hWnd, L"Package(s) install aborted", this->_error);
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
+    Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
     return;
   }
 
@@ -1445,20 +1433,20 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
 void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
-  if(!this->installAccess(hWnd)) {
-    this->_error = L"Cannot uninstall package(s), the Destination folder \"";
-    this->_error += this->_installDir + L"\" is no longer accessible for writing.";
-    this->log(1, L"Location("+this->_title+L") Package(s) Uninstall", this->_error);
-    Om_dialogBoxErr(hWnd, L"Package(s) Uninstall aborted", this->_error);
+  if(!this->checkAccessDst()) {
+    this->_error = L"Destination folder \""+this->_installDir+L"\"";
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Packages Uninstall", this->_error);
+    Om_dialogBoxErr(hWnd, L"Package(s) uninstallation aborted", this->_error);
     return;
   }
 
   // checks whether we have a valid Backup folder
-  if(!this->backupAccess(hWnd)) {
-    this->_error = L"Cannot uninstall package(s), the Backup folder \"";
-    this->_error += this->_backupDir + L"\" is no longer accessible.";
-    this->log(1, L"Location("+this->_title+L") Package(s) Uninstall", this->_error);
-    Om_dialogBoxErr(hWnd, L"Package(s) Uninstall aborted", this->_error);
+  if(!this->checkAccessBck()) {
+    this->_error = L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Packages Uninstall", this->_error);
+    Om_dialogBoxErr(hWnd, L"Package(s) uninstallation aborted", this->_error);
     return;
   }
 

@@ -124,8 +124,10 @@ bool OmUiPropCtx::applyChanges()
   // Step 1, verify everything
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     pUiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
-    if(Om_isValidName(ctx_name)) {
-      Om_dialogBoxErr(this->_hwnd, L"Invalid Context title", OMM_STR_ERR_VALIDNAME);
+    if(!Om_isValidName(ctx_name)) {
+      wstring wrn = L"Context title";
+      wrn += OMM_STR_ERR_VALIDNAME;
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", wrn);
       return false;
     }
   }
@@ -197,7 +199,17 @@ bool OmUiPropCtx::applyChanges()
   this->enableItem(IDC_BC_APPLY, false);
 
   // refresh all tree from the main dialog
-  this->root()->refresh();
+  this->refresh();
 
   return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropCtx::_onPropQuit()
+{
+  // refresh all tree from the main dialog
+  this->_parent->refresh();
 }

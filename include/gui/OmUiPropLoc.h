@@ -99,6 +99,8 @@ class OmUiPropLoc : public OmDialogProp
 
     static DWORD WINAPI _moveBackup_fth(void*);
 
+    void                _onPropQuit();
+
     bool                _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 

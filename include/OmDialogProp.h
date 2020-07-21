@@ -81,6 +81,8 @@ class OmDialogProp : public OmDialog
 
     void                _onResize();
 
+    void                _onQuit();
+
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     virtual void        _onPropInit();
@@ -88,6 +90,8 @@ class OmDialogProp : public OmDialog
     virtual void        _onPropShow();
 
     virtual void        _onPropResize();
+
+    virtual void        _onPropQuit();
 
     virtual bool        _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

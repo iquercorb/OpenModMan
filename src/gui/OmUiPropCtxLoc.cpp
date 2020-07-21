@@ -179,6 +179,9 @@ void OmUiPropCtxLoc::_locationDel()
         Om_dialogBoxWarn(this->_hwnd, L"Delete Location error", wrn);
       }
 
+      // refresh the dialog to reflect changes
+      this->refresh();
+
       // To prevent crash during operation we unselect location in the main dialog
       static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
 
@@ -364,6 +367,9 @@ void OmUiPropCtxLoc::_onRefresh()
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 
@@ -377,8 +383,6 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == UWM_REMLOCATION_DONE) {
     // end the removing Location process
     this->_backupPurge_stop();
-    // refresh the main window dialog, this will also refresh this one
-    this->root()->refresh();
   }
 
   if(uMsg == WM_COMMAND) {

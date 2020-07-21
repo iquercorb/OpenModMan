@@ -196,7 +196,7 @@ bool OmUiPropLoc::applyChanges()
     }
 
     // Reset parameter as unmodified
-    pUiPropLocStg->setChParam(LOC_PROP_BCK_COMP_LEVEL, false);
+    pUiPropLocBck->setChParam(LOC_PROP_BCK_COMP_LEVEL, false);
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Install path
@@ -224,6 +224,7 @@ bool OmUiPropLoc::applyChanges()
     // dedicates thread
     if(pLoc->backupDir() != loc_bck) {
 
+      std::wcout << pLoc->backupDir() << L" != " << loc_bck << L"\n";
       this->_moveBackup_init();
 
       // if backup transfer thread is running, we do not quit since it will
@@ -270,27 +271,9 @@ bool OmUiPropLoc::applyChanges()
   this->enableItem(IDC_BC_APPLY, false);
 
   // refresh all tree from the main dialog
-  this->root()->refresh();
+  this->refresh();
 
   return true;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  // UWM_MOVEBACKUP_DONE is a custom message sent from backup transfer thread
-  // function, to notify the progress dialog ended is job.
-  if(uMsg == UWM_MOVEBACKUP_DONE) {
-    // end the backup transfer process
-    this->_moveBackup_stop();
-    // refresh the main window dialog, this will also refresh this one
-    this->root()->refresh();
-  }
-
-  return false;
 }
 
 
@@ -368,4 +351,32 @@ DWORD WINAPI OmUiPropLoc::_moveBackup_fth(void* arg)
   PostMessage(self->_hwnd, UWM_MOVEBACKUP_DONE, 0, 0);
 
   return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLoc::_onPropQuit()
+{
+  // refresh all tree from the main dialog
+  this->_parent->refresh();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+  // UWM_MOVEBACKUP_DONE is a custom message sent from backup transfer thread
+  // function, to notify the progress dialog ended is job.
+  if(uMsg == UWM_MOVEBACKUP_DONE) {
+    // end the backup transfer process
+    this->_moveBackup_stop();
+    // refresh dialog
+    this->refresh();
+  }
+
+  return false;
 }

@@ -246,6 +246,9 @@ void OmUiPropCtxBat::_onRefresh()
       SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

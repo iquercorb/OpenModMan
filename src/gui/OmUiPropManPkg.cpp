@@ -83,6 +83,9 @@ void OmUiPropManPkg::_onInit()
   this->msgItem(IDC_BC_CHK04, BM_SETCHECK, pMgr->warnMissDpnd());
   this->msgItem(IDC_BC_CHK05, BM_SETCHECK, pMgr->warnExtraUnin());
   this->msgItem(IDC_BC_CHK06, BM_SETCHECK, pMgr->quietBatches());
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 

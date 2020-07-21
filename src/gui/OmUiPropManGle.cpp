@@ -114,6 +114,9 @@ void OmUiPropManGle::_onInit()
   this->enableItem(IDC_BC_DEL, false);
 
   SetFocus(hCb);
+
+  // reset modified parameters flags
+  for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
 }
 
 
