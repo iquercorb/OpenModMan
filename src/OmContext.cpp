@@ -507,7 +507,7 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   // checks whether we have custom Backup folder
   if(backup.empty()) {
     // Create the default backup sub-folder
-    Om_dirCreate(loc_home + L"\\backup");
+    Om_dirCreate(loc_home + L"\\Backup");
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(backup)) {
@@ -522,7 +522,7 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   // checks whether we have custom Library folder
   if(library.empty()) {
     // Create the default library sub-folder
-    Om_dirCreate(loc_home + L"\\library");
+    Om_dirCreate(loc_home + L"\\Library");
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(library)) {
@@ -581,7 +581,7 @@ bool OmContext::remLocation(unsigned id)
   pLoc->close();
 
   // remove the default backup folder
-  wstring bck_path = loc_home + L"\\backup";
+  wstring bck_path = loc_home + L"\\Backup";
   if(Om_isDir(bck_path)) {
     // this will fails if folder not empty, this is intended
     int result = Om_dirDelete(bck_path);
@@ -593,7 +593,7 @@ bool OmContext::remLocation(unsigned id)
   }
 
   // remove the default Library folder
-  wstring lib_path = loc_home + L"\\library";
+  wstring lib_path = loc_home + L"\\Library";
   if(Om_isDir(lib_path)) {
     // this will fails if folder not empty, this is intended
     int result = Om_dirDelete(lib_path);

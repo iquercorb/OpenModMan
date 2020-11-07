@@ -166,7 +166,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(bm_chk && pLoc->hasCustLibraryDir()) {
         this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
       } else {
-        this->setItemText(IDC_EC_INPT3, pLoc->home() + L"\\library");
+        this->setItemText(IDC_EC_INPT3, pLoc->home() + L"\\Library");
       }
       break;
 
@@ -177,7 +177,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(bm_chk && pLoc->hasCustBackupDir()) {
         this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
       } else {
-        this->setItemText(IDC_EC_INPT4, pLoc->home() + L"\\backup");
+        this->setItemText(IDC_EC_INPT4, pLoc->home() + L"\\Backup");
       }
       break;
 

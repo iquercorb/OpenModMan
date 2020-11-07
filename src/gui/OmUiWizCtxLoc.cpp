@@ -116,8 +116,8 @@ void OmUiWizCtxLoc::_onInit()
   // set default start values
   this->setItemText(IDC_EC_INPT1, L"New Location");
   this->setItemText(IDC_EC_INPT2, L"");
-  this->setItemText(IDC_EC_INPT3, L"New Location\\library");
-  this->setItemText(IDC_EC_INPT4, L"New Location\\backup");
+  this->setItemText(IDC_EC_INPT3, L"New Location\\Library");
+  this->setItemText(IDC_EC_INPT4, L"New Location\\Backup");
 
   // disable "next" button
   static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
@@ -225,17 +225,17 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->getItemText(IDC_EC_INPT1, item_str);
       if(Om_isValidName(item_str)) {
         if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT3, item_str + L"\\library");
+          this->setItemText(IDC_EC_INPT3, item_str + L"\\Library");
         }
         if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT4, item_str + L"\\backup");
+          this->setItemText(IDC_EC_INPT4, item_str + L"\\Backup");
         }
       } else {
         if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT3, L"<invalid path>\\library");
+          this->setItemText(IDC_EC_INPT3, L"<invalid path>\\Library");
         }
         if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT4, L"<invalid path>\\backup");
+          this->setItemText(IDC_EC_INPT4, L"<invalid path>\\Backup");
         }
       }
       has_changed = true;
@@ -257,9 +257,9 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         this->getItemText(IDC_EC_INPT1, item_str);
         if(Om_isValidName(item_str)) {
-          item_str += L"\\library";
+          item_str += L"\\Library";
         } else {
-          item_str = L"<invalid path>\\library";
+          item_str = L"<invalid path>\\Library";
         }
       }
       this->setItemText(IDC_EC_INPT3, item_str);
@@ -281,9 +281,9 @@ bool OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         this->getItemText(IDC_EC_INPT1, item_str);
         if(Om_isValidName(item_str)) {
-          item_str += L"\\backup";
+          item_str += L"\\Backup";
         } else {
-          item_str = L"<invalid path>\\backup";
+          item_str = L"<invalid path>\\Backup";
         }
       }
       this->setItemText(IDC_EC_INPT4, item_str);

@@ -25,10 +25,10 @@
 #include <time.h>
 
 
-#define PKG_BACKUP_DIR    L"backup_dir"
-#define PKG_BACKUP_DEF    L"backup_def"
-#define PKG_SOURCE_DIR    L"source_dir"
-#define PKG_SOURCE_DEF    L"source_def"
+#define PKG_BACKUP_DIR    L"root"
+#define PKG_BACKUP_DEF    L"backup"
+#define PKG_SOURCE_DIR    L"root"
+#define PKG_SOURCE_DEF    L"package"
 
 
 /// \brief Get package folder tree.
@@ -909,32 +909,32 @@ void OmPackage::setPicture(HBITMAP hBmp)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
+bool OmPackage::save(const wstring& out_path, const wstring& img_path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
 {
   if(!(this->_type & PKG_TYPE_ZIP)) {
     if(Om_isDir(this->_source)) {
       if(!Om_checkAccess(this->_source, OMM_ACCESS_DIR_READ)) {
         this->_error = L"Source folder \""+this->_source+L"\"";
         this->_error += OMM_STR_ERR_READ;
-        this->log(0, L"Package("+path+L") Save", this->_error);
+        this->log(0, L"Package("+out_path+L") Save", this->_error);
         return false;
       }
     } else {
       this->_error = L"Source folder \""+this->_source+L"\"";
       this->_error += OMM_STR_ERR_ISDIR;
-      this->log(0, L"Package("+path+L") Save", this->_error);
+      this->log(0, L"Package("+out_path+L") Save", this->_error);
       return false;
     }
   }
 
   if(!this->_sourceItem.size()) {
     this->_error = L"Package does not contain any data to be saved.";
-    this->log(0, L"Package("+path+L") Save", this->_error);
+    this->log(0, L"Package("+out_path+L") Save", this->_error);
     return false;
   }
 
   // create package identity according destination path
-  wstring pkg_ident = Om_getNamePart(path);
+  wstring pkg_ident = Om_getNamePart(out_path);
 
   OmZipFile src_zip;
 
@@ -957,12 +957,12 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   // use temporary file name, in case source and destination are the same
   wstring pkg_tmp_path;
-  Om_concatPaths(pkg_tmp_path, Om_getDirPart(path), pkg_ident);
+  Om_concatPaths(pkg_tmp_path, Om_getDirPart(out_path), pkg_ident);
   pkg_tmp_path += L".ztmp";
 
   // initialize zip archive
   if(!pkg_zip.init(pkg_tmp_path)) {
-    this->_error = L"Destination ZIP archive \""+path+L"\"";
+    this->_error = L"Destination ZIP archive \""+out_path+L"\"";
     this->_error += OMM_STR_ERR_ZIPINIT(pkg_zip.lastErrorStr());
     this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
     pkg_zip.close();
@@ -1104,31 +1104,60 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
   }
 
   // add picture to archive and source definition
-  if(this->_picture != nullptr) {
+  if(!img_path.empty()) {
+    if(Om_isFile(img_path)) {
 
-    // create a PNG image from raw pixel data
-    size_t png_size = 0;
-    void* png_data = Om_getPngData(this->_picture, &png_size);
+      // create zip file name
+      zcd_entry = L"snapshot." + Om_getExtensionPart(img_path);
 
-    // add picture as PNG file in zip archive
-    if(!pkg_zip.append(png_data, png_size, L"source_pic.png", zipLvl)) {
-      this->_error = L"Picture file \"source_pic.png\"";
-      this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
-      this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
-      pkg_zip.close();
-      Om_fileDelete(pkg_tmp_path);
-      return false;
+      // add file to destination zip archive
+      if(!pkg_zip.append(img_path, zcd_entry, zipLvl)) {
+        this->_error = L"Snapshot file \""+img_path+L"\"";
+        this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
+        this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
+        pkg_zip.close();
+        Om_fileDelete(pkg_tmp_path);
+        return false;
+      } else {
+        // add section to source definition
+        def_xml.addChild(L"picture").setContent(zcd_entry);
+      }
     }
+  } else {
+    if(this->_picture != nullptr) {
+      // create a PNG image from raw pixel data
+      size_t png_size = 0;
+      void* png_data = Om_getPngData(this->_picture, &png_size);
 
-    // release png data
-    mz_free(png_data);
+      // add picture as PNG file in zip archive
+      if(!pkg_zip.append(png_data, png_size, L"snapshot.png", zipLvl)) {
+        this->_error = L"Picture file \"snapshot.png\"";
+        this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
+        this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
+        pkg_zip.close();
+        Om_fileDelete(pkg_tmp_path);
+        return false;
+      }
 
-    // add section to source definition
-    def_xml.addChild(L"picture").setContent(L"source_pic.png");
+      // release png data
+      mz_free(png_data);
+
+      // add section to source definition
+      def_xml.addChild(L"picture").setContent(L"snapshot.png");
+    }
   }
 
-  // add a REAMDE.TXT file into archive
-  string pkg_readme = "Open Mod Manager Package file for \"";
+  // Compose and add a REAMDE.TXT file into archive
+  string pkg_readme;
+
+  if(!this->_desc.empty()) {
+    Om_toAnsiCp(pkg_readme, this->_desc);
+    pkg_readme += "\r\n\r\n";
+    pkg_readme += "-- END OF DESCRIPTION ---------------------------------------------------------";
+    pkg_readme += "\r\n\r\n";
+  }
+
+  pkg_readme += "Open Mod Manager Package file for \"";
   pkg_readme += Om_toUtf8(pkg_ident);
   pkg_readme += "\" Mod.\r\n\r\n"
   "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
@@ -1187,7 +1216,7 @@ bool OmPackage::save(const wstring& path, unsigned zipLvl, HWND hPb, HWND hSc, c
 
   // compose the definitive package filename
   wstring pkg_path;
-  Om_concatPaths(pkg_path, Om_getDirPart(path), pkg_ident);
+  Om_concatPaths(pkg_path, Om_getDirPart(out_path), pkg_ident);
   pkg_path += L".zip";
 
   // in case file already exists, we delete it

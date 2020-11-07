@@ -450,7 +450,7 @@ class OmPackage
     /// Restores the Package backup if it exists and cleanup
     /// destination directory.
     ///
-    /// \param[in]  hSc    : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  hPb    : Optional progress bar control handle (HWND) to step.
     /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
@@ -462,7 +462,7 @@ class OmPackage
     /// Install Package files to the destination directory.
     ///
     /// \param[in]  zipLvl    : Zip compression level for backup.
-    /// \param[in]  hSc       : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  hPb       : Optional progress bar control handle (HWND) to step.
     /// \param[in]  pAbort    : Optional pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
@@ -557,7 +557,20 @@ class OmPackage
       return _location;
     }
 
-    bool save(const wstring& path, unsigned zipLvl = 2, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    /// \brief Save Package.
+    ///
+    /// Create a new package file from this package
+    ///
+    /// \param[in]  path    : Destination path and filename to save package as.
+    /// \param[in]  pict    : Alternate path to image file to use as snapshot.
+    /// \param[in]  zipLvl  : Package Zip compression level.
+    /// \param[in]  hPb       : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  hSc       : Optional static text control handle (HWND) for description.
+    /// \param[in]  pAbort    : Optional pointer to boolean to cancel operation.
+    ///
+    /// \return Pointer to Package related Location.
+    ///
+    bool save(const wstring& path, const wstring& pict, unsigned zipLvl = 2, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Clear object.
     ///

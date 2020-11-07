@@ -164,7 +164,7 @@ void OmUiNewPkg::_buildPkg_stop()
     wstring item_str;
 
     // get destination filename
-    this->getItemText(IDC_EC_INPT4, item_str);
+    this->getItemText(IDC_EC_INPT6, item_str);
 
     wstring info = L"The Package \"" + Om_getFilePart(item_str);
     info += L"\" was successfully created.";
@@ -183,7 +183,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
-  wstring item_str;
+  wstring item_str, out_path, img_path;
 
   OmPackage package(nullptr);
 
@@ -218,6 +218,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   // get package picture data
   if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
+    self->getItemText(IDC_EC_INPT4, img_path);
     package.setPicture(self->_hBmImage);
   }
 
@@ -231,7 +232,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
   LRESULT zip_lvl = self->msgItem(IDC_CB_LEVEL, CB_GETCURSEL);
 
   // get destination filename
-  self->getItemText(IDC_EC_INPT4, item_str);
+  self->getItemText(IDC_EC_INPT6, out_path);
 
   // hide the main dialog
   self->hide();
@@ -243,7 +244,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   DWORD exitCode = 0;
 
-  if(!package.save(item_str, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
+  if(!package.save(out_path, img_path, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += package.lastError();
@@ -284,7 +285,7 @@ bool OmUiNewPkg::_apply()
     }
   }
 
-  this->getItemText(IDC_EC_INPT4, item_str);
+  this->getItemText(IDC_EC_INPT6, item_str);
   if(Om_isValidPath(item_str)) {
     if(Om_isFile(item_str)) {
       wstring qry = L"The file \""+Om_getFilePart(item_str)+L"\"";
@@ -368,6 +369,7 @@ void OmUiNewPkg::_onResize()
 
   // Picture CheckBox & Load button
   this->_setItemPos(IDC_BC_CHK04, 10, 125, 120, 9);
+  this->_setItemPos(IDC_EC_INPT4, 110, 125, this->width()-172, 14); // hidden
   this->_setItemPos(IDC_BC_BROW4, this->width()-60, 125, 50, 14);
   // Picture Bitmap & Label
   this->_setItemPos(IDC_SB_PKIMG, 10, 136, 85, 78);
@@ -382,17 +384,17 @@ void OmUiNewPkg::_onResize()
   // Destination label
   this->_setItemPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
   // Destination file name
-  this->_setItemPos(IDC_EC_INPT4, 10, this->height()-105, this->width()-72, 14);
+  this->_setItemPos(IDC_EC_INPT6, 10, this->height()-105, this->width()-72, 14);
   // Destination brows button
   this->_setItemPos(IDC_BC_SAVE, this->width()-60, this->height()-105, 50, 14);
 
   // Parsed name label & entry
   this->_setItemPos(IDC_SC_LBL07, 10, this->height()-84, 50, 9);
-  this->_setItemPos(IDC_EC_INPT5, 60, this->height()-85, this->width()-175, 12);
+  this->_setItemPos(IDC_EC_INPT7, 60, this->height()-85, this->width()-175, 12);
 
   // Parsed version label & entry
   this->_setItemPos(IDC_SC_LBL08, this->width()-101, this->height()-84, 51, 9);
-  this->_setItemPos(IDC_EC_INPT6, this->width()-45, this->height()-85, 35, 12);
+  this->_setItemPos(IDC_EC_INPT8, this->width()-45, this->height()-85, 35, 12);
 
   // Zip Level Label
   this->_setItemPos(IDC_SC_LBL09, 10, this->height()-60, 120, 9);
@@ -475,7 +477,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       this->getItemText(IDC_EC_INPT1, item_str);
       if(item_str.empty()) {
-        item_str = pLoc->libraryDir();
+        item_str = pLoc ? pLoc->libraryDir() : L"";
       } else {
         item_str = Om_getDirPart(item_str);
       }
@@ -488,7 +490,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // select the initial location for browsing start
       this->getItemText(IDC_EC_INPT2, item_str);
       if(item_str.empty()) {
-        item_str = pLoc->libraryDir();
+        item_str = pLoc ? pLoc->libraryDir() : L"";
       } else {
         item_str = Om_getDirPart(item_str);
       }
@@ -552,6 +554,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         if(hBm != this->_hBmBlank) DeleteObject(hBm);
         if(this->_hBmImage) DeleteObject(this->_hBmImage);
         this->_hBmImage = nullptr;
+        this->setItemText(IDC_EC_INPT4, L"");
       }
       break;
 
@@ -568,6 +571,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         if(Om_isFile(brow_str)) {
           if(this->_hBmImage) DeleteObject(this->_hBmImage);
           this->_hBmImage = Om_loadBitmap(brow_str);
+          this->setItemText(IDC_EC_INPT4, (this->_hBmImage) ? brow_str : L"");
           hBm = Om_getBitmapThumbnail(this->_hBmImage, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
           hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
           if(hBm != this->_hBmBlank) DeleteObject(hBm);
@@ -610,23 +614,23 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       // select the initial location for browsing start
       if(pLoc) {
-        item_str = pLoc->libraryDir();
+        item_str = pLoc ? pLoc->libraryDir() : L"";
       } else {
         item_str = Om_getDirPart(item_str);
       }
 
       if(Om_dialogSaveFile(brow_str, this->_hwnd, L"Save Package as...", OMM_PKG_FILES_FILTER, item_str)) {
-        this->setItemText(IDC_EC_INPT4, brow_str);
+        this->setItemText(IDC_EC_INPT6, brow_str);
       }
       break;
 
-    case IDC_EC_INPT4:
-      this->getItemText(IDC_EC_INPT4, item_str);
+    case IDC_EC_INPT6:
+      this->getItemText(IDC_EC_INPT6, item_str);
       if(!item_str.empty()) {
         wstring name, vers;
         Om_parsePkgIdent(name, vers, item_str, true, true);
-        this->setItemText(IDC_EC_INPT5, name);
-        this->setItemText(IDC_EC_INPT6, vers);
+        this->setItemText(IDC_EC_INPT7, name);
+        this->setItemText(IDC_EC_INPT8, vers);
       }
       has_changed = true;
       break;
@@ -650,7 +654,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       if(!item_str.empty()) {
 
-        this->getItemText(IDC_EC_INPT4, item_str);
+        this->getItemText(IDC_EC_INPT6, item_str);
         if(item_str.empty()) allow = false;
 
       } else {

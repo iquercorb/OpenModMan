@@ -783,7 +783,7 @@ void OmLocation::remCustLibraryDir()
 {
   if(this->_config.valid()) {
 
-    this->_libraryDir = this->_home + L"\\library";
+    this->_libraryDir = this->_home + L"\\Library";
     // notify we use default settings
     this->_custLibraryDir = false;
 
@@ -831,7 +831,7 @@ void OmLocation::remCustBackupDir()
 {
   if(this->_config.valid()) {
 
-    this->_backupDir = this->_home + L"\\backup";
+    this->_backupDir = this->_home + L"\\Backup";
     // notify we use default settings
     this->_custBackupDir = false;
 

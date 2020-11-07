@@ -20,7 +20,7 @@
 				<Option output="bin/64-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/64-bit/Debug" />
 				<Option type="1" />
-				<Option compiler="mingw-w64_x86_64" />
+				<Option compiler="gcc_mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-pedantic" />
 					<Add option="-Wall" />
@@ -37,7 +37,7 @@
 				<Option output="bin/64-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/64-bit/Release" />
 				<Option type="0" />
-				<Option compiler="mingw-w64_x86_64" />
+				<Option compiler="gcc_mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-pedantic" />
@@ -55,7 +55,7 @@
 				<Option output="bin/32-bit/Debug/OpenModMan" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/32-bit/Debug" />
 				<Option type="1" />
-				<Option compiler="mingw-w64_i686" />
+				<Option compiler="gcc_mingw-w64_i686" />
 				<Compiler>
 					<Add option="-pedantic" />
 					<Add option="-Wall" />
@@ -72,7 +72,7 @@
 				<Option output="bin/32-bit/Release/OpenModMan" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/32-bit/Release" />
 				<Option type="0" />
-				<Option compiler="mingw-w64_i686" />
+				<Option compiler="gcc_mingw-w64_i686" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-pedantic" />

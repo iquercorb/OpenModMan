@@ -95,6 +95,8 @@
 #define IDC_EC_INPT4                            40203
 #define IDC_EC_INPT5                            40204
 #define IDC_EC_INPT6                            40205
+#define IDC_EC_INPT7                            40206
+#define IDC_EC_INPT8                            40207
 #define IDC_EC_ENT01                            40210
 #define IDC_EC_PKTXT                            40250
 #define IDC_BC_BROW1                            40300
