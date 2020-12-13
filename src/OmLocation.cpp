@@ -1071,7 +1071,7 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
 
   vector<OmPackage*> uninst_list; //< our real uninstall list
 
-  // Build the real packages uinstall list including dependencies created
+  // Build the real packages uninstall list including dependencies created
   // when packages installation overlaps others:
   //
   // When installed, a package may overlaps a previously installed one,
@@ -1674,16 +1674,17 @@ size_t OmLocation::getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& 
 
   bool unique;
   bool dpend_found;
-  uint64_t file_hash;
 
   for(size_t i = 0; i < package->dependCount(); ++i) {
-
-    file_hash = Om_getXXHash3(package->depend(i));
 
     dpend_found = false;
     for(size_t j = 0; j < this->_package.size(); ++j) {
 
-      if(file_hash == this->_package[j]->hash()) {
+      // rely only on packages
+      if(!this->_package[j]->isType(PKG_TYPE_ZIP))
+        continue;
+
+      if(package->depend(i) == this->_package[j]->ident()) {
 
         n += this->getInstDpList(pkg_list, miss_list, this->_package[j]);
         // we add to list only if unique and not already installed, this allow
@@ -1701,6 +1702,7 @@ size_t OmLocation::getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& 
             ++n;
           }
         }
+
         dpend_found = true;
         break;
       }
