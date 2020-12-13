@@ -16,6 +16,7 @@
 */
 
 #include "OmGlobal.h"
+#include <regex>
 
 ///
 /// Currently not used
@@ -623,6 +624,27 @@ void Om_sortStrings(vector<wstring>* strings)
 /// List of forbidden characters to test validity of file name or path.
 ///
 static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
+
+
+/// \brief URL Regex pattern
+///
+/// Regular expression pattern to check whether string is a valid URL according RFC 3986.
+///
+static const std::regex __url_pattern(
+"\\A([a-z][a-z0-9+\\-.]*:(//([a-z0-9\\-._~%!$&'()*+,;=]+@)?([a-z0-9\\-._~%]+|\\[[a-f0-9:.]+\\]|"
+"\\[v[a-f0-9][a-z0-9\\-._~%!$&'()*+,;=:]+\\])(:[0-9]+)?(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?"
+"|(/?[a-z0-9\\-._~%!$&'()*+,;=:@]+(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?)?)|([a-z0-9\\-._~%!$&'()*+,;=@]"
+"+(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?|(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)+/?))"
+"(\\?[a-z0-9\\-._~%!$&'()*+,;=:@/?]*)?(\\#[a-z0-9\\-._~%!$&'()*+,;=:@/?]*)?\\Z");
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidUrl(const string& url)
+{
+  return std::regex_match(url, __url_pattern);
+}
 
 
 ///
