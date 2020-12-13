@@ -48,11 +48,11 @@ Rich Geldreich <richgel99@gmail.com>, last updated Oct. 13, 2013
 This is free and unencumbered software released into the public domain.
 
 * * *
-                        _   _ ____  _
-  Project           ___| | | |  _ \| |
-                   / __| | | | |_) | |
-                  | (__| |_| |  _ <| |___
-                   \___|\___/|_| \_\_____|
+                      _   _ ____  _
+Project           ___| | | |  _ \| |
+                 / __| | | | |_) | |
+                | (__| |_| |  _ <| |___
+                 \___|\___/|_| \_\_____|
 
 Copyright (c) 1996 - 2020, Daniel Stenberg, <daniel@haxx.se>, and many contributors, see the THANKS file.
 
