@@ -23,7 +23,7 @@ class OmContext;
 
 /// \brief New Batch dialog
 ///
-/// OmDialog class derived for Preset Builder dialog window
+/// OmDialog class derived for New Batch dialog window
 ///
 class OmUiNewBat : public OmDialog
 {

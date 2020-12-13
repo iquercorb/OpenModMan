@@ -66,7 +66,7 @@ class OmUiMainLib : public OmDialog
     ///
     void install();
 
-    /// \brief Uinstall selected packages.
+    /// \brief Uninstall selected packages.
     ///
     /// Public function to launch unsintall process for selected packages if
     /// any.
@@ -177,6 +177,8 @@ class OmUiMainLib : public OmDialog
     void                _monitor_stop();
 
     void                _onInit();
+
+    void                _onShow();
 
     void                _onResize();
 

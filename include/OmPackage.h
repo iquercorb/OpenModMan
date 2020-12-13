@@ -609,7 +609,7 @@ class OmPackage
     ///
     bool _doInstall(HWND hPb = nullptr, const bool *pAbort = nullptr);
 
-    /// \brief Uinstall package and restore backup data.
+    /// \brief Uninstall package and restore backup data.
     ///
     /// Sub-routine for uninstall and backup data restoration
     ///

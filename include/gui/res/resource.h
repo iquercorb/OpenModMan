@@ -6,11 +6,12 @@
 #define IDR_ACCEL                               601
 #define IDD_MAIN                                700
 #define IDD_MAIN_LIB                            701
-#define IDD_MAIN_BAT                            702
+#define IDD_MAIN_REP                            702
 #define IDD_NEW_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_NEW_PKG                             712
 #define IDD_NEW_BAT                             713
+#define IDD_NEW_REP                             714
 #define IDD_PROP_MAN                            720
 #define IDD_PROP_MAN_GLE                        721
 #define IDD_PROP_MAN_PKG                        722
@@ -61,6 +62,7 @@
 #define IDB_BTN_ADD                             850
 #define IDB_BTN_REM                             851
 #define IDB_BTN_MOD                             852
+#define IDB_BTN_REF                             853
 #define IDB_BTN_UP                              860
 #define IDB_BTN_DN                              861
 #define IDB_PKG_BLANK                           870
@@ -108,10 +110,13 @@
 #define IDC_BC_INST                             40310
 #define IDC_BC_UNIN                             40311
 #define IDC_BC_LOAD                             40312
+#define IDC_BC_UPGD                             40313
+#define IDC_BC_SYNC                             40314
 #define IDC_BC_DEL                              40315
 #define IDC_BC_ADD                              40316
-#define IDC_BC_EDIT                             40317
+#define IDC_BC_EDI                              40317
 #define IDC_BC_NEW                              40318
+#define IDC_BC_REF                              40319
 #define IDC_BC_ABORT                            40320
 #define IDC_BC_CLOSE                            40321
 #define IDC_BC_UP                               40322
@@ -133,6 +138,7 @@
 #define IDC_LB_DPNDS                            40423
 #define IDC_LB_EXC                              40424
 #define IDC_LB_INC                              40425
+#define IDC_LB_REPLS                            40426
 #define IDC_LV_PKGLS                            40450
 #define IDC_LV_PSLST                            40451
 #define IDC_PB_PGRES                            40500

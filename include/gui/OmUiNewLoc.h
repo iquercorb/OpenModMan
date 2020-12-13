@@ -23,7 +23,7 @@ class OmContext;
 
 /// \brief New Location dialog
 ///
-/// OmDialog class derived for Preset Builder dialog window
+/// OmDialog class derived for New Location dialog window
 ///
 class OmUiNewLoc : public OmDialog
 {
