@@ -136,13 +136,13 @@ bool OmUiPropMan::applyChanges()
 
     int lb_cnt =  SendMessageW(hLb, LB_GETCOUNT, 0, 0);
 
-    wstring item_str;
+    wchar_t item_buf[OMM_ITM_BUFF];
 
     vector<wstring> start_files;
 
     for(int i = 0; i < lb_cnt; ++i) {
-      pUiPropManGle->getItemText(IDC_LB_STRLS, item_str);
-      start_files.push_back(item_str);
+      SendMessageW(hLb, LB_GETTEXT, i, reinterpret_cast<LPARAM>(item_buf));
+      start_files.push_back(item_buf);
     }
 
     bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
