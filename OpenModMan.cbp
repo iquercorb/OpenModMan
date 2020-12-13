@@ -32,6 +32,8 @@
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
+					<Add library="lib/64-bit/libcurl.dll.a" />
+					<Add library="lib/64-bit/libcurl.a" />
 					<Add directory="lib/64-bit" />
 				</Linker>
 			</Target>
@@ -53,6 +55,8 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m64" />
+					<Add library="lib/64-bit/libcurl.dll.a" />
+					<Add library="lib/64-bit/libcurl.a" />
 					<Add directory="lib/64-bit" />
 				</Linker>
 			</Target>
@@ -73,6 +77,8 @@
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
+					<Add library="lib/32-bit/libcurl.dll.a" />
+					<Add library="lib/32-bit/libcurl.a" />
 					<Add directory="lib/32-bit" />
 				</Linker>
 			</Target>
@@ -94,6 +100,8 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m32" />
+					<Add library="lib/32-bit/libcurl.dll.a" />
+					<Add library="lib/32-bit/libcurl.a" />
 					<Add directory="lib/32-bit" />
 				</Linker>
 			</Target>
@@ -121,7 +129,6 @@
 			<Add library="Shell32" />
 			<Add library="Uuid" />
 			<Add library="UxTheme" />
-			<Add library="curl" />
 		</Linker>
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />
