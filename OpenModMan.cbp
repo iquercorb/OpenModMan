@@ -27,9 +27,12 @@
 					<Add option="-m64" />
 					<Add option="-g" />
 					<Add option="-DDEBUG" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
+					<Add directory="lib/64-bit" />
 				</Linker>
 			</Target>
 			<Target title="64-bit Release">
@@ -44,10 +47,13 @@
 					<Add option="-Wall" />
 					<Add option="-Wextra" />
 					<Add option="-m64" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m64" />
+					<Add directory="lib/64-bit" />
 				</Linker>
 			</Target>
 			<Target title="32-bit Debug">
@@ -62,9 +68,12 @@
 					<Add option="-m32" />
 					<Add option="-g" />
 					<Add option="-DDEBUG" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
+					<Add directory="lib/32-bit" />
 				</Linker>
 			</Target>
 			<Target title="32-bit Release">
@@ -79,15 +88,20 @@
 					<Add option="-Wall" />
 					<Add option="-Wextra" />
 					<Add option="-m32" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m32" />
+					<Add directory="lib/32-bit" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-DCURL_STATICLIB" />
 			<Add directory="include" />
+			<Add directory="include/thirdparty" />
 			<Add directory="include/thirdparty/miniz" />
 			<Add directory="include/thirdparty/pugixml" />
 			<Add directory="include/thirdparty/xxhash" />
@@ -107,6 +121,7 @@
 			<Add library="Shell32" />
 			<Add library="Uuid" />
 			<Add library="UxTheme" />
+			<Add library="curl" />
 		</Linker>
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />
@@ -121,6 +136,8 @@
 		<Unit filename="include/OmLocation.h" />
 		<Unit filename="include/OmManager.h" />
 		<Unit filename="include/OmPackage.h" />
+		<Unit filename="include/OmRepository.h" />
+		<Unit filename="include/OmSocket.h" />
 		<Unit filename="include/OmStrings.h" />
 		<Unit filename="include/OmVersion.h" />
 		<Unit filename="include/OmXmlDoc.h" />
@@ -129,9 +146,11 @@
 		<Unit filename="include/gui/OmUiHelpLog.h" />
 		<Unit filename="include/gui/OmUiMain.h" />
 		<Unit filename="include/gui/OmUiMainLib.h" />
+		<Unit filename="include/gui/OmUiMainRep.h" />
 		<Unit filename="include/gui/OmUiNewBat.h" />
 		<Unit filename="include/gui/OmUiNewLoc.h" />
 		<Unit filename="include/gui/OmUiNewPkg.h" />
+		<Unit filename="include/gui/OmUiNewRep.h" />
 		<Unit filename="include/gui/OmUiProgress.h" />
 		<Unit filename="include/gui/OmUiPropBat.h" />
 		<Unit filename="include/gui/OmUiPropBatStg.h" />
@@ -161,6 +180,7 @@
 		<Unit filename="include/thirdparty/curl/easy.h" />
 		<Unit filename="include/thirdparty/curl/mprintf.h" />
 		<Unit filename="include/thirdparty/curl/multi.h" />
+		<Unit filename="include/thirdparty/curl/options.h" />
 		<Unit filename="include/thirdparty/curl/stdcheaders.h" />
 		<Unit filename="include/thirdparty/curl/system.h" />
 		<Unit filename="include/thirdparty/curl/typecheck-gcc.h" />
@@ -184,6 +204,8 @@
 		<Unit filename="src/OmLocation.cpp" />
 		<Unit filename="src/OmManager.cpp" />
 		<Unit filename="src/OmPackage.cpp" />
+		<Unit filename="src/OmRepository.cpp" />
+		<Unit filename="src/OmSocket.cpp" />
 		<Unit filename="src/OmVersion.cpp" />
 		<Unit filename="src/OmXmlDoc.cpp" />
 		<Unit filename="src/OmZipFile.cpp" />
@@ -191,9 +213,11 @@
 		<Unit filename="src/gui/OmUiHelpLog.cpp" />
 		<Unit filename="src/gui/OmUiMain.cpp" />
 		<Unit filename="src/gui/OmUiMainLib.cpp" />
+		<Unit filename="src/gui/OmUiMainRep.cpp" />
 		<Unit filename="src/gui/OmUiNewBat.cpp" />
 		<Unit filename="src/gui/OmUiNewLoc.cpp" />
 		<Unit filename="src/gui/OmUiNewPkg.cpp" />
+		<Unit filename="src/gui/OmUiNewRep.cpp" />
 		<Unit filename="src/gui/OmUiProgress.cpp" />
 		<Unit filename="src/gui/OmUiPropBat.cpp" />
 		<Unit filename="src/gui/OmUiPropBatStg.cpp" />

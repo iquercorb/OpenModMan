@@ -54,7 +54,7 @@
 #else
   #define OMM_APP_ARCH            L"x86"
 #endif
-#define OMM_APP_DATE              L"July 2020"
+#define OMM_APP_DATE              L"December 2020"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2020"

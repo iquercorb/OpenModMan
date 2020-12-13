@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.3 (beta)
+Version: 0.9.4 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -44,12 +44,18 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
-0.9.3 (07/21/2020)
+0.9.4 (2020-11-26)
+ - Modify Package creation function to add picture file as provided.
+ - Fix Package creation dialog crash if no Context loaded.
+ - Fix various typo for "Uninstall".
+ - Fix Load Contexts At Startup option dialog not saving properly.
+
+0.9.3 (2020-07-21)
  - Update pugixml API to version 1.10
  - Fixed new Context Wizzard custom library and bakcup folder incorrectly created.
  - Fixed multiple bugs in various dialogs.
 
-0.9.2 (07/15/2020)
+0.9.2 (2020-07-15)
  - Rewritten Package building algorithm.
  - Fixed Package "Save As" button never enabling.
  - Replace GPL text by credits in the "About" dialog.
@@ -57,11 +63,11 @@ Version history
  - Improved Unicode and non-ASCII characters support.
  - Fixed incorrect packages list refresh after move to trash.
 
-0.9.1 (07/11/2020)
+0.9.1 (2020-07-11)
  - Fixed random string bug and crash caused by buffer overflow.
  - Fixed Context creation wizard not properly reseted after cancel by user.
  - Fixed missing application informations and icons within Windows Application list.
  - Algorithm to check file and folder access permissions slightly modified.
 
-0.9.0 (07/08/2020)
+0.9.0 (2020-07-08)
  - First public BETA release

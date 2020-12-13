@@ -532,21 +532,21 @@
 
 1595317607 d:\atelier\dev\cpp\openmodman\include\omstrings.h
 
-1604749540 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
+1605697141 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
 	<windows.h>
 	<commctrl.h>
 	<richedit.h>
 	"resource.h"
 
-1604745149 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
+1605695440 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
 
-1594812366 source:d:\atelier\code\cpp\openmodman\main.cpp
+1605702281 source:d:\atelier\code\cpp\openmodman\main.cpp
 	"OmGlobal.h"
 	"OmVersion.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
 
-1595393885 d:\atelier\code\cpp\openmodman\include\omglobal.h
+1606051501 d:\atelier\code\cpp\openmodman\include\omglobal.h
 	<cstdio>
 	<cstdlib>
 	<iostream>
@@ -558,6 +558,7 @@
 	<locale>
 	<codecvt>
 	"OmStrings.h"
+	"curl/curl.h"
 	<Windows.h>
 	<Shlobj.h>
 	<Shlwapi.h>
@@ -588,12 +589,13 @@
 	"OmLocation.h"
 	"OmBatch.h"
 
-1595311354 d:\atelier\code\cpp\openmodman\include\omlocation.h
+1606038218 d:\atelier\code\cpp\openmodman\include\omlocation.h
 	"OmGlobal.h"
 	"OmConfig.h"
 	"OmPackage.h"
+	"OmRepository.h"
 
-1604747485 d:\atelier\code\cpp\openmodman\include\ompackage.h
+1607853922 d:\atelier\code\cpp\openmodman\include\ompackage.h
 	"OmGlobal.h"
 	"OmVersion.h"
 
@@ -604,7 +606,7 @@
 1595261500 d:\atelier\code\cpp\openmodman\include\gui\omuimain.h
 	"OmDialog.h"
 
-1595325654 d:\atelier\code\cpp\openmodman\include\omdialog.h
+1604840002 d:\atelier\code\cpp\openmodman\include\omdialog.h
 	"OmGlobal.h"
 
 1595108894 source:d:\atelier\code\cpp\openmodman\src\gui\omuihelpabout.cpp
@@ -623,11 +625,12 @@
 1595108894 d:\atelier\code\cpp\openmodman\include\gui\omuihelplog.h
 	"OmDialog.h"
 
-1595318392 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
+1606035353 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
 	"gui/OmUiMainLib.h"
+	"gui/OmUiMainRep.h"
 	"gui/OmUiPropCtx.h"
 	"gui/OmUiPropLoc.h"
 	"gui/OmUiPropMan.h"
@@ -635,10 +638,11 @@
 	"gui/OmUiHelpAbout.h"
 	"gui/OmUiWizCtx.h"
 	"gui/OmUiNewBat.h"
+	"gui/OmUiNewRep.h"
 	"gui/OmUiNewLoc.h"
 	"gui/OmUiNewPkg.h"
 
-1595232682 d:\atelier\code\cpp\openmodman\include\gui\omuimainlib.h
+1607853922 d:\atelier\code\cpp\openmodman\include\gui\omuimainlib.h
 	"OmDialog.h"
 
 1595343813 d:\atelier\code\cpp\openmodman\include\gui\omuipropctx.h
@@ -659,16 +663,16 @@
 1595111240 d:\atelier\code\cpp\openmodman\include\omdialogwiz.h
 	"OmDialog.h"
 
-1595266777 d:\atelier\code\cpp\openmodman\include\gui\omuinewbat.h
+1605691461 d:\atelier\code\cpp\openmodman\include\gui\omuinewbat.h
 	"OmDialog.h"
 
-1595266786 d:\atelier\code\cpp\openmodman\include\gui\omuinewloc.h
+1605691440 d:\atelier\code\cpp\openmodman\include\gui\omuinewloc.h
 	"OmDialog.h"
 
 1595110755 d:\atelier\code\cpp\openmodman\include\gui\omuinewpkg.h
 	"OmDialog.h"
 
-1595326456 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
+1604910522 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMainLib.h"
@@ -748,7 +752,7 @@
 1595109955 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxbat.h
 	"OmDialog.h"
 
-1595323929 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxbat.cpp
+1604834561 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxbat.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
@@ -757,7 +761,7 @@
 	"gui/OmUiPropCtx.h"
 	"gui/OmUiPropCtxBat.h"
 
-1595344291 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
+1604834561 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
@@ -911,8 +915,9 @@
 	"gui/res/resource.h"
 	"OmDialogWiz.h"
 
-1595111418 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
+1606042625 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
 	"OmGlobal.h"
+	<regex>
 	"thirdparty/xxhash/xxh3.h"
 	<ctime>
 	<random>
@@ -952,7 +957,7 @@
 	<string.h>
 	<stdio.h>
 
-1604749279 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
+1605628249 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
 	"OmManager.h"
 	"OmContext.h"
 	"OmLocation.h"
@@ -1016,7 +1021,7 @@
 1593016497 source:d:\atelier\code\cpp\openmodman\src\thirdparty\xxhash\xxhash.c
 	"xxhash.h"
 
-1604748706 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
+1606035424 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
 	"thirdparty/miniz/miniz.h"
 	"OmZipFile.h"
 	"OmXmlDoc.h"
@@ -1025,4 +1030,82 @@
 	"OmLocation.h"
 	"OmPackage.h"
 	<time.h>
+
+1605687990 d:\atelier\code\cpp\openmodman\include\gui\omuimainrep.h
+	"OmDialog.h"
+
+1605696391 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainrep.cpp
+	"gui/res/resource.h"
+	"OmManager.h"
+	"gui/OmUiMainRep.h"
+	"gui/OmUiNewLoc.h"
+	"gui/OmUiNewRep.h"
+	"gui/OmUiMain.h"
+
+1606065897 source:d:\atelier\code\cpp\openmodman\src\gui\omuinewrep.cpp
+	"gui/res/resource.h"
+	"gui/OmUiNewRep.h"
+	"OmManager.h"
+	"OmSocket.h"
+
+1605705131 d:\atelier\code\cpp\openmodman\include\gui\omuinewrep.h
+	"OmDialog.h"
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\curl.h
+	"curlver.h"
+	"system.h"
+	<stdio.h>
+	<limits.h>
+	<osreldate.h>
+	<sys/types.h>
+	<time.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<sys/select.h>
+	<sys/socket.h>
+	<sys/time.h>
+	<support/SupportDefs.h>
+	"easy.h"
+	"multi.h"
+	"urlapi.h"
+	"options.h"
+	"typecheck-gcc.h"
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\curlver.h
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\system.h
+	<winsock2.h>
+	<windows.h>
+	<ws2tcpip.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<sys/poll.h>
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\easy.h
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\multi.h
+	"curl.h"
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\urlapi.h
+	"curl.h"
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\options.h
+
+1604820794 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\typecheck-gcc.h
+
+1606065881 source:d:\atelier\code\cpp\openmodman\src\omsocket.cpp
+	"OmSocket.h"
+	<curl/curl.h>
+
+1606065839 d:\atelier\code\cpp\openmodman\include\omsocket.h
+	"OmGlobal.h"
+
+1606061281 d:\atelier\code\cpp\openmodman\include\omrepository.h
+	"OmGlobal.h"
+	"OmConfig.h"
+
+1606065805 source:d:\atelier\code\cpp\openmodman\src\omrepository.cpp
+	"OmRepository.h"
+	"OmLocation.h"
+	"OmSocket.h"
 

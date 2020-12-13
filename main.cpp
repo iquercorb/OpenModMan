@@ -24,6 +24,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, char* argv, int nShow
 {
   InitCommonControls();
 
+  curl_global_init(CURL_GLOBAL_ALL);
+
   OmManager manager;
   OmUiMain dialog(hInst);
 
