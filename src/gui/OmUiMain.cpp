@@ -19,6 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
 #include "gui/OmUiMainLib.h"
+#include "gui/OmUiMainRep.h"
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropMan.h"
@@ -26,6 +27,7 @@
 #include "gui/OmUiHelpAbout.h"
 #include "gui/OmUiWizCtx.h"
 #include "gui/OmUiNewBat.h"
+#include "gui/OmUiNewRep.h"
 #include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewPkg.h"
 
@@ -47,6 +49,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Library", new OmUiMainLib(hins));
+  //this->_addPage(L"Network", new OmUiMainRep(hins));
 
   // add children dialogs
   this->addChild(new OmUiPropMan(hins));    //< Dialog for general settings
@@ -57,6 +60,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiWizCtx(hins));     //< Dialog for New Context Wizard
   this->addChild(new OmUiNewPkg(hins));     //< Dialog for new Package
   this->addChild(new OmUiNewBat(hins));     //< Dialog for new Batch
+  this->addChild(new OmUiNewRep(hins));     //< Dialog for new Repository
   this->addChild(new OmUiNewLoc(hins));     //< Dialog for adding Location
 
   // set the accelerator table for the dialog
@@ -173,8 +177,13 @@ void OmUiMain::selContext(int id)
   // update dialog window title
   this->_reloadCaption();
 
-  // refresh library tab
-  static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->refresh();
+  // refresh visible tab
+  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+    if(this->_pageDial[i]->visible()) {
+      this->_pageDial[i]->refresh();
+      break;
+    }
+  }
 
   // forces control to select (or unselect) item
   HWND hCb = this->getItem(IDC_CB_CTXLS);

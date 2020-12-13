@@ -184,7 +184,7 @@ void OmUiPropCtxBat::_onInit()
   // Set buttons inner icons
   this->msgItem(IDC_BC_ADD,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
   this->msgItem(IDC_BC_DEL,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
-  this->msgItem(IDC_BC_EDIT,  BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
+  this->msgItem(IDC_BC_EDI,  BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
   this->msgItem(IDC_BC_UP,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
   this->msgItem(IDC_BC_DN,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
 
@@ -196,11 +196,11 @@ void OmUiPropCtxBat::_onInit()
 
   this->_createTooltip(IDC_BC_DEL,    L"Delete batch");
   this->_createTooltip(IDC_BC_ADD,    L"Create new batch");
-  this->_createTooltip(IDC_BC_EDIT,   L"Batch properties");
+  this->_createTooltip(IDC_BC_EDI,   L"Batch properties");
 
   // Set controls default states and parameters
   this->enableItem(IDC_BC_DEL, false);
-  this->enableItem(IDC_BC_EDIT, false);
+  this->enableItem(IDC_BC_EDI, false);
 
   // Update values
   this->_onRefresh();
@@ -221,7 +221,7 @@ void OmUiPropCtxBat::_onResize()
 
   // Remove & Modify Buttons
   this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setItemPos(IDC_BC_EDIT, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_EDI, 122, 110, 50, 14);
   // Add button
   this->_setItemPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
 }
@@ -283,7 +283,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
       if(lb_sel >= 0) {
         this->enableItem(IDC_BC_DEL, true);
-        this->enableItem(IDC_BC_EDIT, true);
+        this->enableItem(IDC_BC_EDI, true);
         this->enableItem(IDC_BC_UP, (lb_sel > 0));
         lb_max = this->msgItem(IDC_LB_BATLS, LB_GETCOUNT) - 1;
         this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -298,7 +298,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_BC_EDIT:
+    case IDC_BC_EDI:
       lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
       if(lb_sel >= 0 && lb_sel < (int)pCtx->batchCount()) {
         // open the Location Properties dialog

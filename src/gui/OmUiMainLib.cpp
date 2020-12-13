@@ -1218,6 +1218,15 @@ void OmUiMainLib::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMainLib::_onShow()
+{
+  this->_onRefresh();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMainLib::_onResize()
 {
   // Locations Combo-Box

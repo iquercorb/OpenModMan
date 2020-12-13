@@ -292,7 +292,7 @@ void OmUiPropCtxLoc::_onInit()
   // Set buttons inner icons
   this->msgItem(IDC_BC_ADD,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
   this->msgItem(IDC_BC_DEL,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
-  this->msgItem(IDC_BC_EDIT,  BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
+  this->msgItem(IDC_BC_EDI,  BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
   this->msgItem(IDC_BC_UP,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
   this->msgItem(IDC_BC_DN,    BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
 
@@ -304,7 +304,7 @@ void OmUiPropCtxLoc::_onInit()
 
   this->_createTooltip(IDC_BC_DEL,    L"Remove and purge location");
   this->_createTooltip(IDC_BC_ADD,    L"Add new location");
-  this->_createTooltip(IDC_BC_EDIT,   L"Location properties");
+  this->_createTooltip(IDC_BC_EDI,   L"Location properties");
 
   this->enableItem(IDC_EC_INPT2, false);
   this->enableItem(IDC_EC_INPT3, false);
@@ -337,7 +337,7 @@ void OmUiPropCtxLoc::_onResize()
   this->_setItemPos(IDC_EC_INPT4, 115, 90, this->width()-125, 13);
   // Remove & Modify Buttons
   this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setItemPos(IDC_BC_EDIT, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_EDI, 122, 110, 50, 14);
   // Add button
   this->_setItemPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
 }
@@ -369,7 +369,7 @@ void OmUiPropCtxLoc::_onRefresh()
   this->setItemText(IDC_EC_INPT4, L"<no Location selected>");
 
   this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_EDIT, false);
+  this->enableItem(IDC_BC_EDI, false);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -409,7 +409,7 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
         this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
         this->enableItem(IDC_BC_DEL, true);
-        this->enableItem(IDC_BC_EDIT, true);
+        this->enableItem(IDC_BC_EDI, true);
         this->enableItem(IDC_BC_UP, (lb_sel > 0));
         int lb_max = this->msgItem(IDC_LB_LOCLS, LB_GETCOUNT) - 1;
         this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -424,7 +424,7 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_BC_EDIT:
+    case IDC_BC_EDI:
       lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
       loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
       if(loc_id >= 0) {
