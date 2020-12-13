@@ -1,6 +1,6 @@
 ; example2.nsi
 ;
-; This script is based on example1.nsi, but it remember the directory, 
+; This script is based on example1.nsi, but it remember the directory,
 ; has uninstall support and (optionally) installs start menu shortcuts.
 ;
 ; It will install example2.nsi into a directory that the user selects,
@@ -19,7 +19,7 @@ OutFile                   "${APP_SHORT_NAME}_${AAP_MAJ}-${AAP_MIN}-${AAP_REV}-${
 RequestExecutionLevel     admin
 LicenseData               "..\LICENSE.TXT"
 
-; Registry key to check for directory (so if you install again, it will 
+; Registry key to check for directory (so if you install again, it will
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\${APP_REG_NAME}" "Install_Dir"
 
@@ -65,13 +65,18 @@ Section "Install (required)"
   SetOutPath $INSTDIR
 
   ; Put file there
-  File "/oname=${APP_EXE_NAME}.exe" "${REL_32_EXE}"
-  File "/oname=LICENSE.TXT" "..\LICENSE.TXT"
-  File "/oname=CREDITS.TXT" "..\CREDITS.TXT"
-  
+  File "/oname=${APP_EXE_NAME}.exe"       "${REL_32_EXE}"
+
+  File "/oname=libssl-1_1.dll"            "${SSL_32_DLL}"
+  File "/oname=libcrypto-1_1.dll"         "${CRYPTO_32_DLL}"
+  File "/oname=libcurl.dll"               "${CURL_32_DLL}"
+
+  File "/oname=LICENSE.TXT"               "..\LICENSE.TXT"
+  File "/oname=CREDITS.TXT"               "..\CREDITS.TXT"
+
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\${APP_REG_NAME} "Install_Dir" "$INSTDIR"
-  
+
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "DisplayIcon" "$INSTDIR\${APP_EXE_NAME}.exe"
@@ -81,7 +86,7 @@ Section "Install (required)"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}" "NoRepair" 1
   WriteUninstaller "$INSTDIR\uninstall.exe"
-  
+
 SectionEnd
 
 ; Optional section (can be disabled by the user)
@@ -90,7 +95,7 @@ Section "Start Menu Shortcuts"
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE_NAME}.exe" "" "$INSTDIR\${APP_EXE_NAME}.exe" 0
-  
+
 SectionEnd
 
 ;--------------------------------
@@ -98,7 +103,7 @@ SectionEnd
 ; Uninstaller
 
 Section "Uninstall"
-  
+
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_REG_NAME}"
   DeleteRegKey HKLM SOFTWARE\${APP_REG_NAME}
