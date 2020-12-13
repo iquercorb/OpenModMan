@@ -1152,20 +1152,23 @@ bool OmPackage::save(const wstring& out_path, const wstring& img_path, unsigned 
 
   if(!this->_desc.empty()) {
     Om_toAnsiCp(pkg_readme, this->_desc);
-    pkg_readme += "\r\n\r\n";
-    pkg_readme += "-- END OF DESCRIPTION ---------------------------------------------------------";
-    pkg_readme += "\r\n\r\n";
+    pkg_readme += "\r\n"
+    "\r\n"
+    "-- END OF DESCRIPTION ---------------------------------------------------------"
+    "\r\n"
+    "\r\n";
   }
 
   pkg_readme += "Open Mod Manager Package file for \"";
-  pkg_readme += Om_toUtf8(pkg_ident);
-  pkg_readme += "\" Mod.\r\n\r\n"
+  pkg_readme += Om_toUtf8(pkg_ident); pkg_readme += "\" Mod.\r\n"
+  "\r\n"
   "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
   "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
   "If you want to install this Mod manually, you will find the Mod files into\r\n"
-  "the following folder : \r\n\r\n  \"";
-  pkg_readme += Om_toUtf8(pkg_ident);
-  pkg_readme += "\"\r\n\r\n"
+  "the following folder : \r\n"
+  "\r\n  \""; pkg_readme += Om_toUtf8(pkg_ident);
+  pkg_readme += "\"\r\n"
+  "\r\n"
   "Its content is respecting the destination folder tree and includes files to\r\n"
   "be overwritten or added :\r\n"
   "\r\n";
@@ -1177,11 +1180,11 @@ bool OmPackage::save(const wstring& out_path, const wstring& img_path, unsigned 
   pkg_readme += "\r\n"
   "Once you made a backup of the original files, you can install the Mod by\r\n"
   "extracting the content of the previously indicated folder into the\r\n"
-  "application/game installation folder, overwriting original files.\r\n\r\n"
-
-  // TODO: update URL here...
+  "proper application or game folder, overwriting original files.\r\n"
+  "\r\n"
   "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
-  "visit :\r\n\r\n   https://...";
+  "visit :\r\n"
+  "\r\n   "; pkg_readme += Om_toUtf8(OMM_APP_URL);
 
   // add the REAMDE.TXT file in zip archive
   if(!pkg_zip.append(pkg_readme.c_str(), pkg_readme.size(), L"README.TXT", zipLvl)) {
@@ -1785,12 +1788,12 @@ bool OmPackage::_doUninst(HWND hPb)
           if(result != 0) {
             this->_error = L"Backup file \""+bck_file+L"\"";
             this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
-            this->log(0, L"Package("+this->_ident+L") Uinstall", this->_error);
+            this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
           }
         } else {
           this->_error = L"Installed file \""+app_file+L"\"";
           this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(0, L"Package("+this->_ident+L") Uinstall", this->_error);
+          this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
         // step progress bar
         if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
@@ -1824,14 +1827,14 @@ bool OmPackage::_doUninst(HWND hPb)
         if(result != 0) {
           this->_error = L"Installed file \""+del_file+L"\"";
           this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(1, L"Package("+this->_ident+L") Uinstall", this->_error);
+          this->log(1, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
       } else {
         result = Om_dirDelete(del_file);
         if(result != 0) {
           this->_error = L"Installed subfolder \""+del_file+L"\"";
           this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(1, L"Package("+this->_ident+L") Uinstall", this->_error);
+          this->log(1, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
       }
       // step progress bar
@@ -1848,14 +1851,14 @@ bool OmPackage::_doUninst(HWND hPb)
     if(result != 0) {
       this->_error = L"Backup ZIP archive \""+this->_backup+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+this->_ident+L") Uinstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
     }
   } else {
     result = Om_dirDeleteRecursive(this->_backup);
     if(result != 0) {
       this->_error = L"Backup main directory \""+this->_backup+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+this->_ident+L") Uinstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
     }
   }
 
@@ -1866,7 +1869,7 @@ bool OmPackage::_doUninst(HWND hPb)
   wchar_t log_buf[32];
   swprintf(log_buf, 32, L"Done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, L"Package("+this->_ident+L") Uinstall", log_buf);
+  log(2, L"Package("+this->_ident+L") Uninstall", log_buf);
 
   return true;
 }
