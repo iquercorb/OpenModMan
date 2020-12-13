@@ -34,6 +34,8 @@
 #define NTDDI_VERSION             0x06000000    // NTDDI_VISTA
 #define WINVER                    0x0600        // _WIN32_WINNT_VISTA
 
+#include "curl/curl.h"
+
 #include <Windows.h>
 #include <Shlobj.h>
 #include <Shlwapi.h>
@@ -57,7 +59,7 @@
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2020"
 #define OMM_APP_GIT               L"https://github.com/sedenion/OpenModMan"
-#define OMM_APP_URL               L"https://"
+#define OMM_APP_URL               L"https://github.com/sedenion/OpenModMan"
 
 #define OMM_CFG_SIGN_APP          L"Open_Mod_Manager_Main"
 #define OMM_CFG_SIGN_CTX          L"Open_Mod_Manager_Context"
@@ -65,6 +67,7 @@
 #define OMM_CFG_SIGN_PKG          L"Open_Mod_Manager_Package"
 #define OMM_CFG_SIGN_BCK          L"Open_Mod_Manager_Backup"
 #define OMM_CFG_SIGN_BAT          L"Open_Mod_Manager_Batch"
+#define OMM_CFG_SIGN_REP          L"Open_Mod_Manager_Repository"
 
 #define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
 #define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
@@ -330,6 +333,16 @@ size_t Om_toZipCDR(string& zcdr, const wstring& wstr);
 /// \param[in]  string  : Pointer to vector array of wstring to sort.
 ///
 void Om_sortStrings(vector<wstring>* strings);
+
+/// \brief Check URL validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL.
+///
+/// \param[in]  url     : URL to check.
+///
+/// \return True if the given string is a valid URL, false otherwise.
+///
+bool Om_isValidUrl(const string& url);
 
 /// \brief Check file name validity
 ///

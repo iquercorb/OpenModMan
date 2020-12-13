@@ -21,6 +21,7 @@
 #include "OmGlobal.h"
 #include "OmConfig.h"
 #include "OmPackage.h"
+#include "OmRepository.h"
 
 class OmContext;
 
@@ -32,7 +33,8 @@ class OmContext;
 /// \brief Location object for Context.
 ///
 /// The Location object defines environment for package installation
-/// destination, library and backup.
+/// destination, library and backup. The object provide interface to
+/// store, manage, install and uninstall packages.
 ///
 class OmLocation
 {
@@ -162,6 +164,28 @@ class OmLocation
       return _backupZipLevel;
     }
 
+    /// \brief Get repository URL count.
+    ///
+    /// Returns current repository URL count in library.
+    ///
+    /// \return Repository URL count.
+    ///
+    size_t repositoryCount() const {
+      return _repository.size();
+    }
+
+    /// \brief Get repository URL.
+    ///
+    /// Returns defined repository URL at given index.
+    ///
+    /// \param[in]  i       : Repository URL index to get.
+    ///
+    /// \return Repository URL string.
+    ///
+    OmRepository* repository(unsigned i) const {
+      return _repository[i];
+    }
+
     /// \brief Verify Library folder access.
     ///
     /// Checks whether the Library folder is accessible. If Library folder is
@@ -259,6 +283,23 @@ class OmLocation
     /// default settings.
     ///
     void remCustLibraryDir();
+
+    /// \brief Remove custom Backup.
+    ///
+    /// Removes the current custom Backup configuration and reset to
+    /// default settings.
+    ///
+    /// \param[in]  url   Repository base URL.
+    /// \param[in]  name  Repository name.
+    ///
+    void addRepository(const wstring& url, const wstring& name);
+
+    /// \brief Remove custom Backup.
+    ///
+    /// Removes the current custom Backup configuration and reset to
+    /// default settings.
+    ///
+    void remRepository(unsigned i);
 
     /// \brief Clear Location package list.
     ///
@@ -621,6 +662,8 @@ class OmLocation
     int                 _backupZipLevel;
 
     unsigned            _packageSorting;
+
+    vector<OmRepository*> _repository;
 
     bool                _valid;
 

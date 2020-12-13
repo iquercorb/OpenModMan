@@ -176,6 +176,14 @@ class OmDialog
       ShowWindow(_hwnd, SW_HIDE);
     }
 
+    /// \brief Check visibility.
+    ///
+    /// Checks whether dialog window is visible (shown)
+    ///
+    bool visible() const {
+      return IsWindowVisible(_hwnd);
+    }
+
     /// \brief Check enabled.
     ///
     /// Checks whether dialog window is enabled
