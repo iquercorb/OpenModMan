@@ -623,12 +623,12 @@ void OmUiMainLib::_reloadLibLv(bool clear)
     // we enable the List-View
     EnableWindow(hLv, true);
 
-    // empty list view
-    SendMessageW(hLv, LVM_DELETEALLITEMS, 0, 0);
-
     // Save list-view scroll position to lvRect
     RECT lvRec;
     SendMessageW(hLv, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
+
+    // empty list view
+    SendMessageW(hLv, LVM_DELETEALLITEMS, 0, 0);
 
     // add item to list view
     OmPackage* pPkg;
