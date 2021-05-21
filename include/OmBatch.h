@@ -111,17 +111,27 @@ class OmBatch
     /// \return True if supplied file is a valid Batch and operation succeed,
     /// false otherwise.
     ///
-    bool parse(const wstring& path);
+    bool open(const wstring& path);
 
     /// \brief Check whether has Location.
     ///
     /// Check whether batch has the the specified Location.
     ///
-    /// \param[in]  uuid    : Location UUID to check.
+    /// \param[in]  uuid    : Location UUID to search.
     ///
     /// \return True if the Location was found, false otherwise.
     ///
     bool hasLocation(const wstring& uuid);
+
+    /// \brief Get Batch Location index by UUID.
+    ///
+    /// Retrieve the Batch location index from Location UUID.
+    ///
+    /// \param[in]  uuid    : Location UUID to search.
+    ///
+    /// \return Location index or -1 if UUID was not found.
+    ///
+    int getLocationIndex(const wstring& uuid);
 
     /// \brief Get Location count.
     ///
@@ -155,7 +165,7 @@ class OmBatch
     /// \return Package hash as 64 bits unsigned integer
     ///
     size_t getInstallCount(unsigned l) {
-      return this->_instHash[l].size();
+      return this->_insHash[l].size();
     }
 
     /// \brief Check whether has install hash.
@@ -181,33 +191,7 @@ class OmBatch
     /// \return Package hash as 64 bits unsigned integer
     ///
     uint64_t getInstallHash(unsigned l, unsigned i) {
-      return this->_instHash[l][i];
-    }
-
-    /// \brief Check whether has install hash.
-    ///
-    /// Checks whether Location has an install entry with
-    /// the specified package hash.
-    ///
-    /// \param[in]  l     : Location index.
-    /// \param[in]  ident : Package ident string to search.
-    ///
-    /// \return True if package hash was found, false otherwise.
-    ///
-    bool hasInstallIdent(unsigned l, const wstring& ident);
-
-    /// \brief Get Install entry identity.
-    ///
-    /// Returns the batch install entry package identity for the
-    /// specified Location.
-    ///
-    /// \param[in]  l    : Location index.
-    /// \param[in]  i    : Install entry index.
-    ///
-    /// \return Package identity string.
-    ///
-    wstring getInstallIdent(unsigned l, unsigned i) {
-      return this->_instIden[l][i];
+      return this->_insHash[l][i];
     }
 
     /// \brief Set Batch title.
@@ -242,6 +226,15 @@ class OmBatch
     ///
     void remLocation(const wstring& uuid);
 
+    /// \brief Add package install entry.
+    ///
+    /// Add the specified package installation entry.
+    ///
+    /// \param[in]  uuid        : Location UUID.
+    /// \param[in]  hash_list   : List of install package hash.
+    ///
+    void setInstallList(const wstring& uuid, const vector<uint64_t>& hash_list);
+
     /// \brief Get Context.
     ///
     /// Returns Batch related Context
@@ -258,7 +251,7 @@ class OmBatch
     ///
     /// \param[in]  name   : New Batch file name without extension.
     ///
-    bool renameHome(const wstring& name);
+    bool rename(const wstring& name);
 
     /// \brief Close batch file
     ///
@@ -288,9 +281,7 @@ class OmBatch
 
     vector<wstring>     _locUuid;
 
-    vector<vector<uint64_t>>  _instHash;
-
-    vector<vector<wstring>>   _instIden;
+    vector<vector<uint64_t>>  _insHash;
 
     wstring             _error;
 };

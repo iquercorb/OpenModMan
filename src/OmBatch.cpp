@@ -30,8 +30,7 @@ OmBatch::OmBatch() :
   _title(),
   _index(0),
   _locUuid(),
-  _instHash(),
-  _instIden(),
+  _insHash(),
   _error()
 {
 
@@ -49,8 +48,7 @@ OmBatch::OmBatch(OmContext* pCtx) :
   _title(),
   _index(0),
   _locUuid(),
-  _instHash(),
-  _instIden(),
+  _insHash(),
   _error()
 {
 
@@ -69,7 +67,7 @@ OmBatch::~OmBatch()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::parse(const wstring& path)
+bool OmBatch::open(const wstring& path)
 {
   // clear the instance
   this->close();
@@ -102,27 +100,24 @@ bool OmBatch::parse(const wstring& path)
   this->_index = this->_config.xml().child(L"title").attrAsInt(L"index");
 
   // get <location> entries
-  vector<OmXmlNode> loc_list;
-  this->_config.xml().children(loc_list, L"location");
+  vector<OmXmlNode> xml_loc_list;
+  this->_config.xml().children(xml_loc_list, L"location");
 
-  for(size_t l = 0; l < loc_list.size(); ++l) {
+  for(size_t l = 0; l < xml_loc_list.size(); ++l) {
 
-    this->_locUuid.push_back(loc_list[l].attrAsString(L"uuid"));
+    this->_locUuid.push_back(xml_loc_list[l].attrAsString(L"uuid"));
 
     vector<uint64_t>  hash_list;
-    vector<wstring>   iden_list;
 
     // retrieve all <install> entries in <location>
-    vector<OmXmlNode> ins_list;
-    loc_list[l].children(ins_list, L"install");
+    vector<OmXmlNode> xml_ins_list;
+    xml_loc_list[l].children(xml_ins_list, L"install");
 
-    for(size_t i = 0; i < ins_list.size(); ++i) {
-      hash_list.push_back(Om_toUint64(ins_list[i].attrAsString(L"hash")));
-      iden_list.push_back(ins_list[i].attrAsString(L"ident"));
+    for(size_t i = 0; i < xml_ins_list.size(); ++i) {
+      hash_list.push_back(Om_toUint64(xml_ins_list[i].attrAsString(L"hash")));
     }
 
-    this->_instHash.push_back(hash_list);
-    this->_instIden.push_back(iden_list);
+    this->_insHash.push_back(hash_list);
   }
 
   return true;
@@ -146,22 +141,24 @@ bool OmBatch::hasLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::hasInstallHash(unsigned l, uint64_t hash)
+int OmBatch::getLocationIndex(const wstring& uuid)
 {
-  for(size_t i = 0; i < this->_instHash[l].size(); ++i) {
-    if(this->_instHash[l][i] == hash) return true;
+  for(size_t i = 0; i < this->_locUuid.size(); ++i) {
+    if(this->_locUuid[i] == uuid)
+      return i;
   }
-  return false;
+
+  return -1;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::hasInstallIdent(unsigned l, const wstring& ident)
+bool OmBatch::hasInstallHash(unsigned l, uint64_t hash)
 {
-  for(size_t i = 0; i < this->_instIden[l].size(); ++i) {
-    if(this->_instIden[l][i] == ident) return true;
+  for(size_t i = 0; i < this->_insHash[l].size(); ++i) {
+    if(this->_insHash[l][i] == hash) return true;
   }
   return false;
 }
@@ -213,22 +210,26 @@ void OmBatch::addLocation(const wstring& uuid)
   if(this->_config.valid()) {
 
     // Check whether <location> entry with uuid already exists
-    vector<OmXmlNode> loc_list;
-    this->_config.xml().children(loc_list, L"location");
+    vector<OmXmlNode> xml_loc_list;
+    this->_config.xml().children(xml_loc_list, L"location");
 
-    for(size_t i = 0; i < loc_list.size(); ++i) {
-      if(uuid == loc_list[i].attrAsString(L"uuid")) {
+    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
+      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
         return;
       }
     }
 
     // create new <location> entry in definition
-    OmXmlNode location = this->_config.xml().addChild(L"location");
-    location.setAttr(L"uuid", uuid);
+    OmXmlNode xml_loc = this->_config.xml().addChild(L"location");
+    xml_loc.setAttr(L"uuid", uuid);
 
     // Write definition file
     if(this->_path.size())
       this->_config.save();
+
+    // Echoes changes to local data
+    this->_locUuid.push_back(uuid);
+    this->_insHash.resize(this->_insHash.size()+1);
   }
 }
 
@@ -240,25 +241,97 @@ void OmBatch::remLocation(const wstring& uuid)
 {
   if(this->_config.valid()) {
 
-    vector<OmXmlNode> loc_list;
-    this->_config.xml().children(loc_list, L"location");
+    vector<OmXmlNode> xml_loc_list;
+    this->_config.xml().children(xml_loc_list, L"location");
 
     // search and remove <location> entry with specified uuid
-    for(size_t i = 0; i < loc_list.size(); ++i) {
-      if(uuid == loc_list[i].attrAsString(L"uuid")) {
-        this->_config.xml().remChild(loc_list[i]); break;
+    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
+      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
+        this->_config.xml().remChild(xml_loc_list[i]); break;
       }
     }
 
     // Write definition file
     if(this->_path.size())
       this->_config.save();
+
+    // Echoes changes to local data
+    for(size_t i = 0; i < this->_locUuid.size(); ++i) {
+      if(uuid == this->_locUuid[i]) {
+        this->_insHash.erase(this->_insHash.begin()+i);
+        this->_locUuid.erase(this->_locUuid.begin()+i);
+        break;
+      }
+    }
   }
 }
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::renameHome(const wstring& name)
+void OmBatch::setInstallList(const wstring& uuid, const vector<uint64_t>& hash_list)
+{
+  if(this->_config.valid()) {
+
+    vector<OmXmlNode> xml_loc_list;
+    this->_config.xml().children(xml_loc_list, L"location");
+
+    OmXmlNode xml_loc;
+
+    // search <location> entry with specified uuid
+    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
+      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
+        xml_loc = xml_loc_list[i];
+        break;
+      }
+    }
+
+    // ensure we found Location
+    if(xml_loc.empty())
+      return;
+
+    // remove all current <install>
+    vector<OmXmlNode> xml_ins_list;
+    xml_loc.children(xml_ins_list, L"install");
+
+    for(size_t i = 0; i < xml_ins_list.size(); ++i)
+      xml_loc.remChild(xml_ins_list[i]);
+
+    // add <install> children with "hash" attributes
+    OmXmlNode xml_ins;
+    for(size_t h = 0; h < hash_list.size(); ++h) {
+      xml_ins = xml_loc.addChild(L"install");
+      xml_ins.setAttr(L"hash", Om_toHexString(hash_list[h]));
+    }
+
+    // Write definition file
+    if(this->_path.size())
+      this->_config.save();
+
+    // Echoes changes to local data
+    for(size_t i = 0; i < this->_locUuid.size(); ++i) {
+      if(uuid == this->_locUuid[i]) {
+
+        // empty the list
+        this->_insHash[i].clear();
+
+        // add hash list
+        for(size_t h = 0; h < hash_list.size(); ++h) {
+          this->_insHash[i].push_back(hash_list[h]);
+        }
+
+        break;
+      }
+    }
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmBatch::rename(const wstring& name)
 {
   wstring title = this->_title;
   wstring old_path = this->_path;
@@ -283,7 +356,7 @@ bool OmBatch::renameHome(const wstring& name)
   this->log(2, L"Batch("+title+L")", L"Renamed to \"" + new_path + L"\"");
 
   // Reload Batch
-  this->parse(new_path);
+  this->open(new_path);
 
   return true;
 }
@@ -298,8 +371,7 @@ void OmBatch::close()
   this->_path.clear();
   this->_title.clear();
   this->_locUuid.clear();
-  this->_instHash.clear();
-  this->_instIden.clear();
+  this->_insHash.clear();
 }
 
 

@@ -396,11 +396,18 @@ void OmUiNewBat::_remPkg()
 bool OmUiNewBat::_apply()
 {
   // build the per-Location hash lists
-  vector<vector<uint64_t>> loc_hash_lsts;
+  vector<wstring> loc_uuid;
+  vector<vector<uint64_t>> loc_hash_list;
 
+  OmLocation* pLoc;
   OmPackage* pPkg;
 
   for(size_t k = 0; k < this->_context->locationCount(); ++k) {
+
+    pLoc = this->_context->location(k);
+
+    // append Location UUID
+    loc_uuid.push_back(pLoc->uuid());
 
     // new hash list
     vector<uint64_t> hash_list;
@@ -408,22 +415,22 @@ bool OmUiNewBat::_apply()
     for(size_t i = 0; i < this->_incLs[k].size(); ++i) {
 
       // retrieve package from stored index
-      pPkg = this->_context->location(k)->package(this->_incLs[k][i]);
+      pPkg = pLoc->package(this->_incLs[k][i]);
 
       // add <install> entry with package hash
       hash_list.push_back(pPkg->hash());
     }
 
     // add hash list
-    loc_hash_lsts.push_back(hash_list);
+    loc_hash_list.push_back(hash_list);
   }
 
+  // retrieve batch name
   wstring bat_name;
-
   this->getItemText(IDC_EC_INPT1, bat_name);
 
   // try to create a new batch
-  if(!this->_context->addBatch(bat_name, loc_hash_lsts)) {
+  if(!this->_context->addBatch(bat_name, loc_uuid, loc_hash_list)) {
     Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed",
                                   this->_context->lastError());
     return false;

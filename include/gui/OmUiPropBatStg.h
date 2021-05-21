@@ -20,11 +20,12 @@
 
 #include "OmDialog.h"
 
-#define BAT_PROP_STG_TITLE   0
+#define BAT_PROP_STG_TITLE  0
+#define BAT_PROP_STG_INSLS  1
 
-/// \brief Context Properties Batches Tab
+/// \brief Batch Properties Setting Tab
 ///
-/// OmDialog class derived for Context Properties Batches Tab_Control child
+/// OmDialog class derived for Batch Properties Setting Tab_Control child
 /// dialog window
 ///
 class OmUiPropBatStg : public OmDialog
@@ -76,15 +77,50 @@ class OmUiPropBatStg : public OmDialog
     ///
     void setChParam(unsigned i, bool en);
 
+    /// \brief Get Included list size.
+    ///
+    /// Get count of item in the Included List at index.
+    ///
+    /// \param[in]  l   : List index, corresponding to Location combo box.
+    ///
+    unsigned getIncLsSize(unsigned l) const {
+      return this->_incLs[l].size();
+    }
+
+    /// \brief Get Included list size.
+    ///
+    /// Get count of item in the Included List at index.
+    ///
+    /// \param[in]  l   : List index, corresponding to Location combo box.
+    /// \param[in]  v   : Value index to get in list.
+    ///
+    int getIncLsValue(unsigned l, unsigned v) const {
+      return this->_incLs[l][v];
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     bool                _chParam[8];
 
-    void                _batchUp();
+    vector<vector<int>> _excLs;
 
-    void                _batchDn();
+    vector<vector<int>> _incLs;
 
-    bool                _batchDel();
+    HBITMAP             _hBmBcUp;
+
+    HBITMAP             _hBmBcDn;
+
+    void                _rebuildPkgLb();
+
+    void                _qucikFromCur();
+
+    void                _upPkg();
+
+    void                _dnPkg();
+
+    void                _addPkg();
+
+    void                _remPkg();
 
     void                _onInit();
 

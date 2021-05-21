@@ -265,7 +265,7 @@ bool OmContext::open(const wstring& path)
 
       OmBatch* batch = new OmBatch(this);
 
-      if(batch->parse(omb_list[i])) {
+      if(batch->open(omb_list[i])) {
 
         this->_batch.push_back(batch);
 
@@ -279,6 +279,8 @@ bool OmContext::open(const wstring& path)
         verbose += L"\" parse error:";
         verbose += batch->lastError();
         this->log(1, L"Context("+this->_title+L") Load", verbose);
+
+        delete batch;
       }
     }
 
@@ -395,6 +397,19 @@ void OmContext::setIcon(const wstring& src)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmLocation* OmContext::location(const wstring& uuid)
+{
+  for(size_t i = 0; i < this->_location.size(); ++i) {
+    if(uuid == this->_location[i]->uuid())
+      return this->_location[i];
+  }
+
+  return nullptr;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmContext::sortLocations()
 {
   if(this->_location.size() > 1)
@@ -405,30 +420,53 @@ void OmContext::sortLocations()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmContext::findLocation(const wstring& uuid)
+bool OmContext::selLocation(int i)
 {
-  for(size_t i = 0; i < this->_location.size(); ++i) {
-    if(uuid == this->_location[i]->uuid())
-      return i;
+  if(i >= 0) {
+    if(i < (int)this->_location.size()) {
+      this->_curLocation = this->_location[i];
+      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_curLocation->title()+L"\".");
+    } else {
+      return false;
+    }
+  } else {
+    this->_curLocation = nullptr;
   }
 
-  return -1;
+  return true;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmContext::selLocation(int i)
+bool OmContext::selLocation(const wstring& uuid)
 {
-  if(i >= 0 && i < (int)this->_location.size()) {
-    this->_curLocation = this->_location[i];
-    this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_curLocation->title()+L"\".");
-  } else {
-    this->_curLocation = nullptr;
+  for(size_t i = 0; i < this->_location.size(); ++i) {
+    if(uuid == this->_location[i]->uuid()) {
+      this->_curLocation = this->_location[i];
+      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_curLocation->title()+L"\".");
+      return true;
+    }
   }
+
+  return false;
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int OmContext::findLocationIndex(const wstring& uuid)
+{
+  for(size_t i = 0; i < this->_location.size(); ++i) {
+    if(uuid == this->_location[i]->uuid()) {
+      return i;
+    }
+  }
+
+  return -1;
+}
 
 
 ///
@@ -665,14 +703,15 @@ void OmContext::sortBatches()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts)
+//bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts)
+bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
 {
   // check whether we have same count of Location and hash list
-  if(hash_lsts.size() != this->_location.size()) {
+  if(loc_hash_list.size() != loc_uuid.size()) {
     this->_error = L"Hash list and Location count mismatches, expected \"";
-    this->_error += this->_location.size();
+    this->_error += loc_uuid.size();
     this->_error += L"\", found ";
-    this->_error += hash_lsts.size();
+    this->_error += loc_hash_list.size();
     this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
     return false;
   }
@@ -704,29 +743,35 @@ bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& h
   def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batch.size()));
 
   // useful variables
-  OmPackage* pPkg;
+  OmLocation* pLoc;
   OmXmlNode xml_loc, xml_ins;
 
-  for(size_t k = 0; k < this->_location.size(); ++k) {
+  // For each Location defined
+  for(size_t l = 0; l < loc_uuid.size(); ++l) {
 
-    // add <location> entry
-    xml_loc = def_xml.addChild(L"location");
-    xml_loc.setAttr(L"uuid", this->_location[k]->uuid());
+    pLoc = this->location(loc_uuid[l]);
 
-    for(size_t i = 0; i < hash_lsts[k].size(); ++i) {
+    if(pLoc != nullptr) {
 
-      pPkg = this->_location[k]->findPackage(hash_lsts[k][i]);
+      // add <location> entry
+      xml_loc = def_xml.addChild(L"location");
+      xml_loc.setAttr(L"uuid", loc_uuid[l]);
 
-      if(pPkg) {
-        xml_ins = xml_loc.addChild(L"install");
-        xml_ins.setAttr(L"ident", pPkg->ident());
-        xml_ins.setAttr(L"hash", Om_toHexString(pPkg->hash()));
-      } else {
-        this->_error = L"Package with hash "+Om_toHexString(hash_lsts[k][i]);
-        this->_error += L" was not found in Location.";
-        this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
+      for(size_t i = 0; i < loc_hash_list[l].size(); ++i) {
+        // check whether package with this hash exists
+        if(pLoc->findPackage(loc_hash_list[l][i])) {
+          xml_ins = xml_loc.addChild(L"install");
+          xml_ins.setAttr(L"hash", Om_toHexString(loc_hash_list[l][i]));
+        } else {
+          this->_error = L"Package with hash "+Om_toHexString(loc_hash_list[l][i]);
+          this->_error += L" was not found in Location.";
+          this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
+        }
       }
-
+    } else {
+      this->_error = L"Location with UUID "+loc_uuid[l];
+      this->_error += L" was not found.";
+      this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
     }
   }
 
@@ -738,7 +783,7 @@ bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& h
 
   // load the newly created Batch
   OmBatch* batch = new OmBatch(this);
-  batch->parse(bat_def_path);
+  batch->open(bat_def_path);
   this->_batch.push_back(batch);
 
   // sort Batches by index

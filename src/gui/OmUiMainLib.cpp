@@ -19,6 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiMainLib.h"
 #include "gui/OmUiPropPkg.h"
+#include "gui/OmUiPropBat.h"
 #include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewBat.h"
 #include "gui/OmUiMain.h"
@@ -43,6 +44,7 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),0,0,0,0))),
   _hBmBcNew(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),0,0,0,0))),
   _hBmBcDel(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),0,0,0,0))),
+  _hBmBcMod(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_MOD),0,0,0,0))),
   _abortPending(false),
   _install_hth(nullptr),
   _uninstall_hth(nullptr),
@@ -72,6 +74,7 @@ OmUiMainLib::~OmUiMainLib()
   DeleteObject(this->_hBmBlank);
   DeleteObject(this->_hBmBcNew);
   DeleteObject(this->_hBmBcDel);
+  DeleteObject(this->_hBmBcMod);
   DeleteObject(this->_hFtTitle);
   DeleteObject(this->_hFtMonos);
 }
@@ -377,6 +380,34 @@ bool OmUiMainLib::remBatch()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmUiMainLib::ediBatch()
+{
+  HWND hLb = this->getItem(IDC_LB_BATLS);
+
+  int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
+
+  if(lb_sel >= 0) {
+
+    int bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
+
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->curContext();
+
+    OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
+    pUiPropBat->setBatch(pCtx->batch(bat_id));
+    pUiPropBat->open();
+  }
+
+  // reload the batch list-box
+  this->_reloadBatLb();
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMainLib::setOnProcess(bool enable)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
@@ -562,7 +593,7 @@ void OmUiMainLib::_onSelectBat()
   int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
 
   this->enableItem(IDC_BC_APPLY, (lb_sel >= 0));
-  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
+  this->enableItem(IDC_BC_EDI, (lb_sel >= 0));
 }
 
 
@@ -997,7 +1028,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
     for(unsigned l = 0; l < batch->locationCount(); l++) {
 
       // Select the location
-      self->selLocation(pCtx->findLocation(batch->getLocationUuid(l)));
+      self->selLocation(pCtx->findLocationIndex(batch->getLocationUuid(l)));
       pLoc = pCtx->curLocation();
 
       if(pLoc == nullptr) {
@@ -1167,7 +1198,7 @@ void OmUiMainLib::_onInit()
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
   // Set batches New and Delete buttons icons
   this->msgItem(IDC_BC_NEW, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
-  this->msgItem(IDC_BC_DEL, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
+  this->msgItem(IDC_BC_EDI, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOCLS,  L"Select active location");
@@ -1265,7 +1296,7 @@ void OmUiMainLib::_onResize()
   // Batches Apply, New.. and Delete buttons
   this->_setItemPos(IDC_BC_APPLY, this->width()-143, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
-  this->_setItemPos(IDC_BC_DEL, this->width()-51, this->height()-114, 45, 14);
+  this->_setItemPos(IDC_BC_EDI, this->width()-51, this->height()-114, 45, 14);
 
 
   InvalidateRect(this->_hwnd, nullptr, true);
@@ -1304,7 +1335,7 @@ void OmUiMainLib::_onRefresh()
   // disable all batches buttons
   this->enableItem(IDC_BC_APPLY, false);
   this->enableItem(IDC_BC_NEW, (pMgr->curContext() != nullptr));
-  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_EDI, false);
 
   this->_reloadBatLb(); //< reload Batches list
 }
@@ -1457,8 +1488,8 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->batch();
       break;
 
-    case IDC_BC_DEL:
-      this->remBatch();
+    case IDC_BC_EDI:
+      this->ediBatch();
       break;
 
     case IDM_EDIT_PKG_INST:

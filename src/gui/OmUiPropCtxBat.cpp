@@ -301,7 +301,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_EDI:
       lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
       if(lb_sel >= 0 && lb_sel < (int)pCtx->batchCount()) {
-        // open the Location Properties dialog
+        // open the Batch Properties dialog
         int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
         OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
         pUiPropBat->setBatch(pCtx->batch(bat_id));

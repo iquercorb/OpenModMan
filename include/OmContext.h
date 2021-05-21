@@ -166,13 +166,33 @@ class OmContext
     ///
     /// Returns Location at index.
     ///
-    /// \param[in]  id      : Location index.
+    /// \param[in]  i      : Location index.
     ///
-    /// \return Location object at index.
+    /// \return Location object at index or nullptr if index is out of bound.
     ///
-    OmLocation* location(unsigned id) {
-      return _location[id];
+    OmLocation* location(unsigned i) {
+      return (i < _location.size()) ? _location[i] : nullptr;
     }
+
+    /// \brief Get Location.
+    ///
+    /// Returns Location with specified UUID.
+    ///
+    /// \param[in]  uuid     : Location UUID to search.
+    ///
+    /// \return Location object or nullptr if not found.
+    ///
+    OmLocation* location(const wstring& uuid);
+
+    /// \brief Find Location index.
+    ///
+    /// Returns the index of the Location that matches the specified UUID.
+    ///
+    /// \param[in]  uuid     : Location UUID to search.
+    ///
+    /// \return Location index or -1 if not found.
+    ///
+    int findLocationIndex(const wstring& uuid);
 
     /// \brief Sort Location list.
     ///
@@ -180,23 +200,25 @@ class OmContext
     ///
     void sortLocations();
 
-    /// \brief Find Location.
-    ///
-    /// Find Location by its UUID.
-    ///
-    /// \param[in]  uuid     : Location UUID to search.
-    ///
-    /// \return Location index or -1 if not found.
-    ///
-    int findLocation(const wstring& uuid);
-
     /// \brief Select Location.
     ///
     /// Sets the specified Location as active one.
     ///
     /// \param[in]  id      : Location index or -1 to unselect.
     ///
-    void selLocation(int id);
+    /// \return True if operation succeed, false if id is out of bound.
+    ///
+    bool selLocation(int id);
+
+    /// \brief Select Location.
+    ///
+    /// Sets the specified Location as active one.
+    ///
+    /// \param[in]  uuid    : Location UUID to select.
+    ///
+    /// \return True if operation succeed, false if Location with such UUID does not exists.
+    ///
+    bool selLocation(const wstring& uuid);
 
     /// \brief Get current Location.
     ///
@@ -264,12 +286,13 @@ class OmContext
     ///
     /// Creates a new Batch within the Context.
     ///
-    /// \param[in]  title     : Title of new Batch to be created.
-    /// \param[in]  hash_lsts : Per Location install package hash lists.
+    /// \param[in]  title         : Title of new Batch to be created.
+    /// \param[in]  loc_uuid      : Location UUID list.
+    /// \param[in]  loc_hash_list : Per Location install package hash lists.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool addBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts);
+    bool addBatch(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list);
 
     /// \brief Delete Batch.
     ///

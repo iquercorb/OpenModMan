@@ -27,6 +27,7 @@
 #define IDD_PROP_PKG_BCK                        752
 #define IDD_PROP_BAT                            760
 #define IDD_PROP_BAT_STG                        761
+#define IDD_PROP_BAT_LST                        762
 #define IDD_WIZ_CTX                             770
 #define IDD_WIZ_LOC                             771
 #define IDD_WIZ_CTX_BEG                         774

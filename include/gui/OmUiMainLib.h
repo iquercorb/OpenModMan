@@ -110,6 +110,12 @@ class OmUiMainLib : public OmDialog
     ///
     bool remBatch();
 
+    /// \brief Modify selected batch.
+    ///
+    /// Public function to modify the selected batch if any.
+    ///
+    bool ediBatch();
+
     /// \brief Set dialog on-process state.
     ///
     /// Enable or disable the dialog on process state. The on-process state
@@ -139,6 +145,8 @@ class OmUiMainLib : public OmDialog
     HBITMAP             _hBmBcNew;
 
     HBITMAP             _hBmBcDel;
+
+    HBITMAP             _hBmBcMod;
 
     void                _reloadLibEc();
 

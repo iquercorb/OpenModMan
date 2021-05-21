@@ -56,20 +56,28 @@ long OmUiPropBat::id() const
 ///
 bool OmUiPropBat::checkChanges()
 {
-  OmBatch* batch = static_cast<OmBatch*>(this->_batch);
+  OmBatch* pBat = this->_batch;
+
+  if(pBat == nullptr)
+    return false;
+
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
   bool changed = false;
 
   wstring item_str;
 
-  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Context title
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INPT1, item_str);
-    if(batch->title() != item_str) {
+    if(pBat->title() != item_str) {
       changed = true;
     } else {
       pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
     }
+  }
+
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
+    changed = true;
   }
 
   // enable Apply button
@@ -84,13 +92,19 @@ bool OmUiPropBat::checkChanges()
 ///
 bool OmUiPropBat::applyChanges()
 {
-  OmBatch* batch = static_cast<OmBatch*>(this->_batch);
+  OmBatch* pBat = this->_batch;
+
+  if(pBat == nullptr)
+    return false;
+
+  OmContext* pCtx = pBat->context();
+
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
   wstring bat_name;
 
   // Step 1, verify everything
-  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
     if(!Om_isValidName(bat_name)) {
       wstring wrn = L"The title";
@@ -99,7 +113,7 @@ bool OmUiPropBat::applyChanges()
       return false;
     }
     // Check whether name already exists
-    OmContext* pCtx = batch->context();
+    OmContext* pCtx = pBat->context();
     for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
       if(pCtx->batch(i)->title() == bat_name) {
         Om_dialogBoxErr(this->_hwnd, L"Not unique Batch title",
@@ -110,15 +124,51 @@ bool OmUiPropBat::applyChanges()
     }
   }
 
+
   // Step 2, save changes
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    if(!batch->renameHome(bat_name)) { //< rename Batch filename
+    if(!pBat->rename(bat_name)) { //< rename Batch filename
       Om_dialogBoxErr(this->_hwnd,  L"Batch rename failed",
-                                    batch->lastError());
+                                    pBat->lastError());
     }
-    batch->setTitle(bat_name); //< change Batch title
+    pBat->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified
     pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
+  }
+
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
+
+    // build the per-Location hash lists
+    vector<uint64_t> hash_list;
+    OmLocation* pLoc;
+    OmPackage* pPkg;
+
+    for(size_t k = 0; k < pCtx->locationCount(); ++k) {
+
+      pLoc = pCtx->location(k);
+
+      // reset list
+      hash_list.clear();
+
+      for(size_t i = 0; i < pUiPropBatStg->getIncLsSize(k); ++i) {
+
+        // retrieve package from stored index
+        pPkg = pLoc->package(pUiPropBatStg->getIncLsValue(k, i));
+
+        // add <install> entry with package hash
+        hash_list.push_back(pPkg->hash());
+      }
+
+      // add new location in batch if required
+      if(!pBat->hasLocation(pLoc->uuid()))
+         pBat->addLocation(pLoc->uuid());
+
+      // set new Install list
+      pBat->setInstallList(pLoc->uuid(), hash_list);
+    }
+
+    // Reset parameter as unmodified
+    pUiPropBatStg->setChParam(BAT_PROP_STG_INSLS, false);
   }
 
   // disable Apply button
