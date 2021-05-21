@@ -490,6 +490,20 @@ class OmLocation
     ///
     bool backupsPurge(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
+    /// \brief Discard backup data.
+    ///
+    /// Discard/delete all backup data without restoring. This function is used as an
+    /// emergency reset to prevent restoring old or corrupted data.
+    ///
+    /// \param[in]  hWnd       : Parent window handle for warning messages.
+    /// \param[in]  hPb        : Progress Bar control handle to be updated during process.
+    /// \param[in]  hSc        : Static Label control handle to be updated during process.
+    /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
+    ///
+    /// \return True if operation succeed, false is error occurred.
+    ///
+    bool backupsDiscard(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+
     /// \brief Install package(s).
     ///
     /// Installs one or several package(s) according Location environment.

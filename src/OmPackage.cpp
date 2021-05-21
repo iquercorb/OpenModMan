@@ -850,6 +850,48 @@ bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
 }
 
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::unbackup(const bool *pAbort)
+{
+  // cannot install without valid Location
+  if(this->_location == nullptr) {
+    this->_error = L"Package cannot be uninstalled out of a valid Location.";
+    this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+    return false;
+  }
+
+  if(!(this->_type & PKG_TYPE_BCK)) {
+    // I am sorry Dave, but there is no backup to restore
+    this->_error = L"Backup data does not exists.";
+    this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+    return false;
+  }
+
+  // ultimate validity check before try to install
+  if(!this->backupValid()) {
+    this->_error = L"Backup data should exist but was not found.";
+    this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+    return false;
+  }
+
+  // it still time to abort
+  if(pAbort) {
+    if(*pAbort) {
+      this->log(1, L"Package("+this->_ident+L") Unbackup", L"Aborted.");
+      return true;
+    }
+  }
+
+  // restore backed files into destination tree
+  if(!this->_doUnbackup()) {
+    return false;
+  }
+
+  return true;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1769,7 +1811,7 @@ bool OmPackage::_doUninst(HWND hPb)
     // all appear OK, we can proceed
     wstring bck_file, app_file;
 
-    // first we restore genuine files from zip
+    // first we restore genuine files from backup folder
     for(size_t i = 0; i < this->_backupItem.size(); ++i) {
       // we are interested only by backup file to copy
       if(this->_backupItem[i].dest == PKGITEM_DEST_CPY) {
@@ -2013,4 +2055,82 @@ void OmPackage::_undoInstall(HWND hPb)
   swprintf(log_buf, 32, L"Done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
   log(2, L"Package("+this->_ident+L") Undo", log_buf);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::_doUnbackup()
+{
+  // initialize local timer
+  clock_t time = clock();
+
+  int result;
+  bool is_zip;
+
+  if(Om_isFileZip(this->_backup)) {
+
+    OmZipFile zip;
+    if(!zip.load(this->_backup)) {
+      this->_error = L"Backup ZIP archive \""+this->_backup+L"\"";
+      this->_error += OMM_STR_ERR_ZIPOPEN(zip.lastErrorStr());
+      this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+      return false;
+    }
+
+    is_zip = true; //< backup data is zip file
+
+    // we do not need this anymore
+    zip.close();
+
+  } else {
+
+    if(!Om_isDir(this->_backup)) {
+      this->_error =  L"Backup data \""+this->_backup+L"\"";
+      this->_error += L" is neither a valid ZIP archive or directory.";
+      this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+      return false;
+    }
+
+    // compose the path to backup root path
+    wstring bck_dir_path = this->_backup + L"\\" + this->_backupDir;
+
+    if(!Om_isDir(bck_dir_path)) {
+      this->_error = L"Backup data subfolder \""+bck_dir_path+L"\"";
+      this->_error += OMM_STR_ERR_ISDIR;
+      this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+      return false;
+    }
+
+    is_zip = false; //< backup data is a sub-directory
+  }
+
+  // cleanup backup data either zip file or sub-directory...
+  if(is_zip) {
+    result = Om_fileDelete(this->_backup);
+    if(result != 0) {
+      this->_error = L"Backup ZIP archive \""+this->_backup+L"\"";
+      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+    }
+  } else {
+    result = Om_dirDeleteRecursive(this->_backup);
+    if(result != 0) {
+      this->_error = L"Backup main directory \""+this->_backup+L"\"";
+      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
+    }
+  }
+
+  // revoke the backup property of this package
+  this->backupClear();
+
+  // making report
+  wchar_t log_buf[32];
+  swprintf(log_buf, 32, L"Done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
+
+  log(2, L"Package("+this->_ident+L") Unbackup", log_buf);
+
+  return true;
 }

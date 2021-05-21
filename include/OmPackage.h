@@ -450,7 +450,7 @@ class OmPackage
     /// Restores the Package backup if it exists and cleanup
     /// destination directory.
     ///
-    /// \param[in]  hPb    : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  hPb     : Optional progress bar control handle (HWND) to step.
     /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
     ///
     /// \return True if operation succeed, false otherwise.
@@ -468,6 +468,16 @@ class OmPackage
     /// \return True if operation succeed, false otherwise.
     ///
     bool install(unsigned zipLvl = 0, HWND hPb = nullptr, const bool *pAbort = nullptr);
+
+    /// \brief Perform unbackup.
+    ///
+    /// Delete the Package backup without restoring data, set it as uninstalled.
+    ///
+    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool unbackup(const bool *pAbort = nullptr);
 
     /// \brief Check whether has Backup.
     ///
@@ -628,6 +638,14 @@ class OmPackage
     /// \return True if operation succeed, false otherwise.
     ///
     void _undoInstall(HWND hPb = nullptr);
+
+    /// \brief Discard backup data.
+    ///
+    /// Sub-routine to delete backup data without restoring.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool _doUnbackup();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

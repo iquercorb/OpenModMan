@@ -942,12 +942,9 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
     if(!this->checkAccessBck()) {
       this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
       this->_error += OMM_STR_ERR_DIRACCESS;
-      this->log(1, L"Location("+this->_title+L") Move backup", this->_error);
+      this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
       return false;
     }
-
-    // update dialog message
-    wstring item_str;
 
     if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
@@ -969,7 +966,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
       // check whether abort is requested
       if(pAbort) {
         if(*pAbort) {
-          this->log(1, L"Location("+this->_title+L") Move backup", L"Process aborted");
+          this->log(1, L"Location("+this->_title+L") Move backups", L"Process aborted");
           SetWindowTextW(hSc, L"Process aborted");
           break;
         }
@@ -991,7 +988,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
       if(result != 0) {
         this->_error =  L"Backup data \""+src+L"\"";
         this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
-        this->log(1, L"Location("+this->_title+L") Move backup", this->_error);
+        this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
         has_error = true;
       }
     }
@@ -1010,7 +1007,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
     // Force a full refresh for the next time
     this->packageListClear();
 
-    this->log(2, L"Location("+this->_title+L") Move backup", L"Data transfered to \""+path+L"\".");
+    this->log(2, L"Location("+this->_title+L") Move backups", L"Data transfered to \""+path+L"\".");
   }
 
   return !has_error;
@@ -1039,7 +1036,7 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
   if(!this->checkAccessDst()) {
     this->_error =  L"Destination folder \""+this->_installDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
-    this->log(1, L"Location("+this->_title+L") Purge backup", this->_error);
+    this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
 
@@ -1047,12 +1044,9 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
   if(!this->checkAccessBck()) {
     this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
-    this->log(1, L"Location("+this->_title+L") Purge backup", this->_error);
+    this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
-
-  // update dialog message
-  wstring item_str;
 
   if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
@@ -1132,7 +1126,7 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
     // check whether abort is requested
     if(pAbort) {
       if(*pAbort) {
-        this->log(1, L"Location("+this->_title+L") Purge backup", L"Process aborted.");
+        this->log(1, L"Location("+this->_title+L") Purge backups", L"Process aborted.");
         SetWindowTextW(hSc, L"Process aborted");
         break;
       }
@@ -1146,7 +1140,94 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
       if(!uninst_list[i]->uninst(nullptr, pAbort)) {
         this->_error =  L"Backup data \""+uninst_list[i]->name()+L"\"";
         this->_error += L" restoration failed: "+uninst_list[i]->lastError();
-        this->log(0, L"Location("+this->_title+L") Purge backup", this->_error);
+        this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
+        has_error = true;
+      }
+    }
+
+    // step progress bar
+    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
+
+    #ifdef DEBUG_SLOW
+    Sleep(DEBUG_SLOW); //< for debug
+    #endif
+  }
+
+  // update dialog message
+  if(hSc) {
+    if(pAbort) {
+      if(*pAbort != true) {
+        SetWindowTextW(hSc, L"Process completed");
+      }
+    } else {
+      SetWindowTextW(hSc, L"Process completed");
+    }
+  }
+
+  // Force a full refresh for the next time
+  this->packageListClear();
+
+  return !has_error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
+{
+  // checks whether we have a valid Backup folder
+  if(!this->checkAccessBck()) {
+    this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->log(1, L"Location("+this->_title+L") Discard backups", this->_error);
+    return false;
+  }
+
+  if(hSc) SetWindowTextW(hSc, L"Analyzing...");
+
+  // first we gather all installed package, we will then discard backup for all
+  vector<OmPackage*> reset_list; //< our real uninstall list
+  for(size_t i = 0; i < this->_package.size(); ++i) {
+    if(this->_package[i]->hasBackup())
+      reset_list.push_back(this->_package[i]);
+  }
+
+  // check whether we have something to proceed
+  if(reset_list.empty())
+    return true;
+
+  // initialize the progress bar
+  if(hPb) {
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, reset_list.size()));
+    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
+    SendMessageW(hPb, PBM_SETPOS, 0, 0);
+  }
+
+  bool has_error = false;
+
+  // Discard backup data for all packages
+  for(size_t i = 0; i < reset_list.size(); ++i) {
+
+    // update dialog message
+    if(hSc) SetWindowTextW(hSc, reset_list[i]->name().c_str());
+
+    // check whether abort is requested
+    if(pAbort) {
+      if(*pAbort) {
+        this->log(1, L"Location("+this->_title+L") Discard backups", L"Process aborted.");
+        SetWindowTextW(hSc, L"Process aborted");
+        break;
+      }
+    }
+
+    if(reset_list[i]->hasBackup()) { //< this should be always the case
+
+      // Discard backup of this package
+      if(!reset_list[i]->unbackup(pAbort)) {
+        this->_error =  L"Backup data \""+reset_list[i]->name()+L"\"";
+        this->_error += L" discard failed: "+reset_list[i]->lastError();
+        this->log(0, L"Location("+this->_title+L") Discard backups", this->_error);
         has_error = true;
       }
     }
