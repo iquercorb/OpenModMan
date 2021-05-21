@@ -23,6 +23,7 @@
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropMan.h"
+#include "gui/OmUiPropBat.h"
 #include "gui/OmUiHelpLog.h"
 #include "gui/OmUiHelpAbout.h"
 #include "gui/OmUiWizCtx.h"
@@ -49,12 +50,13 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Library", new OmUiMainLib(hins));
-  //this->_addPage(L"Network", new OmUiMainRep(hins));
+  //this->_addPage(L"Network", new OmUiMainRep(hins)); // net ready yet
 
   // add children dialogs
   this->addChild(new OmUiPropMan(hins));    //< Dialog for general settings
   this->addChild(new OmUiPropCtx(hins));    //< Dialog for Context properties
   this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location properties
+  this->addChild(new OmUiPropBat(hins));    //< Dialog for Location properties
   this->addChild(new OmUiHelpLog(hins));    //< Dialog for help debug log
   this->addChild(new OmUiHelpAbout(hins));  //< Dialog for help debug log
   this->addChild(new OmUiWizCtx(hins));     //< Dialog for New Context Wizard
