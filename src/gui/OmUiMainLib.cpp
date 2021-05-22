@@ -99,6 +99,9 @@ void OmUiMainLib::selLocation(int i)
   // stop Library folder monitoring
   this->_monitor_stop();
 
+  // main window dialog
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
+
   // select the requested Location
   if(pMgr->curContext()) {
 
@@ -133,16 +136,20 @@ void OmUiMainLib::selLocation(int i)
         wrn += L"\n\nPlease check Location's settings and folder permissions.";
         Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", wrn);
       }
+
+      // enable the "Edit > Location properties..." menu
+      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_ENABLED);
+
+    } else {
+      // disable the "Edit > Location properties..." menu
+      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_GRAYED);
     }
   }
 
-  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
-
   // disable "Edit > Package" in main menu
-  pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
-
+  pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
   // disable the "Edit > Package > []" elements
-  HMENU hMenu = pUiMain->getMenuEdit(1);
+  HMENU hMenu = pUiMain->getMenuEdit(5);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
   EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
@@ -413,7 +420,7 @@ void OmUiMainLib::setOnProcess(bool enable)
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // handle to "Edit > Package" sub-menu
-  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
+  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(5);
 
   // enable/disable Location combo-box
   this->enableItem(IDC_CB_LOCLS, !enable);
@@ -487,10 +494,10 @@ void OmUiMainLib::_onSelectPkg()
   OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
   // disable "Edit > Package" in main menu
-  pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
+  pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
 
   // handle to "Edit > Package" sub-menu
-  HMENU hMenu = pUiMain->getMenuEdit(1);
+  HMENU hMenu = pUiMain->getMenuEdit(5);
 
   HWND hLv = this->getItem(IDC_LV_PKGLS);
   HWND hSb = this->getItem(IDC_SB_PKIMG);
@@ -514,7 +521,7 @@ void OmUiMainLib::_onSelectPkg()
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, 0);
 
     // enable "Edit > Package" sub-menu
-    pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_ENABLED);
+    pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_ENABLED);
 
     if(lv_nsl > 1) {
 
@@ -574,7 +581,7 @@ void OmUiMainLib::_onSelectPkg()
     EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
 
     // disable "Edit > Package" sub-menu
-    pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
+    pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
   }
 
   // Update the selected picture
@@ -895,7 +902,7 @@ void OmUiMainLib::_reloadIcons()
 void OmUiMainLib::_showPkgPopup()
 {
   // get handle to "Edit > Packages..." sub-menu
-  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(1);
+  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(5);
 
   // get mouse cursor position
   POINT pt;

@@ -165,6 +165,7 @@
 #define IDM_EDIT_OPTIONS                        40820
 #define IDM_EDIT_CTX_PROP                       40822
 #define IDM_EDIT_CTX_ADDL                       40823
+#define IDM_EDIT_LOC_PROP                       40824
 #define IDM_EDIT_PKG_INST                       40826
 #define IDM_EDIT_PKG_UINS                       40827
 #define IDM_EDIT_PKG_INFO                       40828

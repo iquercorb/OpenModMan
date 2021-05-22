@@ -169,11 +169,14 @@ void OmUiMain::selContext(int id)
   // update menus
   if(pMgr->curContext()) {
     this->setMenuFile(IDM_FILE_CLOSE, MF_ENABLED); // File > Close
-    this->setMenuEdit(0, MF_BYPOSITION|MF_ENABLED); // Edit > Context
-
+    this->setMenuEdit(0, MF_BYPOSITION|MF_ENABLED); // Edit > Context properties...
+    this->setMenuEdit(3, MF_BYPOSITION|MF_ENABLED); // Edit > Add Location...
   } else {
     this->setMenuFile(IDM_FILE_CLOSE, MF_GRAYED); // File > Close
-    this->setMenuEdit(0, MF_BYPOSITION|MF_GRAYED); // Edit > Context
+    this->setMenuEdit(0, MF_BYPOSITION|MF_GRAYED); // Edit > Context properties...
+    this->setMenuEdit(2, MF_BYPOSITION|MF_GRAYED); // Edit > Location properties...
+    this->setMenuEdit(3, MF_BYPOSITION|MF_GRAYED); // Edit > Add Location...
+    this->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED); // Edit > Package []
   }
 
   // update dialog window title
@@ -638,6 +641,14 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         OmUiPropCtx* pUiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
         pUiPropCtx->setContext(pMgr->curContext());
         pUiPropCtx->open(true);
+      }
+      break;
+
+    case IDM_EDIT_LOC_PROP:
+      if(pMgr->curContext()) {
+        OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->childById(IDD_PROP_LOC));
+        pUiPropLoc->setLocation(pMgr->curContext()->curLocation());
+        pUiPropLoc->open(true);
       }
       break;
 

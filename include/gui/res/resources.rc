@@ -154,11 +154,18 @@ IDR_MENU MENU
     }
     POPUP "&Edit"
     {
-        POPUP "&Context", GRAYED
-        {
-            MENUITEM "&Properties...", IDM_EDIT_CTX_PROP
-            MENUITEM "&Add location...", IDM_EDIT_CTX_ADDL
-        }
+
+        //POPUP "&Context", GRAYED
+        //{
+        //    MENUITEM "&Properties...", IDM_EDIT_CTX_PROP
+        //    MENUITEM "&Add location...", IDM_EDIT_CTX_ADDL
+        //}
+
+        MENUITEM "&Context properties...", IDM_EDIT_CTX_PROP
+        MENUITEM SEPARATOR
+        MENUITEM "&Location properties...", IDM_EDIT_LOC_PROP
+        MENUITEM "&Add Location...", IDM_EDIT_CTX_ADDL
+        MENUITEM SEPARATOR
         POPUP "&Package", GRAYED
         {
             MENUITEM "&Install\tEnter", IDM_EDIT_PKG_INST, GRAYED
@@ -170,7 +177,7 @@ IDR_MENU MENU
             MENUITEM "View &details...\tCtrl+I", IDM_EDIT_PKG_INFO, GRAYED
         }
         MENUITEM SEPARATOR
-        MENUITEM "&Options...", IDM_EDIT_OPTIONS
+        MENUITEM "&Manager options...", IDM_EDIT_OPTIONS
     }
     POPUP "&Help"
     {
@@ -274,7 +281,7 @@ FONT 8, "Ms Shell Dlg"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_NEW_LOC DIALOG 0, 0, 320, 220
+IDD_NEW_LOC DIALOG 0, 0, 260, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "New Location"
@@ -474,6 +481,8 @@ FONT 8, "Ms Shell Dlg"
     AUTOCHECKBOX    "Compress (zip) backups data", IDC_BC_CHK01, 50, 20, 120, 9, 0, WS_EX_LEFT
     LTEXT           "Backups compression level :", IDC_SC_LBL01, 50, 40, 120, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_LEVEL, 50, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Maintenance operations :", IDC_SC_LBL02, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
+    PUSHBUTTON      "Discard backups", IDC_BC_DEL, 50, 90, 80, 15, 0, WS_EX_LEFT
 }
 
 
@@ -502,7 +511,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_MAN DIALOG 0, 0, 320, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Options"
+CAPTION "Manager options"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
