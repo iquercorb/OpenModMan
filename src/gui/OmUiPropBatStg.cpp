@@ -458,6 +458,9 @@ void OmUiPropBatStg::_onRefresh()
   // initialize Location ComboBox content
   HWND hCb = this->getItem(IDC_CB_LOCLS);
 
+  // empty the ComboBox
+  SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
+
   wstring item_str;
   int l;
 
