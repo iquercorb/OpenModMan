@@ -27,10 +27,10 @@
 
 /// \brief Custom window Message
 ///
-/// Custom window message to notify the dialog window that the remLocation_fth
+/// Custom window message to notify the dialog window that the _backupPurge_fth
 /// thread finished his job.
 ///
-#define UWM_REMLOCATION_DONE     (WM_APP+1)
+#define UWM_BACKPURGE_DONE     (WM_APP+1)
 
 
 ///
@@ -187,11 +187,12 @@ void OmUiPropCtxLoc::_locationDel()
 
     } else {
 
-      // we need to purge backup data before delete Location
+      // we need to purge backups data before delete Location
       this->_backupPurge_init();
     }
   }
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -204,8 +205,8 @@ void OmUiPropCtxLoc::_backupPurge_init()
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setTitle(L"Purge Location backup data");
-  pUiProgress->setDesc(L"Backup data restoration");
+  pUiProgress->setTitle(L"Purge Location backups data");
+  pUiProgress->setDesc(L"Backups data restoration");
 
   DWORD dwId;
   this->_backupPurge_hth = CreateThread(nullptr, 0, this->_backupPurge_fth, this, 0, &dwId);
@@ -238,8 +239,8 @@ void OmUiPropCtxLoc::_backupPurge_stop()
   // Back to main dialog window to normal state
   static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
 
-  // refresh all dialogs from root (Main dialog)
-  this->root()->refresh();
+  // refresh this dialog
+  this->_onRefresh();
 }
 
 
@@ -269,19 +270,19 @@ DWORD WINAPI OmUiPropCtxLoc::_backupPurge_fth(void* arg)
 
     OmLocation* pLoc = pCtx->location(loc_id);
 
-    // launch backup data purge process
+    // launch backups data purge process
     if(!pLoc->backupsPurge(hPb, hSc, pUiProgress->getAbortPtr())) {
       // we encounter error during backup data purge
-      Om_dialogBoxErr(pUiProgress->hwnd(), L"Backup data purge error", pLoc->lastError());
+      Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data purge error", pLoc->lastError());
       exitCode = 1;
     }
   }
 
-  PostMessage(self->_hwnd, UWM_REMLOCATION_DONE, 0, 0);
+  // sends message to window to inform process ended
+  PostMessage(self->_hwnd, UWM_BACKPURGE_DONE, 0, 0);
 
   return exitCode;
 }
-
 
 
 ///
@@ -381,9 +382,9 @@ void OmUiPropCtxLoc::_onRefresh()
 ///
 bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // UWM_REMLOCATION_DONE is a custom message sent from Location deletion thread
+  // UWM_BACKPURGE_DONE is a custom message sent from Location backups purge thread
   // function, to notify the progress dialog ended is job.
-  if(uMsg == UWM_REMLOCATION_DONE) {
+  if(uMsg == UWM_BACKPURGE_DONE) {
     // end the removing Location process
     this->_backupPurge_stop();
   }
