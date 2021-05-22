@@ -724,7 +724,7 @@
 1621613374 d:\atelier\code\cpp\openmodman\include\gui\omuipropbatstg.h
 	"OmDialog.h"
 
-1621617657 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropbatstg.cpp
+1621694802 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropbatstg.cpp
 	"gui/res/resource.h"
 	"OmContext.h"
 	"OmBatch.h"
@@ -764,7 +764,7 @@
 	"gui/OmUiPropCtx.h"
 	"gui/OmUiPropCtxBat.h"
 
-1621678667 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
+1621679611 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
