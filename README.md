@@ -46,8 +46,9 @@ Version history
 
 0.9.5 (no release yet)
  - Fix Library list-view scroll position reset to top on refresh.
- - Added ability to edit batches
- - Added backup discarding feature
+ - New buttons and dialogs for Batches edition
+ - New Discard backups data feature for emergency situations
+ - Edit menu modified for quicker access properties
 
 0.9.4 (2020-11-26)
  - Modify Package creation function to add picture file as provided.
