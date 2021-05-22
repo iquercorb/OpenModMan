@@ -44,7 +44,7 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
   this->_addPage(L"Backups", new OmUiPropLocBck(hins));
 
   // creates child sub-dialogs
-  this->addChild(new OmUiProgress(hins)); //< for Location backup transfer
+  this->addChild(new OmUiProgress(hins)); //< for Location backup transfer or deletion
 }
 
 

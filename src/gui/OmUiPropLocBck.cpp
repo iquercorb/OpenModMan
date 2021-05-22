@@ -17,14 +17,23 @@
 
 #include "gui/res/resource.h"
 #include "OmManager.h"
+#include "gui/OmUiMain.h"
+#include "gui/OmUiProgress.h"
 #include "gui/OmUiPropLocBck.h"
 #include "gui/OmUiPropLoc.h"
 
+/// \brief Custom window Message
+///
+/// Custom window message to notify the dialog window that the backupDcard_fth
+/// thread finished his job.
+///
+#define UWM_BACKDISCARD_DONE     (WM_APP+1)
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropLocBck::OmUiPropLocBck(HINSTANCE hins) : OmDialog(hins)
+OmUiPropLocBck::OmUiPropLocBck(HINSTANCE hins) : OmDialog(hins),
+  _backupDcard_hth(nullptr)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i)
@@ -57,6 +66,80 @@ void OmUiPropLocBck::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
   static_cast<OmDialogProp*>(this->_parent)->checkChanges();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocBck::_backupDcard_init()
+{
+  // To prevent crash during operation we unselect location in the main dialog
+  static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
+
+  pUiProgress->open(true);
+  pUiProgress->setTitle(L"Discard Location backups data");
+  pUiProgress->setDesc(L"Backups data deletion");
+
+  DWORD dwId;
+  this->_backupDcard_hth = CreateThread(nullptr, 0, this->_backupDcard_fth, this, 0, &dwId);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocBck::_backupDcard_stop()
+{
+  DWORD exitCode;
+
+  if(this->_backupDcard_hth) {
+    WaitForSingleObject(this->_backupDcard_hth, INFINITE);
+    GetExitCodeThread(this->_backupDcard_hth, &exitCode);
+    CloseHandle(this->_backupDcard_hth);
+    this->_backupDcard_hth = nullptr;
+  }
+
+  // quit the progress dialog
+  static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
+
+  // Back to main dialog window to normal state
+  static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiPropLocBck::_backupDcard_fth(void* arg)
+{
+  OmUiPropLocBck* self = static_cast<OmUiPropLocBck*>(arg);
+
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(self->_parent)->location();
+
+  if(pLoc == nullptr)
+    return 1;
+
+  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
+
+  HWND hPb = pUiProgress->getPbHandle();
+  HWND hSc = pUiProgress->getDetailScHandle();
+
+  DWORD exitCode = 0;
+
+  // launch backups data deletion process
+  if(!pLoc->backupsDiscard(hPb, hSc, pUiProgress->getAbortPtr())) {
+    // we encounter error during backup data purge
+    Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data deletion error", pLoc->lastError());
+    exitCode = 1;
+  }
+
+  // sends message to window to inform process ended
+  PostMessage(self->_hwnd, UWM_BACKDISCARD_DONE, 0, 0);
+
+  return exitCode;
 }
 
 
@@ -135,6 +218,10 @@ void OmUiPropLocBck::_onResize()
   this->_setItemPos(IDC_CB_LEVEL, 50, 50, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_LEVEL), nullptr, true);
+  // Maintenance operations Label
+  this->_setItemPos(IDC_SC_LBL02, 50, 80, 120, 9);
+  // Discard backups Button
+  this->_setItemPos(IDC_BC_DEL, 50, 90, 80, 15);
 }
 
 
@@ -143,6 +230,13 @@ void OmUiPropLocBck::_onResize()
 ///
 bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  // UWM_BACKDISCARD_DONE is a custom message sent from Location backups discard thread
+  // function, to notify the progress dialog ended is job.
+  if(uMsg == UWM_BACKDISCARD_DONE) {
+    // end the Location backups deletion process
+    this->_backupDcard_stop();
+  }
+
   if(uMsg == WM_COMMAND) {
 
     bool bm_chk;
@@ -159,6 +253,21 @@ bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(HIWORD(wParam) == CBN_SELCHANGE) {
         // user modified parameter, notify it
         this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
+      }
+      break;
+
+    case IDC_BC_DEL: {
+        // warns the user before committing the irreparable
+        wstring wrn = L"This will permanently delete all existing "
+                      L"backups data without restoring them (which should "
+                      "never be done except in emergency situation)."
+
+                      L"\n\nDiscard all backups data for this Location ?";
+
+        if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backups data", wrn)) {
+          // delete the Location
+          this->_backupDcard_init();
+        }
       }
       break;
     }
