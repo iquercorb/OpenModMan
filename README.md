@@ -44,7 +44,7 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
-0.9.5 (no release yet)
+0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.
  - New buttons and dialogs for Batches edition
  - New Discard backups data feature for emergency situations
