@@ -494,6 +494,10 @@ void OmUiPropBatStg::_onRefresh()
           this->_excLs.back().push_back(j);
         }
       }
+    } else {
+      // fill the exclude list
+      for(size_t j = 0; j < pLoc->packageCount(); ++j)
+        this->_excLs.back().push_back(j);
     }
   }
 
