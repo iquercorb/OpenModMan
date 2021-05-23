@@ -44,6 +44,9 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
+0.9.6 (not released)
+ - Enhanced destination path checking in package creation dialog.
+
 0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.
  - New buttons and dialogs for Batches edition
