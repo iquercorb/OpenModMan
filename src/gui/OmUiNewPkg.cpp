@@ -286,18 +286,25 @@ bool OmUiNewPkg::_apply()
   }
 
   this->getItemText(IDC_EC_INPT6, item_str);
-  if(Om_isValidPath(item_str)) {
-    if(Om_isFile(item_str)) {
-      wstring qry = L"The file \""+Om_getFilePart(item_str)+L"\"";
-      qry += OMM_STR_QRY_OVERWRITE;
-      if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
-        return false;
+  if(Om_isDir(Om_getDirPart(item_str))) {
+    if(Om_isValidName(Om_getFilePart(item_str))) {
+      if(Om_isFile(item_str)) {
+        wstring qry = L"The file \""+Om_getFilePart(item_str)+L"\"";
+        qry += OMM_STR_QRY_OVERWRITE;
+        if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
+          return false;
+        }
       }
+    } else {
+      wstring err = L"File name ";
+      err += OMM_STR_ERR_VALIDNAME;
+      Om_dialogBoxErr(this->_hwnd, L"Invalid file name", err);
+      return false;
     }
   } else {
-    wstring err = L"Destination filename";
-    err += OMM_STR_ERR_VALIDPATH;
-    Om_dialogBoxErr(this->_hwnd, L"Invalid destination filename", err);
+    wstring err = L"The destination folder \""+Om_getDirPart(item_str)+L"\"";
+    err += OMM_STR_ERR_ISDIR;
+    Om_dialogBoxErr(this->_hwnd, L"Invalid destination", err);
     return false;
   }
 

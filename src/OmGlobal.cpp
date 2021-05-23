@@ -687,6 +687,7 @@ bool Om_isValidPath(const wchar_t* path)
   if(!wcslen(path))
     return false;
 
+  // check for illegal characters in path
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
     if(wcschr(path, __illegal_chr[i]))
       return false;
