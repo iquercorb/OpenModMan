@@ -24,10 +24,16 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRepository::OmRepository(OmLocation* pLoc) :
-  _location(pLoc)
+  _location(pLoc),
+  _base(),
+  _name(),
+  _url(),
+  _valid(false),
+  _error()
 {
 
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -37,18 +43,20 @@ OmRepository::~OmRepository()
 
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmRepository::setAddress(const wstring& base, const wstring& name)
+bool OmRepository::define(const wstring& base, const wstring& name)
 {
   // Build final URL to check if given setting is valid
-  string url = Om_toUtf8(base);
-  url += "/";
-  url = Om_toUtf8(name);
-  url += ".xml";
+  string url = Om_toUtf8(base) + "/";
+  url += Om_toUtf8(name) + ".xml";
 
   if(!Om_isValidUrl(url)) {
+    this->_error =  L"Parameters make an invalid URL: ";
+    this->_error += L"\"" + Om_fromUtf8(url.c_str()) + L"\"";
+    this->log(1, L"Repository("+base+L"-"+name+L") Define", this->_error);
     return false;
   }
 
@@ -60,15 +68,16 @@ bool OmRepository::setAddress(const wstring& base, const wstring& name)
   return true;
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmRepository::querry()
+bool OmRepository::update()
 {
   if(!_url.size())
     return false;
 
-  _valid = false;
+  this->_valid = false;
 
   OmSocket sock;
 
@@ -78,7 +87,7 @@ bool OmRepository::querry()
     this->_error =  L"\"" + Om_fromUtf8(this->_url.c_str());
     this->_error += L"\" HTTP GET error: ";
     this->_error += sock.lastErrorStr();
-    this->log(1, L"Repository("+this->_base+L" "+this->_name+L") Querry", this->_error);
+    this->log(1, L"Repository("+this->_base+L"-"+this->_name+L") Querry", this->_error);
     return false;
   }
 
@@ -87,7 +96,7 @@ bool OmRepository::querry()
   if(!rep_xml.parse(Om_fromUtf8(rep_str.c_str()))) {
     this->_error = L"Repository definition \""+Om_fromUtf8(this->_url.c_str())+L"\"";
     this->_error += OMM_STR_ERR_DEFOPEN(rep_xml.lastErrorStr());
-    this->log(1, L"Repository("+this->_base+L" "+this->_name+L") Querry", this->_error);
+    this->log(1, L"Repository("+this->_base+L"-"+this->_name+L") Querry", this->_error);
     return false;
   }
 
@@ -95,36 +104,37 @@ bool OmRepository::querry()
   vector<OmXmlNode> pkgs_list;
   rep_xml.children(pkgs_list, L"package");
 
-  _item.clear();
+  this->_item.clear();
 
   OmRepoItem repo_item;
 
   for(size_t i = 0; i < pkgs_list.size(); ++i) {
 
-    if(!pkgs_list[i].hasChild(L"ident"))
+    if(!pkgs_list[i].hasAttr(L"ident"))
       continue;
 
-    if(!pkgs_list[i].hasChild(L"link"))
+    if(!pkgs_list[i].hasAttr(L"href"))
       continue;
 
-    repo_item.ident = pkgs_list[i].child(L"ident").content();
-    repo_item.link = Om_toUtf8(pkgs_list[i].child(L"link").content());
+    repo_item.ident = pkgs_list[i].attrAsString(L"ident");
+    repo_item.href = Om_toUtf8(pkgs_list[i].attrAsString(L"href"));
+
+    if(pkgs_list[i].hasAttr(L"img")) {
+      repo_item.img = Om_toUtf8(pkgs_list[i].attrAsString(L"img"));
+    }
 
     if(pkgs_list[i].hasChild(L"desc")) {
-      repo_item.desc = pkgs_list[i].child(L"desc").content();
+      repo_item.desc = pkgs_list[i].content();
     }
 
-    if(pkgs_list[i].hasChild(L"img")) {
-      repo_item.img = Om_toUtf8(pkgs_list[i].child(L"img").content());
-    }
-
-    _item.push_back(repo_item);
+    this->_item.push_back(repo_item);
   }
 
-  _valid = true;
+  this->_valid = true;
 
   return true;
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

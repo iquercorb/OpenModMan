@@ -31,7 +31,7 @@ struct OmRepoItem {
 
   wstring             ident;  ///< Entry identity
 
-  string              link;   ///< file download URL
+  string              href;   ///< file download URL
 
   wstring             desc;   ///< Entry description
 
@@ -39,7 +39,7 @@ struct OmRepoItem {
 
 };
 
-/// \brief Repository object for Location.
+/// \brief Repository object for Context.
 ///
 /// The Repository object defines environment for network packages repository
 /// and provide interface to retrieve and download repository definition.
@@ -50,8 +50,16 @@ class OmRepository
 
   public:
 
+    /// \brief Constructor.
+    ///
+    /// Default constructor.
+    ///
     OmRepository(OmLocation* pLoc);
 
+    /// \brief Destructor.
+    ///
+    /// Default destructor.
+    ///
     ~OmRepository();
 
     /// \brief Get last error string.
@@ -64,17 +72,64 @@ class OmRepository
       return _error;
     }
 
+    /// \brief Check whether is valid.
+    ///
+    /// Checks whether this instance is correctly loaded a ready to use.
+    ///
+    /// \return True if this instance is valid, false otherwise.
+    ///
+    bool isValid() const {
+      return _valid;
+    }
+
+    /// \brief Get Repository base.
+    ///
+    /// Returns Repository HTTP base address.
+    ///
+    /// \return Repository HTTP base address.
+    ///
     const wstring& base() const {
       return _base;
     }
 
+    /// \brief Get Repository name.
+    ///
+    /// Returns Repository HTTP suffix name.
+    ///
+    /// \return Repository HTTP suffix name.
+    ///
     const wstring& name() const {
       return _name;
     }
 
-    bool setAddress(const wstring& base, const wstring& name);
+    /// \brief Get Repository URL.
+    ///
+    /// Returns Repository URL.
+    ///
+    /// \return Repository URL.
+    ///
+    const string& url() const {
+      return _url;
+    }
 
-    bool querry();
+    /// \brief Set Repository parameters.
+    ///
+    /// Define the Repository base and suffix to define HTTP URL.
+    ///
+    /// \param[in]  base    : Repository HTTP base address.
+    /// \param[in]  name    : Repository HTTP suffix name.
+    ///
+    /// \return True if parameters makes a valid HTTP URL, false otherwise.
+    ///
+    bool define(const wstring& base, const wstring& name);
+
+    /// \brief Update from remote data.
+    ///
+    /// Get data from remote server to update local data.
+    ///
+    /// \return True if update succeed, false if an error occurred.
+    ///
+    bool update();
 
     /// \brief Add log.
     ///

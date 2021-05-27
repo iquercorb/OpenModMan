@@ -19,7 +19,7 @@
 
 #include "OmDialog.h"
 
-class OmContext;
+class OmLocation;
 
 /// \brief New Repository dialog
 ///
@@ -51,44 +51,52 @@ class OmUiNewRep : public OmDialog
     ///
     long id() const;
 
-    /// \brief Get associated Context.
+    /// \brief Get associated Location.
     ///
-    /// Returns associated Context object previously defined
-    /// via OmUiNewLoc.setContext
+    /// Returns associated Location object previously defined
+    /// via OmUiNewLoc.setLocation
     ///
-    /// \return Associated Context or nullptr if none.
+    /// \return Associated Location or nullptr if none.
     ///
-    OmContext* context() const {
-      return _context;
+    OmLocation* location() const {
+      return _location;
     }
 
-    /// \brief Set associated Context.
+    /// \brief Set associated Location.
     ///
-    /// Define the associated Context, which the dialog is intended to
-    /// work with and on. A valid Context must be set in order before
+    /// Define the associated Location, which the dialog is intended to
+    /// work with and on. A valid Location must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  pCtx  : Context object to associate.
+    /// \param[in]  pCtx  : Location object to associate.
     ///
-    void setContext(OmContext* pCtx) {
-      _context = pCtx;
+    void setLocation(OmLocation* pLoc) {
+      _location = pLoc;
     }
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmContext*                _context;
+    OmLocation*         _location;
 
-    bool                      _test();
+    HFONT               _hFtMonos;
 
-    bool                      _apply();
+    HFONT               _hFtHeavy;
 
-    void                      _onInit();
+    int                 _check;
 
-    void                      _onResize();
+    void                _log(const wstring& log);
 
-    bool                      _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    void                _repoChk();
+
+    bool                _apply();
+
+    void                _onInit();
+
+    void                _onResize();
+
+    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUINEWREP_H

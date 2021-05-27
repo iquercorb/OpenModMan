@@ -334,6 +334,27 @@ bool OmLocation::open(const wstring& path)
     this->_packageSorting = this->_config.xml().child(L"library_sort").attrAsInt(L"sort");
   }
 
+  // Get network repository list
+  if(this->_config.xml().hasChild(L"network")) {
+
+    OmXmlNode xml_network = this->_config.xml().child(L"network");
+
+    // check whether repository already exists
+    vector<OmXmlNode> xml_rep_list;
+    xml_network.children(xml_rep_list, L"repo");
+
+    OmRepository* pRep;
+
+    for(size_t i = 0; i < xml_rep_list.size(); ++i) {
+      pRep = new OmRepository(this);
+      if(pRep->define(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
+        this->_repository.push_back(pRep);
+      } else {
+        delete pRep;
+      }
+    }
+  }
+
   // this location is OK and ready
   this->_valid = true;
 
@@ -1839,6 +1860,93 @@ size_t OmLocation::getUninOwList(vector<OmPackage*>& pkg_list, const OmPackage* 
     }
   }
   return n;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmLocation::addRepository(const wstring& base, const wstring& name)
+{
+  if(this->_config.valid()) {
+
+    if(!this->_config.xml().hasChild(L"network")) {
+      this->_config.xml().addChild(L"network");
+    }
+
+    OmXmlNode xml_net = this->_config.xml().child(L"network");
+
+    // check whether repository already exists
+    vector<OmXmlNode> xml_rep_list;
+    xml_net.children(xml_rep_list, L"repo");
+
+    for(size_t i = 0; i < xml_rep_list.size(); ++i) {
+      if(base == xml_rep_list[i].attrAsString(L"base") && name == xml_rep_list[i].attrAsString(L"name")) {
+        this->_error = L"Repository with same parameters already exists";
+        this->log(1, L"Location("+this->_title+L") Add Repository", this->_error);
+        return false;
+      }
+    }
+
+    // add repository entry in definition
+    OmXmlNode xml_rep = xml_net.addChild(L"repo");
+    xml_rep.setAttr(L"base", base);
+    xml_rep.setAttr(L"name", name);
+
+    this->_config.save();
+
+    // add repository in local list
+    OmRepository* pRep = new OmRepository(this);
+
+    // set repository parameters
+    if(!pRep->define(base, name)) {
+      this->log(1, L"Location("+this->_title+L") Add Repository", pRep->lastError());
+      delete pRep;
+      return false;
+    }
+
+    // add to list
+    this->_repository.push_back(pRep);
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::remRepository(unsigned id)
+{
+  if(this->_config.valid()) {
+
+    OmRepository* pRep = this->_repository[id];
+
+    // remove repository from definition
+    if(this->_config.xml().hasChild(L"network")) {
+      OmXmlNode xml_net = this->_config.xml().child(L"network");
+
+      // check whether repository already exists
+      vector<OmXmlNode> xml_rep_list;
+      xml_net.children(xml_rep_list, L"repo");
+
+      for(size_t i = 0; i < xml_rep_list.size(); ++i) {
+        if(pRep->base() == xml_rep_list[i].attrAsString(L"base") &&
+           pRep->name() == xml_rep_list[i].attrAsString(L"name")) {
+          xml_net.remChild(xml_rep_list[i]);
+          break;
+        }
+      }
+    }
+
+    this->_config.save();
+
+    // delete object
+    delete pRep;
+
+    // remove from local list
+    this->_repository.erase(this->_repository.begin()+id);
+  }
 }
 
 

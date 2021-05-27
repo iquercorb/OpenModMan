@@ -263,24 +263,24 @@ bool OmContext::open(const wstring& path)
       verbose += Om_getFilePart(omb_list[i]) + L"\".";
       this->log(2, L"Context("+this->_title+L") Load", verbose);
 
-      OmBatch* batch = new OmBatch(this);
+      OmBatch* pBat = new OmBatch(this);
 
-      if(batch->open(omb_list[i])) {
+      if(pBat->open(omb_list[i])) {
 
-        this->_batch.push_back(batch);
+        this->_batch.push_back(pBat);
 
-        verbose =  L"Batch \"" + batch->title();
+        verbose =  L"Batch \"" + pBat->title();
         verbose += L"\" added to list.";
         this->log(2, L"Context("+this->_title+L") Load", verbose);
 
       } else {
 
-        verbose =  L"Batch \"" + batch->title();
+        verbose =  L"Batch \"" + pBat->title();
         verbose += L"\" parse error:";
-        verbose += batch->lastError();
+        verbose += pBat->lastError();
         this->log(1, L"Context("+this->_title+L") Load", verbose);
 
-        delete batch;
+        delete pBat;
       }
     }
 
@@ -288,7 +288,6 @@ bool OmContext::open(const wstring& path)
     if(this->_batch.size() > 1)
       sort(this->_batch.begin(), this->_batch.end(), __OmContext_batCompareIndex);
   }
-
 
   this->log(2, L"Context("+this->_title+L") Load", L"Success");
 
@@ -703,7 +702,6 @@ void OmContext::sortBatches()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-//bool OmContext::addBatch(const wstring& title, const vector<vector<uint64_t>>& hash_lsts)
 bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
 {
   // check whether we have same count of Location and hash list
@@ -782,9 +780,9 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
   this->log(2, L"Context("+this->_title+L") Create Batch", L"Batch \""+title+L"\" created.");
 
   // load the newly created Batch
-  OmBatch* batch = new OmBatch(this);
-  batch->open(bat_def_path);
-  this->_batch.push_back(batch);
+  OmBatch* pBat = new OmBatch(this);
+  pBat->open(bat_def_path);
+  this->_batch.push_back(pBat);
 
   // sort Batches by index
   this->sortBatches();
@@ -800,10 +798,10 @@ bool OmContext::remBatch(unsigned id)
 {
   if(id < this->_batch.size()) {
 
-    OmBatch* batch = this->_batch[id];
+    OmBatch* pBat = this->_batch[id];
 
-    wstring bat_path = batch->path();
-    wstring bat_title = batch->title();
+    wstring bat_path = pBat->path();
+    wstring bat_title = pBat->title();
 
 
     // remove the definition file
@@ -821,7 +819,7 @@ bool OmContext::remBatch(unsigned id)
     }
 
     // delete batch object
-    delete batch;
+    delete pBat;
 
     // remove from list
     this->_batch.erase(this->_batch.begin()+id);

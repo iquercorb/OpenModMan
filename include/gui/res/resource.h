@@ -6,7 +6,7 @@
 #define IDR_ACCEL                               601
 #define IDD_MAIN                                700
 #define IDD_MAIN_LIB                            701
-#define IDD_MAIN_REP                            702
+#define IDD_MAIN_NET                            702
 #define IDD_NEW_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_NEW_PKG                             712
@@ -22,6 +22,7 @@
 #define IDD_PROP_LOC                            740
 #define IDD_PROP_LOC_STG                        741
 #define IDD_PROP_LOC_BCK                        742
+#define IDD_PROP_LOC_NET                        743
 #define IDD_PROP_PKG                            750
 #define IDD_PROP_PKG_SRC                        751
 #define IDD_PROP_PKG_BCK                        752
@@ -117,7 +118,7 @@
 #define IDC_BC_ADD                              40316
 #define IDC_BC_EDI                              40317
 #define IDC_BC_NEW                              40318
-#define IDC_BC_REF                              40319
+#define IDC_BC_CHK                              40319
 #define IDC_BC_ABORT                            40320
 #define IDC_BC_CLOSE                            40321
 #define IDC_BC_UP                               40322

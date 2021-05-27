@@ -90,7 +90,6 @@ class OmSocket
 
     unsigned            _tpcode;
 
-
     static size_t       _writeCb(char*, size_t, size_t, void*);
 
     static size_t       _pgresCb(void*, double, double, double, double);

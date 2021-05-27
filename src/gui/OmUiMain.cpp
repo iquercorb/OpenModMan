@@ -19,7 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
 #include "gui/OmUiMainLib.h"
-#include "gui/OmUiMainRep.h"
+#include "gui/OmUiMainNet.h"
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropMan.h"
@@ -50,7 +50,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Library", new OmUiMainLib(hins));
-  //this->_addPage(L"Network", new OmUiMainRep(hins)); // net ready yet
+  this->_addPage(L"Network", new OmUiMainNet(hins)); // net ready yet
 
   // add children dialogs
   this->addChild(new OmUiPropMan(hins));    //< Dialog for general settings

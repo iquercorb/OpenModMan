@@ -88,16 +88,16 @@ OmSocket::~OmSocket()
 ///
 bool OmSocket::httpGet(const string& url, string& data)
 {
-  _hcurl = curl_easy_init();
+  this->_hcurl = curl_easy_init();
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_URL, url.c_str());
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_URL, url.c_str());
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_HTTPGET, 1L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_HTTPGET, 1L);
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_WRITEFUNCTION, &this->_writeCb);
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_WRITEDATA, this);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEFUNCTION, &this->_writeCb);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEDATA, this);
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_NOPROGRESS, 1L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_NOPROGRESS, 1L);
 
   //curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_PROGRESSFUNCTION, &this->_pgresCb);
   //curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_PROGRESSDATA, this);
@@ -105,43 +105,45 @@ bool OmSocket::httpGet(const string& url, string& data)
   //curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_XFERINFODATA, this);
 
   /* we use a self-signed test server, skip verification during debugging */
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_SSL_VERIFYPEER, 0L);
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_SSL_VERIFYHOST, 0L);
-  curl_easy_setopt(reinterpret_cast<CURL*>(_hcurl), CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYPEER, 0L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYHOST, 0L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);
 
-  _ercode = curl_easy_perform(reinterpret_cast<CURL*>(_hcurl));
+  this->_ercode = curl_easy_perform(reinterpret_cast<CURL*>(this->_hcurl));
 
-  if(_ercode == CURLE_OK) {
+  if(this->_ercode == CURLE_OK) {
 
     // If needed, realloc to add the null character
-    if((_buff_fill + 1) > _buff_size) {
-      _buff_size++;
-      if((_buff_data = reinterpret_cast<uint8_t*>(realloc(_buff_data, _buff_size))) == nullptr)
+    if((this->_buff_fill + 1) > this->_buff_size) {
+      this->_buff_size++;
+      if((this->_buff_data = reinterpret_cast<uint8_t*>(realloc(this->_buff_data, this->_buff_size))) == nullptr)
         throw std::bad_alloc();
     }
 
     // add terminal null character to ensure we have a valid string
-    _buff_data[_buff_fill] = 0;
-    _buff_fill++;
+    this->_buff_data[this->_buff_fill] = 0;
+    this->_buff_fill++;
 
     data = reinterpret_cast<char*>(_buff_data);
   } else {
-    _tpcode = 0;
-    curl_easy_getinfo(reinterpret_cast<CURL*>(_hcurl), CURLINFO_RESPONSE_CODE, &_tpcode);
+    this->_tpcode = 0;
+    curl_easy_getinfo(reinterpret_cast<CURL*>(this->_hcurl), CURLINFO_RESPONSE_CODE, &this->_tpcode);
   }
 
   // rester buffer
-  if(_buff_data != nullptr)
-    free(_buff_data);
+  if(this->_buff_data != nullptr) {
+    free(this->_buff_data);
+    this->_buff_data = nullptr;
+  }
 
-  _buff_fill = 0;
-  _buff_size = 0;
+  this->_buff_fill = 0;
+  this->_buff_size = 0;
 
   // clean curl
-  curl_easy_cleanup(reinterpret_cast<CURL*>(_hcurl));
-  _hcurl = nullptr;
+  curl_easy_cleanup(reinterpret_cast<CURL*>(this->_hcurl));
+  this->_hcurl = nullptr;
 
-  return (_ercode == CURLE_OK);
+  return (this->_ercode == CURLE_OK);
 }
 
 ///
@@ -149,14 +151,16 @@ bool OmSocket::httpGet(const string& url, string& data)
 ///
 void OmSocket::clear()
 {
-  if(_buff_data != nullptr)
-    free(_buff_data);
+  if(this->_buff_data != nullptr) {
+    free(this->_buff_data);
+    this->_buff_data = nullptr;
+  }
 
-  _buff_fill = 0;
-  _buff_size = 0;
+  this->_buff_fill = 0;
+  this->_buff_size = 0;
 
-  if(_hcurl != nullptr)
-    curl_easy_cleanup(reinterpret_cast<CURL*>(_hcurl));
+  if(this->_hcurl != nullptr)
+    curl_easy_cleanup(reinterpret_cast<CURL*>(this->_hcurl));
 }
 
 ///
@@ -189,10 +193,7 @@ wstring OmSocket::lastErrorStr() const
   case CURLE_PARTIAL_FILE: result = L"PARTIAL_FILE"; break;
   case CURLE_FTP_COULDNT_RETR_FILE: result = L"FTP_COULDNT_RETR_FILE"; break;
   case CURLE_QUOTE_ERROR: result = L"QUOTE_ERROR"; break;
-  case CURLE_HTTP_RETURNED_ERROR:
-    result = L"HTTP_RETURNED_ERROR ";
-    result += _tpcode;
-    break;
+  case CURLE_HTTP_RETURNED_ERROR: result = L"HTTP_RETURNED_ERROR "; result += std::to_wstring(this->_tpcode); break;
   case CURLE_WRITE_ERROR: result = L"WRITE_ERROR"; break;
   case CURLE_UPLOAD_FAILED: result = L"UPLOAD_FAILED"; break;
   case CURLE_READ_ERROR: result = L"READ_ERROR"; break;

@@ -687,14 +687,14 @@ void OmManager::setLogOutput(HWND hWnd) {
 ///
 void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  time_t rtime;
-  time(&rtime);
-  struct tm *ltime = localtime(&rtime);
-
   wstring entry;
 
+  // get local time
+  int t_h, t_m, t_s;
+  Om_getTime(&t_s, &t_m, &t_h);
+
   wchar_t hour[32];
-  swprintf(hour, 32, L"[%02d:%02d:%02d]", ltime->tm_hour, ltime->tm_min, ltime->tm_sec);
+  swprintf(hour, 32, L"[%02d:%02d:%02d]", t_h, t_m, t_s);
   entry = hour;
 
   switch(level)

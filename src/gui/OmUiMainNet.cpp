@@ -17,7 +17,7 @@
 
 #include "gui/res/resource.h"
 #include "OmManager.h"
-#include "gui/OmUiMainRep.h"
+#include "gui/OmUiMainNet.h"
 #include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewRep.h"
 #include "gui/OmUiMain.h"
@@ -27,7 +27,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiMainRep::OmUiMainRep(HINSTANCE hins) : OmDialog(hins),
+OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
   _hFtTitle(Om_createFont(18, 800, L"Ms Shell Dlg")),
   _hFtMonos(Om_createFont(14, 700, L"Consolas")),
   _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),0,0,0,0))),
@@ -42,7 +42,7 @@ OmUiMainRep::OmUiMainRep(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiMainRep::~OmUiMainRep()
+OmUiMainNet::~OmUiMainNet()
 {
 
 }
@@ -51,18 +51,21 @@ OmUiMainRep::~OmUiMainRep()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiMainRep::id() const
+long OmUiMainNet::id() const
 {
-  return IDD_MAIN_REP;
+  return IDD_MAIN_NET;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::selLocation(int i)
+void OmUiMainNet::selLocation(int i)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  // main window dialog
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
   // select the requested Location
   if(pMgr->curContext()) {
@@ -73,29 +76,24 @@ void OmUiMainRep::selLocation(int i)
 
     if(pCtx->curLocation()) {
 
-      OmLocation* pLoc = pCtx->curLocation();
+      // enable the "Edit > Location properties..." menu
+      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_ENABLED);
+
+    } else {
+
+      // disable the "Edit > Location properties..." menu
+      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_GRAYED);
     }
   }
 
-  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
-/*
-  // disable "Edit > Package" in main menu
-  pUiMain->setMenuEdit(1, MF_BYPOSITION|MF_GRAYED);
-
-  // disable the "Edit > Package > []" elements
-  HMENU hMenu = pUiMain->getMenuEdit(1);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
-*/
 
   // refresh
-  this->_reloadLibEc();
-/*
-  this->_reloadLibLv();
-*/
+  this->_reloadRepLb();
+
+  //this->_reloadLibEc();
+
+  //this->_reloadLibLv();
+
   // forces control to select item
   HWND hCb = this->getItem(IDC_CB_LOCLS);
 
@@ -107,24 +105,29 @@ void OmUiMainRep::selLocation(int i)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_reloadLibEc()
+void OmUiMainNet::_repoDel()
 {
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;;
+  int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
 
-  if(pLoc != nullptr) {
+  if(lb_sel >= 0) {
 
-    // check for Library folder validity
-    if(pLoc->checkAccessLib()) {
-      // set the library path
-      this->setItemText(IDC_EC_INPT1, pLoc->libraryDir());
-    } else {
-      this->setItemText(IDC_EC_INPT1, L"<folder access error>");
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->curContext();
+    OmLocation* pLoc = pCtx->curLocation();
+
+    // warns the user before committing the irreparable
+    wstring qry = L"Are your sure you want to delete the Repository \"";
+    qry += pLoc->repository(lb_sel)->base() + L" - " + pLoc->repository(lb_sel)->name();
+    qry += L"\" ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Repository", qry)) {
+      return;
     }
 
-  } else {
-    // empty library path
-    this->setItemText(IDC_EC_INPT1, L"<no Location selected>");
+    pLoc->remRepository(lb_sel);
+
+    // reload the repository list-box
+    this->_reloadRepLb();
   }
 }
 
@@ -132,7 +135,18 @@ void OmUiMainRep::_reloadLibEc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_reloadLocCb()
+void OmUiMainNet::_onSelectRep()
+{
+  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+
+  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainNet::_reloadLocCb()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->curContext();
@@ -185,7 +199,8 @@ void OmUiMainRep::_reloadLocCb()
     // select the the previously selected Context
     if(cb_sel >= 0) {
       SendMessageW(hCb, CB_SETCURSEL, cb_sel, 0);
-      this->_reloadLibEc(); //< reload displayed library path
+      this->_reloadRepLb(); //< reload repositories list
+      //this->_reloadLibEc(); //< reload displayed library path
       //this->_reloadLibLv(true); //< reload + reparse packages list
     } else {
       SendMessageW(hCb, CB_SETCURSEL, 0, 0);
@@ -216,7 +231,34 @@ void OmUiMainRep::_reloadLocCb()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_onInit()
+void OmUiMainNet::_reloadRepLb()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->curContext();
+  OmLocation* pLoc = (pCtx) ? pCtx->curLocation() : nullptr;
+
+  HWND hLb = this->getItem(IDC_LB_REPLS);
+
+  // empty List-Box
+  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
+
+  if(pLoc) {
+
+    wstring str;
+    OmRepository* pRep;
+
+    for(unsigned i = 0; i < pLoc->repositoryCount(); ++i) {
+      pRep = pLoc->repository(i);
+      str = pRep->base() + L" - " + pRep->name();
+      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(str.c_str()));
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainNet::_onInit()
 {
   // Defines fonts for package description, title, and log output
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtTitle), true);
@@ -224,7 +266,7 @@ void OmUiMainRep::_onInit()
   // Set batches New and Delete buttons icons
   this->msgItem(IDC_BC_NEW, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
   this->msgItem(IDC_BC_DEL, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
-  this->msgItem(IDC_BC_REF, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcRef));
+  this->msgItem(IDC_BC_CHK, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcRef));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOCLS,  L"Select active location");
@@ -275,8 +317,24 @@ void OmUiMainRep::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_onShow()
+void OmUiMainNet::_onShow()
 {
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
+
+  // disable "Edit > Package" in main menu
+  pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
+  // disable the "Edit > Package > []" elements
+  HMENU hMenu = pUiMain->getMenuEdit(5);
+  EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
+  EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
+  EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
+  EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
+  EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
+
+  // select location according current ComboBox selection
+  this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
+
+  // refresh dialog
   this->_onRefresh();
 }
 
@@ -284,7 +342,7 @@ void OmUiMainRep::_onShow()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_onResize()
+void OmUiMainNet::_onResize()
 {
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOCLS, 5, 5, this->width()-10, 12);
@@ -294,7 +352,7 @@ void OmUiMainRep::_onResize()
   // Repositories List-Box
   this->_setItemPos(IDC_LB_REPLS, 5, 37, this->width()-34, 28);
   // Repositories Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_REF, this->width()-55, 20, 50, 14);
+  this->_setItemPos(IDC_BC_CHK, this->width()-55, 20, 50, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-25, 36, 20, 14);
   this->_setItemPos(IDC_BC_DEL, this->width()-25, 52, 20, 14);
 
@@ -327,8 +385,6 @@ void OmUiMainRep::_onResize()
   // Package description
   this->_setItemPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
 
-
-
   InvalidateRect(this->_hwnd, nullptr, true);
 }
 
@@ -336,15 +392,9 @@ void OmUiMainRep::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_onRefresh()
+void OmUiMainNet::_onRefresh()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // check whether a context is selected
-  if(!pMgr->curContext()) {
-    // unselect location
-    this->selLocation(-1);
-  }
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -362,18 +412,16 @@ void OmUiMainRep::_onRefresh()
   this->_reloadLocCb(); //< reload Location Combo-Box
 
   // disable all batches buttons
-  this->enableItem(IDC_BC_REF, false);
+  this->enableItem(IDC_BC_CHK, false);
   this->enableItem(IDC_BC_NEW, (pMgr->curContext() != nullptr));
   this->enableItem(IDC_BC_DEL, false);
-
-  //this->_reloadBatLb(); //< reload Batches list
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainRep::_onQuit()
+void OmUiMainNet::_onQuit()
 {
 
 }
@@ -382,7 +430,7 @@ void OmUiMainRep::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->curContext();
@@ -449,16 +497,16 @@ bool OmUiMainRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_CB_LOCLS:
       if(HIWORD(wParam) == CBN_SELCHANGE) {
-        //this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
+        this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
       }
       break;
 
     case IDC_LB_REPLS: //< Location(s) list List-Box
       if(HIWORD(wParam) == LBN_SELCHANGE) {
-        //this->_onSelectBat();
+        this->_onSelectRep();
       }
       if(HIWORD(wParam) == LBN_DBLCLK) {
-        //this->batch();
+        //...
       }
       break;
 
@@ -476,15 +524,16 @@ bool OmUiMainRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_NEW:
       {
         OmUiNewRep* pUiNewRep = static_cast<OmUiNewRep*>(this->siblingById(IDD_NEW_REP));
-        pUiNewRep->setContext(pCtx);
+        pUiNewRep->setLocation(pLoc);
         pUiNewRep->open(true);
       }
       break;
 
-    case IDC_BC_REF:
+    case IDC_BC_CHK:
       break;
 
     case IDC_BC_DEL:
+      this->_repoDel();
       break;
 
     }

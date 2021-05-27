@@ -23,9 +23,9 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiHelpLog::OmUiHelpLog(HINSTANCE hins) : OmDialog(hins),
-  _hFtMonos(nullptr)
+  _hFtMonos(Om_createFont(14, 400, L"Consolas"))
 {
-  this->_hFtMonos = Om_createFont(14, 400, L"Consolas");
+
 }
 
 

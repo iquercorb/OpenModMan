@@ -218,6 +218,38 @@ uint64_t Om_getXXHash3(const wstring& str)
 }
 
 #include <ctime>
+time_t __time_rtime;
+struct tm* __time_ltime;
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_getTime(int *t_sec, int *t_min, int *t_hour)
+{
+  time(&__time_rtime);
+  __time_ltime = localtime(&__time_rtime);
+
+  if(t_sec != nullptr) *t_sec = __time_ltime->tm_sec;
+  if(t_min != nullptr) *t_min = __time_ltime->tm_min;
+  if(t_hour != nullptr) *t_hour = __time_ltime->tm_hour;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_getDate(int *t_day, int *t_mon, int *t_year)
+{
+  time(&__time_rtime);
+  __time_ltime = localtime(&__time_rtime);
+
+  if(t_day != nullptr) *t_day = __time_ltime->tm_mday;
+  if(t_mon != nullptr) *t_mon = __time_ltime->tm_mon;
+  if(t_year != nullptr) *t_year = __time_ltime->tm_year;
+}
+
+
 #include <random>
 
 static mt19937                             __rnd_generator(time(0));
@@ -630,20 +662,16 @@ static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
 ///
 /// Regular expression pattern to check whether string is a valid URL according RFC 3986.
 ///
-static const std::regex __url_pattern(
-"\\A([a-z][a-z0-9+\\-.]*:(//([a-z0-9\\-._~%!$&'()*+,;=]+@)?([a-z0-9\\-._~%]+|\\[[a-f0-9:.]+\\]|"
-"\\[v[a-f0-9][a-z0-9\\-._~%!$&'()*+,;=:]+\\])(:[0-9]+)?(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?"
-"|(/?[a-z0-9\\-._~%!$&'()*+,;=:@]+(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?)?)|([a-z0-9\\-._~%!$&'()*+,;=@]"
-"+(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)*/?|(/[a-z0-9\\-._~%!$&'()*+,;=:@]+)+/?))"
-"(\\?[a-z0-9\\-._~%!$&'()*+,;=:@/?]*)?(\\#[a-z0-9\\-._~%!$&'()*+,;=:@/?]*)?\\Z");
-
+//static const std::regex __url_pattern(R"(^(([^:\/?#]+):)?(//([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)", std::regex::extended); // work everytime
+//static const std::regex __url_pattern(R"(^(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})(:[\d]+)?([\/\w \.-]*)(\?[\da-z=&]+)?)", std::regex::extended); // work never
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 bool Om_isValidUrl(const string& url)
 {
-  return std::regex_match(url, __url_pattern);
+  //return std::regex_match(url, __url_pattern);
+  return PathIsURLA(url.c_str());
 }
 
 

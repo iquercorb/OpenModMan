@@ -20,6 +20,8 @@
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropLocStg.h"
 #include "gui/OmUiPropLocBck.h"
+#include "gui/OmUiPropLocNet.h"
+#include "gui/OmUiNewRep.h"
 #include "gui/OmUiProgress.h"
 #include "gui/OmUiMain.h"
 
@@ -42,9 +44,11 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
   this->_addPage(L"Backups", new OmUiPropLocBck(hins));
+  this->_addPage(L"Network", new OmUiPropLocNet(hins));
 
   // creates child sub-dialogs
-  this->addChild(new OmUiProgress(hins)); //< for Location backup transfer or deletion
+  this->addChild(new OmUiNewRep(hins));     //< Dialog for new Repository
+  this->addChild(new OmUiProgress(hins));   //< for Location backup transfer or deletion
 }
 
 
@@ -74,6 +78,7 @@ bool OmUiPropLoc::checkChanges()
   OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
+  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   bool changed = false;
 
@@ -133,6 +138,7 @@ bool OmUiPropLoc::applyChanges()
   OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
+  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   wstring loc_name, loc_dst, loc_lib, loc_bck;
 

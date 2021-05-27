@@ -1028,14 +1028,14 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
     ShowWindow(self->getItem(IDC_SC_TITLE), false);
 
     // retrieve the batch object from current selection
-    OmBatch* batch = pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
+    OmBatch* pBat = pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
 
     OmLocation* pLoc;
 
-    for(unsigned l = 0; l < batch->locationCount(); l++) {
+    for(unsigned l = 0; l < pBat->locationCount(); l++) {
 
       // Select the location
-      self->selLocation(pCtx->findLocationIndex(batch->getLocationUuid(l)));
+      self->selLocation(pCtx->findLocationIndex(pBat->getLocationUuid(l)));
       pLoc = pCtx->curLocation();
 
       if(pLoc == nullptr) {
@@ -1051,12 +1051,12 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
 
       // create the install list, to keep package order from batch we
       // fill the install list according the batch hash list
-      unsigned n = batch->getInstallCount(l);
+      unsigned n = pBat->getInstallCount(l);
       int p;
 
       for(unsigned i = 0; i < n; ++i) {
 
-        p = pLoc->findPackageIndex(batch->getInstallHash(l, i));
+        p = pLoc->findPackageIndex(pBat->getInstallHash(l, i));
 
         if(p >= 0) {
           if(!pLoc->package(p)->hasBackup()) {
@@ -1070,7 +1070,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
       n = pLoc->packageCount();
       for(unsigned i = 0; i < n; ++i) {
 
-        if(!batch->hasInstallHash(l, pLoc->package(i)->hash())) {
+        if(!pBat->hasInstallHash(l, pLoc->package(i)->hash())) {
           if(pLoc->package(i)->hasBackup()) {
             uins_list.push_back(i);
           }
@@ -1258,6 +1258,10 @@ void OmUiMainLib::_onInit()
 ///
 void OmUiMainLib::_onShow()
 {
+  // select location according current ComboBox selection
+  this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
+
+  // refresh dialog
   this->_onRefresh();
 }
 
@@ -1307,7 +1311,6 @@ void OmUiMainLib::_onResize()
 
 
   InvalidateRect(this->_hwnd, nullptr, true);
-
 }
 
 

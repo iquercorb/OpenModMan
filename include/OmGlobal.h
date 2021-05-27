@@ -182,6 +182,26 @@ inline uint64_t Om_toUint64(const wstring& str) {
   return wcstoull(str.c_str(), nullptr, 16);
 }
 
+/// \brief Get current time.
+///
+/// Get current time values based on system local time.
+///
+/// \param[out] t_sec   : Pointer to receive seconds
+/// \param[out] t_min   : Pointer to receive minute
+/// \param[out] t_hour  : Pointer to receive hour
+///
+void Om_getTime(int *t_sec, int *t_min, int *t_hour);
+
+/// \brief Get current date.
+///
+/// Get current date values based on system local time.
+///
+/// \param[out] t_day   : Pointer to receive day of month
+/// \param[out] t_mon   : Pointer to receive month
+/// \param[out] t_year  : Pointer to receive year
+///
+void Om_getDate(int *t_day, int *t_mon, int *t_year);
+
 /// \brief Generate random bytes.
 ///
 /// Generate a random bytes sequence with values from 0 to 255 of

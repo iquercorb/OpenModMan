@@ -23,7 +23,10 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiNewRep::OmUiNewRep(HINSTANCE hins) : OmDialog(hins),
-  _context(nullptr)
+  _location(nullptr),
+  _hFtMonos(Om_createFont(12, 400, L"Consolas")),
+  _hFtHeavy(Om_createFont(12, 800, L"Ms Shell Dlg")),
+  _check(0)
 {
 
 }
@@ -50,22 +53,84 @@ long OmUiNewRep::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewRep::_test()
+void OmUiNewRep::_log(const wstring& log)
+{
+  wstring entry;
+
+  // get local time
+  int t_h, t_m, t_s;
+  Om_getTime(&t_s, &t_m, &t_h);
+
+  wchar_t hour[32];
+  swprintf(hour, 32, L"[%02d:%02d:%02d]  ", t_h, t_m, t_s);
+
+  entry = hour + log;
+
+  unsigned s = this->msgItem(IDC_EC_ENT01, WM_GETTEXTLENGTH, 0, 0);
+
+  this->msgItem(IDC_EC_ENT01, EM_SETSEL, s, s);
+  this->msgItem(IDC_EC_ENT01, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
+  this->msgItem(IDC_EC_ENT01, WM_VSCROLL, SB_BOTTOM, 0);
+  this->msgItem(IDC_EC_ENT01, WM_VSCROLL, SB_BOTTOM, 0);
+
+  RedrawWindow(this->getItem(IDC_EC_ENT01), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiNewRep::_repoChk()
 {
   OmSocket sock;
 
-  wstring url;
-  wstring name;
+  this->setItemText(IDC_EC_ENT01, L"");
+  this->setItemText(IDC_SC_DESC1, L"Pending...");
 
-  this->getItemText(IDC_EC_INPT1, url);
-  this->getItemText(IDC_EC_INPT2, name);
+  wstring rep_base;
+  wstring rep_name;
 
-  string data;
-  sock.httpGet(Om_toUtf8(url), data);
+  this->getItemText(IDC_EC_INPT1, rep_base);
+  this->getItemText(IDC_EC_INPT2, rep_name);
 
-  std::cout << data << "\n";
+  wstring url = rep_base + L"/";
+  url += rep_name + L".xml";
 
-  return true;
+  if(!Om_isValidUrl(Om_toUtf8(url))) {
+
+    wstring err = L"Supplied parameters cannot be used to "
+                  L"create a valid HTTP address:";
+
+    err += L"\n\n";
+    err += url;
+
+    Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
+  }
+
+  this->_check = -1;
+
+  string rep_xml;
+
+  this->_log(L"HTTP GET request: "+url+L"\r\n");
+
+  if(sock.httpGet(Om_toUtf8(url), rep_xml)) {
+
+    this->_log(L"HTTP GET succeed: "+to_wstring(rep_xml.size())+L" bytes received\r\n");
+
+    OmConfig rep_def;
+
+    if(rep_def.parse(Om_fromUtf8(rep_xml.c_str()), OMM_CFG_SIGN_REP)) {
+      this->_log(L"XML parse succeed: "+to_wstring(rep_def.xml().childCount(L"package"))+L" package(s) provided\r\n");
+      this->setItemText(IDC_SC_DESC1, L"The Repository appear to be valid !");
+      this->_check = 1;
+    } else {
+      this->_log(L"XML parse failed.\r\n");
+      this->setItemText(IDC_SC_DESC1, L"Error: Invalid XML definition");
+    }
+  } else {
+    this->_log(L"HTTP GET failed: "+sock.lastErrorStr()+L"\r\n");
+    this->setItemText(IDC_SC_DESC1, L"Error: HTTP request failed");
+  }
 }
 
 
@@ -74,22 +139,59 @@ bool OmUiNewRep::_test()
 ///
 bool OmUiNewRep::_apply()
 {
-  OmContext* pCtx = this->_context;
+  OmLocation* pLoc = this->_location;
 
-  if(pCtx == nullptr)
+  if(pLoc == nullptr)
     return false;
 
-  this->quit();
+  if(this->_check == 0) {
 
-  // create new Location in Context
-  /*
-  if(!pCtx->addRepository(loc_name, loc_dst, loc_lib, loc_bck)) {
-    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", pCtx->lastError());
+    wstring wrn = L"You did not tested the Repository, it may be invalid "
+                  L"or unavailable, do you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"The Repository was not tested", wrn)) {
+      return false;
+    }
+
+  } else if(this->_check == -1) {
+
+    wstring wrn = L"The last Repository test failed, the Repository "
+                  L"appear to be invalid or unavailable, do you want to "
+                  L"continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"The Repository appear invalid", wrn)) {
+      return false;
+    }
   }
-  */
 
-  // refresh all tree from the main dialog
-  this->root()->refresh();
+  wstring rep_base;
+  wstring rep_name;
+
+  this->getItemText(IDC_EC_INPT1, rep_base);
+  this->getItemText(IDC_EC_INPT2, rep_name);
+
+  wstring url = rep_base + L"/";
+  url += rep_name + L".xml";
+
+  if(!Om_isValidUrl(Om_toUtf8(url))) {
+
+    wstring err = L"Supplied parameters cannot be used to "
+                  L"create a valid HTTP address";
+
+    Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
+
+    return false;
+  }
+
+  // add new repository in Context
+  if(!pLoc->addRepository(rep_base, rep_name)) {
+    Om_dialogBoxErr(this->_hwnd, L"Repository creation failed", pLoc->lastError());
+  }
+
+  // refresh parent dialog
+  this->parent()->refresh();
+
+  this->quit();
 
   return true;
 }
@@ -101,13 +203,22 @@ bool OmUiNewRep::_apply()
 void OmUiNewRep::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Base URL");
+  this->_createTooltip(IDC_EC_INPT1,  L"Repository base URL");
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Section name");
+  this->_createTooltip(IDC_EC_INPT1,  L"Repository name");
+
+  // set specific fonts
+  this->msgItem(IDC_SC_DESC1, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtHeavy), true);
+  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"https://www.dest1.org");
+  this->setItemText(IDC_EC_INPT1, L"http://");
   this->setItemText(IDC_EC_INPT2, L"default");
+  this->setItemText(IDC_SC_DESC1, L"");
+
+  // Set caret at end of string
+  this->msgItem(IDC_EC_INPT1, EM_SETSEL, 0, -1);
+  this->msgItem(IDC_EC_INPT1, EM_SETSEL, -1, -1);
 
   this->enableItem(IDC_BC_OK, false);
 }
@@ -119,18 +230,20 @@ void OmUiNewRep::_onInit()
 void OmUiNewRep::_onResize()
 {
   // Repository URL Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 10, 20, 80, 9);
-  this->_setItemPos(IDC_EC_INPT1, 10, 30, this->width()-125, 13);
+  this->_setItemPos(IDC_SC_LBL01, 10, 10, 80, 9);
+  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-105, 13);
 
   // Repository Name Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, this->width()-110, 20, 80, 9);
-  this->_setItemPos(IDC_EC_INPT2, this->width()-110, 30, 80, 13);
+  this->_setItemPos(IDC_SC_LBL02, this->width()-90, 10, 80, 9);
+  this->_setItemPos(IDC_EC_INPT2, this->width()-90, 20, 80, 13);
 
-  // Repository Test button
-  this->_setItemPos(IDC_BC_REF, 10, 60, 50, 13);
+  // Repository Test Label, Button and Result
+  this->_setItemPos(IDC_SC_LBL03, 10, 40, 80, 9);
+  this->_setItemPos(IDC_BC_CHK, 10, 50, 50, 14);
+  this->_setItemPos(IDC_SC_DESC1, 62, 53, this->width()-20, 12);
 
-  // Repository Test status/result
-  this->_setItemPos(IDC_SC_DESC1, 10, 90, 100, 18);
+  // Repository Test content
+  this->_setItemPos(IDC_EC_ENT01, 10, 70, this->width()-20, this->height()-110);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -156,12 +269,12 @@ bool OmUiNewRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INPT1: // Title
       this->getItemText(IDC_EC_INPT1, item_str);
-      this->enableItem(IDC_BC_REF, (item_str.size() > 7));
+      this->enableItem(IDC_BC_CHK, (item_str.size() > 7));
       has_changed = true;
       break;
 
-    case IDC_BC_REF:
-      this->_test();
+    case IDC_BC_CHK:
+      this->_repoChk();
       break;
 
     case IDC_BC_OK:
