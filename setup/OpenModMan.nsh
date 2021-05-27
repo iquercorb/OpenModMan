@@ -11,6 +11,7 @@
 !define APP_SHORT_NAME    "OpenModMan"
 !define APP_REG_NAME      "Open_Mod_Manager"
 !define APP_EXE_NAME      "OpenModMan"
+!define APP_PUBLISHER     "OMM Dev Team"
 
 !define REL_64_EXE        "..\bin\64-bit\Release\OpenModMan.exe"
 
