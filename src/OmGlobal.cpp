@@ -662,16 +662,35 @@ static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
 ///
 /// Regular expression pattern to check whether string is a valid URL according RFC 3986.
 ///
-//static const std::regex __url_pattern(R"(^(([^:\/?#]+):)?(//([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)", std::regex::extended); // work everytime
-//static const std::regex __url_pattern(R"(^(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})(:[\d]+)?([\/\w \.-]*)(\?[\da-z=&]+)?)", std::regex::extended); // work never
+static const std::regex __url_reg(R"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)"); // work never
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 bool Om_isValidUrl(const string& url)
 {
-  //return std::regex_match(url, __url_pattern);
-  return PathIsURLA(url.c_str());
+  std::match_results<const char*> matches;
+
+  if(std::regex_match(url.c_str(), matches, __url_reg)) {
+
+    // matches :
+    // 0) full match (almost never happen)
+    // 1) http(s)://
+    // 2) xxx.www.domain.tld
+    // 3) :1234
+    // 4) /folder/file.ext
+    // 5) ?x=1&y=2...
+
+    // search for minimum required matches to have a full valid URL
+    if(matches[1].length() != 0) { //< http(s)://
+      if(matches[2].length() != 0) { //< xxx.www.domain.tld
+        return (matches[4].length() != 0); //< /folder/file.ext
+      }
+    }
+  }
+
+  return false;
 }
 
 
