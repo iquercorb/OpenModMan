@@ -349,6 +349,8 @@ bool OmLocation::open(const wstring& path)
       pRep = new OmRepository(this);
       if(pRep->define(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
         this->_repository.push_back(pRep);
+        verbose = L"Add Repository: \""+Om_fromUtf8(pRep->url().c_str())+L"\".";
+        this->log(2, L"Location("+this->_title+L") Load", verbose);
       } else {
         delete pRep;
       }
