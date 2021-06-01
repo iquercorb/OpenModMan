@@ -1976,14 +1976,14 @@ static inline void __sample_bicubic(uint8_t* dst, const uint8_t* data, unsigned 
 /// \param[in]  w       : Image width
 /// \param[in]  h       : Image height
 /// \param[in]  c       : Image channel count
-/// \param[in]  x       : x coordinate to get interpolated pixel
-/// \param[in]  y       : y coordinate to get interpolated pixel
+/// \param[in]  u       : Horizontal coordinate to get interpolated pixel
+/// \param[in]  v       : Vertical coordinate to get interpolated pixel
 /// \param[in]  bw      : Box width in pixel
 /// \param[in]  bh      : Box height in pixel
 ///
-static inline void __sample_box(uint8_t* dst, const uint8_t* data, unsigned w, unsigned h, unsigned c, unsigned x, unsigned y, unsigned bw, unsigned bh)
+static inline void __sample_box(uint8_t* dst, const uint8_t* data, unsigned w, unsigned h, unsigned c, float u, float v, unsigned bw, unsigned bh)
 {
-  unsigned jy;
+  unsigned by, bx;
 
   const uint8_t *sp;
 
@@ -1992,13 +1992,21 @@ static inline void __sample_box(uint8_t* dst, const uint8_t* data, unsigned w, u
   unsigned b = 0;
   unsigned a = 0;
 
-  for(unsigned j = 0; j < bh; ++j) {
+  int hmax = (h - 1);
+  int wmax = (w - 1);
 
-    jy = y + j;
+  int x = u * hmax;
+  int y = v * wmax;
 
-    for(unsigned i = 0; i < bw; ++i) {
+  for(int j = 0; j < bh; ++j) {
 
-      sp = &data[(x + i + jy * w) * c];
+    by = std::max(0, std::min(y + j, hmax));
+
+    for(int i = 0; i < bw; ++i) {
+
+      bx = std::max(0, std::min(x + i, wmax));
+
+      sp = &data[(bx + by * w) * c];
 
       r += sp[0];
       g += sp[1];
@@ -2033,7 +2041,9 @@ static void __image_downsample(uint8_t* dst, unsigned dw, unsigned dh, const uin
   unsigned bw = floor(static_cast<float>(sw) / dw);
   unsigned bh = floor(static_cast<float>(sh) / dh);
 
-  unsigned sy;
+  float mx = 1.0f / (static_cast<float>(dw) - 1);
+  float my = 1.0f / (static_cast<float>(dh) - 1);
+  float u, v;
 
   uint8_t px[4];
 
@@ -2043,11 +2053,13 @@ static void __image_downsample(uint8_t* dst, unsigned dw, unsigned dh, const uin
 
     dp = &dst[dw * c * y];
 
-    sy = (y * bh);
+    v = y * my;
 
     for(unsigned x = 0; x < dw; ++x) {
 
-      __sample_box(px, src, sw, sh, c, (x * bh), sy, bw, bh);
+      u = x * mx;
+
+      __sample_box(px, src, sw, sh, c, u, v, bw, bh);
 
       dp[0] = px[0];
       dp[1] = px[1];
@@ -2125,7 +2137,7 @@ OmImage::OmImage() :
 ///
 OmImage::~OmImage()
 {
-
+  this->clear();
 }
 
 
