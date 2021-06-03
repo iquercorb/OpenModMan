@@ -19,14 +19,6 @@
 
 #include "OmGlobal.h"
 
-enum OmImageType {
-  OMM_IMAGE_UNKNOW  = 0,
-  OMM_IMAGE_BMP     = 1,
-  OMM_IMAGE_JPG     = 2,
-  OMM_IMAGE_PNG     = 3,
-  OMM_IMAGE_GIF     = 4
-};
-
 /// \brief Image file interface.
 ///
 /// Object to provide interface for an image file.
@@ -51,119 +43,71 @@ class OmImage
     ///
     /// Load image from file.
     ///
-    /// \param[in]  path  Image file path
+    /// \param[in]  path  : Image file path
+    /// \param[in]  thumb : Size of the thumbnail to generate or 0 to ignore.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool load(const wstring& path);
+    bool open(const wstring& path, unsigned thumb = 0);
 
     /// \brief Load image.
     ///
     /// Load image from data in memory.
     ///
-    /// \param[in]  data  Image data to read.
-    /// \param[in]  size  Image data size in bytes.
+    /// \param[in]  data  : Image data to read.
+    /// \param[in]  size  : Image data size in bytes.
+    /// \param[in]  thumb : Size of the thumbnail to generate or 0 to ignore.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool load(uint8_t* data, size_t size);
+    bool open(uint8_t* data, size_t size, unsigned thumb = 0);
 
-    /// \brief Save image.
+    /// \brief Check validity
     ///
-    /// Save image to specified file.
+    /// Check whether this instance is valid.
     ///
-    /// \param[in]  path    File path to save image as.
-    /// \param[in]  type    Image format to save.
-    /// \param[in]  level   Optional 0-10 JPEG quality or PNG compression.
+    /// \return True if this instance is valid, false otherwise
     ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    bool save(const wstring& path, OmImageType type, int level = 8);
+    bool valid() const {
+      return _valid;
+    }
 
-    /// \brief Save image in memory.
+    /// \brief Get image raw data.
     ///
-    /// Save image to memory.
+    /// Returns stored image raw data.
     ///
-    /// \param[in]  dest    Pointer to pointer to be allocated.
-    /// \param[in]  size    Image data allocated size.
-    /// \param[in]  type    Image format to encode.
-    /// \param[in]  level   Optional 0 to 10 quality level for JPEG.
+    /// \return Pointer to raw data.
     ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    bool save(uint8_t** dest, size_t* size, OmImageType type, int level = 8);
-
-    /// \brief Get image data.
-    ///
-    /// Returns image raw pixels data.
-    ///
-    /// \return Pointer to raw pixels data.
-    ///
-    uint8_t* data() {
+    const uint8_t* data() const {
       return _data;
     }
 
-    /// \brief Get image width.
+    /// \brief Get image raw data size.
     ///
-    /// Returns image width in pixels
+    /// Returns stored image raw data size in bytes.
     ///
-    /// \return Image width in pixels
+    /// \return Raw data size in bytes.
     ///
-    unsigned width() const {
-      return _width;
+    size_t data_size() const {
+      return _data_size;
     }
 
-    /// \brief Get image height.
+    /// \brief Get raw data image type.
     ///
-    /// Returns image height in pixels
+    /// Returns stored image raw data image format.
     ///
-    /// \return Image height in pixels
+    /// possibles values are the following:
+    /// \c 0 : unknown or invalid type.
+    /// \c OMM_IMAGE_TYPE_BMP (1) : BMP image.
+    /// \c OMM_IMAGE_TYPE_JPG (2) : JPEG image.
+    /// \c OMM_IMAGE_TYPE_PNG (3) : PNG image.
+    /// \c OMM_IMAGE_TYPE_GIF (4) : GIF image.
     ///
-    unsigned height() const {
-      return _height;
+    /// \return Raw data image type.
+    ///
+    unsigned data_type() const {
+      return _data_type;
     }
-
-    /// \brief Get image depth.
-    ///
-    /// Returns image bits per pixels
-    ///
-    /// \return Image bits per pixels
-    ///
-    unsigned depth() const {
-      return _depth;
-    }
-
-    /// \brief Get image as BITMAP.
-    ///
-    /// Returns WinAPI HBITMAP version of pixels data.
-    ///
-    /// \return HBITMAP object.
-    ///
-    HBITMAP asBITMAP() const;
-
-    /// \brief Resize bitmap.
-    ///
-    /// Resize image to fit the specified new width and height.
-    ///
-    /// \param[in]  width   Image new width.
-    /// \param[in]  height  Image new height.
-    ///
-    /// \return true if operation succeed, false otherwise.
-    ///
-    bool resize(unsigned width, unsigned height);
-
-    /// \brief Crop bitmap.
-    ///
-    /// Crop image to the specified rectangle
-    ///
-    /// \param[in]  x       Crop rectangle upper-left corner x coordinate.
-    /// \param[in]  y       Crop rectangle upper-left corner y coordinate.
-    /// \param[in]  width   Crop rectangle width.
-    /// \param[in]  height  Crop rectangle height.
-    ///
-    /// \return true if operation succeed, false otherwise.
-    ///
-    bool crop(unsigned x, unsigned y, unsigned width, unsigned height);
 
     /// \brief Create thumbnail.
     ///
@@ -173,7 +117,9 @@ class OmImage
     ///
     /// \return true if operation succeed, false otherwise.
     ///
-    bool thumbnail(unsigned size);
+    HBITMAP thumbnail() const {
+      return _thumbnail;
+    }
 
     /// \brief Clear instance.
     ///
@@ -191,15 +137,17 @@ class OmImage
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    int                 _status;      //< Image status
+    uint8_t*            _data;        //< Image data
 
-    uint8_t*            _data;        //< image pixel data
+    size_t              _data_size;   //< Image data size
 
-    unsigned            _width;       //< image width in pixels
+    unsigned            _data_type;   //< Image data type
 
-    unsigned            _height;      //< image height in pixels
+    HBITMAP             _thumbnail;   //< Image thumbnail
 
-    unsigned            _depth;       //< image pixel depth
+    bool                _valid;       //< Valid image
+
+    int                 _ercode;      //< Error code
 };
 
 #endif // OMIMAGE_H

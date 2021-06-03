@@ -84,6 +84,11 @@
 #define OMM_BCK_FILE_EXT          L"omk"
 #define OMM_BAT_FILE_EXT          L"omb"
 
+#define OMM_IMAGE_TYPE_BMP        1
+#define OMM_IMAGE_TYPE_JPG        2
+#define OMM_IMAGE_TYPE_PNG        3
+#define OMM_IMAGE_TYPE_GIF        4
+
 #define OMM_PKG_THMB_SIZE         128
 
 #define OMM_MAX_PATH              1024
@@ -181,6 +186,27 @@ inline void Om_toHexString(wstring& str, uint64_t num) {
 inline uint64_t Om_toUint64(const wstring& str) {
   return wcstoull(str.c_str(), nullptr, 16);
 }
+
+/// \brief Encode bytes to Base64.
+///
+/// Encode the given binary data to Base64 string.
+///
+/// \param[in]  data    : Data to convert.
+/// \param[in]  size    : data size in bytes.
+///
+/// \return String containing Base64 encoded data
+///
+wstring Om_toBase64(const uint8_t* data, size_t size);
+
+/// \brief Encode bytes to Base64.
+///
+/// Encode the given binary data to Base64 string.
+///
+/// \param[out] b64     : String to get result.
+/// \param[in]  data    : Data to convert.
+/// \param[in]  size    : data size in bytes.
+///
+void Om_toBase64(wstring& b64, const uint8_t* data, size_t size);
 
 /// \brief Get current time.
 ///
@@ -1107,85 +1133,215 @@ string Om_loadPlainText(const wstring& path);
 ///
 size_t Om_loadPlainText(string& text, const wstring& path);
 
-/// \brief Save as BMP file.
+/// \brief Load image.
 ///
-/// Create a new BMP file at the specified location with the given pixel data.
+/// Load image data from image file. Supported format are Bmp, Jpeg, Png and Gif.
 ///
-/// \param[in]  path    : File full path and name to save.
-/// \param[in]  w       : Image width in pixel.
-/// \param[in]  h       : Image depth in pixel.
-/// \param[in]  d       : Image bits per pixel, either 24 or 32 are supported.
-/// \param[in]  pixels  : Image pixels data.
+/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
+/// \param[out] out_w   : Output image width
+/// \param[out] out_h   : Output image height
+/// \param[out] out_c   : Output image color component count.
+/// \param[in]  in_file : Input image file pointer to read data.
+/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if succeed, false if write error occurred.
+/// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-bool Om_saveBitmap(const wstring& path, unsigned w, unsigned h, unsigned d, const unsigned char* pixels);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y);
 
-/// \brief Save as BMP file.
+/// \brief Load image.
 ///
-/// Create a new BMP file at the specified location from the specified
-/// HBITMAP object handle object.
+/// Load image data from buffer in memory. Supported format are Bmp, Jpeg, Png and Gif.
 ///
-/// \param[in] path    : File full path and name to save.
-/// \param[in] hbmp    : WinAPI HBITMAP object handle to save as BMP file.
+/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
+/// \param[out] out_w   : Output image width
+/// \param[out] out_h   : Output image height
+/// \param[out] out_c   : Output image color component count.
+/// \param[in]  in_data : Input image data to decode.
+/// \param[in]  in_size : Input image data size in bytes.
+/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if succeed, false if write error occurred.
+/// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-bool Om_saveBitmap(const wstring& path, void* hbmp);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, uint8_t* in_data, size_t in_size, bool flip_y);
 
-/// \brief Load image as HBITMAP.
+/// \brief Save image as BMP.
 ///
-/// Loads the specified image file as a WinAPI bitmap HBITMAP handle. The
-/// supported image formats are JPEG, TIFF, BMP, GIF and PNG.
+/// Save given image data as BMP file.
 ///
-/// \param[in] path    : Source file path to open (jpeg, tiff, bmp, gif, png).
-/// \param[in] width   : Image desired width or 0 to keep original size.
-/// \param[in] height  : Image desired height or 0 to keep original size.
-/// \param[in] aspect  : If true, the image original aspect ratio is conserved.
+/// \param[out] path      : File path to save.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return Pointer to be casted as HBITMAP object handle.
+/// \return True if operation succeed, false otherwise
 ///
-HBITMAP Om_loadBitmap(const wstring& path, unsigned width = 0, unsigned height = 0, bool aspect = true);
+bool Om_saveBmp(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
-/// \brief Load buffer as HBITMAP.
+/// \brief Save image as JPEG.
 ///
-/// Loads the specified image data as a WinAPI bitmap HBITMAP handle. The
-/// supported image formats are JPEG, TIFF, BMP, GIF and PNG.
+/// Save given image data as JPEG file.
 ///
-/// \param[in] data    : Source data to convert (jpeg, tiff, bmp, gif, png).
-/// \param[in] size    : Size of source data in bytes.
-/// \param[in] width   : Image desired width or 0 to keep original size.
-/// \param[in] height  : Image desired height or 0 to keep original size.
-/// \param[in] aspect  : If true, the image original aspect ratio is conserved.
+/// \param[out] path      : File path to save.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  level     : JPEG compression quality 0 to 100.
 ///
-/// \return Pointer to be casted as HBITMAP object handle.
+/// \return True if operation succeed, false otherwise
 ///
-HBITMAP Om_loadBitmap(const void* data, size_t size, unsigned width = 0, unsigned height = 0, bool aspect = true);
+bool Om_saveJpg(const wstring& path, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
 
-/// \brief Get bitmap thumbnail
+/// \brief Save image as PNG.
 ///
-/// Returns resized version of the given image according specified width and
-/// height in pixel.
+/// Save given image data as PNG file.
 ///
-/// \param[in] hBmp    : Handle (HBITMAP) to bitmap image to resize.
-/// \param[in] width   : Image desired width.
-/// \param[in] height  : Image desired height.
-/// \param[in] aspect  : If true, the image original aspect ratio is conserved.
+/// \param[out] path      : File path to save.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  level     : PNG compression level 0 to 9.
 ///
-/// \return Handle (HBITMAP) to resized bitmap.
+/// \return True if operation succeed, false otherwise
 ///
-HBITMAP Om_getBitmapThumbnail(HBITMAP hBmp, unsigned width, unsigned height, bool aspect = true);
+bool Om_savePng(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
 
-/// \brief Convert bitmap to PNG
+/// \brief Save image as GIF.
 ///
-/// Convert the given bitmap to PNG image data.
+/// Save given image data as GIF file.
 ///
-/// \param[in] hBmp    : Handle (HBITMAP) to bitmap image to convert.
-/// \param[out] size   : Size in byte of PNG data.
+/// \param[out] path      : File path to save.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return Pointer to PNG data.
+/// \return True if operation succeed, false otherwise
 ///
-void* Om_getPngData(HBITMAP hBmp, size_t* size);
+bool Om_saveGif(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Encode BMP data.
+///
+/// Encode BMP data to buffer in memory.
+///
+/// \param[out] out_data  : Output BMP data, pointer to pointer to be allocated.
+/// \param[out] out_size  : Output BMP data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Encode JPEG data.
+///
+/// Encode JPEG data to buffer in memory.
+///
+/// \param[out] out_data  : Output JPEG data, pointer to pointer to be allocated.
+/// \param[out] out_size  : Output JPEG data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  level     : JPEG compression quality 0 to 100.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+
+/// \brief Encode PNG data.
+///
+/// Encode PNG data to buffer in memory.
+///
+/// \param[out] out_data  : Output PNG data, pointer to pointer to be allocated.
+/// \param[out] out_size  : Output PNG data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  level     : PNG compression level 0 to 9.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+
+/// \brief Encode GIF data.
+///
+/// Encode GIF data to buffer in memory.
+///
+/// \param[out] out_data  : Output GIF data, pointer to pointer to be allocated.
+/// \param[out] out_size  : Output GIF data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_encodeGif(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Resize image.
+///
+/// Resize given image data to the specified width and heigth.
+///
+/// \param[out] w         : Desired image width.
+/// \param[out] h         : Desired image height.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return New pointer to resized image data or null if error.
+///
+uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Crop image.
+///
+/// Crop given image data according the specified rectangle coordinates.
+///
+/// \param[out] x         : Crop rectangle top-left corner horizontal position in image.
+/// \param[out] y         : Crop rectangle top-left corner vertical position in image.
+/// \param[out] w         : Crop rectangle width.
+/// \param[out] h         : Crop rectangle height.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return New pointer to resized image data or null if error.
+///
+uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Create image thumbnail.
+///
+/// Create thumbnail version of the given image data.
+///
+/// \param[out] size      : Thumbnail size.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return New pointer to resized image data or null if error.
+///
+uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+
+/// \brief Create HBITMAP image.
+///
+/// Create HBITMAP version of the given image data.
+///
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return New HBITMAP or null if error.
+///
+HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Load stock shell icon
 ///
