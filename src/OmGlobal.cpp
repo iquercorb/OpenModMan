@@ -1664,7 +1664,7 @@ bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 }
 
 
-/// \brief Load plan text.
+/// \brief Load plain text.
 ///
 /// Loads content of the specified file as plain-text into the given
 /// string object.
@@ -1812,6 +1812,15 @@ static int __gif_read_file_fn(GifFileType* gif, uint8_t* dst, int len)
   return fread(dst, 1, len, reinterpret_cast<FILE*>(gif->UserData));
 }
 
+/// \brief Custom GIF write struct
+///
+/// Custom structure for custom GIF write routine.
+///
+struct __gif_read_st {
+  uint8_t*  src_data;
+  size_t    src_seek;
+};
+
 /// \brief Custom GIF reader
 ///
 /// Custom read function for GIF library to read memory buffer.
@@ -1824,7 +1833,9 @@ static int __gif_read_file_fn(GifFileType* gif, uint8_t* dst, int len)
 ///
 static int __gif_read_buff_fn(GifFileType* gif, uint8_t* dst, int len)
 {
-  memcpy(dst, gif->UserData, len);
+  __gif_read_st* read_st = reinterpret_cast<__gif_read_st*>(gif->UserData);
+  memcpy(dst, read_st->src_data + read_st->src_seek, len);
+  read_st->src_seek += len;
   return len;
 }
 
@@ -2132,8 +2143,13 @@ static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   int error;
   GifFileType* gif;
 
+  // custom read structure
+  __gif_read_st read_st;
+  read_st.src_data = in_data;
+  read_st.src_seek = 0;
+
   // Define custom read function and load GIF header
-  gif = DGifOpen(in_data, __gif_read_buff_fn, &error);
+  gif = DGifOpen(&read_st, __gif_read_buff_fn, &error);
   if(gif == nullptr)
     return false;
 
@@ -3315,16 +3331,15 @@ static inline void __image_sample_bicubic(uint8_t* out_pix, float u, float v, co
 
   float r[4]; float g[4]; float b[4]; float a[4];
 
-  int xx, yy, ys;
+  int x_b, y_b;
   int hmax = in_h - 1;
   int wmax = in_w - 1;
 
   for(int j = 0; j < 4; ++j) {
-    yy = std::max(0, std::min(iy + j, hmax));
-    ys = (yy * (in_w * in_c));
+    y_b = (std::max(0, std::min(iy + j, hmax)) * in_w) * in_c;
     for(int i = 0; i < 4; ++i) {
-      xx = std::max(0, std::min(ix + i, wmax));
-      sp[i] = in_rgb + (ys + (xx * in_c));
+      x_b = std::max(0, std::min(ix + i, wmax)) * in_c;
+      sp[i] = in_rgb + (y_b + x_b);
     }
     r[j] = __interp_cubic(sp[0][0], sp[1][0], sp[2][0], sp[3][0], xf);
     g[j] = __interp_cubic(sp[0][1], sp[1][1], sp[2][1], sp[3][1], xf);
@@ -3364,18 +3379,18 @@ static inline void __image_sample_box(uint8_t* out_pix, int box_w, int box_h, fl
 
   const uint8_t *sp;
 
-  int xx, yy;
-  int hmax = (in_h - 1);
+  int x_b, y_b;
   int wmax = (in_w - 1);
+  int hmax = (in_h - 1);
 
-  int x = u * hmax;
-  int y = v * wmax;
+  int x = u * wmax;
+  int y = v * hmax;
 
   for(int j = 0; j < box_h; ++j) {
-    yy = std::max(0, std::min(y + j, hmax));
+    y_b = (std::max(0, std::min(y + j, hmax)) * in_w) * in_c;
     for(int i = 0; i < box_w; ++i) {
-      xx = std::max(0, std::min(x + i, wmax));
-      sp = in_rgb + ((xx + yy * in_w) * in_c);
+      x_b = std::max(0, std::min(x + i, wmax)) * in_c;
+      sp = in_rgb + (y_b + x_b);
       r += sp[0]; g += sp[1]; b += sp[2];
       if(in_c == 4) a += sp[3];
     }
@@ -3414,7 +3429,7 @@ static void __image_dsample(uint8_t* out_rgb, unsigned w, unsigned h, const uint
   float u, v;
 
   for(unsigned y = 0; y < h; ++y) {
-    dp = out_rgb + (w * in_c * y);
+    dp = out_rgb + ((w * in_c) * y);
     v = y * inv_h;
     for(unsigned x = 0; x < w; ++x) {
       u = x * inv_w;
@@ -3468,7 +3483,7 @@ uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned 
 {
   uint8_t* out_rgb;
   try {
-    out_rgb = new uint8_t[w * in_c * h];
+    out_rgb = new uint8_t[(w * in_c) * h];
   } catch(const std::bad_alloc&) {
     return nullptr;
   }
@@ -3476,7 +3491,7 @@ uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned 
   // resize image to fit desired square
   if(in_w != w || in_h != h) {
 
-    if(w > in_w || h > in_w) {
+    if(w > in_w || h > in_h) {
       __image_usample(out_rgb, w, h, in_rgb, in_w, in_h, in_c);
     } else {
       __image_dsample(out_rgb, w, h, in_rgb, in_w, in_h, in_c);

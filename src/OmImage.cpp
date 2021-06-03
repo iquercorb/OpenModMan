@@ -55,18 +55,16 @@ bool OmImage::open(const wstring& path, unsigned thumb)
   // clear all previous data
   this->clear();
 
-  // open file
-  FILE* fp;
+  // open file for reading
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
 
-  //if((fp = fopen(Om_toUtf8(path).c_str(), "rb")) == nullptr) {
-  if((fp = _wfopen(path.c_str(), L"rb")) == nullptr) {
+  if(hFile == INVALID_HANDLE_VALUE) {
     this->_ercode = OMM_IMAGE_ERR_OPEN;
     return false;
   }
 
-  // read the whole data at once, we will store it
-  fseek(fp, 0, SEEK_END);
-  size_t size = ftell(fp);
+  size_t size = GetFileSize(hFile, nullptr);
 
   // allocate buffer and read
   uint8_t* data;
@@ -76,14 +74,17 @@ bool OmImage::open(const wstring& path, unsigned thumb)
     return false;
   }
 
-  if(fread(data, 1, size, fp) != size) {
+  // read full data at once
+  DWORD rb;
+  if(!ReadFile(hFile, data, size, &rb, nullptr)) {
     this->_ercode = OMM_IMAGE_ERR_READ;
-    fclose(fp);
+    CloseHandle(hFile);
     delete [] data;
     return false;
   }
 
-  fclose(fp);
+  // close file
+  CloseHandle(hFile);
 
   // decode image data
   uint8_t* rgb = nullptr;
