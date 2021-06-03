@@ -20,6 +20,7 @@
 #include "gui/OmUiNewPkg.h"
 #include "OmPackage.h"
 #include "gui/OmUiProgress.h"
+#include "OmImage.h"
 
 /// \brief Compatible image formats filter
 ///
@@ -93,13 +94,12 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
       }
     }
 
-    if(package.picture()) {
+    if(package.picture().thumbnail()) {
       this->msgItem(IDC_BC_CHK04, BM_SETCHECK, 1);
       this->enableItem(IDC_BC_BROW4, true);
-      this->_hBmImage = static_cast<HBITMAP>(CopyImage(package.picture(),IMAGE_BITMAP,0,0,0));
-      HBITMAP hBm = Om_getBitmapThumbnail(this->_hBmImage, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm));
-      DeleteObject(hBm);
+      this->_hBmImage = package.picture().thumbnail();
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmImage));
+      this->setItemText(IDC_EC_INPT4, L"");
     }
 
     if(package.desc().size()) {
@@ -216,10 +216,13 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
     }
   }
 
-  // get package picture data
-  if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
-    self->getItemText(IDC_EC_INPT4, img_path);
-    package.setPicture(self->_hBmImage);
+  // check whether picture data already exists in package
+  if(!package.picture().valid()) {
+    // get package picture data from file
+    if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
+      self->getItemText(IDC_EC_INPT4, img_path);
+      package.setPicture(img_path);
+    }
   }
 
   // get package description text
@@ -462,6 +465,8 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     HBITMAP hBm;
 
+    OmImage img;
+
     bool bm_chk;
 
     int lb_sel;
@@ -577,10 +582,13 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, item_str)) {
         if(Om_isFile(brow_str)) {
           if(this->_hBmImage) DeleteObject(this->_hBmImage);
-          this->_hBmImage = Om_loadBitmap(brow_str);
+          if(img.open(brow_str, OMM_PKG_THMB_SIZE)) {
+            this->_hBmImage = img.thumbnail();
+          } else {
+            this->_hBmImage = nullptr;
+          }
           this->setItemText(IDC_EC_INPT4, (this->_hBmImage) ? brow_str : L"");
-          hBm = Om_getBitmapThumbnail(this->_hBmImage, OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
-          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
+          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmImage)));
           if(hBm != this->_hBmBlank) DeleteObject(hBm);
         }
       }

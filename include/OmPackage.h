@@ -20,6 +20,7 @@
 
 #include "OmGlobal.h"
 #include "OmVersion.h"
+#include "OmImage.h"
 
 class OmLocation;
 
@@ -545,7 +546,7 @@ class OmPackage
     ///
     /// \return Package image or nullptr if not exists.
     ///
-    HBITMAP picture() const {
+    const OmImage& picture() const {
       return _picture;
     }
 
@@ -553,9 +554,15 @@ class OmPackage
     ///
     /// Sets an image to this Package.
     ///
-    /// \param[in]  hBmp    : Handle to bitmap (HBITMAP) to set as image.
+    /// \param[in]  path    : Path to image file to load.
     ///
-    void setPicture(HBITMAP hBmp);
+    void setPicture(const wstring& path);
+
+    /// \brief Remove image.
+    ///
+    /// Remove image from this Package.
+    ///
+    void remPicture();
 
     /// \brief Get Location.
     ///
@@ -677,7 +684,7 @@ class OmPackage
 
     OmVersion           _version;
 
-    HBITMAP             _picture;
+    OmImage             _picture;
 
     OmLocation*         _location;
 

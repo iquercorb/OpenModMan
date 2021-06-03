@@ -554,8 +554,8 @@ void OmUiMainLib::_onSelectPkg()
             this->setItemText(IDC_EC_PKTXT, L"<no description available>");
           }
 
-          if(pLoc->package(i)->picture()) {
-            hBm = Om_getBitmapThumbnail(pLoc->package(i)->picture(), OMM_PKG_THMB_SIZE, OMM_PKG_THMB_SIZE);
+          if(pLoc->package(i)->picture().thumbnail()) {
+            hBm = pLoc->package(i)->picture().thumbnail();
           }
 
           ShowWindow(this->getItem(IDC_SC_TITLE), true);
