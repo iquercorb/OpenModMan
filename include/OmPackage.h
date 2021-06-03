@@ -542,27 +542,29 @@ class OmPackage
 
     /// \brief Get image.
     ///
-    /// Returns package image if any.
+    /// Returns package image object.
     ///
-    /// \return Package image or nullptr if not exists.
+    /// \return Package image object.
     ///
-    const OmImage& picture() const {
-      return _picture;
+    const OmImage& image() const {
+      return _image;
     }
 
     /// \brief Set image.
     ///
-    /// Sets an image to this Package.
+    /// Load an image and create thumbnail for
+    /// this Package.
     ///
-    /// \param[in]  path    : Path to image file to load.
+    /// \param[in]  path  : Path to image file to load.
+    /// \param[in]  size  : Image thumbnail size.
     ///
-    void setPicture(const wstring& path);
+    void loadImage(const wstring& path, unsigned size);
 
-    /// \brief Remove image.
+    /// \brief Clear image.
     ///
-    /// Remove image from this Package.
+    /// Clear image data from this Package.
     ///
-    void remPicture();
+    void clearImage();
 
     /// \brief Get Location.
     ///
@@ -579,15 +581,14 @@ class OmPackage
     /// Create a new package file from this package
     ///
     /// \param[in]  path    : Destination path and filename to save package as.
-    /// \param[in]  pict    : Alternate path to image file to use as snapshot.
     /// \param[in]  zipLvl  : Package Zip compression level.
-    /// \param[in]  hPb       : Optional progress bar control handle (HWND) to step.
-    /// \param[in]  hSc       : Optional static text control handle (HWND) for description.
-    /// \param[in]  pAbort    : Optional pointer to boolean to cancel operation.
+    /// \param[in]  hPb     : Optional progress bar control handle (HWND) to step.
+    /// \param[in]  hSc     : Optional static text control handle (HWND) for description.
+    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
     ///
     /// \return Pointer to Package related Location.
     ///
-    bool save(const wstring& path, const wstring& pict, unsigned zipLvl = 2, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool save(const wstring& path, unsigned zipLvl = 2, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Clear object.
     ///
@@ -684,7 +685,7 @@ class OmPackage
 
     OmVersion           _version;
 
-    OmImage             _picture;
+    OmImage             _image;
 
     OmLocation*         _location;
 

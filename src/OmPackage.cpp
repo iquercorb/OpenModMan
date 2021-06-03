@@ -108,7 +108,7 @@ OmPackage::OmPackage() :
   _overlap(),
   _desc(),
   _version(),
-  _picture(),
+  _image(),
   _location(nullptr),
   _error()
 {
@@ -134,7 +134,7 @@ OmPackage::OmPackage(OmLocation* pLoc) :
   _overlap(),
   _desc(),
   _version(),
-  _picture(),
+  _image(),
   _location(pLoc),
   _error()
 {
@@ -155,7 +155,7 @@ OmPackage::~OmPackage()
   this->_backupItem.clear();
   this->_overlap.clear();
   this->_depends.clear();
-  this->_picture.clear();
+  this->_image.clear();
 }
 
 
@@ -292,7 +292,6 @@ bool OmPackage::sourceParse(const wstring& path)
         }
         // check for Package picture
         if(cfg_xml.hasChild(L"picture")) {
-          OmImage img;
           wstring pic_name = cfg_xml.child(L"picture").content();
           int zcrd_index = src_zip.locate(pic_name);
           if(zcrd_index >= 0) {
@@ -308,9 +307,9 @@ bool OmPackage::sourceParse(const wstring& path)
             if(data != nullptr) {
               if(src_zip.extract(zcrd_index, data, s)) {
                 // finally load picture data
-                if(!this->_picture.open(data, s, OMM_PKG_THMB_SIZE)) {
+                if(!this->_image.open(data, s, OMM_PKG_THMB_SIZE)) {
                   this->_error = L"Picture file \""+pic_name+L"\"";
-                  this->_error += L"cannot be loaded: "+img.lastErrorStr();
+                  this->_error += L"cannot be loaded: "+_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
@@ -408,9 +407,9 @@ bool OmPackage::sourceParse(const wstring& path)
             }
             if(data != nullptr) {
               if(src_zip.extract(i, data, s)) {
-                if(!this->_picture.open(data, s, OMM_PKG_THMB_SIZE)) {
+                if(!this->_image.open(data, s, OMM_PKG_THMB_SIZE)) {
                   this->_error = L"Picture file \""+zcd_entry+L"\"";
-                  this->_error += L"cannot be loaded: "+this->_picture.lastErrorStr();
+                  this->_error += L"cannot be loaded: "+this->_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
@@ -941,25 +940,25 @@ bool OmPackage::couldOverlap(const OmPackage* other) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::setPicture(const wstring& path)
+void OmPackage::loadImage(const wstring& path, unsigned size)
 {
-  this->_picture.open(path, OMM_PKG_THMB_SIZE);
+  this->_image.open(path, size);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::remPicture()
+void OmPackage::clearImage()
 {
-  this->_picture.clear();
+  this->_image.clear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::save(const wstring& out_path, const wstring& img_path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
+bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
 {
   // initialize local timer
   clock_t time = clock();
@@ -1157,49 +1156,26 @@ bool OmPackage::save(const wstring& out_path, const wstring& img_path, unsigned 
   }
 
   // add picture to archive and source definition
-  if(!img_path.empty()) {
-    if(Om_isFile(img_path)) {
-
-      // create zip file name
-      zcd_entry = L"snapshot." + Om_getExtensionPart(img_path);
-
-      // add file to destination zip archive
-      if(!pkg_zip.append(img_path, zcd_entry, zipLvl)) {
-        this->_error = L"Snapshot file \""+img_path+L"\"";
-        this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
-        this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
-        pkg_zip.close();
-        Om_fileDelete(pkg_tmp_path);
-        return false;
-      } else {
-        // add section to source definition
-        def_xml.addChild(L"picture").setContent(zcd_entry);
-      }
+  if(this->_image.valid()) {
+    // check image type to create file name
+    switch(this->_image.data_type())
+    {
+    case 1: zcd_entry = L"snapshot.bmp"; break;
+    case 2: zcd_entry = L"snapshot.jpg"; break;
+    case 3: zcd_entry = L"snapshot.png"; break;
+    case 4: zcd_entry = L"snapshot.gif"; break;
     }
-  } else {
-
-    if(this->_picture.valid()) {
-
-      // check image type to create file name
-      switch(this->_picture.data_type())
-      {
-      case 1: zcd_entry = L"snapshot.bmp"; break;
-      case 2: zcd_entry = L"snapshot.jpg"; break;
-      case 3: zcd_entry = L"snapshot.png"; break;
-      case 4: zcd_entry = L"snapshot.gif"; break;
-      }
-      // add image in zip archive
-      if(!pkg_zip.append(this->_picture.data(), this->_picture.data_size(), zcd_entry, zipLvl)) {
-        this->_error = L"Image file \"" + zcd_entry + L"\"";
-        this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
-        this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
-        pkg_zip.close();
-        Om_fileDelete(pkg_tmp_path);
-        return false;
-      }
-      // add section to source definition
-      def_xml.addChild(L"picture").setContent(zcd_entry);
+    // add image in zip archive
+    if(!pkg_zip.append(this->_image.data(), this->_image.data_size(), zcd_entry, zipLvl)) {
+      this->_error = L"Image file \"" + zcd_entry + L"\"";
+      this->_error += OMM_STR_ERR_ZIPDEFL(pkg_zip.lastErrorStr());
+      this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
+      pkg_zip.close();
+      Om_fileDelete(pkg_tmp_path);
+      return false;
     }
+    // add section to source definition
+    def_xml.addChild(L"picture").setContent(zcd_entry);
   }
 
   // Compose and add a REAMDE.TXT file into archive
@@ -1313,7 +1289,7 @@ void OmPackage::clear()
 {
   this->_type = 0;
   this->_hash = 0;
-  this->_picture.clear();
+  this->_image.clear();
   this->_name.clear();
   this->_ident.clear();
   this->_source.clear();

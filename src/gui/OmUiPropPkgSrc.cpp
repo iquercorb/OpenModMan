@@ -100,8 +100,8 @@ void OmUiPropPkgSrc::_onInit()
     }
 
     // Snapshot image
-    if(pPkg->picture().thumbnail()) {
-      this->_hBmThumb = pPkg->picture().thumbnail();
+    if(pPkg->image().thumbnail()) {
+      this->_hBmThumb = pPkg->image().thumbnail();
     } else {
       this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
     }

@@ -43,9 +43,9 @@
 OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
   _hFtMonos(Om_createFont(14, 400, L"Consolas")),
   _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0))),
-  _hBmImage(nullptr),
   _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
   _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0))),
+  _image(),
   _buildPkg_hth(nullptr)
 {
   this->addChild(new OmUiProgress(hins)); //< for package creation process
@@ -59,7 +59,6 @@ OmUiNewPkg::~OmUiNewPkg()
 {
   DeleteObject(this->_hFtMonos);
   DeleteObject(this->_hBmBlank);
-  if(this->_hBmImage) DeleteObject(this->_hBmImage);
   DeleteObject(this->_hBmBcNew);
   DeleteObject(this->_hBmBcDel);
 }
@@ -94,11 +93,10 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
       }
     }
 
-    if(package.picture().thumbnail()) {
+    if(package.image().thumbnail()) {
       this->msgItem(IDC_BC_CHK04, BM_SETCHECK, 1);
       this->enableItem(IDC_BC_BROW4, true);
-      this->_hBmImage = package.picture().thumbnail();
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmImage));
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(package.image().thumbnail()));
       this->setItemText(IDC_EC_INPT4, L"");
     }
 
@@ -183,7 +181,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
-  wstring item_str, out_path, img_path;
+  wstring item_str, out_path;
 
   OmPackage package(nullptr);
 
@@ -216,12 +214,11 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
     }
   }
 
-  // check whether picture data already exists in package
-  if(!package.picture().valid()) {
-    // get package picture data from file
-    if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
-      self->getItemText(IDC_EC_INPT4, img_path);
-      package.setPicture(img_path);
+  // get package image data from specified file if any
+  if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
+    self->getItemText(IDC_EC_INPT4, item_str);
+    if(!item_str.empty()) {
+      package.loadImage(item_str, OMM_PKG_THMB_SIZE);
     }
   }
 
@@ -247,7 +244,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 
   DWORD exitCode = 0;
 
-  if(!package.save(out_path, img_path, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
+  if(!package.save(out_path, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += package.lastError();
@@ -434,8 +431,7 @@ void OmUiNewPkg::_onRefresh()
 ///
 void OmUiNewPkg::_onQuit()
 {
-  DeleteObject(this->_hBmImage);
-  this->_hBmImage = nullptr;
+
 }
 
 
@@ -462,10 +458,6 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     OmManager* pMgr = static_cast<OmManager*>(this->_data);
     OmContext* pCtx = pMgr->curContext();
     OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
-
-    HBITMAP hBm;
-
-    OmImage img;
 
     bool bm_chk;
 
@@ -560,12 +552,7 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->enableItem(IDC_BC_BROW4, true);
       } else {
         this->enableItem(IDC_BC_BROW4, false);
-        // Properly delete image
-        hBm = this->_hBmBlank;
-        hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
-        if(hBm != this->_hBmBlank) DeleteObject(hBm);
-        if(this->_hBmImage) DeleteObject(this->_hBmImage);
-        this->_hBmImage = nullptr;
+        this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
         this->setItemText(IDC_EC_INPT4, L"");
       }
       break;
@@ -580,16 +567,13 @@ bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       item_str = Om_getDirPart(item_str);
 
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, item_str)) {
-        if(Om_isFile(brow_str)) {
-          if(this->_hBmImage) DeleteObject(this->_hBmImage);
-          if(img.open(brow_str, OMM_PKG_THMB_SIZE)) {
-            this->_hBmImage = img.thumbnail();
-          } else {
-            this->_hBmImage = nullptr;
-          }
-          this->setItemText(IDC_EC_INPT4, (this->_hBmImage) ? brow_str : L"");
-          hBm = reinterpret_cast<HBITMAP>(this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmImage)));
-          if(hBm != this->_hBmBlank) DeleteObject(hBm);
+        if(this->_image.open(brow_str, OMM_PKG_THMB_SIZE)) {
+          this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_image.thumbnail()));
+          this->setItemText(IDC_EC_INPT4, brow_str);
+        } else {
+          std::wcout << L"Image error : " << this->_image.lastErrorStr() << L"\n";
+          this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
+          this->setItemText(IDC_EC_INPT4, L"");
         }
       }
       break;

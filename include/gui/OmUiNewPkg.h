@@ -19,6 +19,7 @@
 #define OMUIPKGMAKE_H
 
 #include "OmDialog.h"
+#include "OmImage.h"
 
 /// \brief Package Builder dialog
 ///
@@ -58,11 +59,11 @@ class OmUiNewPkg : public OmDialog
 
     HBITMAP             _hBmBlank;
 
-    HBITMAP             _hBmImage;
-
     HBITMAP             _hBmBcNew;
 
     HBITMAP             _hBmBcDel;
+
+    OmImage             _image;
 
     bool                _parsePkg(const wstring& path);
 
