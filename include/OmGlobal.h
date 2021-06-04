@@ -191,7 +191,7 @@ inline uint64_t Om_toUint64(const wstring& str) {
 ///
 /// Encode the given binary data to Base64 string.
 ///
-/// \param[in]  data    : Data to convert.
+/// \param[in]  data    : Data to encode.
 /// \param[in]  size    : data size in bytes.
 ///
 /// \return String containing Base64 encoded data
@@ -203,10 +203,21 @@ wstring Om_toBase64(const uint8_t* data, size_t size);
 /// Encode the given binary data to Base64 string.
 ///
 /// \param[out] b64     : String to get result.
-/// \param[in]  data    : Data to convert.
+/// \param[in]  data    : Data to encode.
 /// \param[in]  size    : data size in bytes.
 ///
 void Om_toBase64(wstring& b64, const uint8_t* data, size_t size);
+
+/// \brief Decode Base64 to bytes.
+///
+/// Decode the given Base64 string to binary data.
+///
+/// \param[in]  size    : Pointer to receive decoded data size
+/// \param[out] b64     : Base64 string to decode.
+///
+/// \return Pointer to decoded data.
+///
+uint8_t* Om_fromBase64(size_t* size, const wstring& b64);
 
 /// \brief Get current time.
 ///
@@ -1146,7 +1157,7 @@ size_t Om_loadPlainText(string& text, const wstring& path);
 ///
 /// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y = false);
 
 /// \brief Load image.
 ///
@@ -1162,7 +1173,7 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 /// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y = false);
 
 /// \brief Save image as BMP.
 ///
@@ -1191,7 +1202,7 @@ bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Save image as PNG.
 ///
@@ -1206,7 +1217,7 @@ bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
 
 /// \brief Save image as GIF.
 ///
@@ -1251,7 +1262,7 @@ bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Encode PNG data.
 ///
@@ -1267,7 +1278,7 @@ bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
 
 /// \brief Encode GIF data.
 ///

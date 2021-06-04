@@ -218,7 +218,104 @@ uint64_t Om_getXXHash3(const wstring& str)
 }
 
 
-static const wchar_t __b64_chars[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const wchar_t __b64_enc_table[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static const uint8_t __b64_dec_table[] = {0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                                          0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                                          0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 62,  0,  0,  0, 63,
+                                         52, 53, 54, 55, 56, 57, 58, 59, 60, 61,  0,  0,  0,  0,  0,  0,
+                                          0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+                                         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,  0,  0,  0,  0,  0,
+                                          0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                                         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  0,  0,  0,  0,  0};
+
+/// \brief Base64 encode.
+///
+/// Encode given data to Base64 string.
+///
+/// \param[out] out_b64 : Output Base64 encoding result string.
+/// \param[in]  in_data : Input data to encode.
+/// \param[in]  in_size : Input size of data in bytes.
+///
+static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, size_t in_size)
+{
+  unsigned p = 0, r = in_size % 3; //< remaining bytes after per-triplet division
+  uint32_t t;
+
+  // main block, per triplets
+  unsigned n = in_size - r;
+  for(unsigned i = 0; i < n; ++i) {
+    t  = in_data[p++] << 16;
+    t |= in_data[p++] << 8;
+    t |= in_data[p++];
+    out_b64 += __b64_enc_table[0x3F & (t >> 18)];
+    out_b64 += __b64_enc_table[0x3F & (t >> 12)];
+    out_b64 += __b64_enc_table[0x3F & (t >>  6)];
+    out_b64 += __b64_enc_table[0x3F & (t)];
+  }
+
+  // remaining bytes + padding
+  if(r != 0) {
+    t = in_data[p] << 16; p++;
+    if(r > 1) t |= in_data[p] << 8;
+    out_b64 += __b64_enc_table[0x3F & (t >> 18)];
+    out_b64 += __b64_enc_table[0x3F & (t >> 12)];
+    if(r > 1) {
+      out_b64 += __b64_enc_table[0x3F & (t >>  6)];
+    } else {
+      out_b64 += L'=';
+    }
+    out_b64 += L'=';
+  }
+}
+
+/// \brief Base64 decode.
+///
+/// Decode Base64 string to buffer.
+///
+/// \param[out] out_size  : Output size of decoded data in bytes.
+/// \param[in]  in_b64    : Input Base64 string to decode.
+///
+/// \return Pointer to decoded data.
+///
+static inline uint8_t* __base64_decode(size_t* out_size, const wstring& in_b64)
+{
+  // check whether input data is valid
+  if(in_b64.size() % 4 != 0)
+    return nullptr;
+
+  // compute output data size now
+  size_t size = (in_b64.size() / 4) * 3;
+  if(in_b64[in_b64.size() - 1] == '=') size--;
+  if(in_b64[in_b64.size() - 2] == '=') size--;
+
+  // allocate output data buffer
+  uint8_t* data = new(std::nothrow) uint8_t[size];
+  if(!data) return nullptr;
+
+  // decode data
+  uint32_t t;
+  uint8_t a, b, c, d;
+
+  for(unsigned i = 0, j = 0; i < in_b64.size(); ) {
+
+    a = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    b = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    c = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    d = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+
+    t = (a << 18) + (b << 12) + (c << 6) + d;
+
+    if(j < size) data[j++] = (t >> 16) & 0xFF;
+    if(j < size) data[j++] = (t >>  8) & 0xFF;
+    if(j < size) data[j++] = (t      ) & 0xFF;
+  }
+
+  (*out_size) = size;
+
+  return data;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -226,66 +323,28 @@ static const wchar_t __b64_chars[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 wstring Om_toBase64(const uint8_t* data, size_t size)
 {
   wstring b64;
-
-  unsigned p, n, t, rem = size % 3;  //< remaining bytes after per-triplet division
-
-  // main block, per triplets
-  for(p = 0, n = size - rem; p < n; ) {
-    t = (data[p++] << 16) | (data[p++] << 8) | data[p++];
-    b64 += __b64_chars[0x3F & (t >> 18)];
-    b64 += __b64_chars[0x3F & (t >> 12)];
-    b64 += __b64_chars[0x3F & (t >>  6)];
-    b64 += __b64_chars[0x3F & (t)];
-  }
-
-  // remaining bytes + padding
-  if(rem != 0) {
-    t = (data[p++] << 16);
-    if(rem > 1) t |= (data[p] << 8);
-    b64 += __b64_chars[0x3F & (t >> 18)];
-    b64 += __b64_chars[0x3F & (t >> 12)];
-    if(rem > 1) {
-      b64 += __b64_chars[0x3F & (t >>  6)];
-    } else {
-      b64 += L"=";
-    }
-    b64 += L"=";
-  }
-
+  __base64_encode(b64, data, size);
   return b64;
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-
 void Om_toBase64(wstring& b64, const uint8_t* data, size_t size)
 {
-  unsigned p, n, t, rem = size % 3;  //< remaining bytes after per-triplet division
-
-  // main block, per triplets
-  for(p = 0, n = size - rem; p < n; ) {
-    t = (data[p++] << 16) | (data[p++] << 8) | data[p++];
-    b64 += __b64_chars[0x3F & (t >> 18)];
-    b64 += __b64_chars[0x3F & (t >> 12)];
-    b64 += __b64_chars[0x3F & (t >>  6)];
-    b64 += __b64_chars[0x3F & (t)];
-  }
-
-  // remaining bytes + padding
-  if(rem != 0) {
-    t = (data[p++] << 16);
-    if(rem > 1) t |= (data[p] << 8);
-    b64 += __b64_chars[0x3F & (t >> 18)];
-    b64 += __b64_chars[0x3F & (t >> 12)];
-    if(rem > 1) {
-      b64 += __b64_chars[0x3F & (t >>  6)];
-    } else {
-      b64 += L"=";
-    }
-    b64 += L"=";
-  }
+  __base64_encode(b64, data, size);
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_fromBase64(size_t* size, const wstring& b64)
+{
+  return __base64_decode(size, b64);
+}
+
 
 #include <ctime>
 time_t __time_rtime;
@@ -954,7 +1013,7 @@ bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, boo
 ///
 int Om_dirDeleteRecursive(const wstring& path)
 {
-  wchar_t* path_buf = nullptr;
+  wchar_t* path_buf;
 
   try {
     path_buf = new wchar_t[path.size()+2];
@@ -1362,7 +1421,7 @@ time_t Om_itemTime(const wstring& path)
 ///
 int Om_moveToTrash(const wstring& path)
 {
-  wchar_t* path_buf = nullptr;
+  wchar_t* path_buf;
 
   try {
     path_buf = new wchar_t[path.size()+2];
@@ -1408,10 +1467,10 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   // first call to get required SECURITY_DESCRIPTOR size
   GetFileSecurityW(path.c_str(), sdMask, nullptr, 0, &sdSize);
   // allocate new SECURITY_DESCRIPTOR of the proper size
-  pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(new char[sdSize+1]);
+  pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(malloc(sdSize + 1));
   // second call to get SECURITY_DESCRIPTOR data
   if(!GetFileSecurityW(path.c_str(), sdMask, pSd, sdSize, &sdSize)) {
-    delete pSd; return false;
+    free(pSd); return false;
   }
 
   // STEP 2 - creates a "security token" of the current application process
@@ -1420,14 +1479,14 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
                 | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
-    delete pSd; return false;
+    free(pSd); return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
   // so we need to duplicate it to transform it into a standard "user" token by
   // impersonate it...
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
-    CloseHandle(hTokenProc); delete pSd;
+    CloseHandle(hTokenProc); free(pSd);
     return false;
   }
 
@@ -1479,7 +1538,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
 
   CloseHandle(hTokenProc);
   CloseHandle(hTokenUser);
-  delete pSd;
+  free(pSd);
 
   return status;
 }
@@ -1935,10 +1994,8 @@ static bool __gif_decode_common(void* gif_dec, uint8_t** out_rgb, unsigned* out_
   size_t tot_bytes = h * row_bytes;
 
   // allocate new buffer for RGB data
-  uint8_t* rgb;
-  try {
-    rgb = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
+  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgb) {
     DGifCloseFile(gif, &error);
     return false;
   }
@@ -1993,24 +2050,19 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   size_t idx_bytes = in_w * in_h;
 
   // create red, green and blue array for quantizing
-  uint8_t* in_r;
-  try {
-    in_r = new uint8_t[idx_bytes];
-  } catch(const std::bad_alloc&) {
+  uint8_t* in_r = new(std::nothrow) uint8_t[idx_bytes];
+  if(!in_r) {
     return false;
   }
-  uint8_t* in_g;
-  try {
-    in_g = new uint8_t[idx_bytes];
-  } catch(const std::bad_alloc&) {
+  uint8_t* in_g = new(std::nothrow) uint8_t[idx_bytes];
+  if(!in_g) {
     delete [] in_r;
     return false;
   }
-  uint8_t* in_b;
-  try {
-    in_b = new uint8_t[idx_bytes];
-  } catch(const std::bad_alloc&) {
-    delete [] in_r; delete [] in_g;
+  uint8_t* in_b = new(std::nothrow) uint8_t[idx_bytes];
+  if(!in_b) {
+    delete [] in_r;
+    delete [] in_g;
     return false;
   }
 
@@ -2031,19 +2083,15 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   }
 
   // allocate new buffer to receive color indices
-  uint8_t* indices;
-  try {
-    indices = new uint8_t[idx_bytes];
-  } catch(const std::bad_alloc&) {
+  uint8_t* indices = new(std::nothrow) uint8_t[idx_bytes];
+  if(!indices) {
     delete [] in_r; delete [] in_g; delete [] in_b;
     return false;
   }
 
   // allocate new color map of 256 colors
-  GifColorType* table;
-  try {
-    table = new GifColorType[256];
-  } catch(const std::bad_alloc&) {
+  GifColorType* table = new(std::nothrow) GifColorType[256];
+  if(!table) {
     delete [] in_r; delete [] in_g; delete [] in_b;
     delete [] indices;
     return false;
@@ -2262,13 +2310,10 @@ static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   // define some useful sizes
   size_t row_bytes = w * c;
   size_t tot_bytes = h * row_bytes;
+
   // allocate new buffer to receive rgb data
-  uint8_t* rgb;
-  try {
-    rgb = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgb) return false;
 
   // seek to bitmap data location and read
   fseek(in_file, bmp_head.offbits, SEEK_SET);
@@ -2338,13 +2383,10 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   // define some useful sizes
   size_t row_bytes = w * c;
   size_t tot_bytes = h * row_bytes;
+
   // allocate new buffer to receive rgb data
-  uint8_t* rgb;
-  try {
-    rgb = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgb) return false;
 
   // seek to bitmap data location
   in_ptr = in_data + bmp_head.offbits;
@@ -2387,9 +2429,10 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // compute data sizes
+  size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
   size_t row_bytes = in_w * in_c;
   size_t tot_bytes = row_bytes * in_h;
-  size_t bmp_bytes = tot_bytes + 54; // file header + info header = 54 bytes
+  size_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
   OMM_BITMAPHEADER bmp_head = {};
@@ -2398,7 +2441,7 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
   bmp_head.size = bmp_bytes;
 
   OMM_BITMAPINFOHEADER bmp_info = {};
-  bmp_info.size = 40;
+  bmp_info.size = sizeof(OMM_BITMAPINFOHEADER);
   bmp_info.width = in_w;
   bmp_info.height = in_h;
   bmp_info.planes = 1;
@@ -2410,17 +2453,15 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
   // make sure we start at begining
   fseek(out_file, 0, SEEK_SET);
   // write file header
-  if(fwrite(&bmp_head, 1, 14, out_file) != 14) return false;
+  if(fwrite(&bmp_head, 1, sizeof(OMM_BITMAPHEADER), out_file) != sizeof(OMM_BITMAPHEADER))
+    return false;
   // write info header
-  if(fwrite(&bmp_info, 1, 40, out_file) != 40) return false;
+  if(fwrite(&bmp_info, 1, sizeof(OMM_BITMAPINFOHEADER), out_file) != sizeof(OMM_BITMAPINFOHEADER))
+    return false;
 
   // allocate buffer for data translation
-  uint8_t* row;
-  try {
-    row = new uint8_t[row_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* row = new(std::nothrow) uint8_t[row_bytes];
+  if(!row) return false;
 
   // useful values for translation
   const uint8_t* sp;
@@ -2432,9 +2473,12 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
     dp = row;
     for(unsigned x = 0; x < in_w; ++x) {
       // convert RGBA to BGRA
-      dp[0] = sp[2]; dp[1] = sp[1]; dp[2] = sp[0];
+      dp[0] = sp[2];
+      dp[1] = sp[1];
+      dp[2] = sp[0];
       if(in_c == 4) dp[3] = sp[3];
-      sp += in_c; dp += in_c;
+      sp += in_c;
+      dp += in_c;
     }
     // write row to file
     if(fwrite(row, 1, row_bytes, out_file) != row_bytes) {
@@ -2463,18 +2507,19 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
 static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // compute data sizes
+  size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
   size_t row_bytes = in_w * in_c;
   size_t tot_bytes = row_bytes * in_h;
-  size_t bmp_bytes = tot_bytes + 54;
+  size_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
   OMM_BITMAPHEADER bmp_head = {};
   bmp_head.signature[0] = 0x42; bmp_head.signature[1] = 0x4D; // BM signature
-  bmp_head.offbits = 54; // file header + info header = 54 bytes
+  bmp_head.offbits = hdr_bytes; // file header + info header = 54 bytes
   bmp_head.size = bmp_bytes;
 
   OMM_BITMAPINFOHEADER bmp_info = {};
-  bmp_info.size = 40;
+  bmp_info.size = sizeof(OMM_BITMAPINFOHEADER);
   bmp_info.width = in_w;
   bmp_info.height = in_h;
   bmp_info.planes = 1;
@@ -2484,27 +2529,22 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   bmp_info.xppm = bmp_info.yppm = 0x0ec4;
 
   // allocate buffer for BMP data
-  uint8_t* bmp;
-  try {
-    bmp = new uint8_t[bmp_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* bmp = new(std::nothrow) uint8_t[bmp_bytes];
+  if(!bmp) return false;
 
   // keep pointer to buffer
   uint8_t* bmp_ptr = bmp;
+
   // write file header
-  memcpy(bmp_ptr, &bmp_head, 14); bmp_ptr += 14;
+  memcpy(bmp_ptr, &bmp_head, sizeof(OMM_BITMAPHEADER));
+  bmp_ptr += sizeof(OMM_BITMAPHEADER);
   // write info header
-  memcpy(bmp_ptr, &bmp_info, 40); bmp_ptr += 40;
+  memcpy(bmp_ptr, &bmp_info, sizeof(OMM_BITMAPINFOHEADER));
+  bmp_ptr += sizeof(OMM_BITMAPINFOHEADER);
 
   // allocate buffer for data translation
-  uint8_t* row;
-  try {
-    row = new uint8_t[row_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* row = new(std::nothrow) uint8_t[row_bytes];
+  if(!row) return false;
 
   // useful values for translation
   const uint8_t* sp;
@@ -2516,12 +2556,17 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
     dp = row;
     for(unsigned x = 0; x < in_w; ++x) {
       // convert RGBA to BGRA
-      dp[0] = sp[2]; dp[1] = sp[1]; dp[2] = sp[0];
+      dp[0] = sp[2];
+      dp[1] = sp[1];
+      dp[2] = sp[0];
       if(in_c == 4) dp[3] = sp[3];
-      sp += in_c; dp += in_c;
+      sp += in_c;
+      dp += in_c;
     }
+
     // write row to buffer
-    memcpy(bmp_ptr, row, row_bytes); bmp_ptr += row_bytes;
+    memcpy(bmp_ptr, row, row_bytes);
+    bmp_ptr += row_bytes;
   }
 
   delete [] row;
@@ -2563,15 +2608,11 @@ static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_
 
 	// define sizes
   size_t row_bytes = w * c;
-  size_t tot_bytes = h * row_bytes;
+  size_t tot_bytes = row_bytes * h;
 
   // allocate buffer to receive RGB data
-  uint8_t* rgb;
-  try {
-    rgb = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgb) return false;
 
   // row list pointer for jpeg decoder
   uint8_t* row_p[1];
@@ -2617,6 +2658,10 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
 {
   jpeg_compress_struct* jpg = reinterpret_cast<jpeg_compress_struct*>(jpg_enc);
 
+  // clamp quality value
+  if(level < 0) level = 0;
+  if(level > 100) level = 100;
+
   // define image parameters
   jpg->image_width = in_w;        //< Image width in pixels
   jpg->image_height = in_h;       //< Image height in pixels
@@ -2633,39 +2678,46 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
   // hold row size in bytes
   unsigned row_bytes = in_w * in_c;
 
-  uint8_t* row_p[1];
-
   if(in_c == 4) {
+
     // JPEG encoder does not handle RGBA source we must convert data
     const uint8_t* sp;
     uint8_t* dp;
+
     // create new buffer for one RGB row
-    try {
-      row_p[0] = new uint8_t[in_w * 3];
-    } catch(const std::bad_alloc&) {
-      return false;
-    }
+    uint8_t* row = new(std::nothrow) uint8_t[in_w * 3];
+    if(!row) return false;
+
     // give RGB data to JPEG encoder
     while(jpg->next_scanline < jpg->image_height) {
       // set source and destination pointers
       sp = in_rgb + (jpg->next_scanline * row_bytes);
-      dp = row_p[0];
+      dp = row;
       // convert RGBA to RGB
       for(unsigned i = 0; i < in_w; ++i) {
-        dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2];
-        sp += 4; dp += 3;
+        dp[0] = sp[0];
+        dp[1] = sp[1];
+        dp[2] = sp[2];
+        sp += 4;
+        dp += 3;
       }
       // send to encoder
-      jpeg_write_scanlines(jpg, row_p, 1);
+      jpeg_write_scanlines(jpg, &row, 1);
     }
-    delete [] row_p[0];
+
+    delete [] row;
+
   } else {
+
+    // pointer to source RGB row
+    uint8_t* row_p;
+
     // give RGB data to JPEG encoder
     while(jpg->next_scanline < jpg->image_height) {
       // get pointer to rows
-      row_p[0] = const_cast<uint8_t*>(in_rgb + (jpg->next_scanline * row_bytes));
+      row_p = const_cast<uint8_t*>(in_rgb + (jpg->next_scanline * row_bytes));
       // send to encoder
-      jpeg_write_scanlines(jpg, row_p, 1);
+      jpeg_write_scanlines(jpg, &row_p, 1);
     }
   }
 
@@ -2794,7 +2846,7 @@ static bool __jpg_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   jpeg_create_compress(&jpg);
 
   // set pointer params
-  unsigned long jpg_size;
+  unsigned long jpg_size = 0;
   jpeg_mem_dest(&jpg, out_data, &jpg_size);
 
   if(!__jpg_encode_common(&jpg, in_rgb, in_w, in_h, in_c, level * 10))
@@ -2837,18 +2889,12 @@ static bool __png_decode_common(void* png_dec, uint8_t** out_rgb, unsigned* out_
   size_t tot_bytes = h * row_bytes;
 
   // allocate pointer to receive RGB(A) data
-  uint8_t* rgb;
-  try {
-    rgb = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgb) return false;
 
   // allocate list of pointers for output RGB(A) rows
-  uint8_t** rows_p;
-  try {
-    rows_p = new uint8_t*[h];
-  } catch(const std::bad_alloc&) {
+  uint8_t** rows_p = new(std::nothrow) uint8_t*[h];
+  if(!rows_p) {
     delete [] rgb;
     return false;
   }
@@ -2906,8 +2952,11 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
                PNG_COMPRESSION_TYPE_DEFAULT,
                PNG_FILTER_TYPE_DEFAULT);
 
+  // clamp compression level
+  if(level < 0) level = 0;
+  if(level > 9) level = 9;
+
   // set compression level
-  if(level > 9) level = 9; // clamp to 9
   png_set_compression_level(png, level);
 
   // write info to PNG
@@ -2917,10 +2966,8 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   size_t row_bytes = in_w * in_c;
 
   // allocate list of pointers for input RGB(A) rows
-  const uint8_t** rows_p;
-  try {
-    rows_p = new const uint8_t*[in_h];
-  } catch(const std::bad_alloc&) {
+  const uint8_t** rows_p = new(std::nothrow) const uint8_t*[in_h];
+  if(!rows_p) {
     png_destroy_write_struct(&png, &png_info);
     png_free_data(png, png_info, PNG_FREE_ALL, -1);
     return false;
@@ -3507,12 +3554,8 @@ static void __image_usample(uint8_t* out_rgb, unsigned w, unsigned h, const uint
 ///
 uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
-  uint8_t* out_rgb;
-  try {
-    out_rgb = new uint8_t[(w * in_c) * h];
-  } catch(const std::bad_alloc&) {
-    return nullptr;
-  }
+  uint8_t* out_rgb = new(std::nothrow) uint8_t[(w * in_c) * h];
+  if(!out_rgb) return nullptr;
 
   // resize image to fit desired square
   if(in_w != w || in_h != h) {
@@ -3544,12 +3587,8 @@ uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint
   size_t out_row_bytes = w * in_c;
 
   // allocate new buffer for cropped data
-  uint8_t* out_rgb;
-  try {
-    out_rgb = new uint8_t[out_row_bytes * h];
-  } catch(const std::bad_alloc&) {
-    return nullptr;
-  }
+  uint8_t* out_rgb = new(std::nothrow) uint8_t[out_row_bytes * h];
+  if(!out_rgb) return nullptr;
 
   // copy required RGB data
   const uint8_t* sp;
@@ -3580,12 +3619,9 @@ uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint
 uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // create locale copy of original data
-  uint8_t* out_rgb;
-  try {
-    out_rgb = new uint8_t[(in_w * in_c) * in_h];
-  } catch(const std::bad_alloc&) {
-    return nullptr;
-  }
+  uint8_t* out_rgb = new(std::nothrow) uint8_t[(in_w * in_c) * in_h];
+  if(!out_rgb) return nullptr;
+
   memcpy(out_rgb, in_rgb, (in_w * in_c) * in_h);
 
   // resize image to fit desired size
@@ -3651,12 +3687,8 @@ HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, uns
   size_t row_bytes = (in_w * 4);
   size_t tot_bytes = row_bytes * in_h;
 
-  uint8_t* rgba;
-  try {
-    rgba = new uint8_t[tot_bytes];
-  } catch(const std::bad_alloc&) {
-    return nullptr;
-  }
+  uint8_t* rgba = new(std::nothrow) uint8_t[tot_bytes];
+  if(!rgba) return nullptr;
 
   if(in_c == 3) {
 
