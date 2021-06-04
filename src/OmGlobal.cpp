@@ -1817,7 +1817,7 @@ static int __gif_read_file_fn(GifFileType* gif, uint8_t* dst, int len)
 /// Custom structure for custom GIF write routine.
 ///
 struct __gif_read_st {
-  uint8_t*  src_data;
+  const uint8_t*  src_data;
   size_t    src_seek;
 };
 
@@ -2138,7 +2138,7 @@ static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, uint8_t* in_data, bool flip_y)
+static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
 {
   int error;
   GifFileType* gif;
@@ -2392,12 +2392,12 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
   size_t bmp_bytes = tot_bytes + 54; // file header + info header = 54 bytes
 
   // BMP headers structure
-  OMM_BITMAPHEADER bmp_head = {0};
+  OMM_BITMAPHEADER bmp_head = {};
   bmp_head.signature[0] = 0x42; bmp_head.signature[1] = 0x4D; // BM signature
   bmp_head.offbits = 54; // file header + info header = 54 bytes
   bmp_head.size = bmp_bytes;
 
-  OMM_BITMAPINFOHEADER bmp_info = {0};
+  OMM_BITMAPINFOHEADER bmp_info = {};
   bmp_info.size = 40;
   bmp_info.width = in_w;
   bmp_info.height = in_h;
@@ -2468,12 +2468,12 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   size_t bmp_bytes = tot_bytes + 54;
 
   // BMP headers structure
-  OMM_BITMAPHEADER bmp_head = {0};
+  OMM_BITMAPHEADER bmp_head = {};
   bmp_head.signature[0] = 0x42; bmp_head.signature[1] = 0x4D; // BM signature
   bmp_head.offbits = 54; // file header + info header = 54 bytes
   bmp_head.size = bmp_bytes;
 
-  OMM_BITMAPINFOHEADER bmp_info = {0};
+  OMM_BITMAPINFOHEADER bmp_info = {};
   bmp_info.size = 40;
   bmp_info.width = in_w;
   bmp_info.height = in_h;
@@ -2574,23 +2574,25 @@ static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_
   }
 
   // row list pointer for jpeg decoder
-  uint8_t* rows[1];
+  uint8_t* row_p[1];
 
   if(flip_y) {
     unsigned hmax = h - 1;
-    while (jpg->output_scanline < jpg->output_height) {
-      rows[0] = rgb + ((hmax - jpg->output_scanline) * row_bytes);
-      jpeg_read_scanlines(jpg, rows, 1); //< read one row (scanline)
+    while(jpg->output_scanline < jpg->output_height) {
+      row_p[0] = rgb + ((hmax - jpg->output_scanline) * row_bytes);
+      jpeg_read_scanlines(jpg, row_p, 1); //< read one row (scanline)
     }
   } else {
-    while (jpg->output_scanline < jpg->output_height) {
-      rows[0] = rgb + (jpg->output_scanline * row_bytes);
-      jpeg_read_scanlines(jpg, rows, 1); //< read one row (scanline)
+    while(jpg->output_scanline < jpg->output_height) {
+      row_p[0] = rgb + (jpg->output_scanline * row_bytes);
+      jpeg_read_scanlines(jpg, row_p, 1); //< read one row (scanline)
     }
   }
 
-	// cleanup
+	// finalize reading
 	jpeg_finish_decompress(jpg);
+
+  // cleanup decoder
 	jpeg_destroy_decompress(jpg);
 
 	(*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
@@ -2611,7 +2613,7 @@ static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __jpg_encode_common(void* jpg_enc, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   jpeg_compress_struct* jpg = reinterpret_cast<jpeg_compress_struct*>(jpg_enc);
 
@@ -2631,15 +2633,15 @@ static bool __jpg_encode_common(void* jpg_enc, uint8_t* in_rgb, unsigned in_w, u
   // hold row size in bytes
   unsigned row_bytes = in_w * in_c;
 
-  uint8_t* rows[1];
+  uint8_t* row_p[1];
 
   if(in_c == 4) {
     // JPEG encoder does not handle RGBA source we must convert data
-    uint8_t* sp;
+    const uint8_t* sp;
     uint8_t* dp;
     // create new buffer for one RGB row
     try {
-      rows[0] = new uint8_t[in_w * 3];
+      row_p[0] = new uint8_t[in_w * 3];
     } catch(const std::bad_alloc&) {
       return false;
     }
@@ -2647,23 +2649,23 @@ static bool __jpg_encode_common(void* jpg_enc, uint8_t* in_rgb, unsigned in_w, u
     while(jpg->next_scanline < jpg->image_height) {
       // set source and destination pointers
       sp = in_rgb + (jpg->next_scanline * row_bytes);
-      dp = rows[0];
+      dp = row_p[0];
       // convert RGBA to RGB
       for(unsigned i = 0; i < in_w; ++i) {
-        dp[0] = sp[0]; dp[1] = sp[4]; dp[2] = sp[3];
+        dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2];
         sp += 4; dp += 3;
       }
       // send to encoder
-      jpeg_write_scanlines(jpg, rows, 1);
+      jpeg_write_scanlines(jpg, row_p, 1);
     }
-    delete [] rows[0];
+    delete [] row_p[0];
   } else {
     // give RGB data to JPEG encoder
     while(jpg->next_scanline < jpg->image_height) {
       // get pointer to rows
-      rows[0] = in_rgb + (jpg->next_scanline * row_bytes);
+      row_p[0] = const_cast<uint8_t*>(in_rgb + (jpg->next_scanline * row_bytes));
       // send to encoder
-      jpeg_write_scanlines(jpg, rows, 1);
+      jpeg_write_scanlines(jpg, row_p, 1);
     }
   }
 
@@ -2719,7 +2721,7 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, uint8_t* in_data, size_t in_size, bool flip_y)
+static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
 {
   // create base object for jpeg decoder
   jpeg_decompress_struct jpg;
@@ -2748,7 +2750,7 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __jpg_encode(FILE* out_file, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __jpg_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
 
   // create base object for jpeg encoder
@@ -2780,7 +2782,7 @@ static bool __jpg_encode(FILE* out_file, uint8_t* in_rgb, unsigned in_w, unsigne
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __jpg_encode(uint8_t** out_data, size_t* out_size, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __jpg_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
 
   // create base object for jpeg encoder
@@ -2842,32 +2844,33 @@ static bool __png_decode_common(void* png_dec, uint8_t** out_rgb, unsigned* out_
     return false;
   }
 
-  // we need an array of pointers, with one pointer per row
-  uint8_t** rows;
+  // allocate list of pointers for output RGB(A) rows
+  uint8_t** rows_p;
   try {
-    rows = new uint8_t*[h];
+    rows_p = new uint8_t*[h];
   } catch(const std::bad_alloc&) {
     delete [] rgb;
     return false;
   }
 
-  // setup each pointer to a destination row in destination buffer
+  // define pointers to each row in output RGB(A) data
   if(flip_y) {
     unsigned hmax = h - 1;
-    for(unsigned y = 0; y < h; y++)
-      rows[y] = rgb + ((hmax - y) * row_bytes);
+    for(unsigned y = 0; y < h; ++y)
+      rows_p[y] = rgb + ((hmax - y) * row_bytes);
   } else {
-    for(unsigned y = 0; y < h; y++)
-      rows[y] = rgb + (y * row_bytes);
+    for(unsigned y = 0; y < h; ++y)
+      rows_p[y] = rgb + (y * row_bytes);
   }
 
   // read all rows at once
-  png_read_image(png, rows);
+  png_read_image(png, rows_p);
 
   // cleanup
   png_destroy_read_struct(&png, &png_info, nullptr);
 
-  delete[] rows;
+  // delete list of pointers
+  delete[] rows_p;
 
   // assign output values
   (*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
@@ -2913,16 +2916,32 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   // define useful sizes
   size_t row_bytes = in_w * in_c;
 
-  // send RGB data to PNG encoder
-  const uint8_t* row;
-  for(unsigned y = 0; y < in_h; ++y) {
-    row = in_rgb + (y * row_bytes);
-    png_write_row(png, row);
+  // allocate list of pointers for input RGB(A) rows
+  const uint8_t** rows_p;
+  try {
+    rows_p = new const uint8_t*[in_h];
+  } catch(const std::bad_alloc&) {
+    png_destroy_write_struct(&png, &png_info);
+    png_free_data(png, png_info, PNG_FREE_ALL, -1);
+    return false;
   }
 
+  // define pointers to each row in input RGB(A) data
+  for(unsigned y = 0; y < in_h; ++y)
+    rows_p[y] = in_rgb + (y * row_bytes);
+
+  // supply all data at once to encoder
+  png_write_image(png, const_cast<uint8_t**>(rows_p));
+
+  // finalize write process
+  png_write_end(png, nullptr);
+
   // clear PGN encoder
-  png_free_data(png, png_info, PNG_FREE_ALL, -1);
   png_destroy_write_struct(&png, &png_info);
+  png_free_data(png, png_info, PNG_FREE_ALL, -1);
+
+  // delete list of pointers
+  delete[] rows_p;
 
   return true;
 }
@@ -3111,10 +3130,15 @@ static bool __png_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y)
 {
+  FILE* in_file;
+
+  if((in_file = _wfopen(in_path.c_str(), L"rb")) == nullptr)
+    return false;
+
   // read first 8 bytes of the file
-  unsigned char buff[8];
+  uint8_t buff[8];
   fseek(in_file, 0, SEEK_SET);
   if(fread(buff, 1, 8, in_file) < 8)
     return false;
@@ -3139,6 +3163,8 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
     }
   }
 
+  fclose(in_file);
+
   return type;
 }
 
@@ -3146,7 +3172,7 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, uint8_t* in_data, size_t in_size, bool flip_y)
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
 {
   int type = __image_sign_matches(in_data);
   if(type != 0) {
@@ -3175,18 +3201,18 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveBmp(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // open file
-  FILE* fp;
+  FILE* out_file;
 
-  //if((fp = fopen(Om_toUtf8(path).c_str(), "rb")) == nullptr) {
-  if((fp = _wfopen(path.c_str(), L"wb")) == nullptr)
+  //if((fp = fopen(Om_toUtf8(out_path).c_str(), "rb")) == nullptr) {
+  if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __bmp_encode(fp, in_rgb, in_w, in_h, in_c);
+  bool result = __bmp_encode(out_file, in_rgb, in_w, in_h, in_c);
 
-  fclose(fp);
+  fclose(out_file);
 
   return result;
 }
@@ -3195,18 +3221,18 @@ bool Om_saveBmp(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsig
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveJpg(const wstring& path, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // open file
-  FILE* fp;
+  FILE* out_file;
 
-  //if((fp = fopen(Om_toUtf8(path).c_str(), "rb")) == nullptr) {
-  if((fp = _wfopen(path.c_str(), L"wb")) == nullptr)
+  //if((fp = fopen(Om_toUtf8(out_path).c_str(), "rb")) == nullptr) {
+  if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __jpg_encode(fp, in_rgb, in_w, in_h, in_c, level);
+  bool result = __jpg_encode(out_file, in_rgb, in_w, in_h, in_c, level);
 
-  fclose(fp);
+  fclose(out_file);
 
   return result;
 }
@@ -3215,18 +3241,18 @@ bool Om_saveJpg(const wstring& path, uint8_t* in_rgb, unsigned in_w, unsigned in
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_savePng(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // open file
-  FILE* fp;
+  FILE* out_file;
 
-  //if((fp = fopen(Om_toUtf8(path).c_str(), "rb")) == nullptr) {
-  if((fp = _wfopen(path.c_str(), L"wb")) == nullptr)
+  //if((fp = fopen(Om_toUtf8(out_path).c_str(), "rb")) == nullptr) {
+  if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __png_encode(fp, in_rgb, in_w, in_h, in_c, level);
+  bool result = __png_encode(out_file, in_rgb, in_w, in_h, in_c, level);
 
-  fclose(fp);
+  fclose(out_file);
 
   return result;
 }
@@ -3235,18 +3261,18 @@ bool Om_savePng(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsig
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveGif(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // open file
-  FILE* fp;
+  FILE* out_file;
 
-  //if((fp = fopen(Om_toUtf8(path).c_str(), "rb")) == nullptr) {
-  if((fp = _wfopen(path.c_str(), L"wb")) == nullptr)
+  //if((fp = fopen(Om_toUtf8(out_path).c_str(), "rb")) == nullptr) {
+  if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __gif_encode(fp, in_rgb, in_w, in_h, in_c);
+  bool result = __gif_encode(out_file, in_rgb, in_w, in_h, in_c);
 
-  fclose(fp);
+  fclose(out_file);
 
   return result;
 }
@@ -3264,7 +3290,7 @@ bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   return __jpg_encode(out_data, out_size, in_rgb, in_w, in_h, in_c, level);
 }

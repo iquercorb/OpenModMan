@@ -1141,12 +1141,12 @@ size_t Om_loadPlainText(string& text, const wstring& path);
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_file : Input image file pointer to read data.
+/// \param[in]  in_path : Input image file path to read data.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
 /// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y);
 
 /// \brief Load image.
 ///
@@ -1162,13 +1162,13 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 /// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, uint8_t* in_data, size_t in_size, bool flip_y);
+int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y);
 
 /// \brief Save image as BMP.
 ///
 /// Save given image data as BMP file.
 ///
-/// \param[out] path      : File path to save.
+/// \param[out] out_path  : File path to save.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
@@ -1176,13 +1176,13 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveBmp(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Save image as JPEG.
 ///
 /// Save given image data as JPEG file.
 ///
-/// \param[out] path      : File path to save.
+/// \param[out] out_path  : File path to save.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
@@ -1191,13 +1191,13 @@ bool Om_saveBmp(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsig
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveJpg(const wstring& path, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
 
 /// \brief Save image as PNG.
 ///
 /// Save given image data as PNG file.
 ///
-/// \param[out] path      : File path to save.
+/// \param[out] out_path  : File path to save.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
@@ -1206,13 +1206,13 @@ bool Om_saveJpg(const wstring& path, uint8_t* in_rgb, unsigned in_w, unsigned in
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_savePng(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
 
 /// \brief Save image as GIF.
 ///
 /// Save given image data as GIF file.
 ///
-/// \param[out] path      : File path to save.
+/// \param[out] out_path  : File path to save.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
@@ -1220,7 +1220,7 @@ bool Om_savePng(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsig
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveGif(const wstring& path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode BMP data.
 ///
@@ -1251,7 +1251,7 @@ bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
+bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level);
 
 /// \brief Encode PNG data.
 ///
