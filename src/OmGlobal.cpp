@@ -219,15 +219,10 @@ uint64_t Om_getXXHash3(const wstring& str)
 
 
 static const wchar_t __b64_enc_table[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-static const uint8_t __b64_dec_table[] = {0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-                                          0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-                                          0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 62,  0,  0,  0, 63,
-                                         52, 53, 54, 55, 56, 57, 58, 59, 60, 61,  0,  0,  0,  0,  0,  0,
-                                          0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
-                                         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,  0,  0,  0,  0,  0,
-                                          0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-                                         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  0,  0,  0,  0,  0};
+static const uint8_t __b64_dec_table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,62, 0, 0, 0,63,52,53,54,55,56,57,58,59,60,61, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, 0, 0, 0, 0, 0,
+                                          0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51, 0, 0, 0, 0, 0};
 
 /// \brief Base64 encode.
 ///
@@ -239,35 +234,34 @@ static const uint8_t __b64_dec_table[] = {0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 ///
 static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, size_t in_size)
 {
-  unsigned p = 0, r = in_size % 3; //< remaining bytes after per-triplet division
+  // compute string size now
+  size_t size = 4 * ((in_size + 2) / 3);
+
+  // reserve buffer for encoded data
+  out_b64.reserve(size);
+
+  uint8_t b[3];
   uint32_t t;
 
   // main block, per triplets
-  unsigned n = in_size - r;
-  for(unsigned i = 0; i < n; ++i) {
-    t  = in_data[p++] << 16;
-    t |= in_data[p++] << 8;
-    t |= in_data[p++];
+  for(unsigned i = 0; i < in_size; ) {
+    b[0] = (i < in_size) ? in_data[i++] : 0;
+    b[1] = (i < in_size) ? in_data[i++] : 0;
+    b[2] = (i < in_size) ? in_data[i++] : 0;
+    t = (b[0] << 0x10) + (b[1] << 0x08) + b[2];
     out_b64 += __b64_enc_table[0x3F & (t >> 18)];
     out_b64 += __b64_enc_table[0x3F & (t >> 12)];
     out_b64 += __b64_enc_table[0x3F & (t >>  6)];
     out_b64 += __b64_enc_table[0x3F & (t)];
   }
 
-  // remaining bytes + padding
-  if(r != 0) {
-    t = in_data[p] << 16; p++;
-    if(r > 1) t |= in_data[p] << 8;
-    out_b64 += __b64_enc_table[0x3F & (t >> 18)];
-    out_b64 += __b64_enc_table[0x3F & (t >> 12)];
-    if(r > 1) {
-      out_b64 += __b64_enc_table[0x3F & (t >>  6)];
-    } else {
-      out_b64 += L'=';
-    }
-    out_b64 += L'=';
+  unsigned r = in_size % 3; //< remaining bytes after per-triplet division
+  if(r > 0) {
+    for(unsigned i = 0; i < 3 - r; ++i)
+      out_b64[size - i] = L'=';
   }
 }
+
 
 /// \brief Base64 decode.
 ///
@@ -295,20 +289,17 @@ static inline uint8_t* __base64_decode(size_t* out_size, const wstring& in_b64)
 
   // decode data
   uint32_t t;
-  uint8_t a, b, c, d;
+  uint8_t s[4];
 
   for(unsigned i = 0, j = 0; i < in_b64.size(); ) {
-
-    a = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
-    b = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
-    c = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
-    d = (in_b64[i] == L'=') ? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
-
-    t = (a << 18) + (b << 12) + (c << 6) + d;
-
-    if(j < size) data[j++] = (t >> 16) & 0xFF;
-    if(j < size) data[j++] = (t >>  8) & 0xFF;
-    if(j < size) data[j++] = (t      ) & 0xFF;
+    s[0] = (in_b64[i] == L'=')? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    s[1] = (in_b64[i] == L'=')? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    s[2] = (in_b64[i] == L'=')? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    s[3] = (in_b64[i] == L'=')? 0 : __b64_dec_table[static_cast<uint8_t>(in_b64[i])]; i++;
+    t = (s[0] << 18) + (s[1] << 12) + (s[2] << 6) + s[3];
+    if(j < size) data[j++] = 0xFF & (t >> 16);
+    if(j < size) data[j++] = 0xFF & (t >>  8);
+    if(j < size) data[j++] = 0xFF & (t);
   }
 
   (*out_size) = size;
