@@ -532,21 +532,19 @@
 
 1595317607 d:\atelier\dev\cpp\openmodman\include\omstrings.h
 
-1622109349 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
+1622279607 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
 	<windows.h>
 	<commctrl.h>
 	<richedit.h>
 	"resource.h"
 
-1622103789 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
+1622279607 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
 
-1605705881 source:d:\atelier\code\cpp\openmodman\main.cpp
-	"OmGlobal.h"
-	"OmVersion.h"
+1622836654 source:d:\atelier\code\cpp\openmodman\main.cpp
 	"OmManager.h"
 	"gui/OmUiMain.h"
 
-1621836519 d:\atelier\code\cpp\openmodman\include\omglobal.h
+1622820460 d:\atelier\code\cpp\openmodman\include\omglobal.h
 	<cstdio>
 	<cstdlib>
 	<iostream>
@@ -576,7 +574,7 @@
 	"OmConfig.h"
 	"OmContext.h"
 
-1594028416 d:\atelier\code\cpp\openmodman\include\omconfig.h
+1622284505 d:\atelier\code\cpp\openmodman\include\omconfig.h
 	"OmGlobal.h"
 	"OmXmlDoc.h"
 
@@ -595,9 +593,10 @@
 	"OmPackage.h"
 	"OmRepository.h"
 
-1613581194 d:\atelier\code\cpp\openmodman\include\ompackage.h
+1622735391 d:\atelier\code\cpp\openmodman\include\ompackage.h
 	"OmGlobal.h"
 	"OmVersion.h"
+	"OmImage.h"
 
 1621612778 d:\atelier\code\cpp\openmodman\include\ombatch.h
 	"OmGlobal.h"
@@ -617,7 +616,7 @@
 1595112494 d:\atelier\code\cpp\openmodman\include\gui\omuihelpabout.h
 	"OmDialog.h"
 
-1621850304 source:d:\atelier\code\cpp\openmodman\src\gui\omuihelplog.cpp
+1622714731 source:d:\atelier\code\cpp\openmodman\src\gui\omuihelplog.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiHelpLog.h"
@@ -625,7 +624,7 @@
 1595112494 d:\atelier\code\cpp\openmodman\include\gui\omuihelplog.h
 	"OmDialog.h"
 
-1622099779 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
+1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
@@ -639,7 +638,7 @@
 	"gui/OmUiHelpAbout.h"
 	"gui/OmUiWizCtx.h"
 	"gui/OmUiNewBat.h"
-	"gui/OmUiNewRep.h"
+	"gui/OmUiAddRep.h"
 	"gui/OmUiNewLoc.h"
 	"gui/OmUiNewPkg.h"
 
@@ -670,10 +669,11 @@
 1605695040 d:\atelier\code\cpp\openmodman\include\gui\omuinewloc.h
 	"OmDialog.h"
 
-1595114355 d:\atelier\code\cpp\openmodman\include\gui\omuinewpkg.h
+1622736488 d:\atelier\code\cpp\openmodman\include\gui\omuinewpkg.h
 	"OmDialog.h"
+	"OmImage.h"
 
-1622112531 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
+1622728513 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMainLib.h"
@@ -697,12 +697,13 @@
 	"gui/OmUiNewLoc.h"
 	"OmManager.h"
 
-1621762366 source:d:\atelier\code\cpp\openmodman\src\gui\omuinewpkg.cpp
+1622736634 source:d:\atelier\code\cpp\openmodman\src\gui\omuinewpkg.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiNewPkg.h"
 	"OmPackage.h"
 	"gui/OmUiProgress.h"
+	"OmImage.h"
 
 1595117391 d:\atelier\code\cpp\openmodman\include\gui\omuiprogress.h
 	"OmDialog.h"
@@ -780,14 +781,14 @@
 	"gui/OmUiPropCtxStg.h"
 	"gui/OmUiPropCtx.h"
 
-1622101240 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproploc.cpp
+1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproploc.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiPropLoc.h"
 	"gui/OmUiPropLocStg.h"
 	"gui/OmUiPropLocBck.h"
 	"gui/OmUiPropLocNet.h"
-	"gui/OmUiNewRep.h"
+	"gui/OmUiAddRep.h"
 	"gui/OmUiProgress.h"
 	"gui/OmUiMain.h"
 
@@ -855,7 +856,7 @@
 	"gui/OmUiPropPkg.h"
 	"gui/OmUiPropPkgBck.h"
 
-1595325260 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproppkgsrc.cpp
+1622729027 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproppkgsrc.cpp
 	"gui/res/resource.h"
 	"OmPackage.h"
 	"gui/OmUiPropPkg.h"
@@ -922,13 +923,16 @@
 	"gui/res/resource.h"
 	"OmDialogWiz.h"
 
-1622114202 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
+1622836240 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
 	"OmGlobal.h"
 	<regex>
 	"thirdparty/xxhash/xxh3.h"
 	<ctime>
 	<random>
-	"thirdparty/miniz/miniz.h"
+	"thirdparty/jpeg/jpeglib.h"
+	"thirdparty/png/png.h"
+	"thirdparty/gif/gif_lib.h"
+	"thirdparty/gif/quantize.c"
 
 1593021784 d:\atelier\code\cpp\openmodman\include\thirdparty\xxhash\xxh3.h
 	"xxhash.h"
@@ -964,7 +968,7 @@
 	<string.h>
 	<stdio.h>
 
-1622114302 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
+1622203440 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
 	"OmManager.h"
 	"OmContext.h"
 	"OmLocation.h"
@@ -1028,7 +1032,7 @@
 1593020097 source:d:\atelier\code\cpp\openmodman\src\thirdparty\xxhash\xxhash.c
 	"xxhash.h"
 
-1613581805 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
+1622837030 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
 	"thirdparty/miniz/miniz.h"
 	"OmZipFile.h"
 	"OmXmlDoc.h"
@@ -1036,6 +1040,7 @@
 	"OmContext.h"
 	"OmLocation.h"
 	"OmPackage.h"
+	"OmImage.h"
 	<time.h>
 
 1622091062 d:\atelier\code\cpp\openmodman\include\gui\omuimainrep.h
@@ -1130,22 +1135,740 @@
 1622111677 d:\atelier\code\cpp\openmodman\include\gui\omuimainnet.h
 	"OmDialog.h"
 
-1622112588 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainnet.cpp
+1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainnet.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMainNet.h"
 	"gui/OmUiNewLoc.h"
-	"gui/OmUiNewRep.h"
+	"gui/OmUiAddRep.h"
 	"gui/OmUiMain.h"
 
 1622103916 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocnet.h
 	<OmDialog.h>
 
-1622106665 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproplocnet.cpp
+1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproplocnet.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
-	"gui/OmUiNewRep.h"
+	"gui/OmUiAddRep.h"
 	"gui/OmUiPropLocNet.h"
 	"gui/OmUiPropLoc.h"
 	"OmSocket.h"
+
+1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiaddrep.cpp
+	"gui/res/resource.h"
+	"gui/OmUiAddRep.h"
+	"OmManager.h"
+	"OmSocket.h"
+
+1622279640 d:\atelier\code\cpp\openmodman\include\gui\omuiaddrep.h
+	"OmDialog.h"
+
+1319008720 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jaricom.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1530353598 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jinclude.h
+	"jconfig.h"
+	<stddef.h>
+	<stdlib.h>
+	<sys/types.h>
+	<stdio.h>
+	<strings.h>
+	<string.h>
+
+1570532367 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jconfig.h
+
+1493121142 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jpeglib.h
+	"jconfig.h"
+	"jmorecfg.h"
+	"jpegint.h"
+	"jerror.h"
+
+1379402420 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jmorecfg.h
+
+1490979890 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jpegint.h
+
+1335702938 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jerror.h
+
+1266167430 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcapimin.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1374574430 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcapistd.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1382483802 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcarith.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1315737608 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jccoefct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1369520130 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jccolor.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1369313250 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcdctmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1493067142 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jdct.h
+
+1570532097 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jchuff.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1493141126 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcinit.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1344707418 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcmainct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1369483996 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcmarker.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1494949482 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcmaster.c
+	"jinclude.h"
+	"jpeglib.h"
+
+876337282 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcomapi.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1372677208 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcparam.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1066585636 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcprepct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1066745616 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jcsample.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1494943366 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jctrans.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1365784064 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdapimin.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1374574436 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdapistd.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1450734054 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdarith.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1491832658 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdatadst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+
+1442256898 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdatasrc.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+
+1315740724 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdcoefct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1491567686 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdcolor.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1369313304 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jddctmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1462445334 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdhuff.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1364910054 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdinput.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1457002624 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdmainct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1384705558 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdmarker.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1492513314 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdmaster.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1491567808 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdmerge.c
+	"jinclude.h"
+	"jpeglib.h"
+
+820952864 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdpostct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1449742602 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdsample.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1252885718 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jdtrans.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1438169268 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jerror.c
+	<windows.h>
+	"jinclude.h"
+	"jpeglib.h"
+	"jversion.h"
+	"jerror.h"
+	"jerror.h"
+
+1515924254 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jversion.h
+
+1491566582 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jfdctflt.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1491566596 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jfdctfst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1438861522 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jfdctint.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1491566706 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jidctflt.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1491566816 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jidctfst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1458737328 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jidctint.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+820952986 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jmemansi.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+
+870634716 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\jmemsys.h
+	<Files.h>
+
+1344430002 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jmemmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+
+874254910 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jmemname.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+	<errno.h>
+
+820953078 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jmemnobs.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+
+1315736954 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jquant1.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1315737054 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jquant2.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1315736278 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jutils.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1505562016 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdbmp.c
+	"cdjpeg.h"
+
+1067896398 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\cdjpeg.h
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+	"cderror.h"
+
+1505488960 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\cderror.h
+
+848403524 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdcolmap.c
+	"cdjpeg.h"
+
+872281190 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdgif.c
+	"cdjpeg.h"
+
+1505485214 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdppm.c
+	"cdjpeg.h"
+
+820953140 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdrle.c
+	"cdjpeg.h"
+	<rle.h>
+
+1444417950 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdswitch.c
+	"cdjpeg.h"
+	<ctype.h>
+
+1505560366 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\rdtarga.c
+	"cdjpeg.h"
+
+1506277822 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\transupp.c
+	"jinclude.h"
+	"jpeglib.h"
+	"transupp.h"
+	<ctype.h>
+
+1379074230 d:\atelier\code\cpp\openmodman\include\thirdparty\jpeg\transupp.h
+
+1491840586 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\wrbmp.c
+	"cdjpeg.h"
+
+1491841458 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\wrgif.c
+	"cdjpeg.h"
+
+1491841904 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\wrppm.c
+	"cdjpeg.h"
+
+1491843532 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\wrrle.c
+	"cdjpeg.h"
+	<rle.h>
+
+1491844052 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\wrtarga.c
+	"cdjpeg.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\png.c
+	"pngpriv.h"
+
+1530354653 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pngpriv.h
+	<stdlib.h>
+	<string.h>
+	<config.h>
+	"pnglibconf.h"
+	"pngprefix.h"
+	"pngusr.h"
+	"png.h"
+	<float.h>
+	<fp.h>
+	<math.h>
+	<m68881.h>
+	<mem.h>
+	<alloc.h>
+	<windows.h>
+	"pngstruct.h"
+	"pnginfo.h"
+	"pngdebug.h"
+
+1530353752 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pnglibconf.h
+
+1506674457 d:\atelier\code\cpp\openmodman\include\thirdparty\png\png.h
+	"pnglibconf.h"
+	"pngconf.h"
+
+1506674457 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pngconf.h
+	<limits.h>
+	<stddef.h>
+	<stdio.h>
+	<setjmp.h>
+	<time.h>
+
+1506674457 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pngstruct.h
+	"zlib.h"
+
+1484504980 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\zlib.h
+	"zconf.h"
+
+1530355089 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\zconf.h
+	<stddef.h>
+	<windows.h>
+	<limits.h>
+	<sys/types.h>
+	<stdarg.h>
+	<stddef.h>
+	<unistd.h>
+	<unixio.h>
+
+1506674457 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pnginfo.h
+
+1506674457 d:\atelier\code\cpp\openmodman\include\thirdparty\png\pngdebug.h
+	<crtdbg.h>
+	<stdio.h>
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngerror.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngget.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngmem.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngpread.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngread.c
+	"pngpriv.h"
+	<errno.h>
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngrio.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngrtran.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngrutil.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngset.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngtrans.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngwio.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngwrite.c
+	"pngpriv.h"
+	<errno.h>
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngwtran.c
+	"pngpriv.h"
+
+1506674457 source:d:\atelier\code\cpp\openmodman\src\thirdparty\png\pngwutil.c
+	"pngpriv.h"
+
+1483259830 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\crc32.c
+	<stdio.h>
+	"zutil.h"
+	"crc32.h"
+
+1483259830 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\zutil.h
+	"zlib.h"
+	<stddef.h>
+	<string.h>
+	<stdlib.h>
+	<alloc.h>
+	<malloc.h>
+	<malloc.h>
+	<unix.h>
+	<stdio.h>
+
+1335741492 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\crc32.h
+
+1484504980 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\deflate.c
+	"deflate.h"
+
+1483259830 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\deflate.h
+	"zutil.h"
+
+1483259830 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inflate.c
+	"zutil.h"
+	"inftrees.h"
+	"inflate.h"
+	"inffast.h"
+	"inffixed.h"
+	<stdio.h>
+
+1271650526 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inftrees.h
+
+1483259830 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inflate.h
+
+1271650561 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inffast.h
+
+1317871952 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inffixed.h
+
+1483259830 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\adler32.c
+	"zutil.h"
+
+1484503634 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\trees.c
+	"deflate.h"
+	<ctype.h>
+	"trees.h"
+	<stdio.h>
+
+1271611958 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\trees.h
+
+1484504980 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inffast.c
+	"zutil.h"
+	"inftrees.h"
+	"inflate.h"
+	"inffast.h"
+
+1484504980 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\inftrees.c
+	"zutil.h"
+	"inftrees.h"
+
+1484504980 source:d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\zutil.c
+	"zutil.h"
+	"gzguts.h"
+	<stdlib.h>
+
+1530358139 d:\atelier\code\cpp\openmodman\src\thirdparty\zlib\gzguts.h
+	<stdio.h>
+	"zlib.h"
+	<string.h>
+	<stdlib.h>
+	<limits.h>
+	<fcntl.h>
+	<stddef.h>
+	<io.h>
+	<windows.h>
+	<errno.h>
+
+1622741037 source:d:\atelier\code\cpp\openmodman\src\omimage.cpp
+	"OmImage.h"
+
+1622715016 d:\atelier\code\cpp\openmodman\include\omimage.h
+	"OmGlobal.h"
+
+1561361009 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\dgif_lib.c
+	<stdlib.h>
+	<limits.h>
+	<stdint.h>
+	<fcntl.h>
+	<stdio.h>
+	<string.h>
+	<io.h>
+	<unistd.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1561392973 d:\atelier\code\cpp\openmodman\include\thirdparty\gif\gif_lib.h
+	<stddef.h>
+	<stdbool.h>
+
+1561361293 d:\atelier\code\cpp\openmodman\include\thirdparty\gif\gif_lib_private.h
+	"gif_lib.h"
+	"gif_hash.h"
+
+1561361246 d:\atelier\code\cpp\openmodman\include\thirdparty\gif\gif_hash.h
+	<unistd.h>
+	<stdint.h>
+
+1561361017 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\egif_lib.c
+	<stdint.h>
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<fcntl.h>
+	<io.h>
+	<unistd.h>
+	<sys/types.h>
+	<sys/stat.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1561361067 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gif2rgb.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	<fcntl.h>
+	<io.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361576 d:\atelier\code\cpp\openmodman\include\thirdparty\gif\getarg.h
+	"gif_lib.h"
+	<stdbool.h>
+
+1561361167 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gif_err.c
+	<stdio.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1561361224 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gif_font.c
+	<string.h>
+	<stdlib.h>
+	"gif_lib.h"
+
+1561361236 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gif_hash.c
+	<stdint.h>
+	<stdlib.h>
+	<fcntl.h>
+	<stdio.h>
+	<string.h>
+	"gif_lib.h"
+	"gif_hash.h"
+	"gif_lib_private.h"
+
+1561361077 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifalloc.c
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1561361092 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifbg.c
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	<stdlib.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561380583 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifbuild.c
+	<stdlib.h>
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<ctype.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361144 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifclrmp.c
+	<math.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	<stdlib.h>
+	<assert.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361151 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifcolor.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361159 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifecho.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361203 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\giffilter.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<fcntl.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361211 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\giffix.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361255 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifhisto.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361265 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifinto.c
+	<fcntl.h>
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	<io.h>
+	<unistd.h>
+	"gif_lib.h"
+	"getarg.h"
+	<errno.h>
+	<sys/stat.h>
+
+1561361325 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifsponge.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<fcntl.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361335 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\giftext.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<fcntl.h>
+	<stdbool.h>
+	<io.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361342 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\giftool.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<fcntl.h>
+	<stdbool.h>
+	"getopt.h"
+	"gif_lib.h"
+	"getarg.h"
+
+1561361350 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\gifwedge.c
+	<stdlib.h>
+	<stdio.h>
+	<ctype.h>
+	<string.h>
+	<stdbool.h>
+	"gif_lib.h"
+	"getarg.h"
+
+1561361495 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\openbsd-reallocarray.c
+	<sys/types.h>
+	<errno.h>
+	<stdint.h>
+	<stdlib.h>
+
+1561361391 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\qprintf.c
+	<stdio.h>
+	<stdbool.h>
+	<stdarg.h>
+	"gif_lib.h"
+
+1622567673 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\quantize.c
+	<stdlib.h>
+	<stdio.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1622567673 d:\atelier\code\cpp\openmodman\src\thirdparty\gif\quantize.c
+	<stdlib.h>
+	<stdio.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
 
