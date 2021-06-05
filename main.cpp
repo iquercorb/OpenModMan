@@ -14,9 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "OmGlobal.h"
-#include "OmVersion.h"
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
 

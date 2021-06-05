@@ -300,7 +300,7 @@ bool OmPackage::sourceParse(const wstring& path)
             try {
               data = new uint8_t[s];
             } catch (std::bad_alloc& ba) {
-              this->_error = L"Picture file \""+pic_name+L"\"";
+              this->_error = L"Image file \""+pic_name+L"\"";
               this->_error += OMM_STR_ERR_ZIPINFL(Om_fromUtf8(ba.what()));
               this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
             }
@@ -308,19 +308,19 @@ bool OmPackage::sourceParse(const wstring& path)
               if(src_zip.extract(zcrd_index, data, s)) {
                 // finally load picture data
                 if(!this->_image.open(data, s, OMM_PKG_THMB_SIZE)) {
-                  this->_error = L"Picture file \""+pic_name+L"\"";
+                  this->_error = L"Image file \""+pic_name+L"\"";
                   this->_error += L"cannot be loaded: "+_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
-                this->_error = L"Picture file \""+pic_name+L"\"";
+                this->_error = L"Image file \""+pic_name+L"\"";
                 this->_error += OMM_STR_ERR_ZIPINFL(src_zip.lastErrorStr());
                 this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
               }
               delete [] data;
             }
           } else {
-            this->_error =  L"Referenced picture file \""+pic_name+L"\"";
+            this->_error =  L"Referenced image file \""+pic_name+L"\"";
             this->_error += L" was not found in ZIP archive.";
             this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
           }
@@ -391,29 +391,29 @@ bool OmPackage::sourceParse(const wstring& path)
             }
           }
           // lookup for snapshot
-          if(Om_namesMatches(zcd_entry, L"picture.jpg") ||
-             Om_namesMatches(zcd_entry, L"picture.png") ||
-             Om_namesMatches(zcd_entry, L"picture.bmp") ||
-             Om_namesMatches(zcd_entry, L"picture.gif")) {
+          if(Om_namesMatches(zcd_entry, L"snapshot.jpg") ||
+             Om_namesMatches(zcd_entry, L"snapshot.png") ||
+             Om_namesMatches(zcd_entry, L"snapshot.bmp") ||
+             Om_namesMatches(zcd_entry, L"snapshot.gif")) {
 
             uint8_t* data = nullptr;
             size_t s = src_zip.size(i);
             try {
               data = new uint8_t[s];
             } catch (std::bad_alloc& ba) {
-              this->_error = L"Picture file \""+zcd_entry+L"\"";
+              this->_error = L"Image file \""+zcd_entry+L"\"";
               this->_error += OMM_STR_ERR_ZIPINFL(Om_fromUtf8(ba.what()));
               this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
             }
             if(data != nullptr) {
               if(src_zip.extract(i, data, s)) {
                 if(!this->_image.open(data, s, OMM_PKG_THMB_SIZE)) {
-                  this->_error = L"Picture file \""+zcd_entry+L"\"";
+                  this->_error = L"Image file \""+zcd_entry+L"\"";
                   this->_error += L"cannot be loaded: "+this->_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
-                this->_error = L"Picture file \""+zcd_entry+L"\"";
+                this->_error = L"Image file \""+zcd_entry+L"\"";
                 this->_error += OMM_STR_ERR_ZIPINFL(src_zip.lastErrorStr());
                 this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
               }
@@ -521,7 +521,7 @@ bool OmPackage::backupParse(const wstring& path)
           return false;
         }
         if(!bck_zip.extract(zcd_index, cbuf, s)) {
-          this->_error = L"Picture file \""+zcd_entry+L"\"";
+          this->_error = L"Image file \""+zcd_entry+L"\"";
           this->_error += OMM_STR_ERR_ZIPINFL(bck_zip.lastErrorStr());
           this->log(0, L"Package("+Om_getFilePart(this->_backup)+L") Parse Backup", this->_error);
           bck_zip.close();
@@ -1155,7 +1155,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
     def_xml.addChild(L"description").setContent(this->_desc);
   }
 
-  // add picture to archive and source definition
+  // add image to archive and source definition
   if(this->_image.valid()) {
     // check image type to create file name
     switch(this->_image.data_type())

@@ -39,7 +39,7 @@ class OmConfig
     ///
     /// Default object destructor
     ///
-    virtual ~OmConfig();
+    ~OmConfig();
 
 
     /// \brief Get file path.
