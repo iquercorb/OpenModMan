@@ -15,14 +15,14 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "gui/res/resource.h"
-#include "gui/OmUiNewRep.h"
+#include "gui/OmUiAddRep.h"
 #include "OmManager.h"
 #include "OmSocket.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewRep::OmUiNewRep(HINSTANCE hins) : OmDialog(hins),
+OmUiAddRep::OmUiAddRep(HINSTANCE hins) : OmDialog(hins),
   _location(nullptr),
   _hFtMonos(Om_createFont(12, 400, L"Consolas")),
   _hFtHeavy(Om_createFont(12, 800, L"Ms Shell Dlg")),
@@ -35,7 +35,7 @@ OmUiNewRep::OmUiNewRep(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewRep::~OmUiNewRep()
+OmUiAddRep::~OmUiAddRep()
 {
 
 }
@@ -44,16 +44,16 @@ OmUiNewRep::~OmUiNewRep()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiNewRep::id() const
+long OmUiAddRep::id() const
 {
-  return IDD_NEW_REP;
+  return IDD_ADD_REP;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewRep::_log(const wstring& log)
+void OmUiAddRep::_log(const wstring& log)
 {
   wstring entry;
 
@@ -80,7 +80,7 @@ void OmUiNewRep::_log(const wstring& log)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewRep::_repoChk()
+void OmUiAddRep::_repoChk()
 {
   OmSocket sock;
 
@@ -137,7 +137,7 @@ void OmUiNewRep::_repoChk()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewRep::_apply()
+bool OmUiAddRep::_apply()
 {
   OmLocation* pLoc = this->_location;
 
@@ -200,7 +200,7 @@ bool OmUiNewRep::_apply()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewRep::_onInit()
+void OmUiAddRep::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INPT1,  L"Repository base URL");
@@ -227,7 +227,7 @@ void OmUiNewRep::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewRep::_onResize()
+void OmUiAddRep::_onResize()
 {
   // Repository URL Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 10, 10, 80, 9);
@@ -256,7 +256,7 @@ void OmUiNewRep::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

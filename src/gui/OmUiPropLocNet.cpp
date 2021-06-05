@@ -17,7 +17,7 @@
 
 #include "gui/res/resource.h"
 #include "OmManager.h"
-#include "gui/OmUiNewRep.h"
+#include "gui/OmUiAddRep.h"
 #include "gui/OmUiPropLocNet.h"
 #include "gui/OmUiPropLoc.h"
 #include "OmSocket.h"
@@ -256,7 +256,7 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewRep* pUiNewRep = static_cast<OmUiNewRep*>(this->siblingById(IDD_NEW_REP));
+        OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
         pUiNewRep->setLocation(pLoc);
         pUiNewRep->open(true);
       }

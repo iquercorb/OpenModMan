@@ -28,7 +28,7 @@
 #include "gui/OmUiHelpAbout.h"
 #include "gui/OmUiWizCtx.h"
 #include "gui/OmUiNewBat.h"
-#include "gui/OmUiNewRep.h"
+#include "gui/OmUiAddRep.h"
 #include "gui/OmUiNewLoc.h"
 #include "gui/OmUiNewPkg.h"
 
@@ -62,7 +62,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiWizCtx(hins));     //< Dialog for New Context Wizard
   this->addChild(new OmUiNewPkg(hins));     //< Dialog for new Package
   this->addChild(new OmUiNewBat(hins));     //< Dialog for new Batch
-  this->addChild(new OmUiNewRep(hins));     //< Dialog for new Repository
+  this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
   this->addChild(new OmUiNewLoc(hins));     //< Dialog for adding Location
 
   // set the accelerator table for the dialog

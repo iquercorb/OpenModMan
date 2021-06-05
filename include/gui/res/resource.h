@@ -11,7 +11,7 @@
 #define IDD_NEW_CTX                             711
 #define IDD_NEW_PKG                             712
 #define IDD_NEW_BAT                             713
-#define IDD_NEW_REP                             714
+#define IDD_ADD_REP                             714
 #define IDD_PROP_MAN                            720
 #define IDD_PROP_MAN_GLE                        721
 #define IDD_PROP_MAN_PKG                        722

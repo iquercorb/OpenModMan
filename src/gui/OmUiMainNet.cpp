@@ -19,7 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiMainNet.h"
 #include "gui/OmUiNewLoc.h"
-#include "gui/OmUiNewRep.h"
+#include "gui/OmUiAddRep.h"
 #include "gui/OmUiMain.h"
 
 
@@ -523,7 +523,7 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_NEW:
       {
-        OmUiNewRep* pUiNewRep = static_cast<OmUiNewRep*>(this->siblingById(IDD_NEW_REP));
+        OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
         pUiNewRep->setLocation(pLoc);
         pUiNewRep->open(true);
       }

@@ -21,7 +21,7 @@
 #include "gui/OmUiPropLocStg.h"
 #include "gui/OmUiPropLocBck.h"
 #include "gui/OmUiPropLocNet.h"
-#include "gui/OmUiNewRep.h"
+#include "gui/OmUiAddRep.h"
 #include "gui/OmUiProgress.h"
 #include "gui/OmUiMain.h"
 
@@ -47,7 +47,7 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
   this->_addPage(L"Network", new OmUiPropLocNet(hins));
 
   // creates child sub-dialogs
-  this->addChild(new OmUiNewRep(hins));     //< Dialog for new Repository
+  this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
   this->addChild(new OmUiProgress(hins));   //< for Location backup transfer or deletion
 }
 

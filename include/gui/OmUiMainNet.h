@@ -14,18 +14,18 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUINEWREP_H
-#define OMUINEWREP_H
+
+#ifndef OmUiMainNet_H
+#define OmUiMainNet_H
 
 #include "OmDialog.h"
 
-class OmLocation;
-
-/// \brief New Repository dialog
+/// \brief Main window Repositories Tab
 ///
-/// OmDialog class derived for New Repository dialog window
+/// OmDialog class derived for Main Window Repositories Tab_Control child
+/// dialog window
 ///
-class OmUiNewRep : public OmDialog
+class OmUiMainNet : public OmDialog
 {
   public:
 
@@ -35,13 +35,13 @@ class OmUiNewRep : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiNewRep(HINSTANCE hins);
+    OmUiMainNet(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiNewRep();
+    ~OmUiMainNet();
 
     /// \brief Get resource id.
     ///
@@ -51,52 +51,47 @@ class OmUiNewRep : public OmDialog
     ///
     long id() const;
 
-    /// \brief Get associated Location.
+    /// \brief Select Location
     ///
-    /// Returns associated Location object previously defined
-    /// via OmUiNewLoc.setLocation
+    /// Select or unselect Location then refresh dialog.
     ///
-    /// \return Associated Location or nullptr if none.
+    /// \param[in]  i  Index of Location to select or -1 to select none.
     ///
-    OmLocation* location() const {
-      return _location;
-    }
-
-    /// \brief Set associated Location.
-    ///
-    /// Define the associated Location, which the dialog is intended to
-    /// work with and on. A valid Location must be set in order before
-    /// opening the dialog.
-    ///
-    /// \param[in]  pCtx  : Location object to associate.
-    ///
-    void setLocation(OmLocation* pLoc) {
-      _location = pLoc;
-    }
-
-  protected:
+    void selLocation(int i);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _location;
+    void                _onSelectRep();
+
+    HFONT               _hFtTitle;
 
     HFONT               _hFtMonos;
 
-    HFONT               _hFtHeavy;
+    HBITMAP             _hBmBlank;
 
-    int                 _check;
+    HBITMAP             _hBmBcNew;
 
-    void                _log(const wstring& log);
+    HBITMAP             _hBmBcDel;
 
-    void                _repoChk();
+    HBITMAP             _hBmBcRef;
 
-    bool                _apply();
+    void                _repoDel();
+
+    void                _reloadLocCb();
+
+    void                _reloadRepLb();
 
     void                _onInit();
 
+    void                _onShow();
+
     void                _onResize();
+
+    void                _onRefresh();
+
+    void                _onQuit();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUINEWREP_H
+#endif // OmUiMainNet_H
