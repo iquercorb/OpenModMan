@@ -532,15 +532,15 @@
 
 1595317607 d:\atelier\dev\cpp\openmodman\include\omstrings.h
 
-1622279607 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
+1622971872 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
 	<windows.h>
 	<commctrl.h>
 	<richedit.h>
 	"resource.h"
 
-1622279607 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
+1622971510 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
 
-1622836654 source:d:\atelier\code\cpp\openmodman\main.cpp
+1622837451 source:d:\atelier\code\cpp\openmodman\main.cpp
 	"OmManager.h"
 	"gui/OmUiMain.h"
 
@@ -602,7 +602,7 @@
 	"OmGlobal.h"
 	"OmConfig.h"
 
-1595265100 d:\atelier\code\cpp\openmodman\include\gui\omuimain.h
+1622970749 d:\atelier\code\cpp\openmodman\include\gui\omuimain.h
 	"OmDialog.h"
 
 1604843602 d:\atelier\code\cpp\openmodman\include\omdialog.h
@@ -621,10 +621,10 @@
 	"OmManager.h"
 	"gui/OmUiHelpLog.h"
 
-1595112494 d:\atelier\code\cpp\openmodman\include\gui\omuihelplog.h
+1622970459 d:\atelier\code\cpp\openmodman\include\gui\omuihelplog.h
 	"OmDialog.h"
 
-1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
+1622971510 source:d:\atelier\code\cpp\openmodman\src\gui\omuimain.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
@@ -635,29 +635,30 @@
 	"gui/OmUiPropMan.h"
 	"gui/OmUiPropBat.h"
 	"gui/OmUiHelpLog.h"
-	"gui/OmUiHelpAbout.h"
+	"gui/OmUiHelpAbt.h"
 	"gui/OmUiWizCtx.h"
-	"gui/OmUiNewBat.h"
+	"gui/OmUiAddBat.h"
 	"gui/OmUiAddRep.h"
-	"gui/OmUiNewLoc.h"
-	"gui/OmUiNewPkg.h"
+	"gui/OmUiAddLoc.h"
+	"gui/OmUiToolPkg.h"
+	"gui/OmUiToolRep.h"
 
-1621591220 d:\atelier\code\cpp\openmodman\include\gui\omuimainlib.h
+1622971333 d:\atelier\code\cpp\openmodman\include\gui\omuimainlib.h
 	"OmDialog.h"
 
-1595347413 d:\atelier\code\cpp\openmodman\include\gui\omuipropctx.h
+1622970840 d:\atelier\code\cpp\openmodman\include\gui\omuipropctx.h
 	"OmDialogProp.h"
 
 1595323353 d:\atelier\code\cpp\openmodman\include\omdialogprop.h
 	"OmDialog.h"
 
-1595347418 d:\atelier\code\cpp\openmodman\include\gui\omuiproploc.h
+1622970906 d:\atelier\code\cpp\openmodman\include\gui\omuiproploc.h
 	"OmDialogProp.h"
 
-1595347423 d:\atelier\code\cpp\openmodman\include\gui\omuipropman.h
+1622970976 d:\atelier\code\cpp\openmodman\include\gui\omuipropman.h
 	"OmDialogProp.h"
 
-1594930936 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctx.h
+1622971164 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctx.h
 	"OmDialogWiz.h"
 
 1595114840 d:\atelier\code\cpp\openmodman\include\omdialogwiz.h
@@ -673,14 +674,14 @@
 	"OmDialog.h"
 	"OmImage.h"
 
-1622728513 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
+1622971496 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainlib.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMainLib.h"
 	"gui/OmUiPropPkg.h"
 	"gui/OmUiPropBat.h"
-	"gui/OmUiNewLoc.h"
-	"gui/OmUiNewBat.h"
+	"gui/OmUiAddLoc.h"
+	"gui/OmUiAddBat.h"
 	"gui/OmUiMain.h"
 
 1595269837 d:\atelier\code\cpp\openmodman\include\gui\omuiproppkg.h
@@ -705,7 +706,7 @@
 	"gui/OmUiProgress.h"
 	"OmImage.h"
 
-1595117391 d:\atelier\code\cpp\openmodman\include\gui\omuiprogress.h
+1622971333 d:\atelier\code\cpp\openmodman\include\gui\omuiprogress.h
 	"OmDialog.h"
 
 1595117391 source:d:\atelier\code\cpp\openmodman\src\gui\omuiprogress.cpp
@@ -719,10 +720,10 @@
 	"gui/OmUiPropBat.h"
 	"gui/OmUiPropBatStg.h"
 
-1621599421 d:\atelier\code\cpp\openmodman\include\gui\omuipropbat.h
+1622970840 d:\atelier\code\cpp\openmodman\include\gui\omuipropbat.h
 	"OmDialogProp.h"
 
-1621613374 d:\atelier\code\cpp\openmodman\include\gui\omuipropbatstg.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropbatstg.h
 	"OmDialog.h"
 
 1621694802 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropbatstg.cpp
@@ -733,7 +734,7 @@
 	"gui/OmUiPropBat.h"
 	"gui/OmUiPropBatStg.h"
 
-1595347012 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctx.cpp
+1622969691 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctx.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
@@ -741,35 +742,35 @@
 	"gui/OmUiPropCtxStg.h"
 	"gui/OmUiPropCtxLoc.h"
 	"gui/OmUiPropCtxBat.h"
-	"gui/OmUiNewLoc.h"
+	"gui/OmUiAddLoc.h"
 	"gui/OmUiPropLoc.h"
-	"gui/OmUiNewBat.h"
+	"gui/OmUiAddBat.h"
 	"gui/OmUiPropBat.h"
 	"gui/OmUiProgress.h"
 
-1595115675 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxstg.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxstg.h
 	"OmDialog.h"
 
-1595233388 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxloc.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxloc.h
 	"OmDialog.h"
 
-1595113555 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxbat.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropctxbat.h
 	"OmDialog.h"
 
-1621599531 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxbat.cpp
+1622969640 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxbat.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
-	"gui/OmUiNewBat.h"
+	"gui/OmUiAddBat.h"
 	"gui/OmUiPropBat.h"
 	"gui/OmUiPropCtx.h"
 	"gui/OmUiPropCtxBat.h"
 
-1621679611 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
+1622971496 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropctxloc.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMain.h"
-	"gui/OmUiNewLoc.h"
+	"gui/OmUiAddLoc.h"
 	"gui/OmUiProgress.h"
 	"gui/OmUiPropCtx.h"
 	"gui/OmUiPropCtxLoc.h"
@@ -781,7 +782,7 @@
 	"gui/OmUiPropCtxStg.h"
 	"gui/OmUiPropCtx.h"
 
-1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproploc.cpp
+1622972120 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproploc.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiPropLoc.h"
@@ -792,10 +793,10 @@
 	"gui/OmUiProgress.h"
 	"gui/OmUiMain.h"
 
-1622100008 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocstg.h
+1622971031 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocstg.h
 	"OmDialog.h"
 
-1621673720 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocbck.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocbck.h
 	"OmDialog.h"
 
 1621678857 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproplocbck.cpp
@@ -819,10 +820,10 @@
 	"gui/OmUiPropManGle.h"
 	"gui/OmUiPropManPkg.h"
 
-1594932641 d:\atelier\code\cpp\openmodman\include\gui\omuipropmangle.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropmangle.h
 	"OmDialog.h"
 
-1594933349 d:\atelier\code\cpp\openmodman\include\gui\omuipropmanpkg.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropmanpkg.h
 	"OmDialog.h"
 
 1595325208 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropmangle.cpp
@@ -844,10 +845,10 @@
 	"gui/OmUiPropPkgSrc.h"
 	"gui/OmUiPropPkgBck.h"
 
-1595112527 d:\atelier\code\cpp\openmodman\include\gui\omuiproppkgsrc.h
+1622971287 d:\atelier\code\cpp\openmodman\include\gui\omuiproppkgsrc.h
 	"OmDialog.h"
 
-1595112494 d:\atelier\code\cpp\openmodman\include\gui\omuiproppkgbck.h
+1622971290 d:\atelier\code\cpp\openmodman\include\gui\omuiproppkgbck.h
 	"OmDialog.h"
 
 1595325255 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproppkgbck.cpp
@@ -872,13 +873,13 @@
 	"OmManager.h"
 	"OmContext.h"
 
-1594923879 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxbeg.h
+1622971277 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxbeg.h
 	"OmDialog.h"
 
-1594923894 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxcfg.h
+1622971277 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxcfg.h
 	"OmDialog.h"
 
-1594923957 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxloc.h
+1622971272 d:\atelier\code\cpp\openmodman\include\gui\omuiwizctxloc.h
 	"OmDialog.h"
 
 1595110322 source:d:\atelier\code\cpp\openmodman\src\gui\omuiwizctxbeg.cpp
@@ -923,7 +924,7 @@
 	"gui/res/resource.h"
 	"OmDialogWiz.h"
 
-1622836240 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
+1622967462 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
 	"OmGlobal.h"
 	<regex>
 	"thirdparty/xxhash/xxh3.h"
@@ -1105,7 +1106,7 @@
 
 1604824394 d:\atelier\code\cpp\openmodman\include\thirdparty\curl\typecheck-gcc.h
 
-1621768647 source:d:\atelier\code\cpp\openmodman\src\omsocket.cpp
+1622972359 source:d:\atelier\code\cpp\openmodman\src\omsocket.cpp
 	"OmSocket.h"
 	<curl/curl.h>
 
@@ -1132,18 +1133,18 @@
 1613745582 d:\atelier\code\cpp\openmodman\include\gui\omuipropbatlst.h
 	"OmDialog.h"
 
-1622111677 d:\atelier\code\cpp\openmodman\include\gui\omuimainnet.h
+1622971333 d:\atelier\code\cpp\openmodman\include\gui\omuimainnet.h
 	"OmDialog.h"
 
-1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainnet.cpp
+1622971496 source:d:\atelier\code\cpp\openmodman\src\gui\omuimainnet.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiMainNet.h"
-	"gui/OmUiNewLoc.h"
+	"gui/OmUiAddLoc.h"
 	"gui/OmUiAddRep.h"
 	"gui/OmUiMain.h"
 
-1622103916 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocnet.h
+1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuiproplocnet.h
 	<OmDialog.h>
 
 1622279640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiproplocnet.cpp
@@ -1160,7 +1161,7 @@
 	"OmManager.h"
 	"OmSocket.h"
 
-1622279640 d:\atelier\code\cpp\openmodman\include\gui\omuiaddrep.h
+1622970416 d:\atelier\code\cpp\openmodman\include\gui\omuiaddrep.h
 	"OmDialog.h"
 
 1319008720 source:d:\atelier\code\cpp\openmodman\src\thirdparty\jpeg\jaricom.c
@@ -1871,4 +1872,55 @@
 	<stdio.h>
 	"gif_lib.h"
 	"gif_lib_private.h"
+
+1622968403 d:\atelier\code\cpp\openmodman\include\gui\omuiedirep.h
+	"OmDialog.h"
+
+1622968846 source:d:\atelier\code\cpp\openmodman\src\gui\omuiedirep.cpp
+	"gui/res/resource.h"
+	"gui/OmUiEdiRep.h"
+
+1622969640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiaddbat.cpp
+	"gui/res/resource.h"
+	"gui/OmUiAddBat.h"
+	"OmManager.h"
+	"OmBatch.h"
+
+1622970393 d:\atelier\code\cpp\openmodman\include\gui\omuiaddbat.h
+	"OmDialog.h"
+
+1622971496 source:d:\atelier\code\cpp\openmodman\src\gui\omuiaddloc.cpp
+	"gui/res/resource.h"
+	"gui/OmUiAddLoc.h"
+	"OmManager.h"
+
+1622970406 d:\atelier\code\cpp\openmodman\include\gui\omuiaddloc.h
+	"OmDialog.h"
+
+1622971510 source:d:\atelier\code\cpp\openmodman\src\gui\omuihelpabt.cpp
+	"gui/res/resource.h"
+	"OmManager.h"
+	"gui/OmUiHelpAbt.h"
+
+1622970435 d:\atelier\code\cpp\openmodman\include\gui\omuihelpabt.h
+	"OmDialog.h"
+
+1622971395 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolpkg.cpp
+	"gui/res/resource.h"
+	"OmManager.h"
+	"gui/OmUiToolPkg.h"
+	"OmPackage.h"
+	"gui/OmUiProgress.h"
+	"OmImage.h"
+
+1622971112 d:\atelier\code\cpp\openmodman\include\gui\omuitoolpkg.h
+	"OmDialog.h"
+	"OmImage.h"
+
+1622971414 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolrep.cpp
+	"gui/res/resource.h"
+	"gui/OmUiToolRep.h"
+
+1622971132 d:\atelier\code\cpp\openmodman\include\gui\omuitoolrep.h
+	"OmDialog.h"
 

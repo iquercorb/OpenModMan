@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIMAIN_H
 #define OMUIMAIN_H
 
@@ -24,9 +23,9 @@
 #define IDM_FILE_RECENT_PATH      40990
 
 
-/// \brief Application main window
+/// \brief Application Main window
 ///
-/// OmDialog class derived for the application main window
+/// OmDialog class derived for the application Main dialog window
 ///
 class OmUiMain : public OmDialog
 {

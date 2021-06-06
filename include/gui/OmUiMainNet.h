@@ -14,16 +14,14 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef OmUiMainNet_H
-#define OmUiMainNet_H
+#ifndef OMUIMAINNET_H
+#define OMUIMAINNET_H
 
 #include "OmDialog.h"
 
-/// \brief Main window Repositories Tab
+/// \brief Main window - Network Tab child
 ///
-/// OmDialog class derived for Main Window Repositories Tab_Control child
-/// dialog window
+/// OmDialog class derived for Main window Network tab child dialog window
 ///
 class OmUiMainNet : public OmDialog
 {
@@ -94,4 +92,4 @@ class OmUiMainNet : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OmUiMainNet_H
+#endif // OMUIMAINNET_H

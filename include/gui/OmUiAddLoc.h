@@ -14,18 +14,18 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPSTMAKE_H
-#define OMUIPSTMAKE_H
+#ifndef OMUIADDLOC_H
+#define OMUIADDLOC_H
 
 #include "OmDialog.h"
 
 class OmContext;
 
-/// \brief New Batch dialog
+/// \brief Add Location dialog
 ///
-/// OmDialog class derived for New Batch dialog window
+/// OmDialog class derived for Add Location dialog window
 ///
-class OmUiNewBat : public OmDialog
+class OmUiAddLoc : public OmDialog
 {
   public:
 
@@ -35,13 +35,13 @@ class OmUiNewBat : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiNewBat(HINSTANCE hins);
+    OmUiAddLoc(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiNewBat();
+    ~OmUiAddLoc();
 
     /// \brief Get resource id.
     ///
@@ -54,7 +54,7 @@ class OmUiNewBat : public OmDialog
     /// \brief Get associated Context.
     ///
     /// Returns associated Context object previously defined
-    /// via OmUiNewLoc.setContext
+    /// via OmUiAddLoc.setContext
     ///
     /// \return Associated Context or nullptr if none.
     ///
@@ -80,26 +80,6 @@ class OmUiNewBat : public OmDialog
 
     OmContext*                _context;
 
-    vector<vector<int>>       _excLs;
-
-    vector<vector<int>>       _incLs;
-
-    HBITMAP                   _hBmBcUp;
-
-    HBITMAP                   _hBmBcDn;
-
-    void                      _rebuildPkgLb();
-
-    void                      _qucikFromCur();
-
-    void                      _upPkg();
-
-    void                      _dnPkg();
-
-    void                      _addPkg();
-
-    void                      _remPkg();
-
     bool                      _apply();
 
     void                      _onInit();
@@ -109,4 +89,4 @@ class OmUiNewBat : public OmDialog
     bool                      _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPSTMAKE_H
+#endif // OMUIADDLOC_H

@@ -15,13 +15,13 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "gui/res/resource.h"
-#include "gui/OmUiNewLoc.h"
+#include "gui/OmUiAddLoc.h"
 #include "OmManager.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewLoc::OmUiNewLoc(HINSTANCE hins) : OmDialog(hins),
+OmUiAddLoc::OmUiAddLoc(HINSTANCE hins) : OmDialog(hins),
   _context(nullptr)
 {
 
@@ -31,7 +31,7 @@ OmUiNewLoc::OmUiNewLoc(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewLoc::~OmUiNewLoc()
+OmUiAddLoc::~OmUiAddLoc()
 {
 
 }
@@ -40,16 +40,16 @@ OmUiNewLoc::~OmUiNewLoc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiNewLoc::id() const
+long OmUiAddLoc::id() const
 {
-  return IDD_NEW_LOC;
+  return IDD_ADD_LOC;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewLoc::_apply()
+bool OmUiAddLoc::_apply()
 {
   OmContext* pCtx = this->_context;
 
@@ -115,7 +115,7 @@ bool OmUiNewLoc::_apply()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewLoc::_onInit()
+void OmUiAddLoc::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
@@ -173,7 +173,7 @@ void OmUiNewLoc::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewLoc::_onResize()
+void OmUiAddLoc::_onResize()
 {
   // Location title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 10, 10, this->width()-25, 9);
@@ -205,7 +205,7 @@ void OmUiNewLoc::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPLOCSETG_H
-#define OMUIPROPLOCSETG_H
+#ifndef OMUIPROPLOCSTG_H
+#define OMUIPROPLOCSTG_H
 
 #include "OmDialog.h"
 
@@ -24,10 +24,9 @@
 #define LOC_PROP_STG_LIBRARY   2
 #define LOC_PROP_STG_BACKUP    3
 
-/// \brief Location Properties Settings Tab
+/// \brief Location Properties / Settings tab child
 ///
-/// OmDialog class derived for Location Properties Settings Tab_Control child
-/// dialog window
+/// OmDialog class derived for Location Properties / Settings tab child dialog window
 ///
 class OmUiPropLocStg : public OmDialog
 {
@@ -91,4 +90,4 @@ class OmUiPropLocStg : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROPLOCSETG_H
+#endif // OMUIPROPLOCSTG_H

@@ -14,16 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIHELPLOG_H
-#define OMUIHELPLOG_H
+#ifndef OMUITOOLREP_H
+#define OMUITOOLREP_H
 
 #include "OmDialog.h"
 
-/// \brief Debug Log dialog
+/// \brief Repository Editor tool dialog
 ///
-/// OmDialog class derived for Debug Log dialog window
+/// OmDialog class derived for Repository Editor tool dialog window
 ///
-class OmUiHelpLog : public OmDialog
+class OmUiToolRep : public OmDialog
 {
   public:
 
@@ -33,13 +33,13 @@ class OmUiHelpLog : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiHelpLog(HINSTANCE hins);
+    OmUiToolRep(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiHelpLog();
+    ~OmUiToolRep();
 
     /// \brief Get resource id.
     ///
@@ -51,7 +51,7 @@ class OmUiHelpLog : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _hFtMonos;
+    bool                _apply();
 
     void                _onInit();
 
@@ -60,4 +60,4 @@ class OmUiHelpLog : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIHELPLOG_H
+#endif // OMUITOOLREP_H

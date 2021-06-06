@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPBAT_H
 #define OMUIPROPBAT_H
 
@@ -22,9 +21,9 @@
 
 class OmBatch;
 
-/// \brief Batch Properties Dialog
+/// \brief Batch Properties parent dialog
 ///
-/// OmDialogProp class derived for Batch Properties dialog window.
+/// OmDialogProp class derived for Batch Properties parent dialog window.
 ///
 class OmUiPropBat : public OmDialogProp
 {

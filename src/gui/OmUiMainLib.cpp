@@ -20,8 +20,8 @@
 #include "gui/OmUiMainLib.h"
 #include "gui/OmUiPropPkg.h"
 #include "gui/OmUiPropBat.h"
-#include "gui/OmUiNewLoc.h"
-#include "gui/OmUiNewBat.h"
+#include "gui/OmUiAddLoc.h"
+#include "gui/OmUiAddBat.h"
 #include "gui/OmUiMain.h"
 
 
@@ -825,7 +825,7 @@ void OmUiMainLib::_reloadLocCb()
                   L"Do you want to configure a new Location now ?";
 
     if(Om_dialogBoxQuerry(this->_hwnd, L"No Location found", qry)) {
-      OmUiNewLoc* pUiNewLoc = static_cast<OmUiNewLoc*>(this->siblingById(IDD_NEW_LOC));
+      OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
       pUiNewLoc->setContext(pCtx);
       pUiNewLoc->open(true);
     }
@@ -1488,7 +1488,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_NEW:
       {
-        OmUiNewBat* pUiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
         pUiNewBat->setContext(pCtx);
         pUiNewBat->open(true);
       }

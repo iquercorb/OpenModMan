@@ -14,16 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIHELPABOUT_H
-#define OMUIHELPABOUT_H
+#ifndef OMUIHELPABT_H
+#define OMUIHELPABT_H
 
 #include "OmDialog.h"
 
-/// \brief About dialog
+/// \brief Help-About dialog
 ///
-/// OmDialog class derived for About window dialog
+/// OmDialog class derived for Help-About window dialog
 ///
-class OmUiHelpAbout : public OmDialog
+class OmUiHelpAbt : public OmDialog
 {
   public:
 
@@ -33,13 +33,13 @@ class OmUiHelpAbout : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiHelpAbout(HINSTANCE hins);
+    OmUiHelpAbt(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiHelpAbout();
+    ~OmUiHelpAbt();
 
     /// \brief Get resource id.
     ///
@@ -60,4 +60,4 @@ class OmUiHelpAbout : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIHELPABOUT_H
+#endif // OMUIHELPABT_H

@@ -18,7 +18,7 @@
 #include "gui/res/resource.h"
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
-#include "gui/OmUiNewLoc.h"
+#include "gui/OmUiAddLoc.h"
 #include "gui/OmUiProgress.h"
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropCtxLoc.h"
@@ -419,7 +419,7 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewLoc* pUiNewLoc = static_cast<OmUiNewLoc*>(this->siblingById(IDD_NEW_LOC));
+        OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
         pUiNewLoc->setContext(pCtx);
         pUiNewLoc->open(true);
       }

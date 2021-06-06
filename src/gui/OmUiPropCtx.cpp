@@ -22,9 +22,9 @@
 #include "gui/OmUiPropCtxStg.h"
 #include "gui/OmUiPropCtxLoc.h"
 #include "gui/OmUiPropCtxBat.h"
-#include "gui/OmUiNewLoc.h"
+#include "gui/OmUiAddLoc.h"
 #include "gui/OmUiPropLoc.h"
-#include "gui/OmUiNewBat.h"
+#include "gui/OmUiAddBat.h"
 #include "gui/OmUiPropBat.h"
 #include "gui/OmUiProgress.h"
 
@@ -41,8 +41,8 @@ OmUiPropCtx::OmUiPropCtx(HINSTANCE hins) : OmDialogProp(hins),
   this->_addPage(L"Locations", new OmUiPropCtxLoc(hins));
   this->_addPage(L"Batches", new OmUiPropCtxBat(hins));
 
-  this->addChild(new OmUiNewLoc(hins));     //< Dialog for Location creation
-  this->addChild(new OmUiNewBat(hins));     //< Dialog for Batch creation
+  this->addChild(new OmUiAddLoc(hins));     //< Dialog for Location creation
+  this->addChild(new OmUiAddBat(hins));     //< Dialog for Batch creation
   this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location properties
   this->addChild(new OmUiPropBat(hins));    //< Dialog for Location properties
   this->addChild(new OmUiProgress(hins));   //< for Location backup cleaning

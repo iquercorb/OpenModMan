@@ -14,17 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPLOCBACK_H
-#define OMUIPROPLOCBACK_H
+#ifndef OMUIPROPLOCBCK_H
+#define OMUIPROPLOCBCK_H
 
 #include "OmDialog.h"
 
 #define LOC_PROP_BCK_COMP_LEVEL   0
 
-/// \brief Location Properties Backup Tab
+/// \brief Location Properties / Backups tab child
 ///
-/// OmDialog class derived for Location Properties Backup Tab_Control child
-/// dialog window
+/// OmDialog class derived for Location Properties / Backups tab child dialog window
 ///
 class OmUiPropLocBck : public OmDialog
 {
@@ -94,4 +93,4 @@ class OmUiPropLocBck : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROPLOCBACK_H
+#endif // OMUIPROPLOCBCK_H

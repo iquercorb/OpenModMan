@@ -14,16 +14,14 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef OMUIWIZPGLOCCFG_H
-#define OMUIWIZPGLOCCFG_H
+#ifndef OMUIWIZCTXLOC_H
+#define OMUIWIZCTXLOC_H
 
 #include "OmDialog.h"
 
-/// \brief Context Wizard Location params Page
+/// \brief New Context Wizard / Location page child
 ///
-/// OmDialog class derived for Context creation Wizard Location params child
-/// dialog window
+/// OmDialog class derived for New Context Wizard / Location page child dialog window
 ///
 class OmUiWizCtxLoc : public OmDialog
 {
@@ -77,4 +75,4 @@ class OmUiWizCtxLoc : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIWIZPGLOCCFG_H
+#endif // OMUIWIZCTXLOC_H

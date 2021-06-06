@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPCTXLOCS_H
 #define OMUIPROPCTXLOCS_H
 
@@ -22,10 +21,9 @@
 
 #define CTX_PROP_LOC_ORDER   0
 
-/// \brief Context Properties Locations Tab
+/// \brief Context Properties / Locations tab child
 ///
-/// OmDialog class derived for Context Properties Locations Tab_Control child
-/// dialog window
+/// OmDialog class derived for Context Properties / Locations tab child dialog window
 ///
 class OmUiPropCtxLoc : public OmDialog
 {

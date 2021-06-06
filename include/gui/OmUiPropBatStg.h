@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPBATSTG_H
 #define OMUIPROPBATSTG_H
 
@@ -23,10 +22,9 @@
 #define BAT_PROP_STG_TITLE  0
 #define BAT_PROP_STG_INSLS  1
 
-/// \brief Batch Properties Setting Tab
+/// \brief Batch Properties / Setting tab child
 ///
-/// OmDialog class derived for Batch Properties Setting Tab_Control child
-/// dialog window
+/// OmDialog class derived for Batch Properties / Settings tab child dialog window
 ///
 class OmUiPropBatStg : public OmDialog
 {

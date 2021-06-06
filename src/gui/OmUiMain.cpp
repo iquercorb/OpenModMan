@@ -25,12 +25,13 @@
 #include "gui/OmUiPropMan.h"
 #include "gui/OmUiPropBat.h"
 #include "gui/OmUiHelpLog.h"
-#include "gui/OmUiHelpAbout.h"
+#include "gui/OmUiHelpAbt.h"
 #include "gui/OmUiWizCtx.h"
-#include "gui/OmUiNewBat.h"
+#include "gui/OmUiAddBat.h"
 #include "gui/OmUiAddRep.h"
-#include "gui/OmUiNewLoc.h"
-#include "gui/OmUiNewPkg.h"
+#include "gui/OmUiAddLoc.h"
+#include "gui/OmUiToolPkg.h"
+#include "gui/OmUiToolRep.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -49,21 +50,22 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   _hMenuHelp(nullptr)
 {
   // create child tab dialogs
-  this->_addPage(L"Library", new OmUiMainLib(hins));
-  this->_addPage(L"Network", new OmUiMainNet(hins)); // net ready yet
+  this->_addPage(L"Library", new OmUiMainLib(hins)); // Library Tab
+  this->_addPage(L"Network", new OmUiMainNet(hins)); // Network Tab
 
   // add children dialogs
-  this->addChild(new OmUiPropMan(hins));    //< Dialog for general settings
-  this->addChild(new OmUiPropCtx(hins));    //< Dialog for Context properties
-  this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location properties
-  this->addChild(new OmUiPropBat(hins));    //< Dialog for Location properties
-  this->addChild(new OmUiHelpLog(hins));    //< Dialog for help debug log
-  this->addChild(new OmUiHelpAbout(hins));  //< Dialog for help debug log
+  this->addChild(new OmUiPropMan(hins));    //< Dialog for Manager Options
+  this->addChild(new OmUiPropCtx(hins));    //< Dialog for Context Properties
+  this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location Properties
+  this->addChild(new OmUiPropBat(hins));    //< Dialog for Batch Properties
+  this->addChild(new OmUiHelpLog(hins));    //< Dialog for Help Debug log
+  this->addChild(new OmUiHelpAbt(hins));  //< Dialog for Help About
   this->addChild(new OmUiWizCtx(hins));     //< Dialog for New Context Wizard
-  this->addChild(new OmUiNewPkg(hins));     //< Dialog for new Package
-  this->addChild(new OmUiNewBat(hins));     //< Dialog for new Batch
-  this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
-  this->addChild(new OmUiNewLoc(hins));     //< Dialog for adding Location
+  this->addChild(new OmUiToolPkg(hins));     //< Dialog for New Package
+  this->addChild(new OmUiAddBat(hins));     //< Dialog for New Batch
+  this->addChild(new OmUiAddLoc(hins));     //< Dialog for Adding Location
+  this->addChild(new OmUiAddRep(hins));     //< Dialog for Add Repository
+  this->addChild(new OmUiToolRep(hins));     //< Dialog for Repository Editor
 
   // set the accelerator table for the dialog
   this->setAccelerator(IDR_ACCEL);
@@ -611,8 +613,8 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->childById(IDD_WIZ_CTX)->open(); // New Context Wizard
       break;
 
-    case IDM_FILE_NEW_PKG:
-      this->childById(IDD_NEW_PKG)->open();
+    case IDM_TOOLS_EDI_PKG:
+      this->childById(IDD_TOOL_PKG)->open();
       break;
 
     case IDM_FILE_OPEN:
@@ -654,7 +656,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_CTX_ADDL:
       if(pMgr->curContext()) {
-        OmUiNewLoc* pUiNewLoc = static_cast<OmUiNewLoc*>(this->childById(IDD_NEW_LOC));
+        OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->childById(IDD_ADD_LOC));
         pUiNewLoc->setContext(pMgr->curContext());
         pUiNewLoc->open(true);
       }
@@ -680,6 +682,10 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->viewDetails();
       break;
 
+    case IDM_TOOLS_EDI_REP:
+      this->childById(IDD_TOOL_REP)->open();
+      break;
+
     case IDM_EDIT_OPTIONS:
       this->childById(IDD_PROP_MAN)->open();
       break;
@@ -689,7 +695,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_HELP_ABOUT:
-      this->childById(IDD_HELP_ABOUT)->open();
+      this->childById(IDD_HELP_ABT)->open();
       break;
     }
   }

@@ -21,10 +21,9 @@
 
 #define MAN_PROP_PKG_PACKAGE_FLAGS    0
 
-/// \brief Application Options Packages Tab
+/// \brief Manager Options / Packages tab child
 ///
-/// OmDialog class derived for Application Options Packages Tab_Control child
-/// dialog window
+/// OmDialog class derived for Manager Options / Packages tab child dialog window
 ///
 class OmUiPropManPkg : public OmDialog
 {

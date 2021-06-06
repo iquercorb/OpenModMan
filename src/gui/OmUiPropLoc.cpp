@@ -78,7 +78,7 @@ bool OmUiPropLoc::checkChanges()
   OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
-  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
+  //OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   bool changed = false;
 
@@ -138,11 +138,12 @@ bool OmUiPropLoc::applyChanges()
   OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
-  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
+ // OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   wstring loc_name, loc_dst, loc_lib, loc_bck;
 
-  bool cust_lib, cust_bck;
+  bool cust_lib = false;
+  bool cust_bck = false;
 
   // Step 1, verify everything
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title

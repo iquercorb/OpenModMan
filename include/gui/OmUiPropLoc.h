@@ -21,9 +21,9 @@
 
 class OmLocation;
 
-/// \brief Location Properties Dialog
+/// \brief Location Properties parent dialog
 ///
-/// OmDialogProp class derived for Location Properties dialog window.
+/// OmDialogProp class derived for Location Properties parent dialog window.
 ///
 class OmUiPropLoc : public OmDialogProp
 {

@@ -19,9 +19,9 @@
 
 #include "OmDialogWiz.h"
 
-/// \brief New Context Wizard
+/// \brief New Context Wizard parent dialog
 ///
-/// OmDialogWiz class derived for new Context & First Location Wizard Dialog
+/// OmDialogWiz class derived for New Context Wizard parent dialog window
 ///
 class OmUiWizCtx : public OmDialogWiz
 {

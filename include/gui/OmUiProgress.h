@@ -14,15 +14,14 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef OMUIPROCPGRS_H
-#define OMUIPROCPGRS_H
+#ifndef OMUIPROGRESS_H
+#define OMUIPROGRESS_H
 
 #include "OmDialog.h"
 
-/// \brief Custom Process Progression dialog
+/// \brief Progression dialog
 ///
-/// OmDialog class derived for customizable process progression dialog
+/// OmDialog class derived for Progression dialog
 ///
 class OmUiProgress : public OmDialog
 {
@@ -125,4 +124,4 @@ class OmUiProgress : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROCPGRS_H
+#endif // OMUIPROGRESS_H

@@ -19,9 +19,9 @@
 
 #include "OmDialogProp.h"
 
-/// \brief Application Options dialog
+/// \brief Manager Options parent dialog
 ///
-/// OmDialogProp class derived for Application Options dialog window
+/// OmDialogProp class derived for Manager Options parent dialog window.
 ///
 class OmUiPropMan : public OmDialogProp
 {

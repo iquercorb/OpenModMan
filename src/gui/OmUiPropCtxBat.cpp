@@ -18,7 +18,7 @@
 #include "gui/res/resource.h"
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
-#include "gui/OmUiNewBat.h"
+#include "gui/OmUiAddBat.h"
 #include "gui/OmUiPropBat.h"
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropCtxBat.h"
@@ -292,7 +292,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< New button for Location(s) list
       {
-        OmUiNewBat* pUiNewBat = static_cast<OmUiNewBat*>(this->siblingById(IDD_NEW_BAT));
+        OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
         pUiNewBat->setContext(pCtx);
         pUiNewBat->open(true);
       }

@@ -14,16 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OmUiAddRep_H
-#define OmUiAddRep_H
+#ifndef OMUIADDREP_H
+#define OMUIADDREP_H
 
 #include "OmDialog.h"
 
 class OmLocation;
 
-/// \brief New Repository dialog
+/// \brief Add Repository dialog
 ///
-/// OmDialog class derived for New Repository dialog window
+/// OmDialog class derived for Add Repository dialog window
 ///
 class OmUiAddRep : public OmDialog
 {
@@ -54,7 +54,7 @@ class OmUiAddRep : public OmDialog
     /// \brief Get associated Location.
     ///
     /// Returns associated Location object previously defined
-    /// via OmUiNewLoc.setLocation
+    /// via OmUiAddLoc.setLocation
     ///
     /// \return Associated Location or nullptr if none.
     ///
@@ -99,4 +99,4 @@ class OmUiAddRep : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OmUiAddRep_H
+#endif // OMUIADDREP_H

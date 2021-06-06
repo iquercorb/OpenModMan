@@ -22,10 +22,9 @@
 #define MAN_PROP_GLE_ICON_SIZE          0
 #define MAN_PROP_GLE_STARTUP_CONTEXTS    1
 
-/// \brief Application Options General Tab
+/// \brief Manager Options / General tab child
 ///
-/// OmDialog class derived for Application Options General Tab_Control child
-/// dialog window
+/// OmDialog class derived for Manager Options / General tab child dialog window
 ///
 class OmUiPropManGle : public OmDialog
 {

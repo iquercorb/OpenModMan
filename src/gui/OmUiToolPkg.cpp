@@ -17,7 +17,7 @@
 
 #include "gui/res/resource.h"
 #include "OmManager.h"
-#include "gui/OmUiNewPkg.h"
+#include "gui/OmUiToolPkg.h"
 #include "OmPackage.h"
 #include "gui/OmUiProgress.h"
 #include "OmImage.h"
@@ -40,7 +40,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
+OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
   _hFtMonos(Om_createFont(14, 400, L"Consolas")),
   _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0))),
   _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
@@ -55,7 +55,7 @@ OmUiNewPkg::OmUiNewPkg(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewPkg::~OmUiNewPkg()
+OmUiToolPkg::~OmUiToolPkg()
 {
   DeleteObject(this->_hFtMonos);
   DeleteObject(this->_hBmBlank);
@@ -67,16 +67,16 @@ OmUiNewPkg::~OmUiNewPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiNewPkg::id() const
+long OmUiToolPkg::id() const
 {
-  return IDD_NEW_PKG;
+  return IDD_TOOL_PKG;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewPkg::_parsePkg(const wstring& path)
+bool OmUiToolPkg::_parsePkg(const wstring& path)
 {
   OmPackage package;
 
@@ -124,7 +124,7 @@ bool OmUiNewPkg::_parsePkg(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_buildPkg_init()
+void OmUiToolPkg::_buildPkg_init()
 {
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
@@ -142,7 +142,7 @@ void OmUiNewPkg::_buildPkg_init()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_buildPkg_stop()
+void OmUiToolPkg::_buildPkg_stop()
 {
   DWORD exitCode;
 
@@ -175,9 +175,9 @@ void OmUiNewPkg::_buildPkg_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
+DWORD WINAPI OmUiToolPkg::_buildPkg_fth(void* arg)
 {
-  OmUiNewPkg* self = static_cast<OmUiNewPkg*>(arg);
+  OmUiToolPkg* self = static_cast<OmUiToolPkg*>(arg);
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
@@ -262,7 +262,7 @@ DWORD WINAPI OmUiNewPkg::_buildPkg_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewPkg::_apply()
+bool OmUiToolPkg::_apply()
 {
   wstring item_str;
 
@@ -320,7 +320,7 @@ bool OmUiNewPkg::_apply()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_onInit()
+void OmUiToolPkg::_onInit()
 {
   // Set font for description
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
@@ -351,7 +351,7 @@ void OmUiNewPkg::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_onResize()
+void OmUiToolPkg::_onResize()
 {
   // From folder RadioButton
   this->_setItemPos(IDC_BC_RAD01, 10, 10, 150, 9);
@@ -420,7 +420,7 @@ void OmUiNewPkg::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_onRefresh()
+void OmUiToolPkg::_onRefresh()
 {
 
 }
@@ -429,7 +429,7 @@ void OmUiNewPkg::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewPkg::_onQuit()
+void OmUiToolPkg::_onQuit()
 {
 
 }
@@ -438,7 +438,7 @@ void OmUiNewPkg::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_BUILDPKG_DONE is a custom message sent from Location deletion thread
   // function, to notify the progress dialog ended is job.

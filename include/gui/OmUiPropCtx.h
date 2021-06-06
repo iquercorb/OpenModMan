@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPCTX_H
 #define OMUIPROPCTX_H
 
@@ -22,9 +21,9 @@
 
 class OmContext;
 
-/// \brief Context Properties Dialog
+/// \brief Context Properties parent dialog
 ///
-/// OmDialogProp class derived for Context Properties dialog window.
+/// OmDialogProp class derived for Context Properties parent dialog window.
 ///
 class OmUiPropCtx : public OmDialogProp
 {

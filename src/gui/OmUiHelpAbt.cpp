@@ -16,12 +16,12 @@
 */
 #include "gui/res/resource.h"
 #include "OmManager.h"
-#include "gui/OmUiHelpAbout.h"
+#include "gui/OmUiHelpAbt.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiHelpAbout::OmUiHelpAbout(HINSTANCE hins) : OmDialog(hins),
+OmUiHelpAbt::OmUiHelpAbt(HINSTANCE hins) : OmDialog(hins),
   _hFtMonos(Om_createFont(14, 400, L"Consolas"))
 {
 
@@ -31,7 +31,7 @@ OmUiHelpAbout::OmUiHelpAbout(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiHelpAbout::~OmUiHelpAbout()
+OmUiHelpAbt::~OmUiHelpAbt()
 {
 
 }
@@ -40,16 +40,16 @@ OmUiHelpAbout::~OmUiHelpAbout()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiHelpAbout::id() const
+long OmUiHelpAbt::id() const
 {
-  return IDD_HELP_ABOUT;
+  return IDD_HELP_ABT;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiHelpAbout::_onInit()
+void OmUiHelpAbt::_onInit()
 {
   wstring about = OMM_APP_NAME;
   about.append(L" - version ");
@@ -83,7 +83,7 @@ void OmUiHelpAbout::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiHelpAbout::_onResize()
+void OmUiHelpAbt::_onResize()
 {
   unsigned half_width = static_cast<unsigned>(this->width() * 0.5f);
 
@@ -106,7 +106,7 @@ void OmUiHelpAbout::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiHelpAbout::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_NOTIFY) {
 

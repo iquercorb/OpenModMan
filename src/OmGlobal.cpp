@@ -3262,8 +3262,8 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   // open file
   FILE* out_file;
@@ -3286,8 +3286,8 @@ bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   // open file
   FILE* out_file;
@@ -3310,8 +3310,8 @@ bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   // open file
   FILE* out_file;
@@ -3334,8 +3334,8 @@ bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   // open file
   FILE* out_file;
@@ -3358,8 +3358,8 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   return __bmp_encode(out_data, out_size, in_rgb, in_w, in_h, in_c);
 }
@@ -3371,8 +3371,8 @@ bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   return __jpg_encode(out_data, out_size, in_rgb, in_w, in_h, in_c, level);
 }
@@ -3384,8 +3384,8 @@ bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   return __png_encode(out_data, out_size, in_rgb, in_w, in_h, in_c, level);
 }
@@ -3397,8 +3397,8 @@ bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 bool Om_encodeGif(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
-    return nullptr;
+  if(!in_rgb || !in_w || !in_h || !in_c)
+    return false;
 
   return __gif_encode(out_data, out_size, in_rgb, in_w, in_h, in_c);
 }
@@ -3597,7 +3597,7 @@ static void __image_usample(uint8_t* out_rgb, unsigned w, unsigned h, const uint
 uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!(w * h) || !in_rgb || !(in_w * in_h * in_c))
+  if(!w  || !h || !in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
   uint8_t* out_rgb = new(std::nothrow) uint8_t[(w * in_c) * h];
@@ -3627,7 +3627,7 @@ uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned 
 uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!(w * h) || !in_rgb || !(in_w * in_h * in_c))
+  if(!w  || !h || !in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
   if((x + w) > in_w || (y + h) > in_h)
@@ -3671,7 +3671,7 @@ uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint
 uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!size || !in_rgb || !(in_w * in_h * in_c))
+  if(!size || !in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
   // create locale copy of original data
@@ -3741,7 +3741,7 @@ uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, 
 HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
-  if(!in_rgb || !(in_w * in_h * in_c))
+  if(!in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
   // destination buffer is in RGBA

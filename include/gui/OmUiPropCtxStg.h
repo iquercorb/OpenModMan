@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPCTXSETG_H
 #define OMUIPROPCTXSETG_H
 
@@ -23,10 +22,9 @@
 #define CTX_PROP_STG_TITLE   0
 #define CTX_PROP_STG_ICON    1
 
-/// \brief Context Properties Settings Tab
+/// \brief Context Properties / Settings tab child
 ///
-/// OmDialog class derived for Context Properties Settings Tab_Control child
-/// dialog window
+/// OmDialog class derived for Context Properties / Settings tab child dialog window
 ///
 class OmUiPropCtxStg : public OmDialog
 {

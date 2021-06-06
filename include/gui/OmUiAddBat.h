@@ -14,18 +14,18 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUINEWLOC_H
-#define OMUINEWLOC_H
+#ifndef OMUIADDBAT_H
+#define OMUIADDBAT_H
 
 #include "OmDialog.h"
 
 class OmContext;
 
-/// \brief New Location dialog
+/// \brief Add Batch dialog
 ///
-/// OmDialog class derived for New Location dialog window
+/// OmDialog class derived for Add Batch dialog window
 ///
-class OmUiNewLoc : public OmDialog
+class OmUiAddBat : public OmDialog
 {
   public:
 
@@ -35,13 +35,13 @@ class OmUiNewLoc : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiNewLoc(HINSTANCE hins);
+    OmUiAddBat(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiNewLoc();
+    ~OmUiAddBat();
 
     /// \brief Get resource id.
     ///
@@ -54,7 +54,7 @@ class OmUiNewLoc : public OmDialog
     /// \brief Get associated Context.
     ///
     /// Returns associated Context object previously defined
-    /// via OmUiNewLoc.setContext
+    /// via OmUiAddLoc.setContext
     ///
     /// \return Associated Context or nullptr if none.
     ///
@@ -80,6 +80,26 @@ class OmUiNewLoc : public OmDialog
 
     OmContext*                _context;
 
+    vector<vector<int>>       _excLs;
+
+    vector<vector<int>>       _incLs;
+
+    HBITMAP                   _hBmBcUp;
+
+    HBITMAP                   _hBmBcDn;
+
+    void                      _rebuildPkgLb();
+
+    void                      _qucikFromCur();
+
+    void                      _upPkg();
+
+    void                      _dnPkg();
+
+    void                      _addPkg();
+
+    void                      _remPkg();
+
     bool                      _apply();
 
     void                      _onInit();
@@ -89,4 +109,4 @@ class OmUiNewLoc : public OmDialog
     bool                      _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUINEWLOC_H
+#endif // OMUIADDBAT_H

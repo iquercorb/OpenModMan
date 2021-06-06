@@ -15,14 +15,14 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "gui/res/resource.h"
-#include "gui/OmUiNewBat.h"
+#include "gui/OmUiAddBat.h"
 #include "OmManager.h"
 #include "OmBatch.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewBat::OmUiNewBat(HINSTANCE hins) : OmDialog(hins),
+OmUiAddBat::OmUiAddBat(HINSTANCE hins) : OmDialog(hins),
   _context(nullptr),
   _excLs(),
   _incLs(),
@@ -36,7 +36,7 @@ OmUiNewBat::OmUiNewBat(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiNewBat::~OmUiNewBat()
+OmUiAddBat::~OmUiAddBat()
 {
   DeleteObject(this->_hBmBcUp);
   DeleteObject(this->_hBmBcDn);
@@ -46,16 +46,16 @@ OmUiNewBat::~OmUiNewBat()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiNewBat::id() const
+long OmUiAddBat::id() const
 {
-  return IDD_NEW_BAT;
+  return IDD_ADD_BAT;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_rebuildPkgLb()
+void OmUiAddBat::_rebuildPkgLb()
 {
   if(this->_context == nullptr)
     return;
@@ -110,7 +110,7 @@ void OmUiNewBat::_rebuildPkgLb()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_qucikFromCur()
+void OmUiAddBat::_qucikFromCur()
 {
   if(this->_context == nullptr)
     return;
@@ -148,7 +148,7 @@ void OmUiNewBat::_qucikFromCur()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_upPkg()
+void OmUiAddBat::_upPkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
@@ -200,7 +200,7 @@ void OmUiNewBat::_upPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_dnPkg()
+void OmUiAddBat::_dnPkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
@@ -259,7 +259,7 @@ void OmUiNewBat::_dnPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_addPkg()
+void OmUiAddBat::_addPkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
@@ -326,7 +326,7 @@ void OmUiNewBat::_addPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_remPkg()
+void OmUiAddBat::_remPkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
@@ -393,7 +393,7 @@ void OmUiNewBat::_remPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewBat::_apply()
+bool OmUiAddBat::_apply()
 {
   // build the per-Location hash lists
   vector<wstring> loc_uuid;
@@ -446,7 +446,7 @@ bool OmUiNewBat::_apply()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_onInit()
+void OmUiAddBat::_onInit()
 {
   // Set icons for Up and Down buttons
   this->msgItem(IDC_BC_UP, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
@@ -508,7 +508,7 @@ void OmUiNewBat::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiNewBat::_onResize()
+void OmUiAddBat::_onResize()
 {
   int half_width = this->width() * 0.5f;
 
@@ -549,7 +549,7 @@ void OmUiNewBat::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiNewBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_NOTIFY) {
 

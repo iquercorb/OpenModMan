@@ -14,18 +14,17 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef OMUIPKGMAKE_H
-#define OMUIPKGMAKE_H
+#ifndef OMUITOOLPKG_H
+#define OMUITOOLPKG_H
 
 #include "OmDialog.h"
 #include "OmImage.h"
 
-/// \brief Package Builder dialog
+/// \brief Package Editor tool dialog
 ///
-/// OmDialog class derived for Package Builder dialog window
+/// OmDialog class derived for Package Editor tool dialog window
 ///
-class OmUiNewPkg : public OmDialog
+class OmUiToolPkg : public OmDialog
 {
   public:
 
@@ -35,13 +34,13 @@ class OmUiNewPkg : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiNewPkg(HINSTANCE hins);
+    OmUiToolPkg(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiNewPkg();
+    ~OmUiToolPkg();
 
     /// \brief Get resource id.
     ///
@@ -88,4 +87,4 @@ class OmUiNewPkg : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPKGMAKE_H
+#endif // OMUITOOLPKG_H

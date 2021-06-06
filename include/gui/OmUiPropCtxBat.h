@@ -14,7 +14,6 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMUIPROPCTXBAT_H
 #define OMUIPROPCTXBAT_H
 
@@ -22,10 +21,9 @@
 
 #define CTX_PROP_BAT_ORDER   0
 
-/// \brief Context Properties Batches Tab
+/// \brief Context Properties / Batches tab child
 ///
-/// OmDialog class derived for Context Properties Batches Tab_Control child
-/// dialog window
+/// OmDialog class derived for Context Properties / Batches tab child dialog window
 ///
 class OmUiPropCtxBat : public OmDialog
 {

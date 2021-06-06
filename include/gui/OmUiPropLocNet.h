@@ -19,10 +19,9 @@
 
 #include <OmDialog.h>
 
-/// \brief Location Properties Network Tab
+/// \brief Location Properties / Network tab child
 ///
-/// OmDialog class derived for Location Properties Network Tab_Control child
-/// dialog window
+/// OmDialog class derived for Location Properties / Network tab child dialog window
 ///
 class OmUiPropLocNet : public OmDialog
 {
