@@ -197,6 +197,7 @@
 		<Unit filename="include/thirdparty/gif/gif_hash.h" />
 		<Unit filename="include/thirdparty/gif/gif_lib.h" />
 		<Unit filename="include/thirdparty/gif/gif_lib_private.h" />
+		<Unit filename="include/thirdparty/jpeg/README" />
 		<Unit filename="include/thirdparty/jpeg/jpeglib.h" />
 		<Unit filename="include/thirdparty/miniz/miniz.h" />
 		<Unit filename="include/thirdparty/png/png.h" />

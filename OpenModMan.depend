@@ -532,15 +532,15 @@
 
 1595317607 d:\atelier\dev\cpp\openmodman\include\omstrings.h
 
-1622971872 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
+1623339502 source:d:\atelier\code\cpp\openmodman\include\gui\res\resources.rc
 	<windows.h>
 	<commctrl.h>
 	<richedit.h>
 	"resource.h"
 
-1622971510 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
+1623334357 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
 
-1622837451 source:d:\atelier\code\cpp\openmodman\main.cpp
+1623246070 source:d:\atelier\code\cpp\openmodman\main.cpp
 	"OmManager.h"
 	"gui/OmUiMain.h"
 
@@ -726,7 +726,7 @@
 1622971079 d:\atelier\code\cpp\openmodman\include\gui\omuipropbatstg.h
 	"OmDialog.h"
 
-1621694802 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropbatstg.cpp
+1623305987 source:d:\atelier\code\cpp\openmodman\src\gui\omuipropbatstg.cpp
 	"gui/res/resource.h"
 	"OmContext.h"
 	"OmBatch.h"
@@ -924,7 +924,7 @@
 	"gui/res/resource.h"
 	"OmDialogWiz.h"
 
-1622967462 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
+1623245738 source:d:\atelier\code\cpp\openmodman\src\omglobal.cpp
 	"OmGlobal.h"
 	<regex>
 	"thirdparty/xxhash/xxh3.h"
@@ -933,7 +933,6 @@
 	"thirdparty/jpeg/jpeglib.h"
 	"thirdparty/png/png.h"
 	"thirdparty/gif/gif_lib.h"
-	"thirdparty/gif/quantize.c"
 
 1593021784 d:\atelier\code\cpp\openmodman\include\thirdparty\xxhash\xxh3.h
 	"xxhash.h"
@@ -1880,7 +1879,7 @@
 	"gui/res/resource.h"
 	"gui/OmUiEdiRep.h"
 
-1622969640 source:d:\atelier\code\cpp\openmodman\src\gui\omuiaddbat.cpp
+1623305987 source:d:\atelier\code\cpp\openmodman\src\gui\omuiaddbat.cpp
 	"gui/res/resource.h"
 	"gui/OmUiAddBat.h"
 	"OmManager.h"
@@ -1905,7 +1904,7 @@
 1622970435 d:\atelier\code\cpp\openmodman\include\gui\omuihelpabt.h
 	"OmDialog.h"
 
-1622971395 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolpkg.cpp
+1623339488 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolpkg.cpp
 	"gui/res/resource.h"
 	"OmManager.h"
 	"gui/OmUiToolPkg.h"
@@ -1917,10 +1916,11 @@
 	"OmDialog.h"
 	"OmImage.h"
 
-1622971414 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolrep.cpp
+1623336156 source:d:\atelier\code\cpp\openmodman\src\gui\omuitoolrep.cpp
 	"gui/res/resource.h"
 	"gui/OmUiToolRep.h"
 
-1622971132 d:\atelier\code\cpp\openmodman\include\gui\omuitoolrep.h
+1623330343 d:\atelier\code\cpp\openmodman\include\gui\omuitoolrep.h
 	"OmDialog.h"
+	"OmImage.h"
 
