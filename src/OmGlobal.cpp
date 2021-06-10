@@ -1782,7 +1782,7 @@ size_t Om_loadPlainText(string& text, const wstring& path)
 #include "thirdparty/jpeg/jpeglib.h"
 #include "thirdparty/png/png.h"
 #include "thirdparty/gif/gif_lib.h"
-#include "thirdparty/gif/quantize.c"
+//#include "thirdparty/gif/quantize.c"
 
 /* we make sure structures are packed to be properly aligned with
  read buffer */
@@ -1845,6 +1845,305 @@ inline static unsigned __image_sign_matches(const uint8_t* buff)
   if(0 == memcmp(buff, __sign_gif, 6)) return OMM_IMAGE_TYPE_GIF;
 
   return 0;
+}
+
+/// \brief Quantized color node
+///
+/// Structure for linked list node describing a quantized color
+///
+struct __qz_rgb {
+  uint8_t   rgb[3];       //< RGB color
+  uint8_t   pos;          //< Position index in linked-list
+  int32_t   ref_count;    //< Count pixel that reference this color
+  __qz_rgb* next;         //< Next node in linked-list
+};
+
+/// \brief Quantized map
+///
+/// Structure for quantized color map
+///
+struct __qz_map {
+  uint8_t   rgb_min[3];
+  uint8_t   rgb_rng[3];
+  uint32_t  idx_count;     //< Total number of pixels in all the entries
+  uint32_t  size;          //< # of __qz_rgb in linked list below
+  __qz_rgb* node_list;
+};
+
+/// \brief Quantized color sorting function
+///
+/// Quantized color node sorting function along Red axis
+///
+static bool __qz_sort_r_fn(const __qz_rgb* a, const __qz_rgb* b)
+{
+  unsigned h1 = a->rgb[0] * 256 * 256 + a->rgb[1] * 256 + a->rgb[2];
+  unsigned h2 = b->rgb[0] * 256 * 256 + b->rgb[1] * 256 + b->rgb[2];
+  return (h1 < h2);
+}
+
+/// \brief Quantized color sorting function
+///
+/// Quantized color node sorting function along Green axis
+///
+static bool __qz_sort_g_fn(const __qz_rgb* a, const __qz_rgb* b)
+{
+  unsigned h1 = a->rgb[1] * 256 * 256 + a->rgb[2] * 256 + a->rgb[0];
+  unsigned h2 = b->rgb[1] * 256 * 256 + b->rgb[2] * 256 + b->rgb[0];
+  return (h1 < h2);
+}
+
+/// \brief Quantized color sorting function
+///
+/// Quantized color node sorting function along Blue axis
+///
+static bool __qz_sort_b_fn(const __qz_rgb* a, const __qz_rgb* b)
+{
+  unsigned h1 = a->rgb[2] * 256 * 256 + a->rgb[0] * 256 + a->rgb[1];
+  unsigned h2 = b->rgb[2] * 256 * 256 + b->rgb[0] * 256 + b->rgb[1];
+  return (h1 < h2);
+}
+
+/// \brief Quantized color sort functions array
+///
+/// Array containing pointers to quantized color sort functions
+///
+static bool (*__qz_sort_fn[])(const __qz_rgb*, const __qz_rgb*) = {
+  __qz_sort_r_fn,
+  __qz_sort_g_fn,
+  __qz_sort_b_fn
+  };
+
+/// \brief Quantization subdivision
+///
+/// Color quantization function to subdivide the RGB space recursively
+/// using median cut in each axes alternatingly until ColorMapSize different
+/// cubes exists.
+/// The biggest cube in one dimension is subdivide unless it has only one entry.
+///
+/// \param[in]  cmap      : Pointer to color map to subdivide
+/// \param[in]  in_size   : Initial size of the supplied color map
+/// \param[in]  out_size  : New size of the subdivided color map
+///
+/// the following implementation is a rewriting of the SubdivColorMap
+/// function from the quantize.c file of the GifLib library.
+///
+static inline void __image_quantize_subdiv(__qz_map* cmap, unsigned* out_size, unsigned in_size)
+{
+  __qz_rgb* node;
+  std::vector<__qz_rgb*> sort_list;
+  unsigned sort_axis, min_color, max_color, n, c, i, j, u = 0;
+  int rng_max, r;
+
+  while(in_size > *out_size) {
+    // Find candidate for subdivision:
+    rng_max = -1;
+    for(i = 0; i < *out_size; ++i) {
+      for(j = 0; j < 3; ++j) {
+        if((static_cast<int>(cmap[i].rgb_rng[j]) > rng_max) && (cmap[i].size > 1)) {
+          rng_max = cmap[i].rgb_rng[j];
+          u = i;
+          sort_axis = j;
+        }
+      }
+    }
+
+    if(rng_max == -1)
+      return;
+
+    // Split the entry Index into two along the axis SortRGBAxis:
+
+    // Sort all elements in that entry along the given axis and split at
+    // the median.
+    sort_list.reserve(cmap[u].size);
+
+    for(j = 0, node = cmap[u].node_list; j < cmap[u].size && node != nullptr; j++, node = node->next) {
+      sort_list.push_back(node);
+    }
+
+    // Because qsort isn't stable, this can produce differing
+    // results for the order of tuples depending on platform
+    // details of how qsort() is implemented.
+    //
+    // We mitigate this problem by sorting on all three axes rather
+    // than only the one specied by SortRGBAxis; that way the instability
+    // can only become an issue if there are multiple color indices
+    // referring to identical RGB tuples.  Older versions of this
+    // sorted on only the one axis.
+    std::sort(sort_list.begin(), sort_list.end(), __qz_sort_fn[sort_axis]);
+
+    for(j = 0; j < cmap[u].size - 1; ++j)
+      sort_list[j]->next = sort_list[j+1];
+
+    sort_list[cmap[u].size - 1]->next = nullptr;
+    cmap[u].node_list = node = sort_list[0];
+
+    sort_list.clear();
+
+    // Now simply add the Counts until we have half of the Count:
+    r = cmap[u].idx_count / 2 - node->ref_count;
+    n = 1;
+    c = node->ref_count;
+    while(node->next != nullptr && (r -= node->next->ref_count) >= 0 && node->next->next != nullptr) {
+      node = node->next;
+      n++;
+      c += node->ref_count;
+    }
+    // Save the values of the last color of the first half, and first
+    // of the second half so we can update the Bounding Boxes later.
+    // Also as the colors are quantized and the BBoxes are full 0..255,
+    // they need to be rescaled.
+    max_color = node->rgb[sort_axis]; //< Max. of first half
+    // coverity[var_deref_op]
+    min_color = node->next->rgb[sort_axis]; //< of second
+    max_color <<= 3;
+    min_color <<= 3;
+
+    // Partition right here:
+    cmap[*out_size].node_list = node->next;
+    node->next = nullptr;
+    cmap[*out_size].idx_count = c;
+    cmap[u].idx_count -= c;
+    cmap[*out_size].size = cmap[u].size - n;
+    cmap[u].size = n;
+    for(j = 0; j < 3; ++j) {
+      cmap[*out_size].rgb_min[j] = cmap[u].rgb_min[j];
+      cmap[*out_size].rgb_rng[j] = cmap[u].rgb_rng[j];
+    }
+    cmap[*out_size].rgb_rng[sort_axis] = cmap[*out_size].rgb_min[sort_axis] + cmap[*out_size].rgb_rng[sort_axis] - min_color;
+    cmap[*out_size].rgb_min[sort_axis] = min_color;
+
+    cmap[u].rgb_rng[sort_axis] = max_color - cmap[u].rgb_min[sort_axis];
+
+    (*out_size)++;
+  }
+}
+
+/// \brief Color quantization
+///
+/// Function to Quantize high resolution image into lower one. Input image
+/// consists of a 2D array for each of the RGB colors with size Width by Height.
+/// There is no Color map for the input. Output is a quantized image with 2D
+/// array of indexes into the output color map.
+/// Note input image can be 24 bits at the most (8 for red/green/blue) and
+/// the output has 256 colors at the most (256 entries in the color map.).
+/// ColorMapSize specifies size of color map up to 256 and will be updated to
+/// real size before returning.
+/// Also non of the parameter are allocated by this routine.
+///
+/// the following implementation is a rewriting of the GifQuantizeBuffer
+/// function from the quantize.c file of the GifLib library.
+///
+/// \param[out]   out_idx   : Output image pixels color indices (must be allocated).
+/// \param[out]   out_map   : Output image color map (must be allocated).
+/// \param[out]   map_size  : As input, the desired maximum size of color map, as output, the actual final size of color map.
+/// \param[in]    in_rgb    : Input image RGB(A) pixel data.
+/// \param[in]    in_w      : Input image width in pixels.
+/// \param[in]    in_w      : Input image height in pixels.
+/// \param[in]    in_c      : Input image color component count (bytes per pixel).
+///
+/// \return true if operation succeed, false otherwise.
+///
+static bool __image_quantize(uint8_t* out_idx, uint8_t* out_map, unsigned* map_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+{
+  __qz_map new_cmap[256];
+  __qz_rgb *node_list;
+  __qz_rgb *node;
+
+  unsigned u, i, j;
+
+  const uint8_t* sp;
+  uint8_t* dp;
+
+  size_t mtx_bytes = in_w * in_h;
+
+  node_list = new(std::nothrow) __qz_rgb[32768];
+  if(!node_list) return false;
+
+  for(i = 0; i < 32768; ++i) {
+    node_list[i].rgb[0] =  (i >> 10);
+    node_list[i].rgb[1] =  (i >>  5) & 0x1F;
+    node_list[i].rgb[2] =  (i      ) & 0x1F;
+    node_list[i].ref_count = 0;
+  }
+
+  // Sample the colors and their distribution:
+  for(i = 0, sp = in_rgb; i < mtx_bytes; ++i, sp += in_c) {
+    u = ((sp[0] >> 3) << 10) + ((sp[1] >> 3) << 5) + (sp[2] >> 3);
+    node_list[u].ref_count++;
+  }
+
+  /* Put all the colors in the first entry of the color map, and call the
+   * recursive subdivision process.  */
+  for(i = 0; i < 256; i++) {
+    new_cmap[i].node_list = nullptr;
+    new_cmap[i].idx_count = 0;
+    new_cmap[i].size = 0;
+    for(j = 0; j < 3; j++) {
+      new_cmap[i].rgb_min[j] = 0;
+      new_cmap[i].rgb_rng[j] = 255;
+    }
+  }
+
+  /* Find the non empty entries in the color table and chain them: */
+  for(i = 0; i < 32768; ++i) {
+    if(node_list[i].ref_count > 0) break;
+  }
+
+  node = new_cmap[0].node_list = &node_list[i];
+  unsigned n = 1;
+  while(++i < 32768) {
+    if(node_list[i].ref_count > 0) {
+      node->next = &node_list[i];
+      node = &node_list[i];
+      n++;
+    }
+  }
+  node->next = nullptr;
+
+  new_cmap[0].size = n;               //< Different sampled colors
+  new_cmap[0].idx_count = mtx_bytes;   //< Pixels
+
+  unsigned new_size = 1;
+
+  __image_quantize_subdiv(new_cmap, &new_size, (*map_size));
+
+  if(new_size < (*map_size)) {
+    // And clear rest of color map:
+    memset(out_map + (new_size * 3), 0, ((*map_size) - new_size) * 3);
+  }
+
+  // Average the colors in each entry to be the color to be used in the
+  // output color map, and plug it into the output color map itself.
+  unsigned r, g, b;
+  for(i = 0, dp = out_map; i < new_size; ++i, dp += 3) {
+    if((j = new_cmap[i].size) > 0) {
+      node = new_cmap[i].node_list;
+      r = g = b = 0;
+      while(node) {
+        node->pos = i;
+        r += node->rgb[0];
+        g += node->rgb[1];
+        b += node->rgb[2];
+        node = node->next;
+      }
+      dp[0] = (r << 3) / j;
+      dp[1] = (g << 3) / j;
+      dp[2] = (b << 3) / j;
+    }
+  }
+
+  // Finally scan the input buffer again and put the mapped index in the
+  // output buffer.
+  for(i = 0, sp = in_rgb; i < mtx_bytes; ++i, sp += in_c) {
+    u = ((sp[0] >> 3) << 10) + ((sp[1] >> 3) <<  5) + (sp[2] >> 3);
+    out_idx[i] = node_list[u].pos;
+  }
+
+  delete [] node_list;
+
+  (*map_size) = new_size;
+
+  return true;
 }
 
 /// \brief Custom GIF reader
@@ -2037,74 +2336,39 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   int error;
   GifFileType* gif = reinterpret_cast<GifFileType*>(gif_enc);
 
-  // compute image indices array size
-  size_t idx_bytes = in_w * in_h;
-
-  // create red, green and blue array for quantizing
-  uint8_t* in_r = new(std::nothrow) uint8_t[idx_bytes];
-  if(!in_r) {
-    return false;
-  }
-  uint8_t* in_g = new(std::nothrow) uint8_t[idx_bytes];
-  if(!in_g) {
-    delete [] in_r;
-    return false;
-  }
-  uint8_t* in_b = new(std::nothrow) uint8_t[idx_bytes];
-  if(!in_b) {
-    delete [] in_r;
-    delete [] in_g;
-    return false;
-  }
-
-  const uint8_t* sp;
-
-  unsigned i = 0;
-
-  for(unsigned y = 0; y < in_h; ++y) {
-
-    sp = in_rgb + (y * in_h * in_c);
-
-    for(unsigned x = 0; x < in_w; ++x) {
-      in_r[i] = sp[0];
-      in_g[i] = sp[1];
-      in_b[i] = sp[2];
-      sp += in_c; ++i;
-    }
-  }
+  // define useful sizes
+  size_t mtx_bytes = in_w * in_h; //< image matrix size, one byte per pixel
 
   // allocate new buffer to receive color indices
-  uint8_t* indices = new(std::nothrow) uint8_t[idx_bytes];
-  if(!indices) {
-    delete [] in_r; delete [] in_g; delete [] in_b;
+  uint8_t* imtx = new(std::nothrow) uint8_t[mtx_bytes];
+  if(!imtx) {
+    EGifCloseFile(gif, &error);
     return false;
   }
 
   // allocate new color map of 256 colors
-  GifColorType* table = new(std::nothrow) GifColorType[256];
-  if(!table) {
-    delete [] in_r; delete [] in_g; delete [] in_b;
-    delete [] indices;
+  unsigned cmap_size = 256;
+  uint8_t* cmap = new(std::nothrow) uint8_t[cmap_size * 3]; //< cmap_size * RGB
+  if(!cmap) {
+    delete [] imtx;
+    EGifCloseFile(gif, &error);
     return false;
   }
 
   // quantize image
-  int table_size = 256;
-  if(GIF_OK != GifQuantizeBuffer(in_w, in_h, &table_size, in_r, in_g, in_b, indices, table)) {
-    delete [] in_r; delete [] in_g; delete [] in_b;
-    delete [] indices; delete [] table;
+  if(!__image_quantize(imtx, cmap, &cmap_size, in_rgb, in_w, in_h, in_c)) {
+    delete [] imtx;
+    delete [] cmap;
+    EGifCloseFile(gif, &error);
     return false;
   }
-
-  // we do not need color array anymore
-  delete [] in_r; delete [] in_g; delete [] in_b;
 
   // set GIF global parameters
   gif->SWidth = in_w;
   gif->SHeight = in_h;
   gif->SColorResolution = 8;
   gif->SBackGroundColor = 0;
-  gif->SColorMap = GifMakeMapObject(table_size, table); //< global color table
+  gif->SColorMap = GifMakeMapObject(cmap_size, reinterpret_cast<GifColorType*>(cmap)); //< global color table
 
   // set image parameters
   SavedImage image;
@@ -2114,7 +2378,7 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   image.ImageDesc.Height = in_h;
   image.ImageDesc.Interlace = false;
   image.ImageDesc.ColorMap = nullptr; //< no local color table
-  image.RasterBits = indices; //< our color indices
+  image.RasterBits = imtx; //< our color indices
   image.ExtensionBlockCount = 0;
   image.ExtensionBlocks = nullptr;
 
@@ -2123,13 +2387,15 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
 
   // encode GIF
   if(GIF_OK != EGifSpew(gif)) {
-    delete [] indices; delete [] table;
+    delete [] imtx;
+    delete [] cmap;
     EGifCloseFile(gif, &error);
     return false;
   }
 
   // free allocated data
-  delete [] indices; delete [] table;
+  delete [] imtx;
+  delete [] cmap;
 
   return true;
 }
@@ -2421,13 +2687,15 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
 {
   // compute data sizes
   size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
-  size_t row_bytes = in_w * in_c;
-  size_t tot_bytes = row_bytes * in_h;
+  size_t row_bytes = in_w * in_c;                   //< row size in bytes
+  size_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
+  size_t tot_bytes = r4b_bytes * in_h;
   size_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
   OMM_BITMAPHEADER bmp_head = {};
-  bmp_head.signature[0] = 0x42; bmp_head.signature[1] = 0x4D; // BM signature
+  bmp_head.signature[0] = 0x42;
+  bmp_head.signature[1] = 0x4D; // BM signature
   bmp_head.offbits = 54; // file header + info header = 54 bytes
   bmp_head.size = bmp_bytes;
 
@@ -2443,6 +2711,7 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
 
   // make sure we start at begining
   fseek(out_file, 0, SEEK_SET);
+
   // write file header
   if(fwrite(&bmp_head, 1, sizeof(OMM_BITMAPHEADER), out_file) != sizeof(OMM_BITMAPHEADER))
     return false;
@@ -2451,7 +2720,7 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
     return false;
 
   // allocate buffer for data translation
-  uint8_t* row = new(std::nothrow) uint8_t[row_bytes];
+  uint8_t* row = new(std::nothrow) uint8_t[r4b_bytes];
   if(!row) return false;
 
   // useful values for translation
@@ -2472,7 +2741,7 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
       dp += in_c;
     }
     // write row to file
-    if(fwrite(row, 1, row_bytes, out_file) != row_bytes) {
+    if(fwrite(row, 1, r4b_bytes, out_file) != r4b_bytes) {
       delete [] row; return false;
     }
   }
@@ -2499,8 +2768,9 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
 {
   // compute data sizes
   size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
-  size_t row_bytes = in_w * in_c;
-  size_t tot_bytes = row_bytes * in_h;
+  size_t row_bytes = in_w * in_c;                   //< row size in bytes
+  size_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
+  size_t tot_bytes = r4b_bytes * in_h;
   size_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
@@ -2534,7 +2804,7 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   bmp_ptr += sizeof(OMM_BITMAPINFOHEADER);
 
   // allocate buffer for data translation
-  uint8_t* row = new(std::nothrow) uint8_t[row_bytes];
+  uint8_t* row = new(std::nothrow) uint8_t[r4b_bytes];
   if(!row) return false;
 
   // useful values for translation
@@ -2556,8 +2826,8 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
     }
 
     // write row to buffer
-    memcpy(bmp_ptr, row, row_bytes);
-    bmp_ptr += row_bytes;
+    memcpy(bmp_ptr, row, r4b_bytes);
+    bmp_ptr += r4b_bytes;
   }
 
   delete [] row;
