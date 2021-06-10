@@ -18,6 +18,7 @@
 #define OMUITOOLREP_H
 
 #include "OmDialog.h"
+#include "OmImage.h"
 
 /// \brief Repository Editor tool dialog
 ///
@@ -50,6 +51,12 @@ class OmUiToolRep : public OmDialog
     long id() const;
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    HFONT               _hFtMonos;
+
+    HBITMAP             _hBmBlank;
+
+    OmImage             _image;
 
     bool                _apply();
 

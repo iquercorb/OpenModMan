@@ -70,8 +70,8 @@ void OmUiAddBat::_rebuildPkgLb()
   OmLocation* pLoc = this->_context->location(cb_sel);
 
   // hold handle to List-Box controls
-  HWND hLsl = this->getItem(IDC_LB_EXC);
-  HWND hLsr = this->getItem(IDC_LB_INC);
+  HWND hLsl = this->getItem(IDC_LB_EXCLS);
+  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   unsigned p;
   OmPackage* pPkg;
@@ -156,7 +156,7 @@ void OmUiAddBat::_upPkg()
   if(cb_sel < 0)
     return;
 
-  HWND hLsr = this->getItem(IDC_LB_INC);
+  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   // get count of selected items
   int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
@@ -208,7 +208,7 @@ void OmUiAddBat::_dnPkg()
   if(cb_sel < 0)
     return;
 
-  HWND hLsr = this->getItem(IDC_LB_INC);
+  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   // get count of selected items
   int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
@@ -267,8 +267,8 @@ void OmUiAddBat::_addPkg()
   if(cb_sel < 0)
     return;
 
-  HWND hLsl = this->getItem(IDC_LB_EXC);
-  HWND hLsr = this->getItem(IDC_LB_INC);
+  HWND hLsl = this->getItem(IDC_LB_EXCLS);
+  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   // get count of selected items
   int sel_cnt = SendMessageW(hLsl, LB_GETSELCOUNT, 0, 0);
@@ -334,8 +334,8 @@ void OmUiAddBat::_remPkg()
   if(cb_sel < 0)
     return;
 
-  HWND hLsl = this->getItem(IDC_LB_EXC);
-  HWND hLsr = this->getItem(IDC_LB_INC);
+  HWND hLsl = this->getItem(IDC_LB_EXCLS);
+  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   // get count of selected items
   int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
@@ -497,8 +497,8 @@ void OmUiAddBat::_onInit()
 
   // Disable ComboBox and ListBoxes
   this->enableItem(IDC_CB_LOCLS, false);
-  this->enableItem(IDC_LB_EXC, false);
-  this->enableItem(IDC_LB_INC, false);
+  this->enableItem(IDC_LB_EXCLS, false);
+  this->enableItem(IDC_LB_INCLS, false);
 
   // initialize with current state
   this->_qucikFromCur();
@@ -524,14 +524,14 @@ void OmUiAddBat::_onResize()
   // Not-Installed label
   this->_setItemPos(IDC_SC_LBL02, 10, 85, 150, 9);
   // Not-Installed ListBox
-  this->_setItemPos(IDC_LB_EXC, 10, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_EXCLS, 10, 95, half_width-35, this->height()-130);
   // Add and Rem buttons
   this->_setItemPos(IDC_BC_ADD, half_width-20, 180, 16, 15);
   this->_setItemPos(IDC_BC_DEL, half_width-20, 195, 16, 15);
   // Installed label
   this->_setItemPos(IDC_SC_LBL03, half_width, 85, 150, 9);
   // Installed ListBox
-  this->_setItemPos(IDC_LB_INC, half_width, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_INCLS, half_width, 95, half_width-35, this->height()-130);
   // Up and Down buttons
   this->_setItemPos(IDC_BC_UP, this->width()-30, 180, 16, 15);
   this->_setItemPos(IDC_BC_DN, this->width()-30, 195, 16, 15);
@@ -555,13 +555,13 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_LB_EXC:
+    case IDC_LB_EXCLS:
       if(((LPNMHDR)lParam)->code == LBN_DBLCLK) {
         this->_addPkg();
       }
       break;
 
-    case IDC_LB_INC:
+    case IDC_LB_INCLS:
       if(((LPNMHDR)lParam)->code == LBN_DBLCLK) {
         this->_remPkg();
       }
@@ -587,8 +587,8 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_CHK01:
       bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
       this->enableItem(IDC_CB_LOCLS, !bm_chk);
-      this->enableItem(IDC_LB_EXC, !bm_chk);
-      this->enableItem(IDC_LB_INC, !bm_chk);
+      this->enableItem(IDC_LB_EXCLS, !bm_chk);
+      this->enableItem(IDC_LB_INCLS, !bm_chk);
       if(bm_chk) {
         // initialize with current state
         this->_qucikFromCur();
@@ -601,14 +601,14 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_LB_EXC: // Dependencies ListBox
+    case IDC_LB_EXCLS: // Dependencies ListBox
       if(HIWORD(wParam) == LBN_SELCHANGE) {
 
-        sel_cnt = this->msgItem(IDC_LB_EXC, LB_GETSELCOUNT);
+        sel_cnt = this->msgItem(IDC_LB_EXCLS, LB_GETSELCOUNT);
 
         if(sel_cnt > 0) {
           // unselect all from the other ListBox, this is less confusing
-          this->msgItem(IDC_LB_INC, LB_SETSEL, false, -1);
+          this->msgItem(IDC_LB_INCLS, LB_SETSEL, false, -1);
           this->enableItem(IDC_BC_ADD, true);
           this->enableItem(IDC_BC_DEL, false);
           this->enableItem(IDC_BC_UP, false);
@@ -621,21 +621,21 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_LB_INC: // Dependencies ListBox
+    case IDC_LB_INCLS: // Dependencies ListBox
       if(HIWORD(wParam) == LBN_SELCHANGE) {
 
-        sel_cnt = this->msgItem(IDC_LB_INC, LB_GETSELCOUNT);
+        sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
 
         if(sel_cnt > 0) {
           // unselect all from the other ListBox, this is less confusing
-          this->msgItem(IDC_LB_EXC, LB_SETSEL, false, -1);
+          this->msgItem(IDC_LB_EXCLS, LB_SETSEL, false, -1);
           this->enableItem(IDC_BC_ADD, false);
           this->enableItem(IDC_BC_DEL, true);
         }
 
         if(sel_cnt == 1) {
-          this->msgItem(IDC_LB_INC, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
-          lb_max = this->msgItem(IDC_LB_INC, LB_GETCOUNT) - 1;
+          this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
+          lb_max = this->msgItem(IDC_LB_INCLS, LB_GETCOUNT) - 1;
           this->enableItem(IDC_BC_UP, (lb_sel > 0));
           this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
         } else {

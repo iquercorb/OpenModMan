@@ -82,14 +82,14 @@ bool OmUiToolPkg::_parsePkg(const wstring& path)
 
   if(package.sourceParse(path)) {
 
-    this->msgItem(IDC_LB_DPNDS, LB_RESETCONTENT);
+    this->msgItem(IDC_LB_DPNLS, LB_RESETCONTENT);
 
     if(package.dependCount()) {
       this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 1);
-      this->enableItem(IDC_LB_DPNDS, true);
+      this->enableItem(IDC_LB_DPNLS, true);
       this->enableItem(IDC_EC_INPT3, true);
       for(unsigned i = 0; i < package.dependCount(); ++i) {
-        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(package.depend(i).c_str()));
+        this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(package.depend(i).c_str()));
       }
     }
 
@@ -202,12 +202,12 @@ DWORD WINAPI OmUiToolPkg::_buildPkg_fth(void* arg)
 
   // get package dependencies list
   if(self->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
-    int lb_cnt = self->msgItem(IDC_LB_DPNDS, LB_GETCOUNT);
+    int lb_cnt = self->msgItem(IDC_LB_DPNLS, LB_GETCOUNT);
     if(lb_cnt) {
       size_t n;
       for(int i = 0; i < lb_cnt; ++i) {
-        item_str.resize(self->msgItem(IDC_LB_DPNDS, LB_GETTEXTLEN, i));
-        n = self->msgItem(IDC_LB_DPNDS, LB_GETTEXT, i, reinterpret_cast<LPARAM>(&item_str[0]));
+        item_str.resize(self->msgItem(IDC_LB_DPNLS, LB_GETTEXTLEN, i));
+        n = self->msgItem(IDC_LB_DPNLS, LB_GETTEXT, i, reinterpret_cast<LPARAM>(&item_str[0]));
         if(n < item_str.size()) item_str.resize(n);
         package.addDepend(item_str);
       }
@@ -345,6 +345,9 @@ void OmUiToolPkg::_onInit()
     SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
   }
   SendMessageW(hCb, CB_SETCURSEL, 2, 0);
+
+  // Set snapshot format advice
+  this->setItemText(IDC_SC_LBL04, L"optimal format:\nsquare image of 128 x 128 pixels");
 }
 
 
@@ -365,28 +368,31 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_EC_INPT2, 10, 50, this->width()-38, 13);
   this->_setItemPos(IDC_BC_BROW2, this->width()-26, 50, 16, 13);
 
+  // Package details GroupBox
+  this->_setItemPos(IDC_GB_GRP01, 10, 65, this->width()-20, this->height()-185);
+
   // Dependencies CheckBox
-  this->_setItemPos(IDC_BC_CHK03, 10, 70, 112, 9);
+  this->_setItemPos(IDC_BC_CHK03, 15, 75, 80, 9);
   // Dependencies EditControl a Add Button
-  this->_setItemPos(IDC_EC_INPT3, 10, 80, this->width()-38, 13);
-  this->_setItemPos(IDC_BC_ADD, this->width()-26, 80, 16, 13);
+  this->_setItemPos(IDC_EC_INPT3, 15, 90, this->width()-50, 13);
+  this->_setItemPos(IDC_BC_ADD, this->width()-31, 90, 16, 13);
   // Dependencies ListBox & Del button
-  this->_setItemPos(IDC_LB_DPNDS, 10, 95, this->width()-38, 24);
-  this->_setItemPos(IDC_BC_DEL, this->width()-26, 95, 16, 13);
+  this->_setItemPos(IDC_LB_DPNLS, 15, 105, this->width()-50, 24);
+  this->_setItemPos(IDC_BC_DEL, this->width()-31, 105, 16, 13);
 
   // Picture CheckBox & Load button
-  this->_setItemPos(IDC_BC_CHK04, 10, 125, 120, 9);
-  this->_setItemPos(IDC_EC_INPT4, 110, 125, this->width()-172, 14); // hidden
-  this->_setItemPos(IDC_BC_BROW4, this->width()-60, 125, 50, 14);
-  // Picture Bitmap & Label
-  this->_setItemPos(IDC_SB_PKIMG, 10, 136, 85, 78);
-  this->_setItemPos(IDC_SC_LBL04, 115, 165, 200, 9);
+  this->_setItemPos(IDC_BC_CHK04, 15, 135, 80, 9);
+  this->_setItemPos(IDC_SB_PKIMG, 105, 136, 85, 78);
+  this->_setItemPos(IDC_EC_INPT4, 110, 135, this->width()-172, 14); // hidden
+  this->_setItemPos(IDC_BC_BROW4, this->width()-55, 135, 40, 14);
+  // Picture Advice Label
+  this->_setItemPos(IDC_SC_LBL04, this->width()-125, 165, 105, 35);
 
   // Description CheckBox & Load button
-  this->_setItemPos(IDC_BC_CHK05, 10, 220, 120, 9);
-  this->_setItemPos(IDC_BC_BROW5, this->width()-60, 220, 50, 14);
+  this->_setItemPos(IDC_BC_CHK05, 15, 220, 80, 9);
+  this->_setItemPos(IDC_BC_BROW5, this->width()-55, 218, 40, 14);
   // Description EditControl
-  this->_setItemPos(IDC_EC_PKTXT, 10, 235, this->width()-20, this->height()-360);
+  this->_setItemPos(IDC_EC_PKTXT, 15, 235, this->width()-30, this->height()-360);
 
   // Destination label
   this->_setItemPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
@@ -516,7 +522,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_CHK03: // Add Dependencies CheckBox
       bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
-      this->enableItem(IDC_LB_DPNDS, bm_chk);
+      this->enableItem(IDC_LB_DPNLS, bm_chk);
       this->enableItem(IDC_EC_INPT3, bm_chk);
     break;
 
@@ -525,24 +531,24 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->enableItem(IDC_BC_ADD, !item_str.empty());
       break;
 
-    case IDC_LB_DPNDS: // Dependencies ListBox
-      lb_sel = this->msgItem(IDC_LB_DPNDS, LB_GETCURSEL);
+    case IDC_LB_DPNLS: // Dependencies ListBox
+      lb_sel = this->msgItem(IDC_LB_DPNLS, LB_GETCURSEL);
       this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
       break;
 
     case IDC_BC_ADD: // Add Dependency Button
       this->getItemText(IDC_EC_INPT3, item_str);
       if(!item_str.empty()) {
-        this->msgItem(IDC_LB_DPNDS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item_str.c_str()));
+        this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item_str.c_str()));
         this->setItemText(IDC_EC_INPT3, L"");
       }
       this->enableItem(IDC_BC_ADD, false);
       break;
 
     case IDC_BC_DEL: // Remove Dependency Button
-      lb_sel = this->msgItem(IDC_LB_DPNDS, LB_GETCURSEL);
+      lb_sel = this->msgItem(IDC_LB_DPNLS, LB_GETCURSEL);
       if(lb_sel >= 0) {
-        this->msgItem(IDC_LB_DPNDS, LB_DELETESTRING, lb_sel);
+        this->msgItem(IDC_LB_DPNLS, LB_DELETESTRING, lb_sel);
       }
       this->enableItem(IDC_BC_DEL, false);
       break;

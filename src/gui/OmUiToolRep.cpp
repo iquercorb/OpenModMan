@@ -21,7 +21,10 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins)
+OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
+  _hFtMonos(Om_createFont(14, 400, L"Consolas")),
+  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0))),
+  _image()
 {
   //ctor
 }
@@ -50,7 +53,16 @@ long OmUiToolRep::id() const
 ///
 void OmUiToolRep::_onInit()
 {
-  this->enableItem(IDC_BC_OK, false);
+  // Set font for description
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  // Set default package picture
+  this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
+
+  // Enable Create new repository
+  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, 1);
+
+  // Disable the Remove package button
+  this->enableItem(IDC_BC_REM, false);
 }
 
 
@@ -59,12 +71,55 @@ void OmUiToolRep::_onInit()
 ///
 void OmUiToolRep::_onResize()
 {
+  // Edit existing RadioButton
+  this->_setItemPos(IDC_BC_RAD01, 10, 10, 150, 9);
+  // From Folder EditControl & Brows Button
+  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-38, 13);
+  this->_setItemPos(IDC_BC_BROW1, this->width()-26, 20, 16, 13);
+
+  // Create new RadioButton
+  this->_setItemPos(IDC_BC_RAD02, 10, 40, 150, 9);
+
+  // Packages list label
+  this->_setItemPos(IDC_SC_LBL01, 10, 63, 60, 13);
+  // Packages list Add.. & Remove Buttons
+  this->_setItemPos(IDC_BC_ADD, this->width()-92, 58, 40, 14);
+  this->_setItemPos(IDC_BC_REM, this->width()-50, 58, 40, 14);
+  // Packages list ListBox
+  this->_setItemPos(IDC_LB_PKGLS, 10, 75, this->width()-20, 65);
+
+  // Package detail GroupBox
+  this->_setItemPos(IDC_GB_GRP01, 10, 140, this->width()-20, this->height()-190);
+  // Package file Label & EditText
+  this->_setItemPos(IDC_SC_LBL02, 15, 150, 75, 9);
+  this->_setItemPos(IDC_EC_ENT02, 85, 150, this->width()-100, 12);
+  // Download path Label & EditTexit
+  this->_setItemPos(IDC_SC_LBL03, 15, 165, 75, 9);
+  this->_setItemPos(IDC_EC_ENT03, 85, 165, this->width()-100, 12);
+  // Dependencies Label, Check Button & EditTexit
+  this->_setItemPos(IDC_SC_LBL04, 15, 180, 75, 9);
+  this->_setItemPos(IDC_EC_ENT04, 85, 181, this->width()-145, 30);
+  this->_setItemPos(IDC_BC_CHK, this->width()-55, 180, 40, 14);
+  // Snapshot Label & Static Bitmap
+  this->_setItemPos(IDC_SC_LBL05, 15, 215, 75, 9);
+  this->_setItemPos(IDC_SB_PKIMG, 85, 216, 85, 78);
+  // Snapshot Change... & Delete Buttons
+  this->_setItemPos(IDC_BC_EDI, this->width()-55, 217, 40, 14);
+  this->_setItemPos(IDC_BC_DEL, this->width()-55, 232, 40, 14);
+  // Description Label, Load.. & Save Button
+  this->_setItemPos(IDC_SC_LBL06, 15, 305, 75, 9);
+  this->_setItemPos(IDC_BC_LOAD, this->width()-97, 302, 40, 14);
+  this->_setItemPos(IDC_BC_SAVE, this->width()-55, 302, 40, 14);
+  // Description EditText
+  this->_setItemPos(IDC_EC_PKTXT, 15, 320, this->width()-30, this->height()-375);
+
+  // Save As Button
+  this->_setItemPos(IDC_BC_BROW2, 10, this->height()-45, 50, 14);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
-  // Ok and Cancel buttons
-  this->_setItemPos(IDC_BC_OK, this->width()-110, this->height()-19, 50, 14);
-  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  // Close button
+  this->_setItemPos(IDC_BC_CLOSE, this->width()-54, this->height()-19, 50, 14);
 }
 
 
@@ -82,13 +137,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_BC_CHK:
-      break;
-
-    case IDC_BC_OK:
-      break;
-
-    case IDC_BC_CANCEL:
+    case IDC_BC_CLOSE:
       this->quit();
       break;
     }
