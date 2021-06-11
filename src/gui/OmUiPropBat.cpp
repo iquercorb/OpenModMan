@@ -68,7 +68,7 @@ bool OmUiPropBat::checkChanges()
   wstring item_str;
 
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Batch title
-    pUiPropBatStg->getItemText(IDC_EC_INPT1, item_str);
+    pUiPropBatStg->getItemText(IDC_EC_INP01, item_str);
     if(pBat->title() != item_str) {
       changed = true;
     } else {
@@ -105,7 +105,7 @@ bool OmUiPropBat::applyChanges()
 
   // Step 1, verify everything
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Batch title
-    pUiPropBatStg->getItemText(IDC_EC_INPT1, bat_name);
+    pUiPropBatStg->getItemText(IDC_EC_INP01, bat_name);
     if(!Om_isValidName(bat_name)) {
       wstring wrn = L"The title";
       wrn += OMM_STR_ERR_VALIDNAME;

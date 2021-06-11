@@ -617,14 +617,14 @@ void OmUiMainLib::_reloadLibEc()
     // check for Library folder validity
     if(pLoc->checkAccessLib()) {
       // set the library path
-      this->setItemText(IDC_EC_INPT1, pLoc->libraryDir());
+      this->setItemText(IDC_EC_INP01, pLoc->libraryDir());
     } else {
-      this->setItemText(IDC_EC_INPT1, L"<folder access error>");
+      this->setItemText(IDC_EC_INP01, L"<folder access error>");
     }
 
   } else {
     // empty library path
-    this->setItemText(IDC_EC_INPT1, L"<no Location selected>");
+    this->setItemText(IDC_EC_INP01, L"<no Location selected>");
   }
 }
 
@@ -925,7 +925,7 @@ DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
   if(pLoc == nullptr)
     return 0;
 
-  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hPb = self->getItem(IDC_PB_PGBAR);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
 
   // enable on-process state
@@ -969,7 +969,7 @@ DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
   if(pLoc == nullptr)
     return 0;
 
-  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hPb = self->getItem(IDC_PB_PGBAR);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
 
   // enable on-process state
@@ -1010,7 +1010,7 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
   OmContext* pCtx = pMgr->curContext();
 
-  HWND hPb = self->getItem(IDC_PB_PGRES);
+  HWND hPb = self->getItem(IDC_PB_PGBAR);
   HWND hLv = self->getItem(IDC_LV_PKGLS);
   HWND hLb = self->getItem(IDC_LB_BATLS);
 
@@ -1274,7 +1274,7 @@ void OmUiMainLib::_onResize()
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOCLS, 5, 5, this->width()-161, 12);
   // Library path EditControl
-  this->_setItemPos(IDC_EC_INPT1, 5, 20, this->width()-161, 12);
+  this->_setItemPos(IDC_EC_INP01, 5, 20, this->width()-161, 12);
   // Package List ListView
   this->_setItemPos(IDC_LV_PKGLS, 5, 35, this->width()-161, this->height()-151);
   // Resize the ListView column
@@ -1287,7 +1287,7 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PGRES, 107, this->height()-113, this->width()-315, 12);
+  this->_setItemPos(IDC_PB_PGBAR, 107, this->height()-113, this->width()-315, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
@@ -1338,7 +1338,7 @@ void OmUiMainLib::_onRefresh()
   ShowWindow(this->getItem(IDC_SB_PKIMG), false);
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_PGRES, false);
+  this->enableItem(IDC_PB_PGBAR, false);
 
   this->_reloadLocCb(); //< reload Location Combo-Box
 

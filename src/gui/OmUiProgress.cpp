@@ -72,7 +72,7 @@ void OmUiProgress::setDesc(const wchar_t* wstr) const
 ///
 void OmUiProgress::setDetail(const wchar_t* wstr) const
 {
-  SetDlgItemTextW(this->_hwnd, IDC_SC_DESC1, wstr);
+  SetDlgItemTextW(this->_hwnd, IDC_SC_STATE, wstr);
 }
 
 
@@ -81,7 +81,7 @@ void OmUiProgress::setDetail(const wchar_t* wstr) const
 ///
 HWND OmUiProgress::getPbHandle() const
 {
-  return GetDlgItem(this->_hwnd, IDC_PB_PGRES);
+  return GetDlgItem(this->_hwnd, IDC_PB_PGBAR);
 }
 
 
@@ -99,7 +99,7 @@ HWND OmUiProgress::getDescScHandle() const
 ///
 HWND OmUiProgress::getDetailScHandle() const
 {
-  return GetDlgItem(this->_hwnd, IDC_SC_DESC1);
+  return GetDlgItem(this->_hwnd, IDC_SC_STATE);
 }
 
 
@@ -111,7 +111,7 @@ void OmUiProgress::_onInit()
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtDesc), true);
   SetWindowTextW(this->_hwnd, L"");
   this->setItemText(IDC_SC_TITLE, L"");
-  this->setItemText(IDC_SC_DESC1, L"");
+  this->setItemText(IDC_SC_STATE, L"");
 
   this->_abort = false;
 }
@@ -125,8 +125,8 @@ void OmUiProgress::_onResize()
   int half_height = static_cast<int>(this->height() * 0.5f);
 
   this->_setItemPos(IDC_SC_TITLE, 10, 8, this->width()-20, 12);
-  this->_setItemPos(IDC_SC_DESC1, 10, half_height-15, this->width()-20, 9);
-  this->_setItemPos(IDC_PB_PGRES, 10, half_height, this->width()-20, 11);
+  this->_setItemPos(IDC_SC_STATE, 10, half_height-15, this->width()-20, 9);
+  this->_setItemPos(IDC_PB_PGBAR, 10, half_height, this->width()-20, 11);
   this->_setItemPos(IDC_BC_ABORT, this->width()-70, this->height()-24, 60, 14);
 }
 

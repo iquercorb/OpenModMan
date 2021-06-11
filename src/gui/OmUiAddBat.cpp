@@ -427,7 +427,7 @@ bool OmUiAddBat::_apply()
 
   // retrieve batch name
   wstring bat_name;
-  this->getItemText(IDC_EC_INPT1, bat_name);
+  this->getItemText(IDC_EC_INP01, bat_name);
 
   // try to create a new batch
   if(!this->_context->addBatch(bat_name, loc_uuid, loc_hash_list)) {
@@ -453,7 +453,7 @@ void OmUiAddBat::_onInit()
   this->msgItem(IDC_BC_DN, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
@@ -465,7 +465,7 @@ void OmUiAddBat::_onInit()
   this->_createTooltip(IDC_BC_DN,     L"Move down");
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INPT1, L"New Batch");
+  this->setItemText(IDC_EC_INP01, L"New Batch");
 
   // Enable Quick create from current state
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
@@ -515,7 +515,7 @@ void OmUiAddBat::_onResize()
   // Title label
   this->_setItemPos(IDC_SC_LBL01, 10, 10, 150, 9);
   // Title entry
-  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-20, 13);
+  this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-20, 13);
 
   // Crate from stat CheckBox
   this->_setItemPos(IDC_BC_CHK01, 10, 50, 150, 9);
@@ -579,8 +579,8 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_EC_INPT1:
-      this->getItemText(IDC_EC_INPT1, item_str);
+    case IDC_EC_INP01:
+      this->getItemText(IDC_EC_INP01, item_str);
       this->enableItem(IDC_BC_OK, !item_str.empty());
       break;
 

@@ -66,14 +66,14 @@ void OmUiAddRep::_log(const wstring& log)
 
   entry = hour + log;
 
-  unsigned s = this->msgItem(IDC_EC_ENT01, WM_GETTEXTLENGTH, 0, 0);
+  unsigned s = this->msgItem(IDC_EC_OUT01, WM_GETTEXTLENGTH, 0, 0);
 
-  this->msgItem(IDC_EC_ENT01, EM_SETSEL, s, s);
-  this->msgItem(IDC_EC_ENT01, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
-  this->msgItem(IDC_EC_ENT01, WM_VSCROLL, SB_BOTTOM, 0);
-  this->msgItem(IDC_EC_ENT01, WM_VSCROLL, SB_BOTTOM, 0);
+  this->msgItem(IDC_EC_OUT01, EM_SETSEL, s, s);
+  this->msgItem(IDC_EC_OUT01, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
+  this->msgItem(IDC_EC_OUT01, WM_VSCROLL, SB_BOTTOM, 0);
+  this->msgItem(IDC_EC_OUT01, WM_VSCROLL, SB_BOTTOM, 0);
 
-  RedrawWindow(this->getItem(IDC_EC_ENT01), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+  RedrawWindow(this->getItem(IDC_EC_OUT01), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
 }
 
 
@@ -84,14 +84,14 @@ void OmUiAddRep::_repoChk()
 {
   OmSocket sock;
 
-  this->setItemText(IDC_EC_ENT01, L"");
-  this->setItemText(IDC_SC_DESC1, L"Pending...");
+  this->setItemText(IDC_EC_OUT01, L"");
+  this->setItemText(IDC_SC_STATE, L"Pending...");
 
   wstring rep_base;
   wstring rep_name;
 
-  this->getItemText(IDC_EC_INPT1, rep_base);
-  this->getItemText(IDC_EC_INPT2, rep_name);
+  this->getItemText(IDC_EC_INP01, rep_base);
+  this->getItemText(IDC_EC_INP02, rep_name);
 
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
@@ -121,15 +121,15 @@ void OmUiAddRep::_repoChk()
 
     if(rep_def.parse(Om_fromUtf8(rep_xml.c_str()), OMM_CFG_SIGN_REP)) {
       this->_log(L"XML parse succeed: "+to_wstring(rep_def.xml().childCount(L"package"))+L" package(s) provided\r\n");
-      this->setItemText(IDC_SC_DESC1, L"The Repository appear to be valid !");
+      this->setItemText(IDC_SC_STATE, L"The Repository appear to be valid !");
       this->_check = 1;
     } else {
       this->_log(L"XML parse failed.\r\n");
-      this->setItemText(IDC_SC_DESC1, L"Error: Invalid XML definition");
+      this->setItemText(IDC_SC_STATE, L"Error: Invalid XML definition");
     }
   } else {
     this->_log(L"HTTP GET failed: "+sock.lastErrorStr()+L"\r\n");
-    this->setItemText(IDC_SC_DESC1, L"Error: HTTP request failed");
+    this->setItemText(IDC_SC_STATE, L"Error: HTTP request failed");
   }
 }
 
@@ -167,8 +167,8 @@ bool OmUiAddRep::_apply()
   wstring rep_base;
   wstring rep_name;
 
-  this->getItemText(IDC_EC_INPT1, rep_base);
-  this->getItemText(IDC_EC_INPT2, rep_name);
+  this->getItemText(IDC_EC_INP01, rep_base);
+  this->getItemText(IDC_EC_INP02, rep_name);
 
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
@@ -203,22 +203,22 @@ bool OmUiAddRep::_apply()
 void OmUiAddRep::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Repository base URL");
+  this->_createTooltip(IDC_EC_INP01,  L"Repository base URL");
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Repository name");
+  this->_createTooltip(IDC_EC_INP01,  L"Repository name");
 
   // set specific fonts
-  this->msgItem(IDC_SC_DESC1, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtHeavy), true);
-  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtHeavy), true);
+  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"http://");
-  this->setItemText(IDC_EC_INPT2, L"default");
-  this->setItemText(IDC_SC_DESC1, L"");
+  this->setItemText(IDC_EC_INP01, L"http://");
+  this->setItemText(IDC_EC_INP02, L"default");
+  this->setItemText(IDC_SC_STATE, L"");
 
   // Set caret at end of string
-  this->msgItem(IDC_EC_INPT1, EM_SETSEL, 0, -1);
-  this->msgItem(IDC_EC_INPT1, EM_SETSEL, -1, -1);
+  this->msgItem(IDC_EC_INP01, EM_SETSEL, 0, -1);
+  this->msgItem(IDC_EC_INP01, EM_SETSEL, -1, -1);
 
   this->enableItem(IDC_BC_OK, false);
 }
@@ -231,19 +231,19 @@ void OmUiAddRep::_onResize()
 {
   // Repository URL Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 10, 10, 80, 9);
-  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-105, 13);
+  this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-105, 13);
 
   // Repository Name Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, this->width()-90, 10, 80, 9);
-  this->_setItemPos(IDC_EC_INPT2, this->width()-90, 20, 80, 13);
+  this->_setItemPos(IDC_EC_INP02, this->width()-90, 20, 80, 13);
 
   // Repository Test Label, Button and Result
   this->_setItemPos(IDC_SC_LBL03, 10, 40, 80, 9);
   this->_setItemPos(IDC_BC_CHK, 10, 50, 50, 14);
-  this->_setItemPos(IDC_SC_DESC1, 62, 53, this->width()-20, 12);
+  this->_setItemPos(IDC_SC_STATE, 62, 53, this->width()-20, 12);
 
   // Repository Test content
-  this->_setItemPos(IDC_EC_ENT01, 10, 70, this->width()-20, this->height()-110);
+  this->_setItemPos(IDC_EC_OUT01, 10, 70, this->width()-20, this->height()-110);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -267,8 +267,8 @@ bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_EC_INPT1: // Title
-      this->getItemText(IDC_EC_INPT1, item_str);
+    case IDC_EC_INP01: // Title
+      this->getItemText(IDC_EC_INP01, item_str);
       this->enableItem(IDC_BC_CHK, (item_str.size() > 7));
       has_changed = true;
       break;

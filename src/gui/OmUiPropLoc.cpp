@@ -85,18 +85,18 @@ bool OmUiPropLoc::checkChanges()
   wstring item_str;
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
-    pUiPropLocStg->getItemText(IDC_EC_INPT1, item_str);
+    pUiPropLocStg->getItemText(IDC_EC_INP01, item_str);
     if(pLoc->title() != item_str) changed = true;
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
-    pUiPropLocStg->getItemText(IDC_EC_INPT2, item_str);
+    pUiPropLocStg->getItemText(IDC_EC_INP02, item_str);
     if(pLoc->installDir() != item_str) changed = true;
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     if(pUiPropLocStg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-      pUiPropLocStg->getItemText(IDC_EC_INPT3, item_str);
+      pUiPropLocStg->getItemText(IDC_EC_INP03, item_str);
       if(pLoc->libraryDir() != item_str || !pLoc->hasCustLibraryDir())
         changed = true;
     } else {
@@ -106,7 +106,7 @@ bool OmUiPropLoc::checkChanges()
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
     if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-      pUiPropLocStg->getItemText(IDC_EC_INPT4, item_str);
+      pUiPropLocStg->getItemText(IDC_EC_INP04, item_str);
       if(pLoc->backupDir() != item_str || !pLoc->hasCustBackupDir())
         changed = true;
     } else {
@@ -147,7 +147,7 @@ bool OmUiPropLoc::applyChanges()
 
   // Step 1, verify everything
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
-    pUiPropLocStg->getItemText(IDC_EC_INPT1, loc_name);
+    pUiPropLocStg->getItemText(IDC_EC_INP01, loc_name);
     if(!Om_isValidName(loc_name)) {
       wstring wrn = L"The title";
       wrn += OMM_STR_ERR_VALIDNAME;
@@ -157,7 +157,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
-    pUiPropLocStg->getItemText(IDC_EC_INPT2, loc_dst);
+    pUiPropLocStg->getItemText(IDC_EC_INP02, loc_dst);
     if(!Om_isDir(loc_dst)) {
       wstring wrn = L"The folder \""+loc_dst+L"\"";
       wrn += OMM_STR_ERR_ISDIR;
@@ -169,7 +169,7 @@ bool OmUiPropLoc::applyChanges()
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     cust_lib = pUiPropLocStg->msgItem(IDC_BC_CHK01, BM_GETCHECK);
     if(cust_lib) { //< Custom Library folder Check-Box checked
-      pUiPropLocStg->getItemText(IDC_EC_INPT3, loc_lib);
+      pUiPropLocStg->getItemText(IDC_EC_INP03, loc_lib);
       if(!Om_isDir(loc_lib)) {
         wstring wrn = L"The folder \""+loc_lib+L"\"";
         wrn += OMM_STR_ERR_ISDIR;
@@ -182,7 +182,7 @@ bool OmUiPropLoc::applyChanges()
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
     cust_bck = pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK);
     if(cust_bck) { //< Custom Backup folder Check-Box checked
-      pUiPropLocStg->getItemText(IDC_EC_INPT4, loc_bck);
+      pUiPropLocStg->getItemText(IDC_EC_INP04, loc_bck);
       if(!Om_isDir(loc_bck)) {
         wstring wrn = L"The folder \""+loc_bck+L"\"";
         wrn += OMM_STR_ERR_ISDIR;
@@ -341,7 +341,7 @@ DWORD WINAPI OmUiPropLoc::_moveBackup_fth(void* arg)
 
   // retrieve new backup data folder
   wstring bck_dest;
-  pUiPropLocStg->getItemText(IDC_EC_INPT4, bck_dest);
+  pUiPropLocStg->getItemText(IDC_EC_INP04, bck_dest);
 
   // launch move process only if directory not empty
   if(!Om_isDirEmpty(pLoc->backupDir())) {

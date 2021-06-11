@@ -100,9 +100,9 @@ void OmUiPropCtxStg::_setIcon(const wstring& path)
 void OmUiPropCtxStg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT3,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP03,  L"Indicative name");
 
-  this->_createTooltip(IDC_BC_BROW1,  L"Select application or icon file");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select application or icon file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
 
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
@@ -110,11 +110,11 @@ void OmUiPropCtxStg::_onInit()
   if(pCtx == nullptr)
     return;
 
-  this->setItemText(IDC_EC_INPT1, pCtx->home());
-  this->setItemText(IDC_EC_INPT2, pCtx->uuid());
-  this->setItemText(IDC_EC_INPT3, pCtx->title());
+  this->setItemText(IDC_EC_INP01, pCtx->home());
+  this->setItemText(IDC_EC_INP02, pCtx->uuid());
+  this->setItemText(IDC_EC_INP03, pCtx->title());
 
-  this->setItemText(IDC_EC_INPT4, L"<invalid>"); //< hidden icon path
+  this->setItemText(IDC_EC_INP04, L"<invalid>"); //< hidden icon path
 
   // refresh with default values
   this->_onRefresh();
@@ -128,16 +128,16 @@ void OmUiPropCtxStg::_onResize()
 {
   // home location Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_EC_INPT1, 70, 20, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
   // Title Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 5, 60, 64, 9);
-  this->_setItemPos(IDC_EC_INPT3, 70, 60, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_INP03, 70, 60, this->width()-90, 13);
   // Icon Label & placeholder
   this->_setItemPos(IDC_SC_LBL04, 5, 90, 64, 9);
-  this->_setItemPos(IDC_EC_INPT4, 170, 90, 50, 13); // not visible
+  this->_setItemPos(IDC_EC_INP04, 170, 90, 50, 13); // not visible
   this->_setItemPos(IDC_SB_CTICO, 70, 90, 30, 30);
   // Select & Remove Buttons
-  this->_setItemPos(IDC_BC_BROW1, 110, 90, 50, 14);
+  this->_setItemPos(IDC_BC_BRW01, 110, 90, 50, 14);
   this->_setItemPos(IDC_BC_DEL, 110, 105, 50, 14);
 }
 
@@ -154,7 +154,7 @@ void OmUiPropCtxStg::_onRefresh()
 
   wstring ctx_icon;
 
-  this->getItemText(IDC_EC_INPT4, ctx_icon);
+  this->getItemText(IDC_EC_INP04, ctx_icon);
 
   HICON hIcon;
 
@@ -162,15 +162,15 @@ void OmUiPropCtxStg::_onRefresh()
   if(Om_isValidPath(ctx_icon)) {
     // reload the last selected icon
     ExtractIconExW(ctx_icon.c_str(), 0, &hIcon, nullptr, 1);
-    this->setItemText(IDC_BC_BROW1, L"Change...");
+    this->setItemText(IDC_BC_BRW01, L"Change...");
   } else {
     // check whether Context already have an icon configured
     if(pCtx->icon()) {
       hIcon = pCtx->icon();
-      this->setItemText(IDC_BC_BROW1, L"Change...");
+      this->setItemText(IDC_BC_BRW01, L"Change...");
     } else {
       hIcon = this->_hIcBlank;
-      this->setItemText(IDC_BC_BROW1, L"Select...");
+      this->setItemText(IDC_BC_BRW01, L"Select...");
     }
   }
 
@@ -195,20 +195,20 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_EC_INPT3: //< Entry for Context title
+    case IDC_EC_INP03: //< Entry for Context title
       // user modified parameter, notify it
       this->setChParam(CTX_PROP_STG_TITLE, true);
       break;
 
-    case IDC_BC_BROW1: //< Brows Button for Context icon
+    case IDC_BC_BRW01: //< Brows Button for Context icon
       // get last valid path to start browsing
-      this->getItemText(IDC_EC_INPT4, item_str);
+      this->getItemText(IDC_EC_INP04, item_str);
       item_str = Om_getDirPart(item_str);
 
       if(Om_dialogOpenFile(brow_str, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, item_str)) {
         this->_setIcon(brow_str);
-        this->setItemText(IDC_EC_INPT4, brow_str);
-        this->setItemText(IDC_BC_BROW1, L"Change..."); //< change browse button text
+        this->setItemText(IDC_EC_INP04, brow_str);
+        this->setItemText(IDC_BC_BRW01, L"Change..."); //< change browse button text
         // user modified parameter, notify it
         this->setChParam(CTX_PROP_STG_ICON, true);
       }
@@ -216,8 +216,8 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_DEL: //< Remove Button for Context icon
       this->_setIcon(L""); //< load default icon
-      this->setItemText(IDC_EC_INPT4, L"<delete>"); //< set invalid path
-      this->setItemText(IDC_BC_BROW1, L"Select..."); //< change browse button text
+      this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
+      this->setItemText(IDC_BC_BRW01, L"Select..."); //< change browse button text
       // user modified parameter, notify it
       this->setChParam(CTX_PROP_STG_ICON, true);
       break;

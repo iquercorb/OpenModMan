@@ -66,18 +66,18 @@ void OmUiPropLocStg::setChParam(unsigned i, bool en)
 void OmUiPropLocStg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
-  this->_createTooltip(IDC_EC_INPT2,  L"Package installation destination path");
-  this->_createTooltip(IDC_BC_BROW2,  L"Select destination folder");
+  this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
+  this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Use custom Library folder");
-  this->_createTooltip(IDC_EC_INPT3,  L"Custom Library folder path");
-  this->_createTooltip(IDC_BC_BROW3,  L"Select custom Library folder");
+  this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
+  this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
 
   this->_createTooltip(IDC_BC_CHK02,  L"Use custom Backup folder");
-  this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
-  this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
+  this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
+  this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
 
   this->_onRefresh();
 }
@@ -90,26 +90,26 @@ void OmUiPropLocStg::_onResize()
 {
   // Location Title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_EC_INPT1, 70, 20, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
 
   // Location Location Label, EditControl and Browse button
   this->_setItemPos(IDC_SC_LBL02, 5, 60, 64, 9);
-  this->_setItemPos(IDC_EC_INPT2, 70, 60, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BROW2, this->width()-35, 60, 16, 13);
+  this->_setItemPos(IDC_EC_INP02, 70, 60, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW02, this->width()-35, 60, 16, 13);
 
   // Custom Library CheckBox
   this->_setItemPos(IDC_BC_CHK01, 70, 90, 120, 9);
   // Location Library Label, EditControl and Browse button
   this->_setItemPos(IDC_SC_LBL03, 5, 100, 64, 9);
-  this->_setItemPos(IDC_EC_INPT3, 70, 100, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BROW3, this->width()-35, 100, 16, 13);
+  this->_setItemPos(IDC_EC_INP03, 70, 100, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW03, this->width()-35, 100, 16, 13);
 
   // Custom Backup CheckBox
   this->_setItemPos(IDC_BC_CHK02, 70, 120, 120, 9);
   // Location Backup Label, EditControl and Browse button
   this->_setItemPos(IDC_SC_LBL04, 5, 130, 64, 9);
-  this->_setItemPos(IDC_EC_INPT4, 70, 130, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BROW4, this->width()-35, 130, 16, 13);
+  this->_setItemPos(IDC_EC_INP04, 70, 130, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW04, this->width()-35, 130, 16, 13);
 }
 
 
@@ -123,18 +123,18 @@ void OmUiPropLocStg::_onRefresh()
   if(pLoc == nullptr)
     return;
 
-  this->setItemText(IDC_EC_INPT1, pLoc->title());
-  this->setItemText(IDC_EC_INPT2, pLoc->installDir());
+  this->setItemText(IDC_EC_INP01, pLoc->title());
+  this->setItemText(IDC_EC_INP02, pLoc->installDir());
 
-  this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
+  this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pLoc->hasCustLibraryDir());
-  this->enableItem(IDC_EC_INPT3, pLoc->hasCustLibraryDir());
-  this->enableItem(IDC_BC_BROW3, pLoc->hasCustLibraryDir());
+  this->enableItem(IDC_EC_INP03, pLoc->hasCustLibraryDir());
+  this->enableItem(IDC_BC_BRW03, pLoc->hasCustLibraryDir());
 
-  this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
+  this->setItemText(IDC_EC_INP04, pLoc->backupDir());
   this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBackupDir());
-  this->enableItem(IDC_EC_INPT4, pLoc->hasCustBackupDir());
-  this->enableItem(IDC_BC_BROW4, pLoc->hasCustBackupDir());
+  this->enableItem(IDC_EC_INP04, pLoc->hasCustBackupDir());
+  this->enableItem(IDC_BC_BRW04, pLoc->hasCustBackupDir());
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -161,64 +161,64 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case IDC_BC_CHK01: //< Check Box for custom Library path
       bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_EC_INPT3, bm_chk);
-      this->enableItem(IDC_BC_BROW3, bm_chk);
+      this->enableItem(IDC_EC_INP03, bm_chk);
+      this->enableItem(IDC_BC_BRW03, bm_chk);
       if(bm_chk && pLoc->hasCustLibraryDir()) {
-        this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
+        this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
       } else {
-        this->setItemText(IDC_EC_INPT3, pLoc->home() + L"\\Library");
+        this->setItemText(IDC_EC_INP03, pLoc->home() + L"\\Library");
       }
       break;
 
     case IDC_BC_CHK02: //< Check Box for custom Backup path
       bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
-      this->enableItem(IDC_EC_INPT4, bm_chk);
-      this->enableItem(IDC_BC_BROW4, bm_chk);
+      this->enableItem(IDC_EC_INP04, bm_chk);
+      this->enableItem(IDC_BC_BRW04, bm_chk);
       if(bm_chk && pLoc->hasCustBackupDir()) {
-        this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
+        this->setItemText(IDC_EC_INP04, pLoc->backupDir());
       } else {
-        this->setItemText(IDC_EC_INPT4, pLoc->home() + L"\\Backup");
+        this->setItemText(IDC_EC_INP04, pLoc->home() + L"\\Backup");
       }
       break;
 
-    case IDC_EC_INPT1: //< Entry for Title
+    case IDC_EC_INP01: //< Entry for Title
       // user modified parameter, notify it
       this->setChParam(LOC_PROP_STG_TITLE, true);
       break;
 
-    case IDC_EC_INPT2: //< Entry for Install
+    case IDC_EC_INP02: //< Entry for Install
       // user modified parameter, notify it
       this->setChParam(LOC_PROP_STG_INSTALL, true);
       break;
 
-    case IDC_BC_BROW2: //< Browse Button for Install folder
-      this->getItemText(IDC_EC_INPT2, item_str);
+    case IDC_BC_BRW02: //< Browse Button for Install folder
+      this->getItemText(IDC_EC_INP02, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select packages Destination folder", item_str)) {
-        this->setItemText(IDC_EC_INPT2, brow_str);
+        this->setItemText(IDC_EC_INP02, brow_str);
       }
       break;
 
-    case IDC_EC_INPT3: //< Entry for Library
+    case IDC_EC_INP03: //< Entry for Library
       // user modified parameter, notify it
       this->setChParam(LOC_PROP_STG_LIBRARY, true);
       break;
 
-    case IDC_BC_BROW3: //< Browse Button for Library folder
-      this->getItemText(IDC_EC_INPT3, item_str);
+    case IDC_BC_BRW03: //< Browse Button for Library folder
+      this->getItemText(IDC_EC_INP03, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select custom packages Library folder", item_str)) {
-        this->setItemText(IDC_EC_INPT3, brow_str);
+        this->setItemText(IDC_EC_INP03, brow_str);
       }
       break;
 
-    case IDC_EC_INPT4: //< Entry for Backup
+    case IDC_EC_INP04: //< Entry for Backup
       // user modified parameter, notify it
       this->setChParam(LOC_PROP_STG_BACKUP, true);
       break;
 
-    case IDC_BC_BROW4: //< Browse Button for Backup folder
-      this->getItemText(IDC_EC_INPT4, item_str);
+    case IDC_BC_BRW04: //< Browse Button for Backup folder
+      this->getItemText(IDC_EC_INP04, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select custom Backups location", item_str)) {
-        this->setItemText(IDC_EC_INPT4, brow_str);
+        this->setItemText(IDC_EC_INP04, brow_str);
       }
       break;
     }

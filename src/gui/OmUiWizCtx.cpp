@@ -89,20 +89,20 @@ void OmUiWizCtx::_onWizFinish()
 
   // Retrieve Context parameters
   wstring ctx_name, ctx_home;
-  pUiWizCtxCfg->getItemText(IDC_EC_INPT1, ctx_name);
-  pUiWizCtxCfg->getItemText(IDC_EC_INPT2, ctx_home);
+  pUiWizCtxCfg->getItemText(IDC_EC_INP01, ctx_name);
+  pUiWizCtxCfg->getItemText(IDC_EC_INP02, ctx_home);
 
   // Retrieve Location parameters
   wstring loc_name, loc_dst, loc_lib, loc_bck;
-  pUiWizLocCfg->getItemText(IDC_EC_INPT1, loc_name);
-  pUiWizLocCfg->getItemText(IDC_EC_INPT2, loc_dst);
+  pUiWizLocCfg->getItemText(IDC_EC_INP01, loc_name);
+  pUiWizLocCfg->getItemText(IDC_EC_INP02, loc_dst);
 
   if(pUiWizLocCfg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-    pUiWizLocCfg->getItemText(IDC_EC_INPT3, loc_lib);
+    pUiWizLocCfg->getItemText(IDC_EC_INP03, loc_lib);
   }
 
   if(pUiWizLocCfg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-    pUiWizLocCfg->getItemText(IDC_EC_INPT4, loc_bck);
+    pUiWizLocCfg->getItemText(IDC_EC_INP04, loc_bck);
   }
 
   this->quit();

@@ -383,10 +383,10 @@ void OmUiPropBatStg::_onInit()
   this->msgItem(IDC_BC_DN, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Batch name");
+  this->_createTooltip(IDC_EC_INP01,  L"Batch name");
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
@@ -398,7 +398,7 @@ void OmUiPropBatStg::_onInit()
   this->_createTooltip(IDC_BC_DN,     L"Move down");
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INPT1, L"New Batch");
+  this->setItemText(IDC_EC_INP01, L"New Batch");
 
   this->_onRefresh();
 }
@@ -413,7 +413,7 @@ void OmUiPropBatStg::_onResize()
 
   // Batch Title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
-  this->_setItemPos(IDC_EC_INPT1, 70, 10, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_INP01, 70, 10, this->width()-90, 13);
 
   // Location list ComboBox
   this->_setItemPos(IDC_CB_LOCLS, 5, 35, this->width()-15, 12);
@@ -451,7 +451,7 @@ void OmUiPropBatStg::_onRefresh()
   if(pCtx == nullptr)
     return;
 
-  this->setItemText(IDC_EC_INPT1, pBat->title());
+  this->setItemText(IDC_EC_INP01, pBat->title());
 
   OmLocation* pLoc;
 
@@ -538,7 +538,7 @@ bool OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_EC_INPT1: //< Entry for Title
+    case IDC_EC_INP01: //< Entry for Title
       // user modified parameter, notify it
       this->setChParam(BAT_PROP_STG_TITLE, true);
       break;

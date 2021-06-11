@@ -59,7 +59,7 @@ void OmUiHelpAbt::_onInit()
   about.append(L" ( "); about.append(OMM_APP_ARCH); about.append(L" )\n\n");
   about.append(OMM_APP_DATE); about.append(L"  by ");
   about.append(OMM_APP_AUTHOR);
-  this->setItemText(IDC_SC_TEXT1, about);
+  this->setItemText(IDC_SC_INTRO, about);
 
   wstring home_url = L"<a href=\"";
   home_url.append(OMM_APP_URL); home_url.append(L"\">");
@@ -71,11 +71,11 @@ void OmUiHelpAbt::_onInit()
   repo_url.append(OMM_APP_GIT); repo_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK02, repo_url);
 
-  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
   string txt;
   if(Om_loadPlainText(txt, L"CREDITS.TXT")) {
-    SetDlgItemText(this->_hwnd, IDC_EC_ENT01, txt.c_str());
+    SetDlgItemText(this->_hwnd, IDC_EC_OUT01, txt.c_str());
   }
 }
 
@@ -87,7 +87,7 @@ void OmUiHelpAbt::_onResize()
 {
   unsigned half_width = static_cast<unsigned>(this->width() * 0.5f);
 
-  this->_setItemPos(IDC_SC_TEXT1, 5, 5, this->width()-10, 25);
+  this->_setItemPos(IDC_SC_INTRO, 5, 5, this->width()-10, 25);
 
   this->_setItemPos(IDC_SC_LBL01, half_width - 100, 35, 60, 9);
   this->_setItemPos(IDC_LM_LNK01, half_width - 35, 35, 200, 9);
@@ -95,11 +95,11 @@ void OmUiHelpAbt::_onResize()
   this->_setItemPos(IDC_SC_LBL02, half_width - 100, 50, 60, 9);
   this->_setItemPos(IDC_LM_LNK02, half_width - 35, 50, 200, 9);
 
-  this->_setItemPos(IDC_EC_ENT01, 5, 65, this->width()-10, this->height()-90);
+  this->_setItemPos(IDC_EC_OUT01, 5, 65, this->width()-10, this->height()-90);
   this->_setItemPos(IDC_BC_CLOSE, half_width - 25, this->height()-20, 50, 14);
 
   // force buttons to redraw
-  InvalidateRect(this->getItem(IDC_SC_TEXT1), nullptr, true);
+  InvalidateRect(this->getItem(IDC_SC_INTRO), nullptr, true);
 }
 
 

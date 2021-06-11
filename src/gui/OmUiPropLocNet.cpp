@@ -111,7 +111,7 @@ void OmUiPropLocNet::_repoChk()
 
     OmSocket sock;
 
-    this->setItemText(IDC_SC_DESC1, L"Pending...");
+    this->setItemText(IDC_SC_STATE, L"Pending...");
 
     wstring msg;
 
@@ -138,8 +138,8 @@ void OmUiPropLocNet::_repoChk()
     wchar_t hour[32];
     swprintf(hour, 32, L"[%02d:%02d:%02d] ", t_h, t_m, t_s);
 
-    this->setItemText(IDC_SC_DESC1, hour + msg);
-    this->enableItem(IDC_SC_DESC1, true);
+    this->setItemText(IDC_SC_STATE, hour + msg);
+    this->enableItem(IDC_SC_STATE, true);
   }
 }
 
@@ -161,7 +161,7 @@ void OmUiPropLocNet::_onInit()
   this->_createTooltip(IDC_BC_ADD,    L"Add new repository");
   this->_createTooltip(IDC_BC_EDI,    L"Test repository availability");
 
-  this->enableItem(IDC_SC_DESC1, false);
+  this->enableItem(IDC_SC_STATE, false);
 
   // Update values
   this->_onRefresh();
@@ -186,7 +186,7 @@ void OmUiPropLocNet::_onResize()
   this->_setItemPos(IDC_SC_LBL02, 71, 80, 40, 9);
   // Test button & entry
   this->_setItemPos(IDC_BC_CHK, 70, 90, 50, 14);
-  this->_setItemPos(IDC_SC_DESC1, 122, 92, this->width()-135, 13);
+  this->_setItemPos(IDC_SC_STATE, 122, 92, this->width()-135, 13);
 }
 
 
@@ -216,8 +216,8 @@ void OmUiPropLocNet::_onRefresh()
   }
 
   // Set controls default states and parameters
-  this->enableItem(IDC_SC_DESC1, false);
-  this->setItemText(IDC_SC_DESC1, L"<no test launched>");
+  this->enableItem(IDC_SC_STATE, false);
+  this->setItemText(IDC_SC_STATE, L"<no test launched>");
 
   this->enableItem(IDC_BC_DEL,  false);
   this->enableItem(IDC_BC_CHK,  false);
@@ -249,8 +249,8 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(lb_sel >= 0) {
         this->enableItem(IDC_BC_DEL, true);
         this->enableItem(IDC_BC_CHK, true);
-        this->enableItem(IDC_SC_DESC1, false);
-        this->setItemText(IDC_SC_DESC1, L"<no test launched>");
+        this->enableItem(IDC_SC_STATE, false);
+        this->setItemText(IDC_SC_STATE, L"<no test launched>");
       }
       break;
 

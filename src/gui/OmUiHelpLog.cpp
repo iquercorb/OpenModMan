@@ -55,10 +55,10 @@ long OmUiHelpLog::id() const
 ///
 void OmUiHelpLog::_onInit()
 {
-  this->msgItem(IDC_EC_ENT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  pMgr->setLogOutput(this->getItem(IDC_EC_ENT01));
+  pMgr->setLogOutput(this->getItem(IDC_EC_OUT01));
 }
 
 
@@ -67,7 +67,7 @@ void OmUiHelpLog::_onInit()
 ///
 void OmUiHelpLog::_onResize()
 {
-  this->_setItemPos(IDC_EC_ENT01, 5, 5, this->width()-10, this->height()-10);
+  this->_setItemPos(IDC_EC_OUT01, 5, 5, this->width()-10, this->height()-10);
 }
 
 

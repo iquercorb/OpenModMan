@@ -307,9 +307,9 @@ void OmUiPropCtxLoc::_onInit()
   this->_createTooltip(IDC_BC_ADD,    L"Add new location");
   this->_createTooltip(IDC_BC_EDI,   L"Location properties");
 
-  this->enableItem(IDC_EC_INPT2, false);
-  this->enableItem(IDC_EC_INPT3, false);
-  this->enableItem(IDC_EC_INPT4, false);
+  this->enableItem(IDC_EC_INP02, false);
+  this->enableItem(IDC_EC_INP03, false);
+  this->enableItem(IDC_EC_INP04, false);
 
   // Update values
   this->_onRefresh();
@@ -329,13 +329,13 @@ void OmUiPropCtxLoc::_onResize()
   this->_setItemPos(IDC_BC_DN, this->width()-35, 36, 16, 15);
   // Location Destination Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, 71, 60, 40, 9);
-  this->_setItemPos(IDC_EC_INPT2, 115, 60, this->width()-125, 13);
+  this->_setItemPos(IDC_EC_INP02, 115, 60, this->width()-125, 13);
   // Location Library Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 71, 75, 40, 9);
-  this->_setItemPos(IDC_EC_INPT3, 115, 75, this->width()-125, 13);
+  this->_setItemPos(IDC_EC_INP03, 115, 75, this->width()-125, 13);
   // Location Backup Label & EditControl
   this->_setItemPos(IDC_SC_LBL04, 71, 90, 40, 9);
-  this->_setItemPos(IDC_EC_INPT4, 115, 90, this->width()-125, 13);
+  this->_setItemPos(IDC_EC_INP04, 115, 90, this->width()-125, 13);
   // Remove & Modify Buttons
   this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
   this->_setItemPos(IDC_BC_EDI, 122, 110, 50, 14);
@@ -365,9 +365,9 @@ void OmUiPropCtxLoc::_onRefresh()
   }
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INPT2, L"<no Location selected>");
-  this->setItemText(IDC_EC_INPT3, L"<no Location selected>");
-  this->setItemText(IDC_EC_INPT4, L"<no Location selected>");
+  this->setItemText(IDC_EC_INP02, L"<no Location selected>");
+  this->setItemText(IDC_EC_INP03, L"<no Location selected>");
+  this->setItemText(IDC_EC_INP04, L"<no Location selected>");
 
   this->enableItem(IDC_BC_DEL,  false);
   this->enableItem(IDC_BC_EDI, false);
@@ -406,9 +406,9 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
       if(loc_id >= 0) {
         OmLocation* pLoc = pCtx->location(loc_id);
-        this->setItemText(IDC_EC_INPT2, pLoc->installDir());
-        this->setItemText(IDC_EC_INPT3, pLoc->libraryDir());
-        this->setItemText(IDC_EC_INPT4, pLoc->backupDir());
+        this->setItemText(IDC_EC_INP02, pLoc->installDir());
+        this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
+        this->setItemText(IDC_EC_INP04, pLoc->backupDir());
         this->enableItem(IDC_BC_DEL, true);
         this->enableItem(IDC_BC_EDI, true);
         this->enableItem(IDC_BC_UP, (lb_sel > 0));

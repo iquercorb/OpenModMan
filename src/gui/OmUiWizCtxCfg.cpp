@@ -55,7 +55,7 @@ bool OmUiWizCtxCfg::hasValidParams() const
 {
   wstring item_str;
 
-  this->getItemText(IDC_EC_INPT1, item_str);
+  this->getItemText(IDC_EC_INP01, item_str);
   if(!Om_isValidName(item_str)) {
     wstring wrn = L"The title";
     wrn += OMM_STR_ERR_VALIDNAME;
@@ -63,7 +63,7 @@ bool OmUiWizCtxCfg::hasValidParams() const
     return false;
   }
 
-  this->getItemText(IDC_EC_INPT2, item_str);
+  this->getItemText(IDC_EC_INP02, item_str);
   if(!Om_isValidPath(item_str)) {
     wstring wrn = L"The path";
     wrn += OMM_STR_ERR_VALIDPATH;
@@ -71,7 +71,7 @@ bool OmUiWizCtxCfg::hasValidParams() const
     return false;
   }
 
-  this->getItemText(IDC_EC_INPT3, item_str);
+  this->getItemText(IDC_EC_INP03, item_str);
   if(!Om_isValidPath(item_str)) {
     wstring wrn = L"The filename";
     wrn += OMM_STR_ERR_VALIDPATH;
@@ -89,15 +89,15 @@ bool OmUiWizCtxCfg::hasValidParams() const
 void OmUiWizCtxCfg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
-  this->_createTooltip(IDC_EC_INPT2,  L"Context home folder location");
-  this->_createTooltip(IDC_BC_BROW2,  L"Select context location");
+  this->_createTooltip(IDC_EC_INP02,  L"Context home folder location");
+  this->_createTooltip(IDC_BC_BRW02,  L"Select context location");
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"New Context");
-  this->setItemText(IDC_EC_INPT2, L"");
-  this->setItemText(IDC_EC_INPT3, L"<invalid path>");
+  this->setItemText(IDC_EC_INP01, L"New Context");
+  this->setItemText(IDC_EC_INP02, L"");
+  this->setItemText(IDC_EC_INP03, L"<invalid path>");
 
   // disable "next" button
   static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
@@ -114,13 +114,13 @@ void OmUiWizCtxCfg::_onShow()
   // enable or disable "next" button according values
   bool allow = true;
 
-  this->getItemText(IDC_EC_INPT1, item_str);
+  this->getItemText(IDC_EC_INP01, item_str);
   if(!item_str.empty()) {
 
-    this->getItemText(IDC_EC_INPT2, item_str);
+    this->getItemText(IDC_EC_INP02, item_str);
     if(!item_str.empty()) {
 
-      this->getItemText(IDC_EC_INPT3, item_str);
+      this->getItemText(IDC_EC_INP03, item_str);
       if(!Om_isValidPath(item_str)) allow = false;
 
     } else {
@@ -141,17 +141,17 @@ void OmUiWizCtxCfg::_onShow()
 void OmUiWizCtxCfg::_onResize()
 {
   // Introduction text
-  this->_setItemPos(IDC_SC_TEXT1, 10, 5, 190, 25);
+  this->_setItemPos(IDC_SC_INTRO, 10, 5, 190, 25);
   // Context title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 10, 40, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT1, 10, 50, this->width()-25, 13);
+  this->_setItemPos(IDC_EC_INP01, 10, 50, this->width()-25, 13);
   // Context location Label & EditControl & Browse button
   this->_setItemPos(IDC_SC_LBL02, 10, 80, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT2, 10, 90, this->width()-45, 13);
-  this->_setItemPos(IDC_BC_BROW2, this->width()-31, 90, 16, 13);
+  this->_setItemPos(IDC_EC_INP02, 10, 90, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BRW02, this->width()-31, 90, 16, 13);
   // Result path Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 10, 150, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT3, 10, 160, this->width()-25, 13);
+  this->_setItemPos(IDC_EC_INP03, 10, 160, this->width()-25, 13);
 }
 
 
@@ -186,11 +186,11 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_EC_INPT1: // title
-    case IDC_EC_INPT2: // Context location path
-      this->getItemText(IDC_EC_INPT1, item_st1);
+    case IDC_EC_INP01: // title
+    case IDC_EC_INP02: // Context location path
+      this->getItemText(IDC_EC_INP01, item_st1);
       if(Om_isValidName(item_st1)) {
-        this->getItemText(IDC_EC_INPT2, item_st2);
+        this->getItemText(IDC_EC_INP02, item_st2);
         if(Om_isValidPath(item_st2)) {
           item_st2 += L"\\" + item_st1 + L"\\";
         } else {
@@ -199,18 +199,18 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       } else {
         item_st2 = L"<invalid path>";
       }
-      this->setItemText(IDC_EC_INPT3, item_st2);
+      this->setItemText(IDC_EC_INP03, item_st2);
       break;
 
-    case IDC_BC_BROW2:
-      this->getItemText(IDC_EC_INPT2, item_st1);
+    case IDC_BC_BRW02:
+      this->getItemText(IDC_EC_INP02, item_st1);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select folder where to create Context home", item_st1)) {
-        this->setItemText(IDC_EC_INPT2, brow_str);
+        this->setItemText(IDC_EC_INP02, brow_str);
         //manager->saveDefaultLocation(inpt2); //< TODO: ?
       }
       break;
 
-    case IDC_EC_INPT3: // resulting Context path
+    case IDC_EC_INP03: // resulting Context path
       has_changed = true;
       break;
     }
@@ -219,13 +219,13 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if(has_changed) {
       bool allow = true;
 
-      this->getItemText(IDC_EC_INPT1, item_st1);
+      this->getItemText(IDC_EC_INP01, item_st1);
       if(!item_st1.empty()) {
 
-        this->getItemText(IDC_EC_INPT2, item_st1);
+        this->getItemText(IDC_EC_INP02, item_st1);
         if(!item_st1.empty()) {
 
-          this->getItemText(IDC_EC_INPT3, item_st1);
+          this->getItemText(IDC_EC_INP03, item_st1);
           if(!Om_isValidPath(item_st1)) allow = false;
 
         } else {

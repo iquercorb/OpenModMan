@@ -73,7 +73,7 @@ void OmUiWizCtxBeg::_onShow()
 void OmUiWizCtxBeg::_onResize()
 {
   // Intro paragraph
-  this->_setItemPos(IDC_SC_TEXT1, 10, 5, 190, 60);
+  this->_setItemPos(IDC_SC_INTRO, 10, 5, 190, 60);
 }
 
 

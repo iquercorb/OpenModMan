@@ -60,7 +60,7 @@ bool OmUiAddLoc::_apply()
 
   wstring loc_name, loc_dst, loc_lib, loc_bck;
 
-  this->getItemText(IDC_EC_INPT1, loc_name);
+  this->getItemText(IDC_EC_INP01, loc_name);
   if(!Om_isValidName(loc_name)) {
     wstring wrn = L"Title";
     wrn += OMM_STR_ERR_VALIDNAME;
@@ -68,7 +68,7 @@ bool OmUiAddLoc::_apply()
     return false;
   }
 
-  this->getItemText(IDC_EC_INPT2, loc_dst);
+  this->getItemText(IDC_EC_INP02, loc_dst);
   if(!Om_isDir(loc_dst)) {
     wstring wrn = L"The folder \""+loc_dst+L"\"";
     wrn += OMM_STR_ERR_ISDIR;
@@ -78,7 +78,7 @@ bool OmUiAddLoc::_apply()
 
   cust_lib = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
   if(cust_lib) {
-    this->getItemText(IDC_EC_INPT3, loc_lib);
+    this->getItemText(IDC_EC_INP03, loc_lib);
     if(!Om_isDir(loc_lib)) {
       wstring wrn = L"The folder \""+loc_lib+L"\"";
       wrn += OMM_STR_ERR_ISDIR;
@@ -89,7 +89,7 @@ bool OmUiAddLoc::_apply()
 
   cust_bck = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
   if(cust_bck) {
-    this->getItemText(IDC_EC_INPT4, loc_bck);
+    this->getItemText(IDC_EC_INP04, loc_bck);
     if(!Om_isDir(loc_bck)) {
       wstring wrn = L"The folder \""+loc_bck+L"\"";
       wrn += OMM_STR_ERR_ISDIR;
@@ -118,43 +118,43 @@ bool OmUiAddLoc::_apply()
 void OmUiAddLoc::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INPT1,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
-  this->_createTooltip(IDC_EC_INPT2,  L"Package installation destination path");
-  this->_createTooltip(IDC_BC_BROW2,  L"Select destination folder");
+  this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
+  this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Use custom Library folder");
-  this->_createTooltip(IDC_EC_INPT3,  L"Custom Library folder path");
-  this->_createTooltip(IDC_BC_BROW3,  L"Select custom Library folder");
+  this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
+  this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
 
   this->_createTooltip(IDC_BC_CHK02,  L"Use custom Backup folder");
-  this->_createTooltip(IDC_EC_INPT4,  L"Custom Backup folder path");
-  this->_createTooltip(IDC_BC_BROW4,  L"Select custom Backup folder");
+  this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
+  this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INPT1, L"New Location");
-  this->setItemText(IDC_EC_INPT2, L"");
-  this->setItemText(IDC_EC_INPT3, L"New Location\\Library");
-  this->setItemText(IDC_EC_INPT4, L"New Location\\Backup");
+  this->setItemText(IDC_EC_INP01, L"New Location");
+  this->setItemText(IDC_EC_INP02, L"");
+  this->setItemText(IDC_EC_INP03, L"New Location\\Library");
+  this->setItemText(IDC_EC_INP04, L"New Location\\Backup");
 
   wstring item_str;
 
   // enable or disable "OK" button according values
   bool allow = true;
 
-  this->getItemText(IDC_EC_INPT1, item_str);
+  this->getItemText(IDC_EC_INP01, item_str);
   if(!item_str.empty()) {
 
-    this->getItemText(IDC_EC_INPT2, item_str);
+    this->getItemText(IDC_EC_INP02, item_str);
     if(!item_str.empty()) {
 
       if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT3, item_str);
+        this->getItemText(IDC_EC_INP03, item_str);
         if(item_str.empty()) allow = false;
       }
 
       if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT4, item_str);
+        this->getItemText(IDC_EC_INP04, item_str);
         if(item_str.empty()) allow = false;
       }
 
@@ -177,22 +177,22 @@ void OmUiAddLoc::_onResize()
 {
   // Location title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 10, 10, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-25, 13);
+  this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-25, 13);
 
   // Location Install Label & EditControl & Browse button
   this->_setItemPos(IDC_SC_LBL02, 10, 50, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT2, 10, 60, this->width()-45, 13);
-  this->_setItemPos(IDC_BC_BROW2, this->width()-31, 60, 16, 13);
+  this->_setItemPos(IDC_EC_INP02, 10, 60, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BRW02, this->width()-31, 60, 16, 13);
 
   // Custom Library Label & EditControl & Browse buttonben ess
   this->_setItemPos(IDC_BC_CHK01, 10, 110, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT3, 10, 120, this->width()-45, 13);
-  this->_setItemPos(IDC_BC_BROW3, this->width()-31, 120, 16, 13);
+  this->_setItemPos(IDC_EC_INP03, 10, 120, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BRW03, this->width()-31, 120, 16, 13);
 
   // Custom Library Label & EditControl & Browse button
   this->_setItemPos(IDC_BC_CHK02, 10, 140, this->width()-25, 9);
-  this->_setItemPos(IDC_EC_INPT4, 10, 150, this->width()-45, 13);
-  this->_setItemPos(IDC_BC_BROW4, this->width()-31, 150, 16, 13);
+  this->_setItemPos(IDC_EC_INP04, 10, 150, this->width()-45, 13);
+  this->_setItemPos(IDC_BC_BRW04, this->width()-31, 150, 16, 13);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -218,85 +218,85 @@ bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_EC_INPT1: // Title
-      this->getItemText(IDC_EC_INPT1, item_str);
+    case IDC_EC_INP01: // Title
+      this->getItemText(IDC_EC_INP01, item_str);
       if(Om_isValidName(item_str)) {
         if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT3, item_str + L"\\Library");
+          this->setItemText(IDC_EC_INP03, item_str + L"\\Library");
         }
         if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT4, item_str + L"\\Backup");
+          this->setItemText(IDC_EC_INP04, item_str + L"\\Backup");
         }
       } else {
         if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT3, L"<invalid path>\\Library");
+          this->setItemText(IDC_EC_INP03, L"<invalid path>\\Library");
         }
         if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-          this->setItemText(IDC_EC_INPT4, L"<invalid path>\\Backup");
+          this->setItemText(IDC_EC_INP04, L"<invalid path>\\Backup");
         }
       }
       has_changed = true;
       break;
 
-    case IDC_BC_BROW2: // browse destination
-      this->getItemText(IDC_EC_INPT2, item_str);
+    case IDC_BC_BRW02: // browse destination
+      this->getItemText(IDC_EC_INP02, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select installation destination folder", item_str)) {
-        this->setItemText(IDC_EC_INPT2, brow_str);
+        this->setItemText(IDC_EC_INP02, brow_str);
       }
       break;
 
     case IDC_BC_CHK01: // custom library check box
       bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_BC_BROW3, bm_chk);
-      this->enableItem(IDC_EC_INPT3, bm_chk);
+      this->enableItem(IDC_BC_BRW03, bm_chk);
+      this->enableItem(IDC_EC_INP03, bm_chk);
       if(bm_chk) {
         item_str = L"";
       } else {
-        this->getItemText(IDC_EC_INPT1, item_str);
+        this->getItemText(IDC_EC_INP01, item_str);
         if(Om_isValidName(item_str)) {
           item_str += L"\\Library";
         } else {
           item_str = L"<invalid path>\\Library";
         }
       }
-      this->setItemText(IDC_EC_INPT3, item_str);
+      this->setItemText(IDC_EC_INP03, item_str);
     break;
 
-    case IDC_BC_BROW3: // browse custom library
-      this->getItemText(IDC_EC_INPT3, item_str);
+    case IDC_BC_BRW03: // browse custom library
+      this->getItemText(IDC_EC_INP03, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select packages library custom folder", item_str)) {
-        this->setItemText(IDC_EC_INPT3, brow_str);
+        this->setItemText(IDC_EC_INP03, brow_str);
       }
       break;
 
     case IDC_BC_CHK02: // custom backup check box
       bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
-      this->enableItem(IDC_BC_BROW4, bm_chk);
-      this->enableItem(IDC_EC_INPT4, bm_chk);
+      this->enableItem(IDC_BC_BRW04, bm_chk);
+      this->enableItem(IDC_EC_INP04, bm_chk);
       if(bm_chk) {
         item_str = L"";
       } else {
-        this->getItemText(IDC_EC_INPT1, item_str);
+        this->getItemText(IDC_EC_INP01, item_str);
         if(Om_isValidName(item_str)) {
           item_str += L"\\Backup";
         } else {
           item_str = L"<invalid path>\\Backup";
         }
       }
-      this->setItemText(IDC_EC_INPT4, item_str);
+      this->setItemText(IDC_EC_INP04, item_str);
 
     break;
 
-    case IDC_BC_BROW4: // browse custom library
-      this->getItemText(IDC_EC_INPT4, item_str);
+    case IDC_BC_BRW04: // browse custom library
+      this->getItemText(IDC_EC_INP04, item_str);
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select backup data custom folder", item_str)) {
-        this->setItemText(IDC_EC_INPT4, brow_str);
+        this->setItemText(IDC_EC_INP04, brow_str);
       }
       break;
 
-    case IDC_EC_INPT2: //< Location
-    case IDC_EC_INPT3: //< Library
-    case IDC_EC_INPT4: //< backup
+    case IDC_EC_INP02: //< Location
+    case IDC_EC_INP03: //< Library
+    case IDC_EC_INP04: //< backup
       has_changed = true;
       break;
 
@@ -314,19 +314,19 @@ bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       bool allow = true;
 
-      this->getItemText(IDC_EC_INPT1, item_str);
+      this->getItemText(IDC_EC_INP01, item_str);
       if(!item_str.empty()) {
 
-        this->getItemText(IDC_EC_INPT2, item_str);
+        this->getItemText(IDC_EC_INP02, item_str);
         if(!item_str.empty()) {
 
           if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-            this->getItemText(IDC_EC_INPT3, item_str);
+            this->getItemText(IDC_EC_INP03, item_str);
             if(item_str.empty()) allow = false;
           }
 
           if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-            this->getItemText(IDC_EC_INPT4, item_str);
+            this->getItemText(IDC_EC_INP04, item_str);
             if(item_str.empty()) allow = false;
           }
 

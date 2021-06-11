@@ -360,7 +360,7 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_SC_SEPAR, 5, 70, this->width()-10, 1);
 
   // Library path EditControl
-  //this->_setItemPos(IDC_EC_INPT1, 5, 120, this->width()-10, 12);
+  //this->_setItemPos(IDC_EC_INP01, 5, 120, this->width()-10, 12);
 
   // Package List ListView
   this->_setItemPos(IDC_LV_PKGLS, 5, 75, this->width()-10, this->height()-191);
@@ -374,7 +374,7 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_BC_UPGD, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_SYNC, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PGRES, 107, this->height()-113, this->width()-165, 12);
+  this->_setItemPos(IDC_PB_PGBAR, 107, this->height()-113, this->width()-165, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-114, 50, 14);
 
@@ -407,7 +407,7 @@ void OmUiMainNet::_onRefresh()
   ShowWindow(this->getItem(IDC_SB_PKIMG), false);
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_PGRES, false);
+  this->enableItem(IDC_PB_PGBAR, false);
 
   this->_reloadLocCb(); //< reload Location Combo-Box
 

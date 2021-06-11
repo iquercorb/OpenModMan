@@ -82,7 +82,7 @@ bool OmUiPropCtx::checkChanges()
   wstring item_str;
 
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
-    pUiPropCtxStg->getItemText(IDC_EC_INPT3, item_str);
+    pUiPropCtxStg->getItemText(IDC_EC_INP03, item_str);
     if(pCtx->title() != item_str) {
       changed = true;
     } else {
@@ -123,7 +123,7 @@ bool OmUiPropCtx::applyChanges()
 
   // Step 1, verify everything
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    pUiPropCtxStg->getItemText(IDC_EC_INPT3, ctx_name);
+    pUiPropCtxStg->getItemText(IDC_EC_INP03, ctx_name);
     if(!Om_isValidName(ctx_name)) {
       wstring wrn = L"The title";
       wrn += OMM_STR_ERR_VALIDNAME;
@@ -133,7 +133,7 @@ bool OmUiPropCtx::applyChanges()
   }
 
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    pUiPropCtxStg->getItemText(IDC_EC_INPT4, ctx_icon);
+    pUiPropCtxStg->getItemText(IDC_EC_INP04, ctx_icon);
   }
 
   // Step 2, save changes

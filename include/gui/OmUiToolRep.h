@@ -19,6 +19,7 @@
 
 #include "OmDialog.h"
 #include "OmImage.h"
+#include "OmConfig.h"
 
 /// \brief Repository Editor tool dialog
 ///
@@ -57,6 +58,12 @@ class OmUiToolRep : public OmDialog
     HBITMAP             _hBmBlank;
 
     OmImage             _image;
+
+    OmConfig            _rep_def;
+
+    void                _addPackage(const wstring& path);
+
+    void                _saveRepo(const wstring& path);
 
     bool                _apply();
 
