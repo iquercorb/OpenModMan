@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.4 (beta)
+Version: 0.9.5 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -46,6 +46,8 @@ Version history
 
 0.9.6 (not released)
  - Enhanced destination path checking in package creation dialog.
+ - Added a Tools menu for editors and futur tools.
+ - New improved Package editor dialog.
 
 0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.
