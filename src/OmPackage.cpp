@@ -986,6 +986,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
   }
 
   // create package identity according destination path
+  wstring pkg_ext = Om_getExtensionPart(out_path);
   wstring pkg_ident = Om_getNamePart(out_path);
 
   OmZipFile src_zip;
@@ -1251,19 +1252,10 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
   // compose the definitive package filename
   wstring pkg_path;
   Om_concatPaths(pkg_path, Om_getDirPart(out_path), pkg_ident);
-  pkg_path += L".zip";
+  pkg_path += L"." + pkg_ext;
 
-  // in case file already exists, we delete it
-  if(Om_isFile(pkg_path)) {
-    result = Om_fileDelete(pkg_path);
-    if(result != 0) {
-      this->_error =  L"File to overwrite \""+pkg_path+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
-      return false;
-    }
-  }
-  // rename temporary file to its final name
+  // rename temporary file to its final name, this will replace
+  // the original file if exists
   result = Om_fileMove(pkg_tmp_path, pkg_path);
   if(result != 0) {
     this->_error =  L"Temporary file name \""+pkg_tmp_path+L"\"";

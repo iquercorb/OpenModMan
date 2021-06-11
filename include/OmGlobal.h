@@ -71,6 +71,8 @@
 
 #define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
 #define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
+#define OMM_IMG_FILE_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
+#define OMM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
 
 #define OMM_CTX_DEF_FILE_FILER    L"Context definition (*.omc)\0*.OMC;\0"
 #define OMM_LOC_DEF_FILE_FILER    L"Location definition (*.oml)\0*.OML;\0"
@@ -805,7 +807,7 @@ inline int Om_fileCopy(const wstring& src, const wstring& dst, bool ow = true) {
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
 inline int Om_fileMove(const wstring& src, const wstring& dst) {
-  if(!MoveFileW(src.c_str(),dst.c_str())) {
+  if(!MoveFileExW(src.c_str(),dst.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
     return GetLastError();
   }
   return 0;

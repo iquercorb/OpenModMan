@@ -66,6 +66,10 @@ class OmUiToolPkg : public OmDialog
 
     bool                _parsePkg(const wstring& path);
 
+    void                _resetPkg();
+
+    void                _parseName();
+
     void                _buildPkg_init();
 
     void                _buildPkg_stop();
@@ -73,6 +77,8 @@ class OmUiToolPkg : public OmDialog
     void*               _buildPkg_hth;
 
     static DWORD WINAPI _buildPkg_fth(void*);
+
+    bool                _abort;
 
     bool                _apply();
 

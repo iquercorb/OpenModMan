@@ -19,16 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiToolPkg.h"
 #include "OmPackage.h"
-#include "gui/OmUiProgress.h"
 #include "OmImage.h"
-
-/// \brief Compatible image formats filter
-///
-/// Open dialog file filter for compatibles images file formats.
-///
-#define IMAGE_FILE_FILTER     L"Image file (*.bmp,*.jpg,*.jpeg,*.tiff,*.tif,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.TIFF;*.GIF;*.PNG;\
-                              \0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\
-                              \0TIFF file (*.tiff,*.tif)\0*.TIFF;*.TIF;\0"
 
 /// \brief Custom window Message
 ///
@@ -46,9 +37,10 @@ OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
   _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
   _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0))),
   _image(),
-  _buildPkg_hth(nullptr)
+  _buildPkg_hth(nullptr),
+  _abort(false)
 {
-  this->addChild(new OmUiProgress(hins)); //< for package creation process
+
 }
 
 
@@ -76,36 +68,97 @@ long OmUiToolPkg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolPkg::_parseName()
+{
+  wchar_t ext_str[16];
+  wstring name_str, vers_str;
+  OmVersion vers;
+
+  // get name
+  this->getItemText(IDC_EC_INP03, name_str);
+
+  if(name_str.size()) {
+
+    // Replace all spaces by underscores
+    std::replace(name_str.begin(), name_str.end(), L' ', L'_');
+
+    // get version
+    this->getItemText(IDC_EC_INP04, vers_str);
+
+    // check if version string is valid
+    if(vers.parse(vers_str))
+      name_str += L"v" + vers.asString();
+
+    // get chosen file extension
+    int cb_sel = this->msgItem(IDC_CB_EXTEN, CB_GETCURSEL, 0, 0);
+    this->msgItem(IDC_CB_EXTEN, CB_GETLBTEXT, cb_sel, reinterpret_cast<LPARAM>(ext_str));
+    name_str += ext_str;
+
+    // set final filename
+    this->setItemText(IDC_EC_OUT01, name_str);
+
+  } else {
+
+    // reset output
+    this->setItemText(IDC_EC_OUT01, L"");
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmUiToolPkg::_parsePkg(const wstring& path)
 {
-  OmPackage package;
+  OmPackage pkg;
 
-  if(package.sourceParse(path)) {
+  if(pkg.sourceParse(path)) {
 
     this->msgItem(IDC_LB_DPNLS, LB_RESETCONTENT);
 
-    if(package.dependCount()) {
-      this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 1);
+    if(pkg.dependCount()) {
+      this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
       this->enableItem(IDC_LB_DPNLS, true);
-      this->enableItem(IDC_EC_INPT3, true);
-      for(unsigned i = 0; i < package.dependCount(); ++i) {
-        this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(package.depend(i).c_str()));
+      this->enableItem(IDC_EC_INP07, true);
+      for(unsigned i = 0; i < pkg.dependCount(); ++i) {
+        this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pkg.depend(i).c_str()));
       }
+    } else {
+      this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
+      this->enableItem(IDC_LB_DPNLS, false);
+      this->setItemText(IDC_EC_INP07, L"");
+      this->enableItem(IDC_EC_INP07, false);
+      this->enableItem(IDC_BC_ADD, false);
+      this->enableItem(IDC_BC_DEL, false);
     }
 
-    if(package.image().thumbnail()) {
-      this->msgItem(IDC_BC_CHK04, BM_SETCHECK, 1);
-      this->enableItem(IDC_BC_BROW4, true);
-      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(package.image().thumbnail()));
-      this->setItemText(IDC_EC_INPT4, L"");
+    if(pkg.image().thumbnail()) {
+      this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 1);
+      this->enableItem(IDC_BC_BRW04, true);
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(pkg.image().thumbnail()));
+      this->setItemText(IDC_EC_INP08, L"");
+    } else {
+      this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 0);
+      this->enableItem(IDC_BC_BRW04, false);
+      this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
     }
 
-    if(package.desc().size()) {
-      this->msgItem(IDC_BC_CHK05, BM_SETCHECK, 1);
-      this->enableItem(IDC_BC_BROW5, true);
+    if(pkg.desc().size()) {
+      this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 1);
+      this->enableItem(IDC_BC_BRW05, true);
       this->enableItem(IDC_EC_PKTXT, true);
-      this->setItemText(IDC_EC_PKTXT, package.desc());
+      this->setItemText(IDC_EC_PKTXT, pkg.desc());
+    } else {
+      this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 0);
+      this->enableItem(IDC_BC_BRW05, false);
+      this->enableItem(IDC_EC_PKTXT, false);
+      this->setItemText(IDC_EC_PKTXT, L"");
     }
+
+    // update name and version
+    this->setItemText(IDC_EC_INP03, pkg.name());
+    if(!pkg.version().isNull())
+      this->setItemText(IDC_EC_INP04, pkg.version().asString());
 
     return true;
 
@@ -124,14 +177,73 @@ bool OmUiToolPkg::_parsePkg(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolPkg::_resetPkg()
+{
+  this->setItemText(IDC_EC_INP04, L"");
+  this->setItemText(IDC_EC_INP03, L"");
+
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
+  this->msgItem(IDC_LB_DPNLS, LB_RESETCONTENT);
+  this->enableItem(IDC_LB_DPNLS, false);
+  this->enableItem(IDC_EC_INP07, false);
+  this->setItemText(IDC_EC_INP07, L"");
+  this->enableItem(IDC_BC_ADD, false);
+  this->enableItem(IDC_BC_DEL, false);
+
+  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 0);
+  this->enableItem(IDC_BC_BRW04, false);
+  this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
+
+  this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 0);
+  this->enableItem(IDC_BC_BRW05, false);
+  this->enableItem(IDC_EC_PKTXT, false);
+  this->setItemText(IDC_EC_PKTXT, L"");
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiToolPkg::_buildPkg_init()
 {
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
+  // disable all controls during creation
+  this->enableItem(IDC_BC_RAD01, false);
+  this->enableItem(IDC_BC_RAD02, false);
+  this->enableItem(IDC_EC_INP03, false);
+  this->enableItem(IDC_EC_INP04, false);
+  this->enableItem(IDC_CB_EXTEN, false);
+  this->enableItem(IDC_CB_LEVEL, false);
+  this->enableItem(IDC_EC_INP05, false);
+  this->enableItem(IDC_BC_BRW03, false);
+  this->enableItem(IDC_BC_CHK01, false);
+  this->enableItem(IDC_BC_CHK02, false);
+  this->enableItem(IDC_BC_CHK03, false);
+  // disable according radios and check-boxes status
+  if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+    this->enableItem(IDC_EC_INP01, false);
+    this->enableItem(IDC_BC_BRW01, false);
+  } else {
+    this->enableItem(IDC_EC_INP02, false);
+    this->enableItem(IDC_BC_BRW02, false);
+  }
+  if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    this->enableItem(IDC_EC_INP07, false);
+    this->enableItem(IDC_BC_ADD, false);
+    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_LB_DPNLS, false);
+  }
+  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    this->enableItem(IDC_BC_BRW04, false);
+  }
+  if(this->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
+    this->enableItem(IDC_BC_BRW05, false);
+    this->enableItem(IDC_EC_PKTXT, false);
+  }
+  this->enableItem(IDC_BC_SAVE, false);
+  this->enableItem(IDC_BC_CLOSE, false);
 
-  // open the progress dialog
-  pUiProgress->open(true);
-  pUiProgress->setTitle(L"Package creation");
-  pUiProgress->setDesc(L"Preparing data");
+  // enable the progress bar
+  this->enableItem(IDC_PB_PGBAR, true);
 
   // start package building thread
   DWORD dWid;
@@ -153,8 +265,45 @@ void OmUiToolPkg::_buildPkg_stop()
     this->_buildPkg_hth = nullptr;
   }
 
-  // quit the progress dialog
-  static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
+  // enable all controls again
+  this->enableItem(IDC_BC_RAD01, true);
+  this->enableItem(IDC_BC_RAD02, true);
+  this->enableItem(IDC_EC_INP03, true);
+  this->enableItem(IDC_EC_INP04, true);
+  this->enableItem(IDC_CB_EXTEN, true);
+  this->enableItem(IDC_CB_LEVEL, true);
+  this->enableItem(IDC_EC_INP05, true);
+  this->enableItem(IDC_BC_BRW03, true);
+  this->enableItem(IDC_BC_CHK01, true);
+  this->enableItem(IDC_BC_CHK02, true);
+  this->enableItem(IDC_BC_CHK03, true);
+  // enable according radios and check-boxes status
+  if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+    this->enableItem(IDC_EC_INP01, true);
+    this->enableItem(IDC_BC_BRW01, true);
+  } else {
+    this->enableItem(IDC_EC_INP02, true);
+    this->enableItem(IDC_BC_BRW02, true);
+  }
+  if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    this->enableItem(IDC_EC_INP07, true);
+    this->enableItem(IDC_BC_ADD, true);
+    this->enableItem(IDC_BC_DEL, true);
+    this->enableItem(IDC_LB_DPNLS, true);
+  }
+  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    this->enableItem(IDC_BC_BRW04, true);
+  }
+  if(this->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
+    this->enableItem(IDC_BC_BRW05, true);
+    this->enableItem(IDC_EC_PKTXT, true);
+  }
+  this->enableItem(IDC_BC_SAVE, true);
+  this->enableItem(IDC_BC_CLOSE, true);
+
+  // reset & disable the progress bar
+  this->msgItem(IDC_PB_PGBAR, PBM_SETPOS, 0, 0);
+  this->enableItem(IDC_PB_PGBAR, false);
 
   // show a reassuring dialog message
   if(exitCode == 0) {
@@ -162,7 +311,7 @@ void OmUiToolPkg::_buildPkg_stop()
     wstring item_str;
 
     // get destination filename
-    this->getItemText(IDC_EC_INPT6, item_str);
+    this->getItemText(IDC_EC_INP06, item_str);
 
     wstring info = L"The Package \"" + Om_getFilePart(item_str);
     info += L"\" was successfully created.";
@@ -179,29 +328,27 @@ DWORD WINAPI OmUiToolPkg::_buildPkg_fth(void* arg)
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(arg);
 
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
-
-  wstring item_str, out_path;
+  wstring item_str, out_path, out_file;
 
   OmPackage package(nullptr);
 
   // get source (either a folder or another package) and parse it
   if(self->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-    self->getItemText(IDC_EC_INPT1, item_str);
+    self->getItemText(IDC_EC_INP01, item_str);
   } else {
-    self->getItemText(IDC_EC_INPT2, item_str);
+    self->getItemText(IDC_EC_INP02, item_str);
   }
 
   if(!package.sourceParse(item_str)) {
     // show error dialog box
     wstring err = L"Source data parsing failed.\n\n";
     err += package.lastError();
-    Om_dialogBoxErr(pUiProgress->hwnd(), L"Package creation error", err);
+    Om_dialogBoxErr(self->_hwnd, L"Package creation error", err);
     return 1;
   }
 
   // get package dependencies list
-  if(self->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
+  if(self->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
     int lb_cnt = self->msgItem(IDC_LB_DPNLS, LB_GETCOUNT);
     if(lb_cnt) {
       size_t n;
@@ -215,15 +362,15 @@ DWORD WINAPI OmUiToolPkg::_buildPkg_fth(void* arg)
   }
 
   // get package image data from specified file if any
-  if(self->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
-    self->getItemText(IDC_EC_INPT4, item_str);
+  if(self->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    self->getItemText(IDC_EC_INP08, item_str);
     if(!item_str.empty()) {
       package.loadImage(item_str, OMM_PKG_THMB_SIZE);
     }
   }
 
   // get package description text
-  if(self->msgItem(IDC_BC_CHK05, BM_GETCHECK)) {
+  if(self->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
     self->getItemText(IDC_EC_PKTXT, item_str);
     package.setDesc(item_str);
   }
@@ -231,27 +378,27 @@ DWORD WINAPI OmUiToolPkg::_buildPkg_fth(void* arg)
   // get package compression level
   LRESULT zip_lvl = self->msgItem(IDC_CB_LEVEL, CB_GETCURSEL);
 
-  // get destination filename
-  self->getItemText(IDC_EC_INPT6, out_path);
+  // get destination path & filename
+  self->getItemText(IDC_EC_INP06, out_path);
+  self->getItemText(IDC_EC_OUT01, out_file);
 
-  // hide the main dialog
-  self->hide();
+  self->_abort = false;
+  self->enableItem(IDC_BC_ABORT, true);
 
-  pUiProgress->setDesc(L"Adding files to package");
-
-  HWND hPb = pUiProgress->getPbHandle();
-  HWND hSc = pUiProgress->getDetailScHandle();
+  HWND hPb = self->getItem(IDC_PB_PGBAR);
 
   DWORD exitCode = 0;
 
-  if(!package.save(out_path, zip_lvl, hPb, hSc, pUiProgress->getAbortPtr())) {
+  if(!package.save(out_path + L"\\" + out_file, zip_lvl, hPb, nullptr, &self->_abort)) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += package.lastError();
-    Om_dialogBoxErr(pUiProgress->hwnd(), L"Package creation error", err);
+    Om_dialogBoxErr(self->_hwnd, L"Package creation error", err);
 
     exitCode = 1;
   }
+
+  self->enableItem(IDC_BC_ABORT, false);
 
   PostMessage(self->_hwnd, UWM_BUILDPKG_DONE, 0, 0);
 
@@ -268,7 +415,7 @@ bool OmUiToolPkg::_apply()
 
   // Step 1, verify everything
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-    this->getItemText(IDC_EC_INPT1, item_str);
+    this->getItemText(IDC_EC_INP01, item_str);
     if(!Om_isDir(item_str)) {
       wstring wrn = L"The folder \""+item_str+L"\"";
       wrn += OMM_STR_ERR_ISDIR;
@@ -276,7 +423,7 @@ bool OmUiToolPkg::_apply()
       return false;
     }
   } else {
-    this->getItemText(IDC_EC_INPT2, item_str);
+    this->getItemText(IDC_EC_INP02, item_str);
     if(!Om_isFileZip(item_str)) {
       wstring wrn = L"The file \""+item_str+L"\"";
       wrn += OMM_STR_ERR_ISFILEZIP;
@@ -285,9 +432,14 @@ bool OmUiToolPkg::_apply()
     }
   }
 
-  this->getItemText(IDC_EC_INPT6, item_str);
-  if(Om_isDir(Om_getDirPart(item_str))) {
-    if(Om_isValidName(Om_getFilePart(item_str))) {
+  wstring name_str, path_str;
+
+  this->getItemText(IDC_EC_INP06, path_str);
+  this->getItemText(IDC_EC_OUT01, name_str);
+
+  if(Om_isDir(path_str)) {
+    if(Om_isValidName(name_str)) {
+      item_str = path_str + L"\\" + name_str;
       if(Om_isFile(item_str)) {
         wstring qry = L"The file \""+Om_getFilePart(item_str)+L"\"";
         qry += OMM_STR_QRY_OVERWRITE;
@@ -302,14 +454,14 @@ bool OmUiToolPkg::_apply()
       return false;
     }
   } else {
-    wstring err = L"The destination folder \""+Om_getDirPart(item_str)+L"\"";
+    wstring err = L"The destination folder \""+path_str+L"\"";
     err += OMM_STR_ERR_ISDIR;
     Om_dialogBoxErr(this->_hwnd, L"Invalid destination", err);
     return false;
   }
 
-  // disable the OK button
-  this->enableItem(IDC_BC_OK, false);
+  // disable the Save button
+  this->enableItem(IDC_BC_SAVE, false);
 
   this->_buildPkg_init();
 
@@ -322,6 +474,33 @@ bool OmUiToolPkg::_apply()
 ///
 void OmUiToolPkg::_onInit()
 {
+  // define controls tool-tips
+  this->_createTooltip(IDC_BC_BRW01, L"Select folder");
+  this->_createTooltip(IDC_BC_BRW02, L"Select Package file");
+
+  this->_createTooltip(IDC_EC_INP03, L"Package name");
+  this->_createTooltip(IDC_EC_INP04, L"Package version");
+  this->_createTooltip(IDC_CB_EXTEN, L"Filename extension");
+
+  this->_createTooltip(IDC_CB_LEVEL, L"Package ZIP compression level");
+
+  this->_createTooltip(IDC_EC_INP06, L"Save destination path");
+  this->_createTooltip(IDC_BC_BRW03, L"Select destination folder");
+
+  this->_createTooltip(IDC_BC_SAVE, L"Save Package");
+  this->_createTooltip(IDC_BC_ABORT, L"Abort process");
+
+  this->_createTooltip(IDC_BC_CHK01, L"Defines dependencies for this Package");
+  this->_createTooltip(IDC_EC_INP07, L"Dependency package identity");
+  this->_createTooltip(IDC_LB_DPNLS, L"Dependencies list");
+
+  this->_createTooltip(IDC_BC_CHK02, L"Defines a snapshot for this Package");
+  this->_createTooltip(IDC_BC_BRW04, L"Select image file");
+
+  this->_createTooltip(IDC_BC_CHK03, L"Defines a description for this Package");
+  this->_createTooltip(IDC_BC_BRW05, L"Select text file");
+  this->_createTooltip(IDC_EC_PKTXT, L"Package description text");
+
   // Set font for description
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
   // Set default package picture
@@ -333,11 +512,18 @@ void OmUiToolPkg::_onInit()
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);
 
-  // add items into Combo-Box
-  HWND hCb = this->getItem(IDC_CB_LEVEL);
-
+  // add items into File Extension Combo-Box
+  HWND hCb = this->getItem(IDC_CB_EXTEN);
   unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
+  if(!cb_cnt) {
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L".zip"));
+    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L".ozp"));
+  }
+  SendMessageW(hCb, CB_SETCURSEL, 0, 0);
 
+  // add items into Zip Level Combo-Box
+  hCb = this->getItem(IDC_CB_LEVEL);
+  cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
   if(!cb_cnt) {
     SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
     SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
@@ -347,7 +533,11 @@ void OmUiToolPkg::_onInit()
   SendMessageW(hCb, CB_SETCURSEL, 2, 0);
 
   // Set snapshot format advice
-  this->setItemText(IDC_SC_LBL04, L"optimal format:\nsquare image of 128 x 128 pixels");
+  this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
+
+  // disable the Save & Abort button
+  this->enableItem(IDC_BC_SAVE, false);
+  this->enableItem(IDC_BC_ABORT, false);
 }
 
 
@@ -356,70 +546,95 @@ void OmUiToolPkg::_onInit()
 ///
 void OmUiToolPkg::_onResize()
 {
+  unsigned half_w = static_cast<float>(this->width()) * 0.5f;
+
+  // -- Left Frame --
+
   // From folder RadioButton
   this->_setItemPos(IDC_BC_RAD01, 10, 10, 150, 9);
-  // From Folder EditControl & Brows Button
-  this->_setItemPos(IDC_EC_INPT1, 10, 20, this->width()-38, 13);
-  this->_setItemPos(IDC_BC_BROW1, this->width()-26, 20, 16, 13);
+  // From Folder EditControl & Browse Button
+  this->_setItemPos(IDC_EC_INP01, 10, 25, half_w-40, 13);
+  this->_setItemPos(IDC_BC_BRW01, half_w-25, 25, 15, 13);
 
   // From existing Package RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 10, 40, 150, 9);
-  // From existing Package EditControl & Brows Button
-  this->_setItemPos(IDC_EC_INPT2, 10, 50, this->width()-38, 13);
-  this->_setItemPos(IDC_BC_BROW2, this->width()-26, 50, 16, 13);
+  this->_setItemPos(IDC_BC_RAD02, 10, 50, 150, 9);
+  // From existing Package EditControl & Browse Button
+  this->_setItemPos(IDC_EC_INP02, 10, 65, half_w-40, 13);
+  this->_setItemPos(IDC_BC_BRW02, half_w-25, 65, 15, 13);
 
-  // Package details GroupBox
-  this->_setItemPos(IDC_GB_GRP01, 10, 65, this->width()-20, this->height()-185);
+  // [ - - - File name & Zip compression GroupBox - - -
+  this->_setItemPos(IDC_GB_GRP01, 5, 100, half_w-10, 110);
+  // Package filename Label
+  this->_setItemPos(IDC_SC_LBL01, 10, 110, 120, 9);
+  // Name Label & EditText
+  this->_setItemPos(IDC_SC_LBL02, 10, 127, 23, 9);
+  this->_setItemPos(IDC_EC_INP03, 35, 125, half_w-145, 13);
+  // Version label & EditText
+  this->_setItemPos(IDC_SC_LBL03, half_w-105, 127, 27, 9);
+  this->_setItemPos(IDC_EC_INP04, half_w-75, 125, 30, 13);
+  // File extension ComboBox
+  this->_setItemPos(IDC_CB_EXTEN, half_w-40, 125, 30, 13);
+  // Output filname EditText
+  this->_setItemPos(IDC_EC_OUT01, 10, 145, half_w-20, 13);
+  // Zip compression Label & ComboBox
+  this->_setItemPos(IDC_SC_LBL04, 10, 175, 120, 9);
+  this->_setItemPos(IDC_CB_LEVEL, 10, 190, half_w-20, 13);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
-  // Dependencies CheckBox
-  this->_setItemPos(IDC_BC_CHK03, 15, 75, 80, 9);
-  // Dependencies EditControl a Add Button
-  this->_setItemPos(IDC_EC_INPT3, 15, 90, this->width()-50, 13);
-  this->_setItemPos(IDC_BC_ADD, this->width()-31, 90, 16, 13);
-  // Dependencies ListBox & Del button
-  this->_setItemPos(IDC_LB_DPNLS, 15, 105, this->width()-50, 24);
-  this->_setItemPos(IDC_BC_DEL, this->width()-31, 105, 16, 13);
+  // Destination Label
+  this->_setItemPos(IDC_SC_LBL05, 10, this->height()-85, 120, 9);
+  // Destination EditText & Browse Button
+  this->_setItemPos(IDC_EC_INP06, 10, this->height()-70, half_w-40, 13);
+  this->_setItemPos(IDC_BC_BRW03, half_w-25, this->height()-70, 15, 13);
 
-  // Picture CheckBox & Load button
-  this->_setItemPos(IDC_BC_CHK04, 15, 135, 80, 9);
-  this->_setItemPos(IDC_SB_PKIMG, 105, 136, 85, 78);
-  this->_setItemPos(IDC_EC_INPT4, 110, 135, this->width()-172, 14); // hidden
-  this->_setItemPos(IDC_BC_BROW4, this->width()-55, 135, 40, 14);
-  // Picture Advice Label
-  this->_setItemPos(IDC_SC_LBL04, this->width()-125, 165, 105, 35);
+  // Save Button
+  this->_setItemPos(IDC_BC_SAVE, 10, this->height()-45, 45, 14);
+  // Progress Bar
+  this->_setItemPos(IDC_PB_PGBAR, 57, this->height()-44, half_w-114, 12);
+  // Abort Button
+  this->_setItemPos(IDC_BC_ABORT, half_w-55, this->height()-45, 45, 14);
 
-  // Description CheckBox & Load button
-  this->_setItemPos(IDC_BC_CHK05, 15, 220, 80, 9);
-  this->_setItemPos(IDC_BC_BROW5, this->width()-55, 218, 40, 14);
-  // Description EditControl
-  this->_setItemPos(IDC_EC_PKTXT, 15, 235, this->width()-30, this->height()-360);
+  // -- Right Frame --
 
-  // Destination label
-  this->_setItemPos(IDC_SC_LBL06, 10, this->height()-115, 120, 9);
-  // Destination file name
-  this->_setItemPos(IDC_EC_INPT6, 10, this->height()-105, this->width()-72, 14);
-  // Destination brows button
-  this->_setItemPos(IDC_BC_SAVE, this->width()-60, this->height()-105, 50, 14);
+  // [ - - -       Dependencies GroupBox          - - -
+  this->_setItemPos(IDC_GB_GRP02, half_w+5, 0, half_w-10, 80);
+  // Has Dependencies CheckBox
+  this->_setItemPos(IDC_BC_CHK01, half_w+10, 10, 120, 9);
+  // Ident Label, EditText & + Button
+  this->_setItemPos(IDC_SC_LBL06, half_w+10, 27, 35, 9);
+  this->_setItemPos(IDC_EC_INP07, half_w+40, 25, half_w-70, 13);
+  this->_setItemPos(IDC_BC_ADD, this->width()-25, 25, 16, 13);
+  // Depend ListBox & Trash Button
+  this->_setItemPos(IDC_LB_DPNLS, half_w+10, 45, half_w-40, 30);
+  this->_setItemPos(IDC_BC_DEL, this->width()-25, 45, 16, 13);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
-  // Parsed name label & entry
-  this->_setItemPos(IDC_SC_LBL07, 10, this->height()-84, 50, 9);
-  this->_setItemPos(IDC_EC_INPT7, 60, this->height()-85, this->width()-175, 12);
+  // [ - - -        Snapshot GroupBox             - - -
+  this->_setItemPos(IDC_GB_GRP03, half_w+5, 85, half_w-10, 95);
+  // Include snapshot CheckBox
+  this->_setItemPos(IDC_BC_CHK02, half_w+10, 95, 65, 9);
+  // Snapshot Bitmap & Select... Button
+  this->_setItemPos(IDC_SB_PKIMG, this->width()-160, 96, 85, 78);
+  this->_setItemPos(IDC_BC_BRW04, this->width()-50, 95, 40, 13);
+  // Snapshot hidden EditText
+  this->_setItemPos(IDC_EC_INP08, half_w+10, 110, 120, 13); // hidden
+  // Snapshot helper Static text
+  this->_setItemPos(IDC_SC_NOTES, this->width()-230, 125, 60, 35);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
-  // Parsed version label & entry
-  this->_setItemPos(IDC_SC_LBL08, this->width()-101, this->height()-84, 51, 9);
-  this->_setItemPos(IDC_EC_INPT8, this->width()-45, this->height()-85, 35, 12);
-
-  // Zip Level Label
-  this->_setItemPos(IDC_SC_LBL09, 10, this->height()-60, 120, 9);
-  // Zip Level ComboBox
-  this->_setItemPos(IDC_CB_LEVEL, 10, this->height()-50, this->width()-20, 14);
+  // [ - - -        Description GroupBox          - - -
+  this->_setItemPos(IDC_GB_GRP04, half_w+5, 185, half_w-10, this->height()-215);
+  // Description CheckBox & Load.. Button
+  this->_setItemPos(IDC_BC_CHK03, half_w+10, 195, 100, 9);
+  this->_setItemPos(IDC_BC_BRW05, this->width()-50, 195, 40, 13);
+  // Description EditText
+  this->_setItemPos(IDC_EC_PKTXT, half_w+10, 210, half_w-20, this->height()-245);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // ----- Separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
-  // Save As... Button
-  this->_setItemPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
   // Close Button
-  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CLOSE, this->width()-54, this->height()-19, 50, 14);
 }
 
 
@@ -451,8 +666,6 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == UWM_BUILDPKG_DONE) {
     // end the removing Location process
     this->_buildPkg_stop();
-    // quit the dialog
-    this->quit();
     // refresh the main window dialog, this will also refresh this one
     this->root()->refresh();
   }
@@ -476,29 +689,45 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_RAD01:
     case IDC_BC_RAD02:
       bm_chk = this->msgItem(IDC_BC_RAD01, BM_GETCHECK);
-      this->enableItem(IDC_EC_INPT1, bm_chk);
-      this->enableItem(IDC_BC_BROW1, bm_chk);
-      this->enableItem(IDC_EC_INPT2, !bm_chk);
-      this->enableItem(IDC_BC_BROW2, !bm_chk);
+      this->enableItem(IDC_EC_INP01, bm_chk);
+      this->enableItem(IDC_BC_BRW01, bm_chk);
+      this->enableItem(IDC_EC_INP02, !bm_chk);
+      this->enableItem(IDC_BC_BRW02, !bm_chk);
+      if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INP01, item_str);
+      } else {
+        this->getItemText(IDC_EC_INP02, item_str);
+      }
+      if(!item_str.empty()) {
+        this->_parsePkg(item_str);
+      } else {
+        this->_resetPkg();
+      }
       has_changed = true;
       break;
 
-    case IDC_BC_BROW1:
+    case IDC_BC_BRW01:
       // select the initial location for browsing start
-      this->getItemText(IDC_EC_INPT1, item_str);
+      this->getItemText(IDC_EC_INP01, item_str);
       if(item_str.empty()) {
         item_str = pLoc ? pLoc->libraryDir() : L"";
       } else {
         item_str = Om_getDirPart(item_str);
       }
       if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select installation file(s) location", item_str)) {
-        this->setItemText(IDC_EC_INPT1, brow_str);
+        if(this->_parsePkg(brow_str)) { //< try to parse folder as package
+          this->setItemText(IDC_EC_INP01, brow_str);
+        }
       }
       break;
 
-    case IDC_BC_BROW2:
+    case IDC_EC_INP01:
+      has_changed = true;
+      break;
+
+    case IDC_BC_BRW02:
       // select the initial location for browsing start
-      this->getItemText(IDC_EC_INPT2, item_str);
+      this->getItemText(IDC_EC_INP02, item_str);
       if(item_str.empty()) {
         item_str = pLoc ? pLoc->libraryDir() : L"";
       } else {
@@ -507,27 +736,50 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, item_str)) {
         if(this->_parsePkg(brow_str)) { //< try to parse package
-          this->setItemText(IDC_EC_INPT2, brow_str);
+          this->setItemText(IDC_EC_INP02, brow_str);
         }
       }
       break;
 
-    case IDC_EC_INPT1:
+    case IDC_EC_INP02:
       has_changed = true;
       break;
 
-    case IDC_EC_INPT2:
+    case IDC_CB_EXTEN:
+    case IDC_EC_INP03:
+    case IDC_EC_INP04:
+      this->_parseName();
       has_changed = true;
       break;
 
-    case IDC_BC_CHK03: // Add Dependencies CheckBox
-      bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
+    case IDC_BC_BRW03:  // Destination folder Browse Button
+      // create the file initial name based on source folder name
+      if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+        this->getItemText(IDC_EC_INP01, item_str);
+      } else {
+        this->getItemText(IDC_EC_INP02, item_str);
+      }
+
+      item_str = Om_getDirPart(item_str);
+
+      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select destination location", item_str)) {
+        this->setItemText(IDC_EC_INP06, brow_str);
+      }
+      break;
+
+    case IDC_EC_INP06: // Destination folder EditText entry
+      this->getItemText(IDC_EC_INP06, item_str);
+      has_changed = true;
+      break;
+
+    case IDC_BC_CHK01: // Has Dependencies CheckBox
+      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+      this->enableItem(IDC_EC_INP07, bm_chk);
       this->enableItem(IDC_LB_DPNLS, bm_chk);
-      this->enableItem(IDC_EC_INPT3, bm_chk);
     break;
 
-    case IDC_EC_INPT3: // Dependencies EditControl
-      this->getItemText(IDC_EC_INPT3, item_str);
+    case IDC_EC_INP07: // Dependencies EditControl
+      this->getItemText(IDC_EC_INP07, item_str);
       this->enableItem(IDC_BC_ADD, !item_str.empty());
       break;
 
@@ -537,10 +789,10 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_ADD: // Add Dependency Button
-      this->getItemText(IDC_EC_INPT3, item_str);
+      this->getItemText(IDC_EC_INP07, item_str);
       if(!item_str.empty()) {
         this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(item_str.c_str()));
-        this->setItemText(IDC_EC_INPT3, L"");
+        this->setItemText(IDC_EC_INP07, L"");
       }
       this->enableItem(IDC_BC_ADD, false);
       break;
@@ -553,49 +805,48 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->enableItem(IDC_BC_DEL, false);
       break;
 
-    case IDC_BC_CHK04:
-      if(this->msgItem(IDC_BC_CHK04, BM_GETCHECK)) {
-        this->enableItem(IDC_BC_BROW4, true);
+    case IDC_BC_CHK02:  // Include snapshot CheckBox
+      if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+        this->enableItem(IDC_BC_BRW04, true);
       } else {
-        this->enableItem(IDC_BC_BROW4, false);
+        this->enableItem(IDC_BC_BRW04, false);
         this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
-        this->setItemText(IDC_EC_INPT4, L"");
+        this->setItemText(IDC_EC_INP08, L"");
       }
       break;
 
-    case IDC_BC_BROW4:
+    case IDC_BC_BRW04:
       // select the start directory from package source path
       if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT1, item_str);
+        this->getItemText(IDC_EC_INP01, item_str);
       } else {
-        this->getItemText(IDC_EC_INPT2, item_str);
+        this->getItemText(IDC_EC_INP02, item_str);
       }
       item_str = Om_getDirPart(item_str);
 
-      if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", IMAGE_FILE_FILTER, item_str)) {
+      if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Open Image file", OMM_IMG_FILE_FILTER, item_str)) {
         if(this->_image.open(brow_str, OMM_PKG_THMB_SIZE)) {
           this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_image.thumbnail()));
-          this->setItemText(IDC_EC_INPT4, brow_str);
+          this->setItemText(IDC_EC_INP08, brow_str);
         } else {
-          std::wcout << L"Image error : " << this->_image.lastErrorStr() << L"\n";
           this->msgItem(IDC_SB_PKIMG, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBlank));
-          this->setItemText(IDC_EC_INPT4, L"");
+          this->setItemText(IDC_EC_INP08, L"");
         }
       }
       break;
 
-    case IDC_BC_CHK05:
-      bm_chk = this->msgItem(IDC_BC_CHK05, BM_GETCHECK);
-      this->enableItem(IDC_BC_BROW5, bm_chk);
+    case IDC_BC_CHK03:
+      bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
+      this->enableItem(IDC_BC_BRW05, bm_chk);
       this->enableItem(IDC_EC_PKTXT, bm_chk);
     break;
 
-    case IDC_BC_BROW5:
+    case IDC_BC_BRW05:
       // select the start directory from package source path
       if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT1, item_str);
+        this->getItemText(IDC_EC_INP01, item_str);
       } else {
-        this->getItemText(IDC_EC_INPT2, item_str);
+        this->getItemText(IDC_EC_INP02, item_str);
       }
       item_str = Om_getDirPart(item_str);
 
@@ -608,43 +859,14 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_SAVE:
-      // create the file initial name based on source folder name
-      if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT1, item_str);
-        brow_str = Om_getFilePart(item_str) + L".zip";
-      } else {
-        this->getItemText(IDC_EC_INPT2, item_str);
-        brow_str = Om_getFilePart(item_str);
-      }
-
-      // select the initial location for browsing start
-      if(pLoc) {
-        item_str = pLoc ? pLoc->libraryDir() : L"";
-      } else {
-        item_str = Om_getDirPart(item_str);
-      }
-
-      if(Om_dialogSaveFile(brow_str, this->_hwnd, L"Save Package as...", OMM_PKG_FILES_FILTER, item_str)) {
-        this->setItemText(IDC_EC_INPT6, brow_str);
-      }
-      break;
-
-    case IDC_EC_INPT6:
-      this->getItemText(IDC_EC_INPT6, item_str);
-      if(!item_str.empty()) {
-        wstring name, vers;
-        Om_parsePkgIdent(name, vers, item_str, true, true);
-        this->setItemText(IDC_EC_INPT7, name);
-        this->setItemText(IDC_EC_INPT8, vers);
-      }
-      has_changed = true;
-      break;
-
-    case IDC_BC_OK:
       this->_apply();
       break;
 
-    case IDC_BC_CANCEL:
+    case IDC_BC_ABORT:
+      this->_abort = true;
+      break;
+
+    case IDC_BC_CLOSE:
       this->quit();
       break;
     }
@@ -653,20 +875,20 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       bool allow = true;
 
       if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INPT1, item_str);
+        this->getItemText(IDC_EC_INP01, item_str);
       } else {
-        this->getItemText(IDC_EC_INPT2, item_str);
+        this->getItemText(IDC_EC_INP02, item_str);
       }
       if(!item_str.empty()) {
 
-        this->getItemText(IDC_EC_INPT6, item_str);
+        this->getItemText(IDC_EC_INP06, item_str);
         if(item_str.empty()) allow = false;
 
       } else {
         allow = false;
       }
 
-      this->enableItem(IDC_BC_OK, allow);
+      this->enableItem(IDC_BC_SAVE, allow);
     }
   }
 
