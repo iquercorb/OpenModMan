@@ -249,16 +249,16 @@ static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, siz
     b[1] = (i < in_size) ? in_data[i++] : 0;
     b[2] = (i < in_size) ? in_data[i++] : 0;
     t = (b[0] << 0x10) + (b[1] << 0x08) + b[2];
-    out_b64 += __b64_enc_table[0x3F & (t >> 18)];
-    out_b64 += __b64_enc_table[0x3F & (t >> 12)];
-    out_b64 += __b64_enc_table[0x3F & (t >>  6)];
-    out_b64 += __b64_enc_table[0x3F & (t)];
+    out_b64.push_back(__b64_enc_table[0x3F & (t >> 18)]);
+    out_b64.push_back(__b64_enc_table[0x3F & (t >> 12)]);
+    out_b64.push_back(__b64_enc_table[0x3F & (t >>  6)]);
+    out_b64.push_back(__b64_enc_table[0x3F & (t)]);
   }
 
   unsigned r = in_size % 3; //< remaining bytes after per-triplet division
   if(r > 0) {
     for(unsigned i = 0; i < 3 - r; ++i)
-      out_b64[size - i] = L'=';
+      out_b64[(size - 1) - i] = L'=';
   }
 }
 
@@ -1663,13 +1663,25 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
   ofn.lStructSize = sizeof(OPENFILENAMEW);
 
   ofn.hwndOwner = hWnd;
-  ofn.lpstrFilter = filter; //L"Mod archive (*.zip)\0*.ZIP;\0";
+  ofn.lpstrFilter = filter;
 
+  // Oyé oyé, dear me in the future trying to fix this...
+
+  // lpstrInitialDir does not work as attended, since Windows 7 if it has the
+  // same value as was passed the first time the application used an Open or
+  // Save As dialog box, the path most recently selected by the user is used
+  // as the initial directory.
+  ofn.lpstrInitialDir = start.c_str();
+
+  // As workaround for the lpstrInitialDir behavior, we could set lpstrFile
+  // with an initial path with a wildcard as file name (eg. C:\folder\*.ext)
+  // However, within the context of this function, this would require to add
+  // an new argument specify the wildcard to set, or to parse the filter
+  // string which would be such monstrous routine for a so little thing.
   ofn.lpstrFile = str_file;
   ofn.lpstrFile[0] = L'\0';
-  ofn.nMaxFile = OMM_MAX_PATH;
 
-  ofn.lpstrInitialDir = start.c_str();
+  ofn.nMaxFile = OMM_MAX_PATH;
 
   ofn.lpstrTitle = title;
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
