@@ -221,6 +221,31 @@ void Om_toBase64(wstring& b64, const uint8_t* data, size_t size);
 ///
 uint8_t* Om_fromBase64(size_t* size, const wstring& b64);
 
+/// \brief Format to Base64 encoded Data URI.
+///
+/// Format the given data to Base64 encoded Data URI.
+///
+/// \param[out] uri       : String to get result.
+/// \param[in]  mime_type : Data URI media type to set.
+/// \param[in]  charset   : Optional text charset to define.
+/// \param[in]  data      : Data to encode.
+/// \param[in]  size      : data size in bytes.
+///
+void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& charset, const uint8_t* data, size_t size);
+
+/// \brief Get data from Data URI.
+///
+/// Get decoded data from Data URI
+///
+/// \param[out] size      : Pointer to receive decoded data size
+/// \param[out] mime_type : String to receive data type
+/// \param[out] charset   : Text charset if any
+/// \param[in]  uri       : Data URI string to parse
+///
+/// \return Pointer to decoded data.
+///
+uint8_t* Om_decodeDataUri(size_t* size, wstring& mime_type, wstring& charset, const wstring& uri);
+
 /// \brief Get current time.
 ///
 /// Get current time values based on system local time.
@@ -1146,26 +1171,69 @@ string Om_loadPlainText(const wstring& path);
 ///
 size_t Om_loadPlainText(string& text, const wstring& path);
 
+/// \brief Load binary file.
+///
+/// Loads the specified file as binary data.
+///
+/// \param[in] size    : Pointer to receive size of load data in bytes.
+/// \param[in] path    : Path to file to be loaded.
+///
+/// \return Pointer to loaded data.
+///
+uint8_t* Om_loadBinary(size_t* size, const wstring& path);
+
+/// \brief Get image type.
+///
+/// Search within the given data buffer for known image signature. Possible
+/// values are the following:
+///
+/// \c 0 : unknown or invalid image format.
+/// \c 1 or \c OMM_IMAGE_TYPE_BMP : BMP image.
+/// \c 2 or \c OMM_IMAGE_TYPE_JPG : JPEG image.
+/// \c 3 or \c OMM_IMAGE_TYPE_PNG : PNG image.
+/// \c 4 or \c OMM_IMAGE_TYPE_GIF : GIF image.
+///
+/// \param[in]  data  : Image data to read, must be at least 8 bytes length.
+///
+/// \return Image type or 0 if unknown type.
+///
+int Om_imageType(uint8_t* data);
+
+/// \brief Get image type.
+///
+/// Search within the given data buffer for known image signature. Possible
+/// values are the following:
+///
+/// \c 0 : unknown or invalid image format.
+/// \c 1 or \c OMM_IMAGE_TYPE_BMP : BMP image.
+/// \c 2 or \c OMM_IMAGE_TYPE_JPG : JPEG image.
+/// \c 3 or \c OMM_IMAGE_TYPE_PNG : PNG image.
+/// \c 4 or \c OMM_IMAGE_TYPE_GIF : GIF image.
+///
+/// \param[in]  file  : File pointer to read data.
+///
+/// \return Image type, 0 if unknown type or -1 if read error occurred.
+///
+int Om_imageType(FILE* file);
+
 /// \brief Load image.
 ///
 /// Load image data from image file. Supported format are Bmp, Jpeg, Png and Gif.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_path : Input image file path to read data.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
+/// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y = false);
+uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y = false);
 
 /// \brief Load image.
 ///
 /// Load image data from buffer in memory. Supported format are Bmp, Jpeg, Png and Gif.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
@@ -1173,9 +1241,9 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
 /// \param[in]  in_size : Input image data size in bytes.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Image type from 1 to 4 on success, 0 if file type is not supported, -1 if error occurred.
+/// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y = false);
+uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y = false);
 
 /// \brief Save image as BMP.
 ///
@@ -1239,16 +1307,15 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// Encode BMP data to buffer in memory.
 ///
-/// \param[out] out_data  : Output BMP data, pointer to pointer to be allocated.
 /// \param[out] out_size  : Output BMP data size in bytes.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode JPEG data.
 ///
@@ -1262,9 +1329,9 @@ bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 /// \param[in]  level     : JPEG compression quality 0 to 100.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded JPG image data or nullptr if failed.
 ///
-bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Encode PNG data.
 ///
@@ -1278,9 +1345,9 @@ bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 /// \param[in]  level     : PNG compression level 0 to 9.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded PNG image data or nullptr if failed.
 ///
-bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
+uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
 
 /// \brief Encode GIF data.
 ///
@@ -1293,9 +1360,9 @@ bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, u
 /// \param[in]  in_h      : Input image height.
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded GIF image data or nullptr if failed.
 ///
-bool Om_encodeGif(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_encodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Resize image.
 ///
@@ -1391,6 +1458,31 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
 ///
 HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name);
 
+/// \brief Compress data
+///
+/// Compress the supplied data using Deflate algorithm.
+///
+/// \param[out] out_size  : Output compressed data size in bytes.
+/// \param[in]  in_data   : Input data to be compressed.
+/// \param[in]  in_size   : Input data size in bytes.
+/// \param[in]  level     : Deflate compression level 0 to 9.
+///
+/// \return Pointer to compressed data or nullptr if failed.
+///
+uint8_t* Om_zDeflate(size_t* out_size, const uint8_t* in_data, size_t in_size, unsigned level = 9);
+
+/// \brief Uncompress data
+///
+/// Uncompress the supplied data using Deflate algorithm.
+///
+/// \param[in]  in_data   : Input data to be decompressed.
+/// \param[in]  in_size   : Input data size in bytes.
+/// \param[in]  def_size  : Original size of decompressed data (must have been stored before compression)
+///
+/// \return Pointer to uncompressed data or nullptr if failed.
+///
+uint8_t* Om_zInflate(const uint8_t* in_data, size_t in_size, size_t def_size);
+
 /// \brief Get Windows error string
 ///
 /// Returns the error string corresponding to the given Windows error code.
@@ -1400,5 +1492,42 @@ HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name);
 /// \return Error string.
 ///
 wstring Om_getErrorStr(int code);
+
+/// \brief Memory allocation.
+///
+/// Allocate new buffer of the specified size. Allocated data
+/// must be free using the Om_free function.
+///
+/// \param[in]  size  : Size to allocate in bytes.
+///
+/// \return Pointer to allocated buffer or nullptr if failed.
+///
+inline void* Om_alloc(size_t size) {
+  return malloc(size);
+}
+
+/// \brief Reallocate memory.
+///
+/// Changes the size of the given memory block to the
+/// specified size.
+///
+/// \param[in] buff : Pointer to a memory block previously allocated with Om_alloc or Om_realloc.
+/// \param[in] size : New size for the memory block, in bytes.
+///
+/// \return Pointer to allocated buffer or nullptr if failed.
+///
+inline void* Om_realloc(void* buff, size_t size) {
+  return realloc(buff, size);
+}
+
+/// \brief Free allocated data.
+///
+/// Properly free a previously allocated data using Om_alloc.
+///
+/// \param[in]  data  : Previously allocated to free.
+///
+inline void Om_free(void* data) {
+  if(data) free(data);
+}
 
 #endif // OMGLOBAL_H

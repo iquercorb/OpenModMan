@@ -67,57 +67,53 @@ bool OmImage::open(const wstring& path, unsigned thumb)
   size_t size = GetFileSize(hFile, nullptr);
 
   // allocate buffer and read
-  uint8_t* data;
-  try {
-    data = new uint8_t[size];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  uint8_t* data = new(std::nothrow) uint8_t[size];
+  if(!data) return false;
 
   // read full data at once
   DWORD rb;
-  if(!ReadFile(hFile, data, size, &rb, nullptr)) {
-    this->_ercode = OMM_IMAGE_ERR_READ;
-    CloseHandle(hFile);
-    delete [] data;
-    return false;
-  }
+  bool result = ReadFile(hFile, data, size, &rb, nullptr);
 
   // close file
   CloseHandle(hFile);
 
-  // decode image data
-  uint8_t* rgb = nullptr;
-  unsigned w, h, c;
+  if(!result) {
+    this->_ercode = OMM_IMAGE_ERR_READ;
+    delete [] data;
+    return false;
+  }
 
-  // check for known image file signatures
-  int type = Om_loadImage(&rgb, &w, &h, &c, data, size, false);
-
-  // check for image loading error
+  // check for image type
+  int type = Om_imageType(data);
   if(type == 0) { //< unknown image format
     this->_ercode = OMM_IMAGE_ERR_TYPE;
     return false;
   }
 
-  if(type == -1) { //< image decoding error
+  // decode image data
+  unsigned w, h, c;
+  uint8_t* rgb = Om_loadImage(&w, &h, &c, data, size, false);
+
+  if(!rgb) { //< image decoding error
     this->_ercode = OMM_IMAGE_ERR_LOAD;
     return false;
   }
 
   // create thumbnail
   if(thumb) {
-    uint8_t* thb_rgb = Om_thumbnailImage(thumb, rgb, w, h, c);
-    if(thb_rgb) {
-      this->_thumbnail = Om_hbitmapImage(thb_rgb, thumb, thumb, c);
-      delete [] thb_rgb;
+    uint8_t* thn = Om_thumbnailImage(thumb, rgb, w, h, c);
+    if(thn) {
+      this->_thumbnail = Om_hbitmapImage(thn, thumb, thumb, c);
+      Om_free(thn); //< free allocated RGB data
     } else {
       this->_ercode = OMM_IMAGE_ERR_THMB;
-      delete [] rgb;
+      Om_free(rgb); //< free allocated RGB data
       return false;
     }
   }
 
-  delete [] rgb;
+  // free allocated image
+  Om_free(rgb);
 
   this->_data = data;
   this->_data_size = size;
@@ -136,18 +132,16 @@ bool OmImage::open(uint8_t* data, size_t size, unsigned thumb)
   // clear all previous data
   this->clear();
 
-  // decode image data
-  uint8_t* rgb = nullptr;
-  unsigned w, h, c;
-
-  // check for known image file signatures
-  int type = Om_loadImage(&rgb, &w, &h, &c, data, size, false);
-
-  // check for image loading error
+  // check for image type
+  int type = Om_imageType(data);
   if(type == 0) { //< unknown image format
     this->_ercode = OMM_IMAGE_ERR_TYPE;
     return false;
   }
+
+  // decode image data
+  unsigned w, h, c;
+  uint8_t* rgb = Om_loadImage(&w, &h, &c, data, size, false);
 
   if(type == -1) { //< image decoding error
     this->_ercode = OMM_IMAGE_ERR_LOAD;
@@ -156,25 +150,24 @@ bool OmImage::open(uint8_t* data, size_t size, unsigned thumb)
 
   // create thumbnail
   if(thumb) {
-    uint8_t* thb_rgb = Om_thumbnailImage(thumb, rgb, w, h, c);
-    if(thb_rgb) {
-      this->_thumbnail = Om_hbitmapImage(thb_rgb, thumb, thumb, c);
-      delete [] thb_rgb;
+    uint8_t* thn = Om_thumbnailImage(thumb, rgb, w, h, c);
+    if(thn) {
+      this->_thumbnail = Om_hbitmapImage(thn, thumb, thumb, c);
+      Om_free(thn); //< free allocated RGB data
     } else {
       this->_ercode = OMM_IMAGE_ERR_THMB;
-      delete [] rgb;
+      Om_free(rgb); //< free allocated RGB data
       return false;
     }
   }
 
-  delete [] rgb;
+  // free allocated image
+  Om_free(rgb);
 
   // copy data locally
-  try {
-    this->_data = new uint8_t[size];
-  } catch(const std::bad_alloc&) {
-    return false;
-  }
+  this->_data = new(std::nothrow) uint8_t[size];
+  if(!this->_data) return false;
+
   memcpy(this->_data, data, size);
 
   this->_data_size = size;

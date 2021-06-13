@@ -238,6 +238,7 @@ static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, siz
   size_t size = 4 * ((in_size + 2) / 3);
 
   // reserve buffer for encoded data
+  out_b64.clear();
   out_b64.reserve(size);
 
   uint8_t b[3];
@@ -284,7 +285,7 @@ static inline uint8_t* __base64_decode(size_t* out_size, const wstring& in_b64)
   if(in_b64[in_b64.size() - 2] == '=') size--;
 
   // allocate output data buffer
-  uint8_t* data = new(std::nothrow) uint8_t[size];
+  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
   if(!data) return nullptr;
 
   // decode data
@@ -334,6 +335,105 @@ void Om_toBase64(wstring& b64, const uint8_t* data, size_t size)
 uint8_t* Om_fromBase64(size_t* size, const wstring& b64)
 {
   return __base64_decode(size, b64);
+}
+
+/// \brief Data URI Regex pattern
+///
+/// Regular expression pattern for Data URI.
+///
+//static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,([\w\W]+))"); // cause crash
+static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,)");
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& charset, const uint8_t* data, size_t size)
+{
+  // compose final data URI string
+  uri.clear();
+  uri.append(L"data:");
+  uri.append(mime_type);
+
+  wstring uri_data;
+
+  if(!charset.empty()) {
+    uri.append(L";charset=");
+    uri.append(charset);
+    // convert data to wstring
+    for(unsigned i = 0; i < size; ++i)
+      uri_data.push_back(static_cast<wchar_t>(data[i]));
+  } else {
+    uri.append(L";base64");
+    // encode binary data to base64
+    __base64_encode(uri_data, data, size);
+  }
+
+  // finally append data
+  uri.push_back(L',');
+  uri.append(uri_data);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_decodeDataUri(size_t* size, wstring& mime_type, wstring& charset, const wstring& uri)
+{
+  // initialize values
+  (*size) = 0;
+  mime_type = L"";
+  charset = L"";
+
+  // check for regex matches
+  std::match_results<const wchar_t*> matches;
+  if(std::regex_search(uri.c_str(), matches, __data_uri_reg)) {
+
+    // matches :
+    // 0) full match
+    // 1) data:
+    // 2) mime-type (eg. image/jpeg)
+    // 3) encoding (eg. base64) or literally "charset"
+    // 4) used charset (eg. UTF-8)
+    // suffix()) the data...
+
+    // search for full match
+    if(matches.size()) {
+
+      // set data mime type
+      mime_type = matches[2];
+
+      // check whether we got a charset
+      if(matches[3] == L"charset") {
+
+        // set the parsed charset
+        charset = matches[4];
+
+        // get data as wide string
+        wstring wdata = matches.suffix();
+
+        // allocate new buffer to hold data
+        uint8_t* ascii = reinterpret_cast<uint8_t*>(Om_alloc(wdata.size()));
+        if(!ascii) return nullptr;
+
+        // convert the wchar_t to uint8_t by value. Since
+        // plain text data URI should always have 8 bits
+        // content, this should be OK
+        for(unsigned i = 0; i < wdata.size(); ++i)
+          ascii[i] = wdata[i];
+
+        (*size) = wdata.size();
+
+        return ascii;
+
+      } else if(matches[3] == L"base64") {
+        // decode base64 data
+        return __base64_decode(size, matches.suffix());
+      }
+    }
+  }
+
+  return nullptr;
 }
 
 
@@ -779,9 +879,9 @@ static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
 
 /// \brief URL Regex pattern
 ///
-/// Regular expression pattern to check whether string is a valid URL according RFC 3986.
+/// Regular expression pattern for URL.
 ///
-static const std::regex __url_reg(R"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)"); // work never
+static const std::regex __url_reg(R"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)");
 
 
 ///
@@ -1004,14 +1104,7 @@ bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, boo
 ///
 int Om_dirDeleteRecursive(const wstring& path)
 {
-  wchar_t* path_buf;
-
-  try {
-    path_buf = new wchar_t[path.size()+2];
-  } catch(std::bad_alloc& ba) {
-    std::cerr << "Om_dirDeleteRecursive:: bad_alloc : " << ba.what();
-    return 1;
-  }
+  wchar_t path_buf[OMM_MAX_PATH];
 
   wcscpy(path_buf, path.c_str());
   path_buf[path.size()+1] = 0; // the buffer must end with double null character
@@ -1022,8 +1115,6 @@ int Om_dirDeleteRecursive(const wstring& path)
   fop.fFlags = FOF_NO_UI;
 
   int result = SHFileOperationW(&fop);
-
-  delete [] path_buf;
 
   return result;
 }
@@ -1412,14 +1503,7 @@ time_t Om_itemTime(const wstring& path)
 ///
 int Om_moveToTrash(const wstring& path)
 {
-  wchar_t* path_buf;
-
-  try {
-    path_buf = new wchar_t[path.size()+2];
-  } catch(std::bad_alloc& ba) {
-    std::cerr << "Om_moveToTrash:: bad_alloc :" << ba.what();
-    return 1;
-  }
+  wchar_t path_buf[OMM_MAX_PATH];
 
   wcscpy(path_buf, path.c_str());
   path_buf[path.size()+1] = 0;
@@ -1430,8 +1514,6 @@ int Om_moveToTrash(const wstring& path)
   fop.fFlags = FOF_NO_UI|FOF_ALLOWUNDO;
 
   int result = SHFileOperationW(&fop);
-
-  delete [] path_buf;
 
   return result;
 }
@@ -1458,10 +1540,10 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   // first call to get required SECURITY_DESCRIPTOR size
   GetFileSecurityW(path.c_str(), sdMask, nullptr, 0, &sdSize);
   // allocate new SECURITY_DESCRIPTOR of the proper size
-  pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(malloc(sdSize + 1));
+  pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(Om_alloc(sdSize + 1));
   // second call to get SECURITY_DESCRIPTOR data
   if(!GetFileSecurityW(path.c_str(), sdMask, pSd, sdSize, &sdSize)) {
-    free(pSd); return false;
+    Om_free(pSd); return false;
   }
 
   // STEP 2 - creates a "security token" of the current application process
@@ -1470,14 +1552,14 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
                 | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
-    free(pSd); return false;
+    Om_free(pSd); return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
   // so we need to duplicate it to transform it into a standard "user" token by
   // impersonate it...
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
-    CloseHandle(hTokenProc); free(pSd);
+    CloseHandle(hTokenProc); Om_free(pSd);
     return false;
   }
 
@@ -1529,7 +1611,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
 
   CloseHandle(hTokenProc);
   CloseHandle(hTokenUser);
-  free(pSd);
+  Om_free(pSd);
 
   return status;
 }
@@ -1748,9 +1830,9 @@ inline static size_t __load_plaintxt(string& txt, const wchar_t* path)
 
   DWORD rb;
   size_t rt = 0;
-  char cbuf[1080];
+  char cbuf[4097];
 
-  while(ReadFile(hFile, cbuf, 1024, &rb, nullptr)) {
+  while(ReadFile(hFile, cbuf, 4096, &rb, nullptr)) {
 
     if(rb == 0)
       break;
@@ -1785,6 +1867,45 @@ string Om_loadPlainText(const wstring& path)
 size_t Om_loadPlainText(string& text, const wstring& path)
 {
   return __load_plaintxt(text, path.c_str());
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_loadBinary(size_t* size, const wstring& path)
+{
+  // initialize size
+  (*size) = 0;
+
+  // open file for reading
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return nullptr;
+
+  size_t data_size = GetFileSize(hFile, nullptr);
+
+  // allocate buffer and read
+  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(data_size));
+  if(!data) return nullptr;
+
+  // read full data at once
+  DWORD rb;
+  bool result = ReadFile(hFile, data, data_size, &rb, nullptr);
+
+  // close file
+  CloseHandle(hFile);
+
+  if(!result) {
+    Om_free(data);
+    return nullptr;
+  }
+
+  (*size) = data_size;
+
+  return data;
 }
 
 
@@ -2068,7 +2189,7 @@ static bool __image_quantize(uint8_t* out_idx, uint8_t* out_map, unsigned* map_s
 
   size_t mtx_bytes = in_w * in_h;
 
-  node_list = new(std::nothrow) __qz_rgb[32768];
+  node_list = reinterpret_cast<__qz_rgb*>(Om_alloc(sizeof(__qz_rgb) * 32768));
   if(!node_list) return false;
 
   for(i = 0; i < 32768; ++i) {
@@ -2151,7 +2272,7 @@ static bool __image_quantize(uint8_t* out_idx, uint8_t* out_map, unsigned* map_s
     out_idx[i] = node_list[u].pos;
   }
 
-  delete [] node_list;
+  Om_free(node_list);
 
   (*map_size) = new_size;
 
@@ -2240,9 +2361,9 @@ static int __gif_write_buff_fn(GifFileType* gif, const uint8_t* src, int len)
   __gif_write_st* write_st = reinterpret_cast<__gif_write_st*>(gif->UserData);
   write_st->dst_size += len;
   if(write_st->dst_data) {
-    write_st->dst_data = reinterpret_cast<uint8_t*>(realloc(write_st->dst_data, write_st->dst_size));
+    write_st->dst_data = reinterpret_cast<uint8_t*>(Om_realloc(write_st->dst_data, write_st->dst_size));
   } else {
-    write_st->dst_data = reinterpret_cast<uint8_t*>(malloc(write_st->dst_size));
+    write_st->dst_data = reinterpret_cast<uint8_t*>(Om_alloc(write_st->dst_size));
   }
   memcpy(write_st->dst_data + write_st->dst_seek, src, len);
   write_st->dst_seek += len;
@@ -2253,16 +2374,15 @@ static int __gif_write_buff_fn(GifFileType* gif, const uint8_t* src, int len)
 ///
 /// Common function to decode GIF using the given GIF decoder structure.
 ///
-/// \param[in]  gif_dec : GIF decoder structure pointer.
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
+/// \param[in]  gif_dec : GIF decoder structure pointer.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB image data or nullptr if failed.
 ///
-static bool __gif_decode_common(void* gif_dec, uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, bool flip_y)
+static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* gif_dec, bool flip_y)
 {
   // Retrieve GIF decoder struct
   int error;
@@ -2271,7 +2391,7 @@ static bool __gif_decode_common(void* gif_dec, uint8_t** out_rgb, unsigned* out_
   // Load GIF content
   if(DGifSlurp(gif) == GIF_ERROR) {
     DGifCloseFile(gif, &error);
-    return false;
+    return nullptr;
   }
 
   // Get image list, we care only about the first one
@@ -2296,10 +2416,10 @@ static bool __gif_decode_common(void* gif_dec, uint8_t** out_rgb, unsigned* out_
   size_t tot_bytes = h * row_bytes;
 
   // allocate new buffer for RGB data
-  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
+  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
   if(!rgb) {
     DGifCloseFile(gif, &error);
-    return false;
+    return nullptr;
   }
 
   // get GIF index list
@@ -2325,9 +2445,9 @@ static bool __gif_decode_common(void* gif_dec, uint8_t** out_rgb, unsigned* out_
   DGifCloseFile(gif, &error);
 
   // assign output values
-  (*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = 3;
+  (*out_w) = w; (*out_h) = h; (*out_c) = 3;
 
-  return true;
+  return rgb;
 }
 
 /// \brief Encode GIF.
@@ -2352,7 +2472,7 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   size_t mtx_bytes = in_w * in_h; //< image matrix size, one byte per pixel
 
   // allocate new buffer to receive color indices
-  uint8_t* imtx = new(std::nothrow) uint8_t[mtx_bytes];
+  uint8_t* imtx = reinterpret_cast<uint8_t*>(Om_alloc(mtx_bytes));
   if(!imtx) {
     EGifCloseFile(gif, &error);
     return false;
@@ -2360,17 +2480,16 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
 
   // allocate new color map of 256 colors
   unsigned cmap_size = 256;
-  uint8_t* cmap = new(std::nothrow) uint8_t[cmap_size * 3]; //< cmap_size * RGB
+  uint8_t* cmap = reinterpret_cast<uint8_t*>(Om_alloc(cmap_size * 3)); //< cmap_size * RGB
   if(!cmap) {
-    delete [] imtx;
+    Om_free(imtx);
     EGifCloseFile(gif, &error);
     return false;
   }
 
   // quantize image
   if(!__image_quantize(imtx, cmap, &cmap_size, in_rgb, in_w, in_h, in_c)) {
-    delete [] imtx;
-    delete [] cmap;
+    Om_free(imtx); Om_free(cmap);
     EGifCloseFile(gif, &error);
     return false;
   }
@@ -2399,33 +2518,32 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
 
   // encode GIF
   if(GIF_OK != EGifSpew(gif)) {
-    delete [] imtx;
-    delete [] cmap;
+    Om_free(imtx);
+    Om_free(cmap);
     EGifCloseFile(gif, &error);
     return false;
   }
 
   // free allocated data
-  delete [] imtx;
-  delete [] cmap;
+  Om_free(imtx);
+  Om_free(cmap);
 
   return true;
 }
 
-/// \brief Decode GIF.
+/// \brief Read GIF file.
 ///
-/// Decode GIF data from file pointer.
+/// Read GIF data from file pointer.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_file : Input file pointer to read data from.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB image data or nullptr if failed.
 ///
-static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __gif_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
 {
   int error;
   GifFileType* gif;
@@ -2436,26 +2554,25 @@ static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   // Define custom read function and load GIF header
   gif = DGifOpen(in_file, __gif_read_file_fn, &error);
   if(gif == nullptr)
-    return false;
+    return nullptr;
 
   // Decode GIF data
-  return __gif_decode_common(gif, out_rgb, out_w, out_h, out_c, flip_y);
+  return __gif_decode_common(out_w, out_h, out_c, gif, flip_y);
 }
 
-/// \brief Decode GIF.
+/// \brief Decode GIF data.
 ///
 /// Decode GIF data from buffer in memory.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_data : Input GIF data to decode.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB image data or nullptr if failed.
 ///
-static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static uint8_t* __gif_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
 {
   int error;
   GifFileType* gif;
@@ -2468,15 +2585,15 @@ static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   // Define custom read function and load GIF header
   gif = DGifOpen(&read_st, __gif_read_buff_fn, &error);
   if(gif == nullptr)
-    return false;
+    return nullptr;
 
   // Decode GIF data
-  return __gif_decode_common(gif, out_rgb, out_w, out_h, out_c, flip_y);
+  return __gif_decode_common(out_w, out_h, out_c, gif, flip_y);
 }
 
-/// \brief Encode GIF.
+/// \brief Write GIF file.
 ///
-/// Encode GIF data to file pointer.
+/// Write GIF data to file pointer.
 ///
 /// \param[out] out_file  : File pointer to write to.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
@@ -2486,7 +2603,7 @@ static bool __gif_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __gif_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static bool __gif_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   int error;
   GifFileType* gif;
@@ -2500,20 +2617,19 @@ static bool __gif_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
   return __gif_encode_common(gif, in_rgb, in_w, in_h, in_c);
 }
 
-/// \brief Encode GIF.
+/// \brief Encode GIF data.
 ///
 /// Encode GIF data to buffer in memory.
 ///
-/// \param[out] out_data  : Output GIF data, pointer to pointer to be allocated.
 /// \param[out] out_size  : Output GIF data size in bytes.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded GIF image data or nullptr if failed.
 ///
-static bool __gif_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static uint8_t* __gif_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   int error;
   GifFileType* gif;
@@ -2527,33 +2643,31 @@ static bool __gif_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   // Define custom read function and load GIF header
   gif = EGifOpen(&write_st, __gif_write_buff_fn, &error);
   if(gif == nullptr)
-    return false;
+    return nullptr;
 
   // Encode RGB to GIF data
   if(!__gif_encode_common(gif, in_rgb, in_w, in_h, in_c))
-    return false;
+    return nullptr;
 
   // assign output values
-  (*out_data) = write_st.dst_data;
   (*out_size) = write_st.dst_size;
 
-  return 1;
+  return write_st.dst_data;
 }
 
-/// \brief Decode BMP.
+/// \brief Read BMP file.
 ///
-/// Decode BMP data from file pointer.
+/// Read BMP data from file pointer.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_file : Input file pointer to read data from.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
 ///
-static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __bmp_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
 {
   // make sure we start at begining
   fseek(in_file, 0, SEEK_SET);
@@ -2562,15 +2676,18 @@ static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   OMM_BITMAPHEADER bmp_head;
   OMM_BITMAPINFOHEADER bmp_info;
   // read base header
-  if(fread(&bmp_head, 1, 14, in_file) < 14) return false;
-  // read info header
-  if(fread(&bmp_info, 1, 40, in_file) < 40) return false;
+  if(fread(&bmp_head, 1, 14, in_file) < 14)
+    return nullptr;
   // check BM signature
-  if(0 != memcmp(bmp_head.signature, "BM", 2)) return false;
+  if(0 != memcmp(bmp_head.signature, "BM", 2))
+    return nullptr;
+  // read info header
+  if(fread(&bmp_info, 1, 40, in_file) < 40)
+    return nullptr;
 
   // we support only 24 or 32 bpp
   if(bmp_info.bpp < 24)
-    return false;
+    return nullptr;
   // get BMP image parameters
   unsigned w = bmp_info.width;
   unsigned h = bmp_info.height;
@@ -2581,8 +2698,8 @@ static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   size_t tot_bytes = h * row_bytes;
 
   // allocate new buffer to receive rgb data
-  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
-  if(!rgb) return false;
+  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!rgb) return nullptr;
 
   // seek to bitmap data location and read
   fseek(in_file, bmp_head.offbits, SEEK_SET);
@@ -2591,14 +2708,14 @@ static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
   if(flip_y) {
     // read all data at once from
     if(fread(rgb, 1, tot_bytes, in_file) != tot_bytes) {
-      delete[] rgb; return false;
+      Om_free(rgb); return nullptr;
     }
   } else {
     // read rows in reverse order
     unsigned hmax = (h - 1);
     for(unsigned y = 0; y < h; ++y) {
       if(fread(rgb + (row_bytes * (hmax - y)), 1, row_bytes, in_file) != row_bytes) {
-        delete[] rgb; return false;
+        Om_free(rgb); return nullptr;
       }
     }
   }
@@ -2608,25 +2725,24 @@ static bool __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, un
     rgb[i  ] ^= rgb[i+2] ^= rgb[i  ] ^= rgb[i+2]; //< BGR => RGB
 
   // assign output values
-  (*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
+  (*out_w) = w; (*out_h) = h; (*out_c) = c;
 
-  return true;
+  return rgb;
 }
 
-/// \brief Decode BMP.
+/// \brief Decode BMP data.
 ///
 /// Decode BMP data from buffer in memory.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_data : Input BMP data to decode.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
 ///
-static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static uint8_t* __bmp_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
 {
   // pointer to input data
   const uint8_t* in_ptr = in_data;
@@ -2636,14 +2752,16 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   OMM_BITMAPINFOHEADER bmp_info;
   // get base header
   memcpy(&bmp_head, in_ptr, 14); in_ptr += 14;
+  // check BM signature
+  if(0 != memcmp(bmp_head.signature, "BM", 2))
+    return nullptr;
   // get info header
   memcpy(&bmp_info, in_ptr, 40); in_ptr += 40;
-  // check BM signature
-  if(0 != memcmp(bmp_head.signature, "BM", 2)) return false;
 
   // we support only 24 or 32 bpp
   if(bmp_info.bpp < 24)
-    return false;
+    return nullptr;
+
   // get BMP image parameters
   unsigned w = bmp_info.width;
   unsigned h = bmp_info.height;
@@ -2654,8 +2772,8 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   size_t tot_bytes = h * row_bytes;
 
   // allocate new buffer to receive rgb data
-  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
-  if(!rgb) return false;
+  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!rgb) return nullptr;
 
   // seek to bitmap data location
   in_ptr = in_data + bmp_head.offbits;
@@ -2678,14 +2796,14 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
     rgb[i  ] ^= rgb[i+2] ^= rgb[i  ] ^= rgb[i+2]; //< BGR => RGB
 
   // assign output values
-  (*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
+  (*out_w) = w; (*out_h) = h; (*out_c) = c;
 
-  return true;
+  return rgb;
 }
 
-/// \brief Encode BMP.
+/// \brief Write BMP file.
 ///
-/// Encode BMP data to file pointer.
+/// Write BMP data to file pointer.
 ///
 /// \param[out] out_file  : File pointer to write to.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
@@ -2695,7 +2813,7 @@ static int __bmp_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static bool __bmp_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // compute data sizes
   size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
@@ -2732,7 +2850,7 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
     return false;
 
   // allocate buffer for data translation
-  uint8_t* row = new(std::nothrow) uint8_t[r4b_bytes];
+  uint8_t* row = reinterpret_cast<uint8_t*>(Om_alloc(r4b_bytes));
   if(!row) return false;
 
   // useful values for translation
@@ -2754,29 +2872,28 @@ static bool __bmp_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
     }
     // write row to file
     if(fwrite(row, 1, r4b_bytes, out_file) != r4b_bytes) {
-      delete [] row; return false;
+      Om_free(row); return false;
     }
   }
 
-  delete [] row;
+  Om_free(row);
 
   return true;
 }
 
-/// \brief Encode BMP.
+/// \brief Encode BMP data.
 ///
 /// Encode BMP data to buffer in memory.
 ///
-/// \param[out] out_data  : Output BMP data, pointer to pointer to be allocated.
 /// \param[out] out_size  : Output BMP data size in bytes.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static uint8_t* __bmp_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // compute data sizes
   size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
@@ -2802,8 +2919,8 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   bmp_info.xppm = bmp_info.yppm = 0x0ec4;
 
   // allocate buffer for BMP data
-  uint8_t* bmp = new(std::nothrow) uint8_t[bmp_bytes];
-  if(!bmp) return false;
+  uint8_t* bmp = reinterpret_cast<uint8_t*>(Om_alloc(bmp_bytes));
+  if(!bmp) return nullptr;
 
   // keep pointer to buffer
   uint8_t* bmp_ptr = bmp;
@@ -2816,8 +2933,11 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   bmp_ptr += sizeof(OMM_BITMAPINFOHEADER);
 
   // allocate buffer for data translation
-  uint8_t* row = new(std::nothrow) uint8_t[r4b_bytes];
-  if(!row) return false;
+  uint8_t* row = reinterpret_cast<uint8_t*>(Om_alloc(r4b_bytes));
+  if(!row) {
+    Om_free(bmp);
+    return nullptr;
+  }
 
   // useful values for translation
   const uint8_t* sp;
@@ -2842,34 +2962,32 @@ static bool __bmp_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
     bmp_ptr += r4b_bytes;
   }
 
-  delete [] row;
+  Om_free(row);
 
-  (*out_data) = bmp;
   (*out_size) = bmp_bytes;
 
-  return true;
+  return bmp;
 }
 
 /// \brief Decode JPEG.
 ///
 /// Common function to decode JPEG using the given GIF decoder structure.
 ///
-/// \param[in]  jpg_dec : JPEG decoder structure pointer.
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
+/// \param[in]  jpg_dec : JPEG decoder structure pointer.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB image data or nullptr if failed.
 ///
-static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, bool flip_y)
+static uint8_t* __jpg_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* jpg_dec, bool flip_y)
 {
   jpeg_decompress_struct* jpg = reinterpret_cast<jpeg_decompress_struct*>(jpg_dec);
 
   // read jpeg header
   if(jpeg_read_header(jpg, true) != 1)
-    return false;
+    return nullptr;
 
   // initialize decompression
   jpeg_start_decompress(jpg);
@@ -2884,8 +3002,8 @@ static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_
   size_t tot_bytes = row_bytes * h;
 
   // allocate buffer to receive RGB data
-  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
-  if(!rgb) return false;
+  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!rgb) return nullptr;
 
   // row list pointer for jpeg decoder
   uint8_t* row_p[1];
@@ -2909,9 +3027,10 @@ static bool __jpg_decode_common(void* jpg_dec, uint8_t** out_rgb, unsigned* out_
   // cleanup decoder
 	jpeg_destroy_decompress(jpg);
 
-	(*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
+	// assign output values
+	(*out_w) = w; (*out_h) = h; (*out_c) = c;
 
-	return true;
+	return rgb;
 }
 
 /// \brief Encode JEPG.
@@ -2958,7 +3077,7 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
     uint8_t* dp;
 
     // create new buffer for one RGB row
-    uint8_t* row = new(std::nothrow) uint8_t[in_w * 3];
+    uint8_t* row = reinterpret_cast<uint8_t*>(Om_alloc(in_w * 3));
     if(!row) return false;
 
     // give RGB data to JPEG encoder
@@ -2978,7 +3097,7 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
       jpeg_write_scanlines(jpg, &row, 1);
     }
 
-    delete [] row;
+    Om_free(row);
 
   } else {
 
@@ -3002,20 +3121,19 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
   return true;
 }
 
-/// \brief Decode JPEG.
+/// \brief Read JPEG file.
 ///
-/// Decode JPEG data from file pointer.
+/// Read JPEG data from file pointer.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_file : Input file pointer to read data from.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded image RGB data or nullptr if failed.
 ///
-static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __jpg_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
 {
   // create base object for jpeg decoder
   jpeg_decompress_struct jpg;
@@ -3029,14 +3147,13 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   fseek(in_file, 0, SEEK_SET);
   jpeg_stdio_src(&jpg, in_file);
 
-  return __jpg_decode_common(&jpg, out_rgb, out_w, out_h, out_c, flip_y);
+  return __jpg_decode_common(out_w, out_h, out_c, &jpg, flip_y);
 }
 
-/// \brief Decode JPEG.
+/// \brief Decode JPEG data.
 ///
 /// Decode JPEG data from buffer in memory.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
@@ -3044,9 +3161,9 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 /// \param[in]  in_size : Input JPEG data size in bytes.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded image RGB data or nullptr if failed.
 ///
-static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
+static uint8_t* __jpg_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
 {
   // create base object for jpeg decoder
   jpeg_decompress_struct jpg;
@@ -3059,12 +3176,12 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   // set read data pointer
   jpeg_mem_src(&jpg, in_data, in_size);
 
-  return __jpg_decode_common(&jpg, out_rgb, out_w, out_h, out_c, flip_y);
+  return __jpg_decode_common(out_w, out_h, out_c, &jpg, flip_y);
 }
 
-/// \brief Encode JPEG.
+/// \brief Write JPEG file.
 ///
-/// Encode JPEG data to file pointer.
+/// Write JPEG data to file pointer.
 ///
 /// \param[out] out_file  : File pointer to write to.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
@@ -3075,9 +3192,8 @@ static int __jpg_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __jpg_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __jpg_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
-
   // create base object for jpeg encoder
   jpeg_compress_struct jpg;
   jpeg_error_mgr jerr;
@@ -3093,11 +3209,10 @@ static bool __jpg_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
   return __jpg_encode_common(&jpg, in_rgb, in_w, in_h, in_c, level * 10);
 }
 
-/// \brief Encode JPEG.
+/// \brief Encode JPEG data.
 ///
 /// Encode JPEG data to buffer in memory.
 ///
-/// \param[out] out_data  : Output JPEG data, pointer to pointer to be allocated.
 /// \param[out] out_size  : Output JPEG data size in bytes.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
@@ -3105,11 +3220,10 @@ static bool __jpg_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, u
 /// \param[in]  in_c      : Input image color component count, either 3 or 4.
 /// \param[in]  level     : JPEG compression quality level 0 to 10.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
 ///
-static bool __jpg_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static uint8_t* __jpg_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
-
   // create base object for jpeg encoder
   jpeg_compress_struct jpg;
   jpeg_error_mgr jerr;
@@ -3118,32 +3232,34 @@ static bool __jpg_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   jpg.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&jpg);
 
+  // pointer to be allocated
+  uint8_t* jpg_data = nullptr;
+
   // set pointer params
   unsigned long jpg_size = 0;
-  jpeg_mem_dest(&jpg, out_data, &jpg_size);
+  jpeg_mem_dest(&jpg, &jpg_data, &jpg_size);
 
   if(!__jpg_encode_common(&jpg, in_rgb, in_w, in_h, in_c, level * 10))
-    return false;
+    return nullptr;
 
   (*out_size) = jpg_size;
 
-  return true;
+  return jpg_data;
 }
 
 /// \brief Decode PNG.
 ///
 /// Common function to decode PNG using the given PNG decoder structure.
 ///
-/// \param[in]  png_dec : PNG decoder structure pointer.
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
+/// \param[in]  png_dec : PNG decoder structure pointer.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
 ///
-static bool __png_decode_common(void* png_dec, uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, bool flip_y)
+static uint8_t* __png_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* png_dec, bool flip_y)
 {
   // get decoder
   png_structp png = reinterpret_cast<png_structp>(png_dec);
@@ -3162,14 +3278,14 @@ static bool __png_decode_common(void* png_dec, uint8_t** out_rgb, unsigned* out_
   size_t tot_bytes = h * row_bytes;
 
   // allocate pointer to receive RGB(A) data
-  uint8_t* rgb = new(std::nothrow) uint8_t[tot_bytes];
-  if(!rgb) return false;
+  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!rgb) return nullptr;
 
   // allocate list of pointers for output RGB(A) rows
-  uint8_t** rows_p = new(std::nothrow) uint8_t*[h];
+  uint8_t** rows_p = reinterpret_cast<uint8_t**>(Om_alloc(sizeof(void*)*h));
   if(!rows_p) {
-    delete [] rgb;
-    return false;
+    Om_free(rgb);
+    return nullptr;
   }
 
   // define pointers to each row in output RGB(A) data
@@ -3189,12 +3305,12 @@ static bool __png_decode_common(void* png_dec, uint8_t** out_rgb, unsigned* out_
   png_destroy_read_struct(&png, &png_info, nullptr);
 
   // delete list of pointers
-  delete[] rows_p;
+  Om_free(rows_p);
 
   // assign output values
-  (*out_rgb) = rgb; (*out_w) = w; (*out_h) = h; (*out_c) = c;
+  (*out_w) = w; (*out_h) = h; (*out_c) = c;
 
-  return true;
+  return rgb;
 }
 
 /// \brief Encode PNG.
@@ -3239,7 +3355,7 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   size_t row_bytes = in_w * in_c;
 
   // allocate list of pointers for input RGB(A) rows
-  const uint8_t** rows_p = new(std::nothrow) const uint8_t*[in_h];
+  const uint8_t** rows_p = reinterpret_cast<const uint8_t**>(Om_alloc(sizeof(void*)*in_h));
   if(!rows_p) {
     png_destroy_write_struct(&png, &png_info);
     png_free_data(png, png_info, PNG_FREE_ALL, -1);
@@ -3261,25 +3377,24 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   png_free_data(png, png_info, PNG_FREE_ALL, -1);
 
   // delete list of pointers
-  delete[] rows_p;
+  Om_free(rows_p);
 
   return true;
 }
 
-/// \brief Decode PNG.
+/// \brief Read PNG file.
 ///
-/// Decode PNG data from file pointer.
+/// Read PNG data from file pointer.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_file : Input file pointer to read data from.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded image RGB(A) data or nullptr if failed.
 ///
-static int __png_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __png_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
 {
   // create PNG decoder structure
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -3289,7 +3404,7 @@ static int __png_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   png_init_io(png, in_file);
 
   // decode PNG data
-  return __png_decode_common(png, out_rgb, out_w, out_h, out_c, flip_y);
+  return __png_decode_common(out_w, out_h, out_c, png, flip_y);
 }
 
 /// \brief Custom PNG read struct
@@ -3320,16 +3435,15 @@ void __png_read_buff_fn(png_structp png, uint8_t* dst, size_t len)
 ///
 /// Decode PNG data from buffer in memory.
 ///
-/// \param[out] out_rgb : Output image RGB(A) data, pointer to pointer to be allocated.
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
 /// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_data : Input GIF data to decode.
+/// \param[in]  in_data : Input PNG data to decode.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to decoded image RGB(A) data or nullptr if failed.
 ///
-static int __png_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static uint8_t* __png_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
 {
   // create PNG decoder structure
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -3343,12 +3457,12 @@ static int __png_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
   png_set_read_fn(png, &read_st, __png_read_buff_fn);
 
   // decode PNG data
-  return __png_decode_common(png, out_rgb, out_w, out_h, out_c, flip_y);
+  return __png_decode_common(out_w, out_h, out_c, png, flip_y);
 }
 
-/// \brief Encode PNG.
+/// \brief Write PNG file.
 ///
-/// Encode PNG data to file pointer.
+/// Write PNG data to file pointer.
 ///
 /// \param[out] out_file  : File pointer to write to.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
@@ -3359,7 +3473,7 @@ static int __png_decode(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, uns
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __png_encode(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __png_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // create PNG encoder structure
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -3394,9 +3508,9 @@ void __png_write_buff_fn(png_structp png, uint8_t* src, size_t len)
   __png_write_st *write_st = static_cast<__png_write_st*>(png_get_io_ptr(png));
   write_st->dst_size += len;
   if(write_st->dst_data) {
-    write_st->dst_data = reinterpret_cast<uint8_t*>(realloc(write_st->dst_data, write_st->dst_size));
+    write_st->dst_data = reinterpret_cast<uint8_t*>(Om_realloc(write_st->dst_data, write_st->dst_size));
   } else {
-    write_st->dst_data = reinterpret_cast<uint8_t*>(malloc(write_st->dst_size));
+    write_st->dst_data = reinterpret_cast<uint8_t*>(Om_alloc(write_st->dst_size));
   }
   if(!write_st->dst_data) png_error(png, "alloc error in __png_write_fn");
   memcpy(write_st->dst_data + write_st->dst_seek, src, len);
@@ -3411,20 +3525,20 @@ void __png_flush_fn(png_structp png)
 {
 }
 
-/// \brief Encode PNG.
+/// \brief Encode PNG data.
 ///
 /// Common function to encode PNG using the given PNG encoder structure.
 ///
-/// \param[in]  gif_enc : PNG encoder structure pointer.
-/// \param[in]  in_rgb  : Input image RGB(A) data to encode.
-/// \param[in]  in_w    : Input image width.
-/// \param[in]  in_h    : Input image height.
-/// \param[in]  in_c    : Input image color component count.
+/// \param[in]  out_size  : Pointer to receive encoded data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count.
 /// \param[in]  level     : PNG compression level 0 to 9.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return Pointer to encoded PNG data
 ///
-static bool __png_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static uint8_t* __png_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // create PNG encoder structure
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -3439,21 +3553,45 @@ static bool __png_encode(uint8_t** out_data, size_t* out_size, const uint8_t* in
   png_set_write_fn(png, &write_st, __png_write_buff_fn, __png_flush_fn);
 
   if(!__png_encode_common(png, in_rgb, in_w, in_h, in_c, level))
-    return false;
+    return nullptr;
 
-  (*out_data) = write_st.dst_data;
   (*out_size) = write_st.dst_size;
 
-  return true;
+  return write_st.dst_data;
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y)
+int Om_imageType(uint8_t* data)
+{
+  // identify image format
+  return __image_sign_matches(data);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int Om_imageType(FILE* file)
+{
+  // read first 8 bytes of the file
+  uint8_t buff[8];
+  fseek(file, 0, SEEK_SET);
+  if(fread(buff, 1, 8, file) < 8) return -1;
+
+  // identify image format
+  return __image_sign_matches(buff);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y)
 {
   // initialize output values
-  (*out_rgb) = nullptr;
   (*out_w) = 0;
   (*out_h) = 0;
   (*out_c) = 0;
@@ -3461,13 +3599,13 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
   // Open file for writing
   FILE* in_file;
   if((in_file = _wfopen(in_path.c_str(), L"rb")) == nullptr)
-    return -1;
+    return nullptr;
 
   // read first 8 bytes of the file
   uint8_t buff[8];
   fseek(in_file, 0, SEEK_SET);
   if(fread(buff, 1, 8, in_file) < 8)
-    return -1;
+    return nullptr;
 
   // identify image format
   int type = __image_sign_matches(buff);
@@ -3477,40 +3615,35 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
     switch(type)
     {
     case OMM_IMAGE_TYPE_BMP:
-      if(!__bmp_decode(out_rgb, out_w, out_h, out_c, in_file, flip_y)) return -1;
-      break;
+      return __bmp_read(out_w, out_h, out_c, in_file, flip_y);
     case OMM_IMAGE_TYPE_JPG:
-      if(!__jpg_decode(out_rgb, out_w, out_h, out_c, in_file, flip_y)) return -1;
-      break;
+      return __jpg_read(out_w, out_h, out_c, in_file, flip_y);
     case OMM_IMAGE_TYPE_PNG:
-      if(!__png_decode(out_rgb, out_w, out_h, out_c, in_file, flip_y)) return -1;
-      break;
+      return __png_read(out_w, out_h, out_c, in_file, flip_y);
     case OMM_IMAGE_TYPE_GIF:
-      if(!__gif_decode(out_rgb, out_w, out_h, out_c, in_file, flip_y)) return -1;
-      break;
+      return __gif_read(out_w, out_h, out_c, in_file, flip_y);
     }
   }
 
   fclose(in_file);
 
-  return type;
+  return nullptr;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
+uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
 {
   // initialize output values
-  (*out_rgb) = nullptr;
   (*out_w) = 0;
   (*out_h) = 0;
   (*out_c) = 0;
 
   // prevent idiot attempts
   if(!in_data || !in_size)
-    return -1;
+    return nullptr;
 
   // identify image format
   int type = __image_sign_matches(in_data);
@@ -3520,21 +3653,17 @@ int Om_loadImage(uint8_t** out_rgb, unsigned* out_w, unsigned* out_h, unsigned* 
     switch(type)
     {
     case OMM_IMAGE_TYPE_BMP:
-      if(!__bmp_decode(out_rgb, out_w, out_h, out_c, in_data, flip_y)) return -1;
-      break;
+      return __bmp_decode(out_w, out_h, out_c, in_data, flip_y);
     case OMM_IMAGE_TYPE_JPG:
-      if(!__jpg_decode(out_rgb, out_w, out_h, out_c, in_data, in_size, flip_y)) return -1;
-      break;
+      return __jpg_decode(out_w, out_h, out_c, in_data, in_size, flip_y);
     case OMM_IMAGE_TYPE_PNG:
-      if(!__png_decode(out_rgb, out_w, out_h, out_c, in_data, flip_y)) return -1;
-      break;
+      return __png_decode(out_w, out_h, out_c, in_data, flip_y);
     case OMM_IMAGE_TYPE_GIF:
-      if(!__gif_decode(out_rgb, out_w, out_h, out_c, in_data, flip_y)) return -1;
-      break;
+      return __gif_decode(out_w, out_h, out_c, in_data, flip_y);
     }
   }
 
-  return type;
+  return nullptr;
 }
 
 
@@ -3554,7 +3683,7 @@ bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
   if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __bmp_encode(out_file, in_rgb, in_w, in_h, in_c);
+  bool result = __bmp_write(out_file, in_rgb, in_w, in_h, in_c);
 
   fclose(out_file);
 
@@ -3578,7 +3707,7 @@ bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
   if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __jpg_encode(out_file, in_rgb, in_w, in_h, in_c, level);
+  bool result = __jpg_write(out_file, in_rgb, in_w, in_h, in_c, level);
 
   fclose(out_file);
 
@@ -3602,7 +3731,7 @@ bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
   if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __png_encode(out_file, in_rgb, in_w, in_h, in_c, level);
+  bool result = __png_write(out_file, in_rgb, in_w, in_h, in_c, level);
 
   fclose(out_file);
 
@@ -3626,7 +3755,7 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
   if((out_file = _wfopen(out_path.c_str(), L"wb")) == nullptr)
     return false;
 
-  bool result = __gif_encode(out_file, in_rgb, in_w, in_h, in_c);
+  bool result = __gif_write(out_file, in_rgb, in_w, in_h, in_c);
 
   fclose(out_file);
 
@@ -3637,52 +3766,52 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_encodeBmp(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
-    return false;
+    return nullptr;
 
-  return __bmp_encode(out_data, out_size, in_rgb, in_w, in_h, in_c);
+  return __bmp_encode(out_size, in_rgb, in_w, in_h, in_c);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_encodeJpg(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
-    return false;
+    return nullptr;
 
-  return __jpg_encode(out_data, out_size, in_rgb, in_w, in_h, in_c, level);
+  return __jpg_encode(out_size, in_rgb, in_w, in_h, in_c, level);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_encodePng(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
-    return false;
+    return nullptr;
 
-  return __png_encode(out_data, out_size, in_rgb, in_w, in_h, in_c, level);
+  return __png_encode(out_size, in_rgb, in_w, in_h, in_c, level);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_encodeGif(uint8_t** out_data, size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_encodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
-    return false;
+    return nullptr;
 
-  return __gif_encode(out_data, out_size, in_rgb, in_w, in_h, in_c);
+  return __gif_encode(out_size, in_rgb, in_w, in_h, in_c);
 }
 
 
@@ -3882,7 +4011,10 @@ uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned 
   if(!w  || !h || !in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
-  uint8_t* out_rgb = new(std::nothrow) uint8_t[(w * in_c) * h];
+  // define useful sizes
+  size_t out_row_bytes = w * in_c;
+
+  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc(out_row_bytes * h));
   if(!out_rgb) return nullptr;
 
   // resize image to fit desired square
@@ -3920,7 +4052,7 @@ uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint
   size_t out_row_bytes = w * in_c;
 
   // allocate new buffer for cropped data
-  uint8_t* out_rgb = new(std::nothrow) uint8_t[out_row_bytes * h];
+  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc(out_row_bytes * h));
   if(!out_rgb) return nullptr;
 
   // copy required RGB data
@@ -3957,7 +4089,7 @@ uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, 
     return nullptr;
 
   // create locale copy of original data
-  uint8_t* out_rgb = new(std::nothrow) uint8_t[(in_w * in_c) * in_h];
+  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc((in_w * in_c) * in_h));
   if(!out_rgb) return nullptr;
 
   memcpy(out_rgb, in_rgb, (in_w * in_c) * in_h);
@@ -3982,7 +4114,7 @@ uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, 
     }
 
     // swap buffers
-    delete [] out_rgb;
+    Om_free(out_rgb);
     out_rgb = tmp_rgb;
 
     // update input width and height
@@ -4009,7 +4141,7 @@ uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, 
     }
 
     // swap buffers
-    delete [] out_rgb;
+    Om_free(out_rgb);
     out_rgb = tmp_rgb;
   }
 
@@ -4026,43 +4158,59 @@ HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, uns
   if(!in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
 
-  // destination buffer is in RGBA
-  size_t row_bytes = (in_w * 4);
-  size_t tot_bytes = row_bytes * in_h;
+  // BITMAP with 24 bits pixels data seem to be always interpreted with
+  // transparent alpha once supplied to STATIC control, so we always
+  // convert to 32 bits pixels data.
 
-  uint8_t* rgba = new(std::nothrow) uint8_t[tot_bytes];
-  if(!rgba) return nullptr;
+  // allocate buffer for 32 bits BMP data
+  uint8_t* bmp = reinterpret_cast<uint8_t*>(Om_alloc((in_w * 4) * in_h));
+  if(!bmp) return nullptr;
 
-  if(in_c == 3) {
+  if(in_c == 4) {
 
-    size_t in_row_bytes = (in_w * 3);
+    // compute data sizes
+    size_t tot_bytes = (in_w * in_c) * in_h;
 
-    // copy data and convert RGB to BGRA
-    const uint8_t *sp;
-    uint8_t *dp;
+    //copy RGBA data to temp buffer
+    memcpy(bmp, in_rgb, tot_bytes);
 
-    for(unsigned y = 0; y < in_h; ++y) {
-      dp = rgba + (row_bytes * y);
-      sp = in_rgb + (in_row_bytes * y);
-      for(unsigned x = 0; x < in_w; ++x) {
-        // swapt RGB to BGR
-        dp[0] = sp[2]; dp[1] = sp[1]; dp[2] = sp[0];
-        dp[3] = 0xff;
-        sp += 3; dp += 4;
-      }
-    }
+    // swap pixels components from RGBA to BGRA
+    for(unsigned i = 0; i < tot_bytes; i += 4)
+      bmp[i  ] ^= bmp[i+2] ^= bmp[i  ] ^= bmp[i+2]; //< RGB => BGR
 
   } else {
 
-    // simply copy original data
-    memcpy(rgba, in_rgb, tot_bytes);
+    // compute data sizes
+    size_t row3_bytes = in_w * 3;
+    size_t row4_bytes = in_w * 4;
 
-    // swap components order RGB to BGR
-    for(unsigned i = 0; i < tot_bytes; i += 4)
-      rgba[i  ] ^= rgba[i+2] ^= rgba[i  ] ^= rgba[i+2]; //< RGB => BGR
+    // pointers for translation
+    const uint8_t* sp;
+    uint8_t* dp;
+
+    for(unsigned y = 0; y < in_h; ++y) {
+
+      sp = in_rgb + (row3_bytes * y);
+      dp = bmp + (row4_bytes * y);
+
+      for(unsigned x = 0; x < in_w; ++x) {
+
+        // convert RGBA to BGRA
+        dp[0] = sp[2];
+        dp[1] = sp[1];
+        dp[2] = sp[0];
+        dp[3] = 0xFF;
+        sp += 3;
+        dp += 4;
+      }
+    }
   }
 
-  return CreateBitmap(in_w, in_h, 1, 32, rgba);
+  HBITMAP hBmp = CreateBitmap(in_w, in_h, 1, 32, bmp);
+
+  Om_free(bmp);
+
+  return hBmp;
 }
 
 
@@ -4112,6 +4260,97 @@ HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name)
                       ANSI_CHARSET,
                       OUT_TT_PRECIS, 0, CLEARTYPE_QUALITY, 0,
                       name);
+}
+
+#include "thirdparty/zlib/zlib.h"
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_zDeflate(size_t* out_size, const uint8_t* in_data, size_t in_size, unsigned level)
+{
+  // initialize values
+  (*out_size) = 0;
+
+  // check for valid parameters
+  if(!out_size || !in_size || !in_data)
+    return nullptr;
+
+  // clamp level
+  if(level > 9) level = 9;
+
+  // new Z stream structure
+  z_stream zs = {};
+
+  // initialize compressor
+  if(deflateInit(&zs, level) != Z_OK)
+    return nullptr;
+
+  // allocate new output buffer
+  uint8_t* buff = reinterpret_cast<uint8_t*>(Om_alloc(in_size));
+  if(!buff) return nullptr;
+
+  // setup sizes and pointers
+  zs.next_out = buff;
+  zs.avail_out = in_size;
+
+  zs.next_in = const_cast<uint8_t*>(in_data);
+  zs.avail_in = in_size;
+
+  // deflate data
+  if(deflate(&zs, Z_FINISH) != Z_STREAM_END) {
+    Om_free(buff);
+    deflateEnd(&zs);
+    return nullptr;
+  }
+
+  (*out_size) = zs.total_out;
+
+  // clean compressor
+  deflateEnd(&zs);
+
+  return buff;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_zInflate(const uint8_t* in_data, size_t in_size, size_t def_size)
+{
+  // check for valid parameters
+  if(!in_data || !in_size || !def_size)
+    return nullptr;
+
+  // new Z stream structure
+  z_stream zs = {};
+
+  // setup input sizes and pointers
+  zs.next_in = const_cast<uint8_t*>(in_data);
+  zs.avail_in = in_size;
+
+  if(inflateInit(&zs) != Z_OK)
+    return nullptr;
+
+  // allocate new output buffer
+  uint8_t* buff = reinterpret_cast<uint8_t*>(Om_alloc(def_size));
+  if(!buff) return nullptr;
+
+  // setup ouput sizes and pointers
+  zs.next_out = buff;
+  zs.avail_out = def_size;
+
+  // inflate data
+  if(inflate(&zs, Z_NO_FLUSH) != Z_STREAM_END) {
+    Om_free(buff);
+    inflateEnd(&zs);
+    return nullptr;
+  }
+
+  // clean decompressor
+  inflateEnd(&zs);
+
+  return buff;
 }
 
 
