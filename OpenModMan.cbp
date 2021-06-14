@@ -112,6 +112,7 @@
 			<Add directory="include/thirdparty/jpeg" />
 			<Add directory="include/thirdparty/png" />
 			<Add directory="include/thirdparty/gif" />
+			<Add directory="include/thirdparty/zlib" />
 			<Add directory="src/thirdparty/zlib" />
 		</Compiler>
 		<ResourceCompiler>
@@ -211,6 +212,7 @@
 		<Unit filename="include/thirdparty/pugixml/pugixml.hpp" />
 		<Unit filename="include/thirdparty/xxhash/xxh3.h" />
 		<Unit filename="include/thirdparty/xxhash/xxhash.h" />
+		<Unit filename="include/thirdparty/zlib/zlib.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="setup/OpenModMan.nsh" />
 		<Unit filename="setup/setup-x64.nsi" />
