@@ -329,6 +329,28 @@ size_t OmDialog::getItemText(unsigned id, wstring& text) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image)
+{
+  LPARAM lParam = reinterpret_cast<LPARAM>(image);
+  LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), STM_SETIMAGE, IMAGE_BITMAP, lParam);
+  return reinterpret_cast<HBITMAP>(lResult);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HBITMAP OmDialog::setBmImage(unsigned id, HBITMAP image)
+{
+  LPARAM lParam = reinterpret_cast<LPARAM>(image);
+  LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), BM_SETIMAGE, IMAGE_BITMAP, lParam);
+  return reinterpret_cast<HBITMAP>(lResult);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h)
 {
   long rect[4] = {x, y, w, h};

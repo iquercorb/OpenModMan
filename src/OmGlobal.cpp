@@ -198,6 +198,54 @@ uint64_t Om_getCRC64(const wstring& str)
   return __CRC64(0, (unsigned char*)str.c_str(), str.size()*sizeof(wchar_t));
 }
 
+
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
+static const wchar_t __hex_digit[] = L"0123456789abcdef";
+
+/// \brief Little-endian bytes to hexadecimal
+///
+/// Translate the given data buffers to its hexadecimal
+/// string representation in little-endian way.
+///
+/// \param[out] hex   : String to be set as hexadecimal representation.
+/// \param[in]  data  : Data to translate.
+/// \param[in]  data  : Data size in bytes.
+///
+static inline void __bytes_to_hex_be(wstring& hex, const uint8_t* data, size_t size)
+{
+  hex.clear();
+  uint8_t c;
+  size_t i = size;
+  while(i--) {
+    c = data[i];
+    hex.push_back(__hex_digit[(c >> 4) & 0x0F]);
+    hex.push_back(__hex_digit[(c)      & 0x0F]);
+  }
+}
+
+/// \brief big-endian bytes to hexadecimal
+///
+/// Translate the given data buffers to its hexadecimal
+/// string representation in big-endian way.
+///
+/// \param[out] hex   : String to be set as hexadecimal representation.
+/// \param[in]  data  : Data to translate.
+/// \param[in]  data  : Data size in bytes.
+///
+static inline void __bytes_to_hex_le(wstring& hex, const uint8_t* data, size_t size)
+{
+  hex.clear();
+  uint8_t c;
+  for(size_t i = 0; i < size; ++i) {
+    c = data[i];
+    hex.push_back(__hex_digit[(c >> 4) & 0x0F]);
+    hex.push_back(__hex_digit[(c)      & 0x0F]);
+  }
+}
+
 #include "thirdparty/xxhash/xxh3.h"
 
 ///
@@ -215,6 +263,118 @@ uint64_t Om_getXXHash3(const void* data, size_t size)
 uint64_t Om_getXXHash3(const wstring& str)
 {
   return static_cast<uint64_t>(XXH3_64bits((unsigned char*)str.c_str(), str.size()*sizeof(wchar_t))); // XXH64_hash_t
+}
+
+
+/// \brief Generate checksum
+///
+/// Generate checksum string using XXHash3 128 bits algorithm
+///
+/// \param[out] str   : String to be set as checksum.
+/// \param[in]  data  : Data to create checksum from.
+/// \param[in]  size  : Data size in bytes.
+///
+static inline void __XXHash3_gen_checksum(wstring& str, const void* data, size_t size)
+{
+  wchar_t buff[17];
+  uint64_t sum = static_cast<uint64_t>(XXH3_64bits(data, size));
+  swprintf(buff, 17, L"%016llx", sum);
+  str = buff;
+}
+
+static inline bool __XXHash3_cmp_checksum(const wstring& hex, const void* data, size_t size)
+{
+  uint64_t hash1 = wcstoull(hex.c_str(), nullptr, 16);
+  uint64_t hahs2 = static_cast<uint64_t>(XXH3_64bits(data, size));
+  return (hash1 == hahs2);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_getChecksum(const wstring& path)
+{
+  wstring hex;
+
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return hex;
+
+  size_t size = GetFileSize(hFile, nullptr);
+
+  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
+  if(!data) return hex;
+
+  DWORD rb;
+  ReadFile(hFile, data, size, &rb, nullptr);
+
+  CloseHandle(hFile);
+
+  __XXHash3_gen_checksum(hex, data, size);
+
+  Om_free(data);
+
+  return hex;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_getChecksum(wstring& hex, const wstring& path)
+{
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return false;
+
+  size_t size = GetFileSize(hFile, nullptr);
+
+  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
+  if(!data) return false;
+
+  DWORD rb;
+  bool result = ReadFile(hFile, data, size, &rb, nullptr);
+
+  CloseHandle(hFile);
+
+  __XXHash3_gen_checksum(hex, data, size);
+
+  Om_free(data);
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_cmpChecksum(const wstring& path, const wstring& hex)
+{
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return false;
+
+  size_t size = GetFileSize(hFile, nullptr);
+
+  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
+  if(!data) return false;
+
+  DWORD rb;
+  ReadFile(hFile, data, size, &rb, nullptr);
+
+  CloseHandle(hFile);
+
+  bool result = __XXHash3_cmp_checksum(hex, data, size);
+
+  Om_free(data);
+
+  return result;
 }
 
 
@@ -483,13 +643,6 @@ void Om_getRandBytes(uint8_t* dest, size_t size)
     dest[i] = __rnd_uint8dist(__rnd_generator);
   }
 }
-
-
-/// \brief Hexadecimal digits
-///
-/// Static translation string to convert integer value to hexadecimal digit.
-///
-static const wchar_t __hex_digit[] = L"0123456789abcdef";
 
 
 ///
@@ -870,28 +1023,33 @@ void Om_sortStrings(vector<wstring>* strings)
 }
 
 
-/// \brief Illegal characters
+/// \brief Illegal Windows characters
 ///
 /// List of forbidden characters to test validity of file name or path.
 ///
-static const wchar_t __illegal_chr[] = L"/*?\"<>|\\";
+static const wchar_t __illegal_win_chr[] = L"/*?\"<>|\\";
 
 
 /// \brief URL Regex pattern
 ///
 /// Regular expression pattern for URL.
 ///
-static const std::regex __url_reg(R"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)");
+static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)");
 
+/// \brief Illegal URL path characters
+///
+/// List of forbidden characters to test validity of URL path.
+///
+static const wchar_t __illegal_url_chr[] = L"#\"<>|\\{}^[]`+:@$";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrl(const string& url)
+bool Om_isValidUrl(const wchar_t* url)
 {
-  std::match_results<const char*> matches;
+  std::match_results<const wchar_t*> matches;
 
-  if(std::regex_match(url.c_str(), matches, __url_reg)) {
+  if(std::regex_match(url, matches, __url_reg)) {
 
     // matches :
     // 0) full match (almost never happen)
@@ -916,13 +1074,54 @@ bool Om_isValidUrl(const string& url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_isValidUrl(const wstring& url)
+{
+  return Om_isValidUrl(url.c_str());
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidUrlPath(const wchar_t* path)
+{
+  if(!wcslen(path))
+    return false;
+
+  for(unsigned i = 0; i < 16; ++i) // forbids all including back-slash
+    if(wcschr(path, __illegal_url_chr[i]))
+      return false;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidUrlPath(const wstring& path)
+{
+  if(path.empty())
+    return false;
+
+  for(unsigned i = 0; i < 16; ++i) // forbids all including back-slash
+    if(path.find_first_of(__illegal_url_chr[i]) != wstring::npos)
+      return false;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool Om_isValidName(const wchar_t* name)
 {
   if(!wcslen(name))
     return false;
 
   for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
-    if(wcschr(name, __illegal_chr[i]))
+    if(wcschr(name, __illegal_win_chr[i]))
       return false;
 
   return true;
@@ -938,7 +1137,7 @@ bool Om_isValidName(const wstring& name)
     return false;
 
   for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
-    if(name.find_first_of(__illegal_chr[i]) != wstring::npos)
+    if(name.find_first_of(__illegal_win_chr[i]) != wstring::npos)
       return false;
 
   return true;
@@ -955,7 +1154,7 @@ bool Om_isValidPath(const wchar_t* path)
 
   // check for illegal characters in path
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
-    if(wcschr(path, __illegal_chr[i]))
+    if(wcschr(path, __illegal_win_chr[i]))
       return false;
 
   return true;
@@ -971,7 +1170,7 @@ bool Om_isValidPath(const wstring& path)
     return false;
 
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
-    if(path.find_first_of(__illegal_chr[i]) != wstring::npos)
+    if(path.find_first_of(__illegal_win_chr[i]) != wstring::npos)
       return false;
 
   return true;

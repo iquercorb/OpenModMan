@@ -585,8 +585,8 @@ void OmUiMainLib::_onSelectPkg()
   }
 
   // Update the selected picture
-  hBm = reinterpret_cast<HBITMAP>(SendMessageW(hSb, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBm)));
-  if(hBm != this->_hBmBlank) DeleteObject(hBm);
+  hBm = this->setStImage(IDC_SB_PKIMG, hBm);
+  if(hBm && hBm != this->_hBmBlank) DeleteObject(hBm);
 
   this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
 }

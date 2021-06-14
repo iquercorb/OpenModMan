@@ -6,6 +6,7 @@
 #define OMM_STR_ERR_ISFILEZIP   L" is not a valid ZIP archive."
 #define OMM_STR_ERR_VALIDNAME   L" cannot contain the following characters: / * ? \" < > | \\"
 #define OMM_STR_ERR_VALIDPATH   L" cannot contain the following characters: / * ? \" < > |"
+#define OMM_STR_ERR_VALIDURL    L" is not a valid HTTP(S) URL."
 #define OMM_STR_ERR_CREATE(e)   L" cannot be created: " + e
 #define OMM_STR_ERR_DELETE(e)   L" cannot be deleted: " + e
 #define OMM_STR_ERR_RENAME(e)   L" cannot be renamed: " + e

@@ -50,12 +50,12 @@ OmRepository::~OmRepository()
 bool OmRepository::define(const wstring& base, const wstring& name)
 {
   // Build final URL to check if given setting is valid
-  string url = Om_toUtf8(base) + "/";
-  url += Om_toUtf8(name) + ".xml";
+  wstring url = base + L"/";
+  url += name + L".xml";
 
   if(!Om_isValidUrl(url)) {
     this->_error =  L"Parameters make an invalid URL: ";
-    this->_error += L"\"" + Om_fromUtf8(url.c_str()) + L"\"";
+    this->_error += L"\"" + url + L"\"";
     this->log(1, L"Repository("+base+L"-"+name+L") Define", this->_error);
     return false;
   }
@@ -63,7 +63,7 @@ bool OmRepository::define(const wstring& base, const wstring& name)
   this->_base = base;
   this->_name = name;
 
-  this->_url = url;
+  this->_url = Om_toUtf8(url);
 
   return true;
 }

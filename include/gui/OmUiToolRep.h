@@ -57,15 +57,67 @@ class OmUiToolRep : public OmDialog
 
     HBITMAP             _hBmBlank;
 
-    OmImage             _image;
+    HBITMAP             _hBmBcNew;
+
+    HBITMAP             _hBmBcDel;
+
+    HBITMAP             _hBmBcDir;
 
     OmConfig            _rep_def;
 
-    void                _addPackage(const wstring& path);
+    OmXmlNode           _curEntry;
 
-    void                _saveRepo(const wstring& path);
+    void                _repoInit();
 
-    bool                _apply();
+    bool                _repoOpen(const wstring& path);
+
+    OmXmlNode           _repoGetEnt(const wstring& ident);
+
+    bool                _repoAddEnt(const wstring& path);
+
+    bool                _repoRemEnt(const wstring& ident);
+
+    bool                _selEntry(const wstring& ident);
+
+    int                 _getDepsList(vector<wstring>& miss_list, const wstring& ident);
+
+    void                _addEntries_init(const wstring& path);
+
+    void                _addEntries_stop();
+
+    void*               _addEntries_hth;
+
+    static DWORD WINAPI _addEntries_fth(void*);
+
+    wstring             _addEntries_path;
+
+    void                _onLbPkglsSel();
+
+    void                _onBcNew();
+
+    void                _onBcOpen();
+
+    void                _onBcBrwPkg();
+
+    void                _onBcBrwDir();
+
+    void                _onBcRemPkg();
+
+    void                _onBcSavUrl();
+
+    void                _onBcChkDeps();
+
+    void                _onBcBrwSnap();
+
+    void                _onBcDelSnap();
+
+    void                _onBcBrwDesc();
+
+    void                _onBcSavDesc();
+
+    void                _onBcSave();
+
+    void                _onBcClose();
 
     void                _onInit();
 

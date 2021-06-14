@@ -218,6 +218,15 @@ void OmXmlNode::setAttr(const wstring& attr, double value)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmXmlNode::remAttr(const wstring& attr)
+{
+  return static_cast<pugi::xml_node*>(_data)->remove_attribute(attr.c_str());
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 unsigned OmXmlNode::childCount() const
 {
   unsigned n = 0;

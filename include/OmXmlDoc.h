@@ -187,6 +187,16 @@ class OmXmlNode
     ///
     void setAttr(const wstring& attr, double value);
 
+    /// \brief Remove node attribute.
+    ///
+    /// Remove attribute from node.
+    ///
+    /// \param[in]  attr  : Attribute name.
+    ///
+    /// \return True if operation succeed, false node was not found.
+    ///
+    bool remAttr(const wstring& attr);
+
     /// \brief Get parent node.
     ///
     /// Returns parent node of this instance.

@@ -66,6 +66,7 @@
 #define IDB_BTN_REM                             851
 #define IDB_BTN_MOD                             852
 #define IDB_BTN_REF                             853
+#define IDB_BTN_DIR                             854
 #define IDB_BTN_UP                              860
 #define IDB_BTN_DN                              861
 #define IDB_PKG_BLANK                           870
@@ -118,10 +119,16 @@
 #define IDC_BC_BRW08                            40307
 #define IDC_BC_BRW09                            40308
 #define IDC_BC_BRW10                            40309
-#define IDC_BC_SAVE                             40320
+#define IDC_BC_SAVE                             40310
+#define IDC_BC_SAV01                            40311
+#define IDC_BC_SAV02                            40312
+#define IDC_BC_SAV03                            40313
+#define IDC_BC_LOAD                             40314
+#define IDC_BC_OPEN1                            40315
+#define IDC_BC_OPEN2                            40316
+#define IDC_BC_OPEN3                            40317
 #define IDC_BC_INST                             40321
 #define IDC_BC_UNIN                             40322
-#define IDC_BC_LOAD                             40323
 #define IDC_BC_UPGD                             40324
 #define IDC_BC_SYNC                             40325
 #define IDC_BC_DEL                              40330

@@ -327,6 +327,28 @@ class OmDialog
     ///
     size_t getItemText(unsigned id, wstring& text) const;
 
+    /// \brief Set static control image
+    ///
+    /// Define image for the specified dialog static control.
+    ///
+    /// \param[in]  id    : Static control resource ID to set image to.
+    /// \param[in]  image : Image to set.
+    ///
+    /// \return Previously associated image to control, or nullptr.
+    ///
+    HBITMAP setStImage(unsigned id, HBITMAP image);
+
+    /// \brief Set button control image
+    ///
+    /// Define image for the specified dialog button control.
+    ///
+    /// \param[in]  id    : Button control resource ID to set image to.
+    /// \param[in]  image : Image to set.
+    ///
+    /// \return Previously associated image to control, or nullptr.
+    ///
+    HBITMAP setBmImage(unsigned id, HBITMAP image);
+
     /// \brief Send message to control
     ///
     /// Send the message with parameters to the specified dialog control.
@@ -339,20 +361,30 @@ class OmDialog
     /// \return The return value specifies the result of the message processing.
     ///
     LRESULT msgItem(unsigned id, UINT uMsg, WPARAM wParam = 0, LPARAM lParam = 0) const {
-      return SendMessageW(GetDlgItem(this->_hwnd, id), uMsg, wParam, lParam);
+      return SendMessageW(GetDlgItem(_hwnd, id), uMsg, wParam, lParam);
     }
 
     /// \brief Enable or disable control
     ///
     /// Enable or disable the specified dialog control.
     ///
-    /// \param[in]  id      : Control resource ID to set text for.
+    /// \param[in]  id      : Control resource ID to enable or disable.
     /// \param[in]  enable  : Enable or disable.
     ///
-    /// \return The return value specifies the result of the message processing.
-    ///
     void enableItem(unsigned id, bool enable) {
-      EnableWindow(GetDlgItem(this->_hwnd, id), enable);
+      EnableWindow(GetDlgItem(_hwnd, id), enable);
+    }
+
+    /// \brief Check whether control is enabled
+    ///
+    /// Check whether the specified dialog control is enabled.
+    ///
+    /// \param[in]  id      : Control resource ID to check.
+    ///
+    /// \return True if the control is enabled, false otherwise.
+    ///
+    bool itemEnabled(unsigned id) {
+      return IsWindowEnabled(GetDlgItem(_hwnd, id));
     }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -

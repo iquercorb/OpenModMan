@@ -18,7 +18,6 @@
 #define OMUITOOLPKG_H
 
 #include "OmDialog.h"
-#include "OmImage.h"
 
 /// \brief Package Editor tool dialog
 ///
@@ -62,13 +61,13 @@ class OmUiToolPkg : public OmDialog
 
     HBITMAP             _hBmBcDel;
 
-    OmImage             _image;
-
     bool                _parsePkg(const wstring& path);
 
     void                _resetPkg();
 
-    void                _parseName();
+    void                _nameParse();
+
+    bool                _snapLoad(const wstring& path);
 
     void                _buildPkg_init();
 
@@ -80,7 +79,7 @@ class OmUiToolPkg : public OmDialog
 
     bool                _abort;
 
-    bool                _apply();
+    bool                _save();
 
     void                _onInit();
 

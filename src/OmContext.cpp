@@ -529,17 +529,17 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   wstring uuid = Om_genUUID();
 
   // Get XML document instance
-  OmXmlNode def_xml = loc_def.xml();
+  OmXmlNode xml_def = loc_def.xml();
 
   // define uuid and title in definition file
-  def_xml.addChild(L"uuid").setContent(uuid);
-  def_xml.addChild(L"title").setContent(title);
+  xml_def.addChild(L"uuid").setContent(uuid);
+  xml_def.addChild(L"title").setContent(title);
 
   // define ordering index in definition file
-  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_location.size()));
+  xml_def.child(L"title").setAttr(L"index", static_cast<int>(this->_location.size()));
 
   // define installation destination folder in definition file
-  def_xml.addChild(L"install").setContent(install);
+  xml_def.addChild(L"install").setContent(install);
 
   // checks whether we have custom Backup folder
   if(backup.empty()) {
@@ -553,7 +553,7 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
       this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
     }
     // add custom backup in definition
-    def_xml.addChild(L"backup").setContent(backup);
+    xml_def.addChild(L"backup").setContent(backup);
   }
 
   // checks whether we have custom Library folder
@@ -568,7 +568,7 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
       this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
     }
     // add custom library in definition
-    def_xml.addChild(L"library").setContent(library);
+    xml_def.addChild(L"library").setContent(library);
   }
 
   // save and close definition file

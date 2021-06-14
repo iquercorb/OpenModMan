@@ -96,7 +96,7 @@ void OmUiAddRep::_repoChk()
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
 
-  if(!Om_isValidUrl(Om_toUtf8(url))) {
+  if(!Om_isValidUrl(url)) {
 
     wstring err = L"Supplied parameters cannot be used to "
                   L"create a valid HTTP address:";
@@ -173,7 +173,7 @@ bool OmUiAddRep::_apply()
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
 
-  if(!Om_isValidUrl(Om_toUtf8(url))) {
+  if(!Om_isValidUrl(url)) {
 
     wstring err = L"Supplied parameters cannot be used to "
                   L"create a valid HTTP address";

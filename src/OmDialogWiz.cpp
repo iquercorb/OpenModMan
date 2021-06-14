@@ -66,7 +66,7 @@ void OmDialogWiz::_addPage(OmDialog* dialog)
 void OmDialogWiz::_onInit()
 {
   // set splash image
-  this->msgItem(IDC_SB_IMAGE, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmSplash));
+  this->setStImage(IDC_SB_IMAGE, this->_hBmSplash);
 
   this->_currPage = 0;
 

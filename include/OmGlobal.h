@@ -71,8 +71,9 @@
 
 #define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
 #define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
-#define OMM_IMG_FILE_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
+#define OMM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
 #define OMM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
+#define OMM_TXT_FILES_FILTER      L"Text file (*.txt)\0*.TXT\0"
 
 #define OMM_CTX_DEF_FILE_FILER    L"Context definition (*.omc)\0*.OMC;\0"
 #define OMM_LOC_DEF_FILE_FILER    L"Location definition (*.oml)\0*.OML;\0"
@@ -118,11 +119,44 @@ uint64_t Om_getXXHash3(const void* data, size_t size);
 /// Calculates and returns 64 bits unsigned integer hash (xxHash) of the given
 /// wide string.
 ///
-/// \param[in]  data    : Wide string to compute Hash.
+/// \param[in]  str    : Wide string to compute Hash.
 ///
 /// \return Resulting 64 bits unsigned integer hash.
 ///
 uint64_t Om_getXXHash3(const wstring& str);
+
+/// \brief Get file checksum.
+///
+/// Calculates and returns the 16 characters hash string of the
+/// given data.
+///
+/// \param[in]  path    : Path to file to generate checksum.
+///
+/// \return 16 hexadecimal characters hash string.
+///
+wstring Om_getChecksum(const wstring& path);
+
+/// \brief Get file checksum.
+///
+/// Calculates the 16 characters hash string of the given data.
+///
+/// \param[in]  hex     : String to set as checksum string.
+/// \param[in]  path    : Path to file to generate checksum.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_getChecksum(wstring& hex, const wstring& path);
+
+/// \brief Compare file checksum.
+///
+/// Calculates the 16 characters hash string of the given data.
+///
+/// \param[in]  path    : Path to file to generate checksum.
+/// \param[in]  hex     : Checksum hexadecimal string to compare.
+///
+/// \return true if checksum matches, false otherwise
+///
+bool Om_cmpChecksum(const wstring& path, const wstring& hex);
 
 /// \brief Calculate CRC64 value.
 ///
@@ -158,7 +192,7 @@ uint64_t Om_getCRC64(const wstring& str);
 ///
 inline wstring Om_toHexString(uint64_t num) {
   wchar_t num_buf[17];
-  swprintf(num_buf, 17, L"%llx", num);
+  swprintf(num_buf, 17, L"%016llx", num);
   return wstring(num_buf);
 }
 
@@ -172,7 +206,7 @@ inline wstring Om_toHexString(uint64_t num) {
 ///
 inline void Om_toHexString(wstring& str, uint64_t num) {
   wchar_t num_buf[17];
-  swprintf(num_buf, 17, L"%llx", num);
+  swprintf(num_buf, 17, L"%016llx", num);
   str = num_buf;
 }
 
@@ -426,7 +460,37 @@ void Om_sortStrings(vector<wstring>* strings);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidUrl(const string& url);
+bool Om_isValidUrl(const wchar_t* url);
+
+/// \brief Check URL validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL.
+///
+/// \param[in]  url     : URL to check.
+///
+/// \return True if the given string is a valid URL, false otherwise.
+///
+bool Om_isValidUrl(const wstring& url);
+
+/// \brief Check URL path validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL path.
+///
+/// \param[in]  path    : Path to check.
+///
+/// \return True if the given string is a valid URL path, false otherwise.
+///
+bool Om_isValidUrlPath(const wchar_t* path);
+
+/// \brief Check URL path validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL path.
+///
+/// \param[in]  path    : Path to check.
+///
+/// \return True if the given string is a valid URL path, false otherwise.
+///
+bool Om_isValidUrlPath(const wstring& path);
 
 /// \brief Check file name validity
 ///
