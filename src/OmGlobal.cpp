@@ -268,7 +268,7 @@ uint64_t Om_getXXHash3(const wstring& str)
 
 /// \brief Generate checksum
 ///
-/// Generate checksum string using XXHash3 128 bits algorithm
+/// Generate checksum string using XXHash3 64 bits algorithm
 ///
 /// \param[out] str   : String to be set as checksum.
 /// \param[in]  data  : Data to create checksum from.
@@ -282,6 +282,15 @@ static inline void __XXHash3_gen_checksum(wstring& str, const void* data, size_t
   str = buff;
 }
 
+
+/// \brief Compare checksum
+///
+/// Compare checksum string using XXHash3 64 bits algorithm
+///
+/// \param[out] hex   : Checksum hexadecimal representation string to be compared.
+/// \param[in]  data  : Data to create checksum to compare.
+/// \param[in]  size  : Data size in bytes.
+///
 static inline bool __XXHash3_cmp_checksum(const wstring& hex, const void* data, size_t size)
 {
   uint64_t hash1 = wcstoull(hex.c_str(), nullptr, 16);

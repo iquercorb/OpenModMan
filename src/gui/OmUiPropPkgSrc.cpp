@@ -103,7 +103,7 @@ void OmUiPropPkgSrc::_onInit()
     if(pPkg->image().thumbnail()) {
       this->_hBmThumb = pPkg->image().thumbnail();
     } else {
-      this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
+      this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0));
     }
     this->setStImage(IDC_SB_PKIMG, this->_hBmThumb);
 
@@ -127,7 +127,7 @@ void OmUiPropPkgSrc::_onInit()
     this->setItemText(IDC_EC_OUT08, L"N/A");
     this->enableItem(IDC_EC_OUT08, false);
     // Snapshot image
-    this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0));
+    this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0));
     this->setStImage(IDC_SB_PKIMG, this->_hBmThumb);
     // Package description
     this->setItemText(IDC_EC_PKTXT, L"N/A");

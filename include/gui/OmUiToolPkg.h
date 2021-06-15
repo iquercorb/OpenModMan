@@ -18,6 +18,7 @@
 #define OMUITOOLPKG_H
 
 #include "OmDialog.h"
+#include "OmPackage.h"
 
 /// \brief Package Editor tool dialog
 ///
@@ -53,33 +54,51 @@ class OmUiToolPkg : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _hFtMonos;
+    HFONT               _ftMono;
 
-    HBITMAP             _hBmBlank;
+    HBITMAP             _bmThn;
 
-    HBITMAP             _hBmBcNew;
+    HBITMAP             _bmEnt;
 
-    HBITMAP             _hBmBcDel;
+    HBITMAP             _bmRem;
 
-    bool                _parsePkg(const wstring& path);
+    OmPackage           _package;
 
-    void                _resetPkg();
+    bool                _parseSrc(const wstring& path);
 
-    void                _nameParse();
+    void                _freeze(bool freeze);
 
-    bool                _snapLoad(const wstring& path);
+    void                _save_init();
 
-    void                _buildPkg_init();
+    void                _save_stop();
 
-    void                _buildPkg_stop();
+    void*               _save_hth;
 
-    void*               _buildPkg_hth;
+    static DWORD WINAPI _save_fth(void*);
 
-    static DWORD WINAPI _buildPkg_fth(void*);
+    bool                _save_abort;
 
-    bool                _abort;
+    void                _onBcRadSrc();
 
-    bool                _save();
+    void                _onBcBrwDir();
+
+    void                _onBcBrwPkg();
+
+    void                _onNameChange();
+
+    void                _onBcBrwDest();
+
+    void                _onLbDpnlsSel();
+
+    void                _onBcAddDep();
+
+    void                _onBcDelDep();
+
+    void                _onBcBrwSnap();
+
+    void                _onBcBrwDesc();
+
+    void                _onBcSave();
 
     void                _onInit();
 
@@ -87,7 +106,7 @@ class OmUiToolPkg : public OmDialog
 
     void                _onRefresh();
 
-    void                _onQuit();
+    void                _onClose();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

@@ -25,7 +25,7 @@
 
 /// \brief Custom window Message
 ///
-/// Custom window message to notify the dialog window that the _addEntries_fth
+/// Custom window message to notify the dialog window that the _addDir_fth
 /// thread finished his job.
 ///
 #define UWM_ADDENTRIES_DONE   (WM_APP+1)
@@ -127,12 +127,15 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
-  _hFtMonos(Om_createFont(14, 400, L"Consolas")),
-  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),IMAGE_BITMAP,0,0,0))),
-  _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
-  _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0))),
-  _hBmBcDir(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DIR), IMAGE_BITMAP, 0, 0, 0))),
-  _rep_def()
+  _ftMono(Om_createFont(14, 400, L"Consolas")),
+  _bmThn(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0))),
+  _bmAdd(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),IMAGE_BITMAP,0,0,0))),
+  _bmRem(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),IMAGE_BITMAP,0,0,0))),
+  _bmDir(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_DIR),IMAGE_BITMAP,0,0,0))),
+  _condig(),
+  _curEntry(),
+  _addDir_hth(nullptr),
+  _addDir_path()
 {
   this->addChild(new OmUiProgress(hins));   //< for Location backup cleaning
 }
@@ -143,8 +146,14 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolRep::~OmUiToolRep()
 {
-  DeleteObject(this->_hBmBlank);
-  DeleteObject(this->_hFtMonos);
+  DeleteObject(this->_ftMono);
+  DeleteObject(this->_bmAdd);
+  DeleteObject(this->_bmRem);
+  DeleteObject(this->_bmDir);
+
+  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, nullptr);
+  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+  DeleteObject(this->_bmThn);
 }
 
 
@@ -163,13 +172,13 @@ long OmUiToolRep::id() const
 void OmUiToolRep::_repoInit()
 {
   // Initialize new Repository definition XML scheme
-  this->_rep_def.init(OMM_CFG_SIGN_REP);
+  this->_condig.init(OMM_CFG_SIGN_REP);
 
   // Generate a new UUID for this Repository
   wstring uuid = Om_genUUID();
 
   // Create repository base scheme
-  OmXmlNode xml_def = this->_rep_def.xml();
+  OmXmlNode xml_def = this->_condig.xml();
   xml_def.addChild(L"uuid").setContent(uuid);
   xml_def.addChild(L"title").setContent(L"New Repository");
   xml_def.addChild(L"download").setContent(REPO_DEFAULT_DOWLOAD);
@@ -183,7 +192,7 @@ void OmUiToolRep::_repoInit()
 bool OmUiToolRep::_repoOpen(const wstring& path)
 {
   // Initialize new Repository definition XML scheme
-  if(!this->_rep_def.open(path, OMM_CFG_SIGN_REP)) {
+  if(!this->_condig.open(path, OMM_CFG_SIGN_REP)) {
 
     wstring err = L"The file \"";
     err += path;
@@ -205,7 +214,7 @@ OmXmlNode OmUiToolRep::_repoGetEnt(const wstring& ident)
   OmXmlNode result;
 
   // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_rep_def.xml().child(L"packages");
+  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
 
   // Get all <entry> children
   std::vector<OmXmlNode> xml_ent_ls;
@@ -269,7 +278,7 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
   } else {
 
     // Get the package list XML node
-    xml_packages = this->_rep_def.xml().child(L"packages");
+    xml_packages = this->_condig.xml().child(L"packages");
 
     // create new entry in repository
     xml_entry = xml_packages.addChild(L"entry");
@@ -313,7 +322,7 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
 bool OmUiToolRep::_repoRemEnt(const wstring& ident)
 {
   // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_rep_def.xml().child(L"packages");
+  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
 
   // Get all <entry> children
   std::vector<OmXmlNode> xml_ent_ls;
@@ -355,7 +364,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
     this->enableItem(IDC_BC_CHK, false);
     this->enableItem(IDC_BC_BRW08, false);
     this->enableItem(IDC_BC_DEL, false);
-    this->setStImage(IDC_SB_PKIMG, this->_hBmBlank);
+    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
     this->enableItem(IDC_BC_BRW09, false);
     this->enableItem(IDC_BC_SAV02, false);
     this->setItemText(IDC_EC_PKTXT, L"");
@@ -365,7 +374,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
   }
 
   // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_rep_def.xml().child(L"packages");
+  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
 
   // Get all <entry> children
   std::vector<OmXmlNode> xml_ent_ls;
@@ -464,7 +473,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 
         // set image to dialog
         hBm_old = this->setStImage(IDC_SB_PKIMG, hBm_new);
-        if(hBm_old && hBm_old != this->_hBmBlank) DeleteObject(hBm_old);
+        if(hBm_old && hBm_old != this->_bmThn) DeleteObject(hBm_old);
         this->enableItem(IDC_BC_DEL, true);
         this->setItemText(IDC_BC_OPEN1, L"Change...");
         has_snap = true;
@@ -479,8 +488,8 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 
   // no snapshot, reset controls to default
   if(!has_snap) {
-    hBm_old = this->setStImage(IDC_SB_PKIMG, this->_hBmBlank);
-    if(hBm_old && hBm_old != this->_hBmBlank) DeleteObject(hBm_old);
+    hBm_old = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+    if(hBm_old && hBm_old != this->_bmThn) DeleteObject(hBm_old);
     this->enableItem(IDC_BC_DEL, false);
   }
 
@@ -584,7 +593,7 @@ int OmUiToolRep::_getDepsList(vector<wstring>& miss_list, const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_addEntries_init(const wstring& path)
+void OmUiToolRep::_addDir_init(const wstring& path)
 {
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
@@ -593,29 +602,29 @@ void OmUiToolRep::_addEntries_init(const wstring& path)
   pUiProgress->setDesc(L"Computes packages checksum");
 
   // keep path to folder to scan
-  this->_addEntries_path = path;
+  this->_addDir_path = path;
 
   // start package building thread
   DWORD dWid;
-  this->_addEntries_hth = CreateThread(nullptr, 0, this->_addEntries_fth, this, 0, &dWid);
+  this->_addDir_hth = CreateThread(nullptr, 0, this->_addDir_fth, this, 0, &dWid);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_addEntries_stop()
+void OmUiToolRep::_addDir_stop()
 {
   DWORD exitCode;
 
-  if(this->_addEntries_hth) {
-    WaitForSingleObject(this->_addEntries_hth, INFINITE);
-    GetExitCodeThread(this->_addEntries_hth, &exitCode);
-    CloseHandle(this->_addEntries_hth);
-    this->_addEntries_hth = nullptr;
+  if(this->_addDir_hth) {
+    WaitForSingleObject(this->_addDir_hth, INFINITE);
+    GetExitCodeThread(this->_addDir_hth, &exitCode);
+    CloseHandle(this->_addDir_hth);
+    this->_addDir_hth = nullptr;
   }
 
-  this->_addEntries_path.clear();
+  this->_addDir_path.clear();
 
   // quit the progress dialog
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
@@ -629,7 +638,7 @@ void OmUiToolRep::_addEntries_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiToolRep::_addEntries_fth(void* arg)
+DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
 {
   OmUiToolRep* self = static_cast<OmUiToolRep*>(arg);
 
@@ -640,7 +649,7 @@ DWORD WINAPI OmUiToolRep::_addEntries_fth(void* arg)
 
   // get all file from given path
   vector<wstring> ls;
-  Om_lsFile(&ls, self->_addEntries_path, true);
+  Om_lsFile(&ls, self->_addDir_path, true);
 
   // initialize the progress bar
   if(hPb) {
@@ -700,7 +709,7 @@ void OmUiToolRep::_onBcNew()
   this->msgItem(IDC_LB_PKGLS, LB_RESETCONTENT, 0, 0);
 
   // Set default title and download path to controls
-  OmXmlNode xml_def = this->_rep_def.xml();
+  OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
   this->setItemText(IDC_EC_INP02, xml_def.child(L"download").content());
 }
@@ -736,11 +745,11 @@ void OmUiToolRep::_onBcOpen()
     return;
 
   // Get Repository Title
-  this->setItemText(IDC_EC_INP01, this->_rep_def.xml().child(L"title").content());
+  this->setItemText(IDC_EC_INP01, this->_condig.xml().child(L"title").content());
   // Get Download path
-  this->setItemText(IDC_EC_INP02, this->_rep_def.xml().child(L"download").content());
+  this->setItemText(IDC_EC_INP02, this->_condig.xml().child(L"download").content());
 
-  OmXmlNode xml_pkgs = this->_rep_def.xml().child(L"packages");
+  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
 
   // get all <entry> nodes within <packages>
   std::vector<OmXmlNode> xml_ent_ls;
@@ -810,7 +819,7 @@ void OmUiToolRep::_onBcBrwDir()
   // each add need to compute the file checksum, this operation can take
   // long time specially with huge files, to prevent unpleasant freeze of
   // dialog, we proceed through progress dialog within new thread.
-  this->_addEntries_init(result);
+  this->_addDir_init(result);
 }
 
 
@@ -1008,7 +1017,7 @@ void OmUiToolRep::_onBcBrwSnap()
     if(__save_snapshot(xml_pic, image)) {
 
       HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, image.thumbnail());
-      if(hBm && hBm != this->_hBmBlank) DeleteObject(hBm);
+      if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
 
       // enable General "Save as..." Button
       this->enableItem(IDC_BC_SAVE, true);
@@ -1040,8 +1049,8 @@ void OmUiToolRep::_onBcDelSnap()
     this->_curEntry.remChild(L"picture");
   }
 
-  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, this->_hBmBlank);
-  if(hBm && hBm != this->_hBmBlank) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
 
   // disable Snapshot "Delete" Button
   this->enableItem(IDC_BC_DEL, false);
@@ -1130,7 +1139,7 @@ void OmUiToolRep::_onBcSave()
   OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
 
   // Repository XML node
-  OmXmlNode xml_def = this->_rep_def.xml();
+  OmXmlNode xml_def = this->_condig.xml();
 
   // Before saving, update the download path and title
   wstring item_str;
@@ -1183,9 +1192,9 @@ void OmUiToolRep::_onBcSave()
     return;
   }
 
-  if(!this->_rep_def.save(result)) {
+  if(!this->_condig.save(result)) {
     wstring err = L"Failed to save file "+Om_getFilePart(result)+L"\", ";
-    err += this->_rep_def.lastErrorStr();
+    err += this->_condig.lastErrorStr();
     Om_dialogBoxErr(this->_hwnd, L"Unable to save file", err);
     return;
   }
@@ -1223,6 +1232,11 @@ void OmUiToolRep::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_BC_BRW01, L"Select Repository XML file");
+  this->_createTooltip(IDC_BC_NEW, L"Initialize new repository");
+
+  this->_createTooltip(IDC_EC_INP01, L"Indicative title");
+  this->_createTooltip(IDC_EC_INP02, L"Default download path");
+
   this->_createTooltip(IDC_LB_PKGLS, L"Repository package entries list");
 
   this->_createTooltip(IDC_BC_BRW02, L"Add Package");
@@ -1242,13 +1256,13 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_SAV02, L"Save descriptions changes");
 
   // Set font for description
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKIMG, this->_hBmBlank);
+  this->setStImage(IDC_SB_PKIMG, this->_bmThn);
   // Set buttons icons
-  this->setBmImage(IDC_BC_BRW02, this->_hBmBcNew);
-  this->setBmImage(IDC_BC_BRW03, this->_hBmBcDir);
-  this->setBmImage(IDC_BC_REM, this->_hBmBcDel);
+  this->setBmImage(IDC_BC_BRW02, this->_bmAdd);
+  this->setBmImage(IDC_BC_BRW03, this->_bmDir);
+  this->setBmImage(IDC_BC_REM, this->_bmRem);
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
@@ -1257,7 +1271,7 @@ void OmUiToolRep::_onInit()
   this->_repoInit();
 
   // Set default title and download path to controls
-  OmXmlNode xml_def = this->_rep_def.xml();
+  OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
   this->setItemText(IDC_EC_INP02, xml_def.child(L"download").content());
 }
@@ -1369,7 +1383,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_ADDENTRIES_DONE) {
     // end the removing Location process
-    this->_addEntries_stop();
+    this->_addDir_stop();
   }
 
   if(uMsg == WM_COMMAND) {
@@ -1411,6 +1425,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_LB_PKGLS: //< Packages list ListBox
+      // check for selection change
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbPkglsSel();
       break;

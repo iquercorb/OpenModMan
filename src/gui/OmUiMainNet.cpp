@@ -30,7 +30,7 @@
 OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
   _hFtTitle(Om_createFont(18, 800, L"Ms Shell Dlg")),
   _hFtMonos(Om_createFont(14, 700, L"Consolas")),
-  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_BLANK),0,0,0,0))),
+  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),0,0,0,0))),
   _hBmBcNew(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),0,0,0,0))),
   _hBmBcDel(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),0,0,0,0))),
   _hBmBcRef(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REF),0,0,0,0)))

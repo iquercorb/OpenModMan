@@ -53,17 +53,17 @@ class OmUiToolRep : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _hFtMonos;
+    HFONT               _ftMono;
 
-    HBITMAP             _hBmBlank;
+    HBITMAP             _bmThn;
 
-    HBITMAP             _hBmBcNew;
+    HBITMAP             _bmAdd;
 
-    HBITMAP             _hBmBcDel;
+    HBITMAP             _bmRem;
 
-    HBITMAP             _hBmBcDir;
+    HBITMAP             _bmDir;
 
-    OmConfig            _rep_def;
+    OmConfig            _condig;
 
     OmXmlNode           _curEntry;
 
@@ -81,15 +81,15 @@ class OmUiToolRep : public OmDialog
 
     int                 _getDepsList(vector<wstring>& miss_list, const wstring& ident);
 
-    void                _addEntries_init(const wstring& path);
+    void                _addDir_init(const wstring& path);
 
-    void                _addEntries_stop();
+    void                _addDir_stop();
 
-    void*               _addEntries_hth;
+    void*               _addDir_hth;
 
-    static DWORD WINAPI _addEntries_fth(void*);
+    static DWORD WINAPI _addDir_fth(void*);
 
-    wstring             _addEntries_path;
+    wstring             _addDir_path;
 
     void                _onLbPkglsSel();
 

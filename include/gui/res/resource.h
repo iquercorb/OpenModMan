@@ -67,9 +67,10 @@
 #define IDB_BTN_MOD                             852
 #define IDB_BTN_REF                             853
 #define IDB_BTN_DIR                             854
+#define IDB_BTN_ENT                             855
 #define IDB_BTN_UP                              860
 #define IDB_BTN_DN                              861
-#define IDB_PKG_BLANK                           870
+#define IDB_PKG_THN                             870
 #define IDC_SC_TITLE                            40100
 #define IDC_SC_INTRO                            40101
 #define IDC_SC_STATE                            40102
