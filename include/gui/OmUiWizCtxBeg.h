@@ -49,8 +49,6 @@ class OmUiWizCtxBeg : public OmDialog
     ///
     long id() const;
 
-  protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     void                _onInit();

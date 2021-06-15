@@ -65,15 +65,14 @@ bool OmUiWizCtx::_onWizNext()
   case 1: // Context parameters Wizard page
     return static_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG))->hasValidParams();
     break;
-
   case 2: // Location parameters Wizard page
-    return static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG))->hasValidParams();
+    return static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_CTX_LOC))->hasValidParams();
     break;
-
   default:
     return true;
     break;
   }
+
   return true;
 }
 
@@ -85,7 +84,7 @@ void OmUiWizCtx::_onWizFinish()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmUiWizCtxCfg* pUiWizCtxCfg = static_cast<OmUiWizCtxCfg*>(this->childById(IDD_WIZ_CTX_CFG));
-  OmUiWizCtxLoc* pUiWizLocCfg = static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_LOC_CFG));
+  OmUiWizCtxLoc* pUiWizLocCfg = static_cast<OmUiWizCtxLoc*>(this->childById(IDD_WIZ_CTX_LOC));
 
   // Retrieve Context parameters
   wstring ctx_name, ctx_home;

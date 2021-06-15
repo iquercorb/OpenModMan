@@ -58,9 +58,11 @@ class OmUiWizCtxCfg : public OmDialog
     ///
     bool hasValidParams() const;
 
-  protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    void                _onPathChange();
+
+    void                _onBcBrwHome();
 
     void                _onInit();
 

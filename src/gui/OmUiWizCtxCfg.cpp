@@ -86,6 +86,42 @@ bool OmUiWizCtxCfg::hasValidParams() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiWizCtxCfg::_onPathChange()
+{
+  wstring name, path;
+
+  this->getItemText(IDC_EC_INP01, name);
+  this->getItemText(IDC_EC_INP02, path);
+
+  if(!Om_isValidName(name) || !Om_isValidPath(path)) {
+    this->setItemText(IDC_EC_INP03, L"<invalid path>");
+    return;
+  }
+
+  path += L"\\" + name + L"\\";
+  this->setItemText(IDC_EC_INP03, path);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizCtxCfg::_onBcBrwHome()
+{
+  wstring start, result;
+
+  this->getItemText(IDC_EC_INP02, start);
+
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select folder where to create Context home", start))
+    return;
+
+  this->setItemText(IDC_EC_INP02, result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiWizCtxCfg::_onInit()
 {
   // define controls tool-tips
@@ -182,51 +218,39 @@ bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    wstring item_st1, item_st2, brow_str;
-
     switch(LOWORD(wParam))
     {
-    case IDC_EC_INP01: // title
-    case IDC_EC_INP02: // Context location path
-      this->getItemText(IDC_EC_INP01, item_st1);
-      if(Om_isValidName(item_st1)) {
-        this->getItemText(IDC_EC_INP02, item_st2);
-        if(Om_isValidPath(item_st2)) {
-          item_st2 += L"\\" + item_st1 + L"\\";
-        } else {
-          item_st2 = L"<invalid path>";
-        }
-      } else {
-        item_st2 = L"<invalid path>";
-      }
-      this->setItemText(IDC_EC_INP03, item_st2);
+    case IDC_EC_INP01: // Title
+    case IDC_EC_INP02: // Context path
+      // check for content changes
+      if(HIWORD(wParam) == EN_CHANGE)
+        this->_onPathChange();
       break;
 
     case IDC_BC_BRW02:
-      this->getItemText(IDC_EC_INP02, item_st1);
-      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select folder where to create Context home", item_st1)) {
-        this->setItemText(IDC_EC_INP02, brow_str);
-        //manager->saveDefaultLocation(inpt2); //< TODO: ?
-      }
+      this->_onBcBrwHome();
       break;
 
-    case IDC_EC_INP03: // resulting Context path
-      has_changed = true;
+    case IDC_EC_INP03: // Resulting Context home path
+      if(HIWORD(wParam) == EN_CHANGE)
+        has_changed = true;
       break;
     }
-
     // enable or disable "next" button according values
     if(has_changed) {
       bool allow = true;
 
-      this->getItemText(IDC_EC_INP01, item_st1);
-      if(!item_st1.empty()) {
+      wstring item_str;
 
-        this->getItemText(IDC_EC_INP02, item_st1);
-        if(!item_st1.empty()) {
+      this->getItemText(IDC_EC_INP01, item_str);
+      if(!item_str.empty()) {
 
-          this->getItemText(IDC_EC_INP03, item_st1);
-          if(!Om_isValidPath(item_st1)) allow = false;
+        this->getItemText(IDC_EC_INP02, item_str);
+        if(!item_str.empty()) {
+
+          this->getItemText(IDC_EC_INP03, item_str);
+          if(!Om_isValidPath(item_str))
+            allow = false;
 
         } else {
           allow = false;

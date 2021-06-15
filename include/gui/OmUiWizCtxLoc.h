@@ -58,9 +58,19 @@ class OmUiWizCtxLoc : public OmDialog
     ///
     bool hasValidParams() const;
 
-  protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    void                _onTitleChange();
+
+    void                _onBcBrwDst();
+
+    void                _onCkBoxLib();
+
+    void                _onBcBrwLib();
+
+    void                _onCkBoxBck();
+
+    void                _onBcBrwBck();
 
     void                _onInit();
 
