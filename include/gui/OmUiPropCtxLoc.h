@@ -78,29 +78,27 @@ class OmUiPropCtxLoc : public OmDialog
 
     bool                _chParam[8];
 
-    HBITMAP             _hBmBcNew;
+    void                _delLoc_init(int id);
 
-    HBITMAP             _hBmBcDel;
+    void                _delLoc_stop();
 
-    HBITMAP             _hBmBcMod;
+    void*               _delLoc_hth;
 
-    HBITMAP             _hBmBcUp;
+    static DWORD WINAPI _delLoc_fth(void*);
 
-    HBITMAP             _hBmBcDn;
+    int                 _delLoc_id;
 
-    void                _locationUp();
+    void                _onLbLoclsSel();
 
-    void                _locationDn();
+    void                _onBcUpLoc();
 
-    void                _locationDel();
+    void                _onBcDnLoc();
 
-    void                _backupPurge_init();
+    void                _onBcDelLoc();
 
-    void                _backupPurge_stop();
+    void                _onBcEdiLoc();
 
-    void*               _backupPurge_hth;
-
-    static DWORD WINAPI _backupPurge_fth(void*);
+    void                _onBcAddLoc();
 
     void                _onInit();
 

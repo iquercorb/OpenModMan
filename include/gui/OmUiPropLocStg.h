@@ -81,6 +81,16 @@ class OmUiPropLocStg : public OmDialog
 
     bool                _chParam[8];
 
+    void                _onBcBrwDst();
+
+    void                _onCkBoxLib();
+
+    void                _onBcBrwLib();
+
+    void                _onCkBoxBck();
+
+    void                _onBcBrwBck();
+
     void                _onInit();
 
     void                _onResize();

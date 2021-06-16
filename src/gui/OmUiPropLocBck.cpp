@@ -33,7 +33,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropLocBck::OmUiPropLocBck(HINSTANCE hins) : OmDialog(hins),
-  _backupDcard_hth(nullptr)
+  _delBck_hth(nullptr)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i)
@@ -72,7 +72,41 @@ void OmUiPropLocBck::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLocBck::_backupDcard_init()
+void OmUiPropLocBck::_onCkBoxZip()
+{
+  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+
+  this->enableItem(IDC_SC_LBL01, bm_chk);
+  this->enableItem(IDC_CB_LEVEL, bm_chk);
+
+  this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocBck::_onBcDelBck()
+{
+  // warns the user before committing the irreparable
+  wstring wrn = L"This will permanently delete all existing "
+                L"backups data without restoring them (which should "
+                "never be done except in emergency situation)."
+
+                L"\n\nDiscard all backups data for this Location ?";
+
+  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backups data", wrn))
+    return;
+
+  // Launch backup discard process
+  this->_delBck_init();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocBck::_delBck_init()
 {
   // To prevent crash during operation we unselect location in the main dialog
   static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
@@ -84,22 +118,22 @@ void OmUiPropLocBck::_backupDcard_init()
   pUiProgress->setDesc(L"Backups data deletion");
 
   DWORD dwId;
-  this->_backupDcard_hth = CreateThread(nullptr, 0, this->_backupDcard_fth, this, 0, &dwId);
+  this->_delBck_hth = CreateThread(nullptr, 0, this->_delBck_fth, this, 0, &dwId);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLocBck::_backupDcard_stop()
+void OmUiPropLocBck::_delBck_stop()
 {
   DWORD exitCode;
 
-  if(this->_backupDcard_hth) {
-    WaitForSingleObject(this->_backupDcard_hth, INFINITE);
-    GetExitCodeThread(this->_backupDcard_hth, &exitCode);
-    CloseHandle(this->_backupDcard_hth);
-    this->_backupDcard_hth = nullptr;
+  if(this->_delBck_hth) {
+    WaitForSingleObject(this->_delBck_hth, INFINITE);
+    GetExitCodeThread(this->_delBck_hth, &exitCode);
+    CloseHandle(this->_delBck_hth);
+    this->_delBck_hth = nullptr;
   }
 
   // quit the progress dialog
@@ -113,7 +147,7 @@ void OmUiPropLocBck::_backupDcard_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiPropLocBck::_backupDcard_fth(void* arg)
+DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
 {
   OmUiPropLocBck* self = static_cast<OmUiPropLocBck*>(arg);
 
@@ -234,41 +268,24 @@ bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_BACKDISCARD_DONE) {
     // end the Location backups deletion process
-    this->_backupDcard_stop();
+    this->_delBck_stop();
   }
 
   if(uMsg == WM_COMMAND) {
 
-    bool bm_chk;
-
     switch(LOWORD(wParam))
     {
-    case IDC_BC_CHK01:
-      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_CB_LEVEL, bm_chk);
-      this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
+    case IDC_BC_CHK01: //< Compress backup data CheckBox
+      this->_onCkBoxZip();
       break;
 
-    case IDC_CB_LEVEL:
-      if(HIWORD(wParam) == CBN_SELCHANGE) {
-        // user modified parameter, notify it
+    case IDC_CB_LEVEL: //< Backup compression level ComboBox
+      if(HIWORD(wParam) == CBN_SELCHANGE)
         this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
-      }
       break;
 
-    case IDC_BC_DEL: {
-        // warns the user before committing the irreparable
-        wstring wrn = L"This will permanently delete all existing "
-                      L"backups data without restoring them (which should "
-                      "never be done except in emergency situation)."
-
-                      L"\n\nDiscard all backups data for this Location ?";
-
-        if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backups data", wrn)) {
-          // delete the Location
-          this->_backupDcard_init();
-        }
-      }
+    case IDC_BC_DEL: //< "Discard backups" Button
+      this->_onBcDelBck();
       break;
     }
   }

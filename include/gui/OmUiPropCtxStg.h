@@ -79,9 +79,9 @@ class OmUiPropCtxStg : public OmDialog
 
     bool                _chParam[8];
 
-    HICON               _hIcBlank;
+    void                _onBcBrwIcon();
 
-    void                _setIcon(const wstring& path);
+    void                _onBcDelIcon();
 
     void                _onInit();
 

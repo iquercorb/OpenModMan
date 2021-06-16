@@ -78,35 +78,37 @@ class OmUiAddBat : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmContext*                _context;
+    OmContext*          _context;
 
-    vector<vector<int>>       _excLs;
+    vector<vector<int>> _excluded;
 
-    vector<vector<int>>       _incLs;
+    vector<vector<int>> _included;
 
-    HBITMAP                   _hBmBcUp;
+    void                _buildLbs();
 
-    HBITMAP                   _hBmBcDn;
+    void                _autoInclude();
 
-    void                      _rebuildPkgLb();
+    void                _includePkg();
 
-    void                      _qucikFromCur();
+    void                _excludePkg();
 
-    void                      _upPkg();
+    void                _onCkBoxAuto();
 
-    void                      _dnPkg();
+    void                _onLbExclsSel();
 
-    void                      _addPkg();
+    void                _onLbInclsSel();
 
-    void                      _remPkg();
+    void                _onBcUpPkg();
 
-    bool                      _apply();
+    void                _onBcDnPkg();
 
-    void                      _onInit();
+    bool                _onBcOk();
 
-    void                      _onResize();
+    void                _onInit();
 
-    bool                      _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    void                _onResize();
+
+    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIADDBAT_H

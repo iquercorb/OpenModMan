@@ -82,7 +82,7 @@ class OmUiPropBatStg : public OmDialog
     /// \param[in]  l   : List index, corresponding to Location combo box.
     ///
     unsigned getIncLsSize(unsigned l) const {
-      return this->_incLs[l].size();
+      return this->_included[l].size();
     }
 
     /// \brief Get Included list size.
@@ -93,32 +93,30 @@ class OmUiPropBatStg : public OmDialog
     /// \param[in]  v   : Value index to get in list.
     ///
     int getIncLsValue(unsigned l, unsigned v) const {
-      return this->_incLs[l][v];
+      return this->_included[l][v];
     }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     bool                _chParam[8];
 
-    vector<vector<int>> _excLs;
+    vector<vector<int>> _excluded;
 
-    vector<vector<int>> _incLs;
+    vector<vector<int>> _included;
 
-    HBITMAP             _hBmBcUp;
+    void                _buildLbs();
 
-    HBITMAP             _hBmBcDn;
+    void                _includePkg();
 
-    void                _rebuildPkgLb();
+    void                _excludePkg();
 
-    void                _qucikFromCur();
+    void                _onLbExclsSel();
 
-    void                _upPkg();
+    void                _onLbInclsSel();
 
-    void                _dnPkg();
+    void                _onBcUpPkg();
 
-    void                _addPkg();
-
-    void                _remPkg();
+    void                _onBcDnPkg();
 
     void                _onInit();
 

@@ -51,8 +51,6 @@ class OmUiHelpLog : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _hFtMonos;
-
     void                _onInit();
 
     void                _onResize();

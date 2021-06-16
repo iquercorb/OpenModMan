@@ -32,16 +32,12 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins),
-  _hIcBlank(nullptr)
+OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i) {
     this->_chParam[i] = false;
   }
-
-  // Load the default Context icon
-  this->_hIcBlank = Om_loadShellIcon(SIID_APPLICATION, true);
 }
 
 
@@ -50,7 +46,8 @@ OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropCtxStg::~OmUiPropCtxStg()
 {
-  DestroyIcon(this->_hIcBlank);
+  HICON hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_GETICON));
+  if(hIc) DestroyIcon(hIc);
 }
 
 
@@ -76,21 +73,53 @@ void OmUiPropCtxStg::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropCtxStg::_setIcon(const wstring& path)
+void OmUiPropCtxStg::_onBcBrwIcon()
 {
-  HICON hIcon;
+  wstring start, result;
+
+  // get last valid path to start browsing
+  this->getItemText(IDC_EC_INP04, start);
+  start = Om_getDirPart(start);
+
+  if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, start))
+    return;
+
+  HICON hIc;
 
   // check if the path to icon is non empty
-  if(Om_isValidPath(path)) {
-    ExtractIconExW(path.c_str(), 0, &hIcon, nullptr, 1);
+  if(Om_isValidPath(result)) {
+    ExtractIconExW(result.c_str(), 0, &hIc, nullptr, 1);
   } else {
-    hIcon = this->_hIcBlank;
+    hIc = Om_loadShellIcon(SIID_APPLICATION, true);
   }
 
-  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon)));
-  if(hIcon != this->_hIcBlank) DestroyIcon(hIcon);
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  if(hIc) DestroyIcon(hIc);
 
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
+
+  this->setItemText(IDC_EC_INP04, result);
+  this->setItemText(IDC_BC_BRW01, L"Change..."); //< change browse button text
+
+  // user modified parameter, notify it
+  this->setChParam(CTX_PROP_STG_ICON, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropCtxStg::_onBcDelIcon()
+{
+  HICON hIc = Om_loadShellIcon(SIID_APPLICATION, true);
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  if(hIc) DestroyIcon(hIc);
+
+  this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
+  this->setItemText(IDC_BC_BRW01, L"Select..."); //< change browse button text
+
+  // user modified parameter, notify it
+  this->setChParam(CTX_PROP_STG_ICON, true);
 }
 
 
@@ -106,9 +135,7 @@ void OmUiPropCtxStg::_onInit()
   this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
 
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
-
-  if(pCtx == nullptr)
-    return;
+  if(!pCtx) return;
 
   this->setItemText(IDC_EC_INP01, pCtx->home());
   this->setItemText(IDC_EC_INP02, pCtx->uuid());
@@ -148,34 +175,36 @@ void OmUiPropCtxStg::_onResize()
 void OmUiPropCtxStg::_onRefresh()
 {
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
-
-  if(pCtx == nullptr)
-    return;
+  if(!pCtx) return;
 
   wstring ctx_icon;
 
   this->getItemText(IDC_EC_INP04, ctx_icon);
 
-  HICON hIcon;
+  HICON hIc;
 
   // check if the path to icon is non empty
   if(Om_isValidPath(ctx_icon)) {
+
     // reload the last selected icon
-    ExtractIconExW(ctx_icon.c_str(), 0, &hIcon, nullptr, 1);
+    ExtractIconExW(ctx_icon.c_str(), 0, &hIc, nullptr, 1);
     this->setItemText(IDC_BC_BRW01, L"Change...");
+
   } else {
+
     // check whether Context already have an icon configured
     if(pCtx->icon()) {
-      hIcon = pCtx->icon();
+      hIc = pCtx->icon();
       this->setItemText(IDC_BC_BRW01, L"Change...");
     } else {
-      hIcon = this->_hIcBlank;
+      hIc = Om_loadShellIcon(SIID_APPLICATION, true);
       this->setItemText(IDC_BC_BRW01, L"Select...");
     }
+
   }
 
-  hIcon = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon)));
-  if(hIcon != this->_hIcBlank) DestroyIcon(hIcon);
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  if(hIc) DestroyIcon(hIc);
 
   InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
 
@@ -201,25 +230,11 @@ bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW01: //< Brows Button for Context icon
-      // get last valid path to start browsing
-      this->getItemText(IDC_EC_INP04, item_str);
-      item_str = Om_getDirPart(item_str);
-
-      if(Om_dialogOpenFile(brow_str, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, item_str)) {
-        this->_setIcon(brow_str);
-        this->setItemText(IDC_EC_INP04, brow_str);
-        this->setItemText(IDC_BC_BRW01, L"Change..."); //< change browse button text
-        // user modified parameter, notify it
-        this->setChParam(CTX_PROP_STG_ICON, true);
-      }
+      this->_onBcBrwIcon();
       break;
 
     case IDC_BC_DEL: //< Remove Button for Context icon
-      this->_setIcon(L""); //< load default icon
-      this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
-      this->setItemText(IDC_BC_BRW01, L"Select..."); //< change browse button text
-      // user modified parameter, notify it
-      this->setChParam(CTX_PROP_STG_ICON, true);
+      this->_onBcDelIcon();
       break;
     }
   }

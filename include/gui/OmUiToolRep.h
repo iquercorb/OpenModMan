@@ -53,16 +53,6 @@ class OmUiToolRep : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _ftMono;
-
-    HBITMAP             _bmThn;
-
-    HBITMAP             _bmAdd;
-
-    HBITMAP             _bmRem;
-
-    HBITMAP             _bmDir;
-
     OmConfig            _condig;
 
     OmXmlNode           _curEntry;

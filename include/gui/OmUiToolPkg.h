@@ -54,14 +54,6 @@ class OmUiToolPkg : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _ftMono;
-
-    HBITMAP             _bmThn;
-
-    HBITMAP             _bmEnt;
-
-    HBITMAP             _bmRem;
-
     OmPackage           _package;
 
     bool                _parseSrc(const wstring& path);
@@ -90,11 +82,17 @@ class OmUiToolPkg : public OmDialog
 
     void                _onLbDpnlsSel();
 
+    void                _onCkBoxDep();
+
     void                _onBcAddDep();
 
     void                _onBcDelDep();
 
+    void                _onCkBoxSnap();
+
     void                _onBcBrwSnap();
+
+    void                _onCkBoxDesc();
 
     void                _onBcBrwDesc();
 

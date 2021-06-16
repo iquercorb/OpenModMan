@@ -734,17 +734,17 @@ void OmUiMainLib::_reloadLibLv(bool clear)
 void OmUiMainLib::_reloadBatLb()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->curContext();
-
-  HWND hLb = this->getItem(IDC_LB_BATLS);
 
   // empty List-Box
-  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_BATLS, LB_RESETCONTENT);
 
-  if(pCtx) {
+  if(pMgr->curContext()) {
+
+    OmContext* pCtx = pMgr->curContext();
+
     for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
-      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
-      SendMessageW(hLb, LB_SETITEMDATA, i, i); // for Location index reordering
+      this->msgItem(IDC_LB_BATLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
+      this->msgItem(IDC_LB_BATLS, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
 }
@@ -1062,6 +1062,8 @@ DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
           if(!pLoc->package(p)->hasBackup()) {
             inst_list.push_back(p);
           }
+        } else {
+          // TODO: handle no longer available package
         }
 
       }
@@ -1459,9 +1461,8 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case IDC_CB_LOCLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE) {
+      if(HIWORD(wParam) == CBN_SELCHANGE)
         this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
-      }
       break;
 
     case IDC_LB_BATLS: //< Location(s) list List-Box

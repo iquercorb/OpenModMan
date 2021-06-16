@@ -24,8 +24,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropPkgBck::OmUiPropPkgBck(HINSTANCE hins) : OmDialog(hins),
-  _hFtMonos(Om_createFont(14, 400, L"Consolas"))
+OmUiPropPkgBck::OmUiPropPkgBck(HINSTANCE hins) : OmDialog(hins)
 {
 
 }
@@ -36,7 +35,8 @@ OmUiPropPkgBck::OmUiPropPkgBck(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropPkgBck::~OmUiPropPkgBck()
 {
-  DeleteObject(this->_hFtMonos);
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  DeleteObject(hFt);
 }
 
 
@@ -55,7 +55,8 @@ long OmUiPropPkgBck::id() const
 void OmUiPropPkgBck::_onInit()
 {
   // defines fonts for package description, title, and log output
-  this->msgItem(IDC_EC_OUT05, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  HFONT hFt = Om_createFont(14, 400, L"Consolas");
+  this->msgItem(IDC_EC_OUT05, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
   if(pPkg == nullptr) return;

@@ -63,6 +63,67 @@ void OmUiPropManGle::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropManGle::_onCkBoxStr()
+{
+  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+
+  this->enableItem(IDC_LB_STRLS, bm_chk);
+  this->enableItem(IDC_BC_BRW01, bm_chk);
+
+  // user modified parameter, notify it
+  this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropManGle::_onLbStrlsSel()
+{
+  int lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+
+  this->enableItem(IDC_BC_REM, (lb_sel >= 0));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropManGle::_onBcBrwStr()
+{
+  wstring start, result;
+
+  this->getItemText(IDC_EC_INP01, start);
+
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Context file", OMM_CTX_DEF_FILE_FILER, start))
+    return;
+
+  // add file path to startup context list
+  this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.c_str()));
+
+  // user modified parameter, notify it
+  this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropManGle::_onBcRemStr()
+{
+  int lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+
+  if(lb_sel >= 0) {
+    this->msgItem(IDC_LB_STRLS, LB_DELETESTRING, lb_sel);
+    // user modified parameter, notify it
+    this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropManGle::_onInit()
 {
   // define controls tool-tips
@@ -71,7 +132,7 @@ void OmUiPropManGle::_onInit()
   this->_createTooltip(IDC_BC_CHK01,  L"Automatically load context at application start");
   this->_createTooltip(IDC_LB_STRLS,  L"Context files");
   this->_createTooltip(IDC_BC_BRW01,  L"Select a context file");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove the selected entry");
+  this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
@@ -111,7 +172,7 @@ void OmUiPropManGle::_onInit()
     SendMessageW(hLb, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(start_files[i].c_str()));
   }
 
-  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_REM, false);
 
   SetFocus(hCb);
 
@@ -137,7 +198,7 @@ void OmUiPropManGle::_onResize()
 
   // Startup Contexts list Add and Remove... buttons
   this->_setItemPos(IDC_BC_BRW01, 50, this->height()-58, 50, 14);
-  this->_setItemPos(IDC_BC_DEL, 102, this->height()-58, 50, 14);
+  this->_setItemPos(IDC_BC_REM, 102, this->height()-58, 50, 14);
 }
 
 
@@ -148,49 +209,30 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    int lb_sel;
-    bool bm_chk;
-    wstring item_str;
-    wstring brow_str;
-
     switch(LOWORD(wParam))
     {
     case IDC_CB_ISIZE: //< Combo-Box for icons size
-      // parameter modified, must be saved we parent dialog valid changes
-      this->setChParam(MAN_PROP_GLE_ICON_SIZE, true);
+      if(HIWORD(wParam) == CBN_SELCHANGE)
+        // parameter modified, must be saved we parent dialog valid changes
+        this->setChParam(MAN_PROP_GLE_ICON_SIZE, true);
       break;
 
     case IDC_BC_CHK01: //< Check-Box for Open Context(s) at startup
-      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_LB_STRLS, bm_chk);
-      this->enableItem(IDC_BC_BRW01, bm_chk);
-      // user modified parameter, notify it
-      this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+      this->_onCkBoxStr();
       break;
 
     case IDC_LB_STRLS: //< List-Box for startup Context(s) list
-      if(HIWORD(wParam) == LBN_SELCHANGE) {
-        lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
-        this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
-      }
+      if(HIWORD(wParam) == LBN_SELCHANGE)
+        this->_onLbStrlsSel();
       break;
 
-    case IDC_BC_BRW01: //< Brows Button for startup Context
-      this->getItemText(IDC_EC_INP01, item_str);
-      if(Om_dialogOpenFile(brow_str, this->_hwnd, L"Select Context file", OMM_CTX_DEF_FILE_FILER, item_str)) {
-        // add file path to startup context list
-        this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(brow_str.c_str()));
-      }
-      // user modified parameter, notify it
-      this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
-      break; // case BTN_BROWSE1:
+    case IDC_BC_BRW01: //< Startup Context list "Add.." Button
+      this->_onBcBrwStr();
+      break;
 
-    case IDC_BC_DEL: //< Remove Button for startup Context
-      lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
-      if(lb_sel >= 0) this->msgItem(IDC_LB_STRLS, LB_DELETESTRING, lb_sel);
-      // user modified parameter, notify it
-      this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
-      break; // case BTN_BROWSE1:
+    case IDC_BC_REM: //< Startup Context list "Remove" Button
+      this->_onBcRemStr();
+      break;
     }
   }
 

@@ -80,7 +80,19 @@ class OmUiAddLoc : public OmDialog
 
     OmContext*                _context;
 
-    bool                      _apply();
+    void                      _onTitleChange();
+
+    void                      _onBcBrwDst();
+
+    void                      _onCkBoxLib();
+
+    void                      _onBcBrwLib();
+
+    void                      _onCkBoxBck();
+
+    void                      _onBcBrwBck();
+
+    bool                      _onBcOk();
 
     void                      _onInit();
 

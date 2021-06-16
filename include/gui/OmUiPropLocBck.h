@@ -78,13 +78,17 @@ class OmUiPropLocBck : public OmDialog
 
     bool                _chParam[8];
 
-    void                _backupDcard_init();
+    void                _onCkBoxZip();
 
-    void                _backupDcard_stop();
+    void                _onBcDelBck();
 
-    void*               _backupDcard_hth;
+    void                _delBck_init();
 
-    static DWORD WINAPI _backupDcard_fth(void*);
+    void                _delBck_stop();
+
+    void*               _delBck_hth;
+
+    static DWORD WINAPI _delBck_fth(void*);
 
     void                _onInit();
 

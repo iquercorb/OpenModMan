@@ -4457,6 +4457,31 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large)
   return result;
 }
 
+/// \brief Loaded internal image
+///
+/// Array of loaded internal ressource image.
+///
+static HBITMAP __internal_image[200] = {nullptr};
+
+
+/// Base index for image resource
+///
+#define RES_IDB_BASE   800
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HBITMAP Om_getResImage(HINSTANCE hins, unsigned id)
+{
+  unsigned db_id = id - RES_IDB_BASE;
+
+  if(__internal_image[db_id] == nullptr) {
+    HBITMAP hBm = static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(id),IMAGE_BITMAP,0,0,0));
+    __internal_image[db_id] = hBm;
+  }
+
+  return __internal_image[db_id];
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

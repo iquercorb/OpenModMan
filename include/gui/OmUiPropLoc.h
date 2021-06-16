@@ -91,13 +91,13 @@ class OmUiPropLoc : public OmDialogProp
 
     OmLocation*         _location;
 
-    void*               _moveBackup_hth;
+    void*               _movBck_hth;
 
-    void                _moveBackup_init();
+    void                _movBck_init();
 
-    void                _moveBackup_stop();
+    void                _movBck_stop();
 
-    static DWORD WINAPI _moveBackup_fth(void*);
+    static DWORD WINAPI _movBck_fth(void*);
 
     bool                _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

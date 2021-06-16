@@ -57,9 +57,7 @@ long OmUiPropBat::id() const
 bool OmUiPropBat::checkChanges()
 {
   OmBatch* pBat = this->_batch;
-
-  if(pBat == nullptr)
-    return false;
+  if(!pBat) return false;
 
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
@@ -93,9 +91,7 @@ bool OmUiPropBat::checkChanges()
 bool OmUiPropBat::applyChanges()
 {
   OmBatch* pBat = this->_batch;
-
-  if(pBat == nullptr)
-    return false;
+  if(!pBat) false;
 
   OmContext* pCtx = pBat->context();
 

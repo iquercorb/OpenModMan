@@ -21,8 +21,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiHelpAbt::OmUiHelpAbt(HINSTANCE hins) : OmDialog(hins),
-  _hFtMonos(Om_createFont(14, 400, L"Consolas"))
+OmUiHelpAbt::OmUiHelpAbt(HINSTANCE hins) : OmDialog(hins)
 {
 
 }
@@ -33,7 +32,8 @@ OmUiHelpAbt::OmUiHelpAbt(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiHelpAbt::~OmUiHelpAbt()
 {
-
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_OUT01, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -71,7 +71,8 @@ void OmUiHelpAbt::_onInit()
   repo_url.append(OMM_APP_GIT); repo_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK02, repo_url);
 
-  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  HFONT hFt = Om_createFont(14, 400, L"Consolas");
+  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   string txt;
   if(Om_loadPlainText(txt, L"CREDITS.TXT")) {
@@ -95,11 +96,15 @@ void OmUiHelpAbt::_onResize()
   this->_setItemPos(IDC_SC_LBL02, half_width - 100, 50, 60, 9);
   this->_setItemPos(IDC_LM_LNK02, half_width - 35, 50, 200, 9);
 
-  this->_setItemPos(IDC_EC_OUT01, 5, 65, this->width()-10, this->height()-90);
-  this->_setItemPos(IDC_BC_CLOSE, half_width - 25, this->height()-20, 50, 14);
+  this->_setItemPos(IDC_EC_OUT01, 5, 65, this->width()-10, this->height()-100);
 
   // force buttons to redraw
   InvalidateRect(this->getItem(IDC_SC_INTRO), nullptr, true);
+
+  // ---- separator
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  // Close button
+  this->_setItemPos(IDC_BC_CLOSE, this->width()-54, this->height()-19, 50, 14);
 }
 
 
@@ -114,26 +119,23 @@ bool OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-      case IDC_LM_LNK01:
-      case IDC_LM_LNK02:
-        // check for a "selection changed" notify
-        if(pNmhdr->code == NM_CLICK) {
-            NMLINK* pNmlink = reinterpret_cast<NMLINK*>(lParam);
-            ShellExecuteW(NULL, L"open", pNmlink->item.szUrl, nullptr, nullptr, SW_SHOW);
-        }
-        break;
+    case IDC_LM_LNK01:
+    case IDC_LM_LNK02:
+      if(pNmhdr->code == NM_CLICK) {
+        NMLINK* pNmlink = reinterpret_cast<NMLINK*>(lParam);
+        ShellExecuteW(NULL, L"open", pNmlink->item.szUrl, nullptr, nullptr, SW_SHOW);
+      }
+      break;
     }
   }
 
   if(uMsg == WM_COMMAND) {
-
     switch(LOWORD(wParam))
     {
     case IDC_BC_CLOSE:
       this->quit();
       break;
     }
-
   }
 
   return false;

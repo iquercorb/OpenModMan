@@ -24,10 +24,8 @@
 ///
 OmUiAddBat::OmUiAddBat(HINSTANCE hins) : OmDialog(hins),
   _context(nullptr),
-  _excLs(),
-  _incLs(),
-  _hBmBcUp(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_UP), IMAGE_BITMAP, 0, 0, 0))),
-  _hBmBcDn(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_DN), IMAGE_BITMAP, 0, 0, 0)))
+  _excluded(),
+  _included()
 {
 
 }
@@ -38,8 +36,7 @@ OmUiAddBat::OmUiAddBat(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiAddBat::~OmUiAddBat()
 {
-  DeleteObject(this->_hBmBcUp);
-  DeleteObject(this->_hBmBcDn);
+
 }
 
 
@@ -55,54 +52,47 @@ long OmUiAddBat::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_rebuildPkgLb()
+void OmUiAddBat::_buildLbs()
 {
-  if(this->_context == nullptr)
-    return;
+  if(!this->_context) return;
 
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
-
-  if(cb_sel < 0)
-    return;
+  if(cb_sel < 0) return;
 
   // get Location corresponding to current selection
   OmLocation* pLoc = this->_context->location(cb_sel);
-
-  // hold handle to List-Box controls
-  HWND hLsl = this->getItem(IDC_LB_EXCLS);
-  HWND hLsr = this->getItem(IDC_LB_INCLS);
 
   unsigned p;
   OmPackage* pPkg;
   wstring item_str;
 
   // reset List-Box control
-  SendMessageW(hLsl, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_EXCLS, LB_RESETCONTENT);
 
   // fill the left List-Box
-  for(size_t i = 0; i < this->_excLs[cb_sel].size(); i++) {
+  for(size_t i = 0; i < this->_excluded[cb_sel].size(); i++) {
 
-    p = this->_excLs[cb_sel][i];
+    p = this->_excluded[cb_sel][i];
     pPkg = pLoc->package(p);
 
     item_str = Om_getFilePart(pPkg->sourcePath());
-    SendMessageW(hLsl, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
-    SendMessageW(hLsl, LB_SETITEMDATA, i, p);
+    this->msgItem(IDC_LB_EXCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    this->msgItem(IDC_LB_EXCLS, LB_SETITEMDATA, i, p);
   }
 
   // reset List-Box control
-  SendMessageW(hLsr, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_INCLS, LB_RESETCONTENT);
 
   // fill the left List-Box
-  for(size_t i = 0; i < this->_incLs[cb_sel].size(); i++) {
+  for(size_t i = 0; i < this->_included[cb_sel].size(); i++) {
 
-    p = this->_incLs[cb_sel][i];
+    p = this->_included[cb_sel][i];
     pPkg = pLoc->package(p);
 
     item_str = Om_getFilePart(pPkg->sourcePath());
-    SendMessageW(hLsr, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
-    SendMessageW(hLsr, LB_SETITEMDATA, i, p);
+    this->msgItem(IDC_LB_INCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, i, p);
   }
 }
 
@@ -110,10 +100,9 @@ void OmUiAddBat::_rebuildPkgLb()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_qucikFromCur()
+void OmUiAddBat::_autoInclude()
 {
-  if(this->_context == nullptr)
-    return;
+  if(!this->_context) return;
 
   OmLocation* pLoc;
   OmPackage* pPkg;
@@ -123,8 +112,8 @@ void OmUiAddBat::_qucikFromCur()
 
     pLoc = this->_context->location(k);
 
-    this->_excLs[k].clear();
-    this->_incLs[k].clear();
+    this->_excluded[k].clear();
+    this->_included[k].clear();
 
     for(size_t i = 0; i < pLoc->packageCount(); ++i) {
 
@@ -132,258 +121,169 @@ void OmUiAddBat::_qucikFromCur()
 
       if(pPkg->hasSource()) {
         if(pPkg->hasBackup()) {
-          this->_incLs[k].push_back(i);
+          this->_included[k].push_back(i);
         } else {
-          this->_excLs[k].push_back(i);
+          this->_excluded[k].push_back(i);
         }
       }
     }
   }
 
   // refill the List-Box controls with new values
-  this->_rebuildPkgLb();
+  this->_buildLbs();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_upPkg()
+void OmUiAddBat::_includePkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
-
-  if(cb_sel < 0)
-    return;
-
-  HWND hLsr = this->getItem(IDC_LB_INCLS);
+  if(cb_sel < 0) return;
 
   // get count of selected items
-  int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
+  int sel_cnt = this->msgItem(IDC_LB_EXCLS, LB_GETSELCOUNT);
+  if(sel_cnt <= 0) return;
 
-  if(sel_cnt == 1) {
+  // get list of selected items (index)
+  int* lb_sel = new int[sel_cnt];
+  this->msgItem(IDC_LB_EXCLS, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
 
-    // get list of selected item (index)
-    int lb_sel;
-    SendMessageW(hLsr, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
+  int index, pos;
+  wchar_t item_buf[OMM_ITM_BUFF];
 
-    // check whether we can move up
-    if(lb_sel == 0)
-      return;
-
-    wchar_t item_buf[OMM_ITM_BUFF];
+  // copy selected items from one list to the other list
+  for(int i = 0; i < sel_cnt; ++i) {
 
     // retrieve the package List-Box label
-    SendMessageW(hLsr, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
-    int index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel - 1, 0);
+    this->msgItem(IDC_LB_EXCLS, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
+    // retrieve the package reference index (in Location package list)
+    index = this->msgItem(IDC_LB_EXCLS, LB_GETITEMDATA, lb_sel[i]);
 
-    SendMessageW(hLsr, LB_DELETESTRING, lb_sel - 1, 0);
-
-    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, index);
-
-    // swap package index to move up
-    for(size_t k = 0; k < this->_incLs[cb_sel].size(); ++k) {
-      if(this->_incLs[cb_sel][k] == index) {
-        int temp = this->_incLs[cb_sel][k];
-        this->_incLs[cb_sel][k] = this->_incLs[cb_sel][k+1];
-        this->_incLs[cb_sel][k+1] = temp;
+    // remove package index from left mirror list
+    for(size_t k = 0; k < this->_excluded[cb_sel].size(); ++k) {
+      if(this->_excluded[cb_sel][k] == index) {
+        this->_excluded[cb_sel].erase(this->_excluded[cb_sel].begin()+k);
         break;
       }
     }
+    // add package index to right mirror list
+    this->_included[cb_sel].push_back(index);
 
-    this->enableItem(IDC_BC_UP, (lb_sel > 1));
-    this->enableItem(IDC_BC_DN, true);
+    // get count of item in List-Box as index to for insertion
+    pos = this->msgItem(IDC_LB_INCLS, LB_GETCOUNT);
+    // add item to the List-Box
+    this->msgItem(IDC_LB_INCLS, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
+    this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, pos, index);
   }
+
+  // remove items from List-Box in reverse order to prevent indexing issues
+  int i = sel_cnt;
+  while(i--) {
+    this->msgItem(IDC_LB_EXCLS, LB_DELETESTRING, lb_sel[i]);
+  }
+
+  // we do not need list-box selection anymore
+  delete [] lb_sel;
+
+  // disable button until new selection
+  this->enableItem(IDC_BC_RIGH, false);
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_dnPkg()
+void OmUiAddBat::_excludePkg()
 {
   // get current Combo-Box selection first Location by default
   int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
-
-  if(cb_sel < 0)
-    return;
-
-  HWND hLsr = this->getItem(IDC_LB_INCLS);
+  if(cb_sel < 0) return;
 
   // get count of selected items
-  int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
+  int sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
+  if(sel_cnt <= 0) return;
 
-  // get count of item in List-Box as index to for insertion
-  int lb_max = SendMessageW(hLsr, LB_GETCOUNT, 0, 0) - 1;
+  // get list of selected items (index)
+  int* lb_sel = new int[sel_cnt];
+  this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
 
-  if(sel_cnt == 1) {
+  int index, pos;
+  wchar_t item_buf[OMM_ITM_BUFF];
 
-    // get list of selected item (index)
-    int lb_sel;
-    SendMessageW(hLsr, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
-
-    // check whether we can move down
-    if(lb_sel == lb_max)
-      return;
-
-    wchar_t item_buf[OMM_ITM_BUFF];
-
+  // copy selected items from one list to the other list
+  for(int i = 0; i < sel_cnt; ++i) {
     // retrieve the package List-Box label
-    SendMessageW(hLsr, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-    int index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel, 0);
+    this->msgItem(IDC_LB_INCLS, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
+    // retrieve the package reference index (in Location package list)
+    index = this->msgItem(IDC_LB_INCLS, LB_GETITEMDATA, lb_sel[i]);
 
-    SendMessageW(hLsr, LB_DELETESTRING, lb_sel, 0);
-
-    lb_sel++;
-
-    SendMessageW(hLsr, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-    SendMessageW(hLsr, LB_SETITEMDATA, lb_sel, index);
-    SendMessageW(hLsr, LB_SETSEL, true, lb_sel);
-
-    // swap package index to move up
-    for(size_t k = 0; k < this->_incLs[cb_sel].size(); ++k) {
-      if(this->_incLs[cb_sel][k] == index) {
-        int temp = this->_incLs[cb_sel][k];
-        this->_incLs[cb_sel][k] = this->_incLs[cb_sel][k+1];
-        this->_incLs[cb_sel][k+1] = temp;
+    // remove package index from right mirror list
+    for(size_t k = 0; k < this->_included[cb_sel].size(); ++k) {
+      if(this->_included[cb_sel][k] == index) {
+        this->_included[cb_sel].erase(this->_included[cb_sel].begin()+k);
         break;
       }
     }
+    // add package index to left mirror list
+    this->_excluded[cb_sel].push_back(index);
 
-    this->enableItem(IDC_BC_UP, true);
-    this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+    // get count of item in List-Box as index to for insertion
+    pos = this->msgItem(IDC_LB_EXCLS, LB_GETCOUNT);
+    // add item to the List-Box
+    this->msgItem(IDC_LB_EXCLS, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
+    this->msgItem(IDC_LB_EXCLS, LB_SETITEMDATA, pos, index);
   }
+
+  // remove items from List-Box in reverse order to prevent indexing issues
+  int i = sel_cnt;
+  while(i--) {
+    this->msgItem(IDC_LB_INCLS, LB_DELETESTRING, lb_sel[i]);
+  }
+
+  // we do not need list-box selection anymore
+  delete [] lb_sel;
+
+  // disable button until new selection
+  this->enableItem(IDC_BC_LEFT, false);
+  this->enableItem(IDC_BC_UP, false);
+  this->enableItem(IDC_BC_DN, false);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_addPkg()
+void OmUiAddBat::_onCkBoxAuto()
 {
-  // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
-  if(cb_sel < 0)
-    return;
+  this->enableItem(IDC_CB_LOCLS, !bm_chk);
+  this->enableItem(IDC_LB_EXCLS, !bm_chk);
+  this->enableItem(IDC_LB_INCLS, !bm_chk);
 
-  HWND hLsl = this->getItem(IDC_LB_EXCLS);
-  HWND hLsr = this->getItem(IDC_LB_INCLS);
-
-  // get count of selected items
-  int sel_cnt = SendMessageW(hLsl, LB_GETSELCOUNT, 0, 0);
-
-  if(sel_cnt > 0) {
-
-    // get list of selected items (index)
-    int* lb_sel = new int[sel_cnt];
-    SendMessageW(hLsl, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
-
-    int index, pos;
-    wchar_t item_buf[OMM_ITM_BUFF];
-
-    // copy selected items from one list to the other list
-    for(int i = 0; i < sel_cnt; ++i) {
-
-      // retrieve the package List-Box label
-      SendMessageW(hLsl, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
-      // retrieve the package reference index (in Location package list)
-      index = SendMessageW(hLsl, LB_GETITEMDATA, lb_sel[i], 0);
-
-      // remove package index from left mirror list
-      for(size_t k = 0; k < this->_excLs[cb_sel].size(); ++k) {
-        if(this->_excLs[cb_sel][k] == index) {
-          this->_excLs[cb_sel].erase(this->_excLs[cb_sel].begin()+k);
-          break;
-        }
-      }
-      // add package index to right mirror list
-      this->_incLs[cb_sel].push_back(index);
-
-      // get count of item in List-Box as index to for insertion
-      pos = SendMessageW(hLsr, LB_GETCOUNT, 0, 0);
-      // add item to the List-Box
-      SendMessageW(hLsr, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
-      SendMessageW(hLsr, LB_SETITEMDATA, pos, index);
-    }
-
-    // remove items from List-Box in reverse order to prevent indexing issues
-    int i = sel_cnt;
-    while(i--) {
-      SendMessageW(hLsl, LB_DELETESTRING, lb_sel[i], 0);
-    }
-
-    // we do not need list-box selection anymore
-    delete [] lb_sel;
-
-    // disable button until new selection
-    this->enableItem(IDC_BC_ADD, false);
-  }
-
+  if(bm_chk)
+    // initialize with current state
+    this->_autoInclude();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddBat::_remPkg()
+void OmUiAddBat::_onLbExclsSel()
 {
-  // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
-
-  if(cb_sel < 0)
-    return;
-
-  HWND hLsl = this->getItem(IDC_LB_EXCLS);
-  HWND hLsr = this->getItem(IDC_LB_INCLS);
-
-  // get count of selected items
-  int sel_cnt = SendMessageW(hLsr, LB_GETSELCOUNT, 0, 0);
+  int sel_cnt = this->msgItem(IDC_LB_EXCLS, LB_GETSELCOUNT);
 
   if(sel_cnt > 0) {
 
-    // get list of selected items (index)
-    int* lb_sel = new int[sel_cnt];
-    SendMessageW(hLsr, LB_GETSELITEMS, sel_cnt, reinterpret_cast<LPARAM>(lb_sel));
+    // unselect all from the other ListBox, this is less confusing
+    this->msgItem(IDC_LB_INCLS, LB_SETSEL, false, -1);
 
-    int index, pos;
-    wchar_t item_buf[OMM_ITM_BUFF];
-
-    // copy selected items from one list to the other list
-    for(int i = 0; i < sel_cnt; ++i) {
-      // retrieve the package List-Box label
-      SendMessageW(hLsr, LB_GETTEXT, lb_sel[i], reinterpret_cast<LPARAM>(item_buf));
-      // retrieve the package reference index (in Location package list)
-      index = SendMessageW(hLsr, LB_GETITEMDATA, lb_sel[i], 0);
-
-      // remove package index from right mirror list
-      for(size_t k = 0; k < this->_incLs[cb_sel].size(); ++k) {
-        if(this->_incLs[cb_sel][k] == index) {
-          this->_incLs[cb_sel].erase(this->_incLs[cb_sel].begin()+k);
-          break;
-        }
-      }
-      // add package index to left mirror list
-      this->_excLs[cb_sel].push_back(index);
-
-      // get count of item in List-Box as index to for insertion
-      pos = SendMessageW(hLsl, LB_GETCOUNT, 0, 0);
-      // add item to the List-Box
-      SendMessageW(hLsl, LB_ADDSTRING, pos, reinterpret_cast<LPARAM>(item_buf));
-      SendMessageW(hLsl, LB_SETITEMDATA, pos, index);
-    }
-
-    // remove items from List-Box in reverse order to prevent indexing issues
-    int i = sel_cnt;
-    while(i--) {
-      SendMessageW(hLsr, LB_DELETESTRING, lb_sel[i], 0);
-    }
-
-    // we do not need list-box selection anymore
-    delete [] lb_sel;
-
-    // disable button until new selection
-    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_BC_RIGH, true);
+    this->enableItem(IDC_BC_LEFT, false);
     this->enableItem(IDC_BC_UP, false);
     this->enableItem(IDC_BC_DN, false);
   }
@@ -393,7 +293,133 @@ void OmUiAddBat::_remPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddBat::_apply()
+void OmUiAddBat::_onLbInclsSel()
+{
+  int sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
+
+  if(sel_cnt > 0) {
+    // unselect all from the other ListBox, this is less confusing
+    this->msgItem(IDC_LB_EXCLS, LB_SETSEL, false, -1);
+    this->enableItem(IDC_BC_RIGH, false);
+    this->enableItem(IDC_BC_LEFT, true);
+  }
+
+  if(sel_cnt == 1) {
+    int lb_sel;
+    this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
+    int lb_max = this->msgItem(IDC_LB_INCLS, LB_GETCOUNT) - 1;
+
+    this->enableItem(IDC_BC_UP, (lb_sel > 0));
+    this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+
+  } else {
+
+    this->enableItem(IDC_BC_UP, false);
+    this->enableItem(IDC_BC_DN, false);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiAddBat::_onBcUpPkg()
+{
+  // get current Combo-Box selection first Location by default
+  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  if(cb_sel < 0) return;
+
+  // get count of selected items
+  int sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
+  if(sel_cnt != 1) return;
+
+  // get list of selected item (index)
+  int lb_sel;
+  this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
+  if(lb_sel == 0) return;
+
+  wchar_t item_buf[OMM_ITM_BUFF];
+
+  // retrieve the package List-Box label
+  this->msgItem(IDC_LB_INCLS, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
+  int index = this->msgItem(IDC_LB_INCLS, LB_GETITEMDATA, lb_sel - 1);
+
+  this->msgItem(IDC_LB_INCLS, LB_DELETESTRING, lb_sel - 1);
+
+  this->msgItem(IDC_LB_INCLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, lb_sel, index);
+
+  // swap package index to move up
+  for(size_t k = 0; k < this->_included[cb_sel].size(); ++k) {
+    if(this->_included[cb_sel][k] == index) {
+      int temp = this->_included[cb_sel][k];
+      this->_included[cb_sel][k] = this->_included[cb_sel][k+1];
+      this->_included[cb_sel][k+1] = temp;
+      break;
+    }
+  }
+
+  this->enableItem(IDC_BC_UP, (lb_sel > 1));
+  this->enableItem(IDC_BC_DN, true);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiAddBat::_onBcDnPkg()
+{
+  // get current Combo-Box selection first Location by default
+  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  if(cb_sel < 0) return;
+
+  // get count of selected items
+  int sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
+  if(sel_cnt != 1) return;
+
+  // get count of item in List-Box as index to for insertion
+  int lb_max = this->msgItem(IDC_LB_INCLS, LB_GETCOUNT) - 1;
+
+  // get list of selected item (index)
+  int lb_sel;
+  this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
+
+  // check whether we can move down
+  if(lb_sel == lb_max) return;
+
+  wchar_t item_buf[OMM_ITM_BUFF];
+
+  // retrieve the package List-Box label
+  this->msgItem(IDC_LB_INCLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  int index = this->msgItem(IDC_LB_INCLS, LB_GETITEMDATA, lb_sel);
+
+  this->msgItem(IDC_LB_INCLS, LB_DELETESTRING, lb_sel);
+
+  lb_sel++;
+
+  this->msgItem(IDC_LB_INCLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, lb_sel, index);
+  this->msgItem(IDC_LB_INCLS, LB_SETSEL, true, lb_sel);
+
+  // swap package index to move up
+  for(size_t k = 0; k < this->_included[cb_sel].size(); ++k) {
+    if(this->_included[cb_sel][k] == index) {
+      int temp = this->_included[cb_sel][k];
+      this->_included[cb_sel][k] = this->_included[cb_sel][k+1];
+      this->_included[cb_sel][k+1] = temp;
+      break;
+    }
+  }
+
+  this->enableItem(IDC_BC_UP, true);
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiAddBat::_onBcOk()
 {
   // build the per-Location hash lists
   vector<wstring> loc_uuid;
@@ -412,10 +438,10 @@ bool OmUiAddBat::_apply()
     // new hash list
     vector<uint64_t> hash_list;
 
-    for(size_t i = 0; i < this->_incLs[k].size(); ++i) {
+    for(size_t i = 0; i < this->_included[k].size(); ++i) {
 
       // retrieve package from stored index
-      pPkg = pLoc->package(this->_incLs[k][i]);
+      pPkg = pLoc->package(this->_included[k][i]);
 
       // add <install> entry with package hash
       hash_list.push_back(pPkg->hash());
@@ -449,8 +475,8 @@ bool OmUiAddBat::_apply()
 void OmUiAddBat::_onInit()
 {
   // Set icons for Up and Down buttons
-  this->msgItem(IDC_BC_UP, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcUp));
-  this->msgItem(IDC_BC_DN, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDn));
+  this->setBmImage(IDC_BC_UP, Om_getResImage(this->_hins, IDB_BTN_UP));
+  this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
@@ -458,8 +484,8 @@ void OmUiAddBat::_onInit()
   this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
 
-  this->_createTooltip(IDC_BC_ADD,    L"Add to install list");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove from install list");
+  this->_createTooltip(IDC_BC_RIGH,    L"Add to install list");
+  this->_createTooltip(IDC_BC_LEFT,    L"Remove from install list");
 
   this->_createTooltip(IDC_BC_UP,     L"Move up");
   this->_createTooltip(IDC_BC_DN,     L"Move down");
@@ -470,11 +496,7 @@ void OmUiAddBat::_onInit()
   // Enable Quick create from current state
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
 
-  if(this->_context == nullptr)
-    return;
-
-  // initialize Location ComboBox content
-  HWND hCb = this->getItem(IDC_CB_LOCLS);
+  if(!this->_context) return;
 
   wstring item_str;
 
@@ -485,15 +507,15 @@ void OmUiAddBat::_onInit()
     item_str += L" - ";
     item_str += this->_context->location(i)->home();
 
-    SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    this->msgItem(IDC_CB_LOCLS, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
 
     // initialize a new install list per Location
-    this->_excLs.push_back(vector<int>());
-    this->_incLs.push_back(vector<int>());
+    this->_excluded.push_back(vector<int>());
+    this->_included.push_back(vector<int>());
   }
 
   // Select first Location by default
-  SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+  this->msgItem(IDC_CB_LOCLS, CB_SETCURSEL, 0);
 
   // Disable ComboBox and ListBoxes
   this->enableItem(IDC_CB_LOCLS, false);
@@ -501,7 +523,7 @@ void OmUiAddBat::_onInit()
   this->enableItem(IDC_LB_INCLS, false);
 
   // initialize with current state
-  this->_qucikFromCur();
+  this->_autoInclude();
 }
 
 
@@ -510,7 +532,8 @@ void OmUiAddBat::_onInit()
 ///
 void OmUiAddBat::_onResize()
 {
-  int half_width = this->width() * 0.5f;
+  int half_w = this->width() * 0.5f;
+  int helf_h = this->height() * 0.5f;
 
   // Title label
   this->_setItemPos(IDC_SC_LBL01, 10, 10, 150, 9);
@@ -524,17 +547,17 @@ void OmUiAddBat::_onResize()
   // Not-Installed label
   this->_setItemPos(IDC_SC_LBL02, 10, 85, 150, 9);
   // Not-Installed ListBox
-  this->_setItemPos(IDC_LB_EXCLS, 10, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_EXCLS, 10, 95, half_w-35, this->height()-130);
   // Add and Rem buttons
-  this->_setItemPos(IDC_BC_ADD, half_width-20, 180, 16, 15);
-  this->_setItemPos(IDC_BC_DEL, half_width-20, 195, 16, 15);
+  this->_setItemPos(IDC_BC_RIGH, half_w-20, helf_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_LEFT, half_w-20, helf_h+30, 16, 15);
   // Installed label
-  this->_setItemPos(IDC_SC_LBL03, half_width, 85, 150, 9);
+  this->_setItemPos(IDC_SC_LBL03, half_w, 85, 150, 9);
   // Installed ListBox
-  this->_setItemPos(IDC_LB_INCLS, half_width, 95, half_width-35, this->height()-130);
+  this->_setItemPos(IDC_LB_INCLS, half_w, 95, half_w-35, this->height()-130);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-30, 180, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-30, 195, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-30, helf_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-30, helf_h+30, 16, 15);
 
   // ----- Separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -542,7 +565,6 @@ void OmUiAddBat::_onResize()
   this->_setItemPos(IDC_BC_OK, this->width()-108, this->height()-19, 50, 14);
   // Close Button
   this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
-
 }
 
 
@@ -551,127 +573,60 @@ void OmUiAddBat::_onResize()
 ///
 bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  if(uMsg == WM_NOTIFY) {
-
-    switch(LOWORD(wParam))
-    {
-    case IDC_LB_EXCLS:
-      if(((LPNMHDR)lParam)->code == LBN_DBLCLK) {
-        this->_addPkg();
-      }
-      break;
-
-    case IDC_LB_INCLS:
-      if(((LPNMHDR)lParam)->code == LBN_DBLCLK) {
-        this->_remPkg();
-      }
-      break;
-    }
-  }
-
   if(uMsg == WM_COMMAND) {
-
-    bool bm_chk;
-
-    int sel_cnt, lb_max, lb_sel;
 
     wstring item_str;
 
     switch(LOWORD(wParam))
     {
     case IDC_EC_INP01:
-      this->getItemText(IDC_EC_INP01, item_str);
-      this->enableItem(IDC_BC_OK, !item_str.empty());
+      if(HIWORD(wParam) == EN_CHANGE) {
+        this->getItemText(IDC_EC_INP01, item_str);
+        this->enableItem(IDC_BC_OK, !item_str.empty());
+      }
       break;
 
     case IDC_BC_CHK01:
-      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_CB_LOCLS, !bm_chk);
-      this->enableItem(IDC_LB_EXCLS, !bm_chk);
-      this->enableItem(IDC_LB_INCLS, !bm_chk);
-      if(bm_chk) {
-        // initialize with current state
-        this->_qucikFromCur();
-      }
+      this->_onCkBoxAuto();
       break;
 
     case IDC_CB_LOCLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE) {
-        this->_rebuildPkgLb();
-      }
+      if(HIWORD(wParam) == CBN_SELCHANGE)
+        this->_buildLbs();
       break;
 
-    case IDC_LB_EXCLS: // Dependencies ListBox
-      if(HIWORD(wParam) == LBN_SELCHANGE) {
-
-        sel_cnt = this->msgItem(IDC_LB_EXCLS, LB_GETSELCOUNT);
-
-        if(sel_cnt > 0) {
-          // unselect all from the other ListBox, this is less confusing
-          this->msgItem(IDC_LB_INCLS, LB_SETSEL, false, -1);
-          this->enableItem(IDC_BC_ADD, true);
-          this->enableItem(IDC_BC_DEL, false);
-          this->enableItem(IDC_BC_UP, false);
-          this->enableItem(IDC_BC_DN, false);
-        }
-
-      }
-      if(HIWORD(wParam) == LBN_DBLCLK) {
-        this->_addPkg();
-      }
+    case IDC_LB_EXCLS: //< Uninstall (exclude) ListBox
+      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbExclsSel();
+      if(HIWORD(wParam) == LBN_DBLCLK)  this->_includePkg();
       break;
 
-    case IDC_LB_INCLS: // Dependencies ListBox
-      if(HIWORD(wParam) == LBN_SELCHANGE) {
-
-        sel_cnt = this->msgItem(IDC_LB_INCLS, LB_GETSELCOUNT);
-
-        if(sel_cnt > 0) {
-          // unselect all from the other ListBox, this is less confusing
-          this->msgItem(IDC_LB_EXCLS, LB_SETSEL, false, -1);
-          this->enableItem(IDC_BC_ADD, false);
-          this->enableItem(IDC_BC_DEL, true);
-        }
-
-        if(sel_cnt == 1) {
-          this->msgItem(IDC_LB_INCLS, LB_GETSELITEMS, 1, reinterpret_cast<LPARAM>(&lb_sel));
-          lb_max = this->msgItem(IDC_LB_INCLS, LB_GETCOUNT) - 1;
-          this->enableItem(IDC_BC_UP, (lb_sel > 0));
-          this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
-        } else {
-          this->enableItem(IDC_BC_UP, false);
-          this->enableItem(IDC_BC_DN, false);
-        }
-
-      }
-      if(HIWORD(wParam) == LBN_DBLCLK) {
-        this->_remPkg();
-      }
+    case IDC_LB_INCLS: //< Install (include) ListBox
+      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbInclsSel();
+      if(HIWORD(wParam) == LBN_DBLCLK) this->_excludePkg();
       break;
 
-    case IDC_BC_ADD:
-      this->_addPkg();
+    case IDC_BC_RIGH: //< ">" Button
+      this->_includePkg();
       break;
 
-    case IDC_BC_DEL:
-      this->_remPkg();
+    case IDC_BC_LEFT: //< "<" Button
+      this->_excludePkg();
       break;
 
-    case IDC_BC_UP:
-      this->_upPkg();
+    case IDC_BC_UP: //< Up Button
+      this->_onBcUpPkg();
       break;
 
-    case IDC_BC_DN:
-      this->_dnPkg();
+    case IDC_BC_DN: //< Down Button
+      this->_onBcDnPkg();
       break;
 
-    case IDC_BC_OK:
-      if(this->_apply()) {
+    case IDC_BC_OK: //< Main "OK" Button
+      if(this->_onBcOk())
         this->quit();
-      }
       break;
 
-    case IDC_BC_CANCEL:
+    case IDC_BC_CANCEL: //< Main "Cancel" Button
       this->quit();
       break;
     }

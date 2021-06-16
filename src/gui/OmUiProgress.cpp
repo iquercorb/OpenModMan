@@ -24,8 +24,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiProgress::OmUiProgress(HINSTANCE hins) : OmDialog(hins),
-  _abort(false),
-  _hFtDesc(Om_createFont(16, 700, L"Ms Shell Dlg"))
+  _abort(false)
 {
 
 }
@@ -36,7 +35,8 @@ OmUiProgress::OmUiProgress(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiProgress::~OmUiProgress()
 {
-  DeleteObject(this->_hFtDesc);
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
+  DeleteObject(hFt);
 }
 
 
@@ -106,9 +106,21 @@ HWND OmUiProgress::getDetailScHandle() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiProgress::_onBcAbort()
+{
+  this->_abort = true;
+
+  this->enableItem(IDC_BC_ABORT, false);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiProgress::_onInit()
 {
-  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtDesc), true);
+  HFONT hFt = Om_createFont(16, 700, L"Ms Shell Dlg");
+  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   SetWindowTextW(this->_hwnd, L"");
   this->setItemText(IDC_SC_TITLE, L"");
   this->setItemText(IDC_SC_STATE, L"");
@@ -141,8 +153,7 @@ bool OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_ABORT:
-      this->_abort = true;
-      this->enableItem(IDC_BC_ABORT, false);
+      this->_onBcAbort();
       break;
     }
 

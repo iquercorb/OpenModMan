@@ -127,11 +127,6 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
-  _ftMono(Om_createFont(14, 400, L"Consolas")),
-  _bmThn(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0))),
-  _bmAdd(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),IMAGE_BITMAP,0,0,0))),
-  _bmRem(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),IMAGE_BITMAP,0,0,0))),
-  _bmDir(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_DIR),IMAGE_BITMAP,0,0,0))),
   _condig(),
   _curEntry(),
   _addDir_hth(nullptr),
@@ -146,14 +141,11 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolRep::~OmUiToolRep()
 {
-  DeleteObject(this->_ftMono);
-  DeleteObject(this->_bmAdd);
-  DeleteObject(this->_bmRem);
-  DeleteObject(this->_bmDir);
-
   HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, nullptr);
-  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
-  DeleteObject(this->_bmThn);
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  DeleteObject(hFt);
 }
 
 
@@ -364,7 +356,8 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
     this->enableItem(IDC_BC_CHK, false);
     this->enableItem(IDC_BC_BRW08, false);
     this->enableItem(IDC_BC_DEL, false);
-    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+    HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
     this->enableItem(IDC_BC_BRW09, false);
     this->enableItem(IDC_BC_SAV02, false);
     this->setItemText(IDC_EC_PKTXT, L"");
@@ -473,7 +466,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 
         // set image to dialog
         hBm_old = this->setStImage(IDC_SB_PKIMG, hBm_new);
-        if(hBm_old && hBm_old != this->_bmThn) DeleteObject(hBm_old);
+        if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
         this->enableItem(IDC_BC_DEL, true);
         this->setItemText(IDC_BC_OPEN1, L"Change...");
         has_snap = true;
@@ -488,8 +481,8 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 
   // no snapshot, reset controls to default
   if(!has_snap) {
-    hBm_old = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
-    if(hBm_old && hBm_old != this->_bmThn) DeleteObject(hBm_old);
+    hBm_old = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
     this->enableItem(IDC_BC_DEL, false);
   }
 
@@ -839,7 +832,7 @@ void OmUiToolRep::_onBcRemPkg()
     return;
 
   // get identity from ListBox string
-  wchar_t iden_buf[OMM_MAX_PATH];
+  wchar_t iden_buf[OMM_ITM_BUFF];
   this->msgItem(IDC_LB_PKGLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
   // remove <entry> from XML definition
@@ -872,7 +865,7 @@ void OmUiToolRep::_onLbPkglsSel()
   if(lb_sel >= 0) {
 
     // Get identity to select
-    wchar_t iden_buf[OMM_MAX_PATH];
+    wchar_t iden_buf[OMM_ITM_BUFF];
     this->msgItem(IDC_LB_PKGLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
     // Select entry by identity
@@ -1017,7 +1010,7 @@ void OmUiToolRep::_onBcBrwSnap()
     if(__save_snapshot(xml_pic, image)) {
 
       HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, image.thumbnail());
-      if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+      if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
       // enable General "Save as..." Button
       this->enableItem(IDC_BC_SAVE, true);
@@ -1049,8 +1042,8 @@ void OmUiToolRep::_onBcDelSnap()
     this->_curEntry.remChild(L"picture");
   }
 
-  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
-  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
   // disable Snapshot "Delete" Button
   this->enableItem(IDC_BC_DEL, false);
@@ -1256,13 +1249,14 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_SAV02, L"Save descriptions changes");
 
   // Set font for description
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), true);
+  HFONT hFt = Om_createFont(14, 400, L"Consolas");
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+  this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons icons
-  this->setBmImage(IDC_BC_BRW02, this->_bmAdd);
-  this->setBmImage(IDC_BC_BRW03, this->_bmDir);
-  this->setBmImage(IDC_BC_REM, this->_bmRem);
+  this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_ADD));
+  this->setBmImage(IDC_BC_BRW03, Om_getResImage(this->_hins, IDB_BTN_DIR));
+  this->setBmImage(IDC_BC_REM, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");

@@ -39,7 +39,7 @@
 ///
 OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
   _location(nullptr),
-  _moveBackup_hth(nullptr)
+  _movBck_hth(nullptr)
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
@@ -231,7 +231,7 @@ bool OmUiPropLoc::applyChanges()
     // dedicates thread
     if(pLoc->backupDir() != loc_bck) {
 
-      this->_moveBackup_init();
+      this->_movBck_init();
 
       // if backup transfer thread is running, we do not quit since it will
       // end the process before it ends. We will wait for the UWM_TRANSFER_ENDED
@@ -286,7 +286,7 @@ bool OmUiPropLoc::applyChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLoc::_moveBackup_init()
+void OmUiPropLoc::_movBck_init()
 {
   // To prevent crash during operation we unselect location in the main dialog
   static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
@@ -297,19 +297,19 @@ void OmUiPropLoc::_moveBackup_init()
   pUiProgress->setDesc(L"Transferring backup data");
 
   DWORD dwid;
-  this->_moveBackup_hth = CreateThread(nullptr, 0, this->_moveBackup_fth, this, 0, &dwid);
+  this->_movBck_hth = CreateThread(nullptr, 0, this->_movBck_fth, this, 0, &dwid);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLoc::_moveBackup_stop()
+void OmUiPropLoc::_movBck_stop()
 {
-  if(this->_moveBackup_hth) {
-    WaitForSingleObject(this->_moveBackup_hth, INFINITE);
-    CloseHandle(this->_moveBackup_hth);
-    this->_moveBackup_hth = nullptr;
+  if(this->_movBck_hth) {
+    WaitForSingleObject(this->_movBck_hth, INFINITE);
+    CloseHandle(this->_movBck_hth);
+    this->_movBck_hth = nullptr;
   }
 
   // Back to main dialog window to normal state
@@ -333,7 +333,7 @@ void OmUiPropLoc::_moveBackup_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiPropLoc::_moveBackup_fth(void* arg)
+DWORD WINAPI OmUiPropLoc::_movBck_fth(void* arg)
 {
   OmUiPropLoc* self = static_cast<OmUiPropLoc*>(arg);
   OmLocation* pLoc = static_cast<OmLocation*>(self->_location);
@@ -379,7 +379,7 @@ bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_MOVEBACKUP_DONE) {
     // end the backup transfer process
-    this->_moveBackup_stop();
+    this->_movBck_stop();
   }
 
   return false;

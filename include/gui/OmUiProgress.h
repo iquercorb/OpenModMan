@@ -117,6 +117,8 @@ class OmUiProgress : public OmDialog
 
     HFONT               _hFtDesc;
 
+    void                _onBcAbort();
+
     void                _onInit();
 
     void                _onResize();

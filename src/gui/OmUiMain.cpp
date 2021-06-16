@@ -604,9 +604,8 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case IDC_CB_CTXLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE) {
+      if(HIWORD(wParam) == CBN_SELCHANGE)
         this->selContext(this->msgItem(IDC_CB_CTXLS, CB_GETCURSEL));
-      }
       break;
 
     case IDM_FILE_NEW_CTX:

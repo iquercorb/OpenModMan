@@ -80,17 +80,13 @@ class OmUiAddRep : public OmDialog
 
     OmLocation*         _location;
 
-    HFONT               _hFtMonos;
+    int                 _testResult;
 
-    HFONT               _hFtHeavy;
+    void                _testLog(const wstring& log);
 
-    int                 _check;
+    void                _onBcChk();
 
-    void                _log(const wstring& log);
-
-    void                _repoChk();
-
-    bool                _apply();
+    bool                _onBcOk();
 
     void                _onInit();
 

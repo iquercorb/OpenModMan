@@ -32,10 +32,6 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
-  _ftMono(Om_createFont(14, 400, L"Consolas")),
-  _bmThn(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0))),
-  _bmEnt(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ENT),IMAGE_BITMAP,0,0,0))),
-  _bmRem(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),IMAGE_BITMAP,0,0,0))),
   _save_hth(nullptr),
   _save_abort(false)
 {
@@ -48,13 +44,11 @@ OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolPkg::~OmUiToolPkg()
 {
-  DeleteObject(this->_ftMono);
-  DeleteObject(this->_bmEnt);
-  DeleteObject(this->_bmRem);
-
   HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, nullptr);
-  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
-  DeleteObject(this->_bmThn);
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  DeleteObject(hFt);
 }
 
 
@@ -158,8 +152,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CHK02, false);
   this->enableItem(IDC_BC_BRW04, false);
-  hBm = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
-  if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+  hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
   this->setItemText(IDC_EC_INP08, L"");
 
   // Description initial states
@@ -215,7 +209,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
     hBm = this->setStImage(IDC_SB_PKIMG, this->_package.image().thumbnail());
-    if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
   }
 
   // check for package description
@@ -313,7 +307,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   if(self->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
     int lb_cnt = self->msgItem(IDC_LB_DPNLS, LB_GETCOUNT);
     if(lb_cnt) {
-      wchar_t ident[OMM_MAX_PATH];
+      wchar_t ident[OMM_ITM_BUFF];
       for(int i = 0; i < lb_cnt; ++i) {
         self->msgItem(IDC_LB_DPNLS, LB_GETTEXT, i, reinterpret_cast<LPARAM>(ident));
         self->_package.addDepend(ident);
@@ -573,6 +567,18 @@ void OmUiToolPkg::_onLbDpnlsSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolPkg::_onCkBoxDep()
+{
+  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+
+  this->enableItem(IDC_EC_INP07, bm_chk);
+  this->enableItem(IDC_LB_DPNLS, bm_chk);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiToolPkg::_onBcAddDep()
 {
   // Get identity string from EditText
@@ -610,6 +616,28 @@ void OmUiToolPkg::_onBcDelDep()
 }
 
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_onCkBoxSnap()
+{
+  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+
+    this->enableItem(IDC_BC_BRW04, true);
+
+  } else {
+
+    this->enableItem(IDC_BC_BRW04, false);
+
+    HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+
+    this->setItemText(IDC_EC_INP08, L"");
+  }
+}
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -636,7 +664,7 @@ void OmUiToolPkg::_onBcBrwSnap()
 
     // set thumbnail
     hBm = this->setStImage(IDC_SB_PKIMG, image.thumbnail());
-    if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
     // set EditText content to image path
     this->setItemText(IDC_EC_INP08, result);
@@ -644,12 +672,24 @@ void OmUiToolPkg::_onBcBrwSnap()
   } else {
 
     // remove any thumbnail
-    hBm = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
-    if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
+    hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
     // reset hidden EditText content
     this->setItemText(IDC_EC_INP08, L"");
   }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_onCkBoxDesc()
+{
+  bool bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
+
+  this->enableItem(IDC_BC_BRW05, bm_chk);
+  this->enableItem(IDC_EC_PKTXT, bm_chk);
 }
 
 
@@ -766,12 +806,13 @@ void OmUiToolPkg::_onInit()
   this->_createTooltip(IDC_EC_PKTXT, L"Package description text");
 
   // Set font for description
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), true);
+  HFONT hFt = Om_createFont(14, 400, L"Consolas");
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+  this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons inner icons
-  this->setBmImage(IDC_BC_ADD, this->_bmEnt);
-  this->setBmImage(IDC_BC_DEL, this->_bmRem);
+  this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ENT));
+  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);
@@ -942,7 +983,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    bool bm_chk, has_changed = false;
+    bool has_changed = false;
 
     wstring item_str;
 
@@ -976,9 +1017,16 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INP03: //< Package Name input EditText
     case IDC_EC_INP04: //< Package Version input EditText
+      if(HIWORD(wParam) == EN_CHANGE) {
+        this->_onNameChange();
+        has_changed = true;
+      }
+      break;
     case IDC_CB_EXTEN: //< File Extension ComboBox
-      this->_onNameChange();
-      has_changed = true;
+      if(HIWORD(wParam) == CBN_SELCHANGE) {
+        this->_onNameChange();
+        has_changed = true;
+      }
       break;
 
     case IDC_BC_BRW03:  // Destination folder "..." Button
@@ -992,12 +1040,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CHK01: //< Has Dependencies CheckBox
-      // check for click
-      if(HIWORD(wParam) == BN_CLICKED) {
-        bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-        this->enableItem(IDC_EC_INP07, bm_chk);
-        this->enableItem(IDC_LB_DPNLS, bm_chk);
-      }
+      this->_onCkBoxDep();
     break;
 
     case IDC_EC_INP07: //< Dependencies input EditText
@@ -1023,16 +1066,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CHK02:  //< Include snapshot CheckBox
-      if(HIWORD(wParam) == BN_CLICKED) {
-        if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
-          this->enableItem(IDC_BC_BRW04, true);
-        } else {
-          this->enableItem(IDC_BC_BRW04, false);
-          HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, this->_bmThn);
-          if(hBm && hBm != this->_bmThn) DeleteObject(hBm);
-          this->setItemText(IDC_EC_INP08, L"");
-        }
-      }
+      this->_onCkBoxSnap();
       break;
 
     case IDC_BC_BRW04: //< Snapshot "Select..." Button
@@ -1040,11 +1074,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CHK03: //< Include Description CheckBox
-      if(HIWORD(wParam) == BN_CLICKED) {
-        bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
-        this->enableItem(IDC_BC_BRW05, bm_chk);
-        this->enableItem(IDC_EC_PKTXT, bm_chk);
-      }
+      this->_onCkBoxDesc();
     break;
 
     case IDC_BC_BRW05: //< Description "Load..." Button

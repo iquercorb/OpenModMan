@@ -496,9 +496,8 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
 
     case IDC_CB_LOCLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE) {
+      if(HIWORD(wParam) == CBN_SELCHANGE)
         this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
-      }
       break;
 
     case IDC_LB_REPLS: //< Location(s) list List-Box

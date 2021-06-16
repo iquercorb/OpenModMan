@@ -73,17 +73,15 @@ class OmUiPropLocNet : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HBITMAP             _hBmBcNew;
-
-    HBITMAP             _hBmBcDel;
-
-    HBITMAP             _hBmBcChk;
-
-    void                _repoDel();
-
-    void                _repoChk();
-
     bool                _chParam[8];
+
+    void                _onLbReplsSel();
+
+    void                _onBcAddRepo();
+
+    void                _onBcChkRepo();
+
+    void                _onBcDelRepo();
 
     void                _onInit();
 

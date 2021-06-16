@@ -173,8 +173,7 @@ void OmDialogProp::_onResize()
 ///
 void OmDialogProp::_onQuit()
 {
-  // refresh all dialogs from root (Main dialog)
-  this->root()->refresh();
+  this->_onPropQuit();
 }
 
 
@@ -225,6 +224,8 @@ bool OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(this->applyChanges()) {
         // quit the dialog
         this->quit();
+        // refresh all dialogs from root (Main dialog)
+        this->root()->refresh();
       }
       break; // case BTN_OK:
 

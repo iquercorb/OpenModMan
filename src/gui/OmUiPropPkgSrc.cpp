@@ -25,8 +25,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
-  _hFtMonos(Om_createFont(14, 400, L"Consolas")),
-  _hBmThumb(nullptr)
+  _ftMono(Om_createFont(14,400,L"Consolas")),
+  _bmThn(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0)))
 {
 
 }
@@ -37,8 +37,8 @@ OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropPkgSrc::~OmUiPropPkgSrc()
 {
-  DeleteObject(this->_hFtMonos);
-  if(this->_hBmThumb) DeleteObject(this->_hBmThumb);
+  DeleteObject(this->_ftMono);
+  if(this->_bmThn) DeleteObject(this->_bmThn);
 }
 
 
@@ -57,7 +57,7 @@ long OmUiPropPkgSrc::id() const
 void OmUiPropPkgSrc::_onInit()
 {
   // defines fonts for package description, title, and log output
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), 1);
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), 1);
 
   OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
   if(pPkg == nullptr) return;
@@ -101,11 +101,10 @@ void OmUiPropPkgSrc::_onInit()
 
     // Snapshot image
     if(pPkg->image().thumbnail()) {
-      this->_hBmThumb = pPkg->image().thumbnail();
-    } else {
-      this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0));
+      DeleteObject(this->_bmThn);
+      this->_bmThn = pPkg->image().thumbnail();
     }
-    this->setStImage(IDC_SB_PKIMG, this->_hBmThumb);
+    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
 
 
     // Package description
@@ -127,8 +126,7 @@ void OmUiPropPkgSrc::_onInit()
     this->setItemText(IDC_EC_OUT08, L"N/A");
     this->enableItem(IDC_EC_OUT08, false);
     // Snapshot image
-    this->_hBmThumb = static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0));
-    this->setStImage(IDC_SB_PKIMG, this->_hBmThumb);
+    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
     // Package description
     this->setItemText(IDC_EC_PKTXT, L"N/A");
     this->enableItem(IDC_EC_PKTXT, false);

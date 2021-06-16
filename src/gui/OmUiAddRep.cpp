@@ -24,9 +24,7 @@
 ///
 OmUiAddRep::OmUiAddRep(HINSTANCE hins) : OmDialog(hins),
   _location(nullptr),
-  _hFtMonos(Om_createFont(12, 400, L"Consolas")),
-  _hFtHeavy(Om_createFont(12, 800, L"Ms Shell Dlg")),
-  _check(0)
+  _testResult(0)
 {
 
 }
@@ -37,7 +35,11 @@ OmUiAddRep::OmUiAddRep(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiAddRep::~OmUiAddRep()
 {
-
+  HFONT hFt;
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_STATE, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_OUT01, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -53,7 +55,7 @@ long OmUiAddRep::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddRep::_log(const wstring& log)
+void OmUiAddRep::_testLog(const wstring& log)
 {
   wstring entry;
 
@@ -80,7 +82,7 @@ void OmUiAddRep::_log(const wstring& log)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddRep::_repoChk()
+void OmUiAddRep::_onBcChk()
 {
   OmSocket sock;
 
@@ -107,28 +109,28 @@ void OmUiAddRep::_repoChk()
     Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
   }
 
-  this->_check = -1;
+  this->_testResult = -1;
 
   string rep_xml;
 
-  this->_log(L"HTTP GET request: "+url+L"\r\n");
+  this->_testLog(L"HTTP GET request: "+url+L"\r\n");
 
   if(sock.httpGet(Om_toUtf8(url), rep_xml)) {
 
-    this->_log(L"HTTP GET succeed: "+to_wstring(rep_xml.size())+L" bytes received\r\n");
+    this->_testLog(L"HTTP GET succeed: "+to_wstring(rep_xml.size())+L" bytes received\r\n");
 
     OmConfig rep_def;
 
     if(rep_def.parse(Om_fromUtf8(rep_xml.c_str()), OMM_CFG_SIGN_REP)) {
-      this->_log(L"XML parse succeed: "+to_wstring(rep_def.xml().childCount(L"package"))+L" package(s) provided\r\n");
+      this->_testLog(L"XML parse succeed.\r\n");
       this->setItemText(IDC_SC_STATE, L"The Repository appear to be valid !");
-      this->_check = 1;
+      this->_testResult = 1;
     } else {
-      this->_log(L"XML parse failed.\r\n");
+      this->_testLog(L"XML parse failed.\r\n");
       this->setItemText(IDC_SC_STATE, L"Error: Invalid XML definition");
     }
   } else {
-    this->_log(L"HTTP GET failed: "+sock.lastErrorStr()+L"\r\n");
+    this->_testLog(L"HTTP GET failed: "+sock.lastErrorStr()+L"\r\n");
     this->setItemText(IDC_SC_STATE, L"Error: HTTP request failed");
   }
 }
@@ -137,14 +139,14 @@ void OmUiAddRep::_repoChk()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddRep::_apply()
+bool OmUiAddRep::_onBcOk()
 {
   OmLocation* pLoc = this->_location;
 
   if(pLoc == nullptr)
     return false;
 
-  if(this->_check == 0) {
+  if(this->_testResult == 0) {
 
     wstring wrn = L"You did not tested the Repository, it may be invalid "
                   L"or unavailable, do you want to continue anyway ?";
@@ -153,7 +155,7 @@ bool OmUiAddRep::_apply()
       return false;
     }
 
-  } else if(this->_check == -1) {
+  } else if(this->_testResult == -1) {
 
     wstring wrn = L"The last Repository test failed, the Repository "
                   L"appear to be invalid or unavailable, do you want to "
@@ -207,9 +209,12 @@ void OmUiAddRep::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository name");
 
+  HFONT hFt;
   // set specific fonts
-  this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtHeavy), true);
-  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  hFt = Om_createFont(12, 800, L"Ms Shell Dlg");
+  this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  hFt = Om_createFont(12, 400, L"Consolas");
+  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"http://");
@@ -229,21 +234,26 @@ void OmUiAddRep::_onInit()
 ///
 void OmUiAddRep::_onResize()
 {
-  // Repository URL Label & EditControl
+  // Repository address Label
   this->_setItemPos(IDC_SC_LBL01, 10, 10, 80, 9);
-  this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-105, 13);
 
-  // Repository Name Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, this->width()-90, 10, 80, 9);
-  this->_setItemPos(IDC_EC_INP02, this->width()-90, 20, 80, 13);
+  // Repository URL Label & EditText
+  this->_setItemPos(IDC_SC_LBL02, 10, 27, 22, 9);
+  this->_setItemPos(IDC_EC_INP01, 31, 25, this->width()-155, 13);
+
+  // Repository Name Label & EditText
+  this->_setItemPos(IDC_EC_INP02, this->width()-89, 25, 79, 13); //< resize EditText first to prevent graphical glitchs
+  this->_setItemPos(IDC_SC_LBL03, this->width()-115, 27, 23, 9);
+  // force Label to repaint by invalidate rect
+  InvalidateRect(this->getItem(IDC_SC_LBL03), nullptr, true);
 
   // Repository Test Label, Button and Result
-  this->_setItemPos(IDC_SC_LBL03, 10, 40, 80, 9);
-  this->_setItemPos(IDC_BC_CHK, 10, 50, 50, 14);
-  this->_setItemPos(IDC_SC_STATE, 62, 53, this->width()-20, 12);
+  this->_setItemPos(IDC_SC_LBL04, 10, 55, 80, 9);
+  this->_setItemPos(IDC_BC_CHK, 10, 70, 50, 14);
+  this->_setItemPos(IDC_SC_STATE, 65, 73, this->width()-20, 12);
 
   // Repository Test content
-  this->_setItemPos(IDC_EC_OUT01, 10, 70, this->width()-20, this->height()-110);
+  this->_setItemPos(IDC_EC_OUT01, 10, 90, this->width()-20, this->height()-130);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -262,23 +272,25 @@ bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    wstring item_str, brow_str;
+    wstring item_str;
 
     switch(LOWORD(wParam))
     {
 
     case IDC_EC_INP01: // Title
-      this->getItemText(IDC_EC_INP01, item_str);
-      this->enableItem(IDC_BC_CHK, (item_str.size() > 7));
-      has_changed = true;
+      if(HIWORD(wParam) == EN_CHANGE) {
+        this->getItemText(IDC_EC_INP01, item_str);
+        this->enableItem(IDC_BC_CHK, (item_str.size() > 7));
+        has_changed = true;
+      }
       break;
 
     case IDC_BC_CHK:
-      this->_repoChk();
+      this->_onBcChk();
       break;
 
     case IDC_BC_OK:
-      this->_apply();
+      this->_onBcOk();
       break;
 
     case IDC_BC_CANCEL:
@@ -288,9 +300,7 @@ bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     // enable or disable "OK" button according values
     if(has_changed) {
-
       bool allow = true;
-
       this->enableItem(IDC_BC_OK, allow);
     }
   }

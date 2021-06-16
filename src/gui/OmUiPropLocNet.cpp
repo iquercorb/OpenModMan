@@ -27,9 +27,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropLocNet::OmUiPropLocNet(HINSTANCE hins) : OmDialog(hins),
-  _hBmBcNew(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_ADD), IMAGE_BITMAP, 0, 0, 0))),
-  _hBmBcDel(static_cast<HBITMAP>(LoadImage(this->_hins, MAKEINTRESOURCE(IDB_BTN_REM), IMAGE_BITMAP, 0, 0, 0)))
+OmUiPropLocNet::OmUiPropLocNet(HINSTANCE hins) : OmDialog(hins)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i)
@@ -42,7 +40,7 @@ OmUiPropLocNet::OmUiPropLocNet(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropLocNet::~OmUiPropLocNet()
 {
-  //dtor
+
 }
 
 
@@ -64,18 +62,46 @@ void OmUiPropLocNet::setChParam(unsigned i, bool en)
   static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLocNet::_repoDel()
+void OmUiPropLocNet::_onLbReplsSel()
+{
+  int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
+  if(lb_sel >= 0) {
+    this->enableItem(IDC_BC_DEL, true);
+    this->enableItem(IDC_BC_CHK, true);
+    this->enableItem(IDC_SC_STATE, false);
+    this->setItemText(IDC_SC_STATE, L"<no test launched>");
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocNet::_onBcAddRepo()
 {
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  if(!pLoc) return;
 
-  if(pLoc == nullptr)
-    return;
+  // Open new Repository dialog
+  OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
+  pUiNewRep->setLocation(pLoc);
+  pUiNewRep->open(true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocNet::_onBcDelRepo()
+{
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  if(!pLoc) return;
 
   int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
-
   if(lb_sel >= 0) {
 
     // warns the user before committing the irreparable
@@ -96,34 +122,32 @@ void OmUiPropLocNet::_repoDel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLocNet::_repoChk()
+void OmUiPropLocNet::_onBcChkRepo()
 {
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
-
-  if(pLoc == nullptr)
-    return;
+  if(!pLoc) return;
 
   int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
 
+    this->setItemText(IDC_SC_STATE, L"Pending...");
+
     OmRepository* pRep = pLoc->repository(lb_sel);
 
     OmSocket sock;
 
-    this->setItemText(IDC_SC_STATE, L"Pending...");
-
     wstring msg;
 
-    string rep_xml;
+    string data;
 
-    if(sock.httpGet(pRep->url(), rep_xml)) {
+    if(sock.httpGet(pRep->url(), data)) {
 
-      OmConfig rep_def;
+      OmConfig config;
 
-      if(rep_def.parse(Om_fromUtf8(rep_xml.c_str()), OMM_CFG_SIGN_REP)) {
-        int n = rep_def.xml().childCount(L"package");
-        msg = L"Available, providing "+to_wstring(n)+L" package(s)";
+      if(config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
+        int n = config.xml().childCount(L"package");
+        msg = L"Available";
       } else {
         msg = L"Invalid XML definition";
       }
@@ -150,9 +174,8 @@ void OmUiPropLocNet::_repoChk()
 void OmUiPropLocNet::_onInit()
 {
   // Set buttons inner icons
-  this->msgItem(IDC_BC_ADD,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
-  this->msgItem(IDC_BC_DEL,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcDel));
-  //this->msgItem(IDC_BC_CHK,   BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcRef));
+  this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ADD));
+  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOCLS,  L"Network repositories");
@@ -186,7 +209,7 @@ void OmUiPropLocNet::_onResize()
   this->_setItemPos(IDC_SC_LBL02, 71, 80, 40, 9);
   // Test button & entry
   this->_setItemPos(IDC_BC_CHK, 70, 90, 50, 14);
-  this->_setItemPos(IDC_SC_STATE, 122, 92, this->width()-135, 13);
+  this->_setItemPos(IDC_SC_STATE, 124, 92, this->width()-137, 13);
 }
 
 
@@ -196,9 +219,7 @@ void OmUiPropLocNet::_onResize()
 void OmUiPropLocNet::_onRefresh()
 {
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
-
-  if(pLoc == nullptr)
-    return;
+  if(!pLoc) return;
 
   HWND hLb = this->getItem(IDC_LB_REPLS);
 
@@ -234,42 +255,24 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
-
-    if(pLoc == nullptr)
-      return false;
-
-    int lb_sel;
-
     switch(LOWORD(wParam))
     {
-
     case IDC_LB_REPLS: //< Location(s) list List-Box
-      lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
-      if(lb_sel >= 0) {
-        this->enableItem(IDC_BC_DEL, true);
-        this->enableItem(IDC_BC_CHK, true);
-        this->enableItem(IDC_SC_STATE, false);
-        this->setItemText(IDC_SC_STATE, L"<no test launched>");
-      }
+      if(HIWORD(wParam) == LBN_SELCHANGE)
+        this->_onLbReplsSel();
       break;
 
     case IDC_BC_ADD: //< New button for Location(s) list
-      {
-        OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
-        pUiNewRep->setLocation(pLoc);
-        pUiNewRep->open(true);
-      }
-      break;
-
-    case IDC_BC_CHK:
-      this->_repoChk();
+      this->_onBcAddRepo();
       break;
 
     case IDC_BC_DEL: //< Remove button for Location(s) list
-      this->_repoDel();
+      this->_onBcDelRepo();
       break;
 
+    case IDC_BC_CHK:
+      this->_onBcChkRepo();
+      break;
     }
   }
 

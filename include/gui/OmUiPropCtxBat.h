@@ -78,21 +78,17 @@ class OmUiPropCtxBat : public OmDialog
 
     bool                _chParam[8];
 
-    HBITMAP             _hBmBcNew;
+    void                _onLbBatlsSel();
 
-    HBITMAP             _hBmBcDel;
+    void                _onBcUpBat();
 
-    HBITMAP             _hBmBcMod;
+    void                _onBcDnBat();
 
-    HBITMAP             _hBmBcUp;
+    void                _onBcEdiBat();
 
-    HBITMAP             _hBmBcDn;
+    void                _onBcDelBat();
 
-    void                _batchUp();
-
-    void                _batchDn();
-
-    bool                _batchDel();
+    void                _onBcAddBat();
 
     void                _onInit();
 

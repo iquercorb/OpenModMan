@@ -79,12 +79,19 @@ class OmUiPropManGle : public OmDialog
 
     bool                _chParam[8];
 
+    void                _onCkBoxStr();
+
+    void                _onLbStrlsSel();
+
+    void                _onBcBrwStr();
+
+    void                _onBcRemStr();
+
     void                _onInit();
 
     void                _onResize();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 };
 
 #endif // OMUIPROPMANGLE_H

@@ -63,6 +63,96 @@ void OmUiPropLocStg::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropLocStg::_onBcBrwDst()
+{
+  wstring start, result;
+
+  this->getItemText(IDC_EC_INP02, start);
+
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select packages Destination folder", start))
+    return;
+
+  this->setItemText(IDC_EC_INP02, result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocStg::_onCkBoxLib()
+{
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  if(!pLoc) return;
+
+  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+
+  this->enableItem(IDC_EC_INP03, bm_chk);
+  this->enableItem(IDC_BC_BRW03, bm_chk);
+
+  if(bm_chk && pLoc->hasCustLibraryDir()) {
+    this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
+  } else {
+    this->setItemText(IDC_EC_INP03, pLoc->home() + L"\\Library");
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocStg::_onBcBrwLib()
+{
+  wstring start, result;
+
+  this->getItemText(IDC_EC_INP03, start);
+
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom packages Library folder", start))
+    return;
+
+  this->setItemText(IDC_EC_INP03, result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocStg::_onCkBoxBck()
+{
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  if(!pLoc) return;
+
+  bool bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+
+  this->enableItem(IDC_EC_INP04, bm_chk);
+  this->enableItem(IDC_BC_BRW04, bm_chk);
+
+  if(bm_chk && pLoc->hasCustBackupDir()) {
+    this->setItemText(IDC_EC_INP04, pLoc->backupDir());
+  } else {
+    this->setItemText(IDC_EC_INP04, pLoc->home() + L"\\Backup");
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropLocStg::_onBcBrwBck()
+{
+  wstring start, result;
+
+  this->getItemText(IDC_EC_INP04, start);
+
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom Backups location", start))
+    return;
+
+  this->setItemText(IDC_EC_INP04, result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropLocStg::_onInit()
 {
   // define controls tool-tips
@@ -148,78 +238,50 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
-    OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
-
-    if(pLoc == nullptr)
-      return false;
-
-    bool bm_chk;
-
-    wstring item_str, brow_str;
-
     switch(LOWORD(wParam))
     {
+    case IDC_EC_INP01: //< Title EditText
+      if(HIWORD(wParam) == EN_CHANGE)
+        // user modified parameter, notify it
+        this->setChParam(LOC_PROP_STG_TITLE, true);
+      break;
+
+    case IDC_BC_BRW02: //< Destination "..." (browse) Button
+      this->_onBcBrwDst();
+      break;
+
+    case IDC_EC_INP02: //< Destination EditText
+      if(HIWORD(wParam) == EN_CHANGE)
+        // user modified parameter, notify it
+        this->setChParam(LOC_PROP_STG_INSTALL, true);
+      break;
+
     case IDC_BC_CHK01: //< Check Box for custom Library path
-      bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
-      this->enableItem(IDC_EC_INP03, bm_chk);
-      this->enableItem(IDC_BC_BRW03, bm_chk);
-      if(bm_chk && pLoc->hasCustLibraryDir()) {
-        this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
-      } else {
-        this->setItemText(IDC_EC_INP03, pLoc->home() + L"\\Library");
-      }
+      this->_onCkBoxLib();
+      break;
+
+    case IDC_BC_BRW03: //< Custom Library "..." (browse) Button
+      this->_onBcBrwLib();
+      break;
+
+    case IDC_EC_INP03: //< Library EditText
+      if(HIWORD(wParam) == EN_CHANGE)
+        // user modified parameter, notify it
+        this->setChParam(LOC_PROP_STG_LIBRARY, true);
       break;
 
     case IDC_BC_CHK02: //< Check Box for custom Backup path
-      bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
-      this->enableItem(IDC_EC_INP04, bm_chk);
-      this->enableItem(IDC_BC_BRW04, bm_chk);
-      if(bm_chk && pLoc->hasCustBackupDir()) {
-        this->setItemText(IDC_EC_INP04, pLoc->backupDir());
-      } else {
-        this->setItemText(IDC_EC_INP04, pLoc->home() + L"\\Backup");
-      }
+      this->_onCkBoxBck();
       break;
 
-    case IDC_EC_INP01: //< Entry for Title
-      // user modified parameter, notify it
-      this->setChParam(LOC_PROP_STG_TITLE, true);
+    case IDC_BC_BRW04: //< Custom Backup "..." (browse) Button
+      this->_onBcBrwBck();
       break;
 
-    case IDC_EC_INP02: //< Entry for Install
-      // user modified parameter, notify it
-      this->setChParam(LOC_PROP_STG_INSTALL, true);
-      break;
-
-    case IDC_BC_BRW02: //< Browse Button for Install folder
-      this->getItemText(IDC_EC_INP02, item_str);
-      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select packages Destination folder", item_str)) {
-        this->setItemText(IDC_EC_INP02, brow_str);
-      }
-      break;
-
-    case IDC_EC_INP03: //< Entry for Library
-      // user modified parameter, notify it
-      this->setChParam(LOC_PROP_STG_LIBRARY, true);
-      break;
-
-    case IDC_BC_BRW03: //< Browse Button for Library folder
-      this->getItemText(IDC_EC_INP03, item_str);
-      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select custom packages Library folder", item_str)) {
-        this->setItemText(IDC_EC_INP03, brow_str);
-      }
-      break;
-
-    case IDC_EC_INP04: //< Entry for Backup
-      // user modified parameter, notify it
-      this->setChParam(LOC_PROP_STG_BACKUP, true);
-      break;
-
-    case IDC_BC_BRW04: //< Browse Button for Backup folder
-      this->getItemText(IDC_EC_INP04, item_str);
-      if(Om_dialogBrowseDir(brow_str, this->_hwnd, L"Select custom Backups location", item_str)) {
-        this->setItemText(IDC_EC_INP04, brow_str);
-      }
+    case IDC_EC_INP04: //< Backup EditText
+      if(HIWORD(wParam) == EN_CHANGE)
+        // user modified parameter, notify it
+        this->setChParam(LOC_PROP_STG_BACKUP, true);
       break;
     }
   }

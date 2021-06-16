@@ -1509,6 +1509,18 @@ HICON Om_loadShellIcon(unsigned id, bool large = false);
 ///
 HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
 
+/// \brief Get internal resource image
+///
+/// Return internal resource image as HBITMAP, created handle does not
+/// have to be deleted.
+///
+/// \param[in] id      : Handle instance to get internal resource.
+/// \param[in] id      : Image internal resource id.
+///
+/// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
+///
+HBITMAP Om_getResImage(HINSTANCE hins, unsigned id);
+
 /// \brief Create font object
 ///
 /// Create and returns a font object according the specified parameters.

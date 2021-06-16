@@ -11,8 +11,8 @@
 #define IDD_NEW_CTX                             711
 #define IDD_ADD_BAT                             712
 #define IDD_ADD_REP                             713
-#define IDD_TOOL_PKG                             714
-#define IDD_TOOL_REP                             715
+#define IDD_TOOL_PKG                            714
+#define IDD_TOOL_REP                            715
 #define IDD_PROP_MAN                            720
 #define IDD_PROP_MAN_GLE                        721
 #define IDD_PROP_MAN_PKG                        722
@@ -138,6 +138,8 @@
 #define IDC_BC_NEW                              40333
 #define IDC_BC_CHK                              40334
 #define IDC_BC_REM                              40335
+#define IDC_BC_RIGH                             40336
+#define IDC_BC_LEFT                             40337
 #define IDC_BC_UP                               40340
 #define IDC_BC_DN                               40341
 #define IDC_BC_BACK                             40342
