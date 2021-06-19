@@ -4421,18 +4421,44 @@ HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, uns
   return hBmp;
 }
 
+/// \brief Loaded shell large icons
+///
+/// Array of loaded shell large icons
+///
+static HICON __shell_large_icon[100] = {nullptr};
+
+/// \brief Loaded shell small icons
+///
+/// Array of loaded shell small icons
+///
+static HICON __shell_small_icon[100] = {nullptr};
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HICON Om_loadShellIcon(unsigned id, bool large)
+HICON Om_getShellIcon(unsigned id, bool large)
 {
+  if(large) {
+    if(__shell_large_icon[id])
+      return __shell_large_icon[id];
+  } else {
+    if(__shell_small_icon[id])
+      return __shell_small_icon[id];
+  }
+
   SHSTOCKICONINFO sIi = {};
   sIi.cbSize = sizeof(SHSTOCKICONINFO);
 
   SHGetStockIconInfo(static_cast<SHSTOCKICONID>(id),
                     (large) ? SHGSI_ICON|SHGSI_LARGEICON : SHGSI_ICON|SHGSI_SMALLICON,
                     &sIi);
+
+  if(large) {
+    __shell_large_icon[id] = sIi.hIcon;
+  } else {
+    __shell_small_icon[id] = sIi.hIcon;
+  }
+
   return sIi.hIcon;
 }
 

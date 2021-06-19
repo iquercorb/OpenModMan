@@ -72,17 +72,17 @@ void OmUiPropBatStg::_buildLbs()
   // reset List-Box control
   this->msgItem(IDC_LB_EXCLS, LB_RESETCONTENT);
 
-  OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batch();
+  OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batCur();
   if(!pBat) return;
-  OmContext* pCtx = pBat->context();
+  OmContext* pCtx = pBat->ownerCtx();
   if(!pCtx) return;
 
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get Location corresponding to current selection
-  OmLocation* pLoc = pCtx->location(cb_sel);
+  OmLocation* pLoc = pCtx->locGet(cb_sel);
 
   unsigned p;
   OmPackage* pPkg;
@@ -92,9 +92,9 @@ void OmUiPropBatStg::_buildLbs()
   for(size_t i = 0; i < this->_excluded[cb_sel].size(); i++) {
 
     p = this->_excluded[cb_sel][i];
-    pPkg = pLoc->package(p);
+    pPkg = pLoc->pkgGet(p);
 
-    item_str = Om_getFilePart(pPkg->sourcePath());
+    item_str = Om_getFilePart(pPkg->srcPath());
     this->msgItem(IDC_LB_EXCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     this->msgItem(IDC_LB_EXCLS, LB_SETITEMDATA, i, p);
   }
@@ -106,9 +106,9 @@ void OmUiPropBatStg::_buildLbs()
   for(size_t i = 0; i < this->_included[cb_sel].size(); i++) {
 
     p = this->_included[cb_sel][i];
-    pPkg = pLoc->package(p);
+    pPkg = pLoc->pkgGet(p);
 
-    item_str = Om_getFilePart(pPkg->sourcePath());
+    item_str = Om_getFilePart(pPkg->srcPath());
     this->msgItem(IDC_LB_INCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, i, p);
   }
@@ -121,7 +121,7 @@ void OmUiPropBatStg::_buildLbs()
 void OmUiPropBatStg::_includePkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -183,7 +183,7 @@ void OmUiPropBatStg::_includePkg()
 void OmUiPropBatStg::_excludePkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -296,7 +296,7 @@ void OmUiPropBatStg::_onLbInclsSel()
 void OmUiPropBatStg::_onBcUpPkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -345,7 +345,7 @@ void OmUiPropBatStg::_onBcUpPkg()
 void OmUiPropBatStg::_onBcDnPkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -404,22 +404,42 @@ void OmUiPropBatStg::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Batch name");
+  this->_createTooltip(IDC_EC_INP01,L"Batch name");
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,L"Indicative name");
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
-  this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
+  this->_createTooltip(IDC_BC_CHK01,L"Create batch according current installed packages");
+  this->_createTooltip(IDC_CB_LOC,  L"Active location");
 
-  this->_createTooltip(IDC_BC_RIGH,    L"Add to install list");
-  this->_createTooltip(IDC_BC_LEFT,    L"Remove from install list");
+  this->_createTooltip(IDC_BC_RIGH, L"Add to install list");
+  this->_createTooltip(IDC_BC_LEFT, L"Remove from install list");
 
-  this->_createTooltip(IDC_BC_UP,     L"Move up");
-  this->_createTooltip(IDC_BC_DN,     L"Move down");
+  this->_createTooltip(IDC_BC_UP,   L"Move up");
+  this->_createTooltip(IDC_BC_DN,   L"Move down");
 
   // Set controls default states and parameters
   this->setItemText(IDC_EC_INP01, L"New Batch");
+
+
+  OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batCur();
+  OmContext* pCtx = pBat->ownerCtx();
+
+  if(pBat && pCtx) {
+  // Automatic fix Batch / Context Location inconsistency
+  for(size_t l = 0; l < pCtx->locCount(); ++l) //< Add missing Location
+    if(!pBat->hasLoc(pCtx->locGet(l)->uuid()))
+      pBat->locAdd(pCtx->locGet(l)->uuid());
+
+  // Remove unavailable location
+  vector<wstring> uuid_ls;
+  for(size_t l = 0; l < pBat->locCount(); ++l)
+    if(pCtx->locFind(pBat->locGetUuid(l)) < 0)
+      uuid_ls.push_back(pBat->locGetUuid(l));
+
+  for(size_t i = 0; i < uuid_ls.size(); ++i)
+    pBat->locRem(uuid_ls[i]);
+  }
 
   this->_onRefresh();
 }
@@ -438,9 +458,9 @@ void OmUiPropBatStg::_onResize()
   this->_setItemPos(IDC_EC_INP01, 70, 10, this->width()-90, 13);
 
   // Location list ComboBox
-  this->_setItemPos(IDC_CB_LOCLS, 5, 35, this->width()-15, 12);
+  this->_setItemPos(IDC_CB_LOC, 5, 35, this->width()-15, 12);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(this->getItem(IDC_CB_LOCLS), nullptr, true);
+  InvalidateRect(this->getItem(IDC_CB_LOC), nullptr, true);
   // Not-Installed label
   this->_setItemPos(IDC_SC_LBL02, 10, 55, 150, 9);
   // Not-Installed ListBox
@@ -463,21 +483,21 @@ void OmUiPropBatStg::_onResize()
 ///
 void OmUiPropBatStg::_onRefresh()
 {
-  OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batch();
+  OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batCur();
   if(!pBat) return;
 
-  OmContext* pCtx = pBat->context();
+  OmContext* pCtx = pBat->ownerCtx();
   if(!pCtx) return;
 
   this->setItemText(IDC_EC_INP01, pBat->title());
 
   OmLocation* pLoc;
 
-  // initialize Location ComboBox content
-  HWND hCb = this->getItem(IDC_CB_LOCLS);
-
   // empty the ComboBox
-  SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
+
+  // check whether a package is unavailable
+  bool unavail = false;
 
   wstring item_str;
   int l, p;
@@ -486,52 +506,52 @@ void OmUiPropBatStg::_onRefresh()
   this->_included.clear();
 
   // add Location(s) to Combo-Box
-  for(unsigned i = 0; i < pCtx->locationCount(); ++i) {
+  for(unsigned i = 0; i < pCtx->locCount(); ++i) {
 
-    pLoc = pCtx->location(i);
+    pLoc = pCtx->locGet(i);
 
     item_str = pLoc->title();
     item_str += L" - ";
     item_str += pLoc->home();
 
-    SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
 
-    // initialize a new install list per Location
+    // initialize new lists for this Location
     this->_excluded.push_back(vector<int>());
     this->_included.push_back(vector<int>());
 
     // get Location index in Btach
-    l = pBat->getLocationIndex(pLoc->uuid());
+    l = pBat->locGetIndex(pLoc->uuid());
 
     // Fill include and exclude list according batch install list
     if(l != -1) {
       // fill the include list ordered as in the batch
-      for(size_t j = 0; j < pBat->getInstallCount(l); ++j) {
-        p = pLoc->findPackageIndex(pBat->getInstallHash(l, j));
+      for(size_t j = 0; j < pBat->insCount(l); ++j) {
+        p = pLoc->pkgIndex(pBat->insGet(l, j));
         if(p >= 0) {
           this->_included.back().push_back(p);
         } else {
-          // TODO: handle no longer available package
+          unavail = true;
         }
       }
       // fill the exclude list
-      for(size_t j = 0; j < pLoc->packageCount(); ++j) {
-        if(!pBat->hasInstallHash(l, pLoc->package(j)->hash())) {
+      for(size_t j = 0; j < pLoc->pkgCount(); ++j) {
+        if(!pBat->hasIns(l, pLoc->pkgGet(j)->hash())) {
           this->_excluded.back().push_back(j);
         }
       }
     } else {
       // fill the exclude list
-      for(size_t j = 0; j < pLoc->packageCount(); ++j)
+      for(size_t j = 0; j < pLoc->pkgCount(); ++j)
         this->_excluded.back().push_back(j);
     }
   }
 
   // Select first Location by default
-  SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+  this->msgItem(IDC_CB_LOC, CB_SETCURSEL, 0);
 
   // Disable ComboBox and ListBoxes
-  this->enableItem(IDC_CB_LOCLS, true);
+  this->enableItem(IDC_CB_LOC, true);
   this->enableItem(IDC_LB_EXCLS, true);
   this->enableItem(IDC_LB_INCLS, true);
 
@@ -540,6 +560,21 @@ void OmUiPropBatStg::_onRefresh()
 
   // fill up each ListBox
   this->_buildLbs();
+
+  // check whether we got some unavailable package to be deleted
+  if(unavail) {
+    // force notify change of the install list
+    this->setChParam(BAT_PROP_STG_INSLS, true);
+    // notify user
+    wstring wrn = L"The Batch have reference to Packages "
+                  L"which are no longer available."
+                  L"\n\nDo you want to clean invalid references ?";
+
+    if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Package reference error", wrn)) {
+      // Force to apply changes
+      static_cast<OmDialogProp*>(this->_parent)->applyChanges();
+    }
+  }
 }
 
 
@@ -558,7 +593,7 @@ bool OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setChParam(BAT_PROP_STG_TITLE, true);
       break;
 
-    case IDC_CB_LOCLS:  //< Location ComboBox
+    case IDC_CB_LOC:  //< Location ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->_buildLbs();
       break;

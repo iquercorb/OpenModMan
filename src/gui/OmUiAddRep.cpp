@@ -23,7 +23,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiAddRep::OmUiAddRep(HINSTANCE hins) : OmDialog(hins),
-  _location(nullptr),
+  _pLoc(nullptr),
   _testResult(0)
 {
 
@@ -99,30 +99,28 @@ void OmUiAddRep::_onBcChk()
   url += rep_name + L".xml";
 
   if(!Om_isValidUrl(url)) {
-
     wstring err = L"Supplied parameters cannot be used to "
-                  L"create a valid HTTP address:";
-
-    err += L"\n\n";
+                  L"create a valid HTTP address:\n\n";
     err += url;
-
     Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
   }
 
   this->_testResult = -1;
 
-  string rep_xml;
+  string data;
 
   this->_testLog(L"HTTP GET request: "+url+L"\r\n");
 
-  if(sock.httpGet(Om_toUtf8(url), rep_xml)) {
+  if(sock.httpGet(Om_toUtf8(url), data)) {
 
-    this->_testLog(L"HTTP GET succeed: "+to_wstring(rep_xml.size())+L" bytes received\r\n");
+    this->_testLog(L"HTTP GET succeed: "+to_wstring(data.size())+L" bytes received\r\n");
 
-    OmConfig rep_def;
+    OmConfig config;
 
-    if(rep_def.parse(Om_fromUtf8(rep_xml.c_str()), OMM_CFG_SIGN_REP)) {
+    if(config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
       this->_testLog(L"XML parse succeed.\r\n");
+      int n = config.xml().child(L"packages").attrAsInt(L"count");
+      this->_testLog(L"Repository provides " + std::to_wstring(n) + L" package(s)\r\n");
       this->setItemText(IDC_SC_STATE, L"The Repository appear to be valid !");
       this->_testResult = 1;
     } else {
@@ -141,29 +139,25 @@ void OmUiAddRep::_onBcChk()
 ///
 bool OmUiAddRep::_onBcOk()
 {
-  OmLocation* pLoc = this->_location;
-
-  if(pLoc == nullptr)
-    return false;
+  if(!this->_pLoc) return false;
 
   if(this->_testResult == 0) {
 
-    wstring wrn = L"You did not tested the Repository, it may be invalid "
-                  L"or unavailable, do you want to continue anyway ?";
+    wstring wrn = L"You did not tested the Repository, "
+                  L"it may be invalid or unavailable."
+                  L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"The Repository was not tested", wrn)) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Repository not tested", wrn))
       return false;
-    }
 
   } else if(this->_testResult == -1) {
 
-    wstring wrn = L"The last Repository test failed, the Repository "
-                  L"appear to be invalid or unavailable, do you want to "
-                  L"continue anyway ?";
+    wstring wrn = L"The last Repository test failed, it "
+                  L"appear to be invalid or unavailable."
+                  L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"The Repository appear invalid", wrn)) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Repository appear invalid", wrn))
       return false;
-    }
   }
 
   wstring rep_base;
@@ -176,18 +170,15 @@ bool OmUiAddRep::_onBcOk()
   url += rep_name + L".xml";
 
   if(!Om_isValidUrl(url)) {
-
     wstring err = L"Supplied parameters cannot be used to "
                   L"create a valid HTTP address";
-
     Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
-
     return false;
   }
 
   // add new repository in Context
-  if(!pLoc->addRepository(rep_base, rep_name)) {
-    Om_dialogBoxErr(this->_hwnd, L"Repository creation failed", pLoc->lastError());
+  if(!this->_pLoc->repAdd(rep_base, rep_name)) {
+    Om_dialogBoxErr(this->_hwnd, L"Repository creation failed", this->_pLoc->lastError());
   }
 
   // refresh parent dialog

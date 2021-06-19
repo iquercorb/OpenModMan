@@ -77,7 +77,7 @@ void OmUiPropLocBck::_onCkBoxZip()
   int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
   this->enableItem(IDC_SC_LBL01, bm_chk);
-  this->enableItem(IDC_CB_LEVEL, bm_chk);
+  this->enableItem(IDC_CB_LVL, bm_chk);
 
   this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
 }
@@ -109,7 +109,7 @@ void OmUiPropLocBck::_onBcDelBck()
 void OmUiPropLocBck::_delBck_init()
 {
   // To prevent crash during operation we unselect location in the main dialog
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+  static_cast<OmUiMain*>(this->root())->safemode(true);
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
@@ -140,7 +140,7 @@ void OmUiPropLocBck::_delBck_stop()
   static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
 
   // Back to main dialog window to normal state
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+  static_cast<OmUiMain*>(this->root())->safemode(false);
 }
 
 
@@ -151,7 +151,7 @@ DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
 {
   OmUiPropLocBck* self = static_cast<OmUiPropLocBck*>(arg);
 
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(self->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(self->_parent)->locCur();
 
   if(pLoc == nullptr)
     return 1;
@@ -164,7 +164,7 @@ DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
   DWORD exitCode = 0;
 
   // launch backups data deletion process
-  if(!pLoc->backupsDiscard(hPb, hSc, pUiProgress->getAbortPtr())) {
+  if(!pLoc->bckDiscard(hPb, hSc, pUiProgress->getAbortPtr())) {
     // we encounter error during backup data purge
     Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data deletion error", pLoc->lastError());
     exitCode = 1;
@@ -184,55 +184,47 @@ void OmUiPropLocBck::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_BC_CHK01,  L"Store backup data as zip archives");
-  this->_createTooltip(IDC_CB_LEVEL,  L"Compression level for backup zip files");
+  this->_createTooltip(IDC_CB_LVL,  L"Compression level for backup zip files");
 
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
 
-  // add items in combo box
-  HWND hCb = this->getItem(IDC_CB_LEVEL);
+  // add items to Zip Level ComboBox
+  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
+  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
+  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
+  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
 
-  unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
-  if(!cb_cnt) {
-    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
-    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
-    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
-    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
-  }
+  if(!pLoc) return;
 
-  if(pLoc == nullptr)
-    return;
-
-  int comp_levl = pLoc->backupZipLevel();
+  int comp_levl = pLoc->bckZipLevel();
 
   if(comp_levl >= 0) {
 
     this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
 
-    EnableWindow(hCb, true);
-
     switch(comp_levl)
     {
     case 1:
-      SendMessageW(hCb, CB_SETCURSEL, 1, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 1, 0);
       break;
     case 2:
-      SendMessageW(hCb, CB_SETCURSEL, 2, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2, 0);
       break;
     case 3:
-      SendMessageW(hCb, CB_SETCURSEL, 3, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 3, 0);
       break;
     default:
-      SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 0, 0);
       break;
     }
+
+    this->enableItem(IDC_CB_LVL, true);
 
   } else {
 
     this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
-
-    EnableWindow(hCb, false);
-
-    SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+    this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 0, 0);
+    this->enableItem(IDC_CB_LVL, false);
   }
 
   // reset modified parameters flags
@@ -249,9 +241,9 @@ void OmUiPropLocBck::_onResize()
   this->_setItemPos(IDC_BC_CHK01, 50, 20, 120, 9);
   // Compression level Label & ComboBox
   this->_setItemPos(IDC_SC_LBL01, 50, 40, 120, 9);
-  this->_setItemPos(IDC_CB_LEVEL, 50, 50, this->width()-100, 14);
+  this->_setItemPos(IDC_CB_LVL, 50, 50, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(this->getItem(IDC_CB_LEVEL), nullptr, true);
+  InvalidateRect(this->getItem(IDC_CB_LVL), nullptr, true);
   // Maintenance operations Label
   this->_setItemPos(IDC_SC_LBL02, 50, 80, 120, 9);
   // Discard backups Button
@@ -279,7 +271,7 @@ bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onCkBoxZip();
       break;
 
-    case IDC_CB_LEVEL: //< Backup compression level ComboBox
+    case IDC_CB_LVL: //< Backup compression level ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->setChParam(LOC_PROP_BCK_COMP_LEVEL, true);
       break;

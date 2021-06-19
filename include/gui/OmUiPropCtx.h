@@ -58,8 +58,8 @@ class OmUiPropCtx : public OmDialogProp
     ///
     /// \return Associated Context or nullptr if none.
     ///
-    OmContext* context() const {
-      return _context;
+    OmContext* ctxCur() const {
+      return _pCtx;
     }
 
     /// \brief Set associated Context.
@@ -70,8 +70,8 @@ class OmUiPropCtx : public OmDialogProp
     ///
     /// \param[in]  pCtx  : Context object to associate.
     ///
-    void setContext(OmContext* pCtx) {
-      _context = pCtx;
+    void ctxSet(OmContext* pCtx) {
+      _pCtx = pCtx;
     }
 
     /// \brief Check for properties changes
@@ -89,7 +89,7 @@ class OmUiPropCtx : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmContext*          _context;
+    OmContext*          _pCtx;
 };
 
 #endif // OMUIPROPCTX_H

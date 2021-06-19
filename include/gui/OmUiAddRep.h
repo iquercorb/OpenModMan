@@ -58,8 +58,8 @@ class OmUiAddRep : public OmDialog
     ///
     /// \return Associated Location or nullptr if none.
     ///
-    OmLocation* location() const {
-      return _location;
+    OmLocation* locCur() const {
+      return _pLoc;
     }
 
     /// \brief Set associated Location.
@@ -70,15 +70,15 @@ class OmUiAddRep : public OmDialog
     ///
     /// \param[in]  pCtx  : Location object to associate.
     ///
-    void setLocation(OmLocation* pLoc) {
-      _location = pLoc;
+    void locSet(OmLocation* pLoc) {
+      _pLoc = pLoc;
     }
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _location;
+    OmLocation*         _pLoc;
 
     int                 _testResult;
 

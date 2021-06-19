@@ -141,7 +141,7 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolRep::~OmUiToolRep()
 {
-  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, nullptr);
+  HBITMAP hBm = this->setStImage(IDC_SB_PKG, nullptr);
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
@@ -185,12 +185,8 @@ bool OmUiToolRep::_repoOpen(const wstring& path)
 {
   // Initialize new Repository definition XML scheme
   if(!this->_condig.open(path, OMM_CFG_SIGN_REP)) {
-
-    wstring err = L"The file \"";
-    err += path;
-    err += L"\" is not valid Repository file.";
+    wstring err = L"The file \""+path+L"\" is not valid Repository file.";
     Om_dialogBoxErr(this->_hwnd, L"Error parsing Repository file", err);
-
     return false;
   }
 
@@ -226,14 +222,14 @@ OmXmlNode OmUiToolRep::_repoGetEnt(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repoAddEnt(const wstring& path)
+bool OmUiToolRep::_repAddEnt(const wstring& path)
 {
   // parse the package
   OmXmlNode xml_node, xml_entry, xml_packages;
 
   // try to parse package
   OmPackage pkg;
-  if(!pkg.sourceParse(path))
+  if(!pkg.srcParse(path))
     return false;
 
   // Search for already existing entry
@@ -242,9 +238,7 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
   // if package with same identity already exist, user have to choose
   if(!xml_entry.empty()) {
 
-    wstring qry = L"Repository entry with identity \"";
-    qry += pkg.ident();
-    qry += L"\" already exists.";
+    wstring qry = L"Repository entry with identity \""+pkg.ident()+L"\" already exists.";
     qry += L"\n\nDo you want to replace the existing one ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Duplicated entry identity", qry))
@@ -262,7 +256,7 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
     xml_entry.remChild(L"dependencies");
     xml_entry.remChild(L"picture");
     xml_entry.remChild(L"description");
-    xml_entry.setAttr(L"file", Om_getFilePart(pkg.sourcePath()));
+    xml_entry.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_entry.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
     xml_entry.setAttr(L"checksum",Om_getChecksum(path));
 
@@ -275,7 +269,7 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
     // create new entry in repository
     xml_entry = xml_packages.addChild(L"entry");
     xml_entry.setAttr(L"ident", pkg.ident());
-    xml_entry.setAttr(L"file", Om_getFilePart(pkg.sourcePath()));
+    xml_entry.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_entry.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
     xml_entry.setAttr(L"checksum",Om_getChecksum(path));
 
@@ -287,10 +281,10 @@ bool OmUiToolRep::_repoAddEnt(const wstring& path)
     xml_packages.setAttr(L"count", n + 1);
   }
 
-  if(pkg.dependCount()) {
+  if(pkg.depCount()) {
     xml_node = xml_entry.addChild(L"dependencies");
-    for(size_t i = 0; i < pkg.dependCount(); ++i) {
-      xml_node.addChild(L"ident").setContent(pkg.depend(i));
+    for(size_t i = 0; i < pkg.depCount(); ++i) {
+      xml_node.addChild(L"ident").setContent(pkg.depGet(i));
     }
   }
 
@@ -356,7 +350,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
     this->enableItem(IDC_BC_CHK, false);
     this->enableItem(IDC_BC_BRW08, false);
     this->enableItem(IDC_BC_DEL, false);
-    HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
     this->enableItem(IDC_BC_BRW09, false);
     this->enableItem(IDC_BC_SAV02, false);
@@ -465,7 +459,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
         Om_free(rgb);
 
         // set image to dialog
-        hBm_old = this->setStImage(IDC_SB_PKIMG, hBm_new);
+        hBm_old = this->setStImage(IDC_SB_PKG, hBm_new);
         if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
         this->enableItem(IDC_BC_DEL, true);
         this->setItemText(IDC_BC_OPEN1, L"Change...");
@@ -481,7 +475,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 
   // no snapshot, reset controls to default
   if(!has_snap) {
-    hBm_old = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+    hBm_old = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
     if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
     this->enableItem(IDC_BC_DEL, false);
   }
@@ -658,7 +652,7 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
     pUiProgress->setDetail(Om_getFilePart(ls[i]).c_str());
 
     // proceed this package
-    self->_repoAddEnt(ls[i]);
+    self->_repAddEnt(ls[i]);
 
     // step progress bar
     if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
@@ -713,13 +707,13 @@ void OmUiToolRep::_onBcNew()
 ///
 void OmUiToolRep::_onBcOpen()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // new dialog to open file
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select XML repository file", OMM_XML_FILES_FILTER, start))
@@ -760,13 +754,13 @@ void OmUiToolRep::_onBcOpen()
 ///
 void OmUiToolRep::_onBcBrwPkg()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // open file dialog
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start))
@@ -776,10 +770,8 @@ void OmUiToolRep::_onBcBrwPkg()
     return;
 
   // add package to repository
-  if(!this->_repoAddEnt(result)) {
-    wstring err = L"The file \"";
-    err += result;
-    err += L"\" is not valid Package file.";
+  if(!this->_repAddEnt(result)) {
+    wstring err = L"The file \""+result+L"\" is not valid Package file.";
     Om_dialogBoxErr(this->_hwnd, L"Error parsing Package file", err);
   }
 
@@ -794,13 +786,13 @@ void OmUiToolRep::_onBcBrwPkg()
 ///
 void OmUiToolRep::_onBcBrwDir()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // open dialog to select folder
   if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select folder to search for packages", start))
@@ -909,9 +901,7 @@ void OmUiToolRep::_onBcSavUrl()
 
     } else {
 
-      wstring err = L"\"";
-      err += url_str;
-      err += L"\" is not a valid URL.";
+      wstring err = L"\""+url_str+L"\" is not a valid URL.";
       Om_dialogBoxErr(this->_hwnd, L"Invalid URL", err);
 
       // return now
@@ -964,8 +954,8 @@ void OmUiToolRep::_onBcChkDeps()
   } else {
 
     //Peaceful message
-    wstring msg =   L"All dependencies for this package was "
-                    "found in the repository.";
+    wstring msg =   L"All dependencies for this package "
+                    "was found in the repository.";
     Om_dialogBoxInfo(this->_hwnd, L"Dependencies package satisfied", msg);
   }
 }
@@ -980,13 +970,13 @@ void OmUiToolRep::_onBcBrwSnap()
   if(this->_curEntry.empty())
     return;
 
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // open file dialog
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select image file", OMM_IMG_FILES_FILTER, start))
@@ -1009,7 +999,7 @@ void OmUiToolRep::_onBcBrwSnap()
     // save snapshot data to <picture>
     if(__save_snapshot(xml_pic, image)) {
 
-      HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, image.thumbnail());
+      HBITMAP hBm = this->setStImage(IDC_SB_PKG, image.thumbnail());
       if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
       // enable General "Save as..." Button
@@ -1042,7 +1032,7 @@ void OmUiToolRep::_onBcDelSnap()
     this->_curEntry.remChild(L"picture");
   }
 
-  HBITMAP hBm = this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
   // disable Snapshot "Delete" Button
@@ -1057,13 +1047,13 @@ void OmUiToolRep::_onBcDelSnap()
 ///
 void OmUiToolRep::_onBcBrwDesc()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // open file dialog
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select text file", OMM_TXT_FILES_FILTER, start))
@@ -1128,8 +1118,8 @@ void OmUiToolRep::_onBcSavDesc()
 ///
 void OmUiToolRep::_onBcSave()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->curContext();
-  OmLocation* pLoc = pCtx ? pCtx->curLocation() : nullptr;
+  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   // Repository XML node
   OmXmlNode xml_def = this->_condig.xml();
@@ -1150,8 +1140,7 @@ void OmUiToolRep::_onBcSave()
   // check whether path is valid
   if(!Om_isValidUrlPath(item_str)) {
 
-    wstring err = L"Download path \"";
-    err += L"\" is not a valid URL path.";
+    wstring err = L"Download path \""+item_str+L"\" is not a valid URL path.";
     Om_dialogBoxErr(this->_hwnd, L"Invalid download URL path", err);
     return;
   }
@@ -1164,7 +1153,7 @@ void OmUiToolRep::_onBcSave()
   wstring start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libraryDir();
+  if(pLoc) start = pLoc->libDir();
 
   // send save dialog to user
   if(!Om_dialogSaveFile(result, this->_hwnd, L"Save Repository definition...", OMM_XML_FILES_FILTER, start))
@@ -1252,7 +1241,7 @@ void OmUiToolRep::_onInit()
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKIMG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons icons
   this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_ADD));
   this->setBmImage(IDC_BC_BRW03, Om_getResImage(this->_hins, IDB_BTN_DIR));
@@ -1342,7 +1331,7 @@ void OmUiToolRep::_onResize()
   // Snapshot Label
   this->_setItemPos(IDC_SC_LBL08, half_w+10, 130, 54, 9);
   // Snapshot Static Bitmap
-  this->_setItemPos(IDC_SB_PKIMG, half_w+65, 131, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, half_w+65, 131, 85, 78);
   // Change.. & Delete Buttons
   this->_setItemPos(IDC_BC_BRW08, this->width()-50, 130, 40, 13);
   this->_setItemPos(IDC_BC_DEL, this->width()-50, 145, 40, 13);

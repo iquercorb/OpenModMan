@@ -37,17 +37,10 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
-  _hIcAppS(static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0))),
-  _hIcAppL(static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0))),
   _pageName(),
   _pageDial(),
-  _quitPending(false),
-  _onProcess(false),
-  _safeEdit(false),
-  _hIcBlank(Om_loadShellIcon(SIID_APPLICATION, true)),
-  _hMenuFile(nullptr),
-  _hMenuEdit(nullptr),
-  _hMenuHelp(nullptr)
+  _freeze_mode(false),
+  _freeze_abort(false)
 {
   // create child tab dialogs
   this->_addPage(L"Library", new OmUiMainLib(hins)); // Library Tab
@@ -68,7 +61,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiToolRep(hins));     //< Dialog for Repository Editor
 
   // set the accelerator table for the dialog
-  this->setAccelerator(IDR_ACCEL);
+  this->setAccel(IDR_ACCEL);
 }
 
 
@@ -77,9 +70,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMain::~OmUiMain()
 {
-  DestroyIcon(this->_hIcAppS);
-  DestroyIcon(this->_hIcAppL);
-  DestroyIcon(this->_hIcBlank);
+
 }
 
 
@@ -95,107 +86,47 @@ long OmUiMain::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::setOnProcess(bool enable)
+void OmUiMain::freeze(bool enable)
 {
+  this->_freeze_mode = enable;
+
+  // disable Context ComboBox
+  this->enableItem(IDC_CB_CTX, !enable);
+  // disable Tab Control
   this->enableItem(IDC_TC_MAIN, !enable);
-  this->enableItem(IDC_CB_CTXLS, !enable);
-  this->enableItem(IDC_LB_LOCLS, !enable);
 
-  if(enable) {
-    this->_onProcess = true;
-  } else {
-    this->_onProcess = false;
-    // if close was requested, we quit the dialog
-    if(this->_quitPending) {
-      this->quit();
-      return;
-    }
-  }
-}
+  // disable menus
+  int state = enable ? MF_GRAYED : MF_ENABLED;
+  this->setPopupItem(this->_menu, 0, state); //< File menu
+  this->setPopupItem(this->_menu, 1, state); //< Edit menu
+  this->setPopupItem(this->_menu, 2, state); //< Tools menu
 
+  // force menu bar to redraw so enabled/grayed state
+  // is properly visually updated
+  DrawMenuBar(this->_hwnd);
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::setSafeEdit(bool enable)
-{
-  if(enable) {
-    // Enters safe edit state
-    this->_safeEdit = true;
-    // Unselect current Location in Library tab dialog
-    static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->selLocation(-1);
-    // Set to process state
-    this->setOnProcess(true);
-  } else {
-    // Unselect current Location in Library tab dialog
-    static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->refresh();
-    // Return to normal process state
-    this->setOnProcess(false);
-    // Exit safe edit state
-    this->_safeEdit = false;
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::openContext(const wstring& path)
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // Try to open Context
-  if(pMgr->openContext(path)) {
-    this->selContext(-1);   //< unselect Context
-    this->_reloadCtxCb();  //< rebuild Combo-Box
-    this->_reloadMenu();    //< refresh "Recent Files" popup list
-  } else {
-    Om_dialogBoxErr(this->_hwnd, L"Context loading failed", pMgr->lastError());
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::selContext(int id)
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // select the requested Context
-  pMgr->selContext(id);
-
-  // update the Context icon
-  this->_reloadCtxIcon();
-
-  // update menus
-  if(pMgr->curContext()) {
-    this->setMenuFile(IDM_FILE_CLOSE, MF_ENABLED); // File > Close
-    this->setMenuEdit(0, MF_BYPOSITION|MF_ENABLED); // Edit > Context properties...
-    this->setMenuEdit(3, MF_BYPOSITION|MF_ENABLED); // Edit > Add Location...
-  } else {
-    this->setMenuFile(IDM_FILE_CLOSE, MF_GRAYED); // File > Close
-    this->setMenuEdit(0, MF_BYPOSITION|MF_GRAYED); // Edit > Context properties...
-    this->setMenuEdit(2, MF_BYPOSITION|MF_GRAYED); // Edit > Location properties...
-    this->setMenuEdit(3, MF_BYPOSITION|MF_GRAYED); // Edit > Add Location...
-    this->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED); // Edit > Package []
-  }
-
-  // update dialog window title
-  this->_reloadCaption();
-
-  // refresh visible tab
+  // passes the message to child tab dialog
   for(size_t i = 0; i < this->_pageDial.size(); ++i) {
     if(this->_pageDial[i]->visible()) {
-      this->_pageDial[i]->refresh();
+      // TODO: update this if tab child dialog are added
+      switch(this->_pageDial[i]->id())
+      {
+      case IDD_MAIN_LIB:
+        static_cast<OmUiMainLib*>(this->_pageDial[i])->freeze(enable);
+        break;
+      case IDD_MAIN_NET:
+        static_cast<OmUiMainNet*>(this->_pageDial[i])->freeze(enable);
+        break;
+      }
       break;
     }
   }
 
-  // forces control to select (or unselect) item
-  HWND hCb = this->getItem(IDC_CB_CTXLS);
-  if(id != SendMessageW(hCb, CB_GETCURSEL, 0, 0)) {
-    SendMessageW(hCb, CB_SETCURSEL, id, 0);
+  // check whether freeze was aborted, this happen if user
+  // requested to close the dialog while in freeze mode.
+  if(this->_freeze_abort) {
+    // if freeze mode is disabled, we can quit the dialog.
+    if(!enable) this->quit();
   }
 }
 
@@ -203,58 +134,110 @@ void OmUiMain::selContext(int id)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HMENU OmUiMain::getMenuFile(unsigned pos)
+void OmUiMain::safemode(bool enable)
 {
-  return GetSubMenu(this->_hMenuFile, pos);
+  // passes the message to child tab dialog
+  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+    if(this->_pageDial[i]->visible()) {
+      // TODO: update this if tab child dialog are added
+      switch(this->_pageDial[i]->id())
+      {
+      case IDD_MAIN_LIB:
+        static_cast<OmUiMainLib*>(this->_pageDial[i])->safemode(enable);
+        break;
+      case IDD_MAIN_NET:
+        static_cast<OmUiMainNet*>(this->_pageDial[i])->safemode(enable);
+        break;
+      }
+      break;
+    }
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HMENU OmUiMain::getMenuEdit(unsigned pos)
+void OmUiMain::ctxOpen(const wstring& path)
 {
-  return GetSubMenu(this->_hMenuEdit, pos);
-}
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
+  // Try to open Context
+  if(pMgr->ctxOpen(path)) {
 
+    // unselect context
+    pMgr->ctxSel(-1);
+    this->msgItem(IDC_CB_CTX, CB_SETCURSEL, -1);
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-HMENU OmUiMain::getMenuHelp(unsigned pos)
-{
-  return GetSubMenu(this->_hMenuHelp, pos);
-}
+    // rebuild "Recent Files" pop-up list
+    this->_buildMnRct();
 
+    // rebuild Context ComboBox
+    this->_buildCbCtx(); //< this will select the last added context
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::setMenuFile(unsigned item, unsigned enable)
-{
-  // Set enable flag
-  EnableMenuItem(this->_hMenuFile, item, enable);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::setMenuEdit(unsigned item, unsigned enable)
-{
-  EnableMenuItem(this->_hMenuEdit, item, enable);
+  } else {
+    Om_dialogBoxErr(this->_hwnd, L"Unable to load Context", pMgr->lastError());
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::setMenuHelp(unsigned item, unsigned enable)
+void OmUiMain::ctxSel(int id)
 {
-  EnableMenuItem(this->_hMenuHelp, item, enable);
-}
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
+  // select the requested Context
+  pMgr->ctxSel(id);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // update dialog window title
+  wstring caption;
+  if(pCtx)
+    caption = pCtx->title() + L" - ";
+
+  this->setCaption(caption + OMM_APP_NAME);
+
+  // update the Context icon
+  HICON hIcon = nullptr;
+
+  // get context icon
+  if(pCtx)
+    if(pCtx->icon())
+      hIcon = pCtx->icon();
+
+  // Get default icon
+  if(!hIcon)
+    hIcon = Om_getShellIcon(SIID_APPLICATION, true);
+
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
+
+  // update menus
+  int state = pCtx ? MF_ENABLED : MF_GRAYED;
+  this->setPopupItem(static_cast<int>(0), 5, state); // File > Close
+  this->setPopupItem(static_cast<int>(1), 0, state); // Edit > Context properties...
+  this->setPopupItem(static_cast<int>(1), 3, state); // Edit > Add Location...
+  if(pCtx) {
+    // Edit > Location properties...
+    this->setPopupItem(static_cast<int>(1), 2, pCtx->locCur() ? MF_ENABLED : MF_GRAYED);
+  } else {
+    this->setPopupItem(static_cast<int>(1), 2, MF_GRAYED); // Edit > Location properties...
+    this->setPopupItem(static_cast<int>(1), 5, MF_GRAYED); // Edit > Package []
+  }
+
+  // forces ComboBox control to select or unselect
+  this->msgItem(IDC_CB_CTX, CB_SETCURSEL, id);
+
+  // refresh visible tab
+  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+    if(this->_pageDial[i]->visible()) {
+      //this->_pageDial[i]->refresh(); break;
+      // send message to notify context selection changed
+      this->_pageDial[i]->postMessage(UWM_MAIN_CTX_CHANGED);
+    }
+  }
+}
 
 
 ///
@@ -268,65 +251,21 @@ void OmUiMain::_addPage(const wstring& title, OmDialog* dialog)
 }
 
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::_reloadCaption()
+void OmUiMain::_buildMnRct()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  wstring title = L"";
-  if(pMgr->curContext()) {
-    title += pMgr->curContext()->title() + L" - ";
-  }
+  // handle to "File > Recent files" pop-up
+  HMENU hMenu = this->getPopupItem(static_cast<unsigned>(0), 3); //< "File > Recent files" pop-up
 
-  title += OMM_APP_NAME;
-  SetWindowTextW(this->_hwnd, title.c_str());
-}
-
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::_reloadCtxIcon()
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  HICON hIcon;
-
-  if(pMgr->curContext()) {
-    if(pMgr->curContext()->icon()) {
-      hIcon = pMgr->curContext()->icon();
-    } else {
-      hIcon = this->_hIcBlank;
-    }
-  } else {
-    hIcon = this->_hIcBlank;
-  }
-
-  this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMain::_reloadMenu()
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // handle to "File > Recent files" popup
-  HMENU hMenu = this->getMenuFile(3); //< "File > Recent files" Menu-item
-
-  // remove all entry from "File > Recent files >" popup except the two last
-  // ones which are the separator and and the "Clear history" menuitem
-  unsigned nb_item = GetMenuItemCount(hMenu) - 2;
-  if(nb_item) {
-    for(unsigned i = 0; i < nb_item; ++i)
-      RemoveMenu(hMenu, 0, MF_BYPOSITION);
-  }
+  // remove all entry from "File > Recent files >" pop-up except the two last
+  // ones which are the separator and and the "Clear history" menu-item
+  unsigned n = GetMenuItemCount(hMenu) - 2;
+  for(unsigned i = 0; i < n; ++i)
+    RemoveMenu(hMenu, 0, MF_BYPOSITION);
 
   // get recent files path list from manager
   vector<wstring> path;
@@ -345,10 +284,10 @@ void OmUiMain::_reloadMenu()
       InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, item_str.c_str());
     }
     // enable the "File > Recent Files" popup
-    this->setMenuFile(3, MF_BYPOSITION|MF_ENABLED);
+    this->setPopupItem(static_cast<int>(0), 3, MF_ENABLED);
   } else {
     // disable the "File > Recent Files" popup
-    this->setMenuFile(3, MF_BYPOSITION|MF_GRAYED);
+    this->setPopupItem(static_cast<int>(0), 3, MF_GRAYED);
   }
 }
 
@@ -356,51 +295,70 @@ void OmUiMain::_reloadMenu()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMain::_reloadCtxCb()
+void OmUiMain::_buildCbCtx()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  HWND hCb = this->getItem(IDC_CB_CTXLS);
-
   // save current selection
-  int cb_sel = SendMessageW(hCb, CB_GETCURSEL, 0, 0);
+  int cb_sel = this->msgItem(IDC_CB_CTX, CB_GETCURSEL);
 
   // empty the Combo-Box
-  SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
-
-  wstring item_str;
+  this->msgItem(IDC_CB_CTX, CB_RESETCONTENT);
 
   // add Context(s) to Combo-Box
-  if(pMgr->contextCount()) {
+  if(pMgr->ctxCount()) {
 
-    EnableWindow(hCb, true);
+    wstring item_str;
 
-    for(unsigned i = 0; i < pMgr->contextCount(); ++i) {
+    for(unsigned i = 0; i < pMgr->ctxCount(); ++i) {
 
-      item_str = pMgr->context(i)->title();
+      item_str = pMgr->ctxGet(i)->title();
       item_str += L" - ";
-      item_str += pMgr->context(i)->home();
+      item_str += pMgr->ctxGet(i)->home();
 
-      SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+      this->msgItem(IDC_CB_CTX, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     }
 
     // select the the previously selected Context
-    if(cb_sel >= 0) {
-      SendMessageW(hCb, CB_SETCURSEL, cb_sel, 0);
+    if(cb_sel < 0) {
+      // select the last added Context by default
+      this->ctxSel(pMgr->ctxCount() - 1);
     } else {
-      SendMessageW(hCb, CB_SETCURSEL, 0, 0);
-      // select the last Context by default
-      this->selContext(pMgr->contextCount()-1);
+      this->msgItem(IDC_CB_CTX, CB_SETCURSEL, cb_sel);
     }
 
+    // enable the ComboBox control
+    this->enableItem(IDC_CB_CTX, true);
+
   } else {
-    // no Context disable the Combo-Box
-    EnableWindow(hCb, false);
-    // unselect all
-    this->selContext(-1);
+
+    // force to unselect
+    this->ctxSel(-1);
+
+    // disable the ComboBox control
+    this->enableItem(IDC_CB_CTX, false);
   }
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMain::_onCbCtxSel()
+{
+  int cb_sel = this->msgItem(IDC_CB_CTX, CB_GETCURSEL);
+
+  if(cb_sel >= 0) this->ctxSel(cb_sel);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMain::_onShow()
+{
+  // show the first tab page
+  this->_pageDial[0]->show();
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -408,16 +366,11 @@ void OmUiMain::_reloadCtxCb()
 void OmUiMain::_onInit()
 {
   // set window icon
-  SendMessageW(this->_hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(this->_hIcAppS));
-  SendMessageW(this->_hwnd, WM_SETICON, ICON_BIG,   reinterpret_cast<LPARAM>(this->_hIcAppL));
+  HICON small = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0));
+  HICON big = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0));
+  this->setIcon(big, small);
 
-  this->_createTooltip(IDC_CB_CTXLS, L"Select active context");
-
-  // Get handle to menu
-  HMENU hMenu = GetMenu(this->_hwnd);
-  this->_hMenuFile = GetSubMenu(hMenu, 0);
-  this->_hMenuEdit = GetSubMenu(hMenu, 1);
-  this->_hMenuHelp = GetSubMenu(hMenu, 2);
+  this->_createTooltip(IDC_CB_CTX, L"Select active context");
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
@@ -448,9 +401,11 @@ void OmUiMain::_onInit()
       this->_pageDial[i]->modeless(false);
       EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
     }
-
-    this->_pageDial[0]->show();
   }
+
+  // Set default context icon
+  HICON hIc = Om_getShellIcon(SIID_APPLICATION, true);
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc));
 
   // refresh all elements
   this->_onRefresh();
@@ -463,9 +418,10 @@ void OmUiMain::_onInit()
 void OmUiMain::_onResize()
 {
   // Context Icon
-  this->_setItemPos(IDC_SB_CTICO, 6, 3, 19, 19);
+  this->_setItemPos(IDC_SB_ICON, 6, 3, 19, 19);
+
   // Context list ComboBox
-  this->_setItemPos(IDC_CB_CTXLS, 32, 6, this->width()-38 , 12);
+  this->_setItemPos(IDC_CB_CTX, 32, 6, this->width()-38 , 12);
 
   // Main Tab Control
   this->_setItemPos(IDC_TC_MAIN, 5, 25, this->width()-9, this->height()-30);
@@ -503,17 +459,11 @@ void OmUiMain::_onResize()
 ///
 void OmUiMain::_onRefresh()
 {
+  // rebuild the Recent Contect menu
+  this->_buildMnRct();
+
   // rebuild the Context list Combo-Box
-  this->_reloadCtxCb();
-
-  // update the Context icon
-  this->_reloadCtxIcon();
-
-  // Update menus to have proper actives or grayed menus
-  this->_reloadMenu();
-
-  // update dialog window title
-  this->_reloadCaption();
+  this->_buildCbCtx();
 }
 
 
@@ -522,14 +472,16 @@ void OmUiMain::_onRefresh()
 ///
 void OmUiMain::_onClose()
 {
-  if(this->_onProcess) {
-    // disable the window, first to notify user the application heard his request
+  // check whether dialog is in freeze mode, in this case we cannot quit
+  // right now, we need to carefully abort all running threads first
+  if(this->_freeze_mode) {
+    // take notes user requested to quit dialog
+    this->_freeze_abort = true;
+    // disable the window to notify user its request to quit is acknowledged
     EnableWindow(this->_hwnd, false);
-    // notify a close was requested
-    this->_quitPending = true;
-    // send an abort message to all Tab child dialogs
+    // send an abort message (emulate Abort button click) to all tab child dialogs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-      PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0), 0);
+      PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0),0);
     }
   } else {
     this->quit();
@@ -558,13 +510,9 @@ void OmUiMain::_onQuit()
 ///
 bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
   if(uMsg == WM_NOTIFY) {
-
     // handle TabControl page selection change
     if(this->_pageDial.size()) {
-
       // check for notify from the specified TabControl
       if(LOWORD(wParam) == IDC_TC_MAIN) {
         // check for a "selection changed" notify
@@ -588,6 +536,9 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->ctxCur();
+
     // handle "File > Recent Files" path click
     if(LOWORD(wParam) >= IDM_FILE_RECENT_PATH) { // recent
 
@@ -595,90 +546,76 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       pMgr->loadRecentFiles(paths);
 
       // subtract Command ID by the base resource ID to get real index
-      this->openContext(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
+      this->ctxOpen(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
     }
 
     wstring item_str;
 
     switch(LOWORD(wParam))
     {
-
-    case IDC_CB_CTXLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE)
-        this->selContext(this->msgItem(IDC_CB_CTXLS, CB_GETCURSEL));
-      break;
-
     case IDM_FILE_NEW_CTX:
       this->childById(IDD_WIZ_CTX)->open(); // New Context Wizard
       break;
 
-    case IDM_TOOLS_EDI_PKG:
-      this->childById(IDD_TOOL_PKG)->open();
-      break;
-
     case IDM_FILE_OPEN:
       if(Om_dialogOpenFile(item_str, this->_hwnd, L"Select Context file.", OMM_CTX_DEF_FILE_FILER, item_str)) {
-        this->openContext(item_str);
+        this->ctxOpen(item_str);
       }
       break;
 
     case IDM_FILE_CLOSE:
-      pMgr->closeCurrContext();
-      this->selContext(-1);
-      this->_reloadCtxCb();
+      pMgr->ctxClose();
+      this->_buildCbCtx();
       break;
 
     case IDM_FILE_CLEAR_HIST:
       pMgr->clearRecentFiles();
-      this->_reloadMenu();
+      this->_buildMnRct();
       break;
 
     case IDM_FILE_QUIT:
       this->quit();
       break;
 
-    case IDM_EDIT_CTX_PROP:
-      if(pMgr->curContext()) {
-        OmUiPropCtx* pUiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
-        pUiPropCtx->setContext(pMgr->curContext());
-        pUiPropCtx->open(true);
-      }
+    case IDM_EDIT_CTX_PROP: {
+      OmUiPropCtx* pUiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
+      pUiPropCtx->ctxSet(pCtx);
+      pUiPropCtx->open(true);
       break;
+    }
 
-    case IDM_EDIT_LOC_PROP:
-      if(pMgr->curContext()) {
-        OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->childById(IDD_PROP_LOC));
-        pUiPropLoc->setLocation(pMgr->curContext()->curLocation());
-        pUiPropLoc->open(true);
-      }
+    case IDM_EDIT_LOC_PROP: {
+      OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->childById(IDD_PROP_LOC));
+      pUiPropLoc->locSet(pCtx->locCur());
+      pUiPropLoc->open(true);
       break;
+    }
 
-    case IDM_EDIT_CTX_ADDL:
-      if(pMgr->curContext()) {
-        OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->childById(IDD_ADD_LOC));
-        pUiNewLoc->setContext(pMgr->curContext());
-        pUiNewLoc->open(true);
-      }
+    case IDM_EDIT_ADD_LOC: {
+      OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->childById(IDD_ADD_LOC));
+      pUiAddLoc->ctxSet(pCtx);
+      pUiAddLoc->open(true);
       break;
+    }
 
     case IDM_EDIT_PKG_INST:
-      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->install();
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgInst();
       break;
 
     case IDM_EDIT_PKG_UINS:
-      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->uninstall();
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgUnin();
       break;
 
     case IDM_EDIT_PKG_TRSH:
-      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->moveTrash();
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgTrsh();
       break;
 
     case IDM_EDIT_PKG_OPEN:
-      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->openExplore();
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgOpen();
       break;
 
     case IDM_EDIT_PKG_INFO:
-      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->viewDetails();
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgProp();
       break;
 
     case IDM_TOOLS_EDI_REP:
@@ -689,12 +626,21 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->childById(IDD_PROP_MAN)->open();
       break;
 
+    case IDM_TOOLS_EDI_PKG:
+      this->childById(IDD_TOOL_PKG)->open();
+      break;
+
     case IDM_HELP_LOG:
       this->childById(IDD_HELP_LOG)->modeless();
       break;
 
     case IDM_HELP_ABOUT:
       this->childById(IDD_HELP_ABT)->open();
+      break;
+
+    case IDC_CB_CTX:
+      if(HIWORD(wParam) == CBN_SELCHANGE)
+        this->_onCbCtxSel();
       break;
     }
   }

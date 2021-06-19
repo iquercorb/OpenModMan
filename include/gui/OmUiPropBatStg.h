@@ -81,7 +81,7 @@ class OmUiPropBatStg : public OmDialog
     ///
     /// \param[in]  l   : List index, corresponding to Location combo box.
     ///
-    unsigned getIncLsSize(unsigned l) const {
+    unsigned incCount(unsigned l) const {
       return this->_included[l].size();
     }
 
@@ -92,7 +92,7 @@ class OmUiPropBatStg : public OmDialog
     /// \param[in]  l   : List index, corresponding to Location combo box.
     /// \param[in]  v   : Value index to get in list.
     ///
-    int getIncLsValue(unsigned l, unsigned v) const {
+    int incGet(unsigned l, unsigned v) const {
       return this->_included[l][v];
     }
 

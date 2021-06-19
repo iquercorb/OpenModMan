@@ -59,7 +59,7 @@ void OmUiPropPkgSrc::_onInit()
   // defines fonts for package description, title, and log output
   this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), 1);
 
-  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
+  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->pkgCur();
   if(pPkg == nullptr) return;
 
   // Ident
@@ -71,10 +71,10 @@ void OmUiPropPkgSrc::_onInit()
   // Computed Hash
   this->setItemText(IDC_EC_OUT04, Om_toHexString(pPkg->hash()));
 
-  if(pPkg->isType(PKG_TYPE_SRC)) {
+  if(pPkg->hasSrc()) {
 
     // Type
-    if(pPkg->isType(PKG_TYPE_ZIP)) {
+    if(pPkg->isZip()) {
       this->setItemText(IDC_EC_OUT06, L"Zip archive");
     } else {
       this->setItemText(IDC_EC_OUT06, L"Sub-folder");
@@ -82,15 +82,15 @@ void OmUiPropPkgSrc::_onInit()
 
     // Location
     this->enableItem(IDC_EC_OUT07, true);
-    this->setItemText(IDC_EC_OUT07, pPkg->sourcePath());
+    this->setItemText(IDC_EC_OUT07, pPkg->srcPath());
 
     // Dependencies
     this->enableItem(IDC_EC_OUT08, true);
-    if(pPkg->dependCount()) {
+    if(pPkg->depCount()) {
       wstring dpn_str;
-      for(unsigned i = 0; i < pPkg->dependCount(); ++i) {
-        dpn_str += pPkg->depend(i);
-        if(i < (pPkg->dependCount() - 1)) {
+      for(unsigned i = 0; i < pPkg->depCount(); ++i) {
+        dpn_str += pPkg->depGet(i);
+        if(i < (pPkg->depCount() - 1)) {
           dpn_str += L"; ";
         }
       }
@@ -104,7 +104,7 @@ void OmUiPropPkgSrc::_onInit()
       DeleteObject(this->_bmThn);
       this->_bmThn = pPkg->image().thumbnail();
     }
-    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+    this->setStImage(IDC_SB_PKG, this->_bmThn);
 
 
     // Package description
@@ -126,7 +126,7 @@ void OmUiPropPkgSrc::_onInit()
     this->setItemText(IDC_EC_OUT08, L"N/A");
     this->enableItem(IDC_EC_OUT08, false);
     // Snapshot image
-    this->setStImage(IDC_SB_PKIMG, this->_bmThn);
+    this->setStImage(IDC_SB_PKG, this->_bmThn);
     // Package description
     this->setItemText(IDC_EC_PKTXT, L"N/A");
     this->enableItem(IDC_EC_PKTXT, false);
@@ -179,7 +179,7 @@ void OmUiPropPkgSrc::_onResize()
   // Package Source Snapshot Label
   this->_setItemPos(IDC_SC_LBL09, 5, 188, 64, 9);
   // Package Source Snapshot Image
-  this->_setItemPos(IDC_SB_PKIMG, 70, 188, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 70, 188, 85, 78);
 
   // Package Source Description Label
   this->_setItemPos(IDC_SC_LBL10, 5, 275, 64, 9);

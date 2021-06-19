@@ -28,7 +28,7 @@ class OmLocation;
 ///
 /// Package type masks enumerator.
 ///
-enum PackageType : unsigned {
+enum OmPkgType : unsigned {
   PKG_TYPE_SRC = 0x1,     ///< Package has Source
   PKG_TYPE_BCK = 0x2,     ///< Package has Backup
   PKG_TYPE_ZIP = 0x4,     ///< Zip file Package
@@ -40,7 +40,7 @@ enum PackageType : unsigned {
 /// Package Item Type enumerator. Describe whether a package item is a
 /// file or a directory.
 ///
-enum OmPackageItemType {
+enum OmPkgItemType {
   PKGITEM_TYPE_F = 0,     ///< File
   PKGITEM_TYPE_D = 1      ///< Directory
 };
@@ -50,7 +50,7 @@ enum OmPackageItemType {
 /// Package Item backup destination enumerator. Describe whether a package
 /// backup item is destined to be copied or removed to/from its destination.
 ///
-enum OmPackageItemDest {
+enum OmPkgItemDest {
   PKGITEM_DEST_NUL = 0,   ///< N/A or Undefined
   PKGITEM_DEST_CPY = 1,   ///< Copy and overwrite to destination
   PKGITEM_DEST_DEL = 2    ///< Delete destination
@@ -63,13 +63,13 @@ enum OmPackageItemDest {
 ///
 struct OmPackageItem {
 
-  OmPackageItemType   type; ///< Item type
+  OmPkgItemType   type; ///< Item type
 
-  OmPackageItemDest   dest; ///< Item destination mask
+  OmPkgItemDest   dest; ///< Item destination mask
 
-  int                 cdri; ///<  Zip CDR index
+  int             cdri; ///<  Zip CDR index
 
-  wstring             path; ///<  Relative path
+  wstring         path; ///<  Relative path
 
 };
 
@@ -223,8 +223,8 @@ class OmPackage
     ///
     /// \return Package Source file path.
     ///
-    const wstring& sourcePath() const {
-      return _source;
+    const wstring& srcPath() const {
+      return _src;
     }
 
     /// \brief Get package Backup file path.
@@ -234,8 +234,8 @@ class OmPackage
     ///
     /// \return Package Backup file path.
     ///
-    const wstring& backupPath() const {
-      return _backup;
+    const wstring& bckPath() const {
+      return _bck;
     }
 
     /// \brief Check if this Package is Backup of a Source.
@@ -248,7 +248,7 @@ class OmPackage
     /// \return True if this Package has the Backup side of the specified Source
     /// file, false otherwise.
     ///
-    bool isBackupOf(const wstring& path) {
+    bool isBckOf(const wstring& path) {
       return (Om_getXXHash3(Om_getFilePart(path)) == _hash);
     }
 
@@ -262,7 +262,7 @@ class OmPackage
     /// \return True if supplied file or folder is a valid package source and
     /// operation succeed, false otherwise.
     ///
-    bool sourceParse(const wstring& path);
+    bool srcParse(const wstring& path);
 
     /// \brief Parse Backup file.
     ///
@@ -274,21 +274,21 @@ class OmPackage
     /// \return True if supplied file is a valid package source and operation
     /// succeed, false otherwise.
     ///
-    bool backupParse(const wstring& path);
+    bool bckParse(const wstring& path);
 
     /// \brief Revoke Source.
     ///
     /// Revoke the Source side of this Package so it will no longer have
     /// a valid Source side.
     ///
-    void sourceClear();
+    void srcClear();
 
     /// \brief Revoke Backup.
     ///
     /// Revoke the Backup side of this Package so it will no longer have
     /// a valid Backup side.
     ///
-    void backupClear();
+    void bckClear();
 
     /// \brief Check source validity.
     ///
@@ -302,7 +302,7 @@ class OmPackage
     ///
     /// \return True if previously parsed Sources still valid, false otherwise.
     ///
-    bool sourceValid();
+    bool srcValid();
 
     /// \brief Check backup validity.
     ///
@@ -316,7 +316,7 @@ class OmPackage
     ///
     /// \return True if previously parsed backup still valid, false otherwise.
     ///
-    bool backupValid();
+    bool bckValid();
 
     /// \brief Get backup list item count.
     ///
@@ -324,8 +324,8 @@ class OmPackage
     ///
     /// \return Count of item in backup tree list.
     ///
-    size_t backupItemCount() const {
-      return _backupItem.size();
+    size_t bckItemCount() const {
+      return _bckItemLs.size();
     }
 
     /// \brief Get backup list item.
@@ -336,8 +336,8 @@ class OmPackage
     ///
     /// \return Backup list item at specified index.
     ///
-    const OmPackageItem& backupItem(unsigned i) const {
-      return _backupItem[i];
+    const OmPackageItem& bckItemGet(unsigned i) const {
+      return _bckItemLs[i];
     }
 
     /// \brief Get source list item count.
@@ -346,8 +346,8 @@ class OmPackage
     ///
     /// \return Count of item in source tree list.
     ///
-    size_t sourceItemCount() const {
-      return _sourceItem.size();
+    size_t srcItemCount() const {
+      return _srcItemLs.size();
     }
 
     /// \brief Get source list item.
@@ -358,8 +358,8 @@ class OmPackage
     ///
     /// \return Source list item at specified index.
     ///
-    const OmPackageItem& sourceItem(unsigned i) const {
-      return _sourceItem[i];
+    const OmPackageItem& srcItemGet(unsigned i) const {
+      return _srcItemLs[i];
     }
 
     /// \brief Get source dependencies count.
@@ -368,8 +368,8 @@ class OmPackage
     ///
     /// \return Count of source dependencies packages.
     ///
-    size_t dependCount() const {
-      return _depends.size();
+    size_t depCount() const {
+      return _depLs.size();
     }
 
     /// \brief Get source dependency package.
@@ -380,8 +380,8 @@ class OmPackage
     ///
     /// \return Source dependency Package.
     ///
-    const wstring& depend(unsigned i) const {
-      return _depends[i];
+    const wstring& depGet(unsigned i) const {
+      return _depLs[i];
     }
 
     /// \brief Add Dependency
@@ -390,11 +390,11 @@ class OmPackage
     ///
     /// \param[in]  name    : Dependency Package name to add
     ///
-    void addDepend(const wstring& name) {
-      for(size_t i = 0; i < _depends.size(); ++i) {
-        if(name == _depends[i]) return;
+    void depAdd(const wstring& name) {
+      for(size_t i = 0; i < _depLs.size(); ++i) {
+        if(name == _depLs[i]) return;
       }
-      _depends.push_back(name);
+      _depLs.push_back(name);
     }
 
     /// \brief Check installation overlapping.
@@ -407,7 +407,7 @@ class OmPackage
     /// \return True if the specified Package already have installed one or more
     /// files which this one could overwrite.
     ///
-    bool couldOverlap(const OmPackage* other) const;
+    bool ovrTest(const OmPackage* other) const;
 
     /// \brief Get overlapped Package count.
     ///
@@ -415,8 +415,8 @@ class OmPackage
     ///
     /// \return Count of overlapped Package by this one.
     ///
-    size_t overlapCount() const {
-      return _overlap.size();
+    size_t ovrCount() const {
+      return _ovrLs.size();
     }
 
     /// \brief Get overlapped package.
@@ -427,8 +427,8 @@ class OmPackage
     ///
     /// \return Hash value of overlapped Package.
     ///
-    uint64_t overlap(unsigned i) const {
-      return _overlap[i];
+    uint64_t ovrGet(unsigned i) const {
+      return _ovrLs[i];
     }
 
     /// \brief Check overlapped package Hash.
@@ -439,9 +439,9 @@ class OmPackage
     ///
     /// \return Hash value of overlapped Package.
     ///
-    bool hasOverlap(uint64_t hash) const {
-      for(size_t i = 0; i < _overlap.size(); ++i) {
-        if(hash == _overlap[i]) return true;
+    bool ovrHas(uint64_t hash) const {
+      for(size_t i = 0; i < _ovrLs.size(); ++i) {
+        if(hash == _ovrLs[i]) return true;
       }
       return false;
     }
@@ -486,7 +486,7 @@ class OmPackage
     ///
     /// \return True if Package is installed and has backup available.
     ///
-    bool hasBackup() const {
+    bool hasBck() const {
       return (_type & PKG_TYPE_BCK);
     }
 
@@ -496,7 +496,7 @@ class OmPackage
     ///
     /// \return True if Package has Source data to be installed.
     ///
-    bool hasSource() const {
+    bool hasSrc() const {
       return (_type & PKG_TYPE_SRC);
     }
 
@@ -506,7 +506,7 @@ class OmPackage
     ///
     /// \return True if Package Source is a Zip archive, false otherwise.
     ///
-    bool isArchive() const {
+    bool isZip() const {
       return (_type & PKG_TYPE_ZIP);
     }
 
@@ -566,13 +566,13 @@ class OmPackage
     ///
     void clearImage();
 
-    /// \brief Get Location.
+    /// \brief Get owner Location.
     ///
-    /// Returns package related Location
+    /// Returns Location that own this package.
     ///
-    /// \return Pointer to Package related Location.
+    /// \return Pointer to Location or nullptr.
     ///
-    OmLocation* location() const {
+    OmLocation* ownerLoc() const {
       return _location;
     }
 
@@ -657,6 +657,8 @@ class OmPackage
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    OmLocation*         _location;
+
     unsigned            _type;
 
     wstring             _ident;
@@ -665,29 +667,27 @@ class OmPackage
 
     wstring             _name;
 
-    wstring             _source;
+    wstring             _src;
 
-    wstring             _sourceDir;
+    wstring             _srcDir;
 
-    vector<OmPackageItem>  _sourceItem;
+    vector<OmPackageItem>  _srcItemLs;
 
-    vector<wstring>     _depends;
+    vector<wstring>     _depLs;
 
-    wstring             _backup;
+    wstring             _bck;
 
-    wstring             _backupDir;
+    wstring             _bckDir;
 
-    vector<OmPackageItem>  _backupItem;
+    vector<OmPackageItem>  _bckItemLs;
 
-    vector<uint64_t>    _overlap;
+    vector<uint64_t>    _ovrLs;
 
     wstring             _desc;
 
     OmVersion           _version;
 
     OmImage             _image;
-
-    OmLocation*         _location;
 
     wstring             _error;
 };

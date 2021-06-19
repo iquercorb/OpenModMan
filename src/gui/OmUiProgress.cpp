@@ -81,7 +81,7 @@ void OmUiProgress::setDetail(const wchar_t* wstr) const
 ///
 HWND OmUiProgress::getPbHandle() const
 {
-  return GetDlgItem(this->_hwnd, IDC_PB_PGBAR);
+  return GetDlgItem(this->_hwnd, IDC_PB_BAR);
 }
 
 
@@ -138,7 +138,7 @@ void OmUiProgress::_onResize()
 
   this->_setItemPos(IDC_SC_TITLE, 10, 8, this->width()-20, 12);
   this->_setItemPos(IDC_SC_STATE, 10, half_height-15, this->width()-20, 9);
-  this->_setItemPos(IDC_PB_PGBAR, 10, half_height, this->width()-20, 11);
+  this->_setItemPos(IDC_PB_BAR, 10, half_height, this->width()-20, 11);
   this->_setItemPos(IDC_BC_ABORT, this->width()-70, this->height()-24, 60, 14);
 }
 

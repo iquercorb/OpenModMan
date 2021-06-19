@@ -38,7 +38,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
-  _location(nullptr),
+  _pLoc(nullptr),
   _movBck_hth(nullptr)
 {
   // create tab dialogs
@@ -75,7 +75,6 @@ long OmUiPropLoc::id()  const
 ///
 bool OmUiPropLoc::checkChanges()
 {
-  OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   //OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
@@ -86,40 +85,40 @@ bool OmUiPropLoc::checkChanges()
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
     pUiPropLocStg->getItemText(IDC_EC_INP01, item_str);
-    if(pLoc->title() != item_str) changed = true;
+    if(this->_pLoc->title() != item_str) changed = true;
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
     pUiPropLocStg->getItemText(IDC_EC_INP02, item_str);
-    if(pLoc->installDir() != item_str) changed = true;
+    if(this->_pLoc->dstDir() != item_str) changed = true;
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     if(pUiPropLocStg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP03, item_str);
-      if(pLoc->libraryDir() != item_str || !pLoc->hasCustLibraryDir())
+      if(this->_pLoc->libDir() != item_str || !this->_pLoc->hasCustLibDir())
         changed = true;
     } else {
-      if(pLoc->hasCustLibraryDir()) changed = true;
+      if(this->_pLoc->hasCustLibDir()) changed = true;
     }
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
     if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP04, item_str);
-      if(pLoc->backupDir() != item_str || !pLoc->hasCustBackupDir())
+      if(this->_pLoc->bckDir() != item_str || !this->_pLoc->hasCustBckDir())
         changed = true;
     } else {
-      if(pLoc->hasCustBackupDir()) changed = true;
+      if(this->_pLoc->hasCustBckDir()) changed = true;
     }
   }
 
   if(pUiPropLocBck->hasChParam(LOC_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
     if(pUiPropLocBck->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-      int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LEVEL, CB_GETCURSEL);
-      if(pLoc->backupZipLevel() != cb_sel) changed = true;
+      int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LVL, CB_GETCURSEL);
+      if(this->_pLoc->bckZipLevel() != cb_sel) changed = true;
     } else {
-      if(pLoc->backupZipLevel() != -1) changed = true;
+      if(this->_pLoc->bckZipLevel() != -1) changed = true;
     }
   }
 
@@ -135,7 +134,6 @@ bool OmUiPropLoc::checkChanges()
 ///
 bool OmUiPropLoc::applyChanges()
 {
-  OmLocation* pLoc = static_cast<OmLocation*>(this->_location);
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
  // OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
@@ -149,8 +147,7 @@ bool OmUiPropLoc::applyChanges()
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
     pUiPropLocStg->getItemText(IDC_EC_INP01, loc_name);
     if(!Om_isValidName(loc_name)) {
-      wstring wrn = L"The title";
-      wrn += OMM_STR_ERR_VALIDNAME;
+      wstring wrn = L"The title"; wrn += OMM_STR_ERR_VALIDNAME;
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
       return false;
     }
@@ -159,8 +156,7 @@ bool OmUiPropLoc::applyChanges()
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
     pUiPropLocStg->getItemText(IDC_EC_INP02, loc_dst);
     if(!Om_isDir(loc_dst)) {
-      wstring wrn = L"The folder \""+loc_dst+L"\"";
-      wrn += OMM_STR_ERR_ISDIR;
+      wstring wrn = L"The folder \""+loc_dst+L"\""; wrn += OMM_STR_ERR_ISDIR;
       Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
       return false;
     }
@@ -171,8 +167,7 @@ bool OmUiPropLoc::applyChanges()
     if(cust_lib) { //< Custom Library folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP03, loc_lib);
       if(!Om_isDir(loc_lib)) {
-        wstring wrn = L"The folder \""+loc_lib+L"\"";
-        wrn += OMM_STR_ERR_ISDIR;
+        wstring wrn = L"The folder \""+loc_lib+L"\""; wrn += OMM_STR_ERR_ISDIR;
         Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
         return false;
       }
@@ -184,8 +179,7 @@ bool OmUiPropLoc::applyChanges()
     if(cust_bck) { //< Custom Backup folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP04, loc_bck);
       if(!Om_isDir(loc_bck)) {
-        wstring wrn = L"The folder \""+loc_bck+L"\"";
-        wrn += OMM_STR_ERR_ISDIR;
+        wstring wrn = L"The folder \""+loc_bck+L"\""; wrn += OMM_STR_ERR_ISDIR;
         Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
         return false;
       }
@@ -195,11 +189,11 @@ bool OmUiPropLoc::applyChanges()
   // Step 2, save changes
   if(pUiPropLocBck->hasChParam(LOC_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
     if(pUiPropLocBck->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-      int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LEVEL, CB_GETCURSEL);
-      if(cb_sel >= 0) pLoc->setBackupZipLevel(cb_sel);
+      int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LVL, CB_GETCURSEL);
+      if(cb_sel >= 0) this->_pLoc->setBckZipLevel(cb_sel);
     } else {
       // disable zipped backups
-      pLoc->setBackupZipLevel(-1);
+      this->_pLoc->setBckZipLevel(-1);
     }
 
     // Reset parameter as unmodified
@@ -207,7 +201,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Install path
-    pLoc->setInstallDir(loc_dst);
+    this->_pLoc->setDstDir(loc_dst);
 
     // Reset parameter as unmodified
     pUiPropLocStg->setChParam(LOC_PROP_STG_INSTALL, false);
@@ -215,9 +209,9 @@ bool OmUiPropLoc::applyChanges()
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     if(cust_lib) {
-      pLoc->setCustLibraryDir(loc_lib);
+      this->_pLoc->setCustLibDir(loc_lib);
     } else {
-      pLoc->remCustLibraryDir();
+      this->_pLoc->remCustLibDir();
     }
     // Reset parameter as unmodified
     pUiPropLocStg->setChParam(LOC_PROP_STG_LIBRARY, false);
@@ -229,7 +223,7 @@ bool OmUiPropLoc::applyChanges()
     // launch the process via a new thread with progress dialog window. The
     // Location backup setting will be properly modified withing the
     // dedicates thread
-    if(pLoc->backupDir() != loc_bck) {
+    if(this->_pLoc->bckDir() != loc_bck) {
 
       this->_movBck_init();
 
@@ -241,8 +235,8 @@ bool OmUiPropLoc::applyChanges()
 
     } else {
       // uncheck the unnecessary "custom" flag
-      if(!cust_bck && pLoc->hasCustBackupDir())
-        pLoc->remCustBackupDir();
+      if(!cust_bck && this->_pLoc->hasCustBckDir())
+        this->_pLoc->remCustBckDir();
 
       // Reset parameter as unmodified
       pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
@@ -251,23 +245,17 @@ bool OmUiPropLoc::applyChanges()
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
 
-    pLoc->setTitle(loc_name);
+    this->_pLoc->setTitle(loc_name);
 
-    wstring qry = L"Location title changed, do you also want to rename "
-                  L"folder and definition file according the new title ?";
+    // To prevent crash during operation we unselect location in the main dialog
+    static_cast<OmUiMain*>(this->root())->safemode(true);
 
-    if(Om_dialogBoxQuerry(this->_hwnd, L"Change Location title", qry)) {
-
-      // To prevent crash during operation we unselect location in the main dialog
-      static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
-
-      if(!pLoc->renameHome(loc_name)) {
-        Om_dialogBoxErr(this->_hwnd, L"Location rename failed", pLoc->lastError());
-      }
-
-      // Back to main dialog window to normal state
-      static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+    if(!this->_pLoc->renameHome(loc_name)) {
+      Om_dialogBoxErr(this->_hwnd, L"Location rename failed", this->_pLoc->lastError());
     }
+
+    // Back to main dialog window to normal state
+    static_cast<OmUiMain*>(this->root())->safemode(false);
 
     // Reset parameter as unmodified
     pUiPropLocStg->setChParam(LOC_PROP_STG_TITLE, false);
@@ -289,7 +277,7 @@ bool OmUiPropLoc::applyChanges()
 void OmUiPropLoc::_movBck_init()
 {
   // To prevent crash during operation we unselect location in the main dialog
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+  static_cast<OmUiMain*>(this->root())->safemode(true);
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
   pUiProgress->open(true);
@@ -313,7 +301,7 @@ void OmUiPropLoc::_movBck_stop()
   }
 
   // Back to main dialog window to normal state
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+  static_cast<OmUiMain*>(this->root())->safemode(false);
 
   // Close progress dialog
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
@@ -336,7 +324,6 @@ void OmUiPropLoc::_movBck_stop()
 DWORD WINAPI OmUiPropLoc::_movBck_fth(void* arg)
 {
   OmUiPropLoc* self = static_cast<OmUiPropLoc*>(arg);
-  OmLocation* pLoc = static_cast<OmLocation*>(self->_location);
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(self->childById(IDD_PROP_LOC_STG));
 
   // retrieve new backup data folder
@@ -344,23 +331,23 @@ DWORD WINAPI OmUiPropLoc::_movBck_fth(void* arg)
   pUiPropLocStg->getItemText(IDC_EC_INP04, bck_dest);
 
   // launch move process only if directory not empty
-  if(!Om_isDirEmpty(pLoc->backupDir())) {
+  if(!Om_isDirEmpty(self->_pLoc->bckDir())) {
 
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
     HWND hPb = pUiProgress->getPbHandle();
     HWND hSc = pUiProgress->getDetailScHandle();
 
-    if(!pLoc->backupsMove(bck_dest, hPb, hSc, pUiProgress->getAbortPtr())) {
-      Om_dialogBoxWarn(pUiProgress->hwnd(), L"Backup data transfer error", pLoc->lastError());
+    if(!self->_pLoc->bckMove(bck_dest, hPb, hSc, pUiProgress->getAbortPtr())) {
+      Om_dialogBoxWarn(pUiProgress->hwnd(), L"Backup data transfer error", self->_pLoc->lastError());
     }
   }
 
   // modify the backup path for the Location
   if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) { // custom backup checked
-    pLoc->setCustBackupDir(bck_dest);
+    self->_pLoc->setCustBckDir(bck_dest);
   } else {
-    pLoc->remCustBackupDir();
+    self->_pLoc->remCustBckDir();
   }
 
   // send message to window, to proper quit dialog and finish

@@ -63,7 +63,7 @@ class OmUiToolRep : public OmDialog
 
     OmXmlNode           _repoGetEnt(const wstring& ident);
 
-    bool                _repoAddEnt(const wstring& path);
+    bool                _repAddEnt(const wstring& path);
 
     bool                _repoRemEnt(const wstring& ident);
 

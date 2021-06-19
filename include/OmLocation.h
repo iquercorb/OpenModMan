@@ -130,8 +130,8 @@ class OmLocation
     ///
     /// \return Location destination directory.
     ///
-    const wstring& installDir() const {
-      return _installDir;
+    const wstring& dstDir() const {
+      return _dstDir;
     }
 
     /// \brief Get Location library path.
@@ -140,8 +140,8 @@ class OmLocation
     ///
     /// \return Packages library directory.
     ///
-    const wstring& libraryDir() const {
-      return _libraryDir;
+    const wstring& libDir() const {
+      return _libDir;
     }
 
     /// \brief Get Location backup path.
@@ -150,8 +150,8 @@ class OmLocation
     ///
     /// \return Backup directory.
     ///
-    const wstring& backupDir() const {
-      return _backupDir;
+    const wstring& bckDir() const {
+      return _bckDir;
     }
 
     /// \brief Get backup compression level.
@@ -160,8 +160,8 @@ class OmLocation
     ///
     /// \return Zip compression level.
     ///
-    int backupZipLevel() const {
-      return _backupZipLevel;
+    int bckZipLevel() const {
+      return _bckZipLevel;
     }
 
     /// \brief Verify Library folder access.
@@ -232,7 +232,7 @@ class OmLocation
     ///
     /// \param[in]  path    : destination path to save.
     ///
-    void setInstallDir(const wstring& path);
+    void setDstDir(const wstring& path);
 
     /// \brief Set custom Library folder.
     ///
@@ -242,7 +242,7 @@ class OmLocation
     ///
     /// \param[in]  path    : Custom Library folder path to save.
     ///
-    void setCustLibraryDir(const wstring& path);
+    void setCustLibDir(const wstring& path);
 
     /// \brief Check for custom Library.
     ///
@@ -251,8 +251,8 @@ class OmLocation
     ///
     /// \return True if a custom Library path is used, false otherwise.
     ///
-    bool hasCustLibraryDir() const {
-      return _custLibraryDir;
+    bool hasCustLibDir() const {
+      return _libDirCust;
     }
 
     /// \brief Remove custom Backup.
@@ -260,19 +260,56 @@ class OmLocation
     /// Removes the current custom Backup configuration and reset to
     /// default settings.
     ///
-    void remCustLibraryDir();
+    void remCustLibDir();
+
+    /// \brief Set custom Backup folder.
+    ///
+    /// Defines and save a custom package Backup folder. If custom
+    /// Backup folder is not defined, the default location is used:
+    /// <Location path>\backup
+    ///
+    /// \param[in]  path    : Custom Backup folder path to save.
+    ///
+    void setCustBckDir(const wstring& path);
+
+    /// \brief Check for custom Backup.
+    ///
+    /// Checks whether this instance currently has and use a custom
+    /// Backup folder path.
+    ///
+    /// \return True if a custom Backup path is used, false otherwise.
+    ///
+    bool hasCustBckDir() const {
+      return _bckDirCust;
+    }
+
+    /// \brief Remove custom Backup.
+    ///
+    /// Removes the current custom Backup configuration and reset to
+    /// default settings.
+    ///
+    void remCustBckDir();
+
+    /// \brief Set Backup compression level.
+    ///
+    /// Defines and save backup compression level. A negative value
+    /// means create directory backup instead of zipped backup.
+    ///
+    /// \param[in]  level   : Zip compression level to save.
+    ///
+    void setBckZipLevel(int level);
 
     /// \brief Clear Location package list.
     ///
     /// Resets Location package list.
     ///
-    void packageListClear();
+    void libClear();
 
     /// \brief Refresh Location package list.
     ///
     /// Refreshes the Location package list.
     ///
-    void packageListRefresh();
+    void libRefresh();
 
     /// \brief Set package list sorting.
     ///
@@ -283,7 +320,7 @@ class OmLocation
     ///
     /// \param[in]  sorting : Package list sorting type.
     ///
-    void setPackageSorting(unsigned sorting);
+    void libSetSorting(unsigned sorting);
 
     /// \brief Get package list sorting.
     ///
@@ -291,8 +328,8 @@ class OmLocation
     ///
     /// \return current package sorting mask.
     ///
-    unsigned packageSorting() const {
-      return _packageSorting;
+    unsigned libGetSorting() const {
+      return _pkgSorting;
     }
 
     /// \brief Get package count.
@@ -301,8 +338,8 @@ class OmLocation
     ///
     /// \return Package count.
     ///
-    size_t packageCount() const {
-      return _package.size();
+    size_t pkgCount() const {
+      return _pkgLs.size();
     }
 
     /// \brief Get package.
@@ -313,8 +350,8 @@ class OmLocation
     ///
     /// \return Package.
     ///
-    OmPackage* package(unsigned i) const {
-      return _package[i];
+    OmPackage* pkgGet(unsigned i) const {
+      return _pkgLs[i];
     }
 
     /// \brief Find package by hash.
@@ -325,9 +362,9 @@ class OmLocation
     ///
     /// \return Package or nullptr if not found.
     ///
-    OmPackage* findPackage(uint64_t hash) const {
-      for(size_t i = 0; i < _package.size(); ++i) {
-        if(_package[i]->hash() == hash) return _package[i];
+    OmPackage* pkgFind(uint64_t hash) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->hash() == hash) return _pkgLs[i];
       }
       return nullptr;
     }
@@ -340,9 +377,9 @@ class OmLocation
     ///
     /// \return Package index or -1 if not found.
     ///
-    int packageIndex(const OmPackage* pPkg) const {
-      for(size_t i = 0; i < _package.size(); ++i) {
-        if(pPkg == _package[i]) return i;
+    int pkgIndex(const OmPackage* pPkg) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(pPkg == _pkgLs[i]) return i;
       }
       return -1;
     }
@@ -355,49 +392,12 @@ class OmLocation
     ///
     /// \return Package index or -1 if not found.
     ///
-    int findPackageIndex(uint64_t hash) const{
-      for(size_t i = 0; i < _package.size(); ++i) {
-        if(_package[i]->hash() == hash) return i;
+    int pkgIndex(uint64_t hash) const{
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->hash() == hash) return i;
       }
       return -1;
     }
-
-    /// \brief Set custom Backup folder.
-    ///
-    /// Defines and save a custom package Backup folder. If custom
-    /// Backup folder is not defined, the default location is used:
-    /// <Location path>\backup
-    ///
-    /// \param[in]  path    : Custom Backup folder path to save.
-    ///
-    void setCustBackupDir(const wstring& path);
-
-    /// \brief Check for custom Backup.
-    ///
-    /// Checks whether this instance currently has and use a custom
-    /// Backup folder path.
-    ///
-    /// \return True if a custom Backup path is used, false otherwise.
-    ///
-    bool hasCustBackupDir() const {
-      return _custBackupDir;
-    }
-
-    /// \brief Remove custom Backup.
-    ///
-    /// Removes the current custom Backup configuration and reset to
-    /// default settings.
-    ///
-    void remCustBackupDir();
-
-    /// \brief Set Backup compression level.
-    ///
-    /// Defines and save backup compression level. A negative value
-    /// means create directory backup instead of zipped backup.
-    ///
-    /// \param[in]  level   : Zip compression level to save.
-    ///
-    void setBackupZipLevel(int level);
 
     /// \brief Rename Location
     ///
@@ -410,7 +410,6 @@ class OmLocation
     ///
     bool renameHome(const wstring& name);
 
-
     /// \brief Check whether has backup data
     ///
     /// Checks whether the Location currently has one or more backup data
@@ -418,7 +417,7 @@ class OmLocation
     ///
     /// \return True Location currently has backup data, false otherwise.
     ///
-    bool hasBackupData();
+    bool bckHasData();
 
     /// \brief Move backup
     ///
@@ -436,7 +435,7 @@ class OmLocation
     ///
     /// \return True if operation succeed, false is error occurred.
     ///
-    bool backupsMove(const wstring& dest, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool bckMove(const wstring& dest, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Cleanup backup data.
     ///
@@ -449,7 +448,7 @@ class OmLocation
     ///
     /// \return True if operation succeed, false is error occurred.
     ///
-    bool backupsPurge(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool bckPurge(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Discard backup data.
     ///
@@ -463,7 +462,7 @@ class OmLocation
     ///
     /// \return True if operation succeed, false is error occurred.
     ///
-    bool backupsDiscard(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool bckDiscard(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Install package(s).
     ///
@@ -477,7 +476,7 @@ class OmLocation
     /// \param[in]  hSc         : Progress Bar control handle to be updated during process.
     /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
     ///
-    void packagesInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    void pkgInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Uninstall package(s).
     ///
@@ -490,7 +489,7 @@ class OmLocation
     /// \param[in]  hSc         : Progress Bar control handle (HWND) to be updated during process.
     /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
     ///
-    void packagesUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    void pkgUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
 
     /// \brief Get installation overlap list.
     ///
@@ -502,7 +501,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t pkgFindOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief Get installation overlap list.
     ///
@@ -514,7 +513,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstOwList(vector<uint64_t>& hash_list, const OmPackage* package) const;
+    size_t pkgFindOverlaps(vector<uint64_t>& hash_list, const OmPackage* package) const;
 
     /// \brief Get installation dependency list.
     ///
@@ -526,8 +525,8 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
-      return getInstDpList(pkg_list, miss_list, _package[i]);
+    size_t pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
+      return pkgGetDepends(pkg_list, miss_list, _pkgLs[i]);
     }
 
     /// \brief Get installation dependency list.
@@ -540,7 +539,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
+    size_t pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
 
     /// \brief Get restoration dependency list.
     ///
@@ -552,8 +551,8 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getUninOwList(vector<OmPackage*>& pkg_list, unsigned i) const {
-      return getUninOwList(pkg_list, _package[i]);
+    size_t bckGetOverlaps(vector<OmPackage*>& pkg_list, unsigned i) const {
+      return bckGetOverlaps(pkg_list, _pkgLs[i]);
     }
 
     /// \brief Get restoration dependency list.
@@ -566,7 +565,7 @@ class OmLocation
     ///
     /// \return Count of Package found.
     ///
-    size_t getUninOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t bckGetOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
 
     /// \brief check backup overlap.
     ///
@@ -577,8 +576,8 @@ class OmLocation
     ///
     /// \return True if package is overlapped, false otherwise.
     ///
-    bool isBakcupOverlapped(unsigned i) const {
-      return isBakcupOverlapped(_package[i]);
+    bool bckOverlapped(unsigned i) const {
+      return bckOverlapped(_pkgLs[i]);
     }
 
     /// \brief check backup overlap.
@@ -590,9 +589,9 @@ class OmLocation
     ///
     /// \return True if package is overlapped, false otherwise.
     ///
-    bool isBakcupOverlapped(const OmPackage* package) const {
-      for(size_t i = 0; i < _package.size(); ++i) {
-        if(_package[i]->hasOverlap(package->_hash))
+    bool bckOverlapped(const OmPackage* package) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->ovrHas(package->_hash))
           return true;
       }
       return false;
@@ -604,8 +603,8 @@ class OmLocation
     ///
     /// \return Repository URL count.
     ///
-    size_t repositoryCount() const {
-      return _repository.size();
+    size_t repCount() const {
+      return _repLs.size();
     }
 
     /// \brief Get repository URL.
@@ -616,8 +615,8 @@ class OmLocation
     ///
     /// \return Repository URL string.
     ///
-    OmRepository* repository(unsigned i) const {
-      return _repository[i];
+    OmRepository* repGet(unsigned i) const {
+      return _repLs[i];
     }
 
     /// \brief Remove custom Backup.
@@ -630,14 +629,14 @@ class OmLocation
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool addRepository(const wstring& base, const wstring& name);
+    bool repAdd(const wstring& base, const wstring& name);
 
     /// \brief Remove custom Backup.
     ///
     /// Removes the current custom Backup configuration and reset to
     /// default settings.
     ///
-    void remRepository(unsigned i);
+    void repRem(unsigned i);
 
     /// \brief Add log.
     ///
@@ -647,7 +646,7 @@ class OmLocation
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _packageSort();
+    void                _pkgSort();
 
     OmContext*          _context;
 
@@ -663,28 +662,27 @@ class OmLocation
 
     wstring             _path;
 
-    wstring             _installDir;
+    wstring             _dstDir;
 
-    wstring             _libraryDir;
+    wstring             _libDir;
 
-    bool                _custLibraryDir;
+    bool                _libDirCust;
 
-    wstring             _backupDir;
+    wstring             _bckDir;
 
-    bool                _custBackupDir;
+    bool                _bckDirCust;
 
-    vector<OmPackage*>  _package;
+    vector<OmPackage*>  _pkgLs;
 
-    int                 _backupZipLevel;
+    int                 _bckZipLevel;
 
-    unsigned            _packageSorting;
+    unsigned            _pkgSorting;
 
-    vector<OmRepository*>  _repository;
+    vector<OmRepository*>  _repLs;
 
     bool                _valid;
 
     wstring             _error;
-
 };
 
 #endif // OMLOCATION_H

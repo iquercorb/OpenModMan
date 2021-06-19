@@ -19,6 +19,8 @@
 
 #include "OmDialog.h"
 
+class OmContext;
+
 /// \brief Main window - Library tab child
 ///
 /// OmDialog class derived for Main window Library tab child dialog window
@@ -49,138 +51,137 @@ class OmUiMainLib : public OmDialog
     ///
     long id() const;
 
+    /// \brief Set dialog freeze mode
+    ///
+    /// Enable or disable the dialog freeze mode.
+    ///
+    /// The freeze mode is a modal-kind emulation for threaded operations,
+    /// it disables (almost) all controls of the dialog and its children
+    /// to prevent user to interact with elements while a threaded process
+    /// is running.
+    ///
+    /// \param[in]  enable  : Enable or disable freeze mode.
+    ///
+    void freeze(bool enable);
+
+    /// \brief Set dialog safe mode
+    ///
+    /// Enables or disable the dialog safe mode.
+    ///
+    /// The safe mode is used to operate modifications on sensitive
+    /// or monitored elements such as deleting or moving Location in
+    /// order to prevent conflicts or crash during process.
+    ///
+    /// \param[in]  enable  : Enable or disable safe mode.
+    ///
+    void safemode(bool enable);
+
     /// \brief Select Location
     ///
     /// Select or unselect Location then refresh dialog.
     ///
     /// \param[in]  i  Index of Location to select or -1 to select none.
     ///
-    void selLocation(int i);
+    void locSel(int i);
 
     /// \brief Install selected packages.
     ///
     /// Public function to launch install process for selected packages if
     /// any.
     ///
-    void install();
+    void pkgInst();
 
     /// \brief Uninstall selected packages.
     ///
     /// Public function to launch unsintall process for selected packages if
     /// any.
     ///
-    void uninstall();
+    void pkgUnin();
 
     /// \brief Toggle selected packages installation.
     ///
     /// Public function to toggle installation (either install or uninstall) of
     /// the selected packages if any.
     ///
-    void toggle();
+    void pkgTogg();
 
     /// \brief View package details.
     ///
     /// Public function to open selected package property dialog.
     ///
-    void viewDetails();
+    void pkgProp();
 
     /// \brief Move package to trash.
     ///
     /// Public function to move selected package to trash.
     ///
-    void moveTrash();
+    void pkgTrsh();
 
     /// \brief Open package in explorer.
     ///
     /// Public function to open package in file explorer.
     ///
-    void openExplore();
-
-    /// \brief Launch selected batch.
-    ///
-    /// Public function to launch the selected batch if any.
-    ///
-    void batch();
-
-    /// \brief Delete selected batch.
-    ///
-    /// Public function to delete the selected batch if any.
-    ///
-    bool remBatch();
-
-    /// \brief Modify selected batch.
-    ///
-    /// Public function to modify the selected batch if any.
-    ///
-    bool ediBatch();
-
-    /// \brief Set dialog on-process state.
-    ///
-    /// Enable or disable the dialog on process state. The on-process state
-    /// disable all dialog controls except the Abort button to avoid bogus user
-    /// interactions.
-    ///
-    /// \param[in]  enable  Enable or disable on-process state.
-    ///
-    void setOnProcess(bool enable);
+    void pkgOpen();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    bool                _onProcess;
+    void                _dirMon_init(const wstring& path);
 
-    unsigned            _lvIconsSize;
+    void                _dirMon_stop();
 
-    void                _onSelectPkg();
+    void*               _dirMon_hth;
 
-    void                _onSelectBat();
+    void*               _dirMon_hev[3];
 
-    HFONT               _hFtTitle;
+    static DWORD WINAPI _dirMon_fth(void*);
 
-    HFONT               _hFtMonos;
+    void                _pkgInst_init();
 
-    HBITMAP             _hBmBlank;
+    void                _pkgInst_stop();
 
-    HBITMAP             _hBmBcNew;
+    void*               _pkgInst_hth;
 
-    HBITMAP             _hBmBcDel;
+    static DWORD WINAPI _pkgInst_fth(void*);
 
-    HBITMAP             _hBmBcMod;
+    void                _pkgUnin_init();
 
-    void                _reloadLibEc();
+    void                _pkgUnin_stop();
 
-    void                _reloadLibLv(bool clear = false);
+    void*               _pkgUnin_hth;
 
-    void                _reloadBatLb();
+    static DWORD WINAPI _pkgUnin_fth(void*);
 
-    void                _reloadLocCb();
+    void                _batExe_init();
 
-    void                _reloadIcons();
+    void                _batExe_stop();
 
-    void                _showPkgPopup();
+    void*               _batExe_hth;
 
-    bool                _abortPending;
+    static DWORD WINAPI _batExe_fth(void*);
 
-    void*               _install_hth;
+    bool                _thread_abort;
 
-    static DWORD WINAPI _install_fth(void*);
+    void                _buildLvPkg();
 
-    void*               _uninstall_hth;
+    unsigned            _buildLvPkg_icSize;
 
-    static DWORD WINAPI _uninstall_fth(void*);
+    void                _buildCbLoc();
 
-    void*               _batch_hth;
+    void                _buildLbBat();
 
-    static DWORD WINAPI _batch_fth(void*);
+    void                _onCbLocSel();
 
-    void*               _monitor_hth;
+    void                _onLvPkgRclk();
 
-    static DWORD WINAPI _monitor_fth(void*);
+    void                _onLvPkgSel();
 
-    void*               _monitor_hev[3];
+    void                _onLbBatSel();
 
-    void                _monitor_init(const wstring& path);
+    void                _onBcRunBat();
 
-    void                _monitor_stop();
+    void                _onBcNewBat();
+
+    void                _onBcEdiBat();
 
     void                _onInit();
 

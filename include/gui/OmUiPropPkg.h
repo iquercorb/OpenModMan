@@ -58,8 +58,8 @@ class OmUiPropPkg : public OmDialogProp
     ///
     /// \return Associated Package or nullptr if none.
     ///
-    OmPackage* package() const {
-      return _package;
+    OmPackage* pkgCur() const {
+      return _pPkg;
     }
     /// \brief Set associated Package.
     ///
@@ -69,13 +69,13 @@ class OmUiPropPkg : public OmDialogProp
     ///
     /// \param[in]  pPkg  : Package object to associate.
     ///
-    void setPackage(OmPackage* pPkg) {
-      _package = pPkg;
+    void pkgSet(OmPackage* pPkg) {
+      _pPkg = pPkg;
     }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmPackage*          _package;
+    OmPackage*          _pPkg;
 };
 
 #endif // OMUIPROPPKG_H

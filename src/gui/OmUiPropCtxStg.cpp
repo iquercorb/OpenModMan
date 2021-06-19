@@ -46,7 +46,7 @@ OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropCtxStg::~OmUiPropCtxStg()
 {
-  HICON hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_GETICON));
+  HICON hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_GETICON));
   if(hIc) DestroyIcon(hIc);
 }
 
@@ -90,13 +90,13 @@ void OmUiPropCtxStg::_onBcBrwIcon()
   if(Om_isValidPath(result)) {
     ExtractIconExW(result.c_str(), 0, &hIc, nullptr, 1);
   } else {
-    hIc = Om_loadShellIcon(SIID_APPLICATION, true);
+    hIc = Om_getShellIcon(SIID_APPLICATION, true);
   }
 
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
   if(hIc) DestroyIcon(hIc);
 
-  InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
+  InvalidateRect(this->getItem(IDC_SB_ICON), nullptr, true);
 
   this->setItemText(IDC_EC_INP04, result);
   this->setItemText(IDC_BC_BRW01, L"Change..."); //< change browse button text
@@ -111,8 +111,8 @@ void OmUiPropCtxStg::_onBcBrwIcon()
 ///
 void OmUiPropCtxStg::_onBcDelIcon()
 {
-  HICON hIc = Om_loadShellIcon(SIID_APPLICATION, true);
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  HICON hIc = Om_getShellIcon(SIID_APPLICATION, true);
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
   if(hIc) DestroyIcon(hIc);
 
   this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
@@ -134,7 +134,7 @@ void OmUiPropCtxStg::_onInit()
   this->_createTooltip(IDC_BC_BRW01,  L"Select application or icon file");
   this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
 
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   this->setItemText(IDC_EC_INP01, pCtx->home());
@@ -162,7 +162,7 @@ void OmUiPropCtxStg::_onResize()
   // Icon Label & placeholder
   this->_setItemPos(IDC_SC_LBL04, 5, 90, 64, 9);
   this->_setItemPos(IDC_EC_INP04, 170, 90, 50, 13); // not visible
-  this->_setItemPos(IDC_SB_CTICO, 70, 90, 30, 30);
+  this->_setItemPos(IDC_SB_ICON, 70, 90, 30, 30);
   // Select & Remove Buttons
   this->_setItemPos(IDC_BC_BRW01, 110, 90, 50, 14);
   this->_setItemPos(IDC_BC_DEL, 110, 105, 50, 14);
@@ -174,7 +174,7 @@ void OmUiPropCtxStg::_onResize()
 ///
 void OmUiPropCtxStg::_onRefresh()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   wstring ctx_icon;
@@ -197,16 +197,16 @@ void OmUiPropCtxStg::_onRefresh()
       hIc = pCtx->icon();
       this->setItemText(IDC_BC_BRW01, L"Change...");
     } else {
-      hIc = Om_loadShellIcon(SIID_APPLICATION, true);
+      hIc = Om_getShellIcon(SIID_APPLICATION, true);
       this->setItemText(IDC_BC_BRW01, L"Select...");
     }
 
   }
 
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_CTICO, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
+  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
   if(hIc) DestroyIcon(hIc);
 
-  InvalidateRect(this->getItem(IDC_SB_CTICO), nullptr, true);
+  InvalidateRect(this->getItem(IDC_SB_ICON), nullptr, true);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;

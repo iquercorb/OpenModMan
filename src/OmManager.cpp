@@ -27,8 +27,8 @@
 OmManager::OmManager() :
   _home(),
   _config(),
-  _context(),
-  _curContext(nullptr),
+  _ctxLs(),
+  _ctxCur(nullptr),
   _iconsSize(16),
   _folderPackages(true),
   _warnEnabled(true),
@@ -51,8 +51,8 @@ OmManager::OmManager() :
 ///
 OmManager::~OmManager()
 {
-  for(size_t i = 0; i < this->_context.size(); ++i)
-    delete this->_context[i];
+  for(size_t i = 0; i < this->_ctxLs.size(); ++i)
+    delete this->_ctxLs[i];
 
   // close log file
   if(this->_logFile) {
@@ -126,8 +126,8 @@ bool OmManager::init()
   if(this->_config.xml().hasChild(L"legacy_support")) {
     this->_folderPackages = this->_config.xml().child(L"legacy_support").attrAsInt(L"enable");
   }
-  if(this->_config.xml().hasChild(L"warn_overlaps")) {
-    this->_warnOverlaps = this->_config.xml().child(L"warn_overlaps").attrAsInt(L"enable");
+  if(this->_config.xml().hasChild(L"warn_ovrLss")) {
+    this->_warnOverlaps = this->_config.xml().child(L"warn_ovrLss").attrAsInt(L"enable");
   }
   if(this->_config.xml().hasChild(L"warn_extra_inst")) {
     this->_warnExtraInstall = this->_config.xml().child(L"warn_extra_inst").attrAsInt(L"enable");
@@ -149,10 +149,8 @@ bool OmManager::init()
   if(autoload) {
     this->log(2, L"Manager() Init", L"Load startup Context file(s)");
     for(size_t i = 0; i < start_files.size(); ++i) {
-      this->openContext(start_files[i]);
+      this->ctxOpen(start_files[i]);
     }
-    // select the last loaded Context
-    this->selContext(this->contextCount()-1);
   }
 
   return true;
@@ -166,9 +164,9 @@ bool OmManager::quit()
 {
   this->log(2, L"Manager() Quit", L"");
 
-  for(size_t i = 0; i < this->_context.size(); ++i)
-    delete this->_context[i];
-  this->_context.clear();
+  for(size_t i = 0; i < this->_ctxLs.size(); ++i)
+    delete this->_ctxLs[i];
+  this->_ctxLs.clear();
 
   return true;
 }
@@ -455,10 +453,10 @@ void OmManager::setWarnOverlaps(bool enable)
 
   if(this->_config.valid()) {
 
-    if(this->_config.xml().hasChild(L"warn_overlaps")) {
-      this->_config.xml().child(L"warn_overlaps").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
+    if(this->_config.xml().hasChild(L"warn_ovrLss")) {
+      this->_config.xml().child(L"warn_ovrLss").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
     } else {
-      this->_config.xml().addChild(L"warn_overlaps").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
+      this->_config.xml().addChild(L"warn_ovrLss").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
     }
 
     this->_config.save();
@@ -549,7 +547,7 @@ void OmManager::setQuietBatches(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmManager::makeContext(const wstring& title, const wstring& path, bool open)
+bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
 {
 
   // check whether install path exists
@@ -601,7 +599,7 @@ bool OmManager::makeContext(const wstring& title, const wstring& path, bool open
 
   // open the new created Context
   if(open) {
-    return this->openContext(ctx_def_path);
+    return this->ctxOpen(ctx_def_path);
   }
 
   return true;
@@ -611,11 +609,11 @@ bool OmManager::makeContext(const wstring& title, const wstring& path, bool open
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmManager::openContext(const wstring& path)
+bool OmManager::ctxOpen(const wstring& path)
 {
   // check whether Context is already opened
-  for(size_t i = 0; i < _context.size(); ++i) {
-    if(path == _context[i]->path())
+  for(size_t i = 0; i < _ctxLs.size(); ++i) {
+    if(path == _ctxLs[i]->path())
       return true;
   }
 
@@ -627,7 +625,7 @@ bool OmManager::openContext(const wstring& path)
     return false;
   }
 
-  this->_context.push_back(pCtx);
+  this->_ctxLs.push_back(pCtx);
 
   this->saveRecentFile(path);
 
@@ -638,31 +636,42 @@ bool OmManager::openContext(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmManager::closeCurrContext()
+void OmManager::ctxClose(int id)
 {
-  for(size_t i = 0; i < this->_context.size(); ++i) {
-    if(this->_curContext == this->_context[i]) {
-      this->_context[i]->close();
-      delete _context[i];
-      this->_context.erase(this->_context.begin()+i);
-      break;
+  if(id < 0) {
+
+    if(!this->_ctxCur)
+      return;
+
+    // search current context index
+    for(size_t i = 0; i < this->_ctxLs.size(); ++i) {
+      if(this->_ctxCur == this->_ctxLs[i]) {
+        id = i; break;
+      }
     }
+
+    this->_ctxCur = nullptr;
   }
 
-  this->_curContext = nullptr;
+  if(id < static_cast<int>(this->_ctxLs.size())) {
+    this->_ctxLs[id]->close();
+    delete _ctxLs[id];
+    this->_ctxLs.erase(this->_ctxLs.begin()+id);
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmManager::selContext(int i)
+void OmManager::ctxSel(int i)
 {
-  if(i >= 0 && i < (int)this->_context.size()) {
-    this->_curContext = _context[i];
-    this->log(2, L"Manager", L"Select Context: \""+this->_curContext->title()+L"\".");
+  if(i >= 0 && i < (int)this->_ctxLs.size()) {
+    this->_ctxCur = this->_ctxLs[i];
+    this->log(2, L"Manager", L"Select Context: \""+this->_ctxCur->title()+L"\".");
   } else {
-    this->_curContext = nullptr;
+    this->_ctxCur = nullptr;
+    this->log(2, L"Manager", L"Select Context: <NONE>");
   }
 }
 

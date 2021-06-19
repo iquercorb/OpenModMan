@@ -80,19 +80,19 @@ void OmUiPropCtxLoc::setChParam(unsigned i, bool en)
 ///
 void OmUiPropCtxLoc::_delLoc_init(int id)
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   // store Location id
   this->_delLoc_id = id;
-  OmLocation* pLoc = pCtx->location(id);
+  OmLocation* pLoc = pCtx->locGet(id);
 
   // To prevent crash during operation we unselect location in the main dialog
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+  static_cast<OmUiMain*>(this->root())->safemode(true);
 
   // if Location does not have backup data, we can bypass the purge and
   // do directly to the end
-  if(pLoc->hasBackupData()) {
+  if(pLoc->bckHasData()) {
 
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
@@ -128,25 +128,24 @@ void OmUiPropCtxLoc::_delLoc_stop()
   // quit the progress dialog
   static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
 
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   // check whether purge succeed
   if(exitCode == 0) {
 
     // backup data purged, now delete Location
-    if(!pCtx->remLocation(this->_delLoc_id)) {
+    if(!pCtx->locRem(this->_delLoc_id)) {
 
-      wstring wrn = L"One or more error occurred during Location deletion "
-                    L"deletion process.\n\n"
-                    L"Please read debug log output for more details.";
+      wstring wrn = L"One or more error occurred during Location deletion process."
+                    L"\n\nRead debug log for more details.";
 
       Om_dialogBoxWarn(this->_hwnd, L"Delete Location error", wrn);
     }
   }
 
   // Back to main dialog window to normal state
-  static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+  static_cast<OmUiMain*>(this->root())->safemode(false);
 
   // refresh all dialogs from root
   this->root()->refresh();
@@ -160,7 +159,7 @@ DWORD WINAPI OmUiPropCtxLoc::_delLoc_fth(void* arg)
 {
   OmUiPropCtxLoc* self = static_cast<OmUiPropCtxLoc*>(arg);
 
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(self->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(self->_parent)->ctxCur();
   if(!pCtx) return 1;
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
@@ -170,10 +169,10 @@ DWORD WINAPI OmUiPropCtxLoc::_delLoc_fth(void* arg)
 
   DWORD exitCode = 0;
 
-  OmLocation* pLoc = pCtx->location(self->_delLoc_id);
+  OmLocation* pLoc = pCtx->locGet(self->_delLoc_id);
 
   // launch backups data purge process
-  if(!pLoc->backupsPurge(hPb, hSc, pUiProgress->getAbortPtr())) {
+  if(!pLoc->bckPurge(hPb, hSc, pUiProgress->getAbortPtr())) {
     // we encounter error during backup data purge
     Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data purge error", pLoc->lastError());
     exitCode = 1;
@@ -191,25 +190,25 @@ DWORD WINAPI OmUiPropCtxLoc::_delLoc_fth(void* arg)
 ///
 void OmUiPropCtxLoc::_onLbLoclsSel()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
-  int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
+  int lb_sel = this->msgItem(IDC_LB_LOC, LB_GETCURSEL);
+  int loc_id = this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, lb_sel);
 
   if(loc_id >= 0) {
 
-    OmLocation* pLoc = pCtx->location(loc_id);
+    OmLocation* pLoc = pCtx->locGet(loc_id);
 
-    this->setItemText(IDC_EC_INP02, pLoc->installDir());
-    this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
-    this->setItemText(IDC_EC_INP04, pLoc->backupDir());
+    this->setItemText(IDC_EC_INP02, pLoc->dstDir());
+    this->setItemText(IDC_EC_INP03, pLoc->libDir());
+    this->setItemText(IDC_EC_INP04, pLoc->bckDir());
 
     this->enableItem(IDC_BC_DEL, true);
     this->enableItem(IDC_BC_EDI, true);
 
     this->enableItem(IDC_BC_UP, (lb_sel > 0));
-    int lb_max = this->msgItem(IDC_LB_LOCLS, LB_GETCOUNT) - 1;
+    int lb_max = this->msgItem(IDC_LB_LOC, LB_GETCOUNT) - 1;
     this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
   }
 }
@@ -221,7 +220,7 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
 void OmUiPropCtxLoc::_onBcUpLoc()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_LOC, LB_GETCURSEL);
 
   // check whether we can move up
   if(lb_sel == 0)
@@ -231,13 +230,13 @@ void OmUiPropCtxLoc::_onBcUpLoc()
   int idx;
 
   // retrieve the package List-Box label
-  this->msgItem(IDC_LB_LOCLS, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
-  idx = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel - 1);
+  this->msgItem(IDC_LB_LOC, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, lb_sel - 1);
 
-  this->msgItem(IDC_LB_LOCLS, LB_DELETESTRING, lb_sel - 1);
+  this->msgItem(IDC_LB_LOC, LB_DELETESTRING, lb_sel - 1);
 
-  this->msgItem(IDC_LB_LOCLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  this->msgItem(IDC_LB_LOCLS, LB_SETITEMDATA, lb_sel, idx);
+  this->msgItem(IDC_LB_LOC, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_LOC, LB_SETITEMDATA, lb_sel, idx);
 
   this->enableItem(IDC_BC_UP, (lb_sel > 1));
   this->enableItem(IDC_BC_DN, true);
@@ -253,9 +252,9 @@ void OmUiPropCtxLoc::_onBcUpLoc()
 void OmUiPropCtxLoc::_onBcDnLoc()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_LOC, LB_GETCURSEL);
   // get count of item in List-Box as index to for insertion
-  int lb_max = this->msgItem(IDC_LB_LOCLS, LB_GETCOUNT) - 1;
+  int lb_max = this->msgItem(IDC_LB_LOC, LB_GETCOUNT) - 1;
 
   // check whether we can move down
   if(lb_sel == lb_max)
@@ -264,15 +263,15 @@ void OmUiPropCtxLoc::_onBcDnLoc()
   wchar_t item_buf[OMM_ITM_BUFF];
   int idx;
 
-  this->msgItem(IDC_LB_LOCLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  idx = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
-  this->msgItem(IDC_LB_LOCLS, LB_DELETESTRING, lb_sel);
+  this->msgItem(IDC_LB_LOC, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, lb_sel);
+  this->msgItem(IDC_LB_LOC, LB_DELETESTRING, lb_sel);
 
   lb_sel++;
 
-  this->msgItem(IDC_LB_LOCLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  this->msgItem(IDC_LB_LOCLS, LB_SETITEMDATA, lb_sel, idx);
-  this->msgItem(IDC_LB_LOCLS, LB_SETCURSEL, true, lb_sel);
+  this->msgItem(IDC_LB_LOC, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_LOC, LB_SETITEMDATA, lb_sel, idx);
+  this->msgItem(IDC_LB_LOC, LB_SETCURSEL, true, lb_sel);
 
   this->enableItem(IDC_BC_UP, true);
   this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -287,23 +286,21 @@ void OmUiPropCtxLoc::_onBcDnLoc()
 ///
 void OmUiPropCtxLoc::_onBcDelLoc()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
-  int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
+  int lb_sel = this->msgItem(IDC_LB_LOC, LB_GETCURSEL);
+  int loc_id = this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, lb_sel);
 
   if(loc_id < 0) return;
 
-  OmLocation* pLoc = pCtx->location(loc_id);
+  OmLocation* pLoc = pCtx->locGet(loc_id);
 
   // warns the user before committing the irreparable
   wstring wrn = L"The operation will permanently delete the Location "
                 L"definition file and related configuration.";
 
-  wrn += L"\n\nDelete the Location \"";
-  wrn += pLoc->title();
-  wrn += L"\" ?";
+  wrn += L"\n\nDelete the Location \""+pLoc->title()+L"\" ?";
 
   if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Location", wrn))
     return;
@@ -318,16 +315,16 @@ void OmUiPropCtxLoc::_onBcDelLoc()
 ///
 void OmUiPropCtxLoc::_onBcEdiLoc()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  int lb_sel = this->msgItem(IDC_LB_LOCLS, LB_GETCURSEL);
-  int loc_id = this->msgItem(IDC_LB_LOCLS, LB_GETITEMDATA, lb_sel);
+  int lb_sel = this->msgItem(IDC_LB_LOC, LB_GETCURSEL);
+  int loc_id = this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, lb_sel);
 
   if(loc_id >= 0) {
     // open the Location Properties dialog
     OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->siblingById(IDD_PROP_LOC));
-    pUiPropLoc->setLocation(pCtx->location(loc_id));
+    pUiPropLoc->locSet(pCtx->locGet(loc_id));
     pUiPropLoc->open();
   }
 }
@@ -338,12 +335,12 @@ void OmUiPropCtxLoc::_onBcEdiLoc()
 ///
 void OmUiPropCtxLoc::_onBcAddLoc()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   // open add Location dialog
   OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
-  pUiNewLoc->setContext(pCtx);
+  pUiNewLoc->ctxSet(pCtx);
   pUiNewLoc->open(true);
 }
 
@@ -361,7 +358,7 @@ void OmUiPropCtxLoc::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOCLS,  L"Context's locations");
+  this->_createTooltip(IDC_LB_LOC,  L"Context's locations");
 
   this->_createTooltip(IDC_BC_UP,     L"Move up");
   this->_createTooltip(IDC_BC_DN,     L"Move down");
@@ -386,7 +383,7 @@ void OmUiPropCtxLoc::_onResize()
 {
   // Locations list Label & ListBox
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_LOCLS, 70, 20, this->width()-107, 30);
+  this->_setItemPos(IDC_LB_LOC, 70, 20, this->width()-107, 30);
   // Up and Down buttons
   this->_setItemPos(IDC_BC_UP, this->width()-35, 20, 16, 15);
   this->_setItemPos(IDC_BC_DN, this->width()-35, 36, 16, 15);
@@ -412,14 +409,14 @@ void OmUiPropCtxLoc::_onResize()
 ///
 void OmUiPropCtxLoc::_onRefresh()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  this->msgItem(IDC_LB_LOCLS, LB_RESETCONTENT);
+  this->msgItem(IDC_LB_LOC, LB_RESETCONTENT);
 
-  for(unsigned i = 0; i < pCtx->locationCount(); ++i) {
-    this->msgItem(IDC_LB_LOCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->location(i)->title().c_str()));
-    this->msgItem(IDC_LB_LOCLS, LB_SETITEMDATA, i, i); // for Location index reordering
+  for(unsigned i = 0; i < pCtx->locCount(); ++i) {
+    this->msgItem(IDC_LB_LOC, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->locGet(i)->title().c_str()));
+    this->msgItem(IDC_LB_LOC, LB_SETITEMDATA, i, i); // for Location index reordering
   }
 
   // Set controls default states and parameters
@@ -451,7 +448,7 @@ bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_LB_LOCLS: //< Location(s) list List-Box
+    case IDC_LB_LOC: //< Location(s) list List-Box
       this->_onLbLoclsSel();
       break;
 

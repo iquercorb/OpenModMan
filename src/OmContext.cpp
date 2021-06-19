@@ -136,9 +136,9 @@ OmContext::OmContext(OmManager* pMgr) :
   _title(),
   _home(),
   _icon(nullptr),
-  _location(),
-  _curLocation(nullptr),
-  _batch(),
+  _locLst(),
+  _locCur(nullptr),
+  _batLst(),
   _valid(false),
   _error()
 {
@@ -235,7 +235,7 @@ bool OmContext::open(const wstring& path)
         OmLocation* pLoc = new OmLocation(this);
 
         if(pLoc->open(omt_list[0])) {
-          this->_location.push_back(pLoc);
+          this->_locLst.push_back(pLoc);
         } else {
           delete pLoc;
           verbose =  L"Ignoring Location (open failed): \"";
@@ -246,8 +246,8 @@ bool OmContext::open(const wstring& path)
     }
 
     // sort Locations by index
-    if(this->_location.size() > 1)
-      sort(this->_location.begin(), this->_location.end(), __OmContext_locCompareIndex);
+    if(this->_locLst.size() > 1)
+      sort(this->_locLst.begin(), this->_locLst.end(), __OmContext_locCompareIndex);
   }
 
   // Load batches for this Context
@@ -267,7 +267,7 @@ bool OmContext::open(const wstring& path)
 
       if(pBat->open(omb_list[i])) {
 
-        this->_batch.push_back(pBat);
+        this->_batLst.push_back(pBat);
 
         verbose =  L"Batch \"" + pBat->title();
         verbose += L"\" added to list.";
@@ -285,8 +285,8 @@ bool OmContext::open(const wstring& path)
     }
 
     // sort Batches by index
-    if(this->_batch.size() > 1)
-      sort(this->_batch.begin(), this->_batch.end(), __OmContext_batCompareIndex);
+    if(this->_batLst.size() > 1)
+      sort(this->_batLst.begin(), this->_batLst.end(), __OmContext_batCompareIndex);
   }
 
   this->log(2, L"Context("+this->_title+L") Load", L"Success");
@@ -313,11 +313,12 @@ void OmContext::close()
 
     this->_config.close();
 
-    for(size_t i = 0; i < this->_location.size(); ++i)
-      delete this->_location[i];
-    this->_location.clear();
+    for(size_t i = 0; i < this->_locLst.size(); ++i)
+      delete this->_locLst[i];
 
-    this->_curLocation = nullptr;
+    this->_locLst.clear();
+
+    this->_locCur = nullptr;
 
     this->_valid = false;
 
@@ -396,11 +397,11 @@ void OmContext::setIcon(const wstring& src)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmLocation* OmContext::location(const wstring& uuid)
+OmLocation* OmContext::locGet(const wstring& uuid)
 {
-  for(size_t i = 0; i < this->_location.size(); ++i) {
-    if(uuid == this->_location[i]->uuid())
-      return this->_location[i];
+  for(size_t i = 0; i < this->_locLst.size(); ++i) {
+    if(uuid == this->_locLst[i]->uuid())
+      return this->_locLst[i];
   }
 
   return nullptr;
@@ -409,27 +410,27 @@ OmLocation* OmContext::location(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmContext::sortLocations()
+void OmContext::locSort()
 {
-  if(this->_location.size() > 1)
-    sort(this->_location.begin(), this->_location.end(), __OmContext_locCompareIndex);
+  if(this->_locLst.size() > 1)
+    sort(this->_locLst.begin(), this->_locLst.end(), __OmContext_locCompareIndex);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::selLocation(int i)
+bool OmContext::locSel(int i)
 {
   if(i >= 0) {
-    if(i < (int)this->_location.size()) {
-      this->_curLocation = this->_location[i];
-      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_curLocation->title()+L"\".");
+    if(i < (int)this->_locLst.size()) {
+      this->_locCur = this->_locLst[i];
+      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_locCur->title()+L"\".");
     } else {
       return false;
     }
   } else {
-    this->_curLocation = nullptr;
+    this->_locCur = nullptr;
   }
 
   return true;
@@ -439,12 +440,12 @@ bool OmContext::selLocation(int i)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::selLocation(const wstring& uuid)
+bool OmContext::locSel(const wstring& uuid)
 {
-  for(size_t i = 0; i < this->_location.size(); ++i) {
-    if(uuid == this->_location[i]->uuid()) {
-      this->_curLocation = this->_location[i];
-      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_curLocation->title()+L"\".");
+  for(size_t i = 0; i < this->_locLst.size(); ++i) {
+    if(uuid == this->_locLst[i]->uuid()) {
+      this->_locCur = this->_locLst[i];
+      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_locCur->title()+L"\".");
       return true;
     }
   }
@@ -456,10 +457,10 @@ bool OmContext::selLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmContext::findLocationIndex(const wstring& uuid)
+int OmContext::locFind(const wstring& uuid)
 {
-  for(size_t i = 0; i < this->_location.size(); ++i) {
-    if(uuid == this->_location[i]->uuid()) {
+  for(size_t i = 0; i < this->_locLst.size(); ++i) {
+    if(uuid == this->_locLst[i]->uuid()) {
       return i;
     }
   }
@@ -471,7 +472,7 @@ int OmContext::findLocationIndex(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::addLocation(const wstring& title, const wstring& install, const wstring& library, const wstring& backup)
+bool OmContext::locAdd(const wstring& title, const wstring& install, const wstring& library, const wstring& backup)
 {
   // this theoretically can't happen, but we check to be sure
   if(!this->isValid()) {
@@ -536,7 +537,7 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   xml_def.addChild(L"title").setContent(title);
 
   // define ordering index in definition file
-  xml_def.child(L"title").setAttr(L"index", static_cast<int>(this->_location.size()));
+  xml_def.child(L"title").setAttr(L"index", static_cast<int>(this->_locLst.size()));
 
   // define installation destination folder in definition file
   xml_def.addChild(L"install").setContent(install);
@@ -580,10 +581,10 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
   // load the newly created Location
   OmLocation* pLoc = new OmLocation(this);
   pLoc->open(loc_def_path);
-  this->_location.push_back(pLoc);
+  this->_locLst.push_back(pLoc);
 
   // sort locations by index
-  this->sortLocations();
+  this->locSort();
 
   return true;
 }
@@ -592,14 +593,14 @@ bool OmContext::addLocation(const wstring& title, const wstring& install, const 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::remLocation(unsigned id)
+bool OmContext::locRem(unsigned id)
 {
-  if(id >= this->_location.size())
+  if(id >= this->_locLst.size())
     return false;
 
-  OmLocation* pLoc = this->_location[id];
+  OmLocation* pLoc = this->_locLst[id];
 
-  if(pLoc->hasBackupData()) {
+  if(pLoc->bckHasData()) {
     this->_error = L"The Location \""+pLoc->title()+L"\"";
     this->_error += L" cannot be deleted: Location still has backup data";
     this->_error += L"to be restored.";
@@ -675,15 +676,15 @@ bool OmContext::remLocation(unsigned id)
   delete pLoc;
 
   // remove from list
-  this->_location.erase(this->_location.begin()+id);
+  this->_locLst.erase(this->_locLst.begin()+id);
 
   // update locations order indexing
-  for(size_t i = 0; i < this->_location.size(); ++i) {
-    this->_location[i]->setIndex(i);
+  for(size_t i = 0; i < this->_locLst.size(); ++i) {
+    this->_locLst[i]->setIndex(i);
   }
 
   // sort Locations by index
-  this->sortLocations();
+  this->locSort();
 
   return !has_error;
 }
@@ -692,17 +693,17 @@ bool OmContext::remLocation(unsigned id)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmContext::sortBatches()
+void OmContext::batSort()
 {
-  if(this->_batch.size() > 1)
-    sort(this->_batch.begin(), this->_batch.end(), __OmContext_batCompareIndex);
+  if(this->_batLst.size() > 1)
+    sort(this->_batLst.begin(), this->_batLst.end(), __OmContext_batCompareIndex);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
+bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
 {
   // check whether we have same count of Location and hash list
   if(loc_hash_list.size() != loc_uuid.size()) {
@@ -738,7 +739,7 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
   def_xml.addChild(L"title").setContent(title);
 
   // define ordering index in definition file
-  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batch.size()));
+  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batLst.size()));
 
   // useful variables
   OmLocation* pLoc;
@@ -747,7 +748,7 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
   // For each Location defined
   for(size_t l = 0; l < loc_uuid.size(); ++l) {
 
-    pLoc = this->location(loc_uuid[l]);
+    pLoc = this->locGet(loc_uuid[l]);
 
     if(pLoc != nullptr) {
 
@@ -757,7 +758,7 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
 
       for(size_t i = 0; i < loc_hash_list[l].size(); ++i) {
         // check whether package with this hash exists
-        if(pLoc->findPackage(loc_hash_list[l][i])) {
+        if(pLoc->pkgFind(loc_hash_list[l][i])) {
           xml_ins = xml_loc.addChild(L"install");
           xml_ins.setAttr(L"hash", Om_toHexString(loc_hash_list[l][i]));
         } else {
@@ -782,10 +783,10 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
   // load the newly created Batch
   OmBatch* pBat = new OmBatch(this);
   pBat->open(bat_def_path);
-  this->_batch.push_back(pBat);
+  this->_batLst.push_back(pBat);
 
   // sort Batches by index
-  this->sortBatches();
+  this->batSort();
 
   return true;
 }
@@ -794,11 +795,11 @@ bool OmContext::addBatch(const wstring& title, const vector<wstring>& loc_uuid, 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmContext::remBatch(unsigned id)
+bool OmContext::batRem(unsigned id)
 {
-  if(id < this->_batch.size()) {
+  if(id < this->_batLst.size()) {
 
-    OmBatch* pBat = this->_batch[id];
+    OmBatch* pBat = this->_batLst[id];
 
     wstring bat_path = pBat->path();
     wstring bat_title = pBat->title();
@@ -810,8 +811,7 @@ bool OmContext::remBatch(unsigned id)
       this->_config.close();
       int result = Om_fileDelete(bat_path);
       if(result != 0) {
-        this->_error = L"Unable to delete Batch definition file \"";
-        this->_error += bat_path + L"\": ";
+        this->_error = L"Unable to delete Batch definition file \""+bat_path+L"\": ";
         this->_error += Om_getErrorStr(result);
         this->log(1, L"Context("+this->_title+L") Delete Batch", this->_error);
         return false;
@@ -822,15 +822,15 @@ bool OmContext::remBatch(unsigned id)
     delete pBat;
 
     // remove from list
-    this->_batch.erase(this->_batch.begin()+id);
+    this->_batLst.erase(this->_batLst.begin()+id);
 
     // update batches order indexing
-    for(size_t i = 0; i < this->_batch.size(); ++i) {
-      this->_batch[i]->setIndex(i);
+    for(size_t i = 0; i < this->_batLst.size(); ++i) {
+      this->_batLst[i]->setIndex(i);
     }
 
     // sort Batches by index
-    this->sortBatches();
+    this->batSort();
 
     this->log(2, L"Context("+this->_title+L") Delete Batch", L"Batch \""+bat_title+L"\" deleted.");
 

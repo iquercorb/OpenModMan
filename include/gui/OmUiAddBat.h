@@ -58,8 +58,8 @@ class OmUiAddBat : public OmDialog
     ///
     /// \return Associated Context or nullptr if none.
     ///
-    OmContext* context() const {
-      return _context;
+    OmContext* ctxCur() const {
+      return _pCtx;
     }
 
     /// \brief Set associated Context.
@@ -70,15 +70,15 @@ class OmUiAddBat : public OmDialog
     ///
     /// \param[in]  pCtx  : Context object to associate.
     ///
-    void setContext(OmContext* pCtx) {
-      _context = pCtx;
+    void ctxSet(OmContext* pCtx) {
+      _pCtx = pCtx;
     }
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmContext*          _context;
+    OmContext*          _pCtx;
 
     vector<vector<int>> _excluded;
 

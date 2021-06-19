@@ -68,7 +68,7 @@ void OmUiPropCtxBat::setChParam(unsigned i, bool en)
 ///
 void OmUiPropCtxBat::_onLbBatlsSel()
 {
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
 
@@ -76,7 +76,7 @@ void OmUiPropCtxBat::_onLbBatlsSel()
     this->enableItem(IDC_BC_EDI, true);
 
     this->enableItem(IDC_BC_UP, (lb_sel > 0));
-    int lb_max = this->msgItem(IDC_LB_BATLS, LB_GETCOUNT) - 1;
+    int lb_max = this->msgItem(IDC_LB_BAT, LB_GETCOUNT) - 1;
     this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
   }
 }
@@ -88,7 +88,7 @@ void OmUiPropCtxBat::_onLbBatlsSel()
 void OmUiPropCtxBat::_onBcUpBat()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
   // check whether we can move up
   if(lb_sel == 0)
@@ -98,13 +98,13 @@ void OmUiPropCtxBat::_onBcUpBat()
   int idx;
 
   // retrieve the package List-Box label
-  this->msgItem(IDC_LB_BATLS, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
-  idx = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel - 1);
+  this->msgItem(IDC_LB_BAT, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel - 1);
 
-  this->msgItem(IDC_LB_BATLS, LB_DELETESTRING, lb_sel - 1);
+  this->msgItem(IDC_LB_BAT, LB_DELETESTRING, lb_sel - 1);
 
-  this->msgItem(IDC_LB_BATLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  this->msgItem(IDC_LB_BATLS, LB_SETITEMDATA, lb_sel, idx);
+  this->msgItem(IDC_LB_BAT, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, lb_sel, idx);
 
   this->enableItem(IDC_BC_UP, (lb_sel > 1));
   this->enableItem(IDC_BC_DN, true);
@@ -119,9 +119,9 @@ void OmUiPropCtxBat::_onBcUpBat()
 void OmUiPropCtxBat::_onBcDnBat()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
   // get count of item in List-Box as index to for insertion
-  int lb_max = this->msgItem(IDC_LB_BATLS, LB_GETCOUNT) - 1;
+  int lb_max = this->msgItem(IDC_LB_BAT, LB_GETCOUNT) - 1;
 
   // check whether we can move down
   if(lb_sel == lb_max)
@@ -130,15 +130,15 @@ void OmUiPropCtxBat::_onBcDnBat()
   wchar_t item_buf[OMM_ITM_BUFF];
   int idx;
 
-  this->msgItem(IDC_LB_BATLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  idx = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel);
-  this->msgItem(IDC_LB_BATLS, LB_DELETESTRING, lb_sel);
+  this->msgItem(IDC_LB_BAT, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel);
+  this->msgItem(IDC_LB_BAT, LB_DELETESTRING, lb_sel);
 
   lb_sel++;
 
-  this->msgItem(IDC_LB_BATLS, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
-  this->msgItem(IDC_LB_BATLS, LB_SETITEMDATA, lb_sel, idx);
-  this->msgItem(IDC_LB_BATLS, LB_SETCURSEL, true, lb_sel);
+  this->msgItem(IDC_LB_BAT, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, lb_sel, idx);
+  this->msgItem(IDC_LB_BAT, LB_SETCURSEL, true, lb_sel);
 
   this->enableItem(IDC_BC_UP, true);
   this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -153,17 +153,17 @@ void OmUiPropCtxBat::_onBcDnBat()
 ///
 void OmUiPropCtxBat::_onBcEdiBat()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
-  if(lb_sel >= 0 && lb_sel < (int)pCtx->batchCount()) {
+  if(lb_sel >= 0 && lb_sel < (int)pCtx->batCount()) {
 
     // open the Batch Properties dialog
-    int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
+    int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel, 0);
     OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
-    pUiPropBat->setBatch(pCtx->batch(bat_id));
+    pUiPropBat->batSet(pCtx->batGet(bat_id));
     pUiPropBat->open();
   }
 }
@@ -174,26 +174,25 @@ void OmUiPropCtxBat::_onBcEdiBat()
 ///
 void OmUiPropCtxBat::_onBcDelBat()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
 
-    int bat_id = this->msgItem(IDC_LB_BATLS, LB_GETITEMDATA, lb_sel, 0);
+    int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel, 0);
 
     // warns the user before committing the irreparable
-    wstring qry = L"Delete the Batch \"";
-    qry += pCtx->batch(bat_id)->title();
+    wstring qry = L"Delete the Batch \"" + pCtx->batGet(bat_id)->title();
     qry += L"\" ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
       return;
     }
 
-    if(!pCtx->remBatch(bat_id)) {
+    if(!pCtx->batRem(bat_id)) {
       Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", pCtx->lastError());
       return;
     }
@@ -209,11 +208,11 @@ void OmUiPropCtxBat::_onBcDelBat()
 ///
 void OmUiPropCtxBat::_onBcAddBat()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
   OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
-  pUiNewBat->setContext(pCtx);
+  pUiNewBat->ctxSet(pCtx);
   pUiNewBat->open(true);
 }
 
@@ -230,7 +229,7 @@ void OmUiPropCtxBat::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // Define controls tool-tips
-  this->_createTooltip(IDC_LB_BATLS,  L"Context's batches");
+  this->_createTooltip(IDC_LB_BAT,  L"Context's batches");
 
   this->_createTooltip(IDC_BC_UP,     L"Move up");
   this->_createTooltip(IDC_BC_DN,     L"Move down");
@@ -255,7 +254,7 @@ void OmUiPropCtxBat::_onResize()
 {
   // Locations list Label & ListBox
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_BATLS, 70, 20, this->width()-107, 85);
+  this->_setItemPos(IDC_LB_BAT, 70, 20, this->width()-107, 85);
   // Up and Down buttons
   this->_setItemPos(IDC_BC_UP, this->width()-35, 49, 16, 15);
   this->_setItemPos(IDC_BC_DN, this->width()-35, 65, 16, 15);
@@ -273,14 +272,14 @@ void OmUiPropCtxBat::_onResize()
 ///
 void OmUiPropCtxBat::_onRefresh()
 {
-  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->context();
+  OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  this->msgItem(IDC_LB_BATLS, LB_RESETCONTENT);
+  this->msgItem(IDC_LB_BAT, LB_RESETCONTENT);
 
-  for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
-    this->msgItem(IDC_LB_BATLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
-    this->msgItem(IDC_LB_BATLS, LB_SETITEMDATA, i, i); // for Location index reordering
+  for(unsigned i = 0; i < pCtx->batCount(); ++i) {
+    this->msgItem(IDC_LB_BAT, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batGet(i)->title().c_str()));
+    this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, i, i); // for Location index reordering
   }
 
   // reset modified parameters flags
@@ -307,7 +306,7 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_LB_BATLS: //< Location(s) list List-Box
+    case IDC_LB_BAT: //< Location(s) list List-Box
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbBatlsSel();
       break;

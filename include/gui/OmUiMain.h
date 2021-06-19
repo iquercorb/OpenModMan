@@ -19,8 +19,19 @@
 
 #include "OmDialog.h"
 
-// Base resource ID for "File > Recent Files" popup path list
+/// \brief Base ID for Recent menu-items
+///
+/// Base resource ID for "Recent Files" menu-items dynamically manager
+/// by the dialog.
+///
 #define IDM_FILE_RECENT_PATH      40990
+
+/// \brief Custom "Context Changed" window Message
+///
+/// Custom window message to notify tab child dialogs that selected
+/// Context in main window changed.
+///
+#define UWM_MAIN_CTX_CHANGED      (WM_APP+16)
 
 
 /// \brief Application Main window
@@ -53,80 +64,30 @@ class OmUiMain : public OmDialog
     ///
     long id() const;
 
-    /// \brief Set on-process state
+    /// \brief Set dialog freeze mode
     ///
-    /// Enables or disable the On-Process state of the dialog. This is
-    /// intended to provide a modal kind behavior.
+    /// Enable or disable the dialog freeze mode.
     ///
-    /// \param[in]  enable    Enable or disable On-Process state of dialog.
+    /// The freeze mode is a modal-kind emulation for threaded operations,
+    /// it disables (almost) all controls of the dialog and its children
+    /// to prevent user to interact with elements while a threaded process
+    /// is running.
     ///
-    void setOnProcess(bool enable);
+    /// \param[in]  enable  : Enable or disable freeze mode.
+    ///
+    void freeze(bool enable);
 
-    /// \brief Set dialog safe-edit mode
+    /// \brief Set dialog safe mode
     ///
-    /// Enables or disable the dialog safe-edit mode.
+    /// Enables or disable the dialog safe mode.
     ///
-    /// This unselect the current Context Location to disable automated
-    /// refresh process preventing application crash during hard modification
-    /// of Location or Context environment.
+    /// The safe mode is used to operate modifications on sensitive
+    /// or monitored elements such as deleting or moving Location in
+    /// order to prevent conflicts or crash during process.
     ///
-    /// \param[in]  enable    Enable or disable Safe-Edit state of dialog.
+    /// \param[in]  enable  : Enable or disable safe mode.
     ///
-    void setSafeEdit(bool enable);
-
-    /// \brief Get File menu sub-item
-    ///
-    /// Returns handle to the specified sub-item in File menu
-    ///
-    /// \param[in]  pos       Zero based Sub-item position in menu.
-    ///
-    HMENU getMenuFile(unsigned pos);
-
-    /// \brief Get Edit menu sub-item
-    ///
-    /// Returns handle to the specified sub-item in Edit menu
-    ///
-    /// \param[in]  pos       Zero based Sub-item position in menu.
-    ///
-    HMENU getMenuEdit(unsigned pos);
-
-    /// \brief Get Help menu sub-item
-    ///
-    /// Returns handle to the specified sub-item in Help menu
-    ///
-    /// \param[in]  pos       Zero based Sub-item position in menu.
-    ///
-    HMENU getMenuHelp(unsigned pos);
-
-    /// \brief Enable or disable File menu sub-item
-    ///
-    /// Set File menu item enable state. The function is a shortcut for
-    /// EnableMenuItem WINAPI function.
-    ///
-    /// \param[in]  item      Menu item position or command ID.
-    /// \param[in]  enable    Enable flag to set.
-    ///
-    void setMenuFile(unsigned item, unsigned enable);
-
-    /// \brief Enable or disable Edit menu sub-item
-    ///
-    /// Set Edit menu item enable state. The function is a shortcut for
-    /// EnableMenuItem WINAPI function.
-    ///
-    /// \param[in]  item      Menu item position or command ID.
-    /// \param[in]  enable    Enable flag to set.
-    ///
-    void setMenuEdit(unsigned item, unsigned enable);
-
-    /// \brief Enable or disable Help menu sub-item
-    ///
-    /// Set Help menu item enable state. The function is a shortcut for
-    /// EnableMenuItem WINAPI function.
-    ///
-    /// \param[in]  item      Menu item position or command ID.
-    /// \param[in]  enable    Enable flag to set.
-    ///
-    void setMenuHelp(unsigned item, unsigned enable);
+    void safemode(bool enable);
 
     /// \brief Open Context
     ///
@@ -134,7 +95,7 @@ class OmUiMain : public OmDialog
     ///
     /// \param[in]  path  Context definition file path to load.
     ///
-    void openContext(const wstring& path);
+    void ctxOpen(const wstring& path);
 
     /// \brief Select Context
     ///
@@ -142,13 +103,9 @@ class OmUiMain : public OmDialog
     ///
     /// \param[in]  i  Index of Context to select or -1 to select none.
     ///
-    void selContext(int i);
+    void ctxSel(int i);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    HICON               _hIcAppS;
-
-    HICON               _hIcAppL;
 
     vector<wstring>     _pageName;
 
@@ -156,29 +113,19 @@ class OmUiMain : public OmDialog
 
     void                _addPage(const wstring& name, OmDialog* dialog);
 
-    bool                _quitPending;
+    bool                _freeze_mode;
 
-    bool                _onProcess;
+    bool                _freeze_abort;
 
-    bool                _safeEdit;
+    void                _buildMnRct();
 
-    HICON               _hIcBlank;
+    void                _buildCbCtx();
 
-    HMENU               _hMenuFile;
-
-    HMENU               _hMenuEdit;
-
-    HMENU               _hMenuHelp;
-
-    void                _reloadCtxCb();
-
-    void                _reloadMenu();
-
-    void                _reloadCtxIcon();
-
-    void                _reloadCaption();
+    void                _onCbCtxSel();
 
     void                _onInit();
+
+    void                _onShow();
 
     void                _onResize();
 

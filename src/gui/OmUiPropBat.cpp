@@ -25,7 +25,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropBat::OmUiPropBat(HINSTANCE hins) : OmDialogProp(hins),
-  _batch(nullptr)
+  _pBat(nullptr)
 {
   // create child tab dialogs
   this->_addPage(L"Settings", new OmUiPropBatStg(hins));
@@ -56,8 +56,8 @@ long OmUiPropBat::id() const
 ///
 bool OmUiPropBat::checkChanges()
 {
-  OmBatch* pBat = this->_batch;
-  if(!pBat) return false;
+  if(!this->_pBat)
+    return false;
 
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
@@ -67,7 +67,7 @@ bool OmUiPropBat::checkChanges()
 
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) {  //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INP01, item_str);
-    if(pBat->title() != item_str) {
+    if(this->_pBat->title() != item_str) {
       changed = true;
     } else {
       pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
@@ -90,10 +90,10 @@ bool OmUiPropBat::checkChanges()
 ///
 bool OmUiPropBat::applyChanges()
 {
-  OmBatch* pBat = this->_batch;
-  if(!pBat) false;
+  if(!this->_pBat)
+    return false;
 
-  OmContext* pCtx = pBat->context();
+  OmContext* pCtx = this->_pBat->ownerCtx();
 
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
 
@@ -103,18 +103,19 @@ bool OmUiPropBat::applyChanges()
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INP01, bat_name);
     if(!Om_isValidName(bat_name)) {
-      wstring wrn = L"The title";
-      wrn += OMM_STR_ERR_VALIDNAME;
+      wstring wrn = L"The title"; wrn += OMM_STR_ERR_VALIDNAME;
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Batch title", wrn);
       return false;
     }
     // Check whether name already exists
-    OmContext* pCtx = pBat->context();
-    for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
-      if(pCtx->batch(i)->title() == bat_name) {
-        Om_dialogBoxErr(this->_hwnd, L"Not unique Batch title",
-                                     L"A Batch with the same title already "
-                                     L"exists. Please choose another title.");
+    for(unsigned i = 0; i < pCtx->batCount(); ++i) {
+      if(pCtx->batGet(i)->title() == bat_name) {
+
+        wstring err = L"A Batch with the same title already "
+                      L"exists. Please choose another title.";
+
+        Om_dialogBoxErr(this->_hwnd, L"Batch title already exists",err);
+
         return false;
       }
     }
@@ -123,11 +124,10 @@ bool OmUiPropBat::applyChanges()
 
   // Step 2, save changes
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
-    if(!pBat->rename(bat_name)) { //< rename Batch filename
-      Om_dialogBoxErr(this->_hwnd,  L"Batch rename failed",
-                                    pBat->lastError());
+    if(!this->_pBat->rename(bat_name)) { //< rename Batch filename
+      Om_dialogBoxErr(this->_hwnd, L"Batch rename failed", this->_pBat->lastError());
     }
-    pBat->setTitle(bat_name); //< change Batch title
+    this->_pBat->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified
     pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
   }
@@ -135,32 +135,32 @@ bool OmUiPropBat::applyChanges()
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
 
     // build the per-Location hash lists
-    vector<uint64_t> hash_list;
+    vector<uint64_t> hash_ls;
     OmLocation* pLoc;
     OmPackage* pPkg;
 
-    for(size_t k = 0; k < pCtx->locationCount(); ++k) {
+    for(size_t k = 0; k < pCtx->locCount(); ++k) {
 
-      pLoc = pCtx->location(k);
+      pLoc = pCtx->locGet(k);
 
       // reset list
-      hash_list.clear();
+      hash_ls.clear();
 
-      for(size_t i = 0; i < pUiPropBatStg->getIncLsSize(k); ++i) {
+      for(size_t i = 0; i < pUiPropBatStg->incCount(k); ++i) {
 
         // retrieve package from stored index
-        pPkg = pLoc->package(pUiPropBatStg->getIncLsValue(k, i));
+        pPkg = pLoc->pkgGet(pUiPropBatStg->incGet(k, i));
 
         // add <install> entry with package hash
-        hash_list.push_back(pPkg->hash());
+        hash_ls.push_back(pPkg->hash());
       }
 
       // add new location in batch if required
-      if(!pBat->hasLocation(pLoc->uuid()))
-         pBat->addLocation(pLoc->uuid());
+      if(!this->_pBat->hasLoc(pLoc->uuid()))
+         this->_pBat->locAdd(pLoc->uuid());
 
       // set new Install list
-      pBat->setInstallList(pLoc->uuid(), hash_list);
+      this->_pBat->insSetList(pLoc->uuid(), hash_ls);
     }
 
     // Reset parameter as unmodified

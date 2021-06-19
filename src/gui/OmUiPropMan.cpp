@@ -64,7 +64,7 @@ bool OmUiPropMan::checkChanges()
 
   if(pUiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
 
-    int cb_sel = pUiPropManGle->msgItem(IDC_CB_ISIZE, CB_GETCURSEL, 0, 0);
+    int cb_sel = pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL, 0, 0);
 
     switch(cb_sel)
     {
@@ -110,7 +110,7 @@ bool OmUiPropMan::applyChanges()
   // Parameter: Icons size for packages List-View
   if(pUiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
 
-    int cb_sel = pUiPropManGle->msgItem(IDC_CB_ISIZE, CB_GETCURSEL);
+    int cb_sel = pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL);
 
     switch(cb_sel)
     {
@@ -132,22 +132,20 @@ bool OmUiPropMan::applyChanges()
   // Parameter: Open Context(s) at startup
   if(pUiPropManGle->hasChParam(MAN_PROP_GLE_STARTUP_CONTEXTS)) {
 
-    HWND hLb = pUiPropManGle->getItem(IDC_LB_STRLS);
-
-    int lb_cnt =  SendMessageW(hLb, LB_GETCOUNT, 0, 0);
-
-    wchar_t item_buf[OMM_ITM_BUFF];
-
-    vector<wstring> start_files;
-
-    for(int i = 0; i < lb_cnt; ++i) {
-      SendMessageW(hLb, LB_GETTEXT, i, reinterpret_cast<LPARAM>(item_buf));
-      start_files.push_back(item_buf);
-    }
-
     bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
-    pMgr->saveStartContexts(bm_chk, start_files);
+    vector<wstring> path_ls;
+
+    int lb_cnt =  this->msgItem(IDC_LB_PATH, LB_GETCOUNT);
+    if(lb_cnt > 0) {
+      wchar_t item_buf[OMM_ITM_BUFF];
+      for(int i = 0; i < lb_cnt; ++i) {
+        this->msgItem(IDC_LB_PATH, LB_GETTEXT, i, reinterpret_cast<LPARAM>(item_buf));
+        path_ls.push_back(item_buf);
+      }
+    }
+
+    pMgr->saveStartContexts(bm_chk, path_ls);
 
     // Reset parameter as unmodified
     pUiPropManGle->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, false);

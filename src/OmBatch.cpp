@@ -127,7 +127,7 @@ bool OmBatch::open(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::hasLocation(const wstring& uuid)
+bool OmBatch::hasLoc(const wstring& uuid)
 {
   for(size_t i = 0; i < this->_locUuid.size(); ++i) {
     if(this->_locUuid[i] == uuid)
@@ -141,7 +141,7 @@ bool OmBatch::hasLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmBatch::getLocationIndex(const wstring& uuid)
+int OmBatch::locGetIndex(const wstring& uuid)
 {
   for(size_t i = 0; i < this->_locUuid.size(); ++i) {
     if(this->_locUuid[i] == uuid)
@@ -155,7 +155,7 @@ int OmBatch::getLocationIndex(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::hasInstallHash(unsigned l, uint64_t hash)
+bool OmBatch::hasIns(unsigned l, uint64_t hash)
 {
   for(size_t i = 0; i < this->_insHash[l].size(); ++i) {
     if(this->_insHash[l][i] == hash) return true;
@@ -205,7 +205,7 @@ void OmBatch::setIndex(unsigned index)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::addLocation(const wstring& uuid)
+void OmBatch::locAdd(const wstring& uuid)
 {
   if(this->_config.valid()) {
 
@@ -237,7 +237,7 @@ void OmBatch::addLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::remLocation(const wstring& uuid)
+void OmBatch::locRem(const wstring& uuid)
 {
   if(this->_config.valid()) {
 
@@ -270,7 +270,7 @@ void OmBatch::remLocation(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::setInstallList(const wstring& uuid, const vector<uint64_t>& hash_list)
+void OmBatch::insSetList(const wstring& uuid, const vector<uint64_t>& hash_list)
 {
   if(this->_config.valid()) {
 

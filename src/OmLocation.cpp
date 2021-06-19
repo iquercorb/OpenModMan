@@ -53,7 +53,7 @@ static bool __OmLocation_pkgCompareName(const OmPackage* a, const OmPackage* b)
     return true;
 
   // strings are strictly equals, we sort by "IsZip" status
-  if(a->isArchive() && !b->isArchive())
+  if(a->isZip() && !b->isZip())
     return true;
 
   return false;
@@ -92,10 +92,10 @@ static bool __OmLocation_pkgCompareVers(const OmPackage* a, const OmPackage* b)
 ///
 static bool __OmLocation_pkgCompareStat(const OmPackage* a, const OmPackage* b)
 {
-  if(a->hasBackup() && b->hasBackup()) {
+  if(a->hasBck() && b->hasBck()) {
     return __OmLocation_pkgCompareName(a, b);
   } else {
-    return (a->hasBackup() && !b->hasBackup());
+    return (a->hasBck() && !b->hasBck());
   }
 }
 
@@ -111,14 +111,14 @@ OmLocation::OmLocation(OmContext* pCtx) :
   _index(0),
   _home(),
   _path(),
-  _installDir(),
-  _libraryDir(),
-  _custLibraryDir(false),
-  _backupDir(),
-  _custBackupDir(false),
-  _package(),
-  _backupZipLevel(-1),
-  _packageSorting(PKG_SORTING_NAME),
+  _dstDir(),
+  _libDir(),
+  _libDirCust(false),
+  _bckDir(),
+  _bckDirCust(false),
+  _pkgLs(),
+  _bckZipLevel(-1),
+  _pkgSorting(PKG_SORTING_NAME),
   _valid(false),
   _error()
 {
@@ -138,20 +138,20 @@ OmLocation::~OmLocation()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-inline void OmLocation::_packageSort()
+inline void OmLocation::_pkgSort()
 {
- if(this->_packageSorting & PKG_SORTING_STAT) //< sorting by status
-    std::sort(this->_package.begin(), this->_package.end(), __OmLocation_pkgCompareStat);
+ if(this->_pkgSorting & PKG_SORTING_STAT) //< sorting by status
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareStat);
 
-  if(this->_packageSorting & PKG_SORTING_NAME) //< sorting by name (alphabetical order)
-    std::sort(this->_package.begin(), this->_package.end(), __OmLocation_pkgCompareName);
+  if(this->_pkgSorting & PKG_SORTING_NAME) //< sorting by name (alphabetical order)
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareName);
 
-  if(this->_packageSorting & PKG_SORTING_VERS) //< sorting by version (ascending)
-    std::sort(this->_package.begin(), this->_package.end(), __OmLocation_pkgCompareVers);
+  if(this->_pkgSorting & PKG_SORTING_VERS) //< sorting by version (ascending)
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareVers);
 
   // check whether we need a normal or reverse sorting
-  if(this->_packageSorting & PKG_SORTING_REVERSE) {
-    std::reverse(this->_package.begin(), this->_package.end());
+  if(this->_pkgSorting & PKG_SORTING_REVERSE) {
+    std::reverse(this->_pkgLs.begin(), this->_pkgLs.end());
   }
 }
 
@@ -159,39 +159,39 @@ inline void OmLocation::_packageSort()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::setPackageSorting(unsigned sorting)
+void OmLocation::libSetSorting(unsigned sorting)
 {
   // we check if the requested sorting kind is the same as the currently
   // used, in this case, this mean the sorting order must be reversed
 
-  if(sorting & this->_packageSorting) {
+  if(sorting & this->_pkgSorting) {
 
     // check if current sorting is reversed, then switch order
-    if(this->_packageSorting & PKG_SORTING_REVERSE) {
-      this->_packageSorting &= ~PKG_SORTING_REVERSE; //< remove reversed flag
+    if(this->_pkgSorting & PKG_SORTING_REVERSE) {
+      this->_pkgSorting &= ~PKG_SORTING_REVERSE; //< remove reversed flag
     } else {
-      this->_packageSorting |= PKG_SORTING_REVERSE; //< add reversed flag
+      this->_pkgSorting |= PKG_SORTING_REVERSE; //< add reversed flag
     }
 
   } else {
 
-    this->_packageSorting = sorting;
+    this->_pkgSorting = sorting;
   }
 
   // save the current sorting
   if(this->_config.valid()) {
 
     if(this->_config.xml().hasChild(L"library_sort")) {
-      this->_config.xml().child(L"library_sort").setAttr(L"sort", (int)_packageSorting);
+      this->_config.xml().child(L"library_sort").setAttr(L"sort", (int)_pkgSorting);
     } else {
-      this->_config.xml().addChild(L"library_sort").setAttr(L"sort", (int)_packageSorting);
+      this->_config.xml().addChild(L"library_sort").setAttr(L"sort", (int)_pkgSorting);
     }
 
     this->_config.save();
   }
 
   // finally sort packages
-  this->_packageSort();
+  this->_pkgSort();
 }
 
 
@@ -241,14 +241,14 @@ bool OmLocation::open(const wstring& path)
   // check for the presence of <install> entry
   if(this->_config.xml().hasChild(L"install")) {
     // we check whether destination folder is valid
-    this->_installDir = this->_config.xml().child(L"install").content();
-    if(!Om_isDir(this->_installDir)) {
-      verbose = L"Destination folder \""+this->_installDir+L"\"";
+    this->_dstDir = this->_config.xml().child(L"install").content();
+    if(!Om_isDir(this->_dstDir)) {
+      verbose = L"Destination folder \""+this->_dstDir+L"\"";
       verbose += OMM_STR_ERR_ISDIR;
       this->log(1, L"Location("+this->_title+L") Load", verbose);
     } else {
       verbose = L"Using destination folder: \"";
-      verbose += this->_installDir + L"\".";
+      verbose += this->_dstDir + L"\".";
       this->log(2, L"Location("+this->_title+L") Load", verbose);
     }
   } else {
@@ -261,77 +261,77 @@ bool OmLocation::open(const wstring& path)
   // check for the presence of <library> entry for custom Library path
   if(this->_config.xml().hasChild(L"library")) {
     // get the custom Library path in config
-    this->_libraryDir = this->_config.xml().child(L"library").content();
+    this->_libDir = this->_config.xml().child(L"library").content();
     // notify we use a custom Library path
-    this->_custLibraryDir = true;
-    if(!Om_isDir(this->_libraryDir)) {
-      verbose = L"Custom library folder \""+this->_libraryDir+L"\"";
+    this->_libDirCust = true;
+    if(!Om_isDir(this->_libDir)) {
+      verbose = L"Custom library folder \""+this->_libDir+L"\"";
       verbose += OMM_STR_ERR_ISDIR;
       this->log(1, L"Location("+this->_title+L") Load", verbose);
     } else {
-      verbose = L"Using custom library folder: \""+this->_libraryDir+L"\".";
+      verbose = L"Using custom library folder: \""+this->_libDir+L"\".";
       this->log(2, L"Location("+this->_title+L") Load", verbose);
     }
   } else {
     // no <library> node in config, use default settings
-    this->_libraryDir = this->_home + L"\\library";
-    if(!Om_isDir(this->_libraryDir)) {
-      int result = Om_dirCreate(this->_libraryDir);
+    this->_libDir = this->_home + L"\\library";
+    if(!Om_isDir(this->_libDir)) {
+      int result = Om_dirCreate(this->_libDir);
       if(result != 0) {
-        this->_error = L"Default library folder \""+this->_libraryDir+L"\".";
+        this->_error = L"Default library folder \""+this->_libDir+L"\".";
         this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
         this->log(0, L"Location("+this->_title+L") Load", this->_error);
         this->close();
         return false;
       }
     }
-    verbose = L"Using default library folder: \""+this->_libraryDir+L"\".";
+    verbose = L"Using default library folder: \""+this->_libDir+L"\".";
     this->log(2, L"Location("+this->_title+L") Load", verbose);
   }
 
   // check for the presence of <backup> entry for custom Backup path
   if(this->_config.xml().hasChild(L"backup")) {
     // get the custom Backup path in config
-    this->_backupDir = this->_config.xml().child(L"backup").content();
+    this->_bckDir = this->_config.xml().child(L"backup").content();
     // notify we use a custom Backup path
-    this->_custBackupDir = true;
-    if(!Om_isDir(this->_backupDir)) {
-      verbose = L"Custom backup folder \""+this->_backupDir+L"\"";
+    this->_bckDirCust = true;
+    if(!Om_isDir(this->_bckDir)) {
+      verbose = L"Custom backup folder \""+this->_bckDir+L"\"";
       verbose += OMM_STR_ERR_ISDIR;
       this->log(1, L"Location("+this->_title+L") Load", verbose);
     } else {
-      verbose = L"Using custom backup folder: \""+this->_backupDir+L"\".";
+      verbose = L"Using custom backup folder: \""+this->_bckDir+L"\".";
       this->log(2, L"Location("+this->_title+L") Load", verbose);
     }
   } else {
     // no <backup> node in config, use default settings
-    this->_backupDir = this->_home + L"\\backup";
-    if(!Om_isDir(this->_backupDir)) {
-      int result = Om_dirCreate(this->_backupDir);
+    this->_bckDir = this->_home + L"\\backup";
+    if(!Om_isDir(this->_bckDir)) {
+      int result = Om_dirCreate(this->_bckDir);
       if(result != 0) {
-        this->_error = L"Default backup folder \""+this->_backupDir+L"\"";
+        this->_error = L"Default backup folder \""+this->_bckDir+L"\"";
         this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
         this->log(0, L"Location("+this->_title+L") Load", this->_error);
         this->close();
         return false;
       }
     }
-    verbose = L"Using default backup folder: \""+this->_backupDir+L"\".";
+    verbose = L"Using default backup folder: \""+this->_bckDir+L"\".";
     this->log(2, L"Location("+this->_title+L") Load", verbose);
   }
 
   // we check for backup compression level
   if(this->_config.xml().hasChild(L"backup_comp")) {
-    this->_backupZipLevel = this->_config.xml().child(L"backup_comp").attrAsInt(L"level");
+    this->_bckZipLevel = this->_config.xml().child(L"backup_comp").attrAsInt(L"level");
 
     // check whether we have a correct value
-    if(this->_backupZipLevel > 3)
-      this->_backupZipLevel = -1;
+    if(this->_bckZipLevel > 3)
+      this->_bckZipLevel = -1;
   }
 
   // we check for saved library sorting
   if(this->_config.xml().hasChild(L"library_sort")) {
-    this->_packageSorting = this->_config.xml().child(L"library_sort").attrAsInt(L"sort");
+    this->_pkgSorting = this->_config.xml().child(L"library_sort").attrAsInt(L"sort");
   }
 
   // Get network repository list
@@ -348,7 +348,7 @@ bool OmLocation::open(const wstring& path)
     for(size_t i = 0; i < xml_rep_list.size(); ++i) {
       pRep = new OmRepository(this);
       if(pRep->define(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
-        this->_repository.push_back(pRep);
+        this->_repLs.push_back(pRep);
         verbose = L"Add Repository: \""+Om_fromUtf8(pRep->url().c_str())+L"\".";
         this->log(2, L"Location("+this->_title+L") Load", verbose);
       } else {
@@ -363,7 +363,7 @@ bool OmLocation::open(const wstring& path)
   this->log(2, L"Location("+this->_title+L") Load", L"Success");
 
   // Refresh library
-  this->packageListRefresh();
+  this->libRefresh();
 
   return true;
 }
@@ -376,15 +376,15 @@ void OmLocation::close()
 {
   wstring title = this->_title;
 
-  this->packageListClear();
+  this->libClear();
   this->_home.clear();
   this->_path.clear();
   this->_title.clear();
-  this->_installDir.clear();
-  this->_libraryDir.clear();
-  this->_custLibraryDir = false;
-  this->_backupDir.clear();
-  this->_custBackupDir = false;
+  this->_dstDir.clear();
+  this->_libDir.clear();
+  this->_libDirCust = false;
+  this->_bckDir.clear();
+  this->_bckDirCust = false;
   this->_config.close();
   this->_valid = false;
 
@@ -400,23 +400,23 @@ bool OmLocation::checkAccessLib()
   bool access_ok = true;
 
   // checks whether folder exists
-  if(Om_isDir(this->_libraryDir)) {
+  if(Om_isDir(this->_libDir)) {
     // checks for proper permissions on folder
-    if(!Om_checkAccess(this->_libraryDir, OMM_ACCESS_DIR_READ)) {
-      this->_error =  L"Library folder \""+this->_libraryDir+L"\"";
+    if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_READ)) {
+      this->_error =  L"Library folder \""+this->_libDir+L"\"";
       this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
-    if(this->_custLibraryDir) {
-      this->_error =  L"Custom library folder \""+this->_libraryDir+L"\"";
+    if(this->_libDirCust) {
+      this->_error =  L"Custom library folder \""+this->_libDir+L"\"";
       this->_error += OMM_STR_ERR_ISDIR;
       access_ok = false;
     } else {
       // try to create it
-      int result = Om_dirCreate(this->_libraryDir);
+      int result = Om_dirCreate(this->_libDir);
       if(result != 0) {
-        this->_error = L"Default library folder \""+this->_libraryDir+L"\"";
+        this->_error = L"Default library folder \""+this->_libDir+L"\"";
         this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
         access_ok = false;
       }
@@ -442,29 +442,29 @@ bool OmLocation::checkAccessBck()
   bool access_ok = true;
 
   // checks whether folder exists
-  if(Om_isDir(this->_backupDir)) {
+  if(Om_isDir(this->_bckDir)) {
     // checks for proper permissions on folder
-    if(Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_READ)) {
-      if(!Om_checkAccess(this->_backupDir, OMM_ACCESS_DIR_WRITE)) {
-        this->_error = L"Backup folder \""+this->_backupDir+L"\"";
+    if(Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_READ)) {
+      if(!Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_WRITE)) {
+        this->_error = L"Backup folder \""+this->_bckDir+L"\"";
         this->_error += OMM_STR_ERR_WRITE;
         access_ok = false;
       }
     } else {
-      this->_error = L"Backup folder \""+this->_backupDir+L"\"";
+      this->_error = L"Backup folder \""+this->_bckDir+L"\"";
       this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
-    if(this->_custBackupDir) {
-      this->_error =  L"Custom backup folder \""+this->_backupDir+L"\"";
+    if(this->_bckDirCust) {
+      this->_error =  L"Custom backup folder \""+this->_bckDir+L"\"";
       this->_error += OMM_STR_ERR_ISDIR;
       access_ok = false;
     } else {
       // try to create it
-      int result = Om_dirCreate(this->_backupDir);
+      int result = Om_dirCreate(this->_bckDir);
       if(result != 0) {
-        this->_error = L"Default backup folder \""+this->_backupDir+L"\"";
+        this->_error = L"Default backup folder \""+this->_bckDir+L"\"";
         this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
         access_ok = false;
       }
@@ -490,21 +490,21 @@ bool OmLocation::checkAccessDst()
   bool access_ok = true;
 
   // checks whether folder exists
-  if(Om_isDir(this->_installDir)) {
+  if(Om_isDir(this->_dstDir)) {
     // checks for proper permissions on folder
-    if(Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_READ)) {
-      if(!Om_checkAccess(this->_installDir, OMM_ACCESS_DIR_WRITE)) {
-        this->_error = L"Destination folder \""+this->_installDir+L"\"";
+    if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
+      if(!Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_WRITE)) {
+        this->_error = L"Destination folder \""+this->_dstDir+L"\"";
         this->_error += OMM_STR_ERR_WRITE;
         access_ok = false;
       }
     } else {
-      this->_error = L"Destination folder \""+this->_installDir+L"\"";
+      this->_error = L"Destination folder \""+this->_dstDir+L"\"";
       this->_error += OMM_STR_ERR_READ;
       access_ok = false;
     }
   } else {
-    this->_error =  L"Destination folder \""+this->_installDir+L"\"";
+    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
     this->_error += OMM_STR_ERR_ISDIR;
     access_ok = false;
   }
@@ -523,18 +523,18 @@ bool OmLocation::checkAccessDst()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::packageListClear()
+void OmLocation::libClear()
 {
-  for(size_t i = 0; i < this->_package.size(); ++i)
-    delete this->_package[i];
-  this->_package.clear();
+  for(size_t i = 0; i < this->_pkgLs.size(); ++i)
+    delete this->_pkgLs[i];
+  this->_pkgLs.clear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::packageListRefresh()
+void OmLocation::libRefresh()
 {
   // some explanation about how Packages and Backups are managed...
   //
@@ -581,138 +581,133 @@ void OmLocation::packageListRefresh()
   // Notice that Backup are tracked internally, the algorithm does not support
   // changes in Backup folder by third-party.
 
-  vector<wstring> ls;
+  vector<wstring> path_ls;
   OmPackage* pPkg;
 
   // our package list is not empty, we will check for added or removed item
-  if(this->_package.size()) {
+  if(this->_pkgLs.size()) {
 
     // get content of the package Library folder
     if(this->_context->_manager->legacySupport()) {
-      Om_lsAll(&ls, this->_libraryDir, true);
+      Om_lsAll(&path_ls, this->_libDir, true);
     } else {
-      Om_lsFile(&ls, this->_libraryDir, true);
+      Om_lsFile(&path_ls, this->_libDir, true);
     }
 
     bool in_list;
 
-    // search for unavailable Packages Sources
-    for(size_t p = 0; p < this->_package.size(); ++p) {
+    // search for unavailable Sources
+    for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
 
-      // search this Package Source in Library folder item list
+      // search this Source in Library folder item list
       in_list = false;
-      for(size_t k = 0; k < ls.size(); ++k) {
-        if(this->_package[p]->sourcePath() == ls[k]) { //< compare Source paths
+      for(size_t k = 0; k < path_ls.size(); ++k) {
+        if(this->_pkgLs[p]->srcPath() == path_ls[k]) { //< compare Source paths
           in_list = true; break;
         }
       }
 
-      // this Package Source is no longer in Library folder
+      // this Source is no longer in Library folder
       if(!in_list) {
         // check whether this Package is installed (has backup)
-        if(this->_package[p]->hasBackup()) {
+        if(this->_pkgLs[p]->hasBck()) {
           // this Package is installed, in this case we don't remove it from
           // list, but we revoke its "Source" property since it is no longer
           // available
-          this->_package[p]->sourceClear();
+          this->_pkgLs[p]->srcClear();
         } else {
           // The Package has no Backup and Source is no longer available
           // this is an empty shell, we have to remove it
-          this->_package.erase(this->_package.begin()+p);
+          this->_pkgLs.erase(this->_pkgLs.begin()+p);
           --p;
         }
       }
     }
 
-    uint64_t full_hash;
+    uint64_t pkg_hash;
 
-    // Search for new Packages Source
-    for(size_t i = 0; i < ls.size(); ++i) {
+    // Search for new Sources
+    for(size_t i = 0; i < path_ls.size(); ++i) {
       // search in all packages to found this file
       in_list = false;
 
-      full_hash = Om_getXXHash3(Om_getFilePart(ls[i]));
+      pkg_hash = Om_getXXHash3(Om_getFilePart(path_ls[i]));
 
-      for(size_t p = 0; p < this->_package.size(); ++p) {
+      for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
         // we first test against the Source Path
-        if(ls[i] == this->_package[p]->sourcePath()) {
+        if(path_ls[i] == this->_pkgLs[p]->srcPath()) {
           in_list = true; break;
         }
         // checks whether Hash values matches
-        if(full_hash == this->_package[p]->hash()) {
+        if(pkg_hash == this->_pkgLs[p]->hash()) {
           // this Package Source obviously matches to a currently
           // installed one, since we got a Package with the same Hash but
           // Source is missing, so we add the Source to this Package Backup
-          this->_package[p]->sourceParse(ls[i]);
+          this->_pkgLs[p]->srcParse(path_ls[i]);
           in_list = true; break;
         }
       }
       // This is a new Package Source
       if(!in_list) {
         pPkg = new OmPackage(this);
-        if(pPkg->sourceParse(ls[i])) {
-          this->_package.push_back(pPkg);
+        if(pPkg->srcParse(path_ls[i])) {
+          this->_pkgLs.push_back(pPkg);
         } else {
           delete pPkg;
         }
       }
     }
 
-    this->_packageSort();
-
-    return;
-  }
-
-  // if we are here in the function, this mean the package list is empty,
-  // either because it is Location initialization or because list was purged.
-  // so, here we go to recreate the package list from scratch.
-
-  // get Backup folder content
-  Om_lsAll(&ls, this->_backupDir, true);
-
-  // add all available and valid Backups
-  for(size_t i = 0; i < ls.size(); ++i) {
-    pPkg = new OmPackage(this);
-    if(pPkg->backupParse(ls[i])) {
-      this->_package.push_back(pPkg);
-    } else {
-      delete pPkg;
-    }
-  }
-
-  // get Backup folder content
-  if(this->_context->_manager->legacySupport()) {
-    // for legacy support, we also use folders as Package Source
-    Om_lsAll(&ls, this->_libraryDir, true);
   } else {
-    Om_lsFile(&ls, this->_libraryDir, true);
-  }
 
-  bool has_bck;
+    // get Backup folder content
+    Om_lsAll(&path_ls, this->_bckDir, true);
 
-  // Link Sources to matching Backup, or add new Sources
-  for(size_t i = 0; i < ls.size(); ++i) {
-    has_bck = false;
-    // check whether this Source matches an existing Backup
-    for(size_t p = 0; p < this->_package.size(); p++) {
-      if(this->_package[p]->isBackupOf(ls[i])) {
-        this->_package[p]->sourceParse(ls[i]);
-        has_bck = true;
-        break;
-      }
-    }
-    // non Backup found for this Source, adding new Source
-    if(!has_bck) {
+    // add all available and valid Backups
+    for(size_t i = 0; i < path_ls.size(); ++i) {
       pPkg = new OmPackage(this);
-      if(pPkg->sourceParse(ls[i])) {
-        this->_package.push_back(pPkg);
+      if(pPkg->bckParse(path_ls[i])) {
+        this->_pkgLs.push_back(pPkg);
       } else {
         delete pPkg;
       }
     }
+
+    // get Backup folder content
+    if(this->_context->_manager->legacySupport()) {
+      // for legacy support, we also use folders as Package Source
+      Om_lsAll(&path_ls, this->_libDir, true);
+    } else {
+      Om_lsFile(&path_ls, this->_libDir, true);
+    }
+
+    bool has_bck;
+
+    // Link Sources to matching Backup, or add new Sources
+    for(size_t i = 0; i < path_ls.size(); ++i) {
+      has_bck = false;
+      // check whether this Source matches an existing Backup
+      for(size_t p = 0; p < this->_pkgLs.size(); p++) {
+        if(this->_pkgLs[p]->isBckOf(path_ls[i])) {
+          this->_pkgLs[p]->srcParse(path_ls[i]);
+          has_bck = true;
+          break;
+        }
+      }
+      // non Backup found for this Source, adding new Source
+      if(!has_bck) {
+        pPkg = new OmPackage(this);
+        if(pPkg->srcParse(path_ls[i])) {
+          this->_pkgLs.push_back(pPkg);
+        } else {
+          delete pPkg;
+        }
+      }
+    }
+
   }
 
-  this->_packageSort();
+  this->_pkgSort();
 }
 
 
@@ -757,11 +752,11 @@ void OmLocation::setIndex(unsigned index)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::setInstallDir(const wstring& path)
+void OmLocation::setDstDir(const wstring& path)
 {
   if(this->_config.valid()) {
 
-    this->_installDir = path;
+    this->_dstDir = path;
 
     if(this->_config.xml().hasChild(L"install")) {
       this->_config.xml().child(L"install").setContent(path);
@@ -777,13 +772,13 @@ void OmLocation::setInstallDir(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::setCustLibraryDir(const wstring& path)
+void OmLocation::setCustLibDir(const wstring& path)
 {
   if(this->_config.valid()) {
 
-    this->_libraryDir = path;
+    this->_libDir = path;
     // notify we use a custom Library path
-    this->_custLibraryDir = true;
+    this->_libDirCust = true;
 
     if(this->_config.xml().hasChild(L"library")) {
       this->_config.xml().child(L"library").setContent(path);
@@ -795,20 +790,20 @@ void OmLocation::setCustLibraryDir(const wstring& path)
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::remCustLibraryDir()
+void OmLocation::remCustLibDir()
 {
   if(this->_config.valid()) {
 
-    this->_libraryDir = this->_home + L"\\Library";
+    this->_libDir = this->_home + L"\\Library";
     // notify we use default settings
-    this->_custLibraryDir = false;
+    this->_libDirCust = false;
 
     if(this->_config.xml().hasChild(L"library")) {
       this->_config.xml().remChild(L"library");
@@ -818,20 +813,20 @@ void OmLocation::remCustLibraryDir()
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::setCustBackupDir(const wstring& path)
+void OmLocation::setCustBckDir(const wstring& path)
 {
   if(this->_config.valid()) {
 
-    this->_backupDir = path;
+    this->_bckDir = path;
     // notify we use a custom Library path
-    this->_custBackupDir = true;
+    this->_bckDirCust = true;
 
     if(this->_config.xml().hasChild(L"backup")) {
       this->_config.xml().child(L"backup").setContent(path);
@@ -843,20 +838,20 @@ void OmLocation::setCustBackupDir(const wstring& path)
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::remCustBackupDir()
+void OmLocation::remCustBckDir()
 {
   if(this->_config.valid()) {
 
-    this->_backupDir = this->_home + L"\\Backup";
+    this->_bckDir = this->_home + L"\\Backup";
     // notify we use default settings
-    this->_custBackupDir = false;
+    this->_bckDirCust = false;
 
     if(this->_config.xml().hasChild(L"backup")) {
       this->_config.xml().remChild(L"backup");
@@ -866,20 +861,20 @@ void OmLocation::remCustBackupDir()
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::setBackupZipLevel(int level)
+void OmLocation::setBckZipLevel(int level)
 {
   if(this->_config.valid()) {
 
-    this->_backupZipLevel = level;
+    this->_bckZipLevel = level;
 
-    if(_config.xml().hasChild(L"backup_comp")) {
+    if(this->_config.xml().hasChild(L"backup_comp")) {
       this->_config.xml().child(L"backup_comp").setAttr(L"level", (int)level);
     } else {
       this->_config.xml().addChild(L"backup_comp").setAttr(L"level", (int)level);
@@ -905,7 +900,9 @@ bool OmLocation::renameHome(const wstring& name)
   bool has_error = false;
 
   // compose new Location definition file name
-  wstring new_file = name; new_file += L"."; new_file += OMM_LOC_FILE_EXT;
+  wstring new_file = name;
+  new_file += L".";
+  new_file += OMM_LOC_FILE_EXT;
 
   // Rename Location definition file
   int result = Om_fileMove(old_path, old_home + L"\\" + new_file);
@@ -955,15 +952,15 @@ bool OmLocation::renameHome(const wstring& name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool *pAbort)
+bool OmLocation::bckMove(const wstring& path, HWND hPb, HWND hSc, const bool *pAbort)
 {
   bool has_error = false;
 
-  if(path != this->_backupDir) {
+  if(path != this->_bckDir) {
 
     // checks whether we have a valid old Backup folder
     if(!this->checkAccessBck()) {
-      this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
+      this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
       this->_error += OMM_STR_ERR_DIRACCESS;
       this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
       return false;
@@ -972,7 +969,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
     if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
     vector<wstring> ls;
-    Om_lsAll(&ls, this->_backupDir, false);
+    Om_lsAll(&ls, this->_bckDir, false);
 
     // initialize the progress bar
     if(hPb) {
@@ -1004,7 +1001,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
       Sleep(DEBUG_SLOW); //< for debug
       #endif
 
-      src = this->_backupDir + L"\\" + ls[i];
+      src = this->_bckDir + L"\\" + ls[i];
       dst = path + L"\\" + ls[i];
 
       result = Om_fileMove(src, dst);
@@ -1028,7 +1025,7 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
     }
 
     // Force a full refresh for the next time
-    this->packageListClear();
+    this->libClear();
 
     this->log(2, L"Location("+this->_title+L") Move backups", L"Data transfered to \""+path+L"\".");
   }
@@ -1040,12 +1037,11 @@ bool OmLocation::backupsMove(const wstring& path, HWND hPb, HWND hSc, const bool
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::hasBackupData()
+bool OmLocation::bckHasData()
 {
-  for(size_t i = 0; i < _package.size(); ++i) {
-    if(_package[i]->hasBackup()) return true;
+  for(size_t i = 0; i < _pkgLs.size(); ++i) {
+    if(_pkgLs[i]->hasBck()) return true;
   }
-
   return false;
 }
 
@@ -1053,11 +1049,11 @@ bool OmLocation::hasBackupData()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
+bool OmLocation::bckPurge(HWND hPb, HWND hSc, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
   if(!this->checkAccessDst()) {
-    this->_error =  L"Destination folder \""+this->_installDir+L"\"";
+    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
@@ -1065,7 +1061,7 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
 
   // checks whether we have a valid Backup folder
   if(!this->checkAccessBck()) {
-    this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
@@ -1076,75 +1072,56 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
   // first we gather all installed package, we will use the same algorithm than
   // for standard uninstall list, but here we uninstall all packages.
 
-  vector<unsigned> selec_list; //< our select list
-  for(size_t i = 0; i < this->_package.size(); ++i) {
-    if(this->_package[i]->hasBackup())
-      selec_list.push_back(i);
+  vector<unsigned> sel_ls; //< our select list
+  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
+    if(this->_pkgLs[i]->hasBck())
+      sel_ls.push_back(i);
   }
 
   // check whether we have something to proceed
-  if(selec_list.empty())
+  if(sel_ls.empty())
     return true;
 
-  vector<OmPackage*> uninst_list; //< our real uninstall list
+  vector<OmPackage*> unin_ls; //< real uninstall list
 
-  // Build the real packages uninstall list including dependencies created
-  // when packages installation overlaps others:
-  //
-  // When installed, a package may overlaps a previously installed one,
-  // overwriting and backing elements already modified by another package.
-  // To prevent original files corruption, the install and uninstall process
-  // takes this into account and overlaps informations are stored into
-  // the backup definition.
-  //
-  // This stage explores the overlaps informations of all currently available
-  // backups, in recursive way, to build a full dependencies list of package to
-  // uninstall in order to prevent data corruption.
-  for(size_t i = 0; i < selec_list.size(); ++i) {
+  // Even if we uninstall all packages, we need to build a properly sorted
+  // uninstall list according packages overlapping
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
-    // get the dependencies for this package, recursively. This will
-    // also give us a uninstall list in the right order, built by tree
-    // exploration in depth
-    this->getUninOwList(uninst_list, selec_list[i]);
+    // get list of all packages that overlaps the selection, theses packages
+    // must be uninstalled first in order to prevent original files corruption
+    this->bckGetOverlaps(unin_ls, sel_ls[i]);
   }
 
+  // Within this function the only goal of this operation is to remove doubles
+  // and create the final properly sorted uninstall list.
   bool unique;
-
-  // create the extra uninstall list, i.e the new packages to be uninstalled
-  // in addition to the user selected ones.
-  //
-  // This process have two purposes, the first is to avoid doubles, since user
-  // selection may already contain packages found during dependencies listing, the
-  // second is to provide a concise list to warn user of additional package to
-  // be uninstalled.
-  for(size_t i = 0; i < selec_list.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     // we add only if it is not already in the uninstall list created
-    // from dependencies tree exploration
+    // from overlapping tree exploration
     unique = true;
-    for(size_t j = 0; j < uninst_list.size(); ++j) {
-      if(this->_package[selec_list[i]] == uninst_list[j]) {
+    for(size_t j = 0; j < unin_ls.size(); ++j) {
+      if(this->_pkgLs[sel_ls[i]] == unin_ls[j]) {
         unique = false; break;
       }
     }
-
-    if(unique)
-      uninst_list.push_back(this->_package[selec_list[i]]);
+    if(unique) unin_ls.push_back(this->_pkgLs[sel_ls[i]]);
   }
 
   // initialize the progress bar
   if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, uninst_list.size()));
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, unin_ls.size()));
     SendMessageW(hPb, PBM_SETSTEP, 1, 0);
     SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
 
   bool has_error = false;
 
-  for(size_t i = 0; i < uninst_list.size(); ++i) {
+  for(size_t i = 0; i < unin_ls.size(); ++i) {
 
     // update dialog message
-    if(hSc) SetWindowTextW(hSc, uninst_list[i]->name().c_str());
+    if(hSc) SetWindowTextW(hSc, unin_ls[i]->name().c_str());
 
     // check whether abort is requested
     if(pAbort) {
@@ -1155,17 +1132,12 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
       }
     }
 
-    if(uninst_list[i]->hasBackup()) { //< this should be always the case
-
-      // we uninstall package and restore backup, without forcing for recursive
-      // uninstall since our uninstall list is already ordered according
-      // dependency tree
-      if(!uninst_list[i]->uninst(nullptr, pAbort)) {
-        this->_error =  L"Backup data \""+uninst_list[i]->name()+L"\"";
-        this->_error += L" restoration failed: "+uninst_list[i]->lastError();
-        this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
-        has_error = true;
-      }
+    // Package uninstall
+    if(!unin_ls[i]->uninst(nullptr, pAbort)) {
+      this->_error =  L"Backup data \""+unin_ls[i]->name()+L"\"";
+      this->_error += L" restoration failed: "+unin_ls[i]->lastError();
+      this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
+      has_error = true;
     }
 
     // step progress bar
@@ -1188,7 +1160,7 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 
   return !has_error;
 }
@@ -1197,11 +1169,11 @@ bool OmLocation::backupsPurge(HWND hPb, HWND hSc, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
+bool OmLocation::bckDiscard(HWND hPb, HWND hSc, const bool *pAbort)
 {
   // checks whether we have a valid Backup folder
   if(!this->checkAccessBck()) {
-    this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Discard backups", this->_error);
     return false;
@@ -1209,20 +1181,20 @@ bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
 
   if(hSc) SetWindowTextW(hSc, L"Analyzing...");
 
-  // first we gather all installed package, we will then discard backup for all
-  vector<OmPackage*> reset_list; //< our real uninstall list
-  for(size_t i = 0; i < this->_package.size(); ++i) {
-    if(this->_package[i]->hasBackup())
-      reset_list.push_back(this->_package[i]);
+  // gather all installed package, we will then discard backup for all
+  vector<OmPackage*> reset_ls;
+  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
+    if(this->_pkgLs[i]->hasBck())
+      reset_ls.push_back(this->_pkgLs[i]);
   }
 
   // check whether we have something to proceed
-  if(reset_list.empty())
+  if(reset_ls.empty())
     return true;
 
   // initialize the progress bar
   if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, reset_list.size()));
+    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, reset_ls.size()));
     SendMessageW(hPb, PBM_SETSTEP, 1, 0);
     SendMessageW(hPb, PBM_SETPOS, 0, 0);
   }
@@ -1230,10 +1202,10 @@ bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
   bool has_error = false;
 
   // Discard backup data for all packages
-  for(size_t i = 0; i < reset_list.size(); ++i) {
+  for(size_t i = 0; i < reset_ls.size(); ++i) {
 
     // update dialog message
-    if(hSc) SetWindowTextW(hSc, reset_list[i]->name().c_str());
+    if(hSc) SetWindowTextW(hSc, reset_ls[i]->name().c_str());
 
     // check whether abort is requested
     if(pAbort) {
@@ -1244,15 +1216,12 @@ bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
       }
     }
 
-    if(reset_list[i]->hasBackup()) { //< this should be always the case
-
-      // Discard backup of this package
-      if(!reset_list[i]->unbackup(pAbort)) {
-        this->_error =  L"Backup data \""+reset_list[i]->name()+L"\"";
-        this->_error += L" discard failed: "+reset_list[i]->lastError();
-        this->log(0, L"Location("+this->_title+L") Discard backups", this->_error);
-        has_error = true;
-      }
+    // Discard backup of this package
+    if(!reset_ls[i]->unbackup(pAbort)) {
+      this->_error =  L"Backup data \""+reset_ls[i]->name()+L"\"";
+      this->_error += L" discard failed: "+reset_ls[i]->lastError();
+      this->log(0, L"Location("+this->_title+L") Discard backups", this->_error);
+      has_error = true;
     }
 
     // step progress bar
@@ -1275,7 +1244,7 @@ bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
   }
 
   // Force a full refresh for the next time
-  this->packageListClear();
+  this->libClear();
 
   return !has_error;
 }
@@ -1284,11 +1253,11 @@ bool OmLocation::backupsDiscard(HWND hPb, HWND hSc, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
+void OmLocation::pkgInst(const vector<unsigned>& sel_ls, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
   if(!this->checkAccessDst()) {
-    this->_error =  L"Destination folder \""+this->_installDir+L"\"";
+    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
     Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
@@ -1297,7 +1266,7 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
 
   // checks whether we have a valid Library folder
   if(!this->checkAccessLib()) {
-    this->_error =  L"Library folder \""+this->_libraryDir+L"\"";
+    this->_error =  L"Library folder \""+this->_libDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
     Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
@@ -1306,47 +1275,38 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
 
   // checks whether we have a valid Backup folder
   if(!this->checkAccessBck()) {
-    this->_error =  L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Packages Install", this->_error);
     Om_dialogBoxErr(hWnd, L"Package(s) installation aborted", this->_error);
     return;
   }
 
-  vector<OmPackage*> insta_list; //< our real install list
-  vector<wstring>    missg_list; //< missing packages to install
-  vector<OmPackage*> olaps_list; //< package overlapping list
+  vector<OmPackage*> inst_ls; //< our real install list
 
-  // Here we go for a smart install process
-  //
-  // We build the dependency tree for each package to create the real
-  // install list, we will also built a missing dependency list.
-  bool unique;
 
-  // so, we first get all dependency tree for packages selected by user
-  for(size_t i = 0; i < selec_list.size(); ++i) {
+  // so, we first get all dependency tree for the current selection
+  vector<wstring> miss_ls; //< missing packages to install
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     // get the recursive dependency tree list for this package, this
     // will also give use an install list in the right order according
     // dependency hierarchy
-    missg_list.clear();
-    this->getInstDpList(insta_list, missg_list, selec_list[i]);
+    miss_ls.clear();
+    this->pkgGetDepends(inst_ls, miss_ls, sel_ls[i]);
 
-    // some dependencies are missing, we ask user if he want to continue and
+    // if some dependencies are missing, we ask user if he want to continue and
     // force installation anyway
-    if(!quiet && this->_context->_manager->warnMissDpnd() && missg_list.size()) {
+    if(!quiet && this->_context->_manager->warnMissDpnd() && miss_ls.size()) {
 
-      wstring qry = L"The package \"";
-      qry += this->_package[selec_list[i]]->name();
-      qry += L"\" have missing dependencies. The following package(s) are "
-              L"required, but are not available in your library:\n";
+      wstring qry = L"The package \"" + this->_pkgLs[sel_ls[i]]->name();
+      qry +=  L"\" have missing dependencies. The following package(s) "
+              L"are required, but are not available in your library:\n";
 
-      for(size_t i = 0; i < missg_list.size(); ++i) {
-        qry += L"\n ";
-        qry += missg_list[i];
-      }
+      for(size_t i = 0; i < miss_ls.size(); ++i)
+        qry += L"\n " + miss_ls[i];
 
-      qry += L"\n\nDo you want to continue and force installation anyway ?";
+      qry +=  L"\n\nDo you want to continue and force installation anyway ?";
 
       if(!Om_dialogBoxQuerryWarn(hWnd, L"Dependencies missing", qry))
         return;
@@ -1355,41 +1315,32 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
 
   // we create the extra list, to warn user that additional package
   // will be installed. This is a reverse search from the user selection
-  if(!quiet && this->_context->_manager->warnExtraInst()) {
+  bool unique;
+  if(inst_ls.size() && !quiet && this->_context->_manager->warnExtraInst()) {
 
-    vector<OmPackage*> extra_list; //< packages to install not selected by user
+    vector<OmPackage*> extra_ls; //< packages to install not selected by user
 
-    for(size_t i = 0; i < insta_list.size(); ++i) {
-
-      // add only if the package is not in the user selection and
-      // not already installed
+    for(size_t i = 0; i < inst_ls.size(); ++i) {
+      // add only if not in the initial selection
       unique = true;
-      for(size_t j = 0; j < selec_list.size(); ++j) {
-        if(insta_list[i] == this->_package[selec_list[j]]) {
+      for(size_t j = 0; j < sel_ls.size(); ++j) {
+        if(inst_ls[i] == this->_pkgLs[sel_ls[j]]) {
           unique = false; break;
         }
       }
-
-      if(unique) {
-        extra_list.push_back(insta_list[i]);
-      }
+      if(unique) extra_ls.push_back(inst_ls[i]);
     }
 
-    // if we got some additional dependencies, we built the warning message
-    // and ask user to continue (or not)
-    if(extra_list.size()) {
-
+    if(extra_ls.size()) {
       // we have some additional package to install, we warn the user
       // and ask him if he want to continue
-      wstring qry = L"One or more selected package(s) have dependencies, the "
-                     L"following package(s) also need to be installed:\n";
+      wstring qry = L"One or more selected package(s) have dependencies, "
+                    L"the following package(s) also need to be installed:\n";
 
-      for(size_t i = 0; i < extra_list.size(); ++i) {
-        qry += L"\n ";
-        qry += extra_list[i]->ident();
-      }
+      for(size_t i = 0; i < extra_ls.size(); ++i)
+        qry += L"\n " + extra_ls[i]->ident();
 
-      qry += L"\n\nContinue installation ?";
+      qry +=  L"\n\nContinue installation ?";
 
       if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation dependencies", qry))
         return;
@@ -1397,22 +1348,16 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
   }
 
   // we now add the user selection into our real install list
-  for(size_t i = 0; i < selec_list.size(); ++i) {
-
-    // we add only if it is not already in the installation list created
-    // from dependencies tree exploration
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+    // add only if not already in install list
     unique = true;
-    for(size_t j = 0; j < insta_list.size(); ++j) {
-      if(this->_package[selec_list[i]] == insta_list[j]) {
+    for(size_t j = 0; j < inst_ls.size(); ++j) {
+      if(this->_pkgLs[sel_ls[i]] == inst_ls[j]) {
         unique = false; break;
       }
     }
-
-    if(unique) {
-      insta_list.push_back(this->_package[selec_list[i]]);
-    }
+    if(unique) inst_ls.push_back(this->_pkgLs[sel_ls[i]]);
   }
-
 
   // this is to update list view item's icon individually so to avoid
   // full refresh of the page. Refreshing all page each time work well but
@@ -1421,7 +1366,12 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
   lvi.mask = LVIF_IMAGE;
   lvi.iSubItem = 0;
 
-  for(size_t i = 0; i < insta_list.size(); ++i) {
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< package overlapping list
+
+  for(size_t i = 0; i < inst_ls.size(); ++i) {
+
+    pPkg = inst_ls[i];
 
     // check whether abort is requested
     if(pAbort) {
@@ -1431,71 +1381,60 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
     // we need the index of this package in list to change the image
     // in the list view control, this is not really elegant, but we have
     // no other choice
-    lvi.iItem = packageIndex(insta_list[i]);
-    lvi.iImage = 4; // IDB_PKG_PRC
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    if(hLv) {
+      lvi.iItem = this->pkgIndex(pPkg);
+      lvi.iImage =  4; //< WIP
+      SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    }
 
-    if(insta_list[i]->hasSource() && !insta_list[i]->hasBackup()) {
+    if(pPkg->hasSrc() && !pPkg->hasBck()) {
 
+      // we check overlapping before installation, we must do it step by step
+      // because overlapping are cumulative with previously installed packages
+      ovlp_ls.clear();
+      this->pkgFindOverlaps(ovlp_ls, pPkg);
 
-      // we check overlapping before installation, we must do it in order
-      // step by step because overlapping are cumulative over previously
-      // installed packages, this is why the warning is disabled by default
-      olaps_list.clear();
+      // if there is overlapping, ask user if he really want to continue installation
+      if(ovlp_ls.size() && !quiet && this->_context->_manager->warnOverlaps()) {
 
-      this->getInstOwList(olaps_list, insta_list[i]);
+        wstring qry = L"Installing the package \"" + pPkg->name();
+        qry +=  L"\" will overlaps and modify file(s) previously installed "
+                L"or modified by the following package(s):\n";
 
-      if(!quiet && this->_context->_manager->warnOverlaps()) {
-        // we create a warning to ask user if he really want to continue
-        // the installation
-        if(olaps_list.size()) {
+        for(size_t j = 0; j < ovlp_ls.size(); ++j)
+          qry += L"\n "+ovlp_ls[j]->name();
 
-          wstring qry = L"Installing the package \"";
-          qry += insta_list[i]->name();
-          qry += L"\" will overlaps and modify file(s) previously installed or "
-                  L"modified by the following package(s):\n";
+        qry +=  L"\n\nDo you want to continue installation anyway ?";
 
-          for(size_t j = 0; j < olaps_list.size(); ++j) {
-            qry += L"\n ";
-            qry += olaps_list[j]->name();
-          }
-
-          qry += L"\n\nDo you want to continue installation anyway ?";
-
-          if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation overlap", qry)) {
-            break;
-          }
-        }
+        if(!Om_dialogBoxQuerryWarn(hWnd, L"Package(s) installation overlap", qry))
+          break;
       }
 
-
-
-      if(insta_list[i]->install(this->_backupZipLevel, hPb, pAbort)) { //< pass Progress Bar Handle
-
-        // ensure package is installed, ti may be aborted
-        if(insta_list[i]->hasBackup()) {
-
-          // select proper image depending installation status
-          if(this->isBakcupOverlapped(insta_list[i])) {
-            lvi.iImage = 6; //< IDB_PKG_OWR
-          } else {
-            lvi.iImage = 5; //< IDB_PKG_BCK
-          }
-        } else {
-          lvi.iImage = -1; //< not installed
-        }
-
-      } else {
-        wstring err = L"The package \"";
-        err += insta_list[i]->name();
+      // install package
+      if(!pPkg->install(this->_bckZipLevel, hPb, pAbort)) {
+        wstring err = L"The package \"" + pPkg->name();
         err += L"\" has not been installed because the following error occurred:\n\n";
-        err += insta_list[i]->lastError();
+        err += pPkg->lastError();
         Om_dialogBoxErr(hWnd, L"Package install failed", err);
-        lvi.iImage = -1; //< not installed
       }
     }
 
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    if(hLv) {
+      // update package icon in ListView
+      if(pPkg->hasBck()) {
+        lvi.iImage = 5; //< BCK
+        SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+        // update icons for overlapped packages
+        for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+          lvi.iItem = this->pkgIndex(ovlp_ls[j]);
+          lvi.iImage = 6; //< OWR
+          SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+        }
+      } else {
+        lvi.iImage = -1; //< not installed
+        SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      }
+    }
 
     // reset progress bar
     if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
@@ -1507,38 +1446,17 @@ void OmLocation::packagesInst(const vector<unsigned>& selec_list, bool quiet, HW
 
   // reset progress bar
   if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
-
-  // package status may change after installation or backup restoration of
-  // others, to ensure all icons are reflect the real status, we make an final
-  // global update of the list. We avoid recreating the list at this stage, this
-  // more convenient than a full refresh.
-  if(hLv) {
-    for(size_t i = 0; i < this->_package.size(); ++i) {
-      lvi.iItem = i;
-      if(this->_package[i]->isType(PKG_TYPE_BCK)) {
-        if(this->isBakcupOverlapped(this->_package[i])) {
-          lvi.iImage = 6; //< IDB_PKG_OWR
-        } else {
-          lvi.iImage = 5; //< IDB_PKG_BCK
-        }
-      } else {
-        lvi.iImage = -1; //< none
-      }
-      SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
-    }
-  }
-
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
+void OmLocation::pkgUnin(const vector<unsigned>& sel_ls, bool quiet, HWND hWnd, HWND hLv, HWND hPb, const bool *pAbort)
 {
   // checks whether we have a valid Destination folder
   if(!this->checkAccessDst()) {
-    this->_error = L"Destination folder \""+this->_installDir+L"\"";
+    this->_error = L"Destination folder \""+this->_dstDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Packages Uninstall", this->_error);
     Om_dialogBoxErr(hWnd, L"Package(s) uninstallation aborted", this->_error);
@@ -1547,17 +1465,17 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
 
   // checks whether we have a valid Backup folder
   if(!this->checkAccessBck()) {
-    this->_error = L"Backup folder \""+this->_backupDir+L"\"";
+    this->_error = L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Packages Uninstall", this->_error);
     Om_dialogBoxErr(hWnd, L"Package(s) uninstallation aborted", this->_error);
     return;
   }
 
-  vector<OmPackage*> uninst_list; //< our real uninstall list
+  vector<OmPackage*> unin_ls; //< our real uninstall list
 
-  // Build the real packages uninstall list including dependencies created
-  // when packages installation overlaps others:
+  // Build the real packages uninstall list including packages which overlaps
+  // the selection:
   //
   // When installed, a package may overlaps a previously installed one,
   // overwriting and backing elements already modified by another package.
@@ -1568,55 +1486,42 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
   // This stage explores the overlaps informations of all currently available
   // backups, in recursive way, to build a full dependencies list of package to
   // uninstall in order to prevent data corruption.
-  for(size_t i = 0; i < selec_list.size(); ++i) {
-
-    // get the dependencies for this package, recursively. This will
-    // also give us a unsinstall list in the right order, built by tree
-    // exploration in depth
-    this->getUninOwList(uninst_list, selec_list[i]);
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+    // get list of all packages that overlaps the selection, theses packages
+    // must be uninstalled first in order to prevent original files corruption
+    this->bckGetOverlaps(unin_ls, sel_ls[i]);
   }
 
-  bool unique;
-
-  // create the extra unsinstall list, i.e the new packages to be unsinstalled
-  // in addition to the user selected ones.
+  // create the extra unsinstall list, i.e the packages to be unsinstalled
+  // in addition to the initial selection.
   //
-  // This process have two purposes, the first is to avoid doubles, since user
-  // selection may already contain packages found during dependencies listing,
-  // the second is to provide a concise list to warn user of additional package
-  // to be unsinstalled.
-  if(!quiet && this->_context->_manager->warnExtraUnin()) {
+  // This process have two purposes, the first is to avoid doubles in the final
+  // list, the second is to provide a list for the warning message.
+  bool unique;
+  if(unin_ls.size() && !quiet && this->_context->_manager->warnExtraUnin()) {
 
-    vector<OmPackage*> extra_list; //< package to uninstall not selected by user
+    vector<OmPackage*> extra_ls; //< package to uninstall not selected by user
 
-    for(size_t i = 0; i < uninst_list.size(); ++i) {
-
-      // add only if the package is not in the user selection
+    for(size_t i = 0; i < unin_ls.size(); ++i) {
+      // add only if not in the initial selection
       unique = true;
-      for(size_t j = 0; j < selec_list.size(); ++j) {
-        if(uninst_list[i] == this->_package[selec_list[j]]) {
+      for(size_t j = 0; j < sel_ls.size(); ++j) {
+        if(unin_ls[i] == this->_pkgLs[sel_ls[j]]) {
           unique = false; break;
         }
       }
-
-      if(unique)
-        extra_list.push_back(uninst_list[i]);
+      if(unique) extra_ls.push_back(unin_ls[i]);
     }
 
-    // if we got some additional dependencies, we built the warning message
-    // and ask user to continue (or not)
-    if(extra_list.size()) {
-
+    if(extra_ls.size()) {
       // we have some additional package to uninstall, we warn the user
       // and ask him if he want to continue
       wstring qry = L"One or more selected package(s) are currently overlapped "
                     L"by other(s). To keep backups integrity the following "
                     L"Package(s) will also be uninstalled:\n";
 
-      for(size_t i = 0; i < extra_list.size(); ++i) {
-        qry += L"\n ";
-        qry += extra_list[i]->name();
-      }
+      for(size_t i = 0; i < extra_ls.size(); ++i)
+        qry += L"\n " + extra_ls[i]->name();
 
       qry += L"\n\nDo you want to continue anyway ?";
 
@@ -1625,23 +1530,17 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
     }
   }
 
-  // we now add the user selection into our real restoration list
-  for(size_t i = 0; i < selec_list.size(); ++i) {
-
-    // we add only if it is not already in the restoration list created
-    // from dependencies tree exploration
+  // we now add the selection into the uninstall list
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+    // add only if not already in the uninstall list
     unique = true;
-    for(size_t j = 0; j < uninst_list.size(); ++j) {
-      if(this->_package[selec_list[i]] == uninst_list[j]) {
+    for(size_t j = 0; j < unin_ls.size(); ++j) {
+      if(this->_pkgLs[sel_ls[i]] == unin_ls[j]) {
         unique = false; break;
       }
     }
-
-    if(unique)
-      uninst_list.push_back(this->_package[selec_list[i]]);
+    if(unique) unin_ls.push_back(this->_pkgLs[sel_ls[i]]);
   }
-
-
 
   // this is to update list view item's icon individually so to avoid
   // full refresh of the page. Refreshing all page each time work well but
@@ -1650,7 +1549,12 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
   lvi.mask = LVIF_IMAGE;
   lvi.iSubItem = 0;
 
-  for(size_t i = 0; i < uninst_list.size(); ++i) {
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< overlapped packages list
+
+  for(size_t i = 0; i < unin_ls.size(); ++i) {
+
+    pPkg = unin_ls[i];
 
     // check whether abort is requested
     if(pAbort) {
@@ -1660,45 +1564,42 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
     // we need the index of this package in list to change the image
     // in the list view control, this is not really elegant, but we have
     // no other choice
-    lvi.iItem = packageIndex(uninst_list[i]);
-    lvi.iImage = 4;
+    lvi.iItem = this->pkgIndex(pPkg);
+    lvi.iImage = 4; //< WIP
     if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
-    if(uninst_list[i]->hasBackup()) { // <- this should be always the case
+    if(!pPkg->hasBck()) //< this should be always the case
+      continue;
 
-      // we uninstall package and restore backup, without forcing for recursive
-      // restoration since our restoration list is already ordered according
-      // dependency tree
-      if(uninst_list[i]->uninst(hPb, pAbort)) {
-
-        // ensure package backup is restored, it may be aborted
-        if(!uninst_list[i]->hasBackup()) {
-          lvi.iImage = -1; //< this one is uninstalled
-        } else {
-          // set proper image depending install status
-          if(this->isBakcupOverlapped(uninst_list[i])) {
-            lvi.iImage = 6; //< IDB_PKG_OWR
-          } else {
-            lvi.iImage = 5; //< IDB_PKG_BCK
-          }
-        }
-
-      } else {
-        wstring err = L"The backup of \"";
-        err += uninst_list[i]->name();
-        err += L"\" has not been properly restored because the following error occurred:\n\n";
-        err += uninst_list[i]->lastError();
-        Om_dialogBoxErr(hWnd, L"Package uninstall failed", err);
-        if(this->isBakcupOverlapped(uninst_list[i])) {
-          lvi.iImage = 6; //< IDB_PKG_OWR
-        } else {
-          lvi.iImage = 5; //< IDB_PKG_BCK
-        }
-
-      }
+    // before uninstall, get list of overlapped packages (by this one)
+    ovlp_ls.clear();
+    for(size_t j = 0; j < pPkg->ovrCount(); ++j) {
+      ovlp_ls.push_back(this->pkgFind(pPkg->ovrGet(j)));
     }
 
-    if(hLv) SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    // uninstall package (restore backup)
+    if(!pPkg->uninst(hPb, pAbort)) {
+      wstring err = L"The backup of \"" + pPkg->name();
+      err += L"\" has not been properly restored because the following error occurred:\n\n";
+      err += pPkg->lastError();
+      Om_dialogBoxErr(hWnd, L"Package uninstall failed", err);
+    }
+
+    if(hLv) {
+      if(pPkg->hasBck()) { //< this mean something went wrong
+        lvi.iImage = this->bckOverlapped(pPkg) ? 6 /*OWR*/ : 5 /*BCK*/;
+        SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      } else {
+        lvi.iImage = -1; //< not installed
+        SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+        // update status icon for overlapped packages
+        for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+          lvi.iItem = pkgIndex(ovlp_ls[j]);
+          lvi.iImage = this->bckOverlapped(ovlp_ls[j]) ? 6 /*OWR*/ : 5 /*BCK*/;
+          SendMessageW(hLv, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+        }
+      }
+    }
 
     // reset progress bar
     if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
@@ -1710,39 +1611,19 @@ void OmLocation::packagesUnin(const vector<unsigned>& selec_list, bool quiet, HW
 
   // reset progress bar
   if(hPb) SendMessageW(hPb, PBM_SETPOS, 0, 0);
-
-  // package status may change after installation or backup restoration of
-  // others, to ensure all icons are reflect the real status, we make an final
-  // global update of the list. We avoid recreating the list at this stage, this
-  // more convenient than a full refresh.
-  if(hLv) {
-    for(size_t i = 0; i < _package.size(); ++i) {
-      lvi.iItem = i;
-      if(this->_package[i]->isType(PKG_TYPE_BCK)) {
-        if(this->isBakcupOverlapped(this->_package[i])) {
-          lvi.iImage = 6; //< IDB_PKG_OWR
-        } else {
-          lvi.iImage = 5; //< IDB_PKG_BCK
-        }
-      } else {
-        lvi.iImage = -1; //< none
-      }
-      SendMessageW(hLv ,LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
-    }
-  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::getInstOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
+size_t OmLocation::pkgFindOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* pkg) const
 {
   size_t n = 0;
 
-  for(size_t i = 0; i < _package.size(); ++i) {
-    if(package->couldOverlap(this->_package[i])) {
-      pkg_list.push_back(this->_package[i]);
+  for(size_t i = 0; i < _pkgLs.size(); ++i) {
+    if(pkg->ovrTest(this->_pkgLs[i])) {
+      pkg_list.push_back(this->_pkgLs[i]);
       ++n;
     }
   }
@@ -1754,13 +1635,13 @@ size_t OmLocation::getInstOwList(vector<OmPackage*>& pkg_list, const OmPackage* 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::getInstOwList(vector<uint64_t>& hash_list, const OmPackage* package) const
+size_t OmLocation::pkgFindOverlaps(vector<uint64_t>& hash_list, const OmPackage* pkg) const
 {
   size_t n = 0;
 
-  for(size_t i = 0; i < _package.size(); ++i) {
-    if(package->couldOverlap(this->_package[i])) {
-      hash_list.push_back(this->_package[i]->hash());
+  for(size_t i = 0; i < _pkgLs.size(); ++i) {
+    if(pkg->ovrTest(this->_pkgLs[i])) {
+      hash_list.push_back(this->_pkgLs[i]->hash());
       ++n;
     }
   }
@@ -1772,37 +1653,37 @@ size_t OmLocation::getInstOwList(vector<uint64_t>& hash_list, const OmPackage* p
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const
+size_t OmLocation::pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* pkg) const
 {
   size_t n = 0;
 
   bool unique;
   bool dpend_found;
 
-  for(size_t i = 0; i < package->dependCount(); ++i) {
+  for(size_t i = 0; i < pkg->depCount(); ++i) {
 
     dpend_found = false;
-    for(size_t j = 0; j < this->_package.size(); ++j) {
+    for(size_t j = 0; j < this->_pkgLs.size(); ++j) {
 
       // rely only on packages
-      if(!this->_package[j]->isType(PKG_TYPE_ZIP))
+      if(!this->_pkgLs[j]->isZip())
         continue;
 
-      if(package->depend(i) == this->_package[j]->ident()) {
+      if(pkg->depGet(i) == this->_pkgLs[j]->ident()) {
 
-        n += this->getInstDpList(pkg_list, miss_list, this->_package[j]);
+        n += this->pkgGetDepends(pkg_list, miss_list, this->_pkgLs[j]);
         // we add to list only if unique and not already installed, this allow
         // us to get a consistent dependency list for a bunch of package by
         // calling this function for each package without clearing the list
-        if(!this->_package[j]->hasBackup()) {
+        if(!this->_pkgLs[j]->hasBck()) {
           unique = true;
           for(unsigned k = 0; k < pkg_list.size(); ++k) {
-            if(pkg_list[k] == this->_package[j]) {
+            if(pkg_list[k] == this->_pkgLs[j]) {
               unique = false; break;
             }
           }
           if(unique) {
-            pkg_list.push_back(this->_package[j]);
+            pkg_list.push_back(this->_pkgLs[j]);
             ++n;
           }
         }
@@ -1818,12 +1699,12 @@ size_t OmLocation::getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& 
       // package without clearing the list */
       unique = true;
       for(size_t j = 0; j < miss_list.size(); ++j) {
-        if(miss_list[j] == package->depend(i)) {
+        if(miss_list[j] == pkg->depGet(i)) {
           unique = false; break;
         }
       }
       if(unique) {
-        miss_list.push_back(package->depend(i));
+        miss_list.push_back(pkg->depGet(i));
       }
     }
   }
@@ -1835,28 +1716,28 @@ size_t OmLocation::getInstDpList(vector<OmPackage*>& pkg_list, vector<wstring>& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::getUninOwList(vector<OmPackage*>& pkg_list, const OmPackage* package) const
+size_t OmLocation::bckGetOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* pkg) const
 {
   size_t n = 0;
   bool unique;
-  for(size_t i = 0; i < this->_package.size(); ++i) {
-    if(this->_package[i]->hasOverlap(package->_hash)) {
+  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
+    if(this->_pkgLs[i]->ovrHas(pkg->_hash)) {
 
       // the function is recursive, we want the full list like a
       // depth-first search in the right order
-      n += this->getUninOwList(pkg_list, this->_package[i]);
+      n += this->bckGetOverlaps(pkg_list, this->_pkgLs[i]);
 
       // recursive way can produce doubles, we want to avoid it
       // so we add only if not already in the list
       unique = true;
       for(size_t j = 0; j < pkg_list.size(); ++j) {
-        if(pkg_list[j] == this->_package[i]) {
+        if(pkg_list[j] == this->_pkgLs[i]) {
           unique = false; break;
         }
       }
 
       if(unique) {
-        pkg_list.push_back(this->_package[i]);
+        pkg_list.push_back(this->_pkgLs[i]);
         ++n;
       }
     }
@@ -1868,7 +1749,7 @@ size_t OmLocation::getUninOwList(vector<OmPackage*>& pkg_list, const OmPackage* 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::addRepository(const wstring& base, const wstring& name)
+bool OmLocation::repAdd(const wstring& base, const wstring& name)
 {
   if(this->_config.valid()) {
 
@@ -1908,7 +1789,7 @@ bool OmLocation::addRepository(const wstring& base, const wstring& name)
     }
 
     // add to list
-    this->_repository.push_back(pRep);
+    this->_repLs.push_back(pRep);
   }
 
   return true;
@@ -1918,11 +1799,11 @@ bool OmLocation::addRepository(const wstring& base, const wstring& name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::remRepository(unsigned id)
+void OmLocation::repRem(unsigned id)
 {
   if(this->_config.valid()) {
 
-    OmRepository* pRep = this->_repository[id];
+    OmRepository* pRep = this->_repLs[id];
 
     // remove repository from definition
     if(this->_config.xml().hasChild(L"network")) {
@@ -1947,7 +1828,7 @@ void OmLocation::remRepository(unsigned id)
     delete pRep;
 
     // remove from local list
-    this->_repository.erase(this->_repository.begin()+id);
+    this->_repLs.erase(this->_repLs.begin()+id);
   }
 }
 

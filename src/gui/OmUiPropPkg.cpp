@@ -27,7 +27,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropPkg::OmUiPropPkg(HINSTANCE hins) : OmDialogProp(hins),
-  _package(nullptr)
+  _pPkg(nullptr)
 {
   // create child tab dialogs
   this->_addPage(L"Source", new OmUiPropPkgSrc(hins));

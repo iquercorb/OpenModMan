@@ -58,8 +58,8 @@ class OmUiPropBat : public OmDialogProp
     ///
     /// \return Associated Batch or nullptr if none.
     ///
-    OmBatch* batch() const {
-      return _batch;
+    OmBatch* batCur() const {
+      return _pBat;
     }
 
     /// \brief Set associated Batch.
@@ -70,8 +70,8 @@ class OmUiPropBat : public OmDialogProp
     ///
     /// \param[in]  bat   : Batch object to associate.
     ///
-    void setBatch(OmBatch* bat) {
-      _batch = bat;
+    void batSet(OmBatch* bat) {
+      _pBat = bat;
     }
 
     /// \brief Check for properties changes
@@ -90,7 +90,7 @@ class OmUiPropBat : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmBatch*            _batch;
+    OmBatch*            _pBat;
 };
 
 #endif // OMUIPROPBAT_H

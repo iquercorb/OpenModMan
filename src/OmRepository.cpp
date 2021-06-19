@@ -24,7 +24,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRepository::OmRepository(OmLocation* pLoc) :
-  _location(pLoc),
+  _pLoc(pLoc),
   _base(),
   _name(),
   _url(),
@@ -141,11 +141,11 @@ bool OmRepository::update()
 ///
 void OmRepository::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  if(this->_location != nullptr) {
+  if(this->_pLoc != nullptr) {
 
-    wstring log_str = L"Location("; log_str.append(this->_location->title());
+    wstring log_str = L"Location("; log_str.append(this->_pLoc->title());
     log_str.append(L"):: "); log_str.append(head);
 
-    this->_location->log(level, log_str, detail);
+    this->_pLoc->log(level, log_str, detail);
   }
 }

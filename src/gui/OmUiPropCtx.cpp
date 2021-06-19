@@ -34,7 +34,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropCtx::OmUiPropCtx(HINSTANCE hins) : OmDialogProp(hins),
-  _context(nullptr)
+  _pCtx(nullptr)
 {
   // create child tab dialogs
   this->_addPage(L"Settings", new OmUiPropCtxStg(hins));
@@ -72,7 +72,9 @@ long OmUiPropCtx::id() const
 ///
 bool OmUiPropCtx::checkChanges()
 {
-  OmContext* pCtx = static_cast<OmContext*>(this->_context);
+  if(!this->_pCtx)
+    return false;
+
   OmUiPropCtxStg* pUiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
   OmUiPropCtxLoc* pUiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
   OmUiPropCtxBat* pUiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
@@ -83,7 +85,7 @@ bool OmUiPropCtx::checkChanges()
 
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) {  //< parameter for Context title
     pUiPropCtxStg->getItemText(IDC_EC_INP03, item_str);
-    if(pCtx->title() != item_str) {
+    if(this->_pCtx->title() != item_str) {
       changed = true;
     } else {
       pUiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
@@ -114,7 +116,9 @@ bool OmUiPropCtx::checkChanges()
 ///
 bool OmUiPropCtx::applyChanges()
 {
-  OmContext* pCtx = static_cast<OmContext*>(this->_context);
+  if(!this->_pCtx)
+    return false;
+
   OmUiPropCtxStg* pUiPropCtxStg  = static_cast<OmUiPropCtxStg*>(this->childById(IDD_PROP_CTX_STG));
   OmUiPropCtxLoc* pUiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
   OmUiPropCtxBat* pUiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
@@ -125,8 +129,7 @@ bool OmUiPropCtx::applyChanges()
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     pUiPropCtxStg->getItemText(IDC_EC_INP03, ctx_name);
     if(!Om_isValidName(ctx_name)) {
-      wstring wrn = L"The title";
-      wrn += OMM_STR_ERR_VALIDNAME;
+      wstring wrn = L"The title"; wrn += OMM_STR_ERR_VALIDNAME;
       Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", wrn);
       return false;
     }
@@ -138,16 +141,16 @@ bool OmUiPropCtx::applyChanges()
 
   // Step 2, save changes
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
-    pCtx->setTitle(ctx_name);
+    this->_pCtx->setTitle(ctx_name);
     // Reset parameter as unmodified
     pUiPropCtxStg->setChParam(CTX_PROP_STG_TITLE, false);
   }
 
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
     if(Om_isValidPath(ctx_icon)) {
-      pCtx->setIcon(ctx_icon);
+      this->_pCtx->setIcon(ctx_icon);
     } else {
-      pCtx->setIcon(L""); //< remove current icon
+      this->_pCtx->setIcon(L""); //< remove current icon
     }
     // Reset parameter as unmodified
     pUiPropCtxStg->setChParam(CTX_PROP_STG_ICON, false);
@@ -156,23 +159,21 @@ bool OmUiPropCtx::applyChanges()
   if(pUiPropCtxLoc->hasChParam(CTX_PROP_LOC_ORDER)) { // parameter for Location index order
 
     // To prevent inconsistency we unselect location in the main dialog
-    static_cast<OmUiMain*>(this->root())->setSafeEdit(true);
+    static_cast<OmUiMain*>(this->root())->safemode(true);
 
-    HWND hLb = pUiPropCtxLoc->getItem(IDC_LB_LOCLS);
-
-    unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
+    unsigned n = this->msgItem(IDC_LB_LOC, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      pCtx->location(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
+      this->_pCtx->locGet(this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, i))->setIndex(i);
     }
 
     // unselect Location in context
-    pCtx->selLocation(-1);
+    this->_pCtx->locSel(-1);
     // sort Location list
-    pCtx->sortLocations();
+    this->_pCtx->locSort();
 
     // restore main dialog to normal state
-    static_cast<OmUiMain*>(this->root())->setSafeEdit(false);
+    static_cast<OmUiMain*>(this->root())->safemode(false);
 
     // Reset parameter as unmodified
     pUiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);
@@ -180,16 +181,14 @@ bool OmUiPropCtx::applyChanges()
 
   if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
 
-    HWND hLb = pUiPropCtxBat->getItem(IDC_LB_BATLS);
-
-    unsigned n = SendMessageW(hLb, LB_GETCOUNT, 0, 0);
+    unsigned n = this->msgItem(IDC_LB_BAT, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,i,0))->setIndex(i);
+      this->_pCtx->batGet(this->msgItem(IDC_LB_BAT, LB_GETITEMDATA,i))->setIndex(i);
     }
 
     // sort Location list
-    pCtx->sortBatches();
+    this->_pCtx->batSort();
 
     // Reset parameter as unmodified
     pUiPropCtxBat->setChParam(CTX_PROP_LOC_ORDER, false);

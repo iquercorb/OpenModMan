@@ -270,7 +270,7 @@ wstring OmSocket::lastErrorStr() const
 ///
 size_t OmSocket::_writeCb(char *recv_data, size_t recv_s, size_t recv_n, void *userptr)
 {
-  OmSocket* self = reinterpret_cast<OmSocket*>(userptr);
+  OmSocket* self = static_cast<OmSocket*>(userptr);
 
   size_t recv_size = recv_s * recv_n;
   size_t recv_tot = recv_size + self->_buff_fill;
@@ -309,7 +309,7 @@ size_t OmSocket::_writeCb(char *recv_data, size_t recv_s, size_t recv_n, void *u
 ///
 size_t OmSocket::_pgresCb(void* userptr, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-  //OmSocket* self = reinterpret_cast<OmSocket*>(userptr);
+  //OmSocket* self = static_cast<OmSocket*>(userptr);
 
   return 0;
 }

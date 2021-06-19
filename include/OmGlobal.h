@@ -69,9 +69,9 @@
 #define OMM_CFG_SIGN_BAT          L"Open_Mod_Manager_Batch"
 #define OMM_CFG_SIGN_REP          L"Open_Mod_Manager_Repository"
 
-#define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
-#define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
-#define OMM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
+#define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.omp)\0*.ZIP;*.OMP;\0"
+#define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.omk)\0*.ZIP;*.OMK;\0"
+#define OMM_IMG_FILES_FILTER      L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
 #define OMM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
 #define OMM_TXT_FILES_FILTER      L"Text file (*.txt)\0*.TXT\0"
 
@@ -1496,7 +1496,7 @@ HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, uns
 ///
 /// \return Icon handle (HICON) of the specified Shell Stock icon
 ///
-HICON Om_loadShellIcon(unsigned id, bool large = false);
+HICON Om_getShellIcon(unsigned id, bool large = false);
 
 /// \brief Load stock shell icon as HBITMAP
 ///

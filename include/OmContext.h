@@ -158,8 +158,8 @@ class OmContext
     ///
     /// \return Location count.
     ///
-    size_t locationCount() {
-      return _location.size();
+    size_t locCount() {
+      return _locLst.size();
     }
 
     /// \brief Get Location.
@@ -170,8 +170,8 @@ class OmContext
     ///
     /// \return Location object at index or nullptr if index is out of bound.
     ///
-    OmLocation* location(unsigned i) {
-      return (i < _location.size()) ? _location[i] : nullptr;
+    OmLocation* locGet(unsigned i) {
+      return (i < _locLst.size()) ? _locLst[i] : nullptr;
     }
 
     /// \brief Get Location.
@@ -182,7 +182,7 @@ class OmContext
     ///
     /// \return Location object or nullptr if not found.
     ///
-    OmLocation* location(const wstring& uuid);
+    OmLocation* locGet(const wstring& uuid);
 
     /// \brief Find Location index.
     ///
@@ -192,23 +192,23 @@ class OmContext
     ///
     /// \return Location index or -1 if not found.
     ///
-    int findLocationIndex(const wstring& uuid);
+    int locFind(const wstring& uuid);
 
     /// \brief Sort Location list.
     ///
     /// Sort Location list according Location ordering index.
     ///
-    void sortLocations();
+    void locSort();
 
     /// \brief Select Location.
     ///
     /// Sets the specified Location as active one.
     ///
-    /// \param[in]  id      : Location index or -1 to unselect.
+    /// \param[in]  i       : Location index or -1 to unselect.
     ///
     /// \return True if operation succeed, false if id is out of bound.
     ///
-    bool selLocation(int id);
+    bool locSel(int i);
 
     /// \brief Select Location.
     ///
@@ -218,7 +218,7 @@ class OmContext
     ///
     /// \return True if operation succeed, false if Location with such UUID does not exists.
     ///
-    bool selLocation(const wstring& uuid);
+    bool locSel(const wstring& uuid);
 
     /// \brief Get current Location.
     ///
@@ -226,8 +226,8 @@ class OmContext
     ///
     /// \return Current active Location or nullptr if none is active.
     ///
-    OmLocation* curLocation() {
-      return _curLocation;
+    OmLocation* locCur() {
+      return _locCur;
     }
 
     /// \brief Make new Location.
@@ -241,18 +241,18 @@ class OmContext
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool addLocation(const wstring& title, const wstring& install, const wstring& library, const wstring& backup);
+    bool locAdd(const wstring& title, const wstring& install, const wstring& library, const wstring& backup);
 
     /// \brief Purge existing Location.
     ///
     /// Cleanup and removes a Location. Notice that this operation actually delete
     /// the Location folder and configuration files.
     ///
-    /// \param[in]  id         : Location index to be removed.
+    /// \param[in]  i           : Location index to be removed.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool remLocation(unsigned id);
+    bool locRem(unsigned i);
 
     /// \brief Get Context Batch count.
     ///
@@ -260,27 +260,27 @@ class OmContext
     ///
     /// \return Batch count.
     ///
-    size_t batchCount() {
-      return _batch.size();
+    size_t batCount() {
+      return _batLst.size();
     }
 
     /// \brief Get Batch.
     ///
     /// Returns Batch at index.
     ///
-    /// \param[in]  id      : Batch index.
+    /// \param[in]  i      : Batch index to get.
     ///
     /// \return Batch object at index.
     ///
-    OmBatch* batch(unsigned id) {
-      return _batch[id];
+    OmBatch* batGet(unsigned i) {
+      return (i < _batLst.size()) ? _batLst[i] : nullptr;
     }
 
     /// \brief Sort Batches list.
     ///
     /// Sort Batches list according Location ordering index.
     ///
-    void sortBatches();
+    void batSort();
 
     /// \brief Make new Batch.
     ///
@@ -292,17 +292,17 @@ class OmContext
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool addBatch(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list);
+    bool batAdd(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list);
 
     /// \brief Delete Batch.
     ///
     /// Delete batch definition file and remove it from list.
     ///
-    /// \param[in]  id    : Index of Batch to delete
+    /// \param[in]  i     : Batch index to delete.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool remBatch(unsigned id);
+    bool batRem(unsigned i);
 
     /// \brief Add log.
     ///
@@ -310,7 +310,8 @@ class OmContext
     ///
     void log(unsigned level, const wstring& head, const wstring& detail);
 
-  private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+           ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  private: ///              - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmManager*          _manager;
 
@@ -326,11 +327,11 @@ class OmContext
 
     HICON               _icon;
 
-    vector<OmLocation*> _location;
+    vector<OmLocation*> _locLst;
 
-    OmLocation*         _curLocation;
+    OmLocation*         _locCur;
 
-    vector<OmBatch*>    _batch;
+    vector<OmBatch*>    _batLst;
 
     bool                _valid;
 

@@ -27,6 +27,7 @@ OmDialog::OmDialog(HINSTANCE hins) :
   _parent(nullptr),
   _child(),
   _accel(nullptr),
+  _menu(nullptr),
   _rect(),
   _data(nullptr),
   _init(true),
@@ -118,8 +119,10 @@ void OmDialog::open(bool show)
       this->_modal = true;
     }
 
-    if(show)
-      ShowWindow(this->_hwnd, SW_SHOW);
+    // Retrieve the associated dialog menu if exists
+    this->_menu = GetMenu(this->_hwnd);
+
+    if(show) ShowWindow(this->_hwnd, SW_SHOW);
   }
 }
 
@@ -145,8 +148,10 @@ void OmDialog::modeless(bool show)
 
     SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
-    if(show)
-      ShowWindow(this->_hwnd, SW_SHOW);
+    // Retrieve the associated dialog menu if exists
+    this->_menu = GetMenu(this->_hwnd);
+
+    if(show) ShowWindow(this->_hwnd, SW_SHOW);
   }
 }
 
@@ -242,7 +247,7 @@ void OmDialog::setParent(OmDialog* dialog)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::setAccelerator(long id)
+void OmDialog::setAccel(long id)
 {
   this->_accel = LoadAccelerators(this->_hins, MAKEINTRESOURCE(id));
 }
@@ -442,7 +447,7 @@ void OmDialog::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialog::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool OmDialog::_onMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
   return false;
 }
@@ -451,22 +456,22 @@ bool OmDialog::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   OmDialog* dialog;
 
-  if(uMsg == WM_INITDIALOG ) {
-    SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
+  if(msg == WM_INITDIALOG ) {
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
     dialog = reinterpret_cast<OmDialog*>(lParam);
   } else {
-    dialog = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    dialog = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
   }
 
   if(dialog) {
 
     LONG size[4] = {0, 0, 4, 8};
 
-    switch(uMsg)
+    switch(msg)
     {
 
     case WM_INITDIALOG:
@@ -476,7 +481,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_SHOWWINDOW:
       if(wParam) { // SHOW
         // Get the initial window size and store it as min size
-        GetWindowRect(hWnd, &dialog->_rect);
+        GetWindowRect(hwnd, &dialog->_rect);
         dialog->_limit[0] = dialog->_rect.right - dialog->_rect.left;
         dialog->_limit[1] = dialog->_rect.bottom - dialog->_rect.top;
 
@@ -491,7 +496,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         // Initialize proper client rect and call resize function to force
         // controls alignments
-        GetClientRect(hWnd, &dialog->_rect);
+        GetClientRect(hwnd, &dialog->_rect);
         // Calculate the dialog base unit
         MapDialogRect(dialog->_hwnd, reinterpret_cast<LPRECT>(&size));
         dialog->_unit[0] = size[2];
@@ -512,9 +517,9 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
       return false; // case WM_MOVE:
 
     case WM_SIZE:
-      GetClientRect(hWnd, &dialog->_rect);
+      GetClientRect(hwnd, &dialog->_rect);
       // Calculate the dialog base unit
-      MapDialogRect(dialog->_hwnd, reinterpret_cast<LPRECT>(&size));
+      MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&size));
       dialog->_unit[0] = size[2];
       dialog->_unit[1] = size[3];
       // calculate dialog size in base unit
@@ -544,7 +549,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
     }
 
-    return dialog->_onMsg(uMsg, wParam, lParam);
+    return dialog->_onMsg(msg, wParam, lParam);
   }
 
   return false;

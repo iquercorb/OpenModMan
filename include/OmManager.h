@@ -88,8 +88,8 @@ class OmManager
     ///
     /// \return Loaded Context count.
     ///
-    size_t contextCount() const {
-      return _context.size();
+    size_t ctxCount() const {
+      return _ctxLs.size();
     }
 
     /// \brief Get Context.
@@ -100,18 +100,18 @@ class OmManager
     ///
     /// \return Loaded Context instance.
     ///
-    OmContext* context(unsigned i) {
-      return _context[i];
+    OmContext* ctxGet(unsigned i) {
+      return _ctxLs[i];
     }
 
     /// \brief Set selected Context.
     ///
     /// Select the specified Context at index. The selected Context will be
-    /// available by via the OmManager.curContext Context.
+    /// available by via the OmManager.ctxCur Context.
     ///
     /// \param[in]  i     : Index of Context to select or -1 to unselect.
     ///
-    void selContext(int i);
+    void ctxSel(int i);
 
     /// \brief Get selected Context.
     ///
@@ -119,8 +119,8 @@ class OmManager
     ///
     /// \return Current selected Context.
     ///
-    OmContext* curContext() const {
-      return _curContext;
+    OmContext* ctxCur() const {
+      return _ctxCur;
     }
 
     /// \brief Save configuration window RECT.
@@ -330,7 +330,7 @@ class OmManager
     /// \param[in]  path      : Path where to create Context.
     /// \param[in]  open      : Open newly created Context after creation.
     ///
-    bool makeContext(const wstring& title, const wstring& path, bool open = true);
+    bool ctxNew(const wstring& title, const wstring& path, bool open = true);
 
     /// \brief Open Context.
     ///
@@ -338,13 +338,15 @@ class OmManager
     ///
     /// \param[in]  path      : Context file path.
     ///
-    bool openContext(const wstring& path);
+    bool ctxOpen(const wstring& path);
 
     /// \brief Close current Context.
     ///
-    /// Close current Context.
+    /// Close Context.
     ///
-    void closeCurrContext();
+    /// \param[in]  i         : Context index to close, or -1 to close current selected.
+    ///
+    void ctxClose(int i = -1);
 
     /// \brief Set log output.
     ///
@@ -366,9 +368,9 @@ class OmManager
 
     OmConfig            _config;
 
-    vector<OmContext*>  _context;
+    vector<OmContext*>  _ctxLs;
 
-    OmContext*          _curContext;
+    OmContext*          _ctxCur;
 
     // general options
     unsigned            _iconsSize;

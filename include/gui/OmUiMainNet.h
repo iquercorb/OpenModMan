@@ -49,35 +49,52 @@ class OmUiMainNet : public OmDialog
     ///
     long id() const;
 
+    /// \brief Set dialog freeze mode
+    ///
+    /// Enable or disable the dialog freeze mode.
+    ///
+    /// The freeze mode is a modal-kind emulation for threaded operations,
+    /// it disables (almost) all controls of the dialog and its children
+    /// to prevent user to interact with elements while a threaded process
+    /// is running.
+    ///
+    /// \param[in]  enable  : Enable or disable freeze mode.
+    ///
+    void freeze(bool enable);
+
+    /// \brief Set dialog safe mode
+    ///
+    /// Enables or disable the dialog safe mode.
+    ///
+    /// The safe mode is used to operate modifications on sensitive
+    /// or monitored elements such as deleting or moving Location in
+    /// order to prevent conflicts or crash during process.
+    ///
+    /// \param[in]  enable  : Enable or disable safe mode.
+    ///
+    void safemode(bool enable);
+
     /// \brief Select Location
     ///
     /// Select or unselect Location then refresh dialog.
     ///
     /// \param[in]  i  Index of Location to select or -1 to select none.
     ///
-    void selLocation(int i);
+    void locSel(int i);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onSelectRep();
+    void                _buildCbLoc();
 
-    HFONT               _hFtTitle;
+    void                _buildLbRep();
 
-    HFONT               _hFtMonos;
+    void                _onCbLocSel();
 
-    HBITMAP             _hBmBlank;
+    void                _onLbRepSel();
 
-    HBITMAP             _hBmBcNew;
+    void                _onBcNewRep();
 
-    HBITMAP             _hBmBcDel;
-
-    HBITMAP             _hBmBcRef;
-
-    void                _repoDel();
-
-    void                _reloadLocCb();
-
-    void                _reloadRepLb();
+    void                _onBcDelRep();
 
     void                _onInit();
 

@@ -58,13 +58,13 @@ void OmUiPropPkgBck::_onInit()
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_OUT05, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->package();
+  OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->pkgCur();
   if(pPkg == nullptr) return;
 
-  if(pPkg->isType(PKG_TYPE_BCK)) {
+  if(pPkg->hasBck()) {
 
     // Type
-    if(Om_isDir(pPkg->backupPath())) {
+    if(Om_isDir(pPkg->bckPath())) {
       this->setItemText(IDC_EC_OUT01, L"Sub-folder");
     } else {
       this->setItemText(IDC_EC_OUT01, L"Zip archive");
@@ -72,15 +72,15 @@ void OmUiPropPkgBck::_onInit()
 
     // Location
     this->enableItem(IDC_EC_OUT02, true);
-    this->setItemText(IDC_EC_OUT02, pPkg->backupPath());
+    this->setItemText(IDC_EC_OUT02, pPkg->bckPath());
 
     // Overlap by
     this->enableItem(IDC_EC_OUT03, true);
-    if(pPkg->overlapCount()) {
+    if(pPkg->ovrCount()) {
       wstring olap_str;
-      unsigned n = pPkg->overlapCount();
+      unsigned n = pPkg->ovrCount();
       for(unsigned i = 0; i < n; ++i) {
-        olap_str += Om_toHexString(pPkg->overlap(i));
+        olap_str += Om_toHexString(pPkg->ovrGet(i));
         if(i < (n - 1)) {
           olap_str += L"; ";
         }
@@ -92,19 +92,19 @@ void OmUiPropPkgBck::_onInit()
 
     // Total Size
     this->enableItem(IDC_EC_OUT04, true);
-    this->setItemText(IDC_EC_OUT04, Om_sizeString(Om_itemSize(pPkg->backupPath())));
+    this->setItemText(IDC_EC_OUT04, Om_sizeString(Om_itemSize(pPkg->bckPath())));
 
     // Installed Files
     this->enableItem(IDC_EC_OUT05, true);
-    if(pPkg->backupItemCount()) {
+    if(pPkg->bckItemCount()) {
       wstring inst_str;
-      for(unsigned i = 0; i < pPkg->backupItemCount(); ++i) {
-        if(pPkg->backupItem(i).dest == PKGITEM_DEST_DEL) {
+      for(unsigned i = 0; i < pPkg->bckItemCount(); ++i) {
+        if(pPkg->bckItemGet(i).dest == PKGITEM_DEST_DEL) {
           inst_str += L"+  ";
         } else {
           inst_str += L"≠  ";
         }
-        inst_str += pPkg->backupItem(i).path;
+        inst_str += pPkg->bckItemGet(i).path;
         inst_str += L"\r\n";
       }
       this->setItemText(IDC_EC_OUT05, inst_str);

@@ -25,41 +25,47 @@
 #include "gui/OmUiMain.h"
 
 
-/// \brief Custom window Message
+/// \brief Custom "Package Install Done" Message
 ///
-/// Custom window message to notify the dialog window that the previously
-/// started thread ended his job
+/// Custom "Package Install Done" window message to notify the dialog that the
+/// running thread finished his job.
 ///
-#define UWM_PACKAGES_DONE     (WM_APP+1)
+#define UWM_PKGINST_DONE      (WM_APP+1)
 
+/// \brief Custom "Package Uninstall Done" Message
+///
+/// Custom "Package Uninstall Done" window message to notify the dialog that the
+/// running thread finished his job.
+///
+#define UWM_PKGUNIN_DONE      (WM_APP+2)
+
+/// \brief Custom "Package Uninstall Done" Message
+///
+/// Custom "Package Uninstall Done" window message to notify the dialog that the
+/// running thread finished his job.
+///
+#define UWM_BATEXE_DONE       (WM_APP+3)
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
-  _onProcess(false),
-  _lvIconsSize(0),
-  _hFtTitle(Om_createFont(18, 800, L"Ms Shell Dlg")),
-  _hFtMonos(Om_createFont(14, 700, L"Consolas")),
-  _hBmBlank(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),0,0,0,0))),
-  _hBmBcNew(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_ADD),0,0,0,0))),
-  _hBmBcDel(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_REM),0,0,0,0))),
-  _hBmBcMod(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_BTN_MOD),0,0,0,0))),
-  _abortPending(false),
-  _install_hth(nullptr),
-  _uninstall_hth(nullptr),
-  _batch_hth(nullptr),
-  _monitor_hth(nullptr)
+  _dirMon_hth(nullptr),
+  _dirMon_hev{0,0,0},
+  _pkgInst_hth(nullptr),
+  _pkgUnin_hth(nullptr),
+  _batExe_hth(nullptr),
+  _thread_abort(false),
+  _buildLvPkg_icSize(0)
 {
   // Package info sub-dialog
   this->addChild(new OmUiPropPkg(hins));
 
   // set the accelerator table for the dialog
-  this->setAccelerator(IDR_ACCEL);
+  this->setAccel(IDR_ACCEL);
 
   // elements for real-time directory monitoring thread
-  this->_monitor_hev[0] = CreateEvent(nullptr, true, false, nullptr); //< custom event to notify thread must exit
-  this->_monitor_hev[1] = nullptr;
+  this->_dirMon_hev[0] = CreateEvent(nullptr, true, false, nullptr); //< custom event to notify thread must exit
 }
 
 
@@ -69,14 +75,13 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
 OmUiMainLib::~OmUiMainLib()
 {
   // stop Library folder changes monitoring
-  this->_monitor_stop();
+  this->_dirMon_stop();
 
-  DeleteObject(this->_hBmBlank);
-  DeleteObject(this->_hBmBcNew);
-  DeleteObject(this->_hBmBcDel);
-  DeleteObject(this->_hBmBcMod);
-  DeleteObject(this->_hFtTitle);
-  DeleteObject(this->_hFtMonos);
+  HFONT hFt;
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -92,106 +97,180 @@ long OmUiMainLib::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::selLocation(int i)
+void OmUiMainLib::freeze(bool enable)
+{
+  // Location ComboBox
+  this->enableItem(IDC_CB_LOC, !enable);
+  // Packages ListView
+  this->enableItem(IDC_LV_PKG, !enable);
+  // Batches ListBox
+  this->enableItem(IDC_LB_BAT, !enable);
+
+  // Package Install and Uninstall buttons
+  this->enableItem(IDC_BC_INST, !enable);
+  this->enableItem(IDC_BC_UNIN, !enable);
+
+  // Batch Buttons
+  if(enable) {
+    this->enableItem(IDC_BC_NEW, false);
+    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_BC_RUN, false);
+  } else {
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    this->enableItem(IDC_BC_NEW, (pMgr->ctxCur() != nullptr));
+    int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
+    this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
+    this->enableItem(IDC_BC_RUN, (lb_sel >= 0));
+  }
+
+  // Abort Button
+  this->enableItem(IDC_BC_ABORT, enable);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::safemode(bool enable)
+{
+  if(enable) {
+    // force to unselect current location
+    this->locSel(-1);
+  } else {
+    // rebuild Location ComboBox, this
+    // will also select the default Location
+    this->_buildCbLoc();
+
+    // rebuild Batches ListBox
+    this->_buildLbBat();
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::locSel(int i)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // stop Library folder monitoring
-  this->_monitor_stop();
+  OmContext* pCtx = pMgr->ctxCur();
 
   // main window dialog
   OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
+  // stop Library folder monitoring
+  this->_dirMon_stop();
+
+  // disable "Edit > Package []" in main menu
+  pUiMain->setPopupItem(1, 5, MF_GRAYED);
+
   // select the requested Location
-  if(pMgr->curContext()) {
+  if(pCtx) {
 
-    OmContext* pCtx = pMgr->curContext();
+    pCtx->locSel(i);
 
-    pCtx->selLocation(i);
+    OmLocation* pLoc = pCtx->locCur();
 
-    if(pCtx->curLocation()) {
+    if(pLoc) {
 
-      OmLocation* pLoc = pCtx->curLocation();
-
+      // Check Location Destination folder access
       if(!pLoc->checkAccessDst()) {
+
         wstring wrn = L"Configured Location's destination folder \"";
-        wrn += pLoc->installDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += pLoc->dstDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
         wrn += L"\n\nPlease check Location's settings and folder permissions.";
+
         Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", wrn);
       }
 
+      // Check Location Backup folder access
       if(!pLoc->checkAccessBck()) {
+
         wstring wrn = L"Configured Location's backup folder \"";
-        wrn += pLoc->backupDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += pLoc->bckDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
         wrn += L"\n\nPlease check Location's settings and folder permissions.";
+
         Om_dialogBoxWarn(this->_hwnd, L"Backup folder access error", wrn);
       }
 
+      // Check Location Library folder access
       if(pLoc->checkAccessLib()) {
+
         // start Library folder monitoring
-        this->_monitor_init(pLoc->libraryDir());
+        this->_dirMon_init(pLoc->libDir());
+
+        // set Library Path EditText control
+        this->setItemText(IDC_EC_INP01, pLoc->libDir());
+
       } else {
+
         wstring wrn = L"Configured Location's library folder \"";
-        wrn += pLoc->backupDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
+        wrn += pLoc->bckDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
         wrn += L"\n\nPlease check Location's settings and folder permissions.";
+
         Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", wrn);
+
+        // set Library Path EditText control
+        this->setItemText(IDC_EC_INP01, L"<folder access error>");
       }
 
       // enable the "Edit > Location properties..." menu
-      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_ENABLED);
+      pUiMain->setPopupItem(1, 2, MF_ENABLED);
 
     } else {
+
+      // set Library Path EditText control
+      this->setItemText(IDC_EC_INP01, L"<no Location selected>");
+
       // disable the "Edit > Location properties..." menu
-      pUiMain->setMenuEdit(2, MF_BYPOSITION|MF_GRAYED);
+      pUiMain->setPopupItem(1, 2, MF_GRAYED);
     }
   }
-
-  // disable "Edit > Package" in main menu
-  pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
-  // disable the "Edit > Package > []" elements
-  HMENU hMenu = pUiMain->getMenuEdit(5);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
-  EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
 
   // refresh
-  this->_reloadLibEc();
-  this->_reloadLibLv();
+  this->_buildLvPkg();
 
   // forces control to select item
-  HWND hCb = this->getItem(IDC_CB_LOCLS);
-
-  if(i != SendMessageW(hCb, CB_GETCURSEL, 0, 0))
-    SendMessageW(hCb, CB_SETCURSEL, i, 0);
+  this->msgItem(IDC_CB_LOC, CB_SETCURSEL, i);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::toggle()
+void OmUiMainLib::pkgInst()
+{
+  this->_pkgInst_init();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::pkgUnin()
+{
+  this->_pkgUnin_init();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::pkgTogg()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = pMgr->curContext()->curLocation();
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return;
 
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-
-  DWORD dwid;
-  unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-  for(unsigned i = 0; i < n; ++i) {
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      // enable the On-Process state of parent window
-      static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
-
-      this->_abortPending = false;
-
-      if(pLoc->package(i)->hasBackup()) {
-        this->_uninstall_hth = CreateThread(nullptr, 0, this->_uninstall_fth, this, 0, &dwid);
+  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      if(pCtx->locCur()->pkgGet(i)->hasBck()) {
+        this->_pkgUnin_init();
       } else {
-        this->_install_hth = CreateThread(nullptr, 0, this->_install_fth, this, 0, &dwid);
+        this->_pkgInst_init();
       }
+      break;
     }
   }
 }
@@ -200,55 +279,25 @@ void OmUiMainLib::toggle()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::install()
-{
-  DWORD dwId;
-  this->_abortPending = false;
-
-  // enable the On-Process state of parent window
-  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
-
-  this->_install_hth = CreateThread(nullptr, 0, this->_install_fth, this, 0, &dwId);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::uninstall()
-{
-  DWORD dwId;
-  this->_abortPending = false;
-
-  // enable the On-Process state of parent window
-  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
-
-  this->_uninstall_hth = CreateThread(nullptr, 0, this->_uninstall_fth, this, 0, &dwId);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::viewDetails()
+void OmUiMainLib::pkgProp()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = pMgr->curContext()->curLocation();
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return;
+
   OmPackage* pPkg = nullptr;
 
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-
-  unsigned lv_cnt = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-  for(unsigned i = 0; i < lv_cnt; ++i) {
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      pPkg = pLoc->package(i);
+  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      pPkg = pCtx->locCur()->pkgGet(i);
       break;
     }
   }
 
   if(pPkg) {
     OmUiPropPkg* pUiPropPkg = static_cast<OmUiPropPkg*>(this->childById(IDD_PROP_PKG));
-    pUiPropPkg->setPackage(pPkg);
+    pUiPropPkg->pkgSet(pPkg);
     pUiPropPkg->open(true);
   }
 }
@@ -257,21 +306,21 @@ void OmUiMainLib::viewDetails()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::moveTrash()
+void OmUiMainLib::pkgTrsh()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = pMgr->curContext()->curLocation();
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return;
 
-  vector<OmPackage*> trash_list;
+  vector<OmPackage*> sel_ls;
 
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
 
-  this->setOnProcess(true);
-
-  unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-  for(unsigned i = 0; i < n; ++i) {
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      trash_list.push_back(pLoc->package(i));
+  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      sel_ls.push_back(pCtx->locCur()->pkgGet(i));
     }
   }
 
@@ -279,53 +328,52 @@ void OmUiMainLib::moveTrash()
   LVITEM lvI = {};
   lvI.mask = LVIF_STATE;
   lvI.stateMask = LVIS_SELECTED;
-  SendMessageW(hLv, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
+  this->msgItem(IDC_LV_PKG, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  if(trash_list.size()) {
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)",
-                                            L"Move the selected package(s) to trash ?"))
+  if(sel_ls.size()) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)", L"Move the selected package(s) to trash ?"))
       return;
 
-    for(size_t i = 0; i < trash_list.size(); ++i) {
-      Om_moveToTrash(trash_list[i]->sourcePath());
+    for(size_t i = 0; i < sel_ls.size(); ++i) {
+      Om_moveToTrash(sel_ls[i]->srcPath());
     }
   }
 
-  this->setOnProcess(false);
+  // unfreeze dialog to allow user to interact
+  static_cast<OmUiMain*>(this->root())->freeze(false);
 
   // update package selection
-  this->_onSelectPkg();
+  this->_onLvPkgSel();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::openExplore()
+void OmUiMainLib::pkgOpen()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = pMgr->curContext()->curLocation();
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return;
 
-  vector<OmPackage*> explo_list;
+  vector<OmPackage*> sel_ls;
 
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-
-  unsigned n = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-  for(unsigned i = 0; i < n; ++i) {
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      explo_list.push_back(pLoc->package(i));
+  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      sel_ls.push_back(pCtx->locCur()->pkgGet(i));
     }
   }
 
-  for(size_t i = 0; i < explo_list.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     // the default behavior is to explore (open explorer with deployed folders)
     // however, it may happen that zip file are handled by an application
     // (typically, WinRar or 7zip) and the "explore" command may fail, in this
     // case, we call the "open" command.
 
-    if(ShellExecuteW(this->_hwnd, L"explore", explo_list[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL ) <= (HINSTANCE)32) {
-      ShellExecuteW(this->_hwnd, L"open", explo_list[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL );
+    if(ShellExecuteW(this->_hwnd, L"explore", sel_ls[i]->srcPath().c_str(), nullptr, nullptr, SW_NORMAL ) <= (HINSTANCE)32) {
+      ShellExecuteW(this->_hwnd, L"open", sel_ls[i]->srcPath().c_str(), nullptr, nullptr, SW_NORMAL );
     }
   }
 }
@@ -334,417 +382,143 @@ void OmUiMainLib::openExplore()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::batch()
-{
-  DWORD dwId;
-  this->_abortPending = false;
-
-  // enable the On-Process state of parent window
-  static_cast<OmUiMain*>(this->_parent)->setOnProcess(true);
-
-  this->_batch_hth = CreateThread(nullptr, 0, this->_batch_fth, this, 0, &dwId);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiMainLib::remBatch()
-{
-  HWND hLb = this->getItem(IDC_LB_BATLS);
-
-  int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
-
-  if(lb_sel >= 0) {
-
-    unsigned bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
-
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    OmContext* pCtx = pMgr->curContext();
-
-    // warns the user before committing the irreparable
-    wstring qry = L"Are your sure you want to delete the Batch \"";
-    qry += pCtx->batch(bat_id)->title();
-    qry += L"\" ?";
-
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
-      return false;
-    }
-
-    if(!pCtx->remBatch(bat_id)) {
-      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", pCtx->lastError());
-      return false;
-    }
-  }
-
-  // reload the batch list-box
-  this->_reloadBatLb();
-
-  return true;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiMainLib::ediBatch()
-{
-  HWND hLb = this->getItem(IDC_LB_BATLS);
-
-  int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
-
-  if(lb_sel >= 0) {
-
-    int bat_id = SendMessageW(hLb, LB_GETITEMDATA, lb_sel, 0);
-
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    OmContext* pCtx = pMgr->curContext();
-
-    OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
-    pUiPropBat->setBatch(pCtx->batch(bat_id));
-    pUiPropBat->open();
-  }
-
-  // reload the batch list-box
-  this->_reloadBatLb();
-
-  return true;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::setOnProcess(bool enable)
+void OmUiMainLib::_buildLvPkg()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
-  // handle to "Edit > Package" sub-menu
-  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(5);
-
-  // enable/disable Location combo-box
-  this->enableItem(IDC_CB_LOCLS, !enable);
-
-  // enable/disable install and uninstall button
-  this->enableItem(IDC_BC_INST, !enable);
-  this->enableItem(IDC_BC_UNIN, !enable);
-  // enable/disable the package list
-  this->enableItem(IDC_LV_PKGLS, !enable);
-
-  // disable/enable abort button
-  this->enableItem(IDC_BC_ABORT, enable);
-
-  // enable/disable the batches list
-  this->enableItem(IDC_LB_BATLS, !enable);
-
-  if(enable) {
-
-    this->_onProcess = true;
-
-    // disable batches buttons
-    this->enableItem(IDC_BC_APPLY, false);
-    this->enableItem(IDC_BC_NEW, false);
-    this->enableItem(IDC_BC_DEL, false);
-
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
-
-  } else {
-
-    OmContext* pCtx = pMgr->curContext();
-
-    HWND hLv = this->getItem(IDC_LV_PKGLS);
-    HWND hLb = this->getItem(IDC_LB_BATLS);
-
-    this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
-
-    bool lb_has_sel = (SendMessageW(hLb, LB_GETCURSEL, 0, 0) >= 0);
-    this->enableItem(IDC_BC_DEL, lb_has_sel);
-    this->enableItem(IDC_BC_APPLY, lb_has_sel);
-
-    // enable the "Edit > Package" sub-items
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_ENABLED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_ENABLED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_ENABLED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_ENABLED);
-
-    bool lv_sing_sel = (SendMessageW(hLv, LVM_GETSELECTEDCOUNT, 0, 0) == 1);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, (lv_sing_sel) ? MF_ENABLED : MF_GRAYED);
-
-    this->_onProcess = false;
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_onSelectPkg()
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
-
-  if(pLoc == nullptr)
+  if(!pLoc) {
+    // empty ListView
+    this->msgItem(IDC_LV_PKG, LVM_DELETEALLITEMS);
+    // disable ListView
+    this->enableItem(IDC_LV_PKG, false);
+    // return now
     return;
+  }
 
-  // keep handle to main dialog
-  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
+  // if icon size changed, create new ImageList
+  if(this->_buildLvPkg_icSize != pMgr->iconsSize()) {
 
-  // disable "Edit > Package" in main menu
-  pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
+    // Build list of images resource ID for the required size
+    unsigned idb[7];
+    switch(pMgr->iconsSize())
+    {
+    case 16:
+      idb[0] = IDB_PKG_ERR_16; idb[1] = IDB_PKG_DIR_16; idb[2] = IDB_PKG_ZIP_16;
+      idb[3] = IDB_PKG_DPN_16; idb[4] = IDB_PKG_WIP_16; idb[5] = IDB_PKG_BCK_16;
+      idb[6] = IDB_PKG_OWR_16;
+      break;
+    case 32:
+      idb[0] = IDB_PKG_ERR_32; idb[1] = IDB_PKG_DIR_32; idb[2] = IDB_PKG_ZIP_32;
+      idb[3] = IDB_PKG_DPN_32; idb[4] = IDB_PKG_WIP_32; idb[5] = IDB_PKG_BCK_32;
+      idb[6] = IDB_PKG_OWR_32;
+      break;
+    default:
+      idb[0] = IDB_PKG_ERR_24; idb[1] = IDB_PKG_DIR_24; idb[2] = IDB_PKG_ZIP_24;
+      idb[3] = IDB_PKG_DPN_24; idb[4] = IDB_PKG_WIP_24; idb[5] = IDB_PKG_BCK_24;
+      idb[6] = IDB_PKG_OWR_24;
+      break;
+    }
 
-  // handle to "Edit > Package" sub-menu
-  HMENU hMenu = pUiMain->getMenuEdit(5);
+    // Create ImageList and fill it with bitmaps
+    HIMAGELIST hImgList = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 7, 0 );
+    for(unsigned i = 0; i < 7; ++i)
+      ImageList_Add(hImgList, Om_getResImage(this->_hins, idb[i]), nullptr);
 
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-  HWND hSb = this->getItem(IDC_SB_PKIMG);
+    // Set ImageList to ListView
+    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgList));
+    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgList));
+    DeleteObject(hImgList);
 
-  // Handle to bitmap for package picture
-  HBITMAP hBm  = this->_hBmBlank;
+    // update size
+    this->_buildLvPkg_icSize = pMgr->iconsSize();
+  }
 
-  // get count of selected item
-  unsigned lv_nsl = SendMessageW(hLv, LVM_GETSELECTEDCOUNT, 0, 0);
+  // return now if library folder cannot be accessed
+  if(!pLoc->checkAccessLib()) {
+    return;
+  }
 
-  if(lv_nsl > 0) {
-    // at least one, we enable buttons
-    this->enableItem(IDC_BC_INST, true);
-    this->enableItem(IDC_BC_UNIN, true);
+  // force Location library refresh
+  pLoc->libRefresh();
 
-    // enable the "Edit > Package" sub-items
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, 0);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, 0);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, 0);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, 0);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, 0);
+  // Save list-view scroll position to lvRect
+  RECT lvRec;
+  this->msgItem(IDC_LV_PKG, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
 
-    // enable "Edit > Package" sub-menu
-    pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_ENABLED);
+  // empty list view
+  this->msgItem(IDC_LV_PKG, LVM_DELETEALLITEMS);
 
-    if(lv_nsl > 1) {
+  // add item to list view
+  OmPackage* pPkg;
+  LVITEMW lvItem;
+  for(unsigned i = 0; i < pLoc->pkgCount(); ++i) {
 
-      // multiple selection, we cannot display readme and snapshot
-      ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+    pPkg = pLoc->pkgGet(i);
 
-      // set title default message
-      ShowWindow(this->getItem(IDC_SC_TITLE), true);
-      this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
-
-      // set default blank picture
-      ShowWindow(hSb, true);
-
-      // disable the "view detail..." sub-menu
-      EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
-
+    // the first column, package status, here we INSERT the new item
+    lvItem.iItem = i;
+    lvItem.mask = LVIF_IMAGE;
+    lvItem.iSubItem = 0;
+    if(pPkg->isType(PKG_TYPE_BCK)) {
+      lvItem.iImage = pLoc->bckOverlapped(pPkg) ? 6/*OWR*/ : 5/*BCK*/;
     } else {
-
-      // get the select item id
-      unsigned itm_count = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-      for(unsigned i = 0; i < itm_count; ++i) {
-
-        if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-
-          this->setItemText(IDC_SC_TITLE, pLoc->package(i)->name());
-
-          if(pLoc->package(i)->desc().size()) {
-            this->setItemText(IDC_EC_PKTXT, pLoc->package(i)->desc());
-          } else {
-            this->setItemText(IDC_EC_PKTXT, L"<no description available>");
-          }
-
-          if(pLoc->package(i)->image().thumbnail()) {
-            hBm = pLoc->package(i)->image().thumbnail();
-          }
-
-          ShowWindow(this->getItem(IDC_SC_TITLE), true);
-          ShowWindow(hSb, true);
-          ShowWindow(this->getItem(IDC_EC_PKTXT), true);
-        }
-      }
+      lvItem.iImage = -1; // none
     }
-  } else {
-    // nothing selected, we disable all
-    ShowWindow(this->getItem(IDC_SC_TITLE), false);
-    ShowWindow(hSb, false);
-    ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+    lvItem.iItem = this->msgItem(IDC_LV_PKG, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-    this->enableItem(IDC_BC_INST, false);
-    this->enableItem(IDC_BC_UNIN, false);
-
-    // disable the "Edit > Package" sub-items
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INST, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_UINS, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_OPEN, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_TRSH, MF_GRAYED);
-    EnableMenuItem(hMenu, IDM_EDIT_PKG_INFO, MF_GRAYED);
-
-    // disable "Edit > Package" sub-menu
-    pUiMain->setMenuEdit(5, MF_BYPOSITION|MF_GRAYED);
-  }
-
-  // Update the selected picture
-  hBm = this->setStImage(IDC_SB_PKIMG, hBm);
-  if(hBm && hBm != this->_hBmBlank) DeleteObject(hBm);
-
-  this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_onSelectBat()
-{
-  int lb_sel = this->msgItem(IDC_LB_BATLS, LB_GETCURSEL);
-
-  this->enableItem(IDC_BC_APPLY, (lb_sel >= 0));
-  this->enableItem(IDC_BC_EDI, (lb_sel >= 0));
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_reloadLibEc()
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;;
-
-  if(pLoc != nullptr) {
-
-    // check for Library folder validity
-    if(pLoc->checkAccessLib()) {
-      // set the library path
-      this->setItemText(IDC_EC_INP01, pLoc->libraryDir());
+    // Second column, the package name and type, here we set the sub-item
+    lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
+    lvItem.iSubItem = 1;
+    if(pPkg->isType(PKG_TYPE_SRC)) {
+      lvItem.iImage = pPkg->isZip() ? (pPkg->depCount() ? 3/*DPN*/ : 2/*ZIP*/) : 1/*DIR*/;
     } else {
-      this->setItemText(IDC_EC_INP01, L"<folder access error>");
+      lvItem.iImage = 0; // IDB_PKG_ERR
     }
 
-  } else {
-    // empty library path
-    this->setItemText(IDC_EC_INP01, L"<no Location selected>");
+    lvItem.pszText = const_cast<LPWSTR>(pPkg->name().c_str());
+    this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Third column, the package version, we set the sub-item
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 2;
+    lvItem.pszText = const_cast<LPWSTR>(pPkg->version().asString().c_str());
+    this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
+
+  // we enable the List-View
+  this->enableItem(IDC_LV_PKG, true);
+
+  // restore list-view scroll position from lvRec
+  this->msgItem(IDC_LV_PKG, LVM_SCROLL, 0, -lvRec.top );
+
+  // update Package ListView selection
+  this->_onLvPkgSel();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_reloadLibLv(bool clear)
+void OmUiMainLib::_buildLbBat()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
-
-  // get List view control
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-
-  if(pLoc != nullptr) {
-
-    // if icon size changed, reload
-    if(this->_lvIconsSize != pMgr->iconsSize()) {
-      this->_reloadIcons();
-    }
-
-    // return now if library folder cannot be accessed
-    if(!pLoc->checkAccessLib()) {
-      return;
-    }
-
-    // force Location library refresh
-    if(clear) {
-      pLoc->packageListClear(); //< clear to rebuild entirely
-    }
-    pLoc->packageListRefresh();
-
-    // we enable the List-View
-    EnableWindow(hLv, true);
-
-    // Save list-view scroll position to lvRect
-    RECT lvRec;
-    SendMessageW(hLv, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
-
-    // empty list view
-    SendMessageW(hLv, LVM_DELETEALLITEMS, 0, 0);
-
-    // add item to list view
-    OmPackage* pPkg;
-    LVITEMW lvItem;
-    for(unsigned i = 0; i < pLoc->packageCount(); ++i) {
-
-      pPkg = pLoc->package(i);
-
-      // the first colum, package status, here we INSERT the new item
-      lvItem.iItem = i;
-      lvItem.mask = LVIF_IMAGE;
-      lvItem.iSubItem = 0;
-      if(pPkg->isType(PKG_TYPE_BCK)) {
-        if(pLoc->isBakcupOverlapped(pPkg)) {
-          lvItem.iImage = 6; // IDB_PKG_OWR
-        } else {
-          lvItem.iImage = 5; // IDB_PKG_BCK
-        }
-      } else {
-        lvItem.iImage = -1; // none
-      }
-      lvItem.iItem = SendMessageW(hLv, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
-
-      // Second column, the package name and type, here we set the subitem
-      lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
-      lvItem.iSubItem = 1;
-      if(pPkg->isType(PKG_TYPE_SRC)) {
-        if(pPkg->isType(PKG_TYPE_ZIP)) {
-          if(pPkg->dependCount()) {
-            lvItem.iImage = 3; // IDB_PKG_DPN
-          } else {
-            lvItem.iImage = 2; // IDB_PKG_ZIP
-          }
-        } else {
-          lvItem.iImage = 1; // IDB_PKG_DIR
-        }
-      } else {
-        lvItem.iImage = 0; // IDB_PKG_ERR
-      }
-      lvItem.pszText = const_cast<LPWSTR>(pLoc->package(i)->name().c_str());
-      SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
-
-      // Third column, the package version, we set the subitem
-      lvItem.mask = LVIF_TEXT;
-      lvItem.iSubItem = 2;
-      lvItem.pszText = const_cast<LPWSTR>(pLoc->package(i)->version().asString().c_str());
-      SendMessageW(hLv, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
-    }
-
-    // restore list-view scroll position from lvmRect
-    SendMessageW(hLv, LVM_SCROLL, 0, -lvRec.top );
-
-  } else {
-    // empty list view
-    SendMessageW(hLv, LVM_DELETEALLITEMS, 0, 0);
-    // disable the List-View
-    EnableWindow(hLv, true);
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_reloadBatLb()
-{
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
 
   // empty List-Box
-  this->msgItem(IDC_LB_BATLS, LB_RESETCONTENT);
+  this->msgItem(IDC_LB_BAT, LB_RESETCONTENT);
 
-  if(pMgr->curContext()) {
+  if(pCtx) {
 
-    OmContext* pCtx = pMgr->curContext();
+    OmBatch* pBat;
 
-    for(unsigned i = 0; i < pCtx->batchCount(); ++i) {
-      this->msgItem(IDC_LB_BATLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batch(i)->title().c_str()));
-      this->msgItem(IDC_LB_BATLS, LB_SETITEMDATA, i, i); // for Location index reordering
+    for(unsigned i = 0; i < pCtx->batCount(); ++i) {
+
+      pBat = pCtx->batGet(i);
+
+      this->msgItem(IDC_LB_BAT, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pBat->title().c_str()));
+      this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, i, i); // for Location index reordering
     }
   }
 }
@@ -753,156 +527,462 @@ void OmUiMainLib::_reloadBatLb()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_reloadLocCb()
+void OmUiMainLib::_buildCbLoc()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->curContext();
+  OmContext* pCtx = pMgr->ctxCur();
 
-  HWND hCb = this->getItem(IDC_CB_LOCLS);
-
-  if(pCtx == nullptr) {
-    // no Location, disable the List-Box
-    EnableWindow(hCb, false);
-    // unselect Location
-    this->selLocation(-1);
-
+  // check whether any context is selected
+  if(!pCtx) {
+    // empty the Combo-Box
+    this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
+    // disable Location ComboBox
+    this->enableItem(IDC_CB_LOC, false);
+    // force to reset current selection
+    this->locSel(-1);
+    // return now
     return;
   }
 
   // save current selection
-  int cb_sel = SendMessageW(hCb, CB_GETCURSEL, 0, 0);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
 
   // empty the Combo-Box
-  SendMessageW(hCb, CB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
 
   // add Context(s) to Combo-Box
-  if(pCtx->locationCount()) {
+  if(pCtx->locCount()) {
 
     wstring label;
 
-    EnableWindow(hCb, true);
+    for(unsigned i = 0; i < pCtx->locCount(); ++i) {
 
-    for(unsigned i = 0; i < pCtx->locationCount(); ++i) {
+      // compose Location label
+      label = pCtx->locGet(i)->title() + L" - ";
 
-      label = pCtx->location(i)->title();
-      label += L" - ";
-
-      // checks whether installation destination path is valid
-      if(pCtx->location(i)->checkAccessDst()) {
-        label += pCtx->location(i)->installDir();
+      if(pCtx->locGet(i)->checkAccessDst()) {
+        label += pCtx->locGet(i)->dstDir();
       } else {
         label += L"<folder access error>";
-
-        wstring wrn = L"Configured Location's Destination folder \"";
-        wrn += pCtx->location(i)->installDir()+L"\"";
-        wrn += OMM_STR_ERR_DIRACCESS;
-        wrn += L"\n\nPlease check Location's settings and folder permissions.";
-        Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", wrn);
       }
 
-      SendMessageW(hCb, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
+      this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
 
     // select the the previously selected Context
-    if(cb_sel >= 0) {
-      SendMessageW(hCb, CB_SETCURSEL, cb_sel, 0);
-      this->_reloadLibEc(); //< reload displayed library path
-      this->_reloadLibLv(true); //< reload + reparse packages list
-    } else {
-      SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+    if(cb_sel < 0) {
       // select the first Location by default
-      this->selLocation(0);
+      this->locSel(0);
+    } else {
+      this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cb_sel);
     }
+
+    // enable the ComboBox control
+    this->enableItem(IDC_CB_LOC, true);
+
   } else {
-    // no Location, disable the List-Box
-    EnableWindow(hCb, false);
-    // unselect Location
-    this->selLocation(-1);
 
-    // if Context have no Location, we ask user to create at least one
-    wstring qry = L"The current Context does not have any configured "
-                  L"Location. A Context needs at least one Location.\n\n"
-                  L"Do you want to configure a new Location now ?";
+    // disable Location ComboBox
+    this->enableItem(IDC_CB_LOC, false);
+    // force to reset current selection
+    this->locSel(-1);
 
-    if(Om_dialogBoxQuerry(this->_hwnd, L"No Location found", qry)) {
-      OmUiAddLoc* pUiNewLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
-      pUiNewLoc->setContext(pCtx);
-      pUiNewLoc->open(true);
+    // ask user to create at least one Location in the Context
+    wstring qry = L"The Context have not any configured "
+                  L"Location, this does not make much sense."
+                  L"\n\nDo you want to add a Location now ?";
+
+    if(Om_dialogBoxQuerry(this->_hwnd, L"Context empty", qry)) {
+      OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
+      pUiAddLoc->ctxSet(pCtx);
+      pUiAddLoc->open(true);
+    }
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgInst_init()
+{
+  // Freezes the main dialog to prevent user to interact during process
+  static_cast<OmUiMain*>(this->root())->freeze(true);
+
+  DWORD dwId;
+  this->_pkgInst_hth = CreateThread(nullptr, 0, this->_pkgInst_fth, this, 0, &dwId);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgInst_stop()
+{
+  DWORD exitCode;
+
+  // safely and cleanly close threads handles
+  if(this->_pkgInst_hth) {
+    WaitForSingleObject(this->_pkgInst_hth, INFINITE);
+    GetExitCodeThread(this->_pkgInst_hth, &exitCode);
+    CloseHandle(this->_pkgInst_hth);
+    this->_pkgInst_hth = nullptr;
+  }
+
+  // Unfreezes dialog so user can interact again
+  static_cast<OmUiMain*>(this->root())->freeze(false);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMainLib::_pkgInst_fth(void* arg)
+{
+  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return 1;
+
+  // reset abort status
+  self->_thread_abort = false;
+
+  // get user selection
+  vector<unsigned> sel_ls;
+
+  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i)
+    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED))
+      sel_ls.push_back(i);
+
+  // Launch install process
+  HWND hPb = self->getItem(IDC_PB_BAR);
+  HWND hLv = self->getItem(IDC_LV_PKG);
+  pCtx->locCur()->pkgInst(sel_ls, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+
+  // send message to notify process ended
+  self->postMessage(UWM_PKGINST_DONE);
+
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgUnin_init()
+{
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
+
+  DWORD dwId;
+  this->_pkgUnin_hth = CreateThread(nullptr, 0, this->_pkgUnin_fth, this, 0, &dwId);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgUnin_stop()
+{
+  DWORD exitCode;
+
+  if(this->_pkgUnin_hth) {
+    WaitForSingleObject(this->_pkgUnin_hth, INFINITE);
+    GetExitCodeThread(this->_pkgUnin_hth, &exitCode);
+    CloseHandle(this->_pkgUnin_hth);
+    this->_pkgUnin_hth = nullptr;
+  }
+
+  // unfreeze dialog to allow user to interact again
+  static_cast<OmUiMain*>(this->root())->freeze(false);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMainLib::_pkgUnin_fth(void* arg)
+{
+  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return 1;
+
+  // reset abort status
+  self->_thread_abort = false;
+
+  // get user selection
+  vector<unsigned> sel_ls;
+
+  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i)
+    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED))
+      sel_ls.push_back(i);
+
+  // Launch uninstall process
+  HWND hPb = self->getItem(IDC_PB_BAR);
+  HWND hLv = self->getItem(IDC_LV_PKG);
+  pCtx->locCur()->pkgUnin(sel_ls, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+
+  // send message to notify process ended
+  self->postMessage(UWM_PKGUNIN_DONE);
+
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_batExe_init()
+{
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
+
+  DWORD dwId;
+  this->_batExe_hth = CreateThread(nullptr, 0, this->_batExe_fth, this, 0, &dwId);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_batExe_stop()
+{
+  DWORD exitCode;
+
+  if(this->_batExe_hth) {
+    WaitForSingleObject(this->_batExe_hth, INFINITE);
+    GetExitCodeThread(this->_batExe_hth, &exitCode);
+    CloseHandle(this->_batExe_hth);
+    this->_batExe_hth = nullptr;
+  }
+
+  // unfreeze dialog to allow user to interact again
+  static_cast<OmUiMain*>(this->root())->freeze(false);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
+{
+  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // save current selected location
+  int cb_sel = self->msgItem(IDC_CB_LOC, CB_GETCURSEL);
+  // save current select batch
+  int lb_sel = self->msgItem(IDC_LB_BAT, LB_GETCURSEL);
+
+  if(lb_sel >= 0) {
+
+    // hide package details
+    ShowWindow(self->getItem(IDC_SB_PKG), false);
+    ShowWindow(self->getItem(IDC_EC_PKTXT), false);
+    ShowWindow(self->getItem(IDC_SC_TITLE), false);
+
+    // retrieve the batch object from current selection
+    OmBatch* pBat = pCtx->batGet(self->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel));
+
+    // Automatic fix Batch / Context Location inconsistency
+    for(size_t l = 0; l < pCtx->locCount(); ++l) //< Add missing Location
+      if(!pBat->hasLoc(pCtx->locGet(l)->uuid()))
+        pBat->locAdd(pCtx->locGet(l)->uuid());
+
+    // Remove unavailable location
+    vector<wstring> uuid_ls;
+    for(size_t l = 0; l < pBat->locCount(); ++l)
+      if(pCtx->locFind(pBat->locGetUuid(l)) < 0)
+        uuid_ls.push_back(pBat->locGetUuid(l));
+
+    for(size_t i = 0; i < uuid_ls.size(); ++i)
+      pBat->locRem(uuid_ls[i]);
+
+    unsigned n;
+    int p;
+    OmLocation* pLoc;
+
+    // create an install and an uninstall list
+    vector<unsigned> inst_list, uins_list;
+
+    // handle to controls
+    HWND hPb = self->getItem(IDC_PB_BAR);
+    HWND hLv = self->getItem(IDC_LV_PKG);
+
+    for(unsigned l = 0; l < pBat->locCount(); l++) {
+
+      // Select the Location found by UUID
+      self->locSel(pCtx->locFind(pBat->locGetUuid(l)));
+
+      pLoc = pCtx->locCur();
+
+      if(!pLoc) {
+        // TODO: warn here because Location no longer exists
+        continue;
+      }
+
+      // create the install list, to keep package order from batch we
+      // fill the install list according the batch hash list
+      n = pBat->insCount(l);
+      for(unsigned i = 0; i < n; ++i) {
+        p = pLoc->pkgIndex(pBat->insGet(l, i));
+        if(p >= 0) {
+          if(!pLoc->pkgGet(p)->hasBck()) {
+            inst_list.push_back(p);
+          }
+        } else {
+          // TODO: handle no longer available package
+        }
+      }
+
+      // create the uninstall list, here we do not care order
+      n = pLoc->pkgCount();
+      for(unsigned i = 0; i < n; ++i) {
+        if(!pBat->hasIns(l, pLoc->pkgGet(i)->hash())) {
+          if(pLoc->pkgGet(i)->hasBck()) {
+            uins_list.push_back(i);
+          }
+        }
+      }
+
+      // first, uninstall packages which must be uninstalled
+      if(uins_list.size()) {
+        pLoc->pkgUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+      }
+
+      // then, install packages which must be installed
+      if(inst_list.size()) {
+
+        // batch execution require packages to be installed in the order
+        // the user chosen, however, the package install process itself may
+        // change this order due to dependencies.
+        //
+        // To ensure both exigences are respect, we launch one install
+        // process per batch install package
+        vector<unsigned> inst;
+        for(size_t i = 0; i < inst_list.size(); ++i) {
+          // clear and replace package index in vector
+          inst.clear(); inst.push_back(inst_list[i]);
+          // Launch install process
+          pLoc->pkgInst(inst, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+        }
+      }
     }
 
+    // restore package details
+    ShowWindow(self->getItem(IDC_SB_PKG), true);
+    ShowWindow(self->getItem(IDC_EC_PKTXT), true);
+    ShowWindow(self->getItem(IDC_SC_TITLE), true);
   }
+
+  // Select previously selected location
+  self->locSel(cb_sel);
+
+  // send message to notify process ended
+  self->postMessage(UWM_BATEXE_DONE);
+
+  return 0;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_reloadIcons()
+void OmUiMainLib::_dirMon_init(const wstring& path)
 {
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // update size
-  this->_lvIconsSize = pMgr->iconsSize();
-
-   // hold the HWND of our list view control */
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-
-  // We add an image list to the list-view control, the image list will
-  // contain all icons we need.
-  HBITMAP hBm[7];
-
-  switch(this->_lvIconsSize)
-  {
-  case 16:
-    hBm[0] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ERR_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[1] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DIR_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[2] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ZIP_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[3] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DPN_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[4] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_WIP_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[5] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BCK_16), IMAGE_BITMAP, 0, 0, 0);
-    hBm[6] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_OWR_16), IMAGE_BITMAP, 0, 0, 0);
-    break;
-  case 32:
-    hBm[0] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ERR_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[1] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DIR_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[2] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ZIP_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[3] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DPN_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[4] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_WIP_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[5] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BCK_32), IMAGE_BITMAP, 0, 0, 0);
-    hBm[6] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_OWR_32), IMAGE_BITMAP, 0, 0, 0);
-    break;
-  default:
-    hBm[0] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ERR_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[1] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DIR_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[2] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_ZIP_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[3] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_DPN_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[4] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_WIP_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[5] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_BCK_24), IMAGE_BITMAP, 0, 0, 0);
-    hBm[6] = (HBITMAP)LoadImage(this->_hins, MAKEINTRESOURCE(IDB_PKG_OWR_24), IMAGE_BITMAP, 0, 0, 0);
-    break;
+  // first stops any running monitor
+  if(this->_dirMon_hth) {
+    this->_dirMon_stop();
   }
 
-  HIMAGELIST hImgList = ImageList_Create(this->_lvIconsSize, this->_lvIconsSize, ILC_COLOR32, 7, 0 );
+  // create a new folder change notification event
+  DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
+  mask |= FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
 
-  for(unsigned i = 0; i < 7; ++i) {
-    ImageList_Add(hImgList, hBm[i], nullptr);
-    DeleteObject(hBm[i]);
-  }
+  this->_dirMon_hev[1] = FindFirstChangeNotificationW(path.c_str(), false, mask);
 
-  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgList));
-  SendMessageW(hLv, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgList));
-
-  DeleteObject(hImgList);
+  // launch new thread to handle notifications
+  DWORD dwId;
+  this->_dirMon_hth = CreateThread(nullptr, 0, this->_dirMon_fth, this, 0, &dwId);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_showPkgPopup()
+void OmUiMainLib::_dirMon_stop()
+{
+  // stops current directory monitoring thread
+  if(this->_dirMon_hth) {
+
+    // set custom event to request thread quit, then wait for it
+    SetEvent(this->_dirMon_hev[0]);
+    WaitForSingleObject(this->_dirMon_hth, INFINITE);
+    CloseHandle(this->_dirMon_hth);
+
+    // reset the "stop" event for further usage
+    ResetEvent(this->_dirMon_hev[0]);
+
+    // close previous folder monitor
+    FindCloseChangeNotification(this->_dirMon_hev[1]);
+    this->_dirMon_hev[1] = nullptr;
+    this->_dirMon_hth = nullptr;
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMainLib::_dirMon_fth(void* arg)
+{
+  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+
+
+  DWORD dwObj;
+
+  while(true) {
+
+    dwObj = WaitForMultipleObjects(2, self->_dirMon_hev, false, INFINITE);
+
+    if(dwObj == 0) //< custom "stop" event
+      break;
+
+    if(dwObj == 1) { //< folder content changed event
+
+      // rebuilt package ListView
+      self->_buildLvPkg();
+
+      FindNextChangeNotification(self->_dirMon_hev[1]);
+    }
+  }
+
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_onCbLocSel()
+{
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
+  this->locSel(cb_sel);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_onLvPkgRclk()
 {
   // get handle to "Edit > Packages..." sub-menu
-  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getMenuEdit(5);
+  HMENU hMenu = static_cast<OmUiMain*>(this->_parent)->getPopupItem(1, 5);
 
   // get mouse cursor position
   POINT pt;
@@ -915,285 +995,164 @@ void OmUiMainLib::_showPkgPopup()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiMainLib::_install_fth(void* arg)
+void OmUiMainLib::_onLvPkgSel()
 {
-  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
 
-  OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
 
-  if(pLoc == nullptr)
-    return 0;
+  // keep handle to main dialog
+  OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
-  HWND hPb = self->getItem(IDC_PB_PGBAR);
-  HWND hLv = self->getItem(IDC_LV_PKGLS);
+  // disable "Edit > Package" in main menu
+  pUiMain->setPopupItem(1, 5, MF_GRAYED);
 
-  // enable on-process state
-  self->setOnProcess(true);
+  // Handle to bitmap for package picture
+  HBITMAP hBm = Om_getResImage(this->_hins, IDB_PKG_THN);
 
-  // get user selection
-  vector<unsigned> selec_list;
+  // get count of selected item
+  unsigned lv_nsl = this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT);
 
-  unsigned lv_cnt = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
+  if(lv_nsl > 0) {
 
-  for(unsigned i = 0; i < lv_cnt; ++i) {
+    // at least one, we enable buttons
+    this->enableItem(IDC_BC_INST, true);
+    this->enableItem(IDC_BC_UNIN, true);
 
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      selec_list.push_back(i);
+    // enable "Edit > Package []" pop-up menu
+    pUiMain->setPopupItem(1, 5, MF_ENABLED);
+
+    // show package title and thumbnail
+    ShowWindow(this->getItem(IDC_SC_TITLE), true);
+    ShowWindow(this->getItem(IDC_SB_PKG), true);
+
+    if(lv_nsl > 1) {
+
+      // disable the "Edit > Package > View detail..." menu-item
+      HMENU hPopup = pUiMain->getPopupItem(1, 5);
+      pUiMain->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
+
+      // on multiple selection, we hide package description
+      ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+      this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
+
+    } else {
+
+      // enable the "Edit > Package > .. " menu-item
+      HMENU hPopup = pUiMain->getPopupItem(1, 5);
+      pUiMain->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
+
+      // show package description
+      ShowWindow(this->getItem(IDC_EC_PKTXT), true);
+
+      // get the select item id, we must iterate over the full list
+      int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+      for(int i = 0; i < lv_cnt; ++i) {
+
+        // check item state, either selected or not
+        if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+
+          // we got it...
+
+          this->setItemText(IDC_SC_TITLE, pLoc->pkgGet(i)->name());
+          if(pLoc->pkgGet(i)->desc().size()) {
+            this->setItemText(IDC_EC_PKTXT, pLoc->pkgGet(i)->desc());
+          } else {
+            this->setItemText(IDC_EC_PKTXT, L"<no description available>");
+          }
+          if(pLoc->pkgGet(i)->image().thumbnail()) {
+            hBm = pLoc->pkgGet(i)->image().thumbnail();
+          }
+
+          break;
+        }
+      }
     }
+
+  } else {
+
+    // disable "Edit > Package []" pop-up menu
+    pUiMain->setPopupItem(1, 5, MF_GRAYED);
+
+    // hide all package bottom infos
+    ShowWindow(this->getItem(IDC_SC_TITLE), false);
+    ShowWindow(this->getItem(IDC_SB_PKG), false);
+    ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+
+    this->enableItem(IDC_BC_INST, false);
+    this->enableItem(IDC_BC_UNIN, false);
   }
 
-  // Launch install process
-  pLoc->packagesInst(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
+  // Update the selected picture
+  hBm = this->setStImage(IDC_SB_PKG, hBm);
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
-  // disable on-process state
-  self->setOnProcess(false);
-
-  // send message to notify thread ended
-  PostMessage(self->_hwnd, UWM_PACKAGES_DONE, 0, 0);
-
-  return 0;
+  // force thumbnail static control to update its position
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiMainLib::_uninstall_fth(void* arg)
+void OmUiMainLib::_onLbBatSel()
 {
-  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
-  OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmLocation* pLoc = (pMgr->curContext())?pMgr->curContext()->curLocation():nullptr;
-
-  if(pLoc == nullptr)
-    return 0;
-
-  HWND hPb = self->getItem(IDC_PB_PGBAR);
-  HWND hLv = self->getItem(IDC_LV_PKGLS);
-
-  // enable on-process state
-  self->setOnProcess(true);
-
-  // get user selection
-  vector<unsigned> selec_list;
-
-  unsigned lv_cnt = SendMessageW(hLv, LVM_GETITEMCOUNT, 0, 0);
-
-  for(unsigned i = 0; i < lv_cnt; ++i) {
-
-    if(SendMessageW(hLv, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      selec_list.push_back(i);
-    }
-  }
-
-  // Launch uninstall process
-  pLoc->packagesUnin(selec_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
-
-  // disable on-process state
-  self->setOnProcess(false);
-
-  // send message to notify thread ended
-  PostMessage(self->_hwnd, UWM_PACKAGES_DONE, 0, 0);
-
-  return 0;
+  this->enableItem(IDC_BC_RUN, (lb_sel >= 0));
+  this->enableItem(IDC_BC_EDI, (lb_sel >= 0));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiMainLib::_batch_fth(void* arg)
+void OmUiMainLib::_onBcRunBat()
 {
-  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+  this->_batExe_init();
+}
 
-  OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->curContext();
 
-  HWND hPb = self->getItem(IDC_PB_PGBAR);
-  HWND hLv = self->getItem(IDC_LV_PKGLS);
-  HWND hLb = self->getItem(IDC_LB_BATLS);
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_onBcNewBat()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
 
-  // get current selected location
-  int cb_sel = self->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
 
-  // get current select batch
-  int lb_sel = SendMessageW(hLb, LB_GETCURSEL, 0, 0);
+  OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
+  pUiNewBat->ctxSet(pCtx);
+  pUiNewBat->open(true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_onBcEdiBat()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+
+  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
 
-    // hide package details
-    ShowWindow(self->getItem(IDC_SB_PKIMG), false);
-    ShowWindow(self->getItem(IDC_EC_PKTXT), false);
-    ShowWindow(self->getItem(IDC_SC_TITLE), false);
+    int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel);
 
-    // retrieve the batch object from current selection
-    OmBatch* pBat = pCtx->batch(SendMessageW(hLb,LB_GETITEMDATA,lb_sel,0));
-
-    OmLocation* pLoc;
-
-    for(unsigned l = 0; l < pBat->locationCount(); l++) {
-
-      // Select the location
-      self->selLocation(pCtx->findLocationIndex(pBat->getLocationUuid(l)));
-      pLoc = pCtx->curLocation();
-
-      if(pLoc == nullptr) {
-        // warning here
-        continue;
-      }
-
-      // enable on-process state
-      self->setOnProcess(true);
-
-      // create an install and an uninstall list
-      vector<unsigned> inst_list, uins_list;
-
-      // create the install list, to keep package order from batch we
-      // fill the install list according the batch hash list
-      unsigned n = pBat->getInstallCount(l);
-      int p;
-
-      for(unsigned i = 0; i < n; ++i) {
-
-        p = pLoc->findPackageIndex(pBat->getInstallHash(l, i));
-
-        if(p >= 0) {
-          if(!pLoc->package(p)->hasBackup()) {
-            inst_list.push_back(p);
-          }
-        } else {
-          // TODO: handle no longer available package
-        }
-
-      }
-
-      // create the uninstall list, here we do not care order
-      n = pLoc->packageCount();
-      for(unsigned i = 0; i < n; ++i) {
-
-        if(!pBat->hasInstallHash(l, pLoc->package(i)->hash())) {
-          if(pLoc->package(i)->hasBackup()) {
-            uins_list.push_back(i);
-          }
-        }
-      }
-
-      if(uins_list.size()) {
-        // Launch uninstall process
-        pLoc->packagesUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_abortPending);
-      }
-
-      if(inst_list.size()) {
-
-        // to ensure we respect batch install order, we process one by one
-        vector<unsigned> inst;
-
-        for(size_t i = 0; i < inst_list.size(); ++i) {
-
-          // clear and replace package index in vector
-          inst.clear(); inst.push_back(inst_list[i]);
-
-          // Launch install process
-          pLoc->packagesInst(inst, false, self->_hwnd, hLv, hPb, &self->_abortPending);
-        }
-      }
-
-      // disable on-process state
-      self->setOnProcess(false);
-    }
-
-    // restore package details
-    ShowWindow(self->getItem(IDC_SB_PKIMG), true);
-    ShowWindow(self->getItem(IDC_EC_PKTXT), true);
-    ShowWindow(self->getItem(IDC_SC_TITLE), true);
+    OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
+    pUiPropBat->batSet(pCtx->batGet(bat_id));
+    pUiPropBat->open();
   }
 
-  // Select previously selected location
-  self->selLocation(cb_sel);
-
-  // send message to notify thread ended
-  PostMessage(self->_hwnd, UWM_PACKAGES_DONE, 0, 0);
-
-  return 0;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_monitor_init(const wstring& path)
-{
-  // first stops any running monitor
-  if(this->_monitor_hth) {
-    this->_monitor_stop();
-  }
-
-  // create a new folder change notification event
-  DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
-  mask |= FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
-
-  this->_monitor_hev[1] = FindFirstChangeNotificationW(path.c_str(), false, mask);
-
-  // launch new thread to handle notifications
-  DWORD dwId;
-  this->_monitor_hth = CreateThread(nullptr, 0, this->_monitor_fth, this, 0, &dwId);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMainLib::_monitor_stop()
-{
-  // stops current directory monitoring thread
-  if(this->_monitor_hth) {
-
-    // set custom event to request thread quit, then wait for it
-    SetEvent(this->_monitor_hev[0]);
-    WaitForSingleObject(this->_monitor_hth, INFINITE);
-    CloseHandle(this->_monitor_hth);
-
-    // reset the "stop" event for further usage
-    ResetEvent(this->_monitor_hev[0]);
-
-    // close previous folder monitor
-    FindCloseChangeNotification(this->_monitor_hev[1]);
-    this->_monitor_hev[1] = nullptr;
-    this->_monitor_hth = nullptr;
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-DWORD WINAPI OmUiMainLib::_monitor_fth(void* arg)
-{
-  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
-  OmManager* pMgr = static_cast<OmManager*>(self->_data);
-
-  DWORD dwObj;
-
-  while(true) {
-
-    dwObj = WaitForMultipleObjects(2, self->_monitor_hev, false, INFINITE);
-
-    if(dwObj == 0) //< custom "stop" event
-      break;
-
-    if(dwObj == 1) { //< folder content changed event
-
-      if(pMgr->curContext()->curLocation()) {
-        // reload the package list
-        self->_reloadLibLv();
-      }
-
-      FindNextChangeNotification(self->_monitor_hev[1]);
-    }
-  }
-
-  return 0;
+  // reload the batch list-box
+  this->_buildLbBat();
 }
 
 
@@ -1203,26 +1162,25 @@ DWORD WINAPI OmUiMainLib::_monitor_fth(void* arg)
 void OmUiMainLib::_onInit()
 {
   // Defines fonts for package description, title, and log output
-  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtTitle), true);
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_hFtMonos), true);
+  HFONT hFt = Om_createFont(18, 800, L"Ms Shell Dlg");
+  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  hFt = Om_createFont(14, 700, L"Consolas");
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
-  this->msgItem(IDC_BC_NEW, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcNew));
-  this->msgItem(IDC_BC_EDI, BM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(this->_hBmBcMod));
+  this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_ADD));
+  this->setBmImage(IDC_BC_EDI, Om_getResImage(this->_hins, IDB_BTN_MOD));
+  this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_LOCLS,  L"Select active location");
+  this->_createTooltip(IDC_CB_LOC,  L"Select active location");
   this->_createTooltip(IDC_BC_INST,   L"Install selected package(s)");
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected package(s)");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
 
   // Initialize the ListView control
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
+  DWORD dwExStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
 
-  DWORD dwExStyle = LVS_EX_FULLROWSELECT|
-                    LVS_EX_SUBITEMIMAGES|
-                    LVS_EX_DOUBLEBUFFER;
-
-  SendMessageW(hLv, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
+  this->msgItem(IDC_LV_PKG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
 
   // we now add columns into our list-view control
   LVCOLUMNW lvCol;
@@ -1236,22 +1194,19 @@ void OmUiMainLib::_onInit()
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
   lvCol.iSubItem = 0;
-  SendMessageW(hLv, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Name");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 550;
   lvCol.iSubItem = 1;
-  SendMessageW(hLv, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Version");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 80;
   lvCol.iSubItem = 2;
-  SendMessageW(hLv, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
-
-  // force refresh
-  this->_onRefresh();
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
 }
 
 
@@ -1261,7 +1216,7 @@ void OmUiMainLib::_onInit()
 void OmUiMainLib::_onShow()
 {
   // select location according current ComboBox selection
-  this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
+  this->locSel(this->msgItem(IDC_CB_LOC, CB_GETCURSEL));
 
   // refresh dialog
   this->_onRefresh();
@@ -1274,28 +1229,27 @@ void OmUiMainLib::_onShow()
 void OmUiMainLib::_onResize()
 {
   // Locations Combo-Box
-  this->_setItemPos(IDC_CB_LOCLS, 5, 5, this->width()-161, 12);
+  this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-161, 12);
   // Library path EditControl
   this->_setItemPos(IDC_EC_INP01, 5, 20, this->width()-161, 12);
   // Package List ListView
-  this->_setItemPos(IDC_LV_PKGLS, 5, 35, this->width()-161, this->height()-151);
+  this->_setItemPos(IDC_LV_PKG, 5, 35, this->width()-161, this->height()-151);
   // Resize the ListView column
   LONG size[4];
-  HWND hLv = this->getItem(IDC_LV_PKGLS);
-  GetClientRect(hLv, reinterpret_cast<LPRECT>(&size));
-  SendMessageW(hLv, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
+  GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PGBAR, 107, this->height()-113, this->width()-315, 12);
+  this->_setItemPos(IDC_PB_BAR, 107, this->height()-113, this->width()-315, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
   this->_setItemPos(IDC_SC_TITLE, 5, this->height()-96, this->width()-161, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKIMG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
   // Package description
   this->_setItemPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
 
@@ -1305,9 +1259,9 @@ void OmUiMainLib::_onResize()
   // Batches label
   this->_setItemPos(IDC_SC_LBL01, this->width()-143, 8, 136, 12);
   // Batches List-Box
-  this->_setItemPos(IDC_LB_BATLS, this->width()-143, 20, 136, this->height()-137);
+  this->_setItemPos(IDC_LB_BAT, this->width()-143, 20, 136, this->height()-137);
   // Batches Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_APPLY, this->width()-143, this->height()-114, 45, 14);
+  this->_setItemPos(IDC_BC_RUN, this->width()-143, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_EDI, this->width()-51, this->height()-114, 45, 14);
 
@@ -1322,12 +1276,7 @@ void OmUiMainLib::_onResize()
 void OmUiMainLib::_onRefresh()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // check whether a context is selected
-  if(!pMgr->curContext()) {
-    // unselect location
-    this->selLocation(-1);
-  }
+  OmContext* pCtx = pMgr->ctxCur();
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -1337,19 +1286,26 @@ void OmUiMainLib::_onRefresh()
   // hide package details
   ShowWindow(this->getItem(IDC_SC_TITLE), false);
   ShowWindow(this->getItem(IDC_EC_PKTXT), false);
-  ShowWindow(this->getItem(IDC_SB_PKIMG), false);
+  ShowWindow(this->getItem(IDC_SB_PKG), false);
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_PGBAR, false);
+  this->enableItem(IDC_PB_BAR, false);
 
-  this->_reloadLocCb(); //< reload Location Combo-Box
+  // rebuild Location ComboBox
+  this->_buildCbLoc();
+
+  // if icon size changed, rebuild Package ListView
+  if(this->_buildLvPkg_icSize != pMgr->iconsSize()) {
+    this->_buildLvPkg();
+  }
 
   // disable all batches buttons
-  this->enableItem(IDC_BC_APPLY, false);
-  this->enableItem(IDC_BC_NEW, (pMgr->curContext() != nullptr));
+  this->enableItem(IDC_BC_RUN, false);
+  this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
   this->enableItem(IDC_BC_EDI, false);
 
-  this->_reloadBatLb(); //< reload Batches list
+  // rebuild Batches ListBox
+  this->_buildLbBat();
 }
 
 
@@ -1359,18 +1315,18 @@ void OmUiMainLib::_onRefresh()
 void OmUiMainLib::_onQuit()
 {
   // stop Library folder changes monitoring
-  this->_monitor_stop();
+  this->_dirMon_stop();
 
   // safely and cleanly close threads handles
-  if(this->_install_hth) {
-    WaitForSingleObject(this->_install_hth, INFINITE);
-    CloseHandle(this->_install_hth);
-    this->_install_hth = nullptr;
+  if(this->_pkgInst_hth) {
+    WaitForSingleObject(this->_pkgInst_hth, INFINITE);
+    CloseHandle(this->_pkgInst_hth);
+    this->_pkgInst_hth = nullptr;
   }
-  if(this->_uninstall_hth) {
-    WaitForSingleObject(this->_uninstall_hth, INFINITE);
-    CloseHandle(this->_uninstall_hth);
-    this->_uninstall_hth = nullptr;
+  if(this->_pkgUnin_hth) {
+    WaitForSingleObject(this->_pkgUnin_hth, INFINITE);
+    CloseHandle(this->_pkgUnin_hth);
+    this->_pkgUnin_hth = nullptr;
   }
 }
 
@@ -1380,56 +1336,72 @@ void OmUiMainLib::_onQuit()
 ///
 bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // packages processing thread ended
-  if(uMsg == UWM_PACKAGES_DONE) {
-    // safely and cleanly close threads handles
-    if(this->_install_hth) {
-      WaitForSingleObject(this->_install_hth, INFINITE);
-      CloseHandle(this->_install_hth);
-      this->_install_hth = nullptr;
-    }
-    if(this->_uninstall_hth) {
-      WaitForSingleObject(this->_uninstall_hth, INFINITE);
-      CloseHandle(this->_uninstall_hth);
-      this->_uninstall_hth = nullptr;
-    }
-    // disable the On-Process state of parent window
-    static_cast<OmUiMain*>(this->_parent)->setOnProcess(false);
-    // Refresh Package list
-    this->_reloadLibLv();
+  // UWM_PKGINST_DONE is a custom message sent from Package Install
+  // thread function, to notify the thread ended is job.
+  if(uMsg == UWM_PKGINST_DONE) {
+    // properly stop the running thread and finish process
+    this->_pkgInst_stop();
+    return false;
   }
 
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->curContext();
-  OmLocation* pLoc = (pCtx) ? pCtx->curLocation() : nullptr;
-
-  if(pLoc == nullptr)
+  // UWM_PKGINST_DONE is a custom message sent from Package Uninstall
+  // thread function, to notify the thread ended is job.
+  if(uMsg == UWM_PKGUNIN_DONE) {
+    // properly stop the running thread and finish process
+    this->_pkgUnin_stop();
     return false;
+  }
+
+  // UWM_BATEXE_DONE is a custom message sent from Batch Execution
+  // thread function, to notify the thread ended is job.
+  if(uMsg == UWM_BATEXE_DONE) {
+    // properly stop the running thread and finish process
+    this->_batExe_stop();
+    return false;
+  }
+
+  // UWM_MAIN_CTX_CHANGED is a custom message sent from Main (parent) Dialog
+  // to notify its child tab dialogs the Context selection changed.
+  if(uMsg == UWM_MAIN_CTX_CHANGED) {
+    // invalidate Location selection
+    this->msgItem(IDC_CB_LOC, CB_SETCURSEL, -1);
+    // Refresh the dialog
+    this->_onRefresh();
+    return false;
+  }
 
   if(uMsg == WM_NOTIFY) {
 
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->ctxCur();
+
+    if(!pCtx->locCur())
+      return false;
+
+    OmLocation* pLoc = pCtx->locCur();
+
     NMHDR* pNmhdr = reinterpret_cast<NMHDR*>(lParam);
 
-    if(LOWORD(wParam) == IDC_LV_PKGLS) {
+    if(LOWORD(wParam) == IDC_LV_PKG) {
 
       // if thread is running we block all interaction
-      if(this->_install_hth || this->_uninstall_hth)
+      if(this->_pkgInst_hth || this->_pkgUnin_hth)
         return false;
 
       if(pNmhdr->code == NM_DBLCLK) {
-        this->toggle();
+        this->pkgTogg();
         return false;
       }
 
       if(pNmhdr->code == LVN_ITEMCHANGED) {
         // update package(s) selection
-        this->_onSelectPkg();
+        this->_onLvPkgSel();
         return false;
       }
 
       if(pNmhdr->code == NM_RCLICK) {
         // Open the popup menu
-        this->_showPkgPopup();
+        this->_onLvPkgRclk();
         return false;
       }
 
@@ -1440,16 +1412,19 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch(pNmlv->iSubItem)
         {
         case 0:
-          pLoc->setPackageSorting(PKG_SORTING_STAT);
+          pLoc->libSetSorting(PKG_SORTING_STAT);
           break;
         case 2:
-          pLoc->setPackageSorting(PKG_SORTING_VERS);
+          pLoc->libSetSorting(PKG_SORTING_VERS);
           break;
         default:
-          pLoc->setPackageSorting(PKG_SORTING_NAME);
+          pLoc->libSetSorting(PKG_SORTING_NAME);
           break;
         }
-        this->refresh();
+
+        // rebuild package ListView
+        this->_buildLvPkg();
+
         return false;
       }
     }
@@ -1457,70 +1432,66 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->ctxCur();
+
+    if(!pCtx) return false;
+
     switch(LOWORD(wParam))
     {
 
-    case IDC_CB_LOCLS:
-      if(HIWORD(wParam) == CBN_SELCHANGE)
-        this->selLocation(this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL));
+    case IDC_CB_LOC:
+      if(HIWORD(wParam) == CBN_SELCHANGE) this->_onCbLocSel();
       break;
 
-    case IDC_LB_BATLS: //< Location(s) list List-Box
-      if(HIWORD(wParam) == LBN_SELCHANGE) {
-        this->_onSelectBat();
-      }
-      if(HIWORD(wParam) == LBN_DBLCLK) {
-        this->batch();
-      }
+    case IDC_LB_BAT: //< Location(s) list List-Box
+      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbBatSel();
+      if(HIWORD(wParam) == LBN_DBLCLK) this->_onBcRunBat();
       break;
 
     case IDC_BC_INST:
-      this->install();
+      this->pkgInst();
       break;
 
     case IDC_BC_UNIN:
-      this->uninstall();
+      this->pkgUnin();
       break;
 
     case IDC_BC_ABORT:
-      this->_abortPending = true;
+      this->_thread_abort = true;
       this->enableItem(IDC_BC_ABORT, false);
       break;
 
-    case IDC_BC_NEW:
-      {
-        OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
-        pUiNewBat->setContext(pCtx);
-        pUiNewBat->open(true);
-      }
+    case IDC_BC_RUN:
+      this->_onBcRunBat();
       break;
 
-    case IDC_BC_APPLY:
-      this->batch();
+    case IDC_BC_NEW:
+      this->_onBcNewBat();
       break;
 
     case IDC_BC_EDI:
-      this->ediBatch();
+      this->_onBcEdiBat();
       break;
 
     case IDM_EDIT_PKG_INST:
-      this->install();
+      this->pkgInst();
       break;
 
     case IDM_EDIT_PKG_UINS:
-      this->uninstall();
+      this->pkgUnin();
       break;
 
     case IDM_EDIT_PKG_TRSH:
-      this->moveTrash();
+      this->pkgTrsh();
       break;
 
     case IDM_EDIT_PKG_OPEN:
-      this->openExplore();
+      this->pkgOpen();
       break;
 
     case IDM_EDIT_PKG_INFO:
-      this->viewDetails();
+      this->pkgProp();
       break;
 
     }

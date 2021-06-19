@@ -121,7 +121,7 @@ class OmBatch
     ///
     /// \return True if the Location was found, false otherwise.
     ///
-    bool hasLocation(const wstring& uuid);
+    bool hasLoc(const wstring& uuid);
 
     /// \brief Get Batch Location index by UUID.
     ///
@@ -131,7 +131,7 @@ class OmBatch
     ///
     /// \return Location index or -1 if UUID was not found.
     ///
-    int getLocationIndex(const wstring& uuid);
+    int locGetIndex(const wstring& uuid);
 
     /// \brief Get Location count.
     ///
@@ -139,7 +139,7 @@ class OmBatch
     ///
     /// \return Count of Location.
     ///
-    size_t locationCount() {
+    size_t locCount() {
       return this->_locUuid.size();
     }
 
@@ -151,7 +151,7 @@ class OmBatch
     ///
     /// \return Location UUID string.
     ///
-    wstring getLocationUuid(unsigned l) {
+    wstring locGetUuid(unsigned l) {
       return this->_locUuid[l];
     }
 
@@ -164,7 +164,7 @@ class OmBatch
     ///
     /// \return Package hash as 64 bits unsigned integer
     ///
-    size_t getInstallCount(unsigned l) {
+    size_t insCount(unsigned l) {
       return this->_insHash[l].size();
     }
 
@@ -178,7 +178,7 @@ class OmBatch
     ///
     /// \return True if package hash was found, false otherwise.
     ///
-    bool hasInstallHash(unsigned l, uint64_t hash);
+    bool hasIns(unsigned l, uint64_t hash);
 
     /// \brief Get Install entry hash.
     ///
@@ -190,7 +190,7 @@ class OmBatch
     ///
     /// \return Package hash as 64 bits unsigned integer
     ///
-    uint64_t getInstallHash(unsigned l, unsigned i) {
+    uint64_t insGet(unsigned l, unsigned i) {
       return this->_insHash[l][i];
     }
 
@@ -216,7 +216,7 @@ class OmBatch
     ///
     /// \param[in]  uuid        : Location UUID.
     ///
-    void addLocation(const wstring& uuid);
+    void locAdd(const wstring& uuid);
 
     /// \brief Remove Location from Batch.
     ///
@@ -224,7 +224,7 @@ class OmBatch
     ///
     /// \param[in]  uuid   : Location UUID.
     ///
-    void remLocation(const wstring& uuid);
+    void locRem(const wstring& uuid);
 
     /// \brief Add package install entry.
     ///
@@ -233,7 +233,7 @@ class OmBatch
     /// \param[in]  uuid        : Location UUID.
     /// \param[in]  hash_list   : List of install package hash.
     ///
-    void setInstallList(const wstring& uuid, const vector<uint64_t>& hash_list);
+    void insSetList(const wstring& uuid, const vector<uint64_t>& hash_list);
 
     /// \brief Get Context.
     ///
@@ -241,7 +241,7 @@ class OmBatch
     ///
     /// \return Pointer to Batch related Context.
     ///
-    OmContext* context() const {
+    OmContext* ownerCtx() const {
       return _context;
     }
 

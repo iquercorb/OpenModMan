@@ -107,19 +107,19 @@ void OmUiWizCtx::_onWizFinish()
   this->quit();
 
   // create the new Context, if an error occur, error message
-  if(pMgr->makeContext(ctx_name, ctx_home)) {
+  if(pMgr->ctxNew(ctx_name, ctx_home)) {
     // get last created Context
-    OmContext* pCtx = pMgr->context(pMgr->contextCount()-1);
+    OmContext* pCtx = pMgr->ctxGet(pMgr->ctxCount()-1);
     // create new Location in Context
-    if(!pCtx->addLocation(loc_name, loc_dst, loc_lib, loc_bck)) {
+    if(!pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
       Om_dialogBoxErr(this->_hwnd, L"Location creation failed", pCtx->lastError());
     }
   } else {
     Om_dialogBoxErr(this->_hwnd, L"Context creation failed", pMgr->lastError());
   }
 
-  // Unselect current context, this will force de select last one at next refresh
-  static_cast<OmUiMain*>(this->root())->selContext(-1);
+  // Unselect current context, this will force to select last one at next refresh
+  static_cast<OmUiMain*>(this->root())->ctxSel(-1);
 
   // force parent dialog to refresh
   this->_parent->refresh();

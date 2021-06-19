@@ -58,8 +58,8 @@ class OmUiPropLoc : public OmDialogProp
     ///
     /// \return Associated Location or nullptr if none.
     ///
-    OmLocation* location() const {
-      return _location;
+    OmLocation* locCur() const {
+      return _pLoc;
     }
 
     /// \brief Set associated Location.
@@ -70,8 +70,8 @@ class OmUiPropLoc : public OmDialogProp
     ///
     /// \param[in]  pLoc  : Location object to associate.
     ///
-    void setLocation(OmLocation* pLoc) {
-      _location = pLoc;
+    void locSet(OmLocation* pLoc) {
+      _pLoc = pLoc;
     }
 
     /// \brief Check for properties changes
@@ -89,7 +89,7 @@ class OmUiPropLoc : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _location;
+    OmLocation*         _pLoc;
 
     void*               _movBck_hth;
 

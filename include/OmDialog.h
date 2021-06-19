@@ -144,6 +144,16 @@ class OmDialog
       return _data;
     }
 
+    /// \brief Dialog menu.
+    ///
+    /// Returns dialog associated menu if exists.
+    ///
+    /// \return Dialog menu or nullptr.
+    ///
+    HMENU menu() const {
+      return _menu;
+    }
+
     /// \brief Open window.
     ///
     /// Create the dialog window.
@@ -226,7 +236,7 @@ class OmDialog
     ///
     /// \param[in] id       : Accelerator table resource id
     ///
-    void setAccelerator(long id);
+    void setAccel(long id);
 
     /// \brief Set dialog custom data.
     ///
@@ -237,17 +247,31 @@ class OmDialog
     ///
     void setData(void* data);
 
-    /// \brief Send WinApi message to dialog.
+    /// \brief Send message to dialog.
     ///
-    /// Send the WinApi message to dialog, the message is transmitted recursively
+    /// Send the message to dialog, the message is transmitted recursively
     /// to all children dialogs.
     ///
-    /// \param[in]  msg     : Pointer to WinApi Message to transmit.
+    /// \param[in]  msg     : Pointer to Message to transmit.
     ///
     /// \return True if message was destined to this dialog window or one of its
     /// children, false otherwise.
     ///
     bool sendMessage(MSG* msg) const;
+
+    /// \brief Post message to dialog.
+    ///
+    /// Places (posts) a message in the message queue of the dialog.
+    ///
+    /// \param[in]  msg     : Message to be posted
+    /// \param[in]  wParam  : Additional message-specific information.
+    /// \param[in]  lParam  : Additional message-specific information.
+    ///
+    /// \return True if succeed, false otherwise.
+    ///
+    bool postMessage(UINT msg, WPARAM wParam = 0, LPARAM lParam = 0) const {
+      return PostMessageW(_hwnd, msg, wParam, lParam);
+    }
 
     /// \brief Enter thread message loop.
     ///
@@ -293,6 +317,28 @@ class OmDialog
     ///
     int unitY() const {
       return this->_unit[1];
+    }
+
+    /// \brief Set dialog caption
+    ///
+    /// Sets the dialog title caption text.
+    ///
+    /// \param[in]  caption : Caption text to set.
+    ///
+    void setCaption(const wstring& caption) const {
+      SetWindowTextW(_hwnd, caption.c_str());
+    }
+
+    /// \brief Set dialog icon
+    ///
+    /// Sets the dialog title icon.
+    ///
+    /// \param[in]  big     : Big icon to set.
+    /// \param[in]  small   : Small icon to set.
+    ///
+    void setIcon(HICON big, HICON small) const {
+      SendMessageW(_hwnd,WM_SETICON,ICON_SMALL, reinterpret_cast<LPARAM>(small));
+      SendMessageW(_hwnd,WM_SETICON,ICON_BIG,   reinterpret_cast<LPARAM>(big));
     }
 
     /// \brief Get control handle
@@ -371,7 +417,7 @@ class OmDialog
     /// \param[in]  id      : Control resource ID to enable or disable.
     /// \param[in]  enable  : Enable or disable.
     ///
-    void enableItem(unsigned id, bool enable) {
+    void enableItem(unsigned id, bool enable) const {
       EnableWindow(GetDlgItem(_hwnd, id), enable);
     }
 
@@ -383,8 +429,74 @@ class OmDialog
     ///
     /// \return True if the control is enabled, false otherwise.
     ///
-    bool itemEnabled(unsigned id) {
+    bool itemEnabled(unsigned id) const {
       return IsWindowEnabled(GetDlgItem(_hwnd, id));
+    }
+
+    /// \brief Get menu pop-up
+    ///
+    /// Returns dialog main menu (menu bar) pop-up.
+    ///
+    /// \param[in]  pos     : Zero based position of the pop-up to get.
+    ///
+    /// \return Menu handle.
+    ///
+    HMENU getPopup(unsigned pos) const {
+      return GetSubMenu(_menu, pos);
+    }
+
+    /// \brief Get pop-up menu-item
+    ///
+    /// Returns dialog menu pop-up menu-item.
+    ///
+    /// \param[in]  popup   : Zero based pop-up position to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position witin the popup.
+    ///
+    /// \return Menu handle.
+    ///
+    HMENU getPopupItem(unsigned popup, unsigned pos) const {
+      return GetSubMenu(GetSubMenu(_menu, popup), pos);
+    }
+
+    /// \brief Get pop-up menu-item
+    ///
+    /// Returns dialog menu pop-up menu-item.
+    ///
+    /// \param[in]  popup   : Menu pop-up handle to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position within the pop-up.
+    ///
+    /// \return Menu handle.
+    ///
+    HMENU getPopupItem(HMENU popup, unsigned pos) const {
+      return GetSubMenu(popup, pos);
+    }
+
+    /// \brief Enable or disable pop-up menu-item
+    ///
+    /// Enable, disable or grays dialog menu pop-up menu-item.
+    ///
+    /// \param[in]  popup   : Zero based pop-up position to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position within the pop-up.
+    /// \param[in]  enable  : Enable flags to set.
+    ///
+    /// \return Menu handle.
+    ///
+    void setPopupItem(unsigned popup, unsigned pos, int enable) const {
+      EnableMenuItem(GetSubMenu(_menu, popup), pos, MF_BYPOSITION|enable);
+    }
+
+    /// \brief Enable or disable pop-up menu-item
+    ///
+    /// Enable, disable or grays dialog menu pop-up menu-item.
+    ///
+    /// \param[in]  popup   : Menu pop-up handle to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position within the pop-up.
+    /// \param[in]  enable  : Enable flags to set.
+    ///
+    /// \return Menu handle.
+    ///
+    void setPopupItem(HMENU popup, unsigned pos, int enable) const {
+      EnableMenuItem(popup, pos, MF_BYPOSITION|enable);
     }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -451,6 +563,8 @@ class OmDialog
     vector<OmDialog*>   _child;     //< Children dialogs
 
     HACCEL              _accel;     //< Accelerator table handle for dialog
+
+    HMENU               _menu;      //< Menu if exists or set
 
     RECT                _rect;      //< Dialog window geometry
 

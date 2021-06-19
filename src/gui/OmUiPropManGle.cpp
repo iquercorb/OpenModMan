@@ -67,7 +67,7 @@ void OmUiPropManGle::_onCkBoxStr()
 {
   int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
-  this->enableItem(IDC_LB_STRLS, bm_chk);
+  this->enableItem(IDC_LB_PATH, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
 
   // user modified parameter, notify it
@@ -80,7 +80,7 @@ void OmUiPropManGle::_onCkBoxStr()
 ///
 void OmUiPropManGle::_onLbStrlsSel()
 {
-  int lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
   this->enableItem(IDC_BC_REM, (lb_sel >= 0));
 }
@@ -99,7 +99,7 @@ void OmUiPropManGle::_onBcBrwStr()
     return;
 
   // add file path to startup context list
-  this->msgItem(IDC_LB_STRLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.c_str()));
+  this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.c_str()));
 
   // user modified parameter, notify it
   this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
@@ -111,10 +111,10 @@ void OmUiPropManGle::_onBcBrwStr()
 ///
 void OmUiPropManGle::_onBcRemStr()
 {
-  int lb_sel = this->msgItem(IDC_LB_STRLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
-    this->msgItem(IDC_LB_STRLS, LB_DELETESTRING, lb_sel);
+    this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
     // user modified parameter, notify it
     this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
   }
@@ -127,54 +127,46 @@ void OmUiPropManGle::_onBcRemStr()
 void OmUiPropManGle::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_ISIZE,  L"Packages list icon size");
+  this->_createTooltip(IDC_CB_ICS,  L"Packages list icon size");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Automatically load context at application start");
-  this->_createTooltip(IDC_LB_STRLS,  L"Context files");
+  this->_createTooltip(IDC_LB_PATH,  L"Context files");
   this->_createTooltip(IDC_BC_BRW01,  L"Select a context file");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  // add items in combo box
-  HWND hCb = this->getItem(IDC_CB_ISIZE);
-
-  unsigned cb_cnt = SendMessageW(hCb, CB_GETCOUNT, 0, 0);
-  if(!cb_cnt) {
-    SendMessageW(hCb, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
-    SendMessageW(hCb, CB_ADDSTRING, 1, reinterpret_cast<LPARAM>(L"Medium"));
-    SendMessageW(hCb, CB_ADDSTRING, 2, reinterpret_cast<LPARAM>(L"Large"));
-  }
+  // add items to Icon Size ComboBox
+  this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
+  this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 1, reinterpret_cast<LPARAM>(L"Medium"));
+  this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 2, reinterpret_cast<LPARAM>(L"Large"));
 
   switch(pMgr->iconsSize()) {
   case 16:
-    SendMessageW(hCb, CB_SETCURSEL, 0, 0);
+    this->msgItem(IDC_CB_ICS, CB_SETCURSEL, 0, 0);
     break;
   case 32:
-    SendMessageW(hCb, CB_SETCURSEL, 2, 0);
+    this->msgItem(IDC_CB_ICS, CB_SETCURSEL, 2, 0);
     break;
   default:
-    SendMessageW(hCb, CB_SETCURSEL, 1, 0);
+    this->msgItem(IDC_CB_ICS, CB_SETCURSEL, 1, 0);
     break;
   }
 
-  bool enable;
-  vector<wstring> start_files;
-  pMgr->getStartContexts(&enable, start_files);
+  bool auto_open;
+  vector<wstring> path_ls;
+  pMgr->getStartContexts(&auto_open, path_ls);
 
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, enable);
-  this->enableItem(IDC_BC_BRW01, enable);
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, auto_open);
+  this->enableItem(IDC_BC_BRW01, auto_open);
 
-  HWND hLb = this->getItem(IDC_LB_STRLS);
-  EnableWindow(hLb, enable);
-  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
-  for(size_t i = 0; i < start_files.size(); ++i) {
-    SendMessageW(hLb, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(start_files[i].c_str()));
+  this->enableItem(IDC_LB_PATH, auto_open);
+  this->msgItem(IDC_LB_PATH, LB_RESETCONTENT);
+  for(size_t i = 0; i < path_ls.size(); ++i) {
+    this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(path_ls[i].c_str()));
   }
 
   this->enableItem(IDC_BC_REM, false);
-
-  SetFocus(hCb);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -188,13 +180,13 @@ void OmUiPropManGle::_onResize()
 {
   // Icon size Label & ComboBox
   this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
-  this->_setItemPos(IDC_CB_ISIZE, 50, 30, this->width()-100, 14);
+  this->_setItemPos(IDC_CB_ICS, 50, 30, this->width()-100, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(this->getItem(IDC_CB_ISIZE), nullptr, true);
+  InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
 
   // Startup Contexts list CheckBox & ListBox
   this->_setItemPos(IDC_BC_CHK01, 50, 59, 100, 9);
-  this->_setItemPos(IDC_LB_STRLS, 50, 70, this->width()-100, this->height()-130);
+  this->_setItemPos(IDC_LB_PATH, 50, 70, this->width()-100, this->height()-130);
 
   // Startup Contexts list Add and Remove... buttons
   this->_setItemPos(IDC_BC_BRW01, 50, this->height()-58, 50, 14);
@@ -211,7 +203,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_CB_ISIZE: //< Combo-Box for icons size
+    case IDC_CB_ICS: //< Combo-Box for icons size
       if(HIWORD(wParam) == CBN_SELCHANGE)
         // parameter modified, must be saved we parent dialog valid changes
         this->setChParam(MAN_PROP_GLE_ICON_SIZE, true);
@@ -221,7 +213,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onCkBoxStr();
       break;
 
-    case IDC_LB_STRLS: //< List-Box for startup Context(s) list
+    case IDC_LB_PATH: //< List-Box for startup Context(s) list
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbStrlsSel();
       break;

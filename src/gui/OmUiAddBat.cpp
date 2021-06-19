@@ -23,7 +23,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiAddBat::OmUiAddBat(HINSTANCE hins) : OmDialog(hins),
-  _context(nullptr),
+  _pCtx(nullptr),
   _excluded(),
   _included()
 {
@@ -54,14 +54,14 @@ long OmUiAddBat::id() const
 ///
 void OmUiAddBat::_buildLbs()
 {
-  if(!this->_context) return;
+  if(!this->_pCtx) return;
 
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get Location corresponding to current selection
-  OmLocation* pLoc = this->_context->location(cb_sel);
+  OmLocation* pLoc = this->_pCtx->locGet(cb_sel);
 
   unsigned p;
   OmPackage* pPkg;
@@ -74,9 +74,9 @@ void OmUiAddBat::_buildLbs()
   for(size_t i = 0; i < this->_excluded[cb_sel].size(); i++) {
 
     p = this->_excluded[cb_sel][i];
-    pPkg = pLoc->package(p);
+    pPkg = pLoc->pkgGet(p);
 
-    item_str = Om_getFilePart(pPkg->sourcePath());
+    item_str = Om_getFilePart(pPkg->srcPath());
     this->msgItem(IDC_LB_EXCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     this->msgItem(IDC_LB_EXCLS, LB_SETITEMDATA, i, p);
   }
@@ -88,9 +88,9 @@ void OmUiAddBat::_buildLbs()
   for(size_t i = 0; i < this->_included[cb_sel].size(); i++) {
 
     p = this->_included[cb_sel][i];
-    pPkg = pLoc->package(p);
+    pPkg = pLoc->pkgGet(p);
 
-    item_str = Om_getFilePart(pPkg->sourcePath());
+    item_str = Om_getFilePart(pPkg->srcPath());
     this->msgItem(IDC_LB_INCLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     this->msgItem(IDC_LB_INCLS, LB_SETITEMDATA, i, p);
   }
@@ -102,25 +102,25 @@ void OmUiAddBat::_buildLbs()
 ///
 void OmUiAddBat::_autoInclude()
 {
-  if(!this->_context) return;
+  if(!this->_pCtx) return;
 
   OmLocation* pLoc;
   OmPackage* pPkg;
 
   // add Location(s) to Combo-Box
-  for(size_t k = 0; k < this->_context->locationCount(); ++k) {
+  for(size_t k = 0; k < this->_pCtx->locCount(); ++k) {
 
-    pLoc = this->_context->location(k);
+    pLoc = this->_pCtx->locGet(k);
 
     this->_excluded[k].clear();
     this->_included[k].clear();
 
-    for(size_t i = 0; i < pLoc->packageCount(); ++i) {
+    for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
 
-      pPkg = pLoc->package(i);
+      pPkg = pLoc->pkgGet(i);
 
-      if(pPkg->hasSource()) {
-        if(pPkg->hasBackup()) {
+      if(pPkg->hasSrc()) {
+        if(pPkg->hasBck()) {
           this->_included[k].push_back(i);
         } else {
           this->_excluded[k].push_back(i);
@@ -140,7 +140,7 @@ void OmUiAddBat::_autoInclude()
 void OmUiAddBat::_includePkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -199,7 +199,7 @@ void OmUiAddBat::_includePkg()
 void OmUiAddBat::_excludePkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -260,7 +260,7 @@ void OmUiAddBat::_onCkBoxAuto()
 {
   int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
-  this->enableItem(IDC_CB_LOCLS, !bm_chk);
+  this->enableItem(IDC_CB_LOC, !bm_chk);
   this->enableItem(IDC_LB_EXCLS, !bm_chk);
   this->enableItem(IDC_LB_INCLS, !bm_chk);
 
@@ -326,7 +326,7 @@ void OmUiAddBat::_onLbInclsSel()
 void OmUiAddBat::_onBcUpPkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -369,7 +369,7 @@ void OmUiAddBat::_onBcUpPkg()
 void OmUiAddBat::_onBcDnPkg()
 {
   // get current Combo-Box selection first Location by default
-  int cb_sel = this->msgItem(IDC_CB_LOCLS, CB_GETCURSEL);
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get count of selected items
@@ -428,9 +428,9 @@ bool OmUiAddBat::_onBcOk()
   OmLocation* pLoc;
   OmPackage* pPkg;
 
-  for(size_t k = 0; k < this->_context->locationCount(); ++k) {
+  for(size_t k = 0; k < this->_pCtx->locCount(); ++k) {
 
-    pLoc = this->_context->location(k);
+    pLoc = this->_pCtx->locGet(k);
 
     // append Location UUID
     loc_uuid.push_back(pLoc->uuid());
@@ -441,7 +441,7 @@ bool OmUiAddBat::_onBcOk()
     for(size_t i = 0; i < this->_included[k].size(); ++i) {
 
       // retrieve package from stored index
-      pPkg = pLoc->package(this->_included[k][i]);
+      pPkg = pLoc->pkgGet(this->_included[k][i]);
 
       // add <install> entry with package hash
       hash_list.push_back(pPkg->hash());
@@ -456,9 +456,8 @@ bool OmUiAddBat::_onBcOk()
   this->getItemText(IDC_EC_INP01, bat_name);
 
   // try to create a new batch
-  if(!this->_context->addBatch(bat_name, loc_uuid, loc_hash_list)) {
-    Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed",
-                                  this->_context->lastError());
+  if(!this->_pCtx->batAdd(bat_name, loc_uuid, loc_hash_list)) {
+    Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed", this->_pCtx->lastError());
     return false;
   }
 
@@ -482,7 +481,7 @@ void OmUiAddBat::_onInit()
   this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
   this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
-  this->_createTooltip(IDC_CB_LOCLS,  L"Active location");
+  this->_createTooltip(IDC_CB_LOC,  L"Active location");
 
   this->_createTooltip(IDC_BC_RIGH,    L"Add to install list");
   this->_createTooltip(IDC_BC_LEFT,    L"Remove from install list");
@@ -496,18 +495,18 @@ void OmUiAddBat::_onInit()
   // Enable Quick create from current state
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
 
-  if(!this->_context) return;
+  if(!this->_pCtx) return;
 
   wstring item_str;
 
   // add Location(s) to Combo-Box
-  for(unsigned i = 0; i < this->_context->locationCount(); ++i) {
+  for(unsigned i = 0; i < this->_pCtx->locCount(); ++i) {
 
-    item_str = this->_context->location(i)->title();
+    item_str = this->_pCtx->locGet(i)->title();
     item_str += L" - ";
-    item_str += this->_context->location(i)->home();
+    item_str += this->_pCtx->locGet(i)->home();
 
-    this->msgItem(IDC_CB_LOCLS, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
+    this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
 
     // initialize a new install list per Location
     this->_excluded.push_back(vector<int>());
@@ -515,10 +514,10 @@ void OmUiAddBat::_onInit()
   }
 
   // Select first Location by default
-  this->msgItem(IDC_CB_LOCLS, CB_SETCURSEL, 0);
+  this->msgItem(IDC_CB_LOC, CB_SETCURSEL, 0);
 
   // Disable ComboBox and ListBoxes
-  this->enableItem(IDC_CB_LOCLS, false);
+  this->enableItem(IDC_CB_LOC, false);
   this->enableItem(IDC_LB_EXCLS, false);
   this->enableItem(IDC_LB_INCLS, false);
 
@@ -543,7 +542,7 @@ void OmUiAddBat::_onResize()
   // Crate from stat CheckBox
   this->_setItemPos(IDC_BC_CHK01, 10, 50, 150, 9);
   // Location list ComboBox
-  this->_setItemPos(IDC_CB_LOCLS, 10, 65, this->width()-20, 12);
+  this->_setItemPos(IDC_CB_LOC, 10, 65, this->width()-20, 12);
   // Not-Installed label
   this->_setItemPos(IDC_SC_LBL02, 10, 85, 150, 9);
   // Not-Installed ListBox
@@ -590,7 +589,7 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onCkBoxAuto();
       break;
 
-    case IDC_CB_LOCLS:
+    case IDC_CB_LOC:
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->_buildLbs();
       break;

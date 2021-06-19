@@ -68,7 +68,7 @@ void OmUiPropLocNet::setChParam(unsigned i, bool en)
 ///
 void OmUiPropLocNet::_onLbReplsSel()
 {
-  int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
   if(lb_sel >= 0) {
     this->enableItem(IDC_BC_DEL, true);
     this->enableItem(IDC_BC_CHK, true);
@@ -83,12 +83,12 @@ void OmUiPropLocNet::_onLbReplsSel()
 ///
 void OmUiPropLocNet::_onBcAddRepo()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
   // Open new Repository dialog
   OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
-  pUiNewRep->setLocation(pLoc);
+  pUiNewRep->locSet(pLoc);
   pUiNewRep->open(true);
 }
 
@@ -98,19 +98,19 @@ void OmUiPropLocNet::_onBcAddRepo()
 ///
 void OmUiPropLocNet::_onBcDelRepo()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
-  int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
   if(lb_sel >= 0) {
 
     // warns the user before committing the irreparable
     wstring qry = L"Are your sure you want to delete the Repository \"";
-    qry += pLoc->repository(lb_sel)->base() + L" - " + pLoc->repository(lb_sel)->name();
+    qry += pLoc->repGet(lb_sel)->base() + L" - " + pLoc->repGet(lb_sel)->name();
     qry += L"\" ?";
 
     if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Repository", qry)) {
-      pLoc->remRepository(lb_sel);
+      pLoc->repRem(lb_sel);
     }
 
     // refresh list and buttons
@@ -124,16 +124,16 @@ void OmUiPropLocNet::_onBcDelRepo()
 ///
 void OmUiPropLocNet::_onBcChkRepo()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
-  int lb_sel = this->msgItem(IDC_LB_REPLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
 
     this->setItemText(IDC_SC_STATE, L"Pending...");
 
-    OmRepository* pRep = pLoc->repository(lb_sel);
+    OmRepository* pRep = pLoc->repGet(lb_sel);
 
     OmSocket sock;
 
@@ -146,8 +146,8 @@ void OmUiPropLocNet::_onBcChkRepo()
       OmConfig config;
 
       if(config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
-        int n = config.xml().childCount(L"package");
-        msg = L"Available";
+        int n = config.xml().child(L"packages").attrAsInt(L"count");
+        msg = L"Available, providing " + std::to_wstring(n) + L" package(s)";
       } else {
         msg = L"Invalid XML definition";
       }
@@ -178,7 +178,7 @@ void OmUiPropLocNet::_onInit()
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOCLS,  L"Network repositories");
+  this->_createTooltip(IDC_LB_LOC,  L"Network repositories");
 
   this->_createTooltip(IDC_BC_DEL,    L"Remove repository");
   this->_createTooltip(IDC_BC_ADD,    L"Add new repository");
@@ -198,7 +198,7 @@ void OmUiPropLocNet::_onResize()
 {
   // Locations list Label & ListBox
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_REPLS, 70, 20, this->width()-107, 30);
+  this->_setItemPos(IDC_LB_REP, 70, 20, this->width()-107, 30);
 
   // Remove Button
   this->_setItemPos(IDC_BC_DEL, 70, 55, 50, 14);
@@ -218,21 +218,19 @@ void OmUiPropLocNet::_onResize()
 ///
 void OmUiPropLocNet::_onRefresh()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
-  HWND hLb = this->getItem(IDC_LB_REPLS);
-
-  SendMessageW(hLb, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_REP, LB_RESETCONTENT);
   if(pLoc) {
 
-    wstring str;
+    wstring label;
     OmRepository* pRep;
 
-    for(unsigned i = 0; i < pLoc->repositoryCount(); ++i) {
-      pRep = pLoc->repository(i);
-      str = pRep->base() + L" - " + pRep->name();
-      SendMessageW(hLb, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(str.c_str()));
+    for(unsigned i = 0; i < pLoc->repCount(); ++i) {
+      pRep = pLoc->repGet(i);
+      label = pRep->base() + L" - " + pRep->name();
+      this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
   }
 
@@ -257,7 +255,7 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_LB_REPLS: //< Location(s) list List-Box
+    case IDC_LB_REP: //< Location(s) list List-Box
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbReplsSel();
       break;

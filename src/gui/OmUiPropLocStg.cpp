@@ -81,7 +81,7 @@ void OmUiPropLocStg::_onBcBrwDst()
 ///
 void OmUiPropLocStg::_onCkBoxLib()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
   bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
@@ -89,8 +89,8 @@ void OmUiPropLocStg::_onCkBoxLib()
   this->enableItem(IDC_EC_INP03, bm_chk);
   this->enableItem(IDC_BC_BRW03, bm_chk);
 
-  if(bm_chk && pLoc->hasCustLibraryDir()) {
-    this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
+  if(bm_chk && pLoc->hasCustLibDir()) {
+    this->setItemText(IDC_EC_INP03, pLoc->libDir());
   } else {
     this->setItemText(IDC_EC_INP03, pLoc->home() + L"\\Library");
   }
@@ -118,7 +118,7 @@ void OmUiPropLocStg::_onBcBrwLib()
 ///
 void OmUiPropLocStg::_onCkBoxBck()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
   bool bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
@@ -126,8 +126,8 @@ void OmUiPropLocStg::_onCkBoxBck()
   this->enableItem(IDC_EC_INP04, bm_chk);
   this->enableItem(IDC_BC_BRW04, bm_chk);
 
-  if(bm_chk && pLoc->hasCustBackupDir()) {
-    this->setItemText(IDC_EC_INP04, pLoc->backupDir());
+  if(bm_chk && pLoc->hasCustBckDir()) {
+    this->setItemText(IDC_EC_INP04, pLoc->bckDir());
   } else {
     this->setItemText(IDC_EC_INP04, pLoc->home() + L"\\Backup");
   }
@@ -208,23 +208,23 @@ void OmUiPropLocStg::_onResize()
 ///
 void OmUiPropLocStg::_onRefresh()
 {
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->location();
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
 
   if(pLoc == nullptr)
     return;
 
   this->setItemText(IDC_EC_INP01, pLoc->title());
-  this->setItemText(IDC_EC_INP02, pLoc->installDir());
+  this->setItemText(IDC_EC_INP02, pLoc->dstDir());
 
-  this->setItemText(IDC_EC_INP03, pLoc->libraryDir());
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pLoc->hasCustLibraryDir());
-  this->enableItem(IDC_EC_INP03, pLoc->hasCustLibraryDir());
-  this->enableItem(IDC_BC_BRW03, pLoc->hasCustLibraryDir());
+  this->setItemText(IDC_EC_INP03, pLoc->libDir());
+  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pLoc->hasCustLibDir());
+  this->enableItem(IDC_EC_INP03, pLoc->hasCustLibDir());
+  this->enableItem(IDC_BC_BRW03, pLoc->hasCustLibDir());
 
-  this->setItemText(IDC_EC_INP04, pLoc->backupDir());
-  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBackupDir());
-  this->enableItem(IDC_EC_INP04, pLoc->hasCustBackupDir());
-  this->enableItem(IDC_BC_BRW04, pLoc->hasCustBackupDir());
+  this->setItemText(IDC_EC_INP04, pLoc->bckDir());
+  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBckDir());
+  this->enableItem(IDC_EC_INP04, pLoc->hasCustBckDir());
+  this->enableItem(IDC_BC_BRW04, pLoc->hasCustBckDir());
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;

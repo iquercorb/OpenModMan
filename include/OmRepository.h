@@ -139,7 +139,7 @@ class OmRepository
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _location;
+    OmLocation*         _pLoc;
 
     wstring             _base;
 
