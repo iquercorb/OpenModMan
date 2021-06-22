@@ -299,17 +299,27 @@ class OmLocation
     ///
     void setBckZipLevel(int level);
 
-    /// \brief Clear Location package list.
+    /// \brief Clear Library.
     ///
-    /// Resets Location package list.
+    /// Empty and reset the packages list.
     ///
     void libClear();
 
-    /// \brief Refresh Location package list.
+    /// \brief Refresh Library.
     ///
-    /// Refreshes the Location package list.
+    /// Update or rebuild the packages list.
     ///
-    void libRefresh();
+    /// \return True if list composition changed, false otherwise.
+    ///
+    bool libRefresh();
+
+    /// \brief Clean Library.
+    ///
+    /// Remove ghost packages from packages list.
+    ///
+    /// \return True if list composition changed, false otherwise.
+    ///
+    bool libClean();
 
     /// \brief Set package list sorting.
     ///
@@ -428,68 +438,61 @@ class OmLocation
     /// current Backup folder path. This function should be used in conjunction
     /// with Location.setCustBackup or Location.remCustBackup.
     ///
-    /// \param[in]  dest      : Destination folder to move backup data to.
-    /// \param[in]  hPb       : Progress Bar control handle to be updated during process.
-    /// \param[in]  hSc       : Static Label control handle to be updated during process.
-    /// \param[in]  pAbort    : Pointer to boolean to cancel operation.
+    /// \param[in]  dest        : Destination folder to move backup data to.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false is error occurred.
     ///
-    bool bckMove(const wstring& dest, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
-
-    /// \brief Cleanup backup data.
-    ///
-    /// Uninstall all installed package package(s) to cleanup all backup data.
-    ///
-    /// \param[in]  hWnd       : Parent window handle for warning messages.
-    /// \param[in]  hPb        : Progress Bar control handle to be updated during process.
-    /// \param[in]  hSc        : Static Label control handle to be updated during process.
-    /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
-    ///
-    /// \return True if operation succeed, false is error occurred.
-    ///
-    bool bckPurge(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool bckMove(const wstring& dest, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Discard backup data.
     ///
     /// Discard/delete all backup data without restoring. This function is used as an
     /// emergency reset to prevent restoring old or corrupted data.
     ///
-    /// \param[in]  hWnd       : Parent window handle for warning messages.
-    /// \param[in]  hPb        : Progress Bar control handle to be updated during process.
-    /// \param[in]  hSc        : Static Label control handle to be updated during process.
-    /// \param[in]  pAbort     : Pointer to boolean to cancel operation.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
-    /// \return True if operation succeed, false is error occurred.
+    /// \return True if operation succeed, false if error occurred.
     ///
-    bool bckDiscard(HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool bckDcard(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
-    /// \brief Install package(s).
+    /// \brief Purge backup data.
     ///
-    /// Installs one or several package(s) according Location environment.
+    /// Uninstall all installed packages to restore and delete all backup data.
     ///
-    /// \param[in]  selec_list  : List of package index to install.
-    /// \param[in]  quiet       : Do not throw warning messages.
-    /// \param[in]  hWnd        : Parent window handle for warning messages.
-    /// \param[in]  hLv         : List View control handle to be updated during process.
-    /// \param[in]  hPb         : Progress Bar control handle to be updated during process.
-    /// \param[in]  hSc         : Progress Bar control handle to be updated during process.
-    /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
-    void pkgInst(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    /// \return True if operation succeed, false if error occurred.
+    ///
+    bool bckPurge(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
-    /// \brief Uninstall package(s).
+    /// \brief Prepare packages installation.
     ///
-    /// Uninstall one or several package(s) according Location environment.
+    /// Creates the full installation list, additional install list and missing
+    /// dependencies list from the given initial packages installation selection.
     ///
-    /// \param[in]  selec_list  : List of package index to uninstall.
-    /// \param[in]  quiet       : Do not throw warning messages.
-    /// \param[in]  hWnd        : Parent window handle (HWND) for warning messages.
-    /// \param[in]  hLv         : List View control handle (HWND) to be updated during process.
-    /// \param[in]  hSc         : Progress Bar control handle (HWND) to be updated during process.
-    /// \param[in]  pAbort      : Pointer to boolean to cancel operation.
+    /// \param[out] ins_ls  : Output full list of packages to be installed.
+    /// \param[out] ovr_ls  : Output list of overlapped packages after installation.
+    /// \param[out] dep_ls  : Output list of additional dependencies packages to be installed.
+    /// \param[out] mis_ls  : Output list of missing dependencies identities.
+    /// \param[in]  pkg_ls  : Input initial packages install selection to be installed.
     ///
-    void pkgUnin(const vector<unsigned>& selec_list, bool quiet, HWND hWnd = nullptr, HWND hLv = nullptr, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    void pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& pkg_ls) const;
+
+    /// \brief Prepare bakcups restoration.
+    ///
+    /// Creates the full installation list, additional install list and missing
+    /// dependencies list from the given initial packages installation selection.
+    ///
+    /// \param[out] uni_ls  : Output full list of packages to be uninstalled.
+    /// \param[out] dep_ls  : Output list of additional packages which depend on selection.
+    /// \param[out] ovr_ls  : Output list of additional packages which overlap the selection.
+    /// \param[in]  pkg_ls  : Input initial packages install selection to be uninstalled.
+    ///
+    void bckPrepareUnin(vector<OmPackage*>& uni_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const vector<OmPackage*>& pkg_ls) const;
 
     /// \brief Get installation overlap list.
     ///
@@ -541,13 +544,12 @@ class OmLocation
     ///
     size_t pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
 
-    /// \brief Get restoration dependency list.
+    /// \brief Get backup overlaps list.
     ///
-    /// Retrieve the package restoration dependencies, meaning, the list
-    /// of overlapping backup of this package.
+    /// Retrieve list of overlapping installed packages of the specified package.
     ///
     /// \param[in]  pkg_list  : Array vector of Package pointer to receive list.
-    /// \param[in]  i         : Package index in Library to get restoration dependencies.
+    /// \param[in]  i         : Package index in Library to get backup overlaps.
     ///
     /// \return Count of Package found.
     ///
@@ -555,13 +557,12 @@ class OmLocation
       return bckGetOverlaps(pkg_list, _pkgLs[i]);
     }
 
-    /// \brief Get restoration dependency list.
+    /// \brief Get backup overlaps list.
     ///
-    /// Retrieve the package restoration dependencies, meaning, the list
-    /// of overlapping backup of this package.
+    /// Retrieve list of overlapping installed packages of the specified package.
     ///
     /// \param[in]  pkg_list  : Array vector of Package pointer to receive list.
-    /// \param[in]  package   : Package to get restoration dependencies.
+    /// \param[in]  package   : Package to get backup overlaps.
     ///
     /// \return Count of Package found.
     ///
@@ -596,6 +597,39 @@ class OmLocation
       }
       return false;
     }
+
+    /// \brief Get backup needies list.
+    ///
+    /// Retrieve list of packages that depend on this installed package.
+    ///
+    /// \param[out] pkg_list  : Array vector of Package pointer to receive list.
+    /// \param[in]  package   : Package to get restoration dependencies.
+    ///
+    /// \return Count of additional package found.
+    ///
+    size_t bckGetNeedies(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+
+    /// \brief Get backup extra list.
+    ///
+    /// Retrieve both (and recursive) list of packages which overlaps and
+    /// depend on the given installed package.
+    ///
+    /// Notice that the routine performs dual test and recursive search,
+    /// considering each additional uninstall (either because of overlaps,
+    /// or by dependency) may expand the graph of overlaps and dependencies.
+    ///
+    /// This method produce a consistent, sorted and exhaustive uninstall
+    /// list, but can be costly on huge packages list with lot of overlaps and
+    /// dependencies.
+    ///
+    /// \param[out] pkg_ls  : Output sorted and cumulative list of package which overlaps and depend on the specified one.
+    /// \param[out] dep_ls  : Output list of packages which depend on the specified one.
+    /// \param[out] ovr_ls  : Output list of packages which overlaps the specified one.
+    /// \param[in]  pkg     : Package to get lists from.
+    ///
+    /// \return Count of additional package found.
+    ///
+    size_t bckGetExtras(vector<OmPackage*>& pkg_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
     /// \brief Get repository URL count.
     ///

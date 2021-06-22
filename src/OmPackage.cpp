@@ -744,7 +744,7 @@ bool OmPackage::bckValid()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::uninst(HWND hPb, const bool *pAbort)
+bool OmPackage::uninst(Om_progressCb progress_cb, void* user_ptr)
 {
   // cannot install without valid Location
   if(this->_location == nullptr) {
@@ -767,23 +767,20 @@ bool OmPackage::uninst(HWND hPb, const bool *pAbort)
     return false;
   }
 
-  // initialize the progress bar
-  if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_bckItemLs.size()));
-    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
-    SendMessageW(hPb, PBM_SETPOS, 0, 0);
-  }
-
-  // it still time to abort
-  if(pAbort) {
-    if(*pAbort) {
+  // initialize the progression values
+  size_t progress_cur, progress_tot;
+  if(progress_cb) {
+    progress_tot = this->_bckItemLs.size();
+    progress_cur = 0;
+    // it still time to abort
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
       this->log(1, L"Package("+this->_ident+L") Uninstall", L"Aborted.");
       return true;
     }
   }
 
   // restore backed files into destination tree
-  if(!this->_doUninst(hPb)) {
+  if(!this->_doUninst(progress_cb, user_ptr)) {
     return false;
   }
 
@@ -794,7 +791,7 @@ bool OmPackage::uninst(HWND hPb, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
+bool OmPackage::install(unsigned zipLvl, Om_progressCb progress_cb, void* user_ptr)
 {
   // cannot install without valid Location
   if(this->_location == nullptr) {
@@ -817,41 +814,26 @@ bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
     return false;
   }
 
-  // initialize the progress bar
-  if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, 2*this->_srcItemLs.size()));
-    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
-    SendMessageW(hPb, PBM_SETPOS, 0, 0);
-  }
-
-  // it still time to abort
-  if(pAbort) {
-    if(*pAbort) {
+  // initialize the progression values
+  size_t progress_cur, progress_tot;
+  if(progress_cb) {
+    progress_tot = 2 * this->_srcItemLs.size();
+    progress_cur = 0;
+    // it still time to abort
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
       this->log(1, L"Package("+this->_ident+L") Install", L"Aborted.");
       return true;
     }
   }
 
   // Step 1 : Create backups of destination files overwritten by package
-  if(!this->_doBackup(zipLvl, hPb, pAbort)) {
+  if(!this->_doBackup(zipLvl, progress_cb, user_ptr)) {
     return false;
-  }
-
-  if(pAbort) {
-    if(*pAbort) {
-      return true;
-    }
   }
 
   // Step 2 : Install package files into destination tree
-  if(!this->_doInstall(hPb, pAbort)) {
+  if(!this->_doInstall(progress_cb, user_ptr)) {
     return false;
-  }
-
-  if(pAbort) {
-    if(*pAbort) {
-      return true;
-    }
   }
 
   return true;
@@ -861,7 +843,7 @@ bool OmPackage::install(unsigned zipLvl, HWND hPb, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::unbackup(const bool *pAbort)
+bool OmPackage::unbackup()
 {
   // cannot install without valid Location
   if(this->_location == nullptr) {
@@ -884,14 +866,6 @@ bool OmPackage::unbackup(const bool *pAbort)
     return false;
   }
 
-  // it still time to abort
-  if(pAbort) {
-    if(*pAbort) {
-      this->log(1, L"Package("+this->_ident+L") Unbackup", L"Aborted.");
-      return true;
-    }
-  }
-
   // restore backed files into destination tree
   if(!this->_doUnbackup()) {
     return false;
@@ -904,35 +878,60 @@ bool OmPackage::unbackup(const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::ovrTest(const OmPackage* other) const
+void OmPackage::footprint(vector<OmPackageItem>& footprint) const
 {
-  if(other->_bckItemLs.size()) {
+  // simulate package installation to have backup item list
+  wstring path;
+  OmPackageItem  item;
 
-    for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
+  for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
 
-      for(size_t j = 0; j < other->_bckItemLs.size(); ++j) {
+    Om_concatPaths(path, this->_location->_dstDir, this->_srcItemLs[i].path);
 
-        // compare only if both are file or folder
-        if(this->_srcItemLs[i].type != other->_bckItemLs[j].type)
+    item.path = this->_srcItemLs[i].path;
+    item.type = this->_srcItemLs[i].type;
+    item.cdri = -1;
+
+    item.dest = Om_pathExists(path) ? PKGITEM_DEST_CPY : PKGITEM_DEST_DEL;
+
+    footprint.push_back(item);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::ovrTest(const vector<OmPackageItem>& footprint) const
+{
+  if(footprint.empty())
+    return false;
+
+  for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
+
+    for(size_t j = 0; j < footprint.size(); ++j) {
+
+      // compare only if both are file or folder
+      if(this->_srcItemLs[i].type != footprint[j].type)
+        continue;
+
+      // Directories to be cleaned need to be empty first, so we also
+      // lookup for created directories overlap
+      if(footprint[j].type == PKGITEM_TYPE_D) {
+        // compare only if other entry is "To Delete", meaning this was a
+        // created directory, to be deleted at restore
+        if(footprint[j].dest != PKGITEM_DEST_DEL) {
           continue;
-
-        // Directories to be cleaned need to be empty first, so we also
-        // lookup for created directories overlap
-        if(other->_bckItemLs[j].type == PKGITEM_TYPE_D) {
-          // compare only if other entry is "To Delete", meaning this was a
-          // created directory, to be deleted at restore
-          if(other->_bckItemLs[j].dest != PKGITEM_DEST_DEL) {
-            continue;
-          }
         }
+      }
 
-        // same path mean overlap
-        if(this->_srcItemLs[i].path == other->_bckItemLs[j].path) {
-          return true;
-        }
+      // same path mean overlap
+      if(this->_srcItemLs[i].path == footprint[j].path) {
+        return true;
       }
     }
   }
+
   return false;
 }
 
@@ -958,7 +957,7 @@ void OmPackage::clearImage()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hSc, const bool *pAbort)
+bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb progress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
@@ -1031,11 +1030,12 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
   // defines the package source directory
   def_xml.addChild(L"install").setContent(pkg_ident);
 
-  // initialize the progress bar
-  if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, this->_srcItemLs.size()));
-    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
-    SendMessageW(hPb, PBM_SETPOS, 0, 0);
+  // initialize the progression values
+  size_t progress_cur, progress_tot;
+  if(progress_cb) {
+    progress_tot = this->_srcItemLs.size();
+    progress_cur = 0;
+    progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
   }
 
   wstring src_path, zcd_entry;
@@ -1045,21 +1045,16 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
 
   for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
 
-    // check for abort request
-    if(pAbort) {
-      if(*pAbort) {
+    // call progression callback
+    if(progress_cb) {
+      progress_cur++;
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
         has_aborted = true;
         break;
       }
     }
-
-    // update description
-    if(hSc) SetWindowTextW(hSc, this->_srcItemLs[i].path.c_str());
-
-    // step progress bar
-    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-    #ifdef DEBUG_SLOW
-    Sleep(DEBUG_SLOW); //< for debug
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
     #endif
 
     // destination zip path, with mirror folder preceding
@@ -1130,16 +1125,12 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, HWND hPb, HWND hS
   if(has_failed) {
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
-    // update description
-    if(hSc) SetWindowTextW(hSc, L"Process failed");
     return false;
   }
 
   if(has_aborted) {
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
-    // update description
-    if(hSc) SetWindowTextW(hSc, L"Process aborted");
     return true;
   }
 
@@ -1315,10 +1306,20 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
+bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
+
+  // initialize progression callback
+  size_t progress_tot, progress_cur;
+  if(progress_cb) {
+    progress_tot = this->_srcItemLs.size() * 2;   //< backup + install
+    progress_cur = 0;
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      return true;
+    }
+  }
 
   // a backup already exists ?
   if(this->_type & PKG_TYPE_BCK) {
@@ -1427,13 +1428,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   wstring app_file, bck_file, zcd_entry, bck_tree;
 
   for(size_t i = 0, z = 0; i < this->_srcItemLs.size(); ++i) {
-    // check for abort request
-    if(pAbort) {
-      if(*pAbort) {
-        has_aborted = true;
-        break;
-      }
-    }
+
     // path to item in the destination tree
     Om_concatPaths(app_file, this->_location->_dstDir, this->_srcItemLs[i].path);
     // our future Backup item entry
@@ -1510,11 +1505,18 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
             break;
           }
         }
-        // step progress bar
-        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-        #ifdef DEBUG_SLOW
-        Sleep(DEBUG_SLOW); //< for debug
+        // call progression callback
+        if(progress_cb) {
+          progress_cur++;
+          if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+            has_aborted = true;
+            break;
+          }
+        }
+        #ifdef DEBUG
+        Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
+
         // do not care about folders
         continue;
       }
@@ -1533,23 +1535,24 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
     }
     // set destination path of this entry in backup definition
     xml_item.setContent(this->_srcItemLs[i].path);
-    // step progress bar
-    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-    #ifdef DEBUG_SLOW
-    Sleep(DEBUG_SLOW); //< for debug
+    // call progression callback
+    if(progress_cb) {
+      progress_cur++;
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+        has_aborted = true;
+        break;
+      }
+    }
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
     #endif
-  }
-
-  // it still time to abort
-  if(pAbort) {
-    if(*pAbort) has_aborted = true;
   }
 
   // process abortion requested
   if(has_aborted) {
     this->log(1, L"Package("+this->_ident+L") Backup", L"Aborted.");
     if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
-    this->_undoInstall(hPb);
+    this->_undoInstall(progress_cb, user_ptr);
     return true;
   }
 
@@ -1557,7 +1560,7 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
   if(has_failed) {
     this->log(1, L"Package("+this->_ident+L") Backup", L"Failed.");
     if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
-    this->_undoInstall(hPb);
+    this->_undoInstall(progress_cb, user_ptr);
     return false;
   }
 
@@ -1616,10 +1619,20 @@ bool OmPackage::_doBackup(int zipLvl, HWND hPb, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
+bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
+
+  // initialize progression callback
+  size_t progress_tot, progress_cur;
+  if(progress_cb) {
+    progress_tot = this->_srcItemLs.size() * 2;   //< item we must install
+    progress_cur = this->_srcItemLs.size();       //< start at half the total, backup was the first half
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      return true;
+    }
+  }
 
   OmZipFile zip;
   int result;
@@ -1635,19 +1648,13 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
       this->_error += OMM_STR_ERR_ZIPOPEN(zip.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Install", this->_error);
       zip.close();
-      this->_undoInstall(hPb); //< automatically uninstall the package
+      this->_undoInstall(progress_cb, user_ptr); //< automatically uninstall the package
       return false;
     }
   }
 
   for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
-    // check for abort request
-    if(pAbort) {
-      if(*pAbort) {
-        has_aborted = true;
-        break;
-      }
-    }
+
     // path to destination file to be overwritten
     Om_concatPaths(app_file, this->_location->_dstDir, this->_srcItemLs[i].path);
     // check if we have a file or folder to install
@@ -1690,23 +1697,24 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
         }
       }
     }
-    // step progress bar
-    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-    #ifdef DEBUG_SLOW
-    Sleep(DEBUG_SLOW); //< for debug
+    // call progression callback
+    if(progress_cb) {
+      progress_cur++;
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+        has_aborted = true;
+        break;
+      }
+    }
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
     #endif
-  }
-
-  // it still time to abort
-  if(pAbort) {
-    if(*pAbort) has_aborted = true;
   }
 
   // process abortion requested
   if(has_aborted) {
     this->log(1, L"Package("+this->_ident+L") Install", L"Aborted.");
     if(this->_type & PKG_TYPE_ZIP) zip.close();
-    this->_undoInstall(hPb);
+    this->_undoInstall(progress_cb, user_ptr);
     return true;
   }
 
@@ -1714,7 +1722,7 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
   if(has_failed) {
     this->log(1, L"Package("+this->_ident+L") Install", L"Failed.");
     if(this->_type & PKG_TYPE_ZIP) zip.close();
-    this->_undoInstall(hPb);
+    this->_undoInstall(progress_cb, user_ptr);
     return false;
   }
 
@@ -1730,10 +1738,20 @@ bool OmPackage::_doInstall(HWND hPb, const bool *pAbort)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doUninst(HWND hPb)
+bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
+
+  // initialize progression callback
+  size_t progress_tot, progress_cur;
+  if(progress_cb) {
+    progress_tot = this->_bckItemLs.size();   //< item we must restore
+    progress_cur = 0;
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      return true;
+    }
+  }
 
   int result;
   bool is_zip;
@@ -1764,10 +1782,13 @@ bool OmPackage::_doUninst(HWND hPb)
           this->_error += OMM_STR_ERR_ZIPINFL(zip.lastErrorStr());
           this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
-        // step progress bar
-        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-        #ifdef DEBUG_SLOW
-        Sleep(DEBUG_SLOW); //< for debug
+        // call progression callback
+        if(progress_cb) {
+          progress_cur++;
+          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+        }
+        #ifdef DEBUG
+        Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
       }
     }
@@ -1824,10 +1845,13 @@ bool OmPackage::_doUninst(HWND hPb)
           this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
           this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
-        // step progress bar
-        if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-        #ifdef DEBUG_SLOW
-        Sleep(DEBUG_SLOW); //< for debug
+        // call progression callback
+        if(progress_cb) {
+          progress_cur++;
+          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+        }
+        #ifdef DEBUG
+        Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
       }
     }
@@ -1866,10 +1890,13 @@ bool OmPackage::_doUninst(HWND hPb)
           this->log(1, L"Package("+this->_ident+L") Uninstall", this->_error);
         }
       }
-      // step progress bar
-      if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-      #ifdef DEBUG_SLOW
-      Sleep(DEBUG_SLOW); //< for debug
+      // call progression callback
+      if(progress_cb) {
+        progress_cur++;
+        progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+      }
+      #ifdef DEBUG
+      Sleep(OMM_DEBUG_SLOW); //< for debug
       #endif
     }
   }
@@ -1907,10 +1934,18 @@ bool OmPackage::_doUninst(HWND hPb)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::_undoInstall(HWND hPb)
+void OmPackage::_undoInstall(Om_progressCb progress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
+
+  // initialize progression callback
+  size_t progress_tot, progress_cur;
+  if(progress_cb) {
+    progress_tot = this->_bckItemLs.size() * 2; //< item we must uninstall
+    progress_cur = this->_bckItemLs.size(); //< start at half the total
+    progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+  }
 
   // This function restores partial unfinished backup data, avoiding checks
   // for valid package backup entry
@@ -1922,6 +1957,8 @@ void OmPackage::_undoInstall(HWND hPb)
   // as the problem does not concern the zipped backup method, this function only
   // restore files from sub-directory backup, and simply cleanup the zipped backup
   // if it exists.
+
+  // TODO: refactor this to support undo of zipped backup
 
   int result;
 
@@ -1958,13 +1995,13 @@ void OmPackage::_undoInstall(HWND hPb)
           this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
           this->log(1, L"Package("+this->_ident+L") Undo", this->_error);
         }
-        // step the progress bar backward
-        if(hPb) {
-          int p = SendMessageW(hPb, PBM_GETPOS, 0, 0);
-          SendMessageW(hPb, PBM_SETPOS, p-1, 0);
+        // call progression callback
+        if(progress_cb) {
+          progress_cur--; //< step backward
+          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
         }
-        #ifdef DEBUG_SLOW
-        Sleep(DEBUG_SLOW); //< for debug
+        #ifdef DEBUG
+        Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
       }
     }
@@ -2004,13 +2041,14 @@ void OmPackage::_undoInstall(HWND hPb)
             }
           }
         }
-        // step the progress bar backward
-        if(hPb) {
-          int p = SendMessageW(hPb, PBM_GETPOS, 0, 0);
-          SendMessageW(hPb, PBM_SETPOS, p-1, 0);
+        // call progression callback
+        if(progress_cb) {
+          progress_cur--; //< step backward
+          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
         }
-        #ifdef DEBUG_SLOW
-        Sleep(DEBUG_SLOW); //< for debug
+        #ifdef DEBUG
+        std::wcout << del_file << "\n";
+        Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
       }
     }

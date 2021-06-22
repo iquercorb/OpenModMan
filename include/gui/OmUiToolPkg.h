@@ -66,6 +66,8 @@ class OmUiToolPkg : public OmDialog
 
     void*               _save_hth;
 
+    static bool         _save_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+
     static DWORD WINAPI _save_fth(void*);
 
     bool                _save_abort;

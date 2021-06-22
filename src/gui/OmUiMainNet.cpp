@@ -248,6 +248,8 @@ void OmUiMainNet::_buildLbRep()
       label = pRep->base() + L" - " + pRep->name();
       this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
+
+    this->enableItem(IDC_BC_CHK, (pLoc->repCount() > 0));
   }
 }
 
@@ -408,13 +410,15 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-10, 12);
 
   // Repositories label
-  this->_setItemPos(IDC_SC_LBL01, 5, 23, 136, 12);
-  // Repositories List-Box
-  this->_setItemPos(IDC_LB_REP, 5, 37, this->width()-34, 28);
-  // Repositories Apply, New.. and Delete buttons
+  this->_setItemPos(IDC_SC_LBL01, 5, 24, 50, 12);
+  // Repositories ProgressBar
+  this->_setItemPos(IDC_PB_REP, 55, 22, this->width()-115, 11);
   this->_setItemPos(IDC_BC_CHK, this->width()-55, 20, 50, 14);
-  this->_setItemPos(IDC_BC_NEW, this->width()-25, 36, 20, 14);
-  this->_setItemPos(IDC_BC_DEL, this->width()-25, 52, 20, 14);
+  // Repositories ListBox
+  this->_setItemPos(IDC_LB_REP, 5, 37, this->width()-65, 29);
+  // Repositories Apply, New.. and Delete buttons
+  this->_setItemPos(IDC_BC_NEW, this->width()-55, 36, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, this->width()-55, 52, 50, 14);
 
   // Horizontal separator
   this->_setItemPos(IDC_SC_SEPAR, 5, 70, this->width()-10, 1);
@@ -430,7 +434,7 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_BC_UPGD, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_SYNC, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_BAR, 107, this->height()-113, this->width()-165, 12);
+  this->_setItemPos(IDC_PB_PKG, 107, this->height()-113, this->width()-165, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-114, 50, 14);
 
@@ -463,7 +467,7 @@ void OmUiMainNet::_onRefresh()
   ShowWindow(this->getItem(IDC_SB_PKG), false);
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_BAR, false);
+  this->enableItem(IDC_PB_PKG, false);
 
   this->_buildCbLoc(); //< reload Location Combo-Box
 
@@ -473,7 +477,6 @@ void OmUiMainNet::_onRefresh()
   //}
 
   // disable all batches buttons
-  this->enableItem(IDC_BC_CHK, false);
   this->enableItem(IDC_BC_NEW, (pMgr->ctxCur() != nullptr));
   this->enableItem(IDC_BC_DEL, false);
 }

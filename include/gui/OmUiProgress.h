@@ -49,43 +49,40 @@ class OmUiProgress : public OmDialog
     ///
     long id() const;
 
-    /// \brief Set window Caption
+    /// \brief Set progress bar range
     ///
-    /// Set the window caption, which is the text in
-    /// the title bar
+    /// Set progress bar control range.
     ///
-    /// \param[in]  str   : Caption to set.
+    /// \param[in]  min   : Minimum or progression start value.
+    /// \param[in]  min   : Maximum or progression finish value.
     ///
-    void setTitle(const wchar_t* str) const;
+    void setPbRange(uint16_t min, uint16_t max) const;
 
-    /// \brief Set progress description
+    /// \brief Set progress bar position
     ///
-    /// Set the progress description text, which is the main text
-    /// appearing at top of dialog window.
+    /// Set progress bar control position within previously defined range.
     ///
-    /// \param[in]  str   : Title to set.
+    /// \param[in]  pos   : Value to set position.
     ///
-    void setDesc(const wchar_t* str) const;
+    void setPbPos(uint16_t pos) const;
 
-    /// \brief Set progress details
+    /// \brief Set header text
     ///
-    /// Set the progress details, which is the current processed item text
-    /// appearing above the progress bar.ils
+    /// Set progress dialog header text, this is the main
+    /// title text at top of dialog.
     ///
-    /// \param[in]  str   : Title to set.
+    /// \param[in]  text   : Text to set.
     ///
-    void setDetail(const wchar_t* wstr) const;
+    void setScHeadText(const wstring& text) const;
 
-    /// \brief Get abort pointer
+    /// \brief Set item text
     ///
-    /// Returns a pointer to a boolean that indicate whether the
-    /// abort button was clicked by user.
+    /// Set progress dialog item or status text, this is the
+    /// text right above the progress bar.
     ///
-    /// \param[in]  str   : Title to set.
+    /// \param[in]  text   : Text to set.
     ///
-    const bool* getAbortPtr() const {
-      return &this->_abort;
-    }
+    void setScItemText(const wstring& text) const;
 
     /// \brief Get progress bar control
     ///
@@ -93,23 +90,53 @@ class OmUiProgress : public OmDialog
     ///
     /// \return Handle (HWND) to dialog progress bar control
     ///
-    HWND getPbHandle() const;
+    HWND hPb() const;
 
-    /// \brief Get static title control
+    /// \brief Get head text handle
     ///
-    /// Returns the dialog title Static control handle
+    /// Returns handle to head text Static control, this is the main
+    /// title text at top of dialog.
     ///
-    /// \return Handle (HWND) to dialog title Static control
+    /// \return Handle (HWND) to dialog Static control.
     ///
-    HWND getDescScHandle() const;
+    HWND hScHead() const;
 
-    /// \brief Get static comment control
+    /// \brief Get item text handle
     ///
-    /// Returns the dialog comment Static control handle
+    /// Returns handle to item text Static control, this is the
+    /// text right above the progress bar.
     ///
-    /// \return Handle (HWND) to dialog comment Static control
+    /// \return Handle (HWND) to dialog Static control.
     ///
-    HWND getDetailScHandle() const;
+    HWND hScItem() const;
+
+    /// \brief Get abort signal
+    ///
+    /// Returns current dialog abort signal flag.
+    ///
+    /// \return true if user clicked abort button, false otherwise.
+    ///
+    bool abortGet() const {
+      return this->_abort;
+    }
+
+    /// \brief Set abort signal
+    ///
+    /// Sets abort signal flag then enable or disable button in accordance.
+    ///
+    /// \param[in]  enable    : Abort signal flag to set.
+    ///
+    void abortSet(bool enable);
+
+    /// \brief Get abort signal pointer
+    ///
+    /// Returns a pointer to abort signal boolean.
+    ///
+    /// \return Pointer to abort clicked boolean value.
+    ///
+    const bool* abortPtr() const {
+      return &this->_abort;
+    }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

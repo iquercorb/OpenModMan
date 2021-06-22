@@ -97,10 +97,23 @@
 #define OMM_MAX_PATH              1024
 #define OMM_ITM_BUFF              256
 
-// This enables a "Slow Mode" for debug purposes
-//#define DEBUG_SLOW          300         //< Sleep time (milliseconds)
+// sleep value for debug slow mode
+#define OMM_DEBUG_SLOW            50 //< ms
 
 using namespace std;
+
+/// \brief Progress callback.
+///
+/// Generic callback function for process progression.
+///
+/// \param[in]  ptr : User data pointer.
+/// \param[in]  tot : Number total count of items.
+/// \param[in]  cur : Number processed item count.
+/// \param[in]  str : String for current stage description or item name.
+///
+/// \return True to continue, false to abort process.
+///
+typedef bool (*Om_progressCb)(void* ptr, size_t tot, size_t cur, const wchar_t* str);
 
 /// \brief Compute Hash.
 ///

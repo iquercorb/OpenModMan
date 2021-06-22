@@ -61,8 +61,8 @@ enum OmPkgItemDest {
 ///
 /// Simple structure for package file or folder item.
 ///
-struct OmPackageItem {
-
+struct OmPackageItem
+{
   OmPkgItemType   type; ///< Item type
 
   OmPkgItemDest   dest; ///< Item destination mask
@@ -70,7 +70,6 @@ struct OmPackageItem {
   int             cdri; ///<  Zip CDR index
 
   wstring         path; ///<  Relative path
-
 };
 
 
@@ -388,14 +387,48 @@ class OmPackage
     ///
     /// Add dependency Package to this instance.
     ///
-    /// \param[in]  name    : Dependency Package name to add
+    /// \param[in]  ident    : Dependency Package identity to add
     ///
-    void depAdd(const wstring& name) {
-      for(size_t i = 0; i < _depLs.size(); ++i) {
-        if(name == _depLs[i]) return;
+    void depAdd(const wstring& ident) {
+      for(size_t i = 0; i < this->_depLs.size(); ++i) {
+        if(ident == this->_depLs[i]) return;
       }
-      _depLs.push_back(name);
+      this->_depLs.push_back(ident);
     }
+
+    /// \brief Check dependency
+    ///
+    /// Checks whether package has the specified identity as dependency
+    ///
+    /// \param[in]  ident    : Dependency Package identity to check
+    ///
+    bool depHas(const wstring& ident) {
+      for(size_t i = 0; i < this->_depLs.size(); ++i) {
+        if(ident == this->_depLs[i]) return true;
+      }
+      return false;
+    }
+
+    /// \brief Get install footprint.
+    ///
+    /// Simulate package installation and create backup item list as if
+    /// package were installed according current state.
+    ///
+    /// \param[out] footprint  : Output backup item list resulting of simulated install.
+    ///
+    void footprint(vector<OmPackageItem>& footprint) const;
+
+    /// \brief Check installation overlapping.
+    ///
+    /// Checks whether this Package is susceptible to overwrite files that are
+    /// already modified or installed by another one.
+    ///
+    /// \param[in]  footprint : Backup item list check overlapping.
+    ///
+    /// \return True if the specified Package already have installed one or more
+    /// files which this one could overwrite.
+    ///
+    bool ovrTest(const vector<OmPackageItem>& footprint) const;
 
     /// \brief Check installation overlapping.
     ///
@@ -407,7 +440,9 @@ class OmPackage
     /// \return True if the specified Package already have installed one or more
     /// files which this one could overwrite.
     ///
-    bool ovrTest(const OmPackage* other) const;
+    bool ovrTest(const OmPackage* other) const {
+      return ovrTest(other->_bckItemLs);
+    }
 
     /// \brief Get overlapped Package count.
     ///
@@ -440,8 +475,8 @@ class OmPackage
     /// \return Hash value of overlapped Package.
     ///
     bool ovrHas(uint64_t hash) const {
-      for(size_t i = 0; i < _ovrLs.size(); ++i) {
-        if(hash == _ovrLs[i]) return true;
+      for(size_t i = 0; i < this->_ovrLs.size(); ++i) {
+        if(hash == this->_ovrLs[i]) return true;
       }
       return false;
     }
@@ -451,34 +486,32 @@ class OmPackage
     /// Restores the Package backup if it exists and cleanup
     /// destination directory.
     ///
-    /// \param[in]  hPb     : Optional progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool uninst(HWND hPb = nullptr, const bool *pAbort = nullptr);
+    bool uninst(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Perform installation.
     ///
     /// Install Package files to the destination directory.
     ///
-    /// \param[in]  zipLvl    : Zip compression level for backup.
-    /// \param[in]  hPb       : Optional progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort    : Optional pointer to boolean to cancel operation.
+    /// \param[in]  zipLvl      : Zip compression level for backup.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool install(unsigned zipLvl = 0, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    bool install(unsigned zipLvl = 0, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Perform unbackup.
     ///
     /// Delete the Package backup without restoring data, set it as uninstalled.
     ///
-    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
-    ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool unbackup(const bool *pAbort = nullptr);
+    bool unbackup();
 
     /// \brief Check whether has Backup.
     ///
@@ -580,15 +613,14 @@ class OmPackage
     ///
     /// Create a new package file from this package
     ///
-    /// \param[in]  path    : Destination path and filename to save package as.
-    /// \param[in]  zipLvl  : Package Zip compression level.
-    /// \param[in]  hPb     : Optional progress bar control handle (HWND) to step.
-    /// \param[in]  hSc     : Optional static text control handle (HWND) for description.
-    /// \param[in]  pAbort  : Optional pointer to boolean to cancel operation.
+    /// \param[in]  path        : Destination path and filename to save package as.
+    /// \param[in]  zipLvl      : Package Zip compression level.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return Pointer to Package related Location.
     ///
-    bool save(const wstring& path, unsigned zipLvl = 2, HWND hPb = nullptr, HWND hSc = nullptr, const bool *pAbort = nullptr);
+    bool save(const wstring& path, unsigned zipLvl = 2, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Clear object.
     ///
@@ -608,44 +640,46 @@ class OmPackage
     ///
     /// Sub-routine for backup data creation
     ///
-    /// \param[in]  zipLvl    : Zip compression level for backup.
-    /// \param[in]  hSc       : Optional Progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort    : Optional Pointer to boolean to cancel operation.
+    /// \param[in]  zipLvl      : Zip compression level for backup.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doBackup(int zipLvl = 0, HWND hPb = nullptr, const bool *pAbort = nullptr);
+    bool _doBackup(int zipLvl = 0, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Install source data.
     ///
     /// Sub-routine for package install from source
     ///
-    /// \param[in]  hSc      : Optional Progress bar control handle (HWND) to step.
-    /// \param[in]  pAbort   : Optional Pointer to boolean to cancel operation.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doInstall(HWND hPb = nullptr, const bool *pAbort = nullptr);
+    bool _doInstall(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Uninstall package and restore backup data.
     ///
     /// Sub-routine for uninstall and backup data restoration
     ///
-    /// \param[in]  hSc      : Optional Progress bar control handle (HWND) to step.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doUninst(HWND hPb = nullptr);
+    bool _doUninst(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Undo backup data.
     ///
     /// Sub-routine to restore partial, erroneous or aborted backup
     ///
-    /// \param[in]  hSc      : Optional Progress bar control handle (HWND) to step.
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    void _undoInstall(HWND hPb = nullptr);
+    void _undoInstall(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Discard backup data.
     ///

@@ -86,6 +86,8 @@ class OmUiPropCtxLoc : public OmDialog
 
     static DWORD WINAPI _delLoc_fth(void*);
 
+    static bool         _delLoc_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+
     int                 _delLoc_id;
 
     void                _onLbLoclsSel();

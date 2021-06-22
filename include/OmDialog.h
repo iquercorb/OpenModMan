@@ -360,7 +360,7 @@ class OmDialog
     /// \param[in]  id    : Control resource ID to set text for.
     /// \param[in]  text  : Text to set.
     ///
-    void setItemText(unsigned id, const wstring& text);
+    void setItemText(unsigned id, const wstring& text) const;
 
     /// \brief Set control text
     ///
@@ -382,7 +382,7 @@ class OmDialog
     ///
     /// \return Previously associated image to control, or nullptr.
     ///
-    HBITMAP setStImage(unsigned id, HBITMAP image);
+    HBITMAP setStImage(unsigned id, HBITMAP image) const;
 
     /// \brief Set button control image
     ///
@@ -393,7 +393,7 @@ class OmDialog
     ///
     /// \return Previously associated image to control, or nullptr.
     ///
-    HBITMAP setBmImage(unsigned id, HBITMAP image);
+    HBITMAP setBmImage(unsigned id, HBITMAP image) const;
 
     /// \brief Send message to control
     ///

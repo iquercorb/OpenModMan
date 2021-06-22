@@ -186,6 +186,10 @@ void OmUiMain::ctxOpen(const wstring& path)
 ///
 void OmUiMain::ctxSel(int id)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::ctxSel " << id << "\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // select the requested Context
@@ -256,6 +260,10 @@ void OmUiMain::_addPage(const wstring& title, OmDialog* dialog)
 ///
 void OmUiMain::_buildMnRct()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_buildMnRct\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // handle to "File > Recent files" pop-up
@@ -297,6 +305,10 @@ void OmUiMain::_buildMnRct()
 ///
 void OmUiMain::_buildCbCtx()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_buildCbCtx\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // save current selection
@@ -356,6 +368,10 @@ void OmUiMain::_onCbCtxSel()
 ///
 void OmUiMain::_onShow()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_onShow\n";
+  #endif
+
   // show the first tab page
   this->_pageDial[0]->show();
 }
@@ -365,6 +381,10 @@ void OmUiMain::_onShow()
 ///
 void OmUiMain::_onInit()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_onInit\n";
+  #endif
+
   // set window icon
   HICON small = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0));
   HICON big = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0));
@@ -459,6 +479,10 @@ void OmUiMain::_onResize()
 ///
 void OmUiMain::_onRefresh()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_onRefresh\n";
+  #endif
+
   // rebuild the Recent Contect menu
   this->_buildMnRct();
 

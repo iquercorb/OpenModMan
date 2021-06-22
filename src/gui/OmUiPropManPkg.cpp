@@ -80,7 +80,7 @@ void OmUiPropManPkg::_onInit()
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pMgr->legacySupport());
   this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pMgr->warnOverlaps());
   this->msgItem(IDC_BC_CHK03, BM_SETCHECK, pMgr->warnExtraInst());
-  this->msgItem(IDC_BC_CHK04, BM_SETCHECK, pMgr->warnMissDpnd());
+  this->msgItem(IDC_BC_CHK04, BM_SETCHECK, pMgr->warnMissDeps());
   this->msgItem(IDC_BC_CHK05, BM_SETCHECK, pMgr->warnExtraUnin());
   this->msgItem(IDC_BC_CHK06, BM_SETCHECK, pMgr->quietBatches());
 

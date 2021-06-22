@@ -114,8 +114,8 @@ void OmUiPropLocBck::_delBck_init()
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setTitle(L"Discard Location backups data");
-  pUiProgress->setDesc(L"Backups data deletion");
+  pUiProgress->setCaption(L"Discard Location backups data");
+  pUiProgress->setScHeadText(L"Backups data deletion");
 
   DWORD dwId;
   this->_delBck_hth = CreateThread(nullptr, 0, this->_delBck_fth, this, 0, &dwId);
@@ -141,6 +141,12 @@ void OmUiPropLocBck::_delBck_stop()
 
   // Back to main dialog window to normal state
   static_cast<OmUiMain*>(this->root())->safemode(false);
+
+  if(exitCode == 1) {
+    wstring msg = L"Errors occurred during backup discard process, "
+                  L"read debug log for more details.";
+    Om_dialogBoxWarn(this->_hwnd, L"Backup discard error", msg);
+  }
 }
 
 
@@ -156,17 +162,10 @@ DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
   if(pLoc == nullptr)
     return 1;
 
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
-
-  HWND hPb = pUiProgress->getPbHandle();
-  HWND hSc = pUiProgress->getDetailScHandle();
-
   DWORD exitCode = 0;
 
   // launch backups data deletion process
-  if(!pLoc->bckDiscard(hPb, hSc, pUiProgress->getAbortPtr())) {
-    // we encounter error during backup data purge
-    Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data deletion error", pLoc->lastError());
+  if(!pLoc->bckDcard(&self->_delBck_progress_cb, self->siblingById(IDD_PROGRESS))) {
     exitCode = 1;
   }
 
@@ -174,6 +173,23 @@ DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
   PostMessage(self->_hwnd, UWM_BACKDISCARD_DONE, 0, 0);
 
   return exitCode;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiPropLocBck::_delBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+{
+  OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
+
+  if(str) {
+    pUiProgress->setScItemText(str);
+  }
+  pUiProgress->setPbRange(0, tot);
+  pUiProgress->setPbPos(cur);
+
+  return !pUiProgress->abortGet();
 }
 
 

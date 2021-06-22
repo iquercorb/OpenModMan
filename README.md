@@ -48,6 +48,10 @@ Version history
  - Added a Tools menu for editors and futur tools.
  - New improved Package editor dialog.
  - Repaired broken Context Wizard dialog.
+ - Fix Batch properties crash if package no longer available.
+ - Batch properties now ask user to clean Batch in case of invalid package reference.
+ - Automatic fix Batch inconsistency in case of Context's Location changes.
+ - Fix Batch execution thread not properly terminated.
 
 0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.

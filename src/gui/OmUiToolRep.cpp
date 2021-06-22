@@ -274,7 +274,7 @@ bool OmUiToolRep::_repAddEnt(const wstring& path)
     xml_entry.setAttr(L"checksum",Om_getChecksum(path));
 
     // Add package to ListBox
-    this->msgItem(IDC_LB_PKGLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pkg.ident().c_str()));
+    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pkg.ident().c_str()));
 
     // increment package count
     int n = xml_packages.attrAsInt(L"count");
@@ -338,7 +338,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
   if(ident.empty()) {
 
     // unselect all in ListBox
-    this->msgItem(IDC_LB_PKGLS, LB_SETCURSEL, -1, 0);
+    this->msgItem(IDC_LB_PKG, LB_SETCURSEL, -1, 0);
 
     // no package selected, disable and reset all related controls
     this->setItemText(IDC_EC_OUT02, L"");
@@ -585,8 +585,8 @@ void OmUiToolRep::_addDir_init(const wstring& path)
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setTitle(L"Add multiples package entries");
-  pUiProgress->setDesc(L"Computes packages checksum");
+  pUiProgress->setCaption(L"Add multiples package entries");
+  pUiProgress->setScItemText(L"Computes packages checksum");
 
   // keep path to folder to scan
   this->_addDir_path = path;
@@ -617,7 +617,7 @@ void OmUiToolRep::_addDir_stop()
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
 
   // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKGLS, LB_GETCOUNT, 0, 0);
+  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
   this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
 }
 
@@ -631,8 +631,8 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
 
-  HWND hPb = pUiProgress->getPbHandle();
-  const bool* abort = pUiProgress->getAbortPtr();
+  HWND hPb = pUiProgress->hPb();
+  const bool* abort = pUiProgress->abortPtr();
 
   // get all file from given path
   vector<wstring> ls;
@@ -649,15 +649,15 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
   for(size_t i = 0; i < ls.size(); ++i) {
 
     // set dialog progress detail text
-    pUiProgress->setDetail(Om_getFilePart(ls[i]).c_str());
+    pUiProgress->setScItemText(Om_getFilePart(ls[i]).c_str());
 
     // proceed this package
     self->_repAddEnt(ls[i]);
 
     // step progress bar
     if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
-    #ifdef DEBUG_SLOW
-    Sleep(DEBUG_SLOW); //< for debug
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
     #endif
 
     if(*abort) break;
@@ -693,7 +693,7 @@ void OmUiToolRep::_onBcNew()
   this->_repoInit();
 
   // reset ListBox content
-  this->msgItem(IDC_LB_PKGLS, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
 
   // Set default title and download path to controls
   OmXmlNode xml_def = this->_condig.xml();
@@ -726,7 +726,7 @@ void OmUiToolRep::_onBcOpen()
   this->_selEntry(L"");
 
   // reset ListBox content
-  this->msgItem(IDC_LB_PKGLS, LB_RESETCONTENT, 0, 0);
+  this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
 
   if(!this->_repoOpen(result))
     return;
@@ -744,7 +744,7 @@ void OmUiToolRep::_onBcOpen()
 
   // Add each <entry> to ListBox
   for(size_t i = 0; i < xml_ent_ls.size(); ++i) {
-    this->msgItem(IDC_LB_PKGLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(xml_ent_ls[i].attrAsString(L"ident")));
+    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(xml_ent_ls[i].attrAsString(L"ident")));
   }
 }
 
@@ -776,7 +776,7 @@ void OmUiToolRep::_onBcBrwPkg()
   }
 
   // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKGLS, LB_GETCOUNT, 0, 0);
+  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
   this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
 }
 
@@ -814,7 +814,7 @@ void OmUiToolRep::_onBcBrwDir()
 void OmUiToolRep::_onBcRemPkg()
 {
   // get current selected item string in ListBox
-  int lb_sel = this->msgItem(IDC_LB_PKGLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_PKG, LB_GETCURSEL);
 
   if(lb_sel < 0)
     return;
@@ -825,7 +825,7 @@ void OmUiToolRep::_onBcRemPkg()
 
   // get identity from ListBox string
   wchar_t iden_buf[OMM_ITM_BUFF];
-  this->msgItem(IDC_LB_PKGLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
+  this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
   // remove <entry> from XML definition
   this->_repoRemEnt(iden_buf);
@@ -834,10 +834,10 @@ void OmUiToolRep::_onBcRemPkg()
   this->_selEntry(L"");
 
   // Remove entry from ListBox
-  this->msgItem(IDC_LB_PKGLS, LB_DELETESTRING, lb_sel, 0);
+  this->msgItem(IDC_LB_PKG, LB_DELETESTRING, lb_sel, 0);
 
   // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKGLS, LB_GETCOUNT, 0, 0);
+  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
   this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
 }
 
@@ -848,7 +848,7 @@ void OmUiToolRep::_onBcRemPkg()
 void OmUiToolRep::_onLbPkglsSel()
 {
   // get ListBox current selection
-  int lb_sel = this->msgItem(IDC_LB_PKGLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_PKG, LB_GETCURSEL);
 
   // enable or disable the Package "Remove" Button
   this->enableItem(IDC_BC_REM, (lb_sel >= 0));
@@ -858,7 +858,7 @@ void OmUiToolRep::_onLbPkglsSel()
 
     // Get identity to select
     wchar_t iden_buf[OMM_ITM_BUFF];
-    this->msgItem(IDC_LB_PKGLS, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
+    this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
     // Select entry by identity
     this->_selEntry(iden_buf);
@@ -1219,7 +1219,7 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_EC_INP01, L"Indicative title");
   this->_createTooltip(IDC_EC_INP02, L"Default download path");
 
-  this->_createTooltip(IDC_LB_PKGLS, L"Repository package entries list");
+  this->_createTooltip(IDC_LB_PKG, L"Repository package entries list");
 
   this->_createTooltip(IDC_BC_BRW02, L"Add Package");
   this->_createTooltip(IDC_BC_BRW03, L"Add all Packages from folder");
@@ -1292,7 +1292,7 @@ void OmUiToolRep::_onResize()
   // Packages list Label
   this->_setItemPos(IDC_SC_LBL02, 10, 147, 120, 9);
   // Packages list ListBox
-  this->_setItemPos(IDC_LB_PKGLS, 10, 160, half_w-20, this->height()-223);
+  this->_setItemPos(IDC_LB_PKG, 10, 160, half_w-20, this->height()-223);
   // Add folder.. , Add... & Remove Buttons
   this->_setItemPos(IDC_BC_BRW02, half_w-125, 144, 40, 14);
   this->_setItemPos(IDC_BC_BRW03, half_w-80, 144, 40, 14);
@@ -1407,7 +1407,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcRemPkg();
       break;
 
-    case IDC_LB_PKGLS: //< Packages list ListBox
+    case IDC_LB_PKG: //< Packages list ListBox
       // check for selection change
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbPkglsSel();
@@ -1470,7 +1470,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     if(has_changed) {
       // check whether ListBox have entry to be saved
-      int lb_cnt = this->msgItem(IDC_LB_PKGLS, LB_GETCOUNT, 0, 0);
+      int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
       this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
     }
   }

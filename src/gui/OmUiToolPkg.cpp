@@ -98,7 +98,7 @@ void OmUiToolPkg::_freeze(bool freeze)
       this->enableItem(IDC_BC_ADD, false);
     }
     this->enableItem(IDC_BC_DEL, enable);
-    this->enableItem(IDC_LB_DPNLS, enable);
+    this->enableItem(IDC_LB_DPN, enable);
   }
   if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
     this->enableItem(IDC_BC_BRW04, enable);
@@ -141,8 +141,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   // Dependencies initial state
   this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CHK01, false);
-  this->msgItem(IDC_LB_DPNLS, LB_RESETCONTENT);
-  this->enableItem(IDC_LB_DPNLS, false);
+  this->msgItem(IDC_LB_DPN, LB_RESETCONTENT);
+  this->enableItem(IDC_LB_DPN, false);
   this->setItemText(IDC_EC_INP07, L"");
   this->enableItem(IDC_EC_INP07, false);
   this->enableItem(IDC_BC_ADD, false);
@@ -197,10 +197,10 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   // check for package dependencies
   if(this->_package.depCount()) {
     this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
-    this->enableItem(IDC_LB_DPNLS, true);
+    this->enableItem(IDC_LB_DPN, true);
     this->enableItem(IDC_EC_INP07, true);
     for(unsigned i = 0; i < this->_package.depCount(); ++i) {
-      this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(this->_package.depGet(i).c_str()));
+      this->msgItem(IDC_LB_DPN, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(this->_package.depGet(i).c_str()));
     }
   }
 
@@ -248,7 +248,7 @@ void OmUiToolPkg::_save_init()
   this->_freeze(true);
 
   // enable progress bar and abort button
-  this->enableItem(IDC_PB_BAR, true);
+  this->enableItem(IDC_PB_PKG, true);
   this->enableItem(IDC_BC_ABORT, true);
 
   // start package building thread
@@ -275,8 +275,8 @@ void OmUiToolPkg::_save_stop()
   this->_freeze(false);
 
   // reset & disable progress bar & abort button
-  this->msgItem(IDC_PB_BAR, PBM_SETPOS, 0, 0);
-  this->enableItem(IDC_PB_BAR, false);
+  this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
+  this->enableItem(IDC_PB_PKG, false);
   this->enableItem(IDC_BC_ABORT, false);
 
   // show a reassuring dialog message
@@ -284,7 +284,7 @@ void OmUiToolPkg::_save_stop()
 
     // get destination filename
     wstring item_str;
-    this->getItemText(IDC_EC_INP06, item_str);
+    this->getItemText(IDC_EC_OUT01, item_str);
 
     wstring info = L"The Package \""+Om_getFilePart(item_str);
     info += L"\" was successfully created.";
@@ -300,6 +300,20 @@ void OmUiToolPkg::_save_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmUiToolPkg::_save_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+{
+  OmUiToolPkg* self = reinterpret_cast<OmUiToolPkg*>(ptr);
+
+  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, tot));
+  self->msgItem(IDC_PB_PKG, PBM_SETPOS, cur);
+
+  return !self->_save_abort;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(arg);
@@ -308,11 +322,11 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 
   // get package dependencies list
   if(self->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
-    int lb_cnt = self->msgItem(IDC_LB_DPNLS, LB_GETCOUNT);
+    int lb_cnt = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
     if(lb_cnt) {
       wchar_t ident[OMM_ITM_BUFF];
       for(int i = 0; i < lb_cnt; ++i) {
-        self->msgItem(IDC_LB_DPNLS, LB_GETTEXT, i, reinterpret_cast<LPARAM>(ident));
+        self->msgItem(IDC_LB_DPN, LB_GETTEXT, i, reinterpret_cast<LPARAM>(ident));
         self->_package.depAdd(ident);
       }
     }
@@ -343,11 +357,9 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   self->_save_abort = false;
   self->enableItem(IDC_BC_ABORT, true);
 
-  HWND hPb = self->getItem(IDC_PB_BAR);
-
   DWORD exitCode = 0;
 
-  if(!self->_package.save(out_path + L"\\" + out_file, zip_lvl, hPb, nullptr, &self->_save_abort)) {
+  if(!self->_package.save(out_path + L"\\" + out_file, zip_lvl, &self->_save_progress_cb, self)) {
     // show error dialog box
     wstring err = L"An error occurred during Package creation:\n";
     err += self->_package.lastError();
@@ -556,7 +568,7 @@ void OmUiToolPkg::_onBcBrwDest()
 void OmUiToolPkg::_onLbDpnlsSel()
 {
   // enable or disable Trash Button according selection
-  int lb_sel = this->msgItem(IDC_LB_DPNLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_DPN, LB_GETCURSEL);
 
   this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
 }
@@ -570,7 +582,7 @@ void OmUiToolPkg::_onCkBoxDep()
   bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
   this->enableItem(IDC_EC_INP07, bm_chk);
-  this->enableItem(IDC_LB_DPNLS, bm_chk);
+  this->enableItem(IDC_LB_DPN, bm_chk);
 }
 
 
@@ -587,7 +599,7 @@ void OmUiToolPkg::_onBcAddDep()
     return;
 
   // Add string to dependencies
-  this->msgItem(IDC_LB_DPNLS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ident.c_str()));
+  this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ident.c_str()));
   // Empty EditText
   this->setItemText(IDC_EC_INP07, L"");
 
@@ -602,11 +614,11 @@ void OmUiToolPkg::_onBcAddDep()
 void OmUiToolPkg::_onBcDelDep()
 {
   // get selected item index
-  int lb_sel = this->msgItem(IDC_LB_DPNLS, LB_GETCURSEL);
+  int lb_sel = this->msgItem(IDC_LB_DPN, LB_GETCURSEL);
 
   // remove from list
   if(lb_sel >= 0) {
-    this->msgItem(IDC_LB_DPNLS, LB_DELETESTRING, lb_sel);
+    this->msgItem(IDC_LB_DPN, LB_DELETESTRING, lb_sel);
   }
 
   // disable Dependencies Trash Button
@@ -794,7 +806,7 @@ void OmUiToolPkg::_onInit()
 
   this->_createTooltip(IDC_BC_CHK01, L"Defines dependencies for this Package");
   this->_createTooltip(IDC_EC_INP07, L"Dependency package identity");
-  this->_createTooltip(IDC_LB_DPNLS, L"Dependencies list");
+  this->_createTooltip(IDC_LB_DPN, L"Dependencies list");
 
   this->_createTooltip(IDC_BC_CHK02, L"Defines a snapshot for this Package");
   this->_createTooltip(IDC_BC_BRW04, L"Select image file");
@@ -889,7 +901,7 @@ void OmUiToolPkg::_onResize()
   // Save Button
   this->_setItemPos(IDC_BC_SAVE, 10, this->height()-45, 45, 14);
   // Progress Bar
-  this->_setItemPos(IDC_PB_BAR, 57, this->height()-44, half_w-114, 12);
+  this->_setItemPos(IDC_PB_PKG, 57, this->height()-44, half_w-114, 12);
   // Abort Button
   this->_setItemPos(IDC_BC_ABORT, half_w-55, this->height()-45, 45, 14);
 
@@ -904,7 +916,7 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_EC_INP07, half_w+40, 25, half_w-70, 13);
   this->_setItemPos(IDC_BC_ADD, this->width()-25, 25, 16, 13);
   // Depend ListBox & Trash Button
-  this->_setItemPos(IDC_LB_DPNLS, half_w+10, 45, half_w-40, 30);
+  this->_setItemPos(IDC_LB_DPN, half_w+10, 45, half_w-40, 30);
   this->_setItemPos(IDC_BC_DEL, this->width()-25, 45, 16, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
@@ -1041,7 +1053,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_LB_DPNLS: //< Dependencies ListBox
+    case IDC_LB_DPN: //< Dependencies ListBox
       // check for selection change
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbDpnlsSel();

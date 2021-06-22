@@ -56,7 +56,8 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _pkgUnin_hth(nullptr),
   _batExe_hth(nullptr),
   _thread_abort(false),
-  _buildLvPkg_icSize(0)
+  _buildLvPkg_icSize(0),
+  _buildLvPkg_legacy(true)
 {
   // Package info sub-dialog
   this->addChild(new OmUiPropPkg(hins));
@@ -150,8 +151,12 @@ void OmUiMainLib::safemode(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::locSel(int i)
+void OmUiMainLib::locSel(int id)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::locSel " << id << "\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
@@ -167,7 +172,7 @@ void OmUiMainLib::locSel(int i)
   // select the requested Location
   if(pCtx) {
 
-    pCtx->locSel(i);
+    pCtx->locSel(id);
 
     OmLocation* pLoc = pCtx->locCur();
 
@@ -231,7 +236,7 @@ void OmUiMainLib::locSel(int i)
   this->_buildLvPkg();
 
   // forces control to select item
-  this->msgItem(IDC_CB_LOC, CB_SETCURSEL, i);
+  this->msgItem(IDC_CB_LOC, CB_SETCURSEL, id);
 }
 
 
@@ -382,8 +387,247 @@ void OmUiMainLib::pkgOpen()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmUiMainLib::_pkgProgressCb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+{
+  OmUiMainLib* self = reinterpret_cast<OmUiMainLib*>(ptr);
+
+  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, tot));
+  self->msgItem(IDC_PB_PKG, PBM_SETPOS, cur);
+
+  return !self->_thread_abort;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  wstring msg;
+
+  vector<OmPackage*> inst_ls; //< final install list
+  vector<OmPackage*> over_ls; //< overlapping list
+  vector<OmPackage*> deps_ls; //< extra install list
+  vector<wstring> miss_ls;    //< missing dependencies lists
+
+  // prepare package installation
+  pLoc->pkgPrepareInst(inst_ls, over_ls, deps_ls, miss_ls, pkg_ls);
+
+  // warn user for missing dependencies
+  if(!silent && miss_ls.size() && pMgr->warnMissDeps()) {
+    msg = L"One or more selected packages have missing dependencies, "
+          L"The following packages are required but not available:\n";
+    for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
+    msg +=  L"\n\nDo you want to proceed installation anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+      return;
+  }
+
+  // warn for additional installation
+  if(!silent && deps_ls.size() && pMgr->warnExtraInst()) {
+    msg = L"One or more selected packages have dependencies, "
+          L"the following packages will also be installed:\n";
+    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    msg +=  L"\n\nContinue installation ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+      return;
+  }
+
+  // if there is overlapping, ask user if he really want to continue installation
+  if(!silent && over_ls.size() && pMgr->warnOverlaps()) {
+    msg = L"One or more selected packages overlaps and will overwrites "
+          L"files previously installed by the following package(s):\n";
+    for(size_t j = 0; j < over_ls.size(); ++j) msg += L"\n "+over_ls[j]->ident();
+    msg +=  L"\n\nDo you want to continue installation anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+      return;
+  }
+
+  // this is to update list view item's icon individually
+  LVITEMW lvi;
+  lvi.mask = LVIF_IMAGE;
+  lvi.iSubItem = 0;
+
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< package overlapping list
+
+  for(size_t i = 0; i < inst_ls.size(); ++i) {
+
+    pPkg = inst_ls[i];
+
+    // check whether abort is requested
+    if(this->_thread_abort)
+      break;
+
+    // set WIP status image
+    lvi.iItem = pLoc->pkgIndex(pPkg);
+    lvi.iImage =  4; //< WIP
+    this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+
+    if(!pPkg->hasSrc() || pPkg->hasBck())
+      continue;
+
+    // we check overlapping before installation, we must do it step by step
+    // because overlapping are cumulative with previously installed packages
+    ovlp_ls.clear();
+    pLoc->pkgFindOverlaps(ovlp_ls, pPkg);
+
+    // install package
+    //if(!pPkg->install(pLoc->bckZipLevel(), this->getItem(IDC_PB_PKG), &this->_thread_abort)) {
+    if(!pPkg->install(pLoc->bckZipLevel(), &this->_pkgProgressCb, this)) {
+      msg = L"The package \"" + pPkg->name() + L"\" ";
+      msg += L"has not been installed because the following error occurred:\n\n";
+      msg += pPkg->lastError();
+      Om_dialogBoxErr(this->_hwnd, L"Package install failed", msg);
+    }
+
+    // update package icon in ListView
+    if(pPkg->hasBck()) {
+      lvi.iImage = 5; //< BCK
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      // update icons for overlapped packages
+      for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+        lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
+        lvi.iImage = 6; //< OWR
+        this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      }
+    } else {
+      lvi.iImage = -1; //< not installed
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    }
+
+    // reset progress bar
+    this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
+
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
+    #endif
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  wstring msg;
+
+  vector<OmPackage*> over_ls;
+  vector<OmPackage*> deps_ls;
+  vector<OmPackage*> unin_ls;
+
+  // prepare packages uninstall and backups restoration
+  pLoc->bckPrepareUnin(unin_ls, over_ls, deps_ls, pkg_ls);
+
+  // check and warn for extra uninstall due to overlaps
+  if(!silent && over_ls.size() && pMgr->warnExtraUnin()) {
+    msg = L"One or more selected packages are overlapped by others later "
+          L"installed, the following packages must also be uninstalled:\n";
+    for(size_t i = 0; i < over_ls.size(); ++i) msg += L"\n "+over_ls[i]->ident();
+    msg += L"\n\nDo you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+      return;
+  }
+
+  // check and warn for extra uninstall due to dependencies
+  if(!silent && deps_ls.size() && pMgr->warnExtraUnin()) {
+    msg = L"One or more selected packages are required as dependency "
+          L"by others, the following packages will also be uninstalled:\n";
+    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    msg += L"\n\nDo you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+      return;
+  }
+
+  // this is to update list view item's icon individually
+  LVITEMW lvi;
+  lvi.mask = LVIF_IMAGE;
+  lvi.iSubItem = 0;
+
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< overlapped packages list
+
+  for(size_t i = 0; i < unin_ls.size(); ++i) {
+
+    pPkg = unin_ls[i];
+
+    // check whether abort is requested
+    if(this->_thread_abort)
+      break;
+
+    // set WIP status image
+    lvi.iItem = pLoc->pkgIndex(pPkg);
+    lvi.iImage = 4; //< WIP
+    this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+
+    if(!pPkg->hasBck()) //< this should be always the case
+      continue;
+
+    // before uninstall, get list of overlapped packages (by this one)
+    ovlp_ls.clear();
+    for(size_t j = 0; j < pPkg->ovrCount(); ++j) {
+      ovlp_ls.push_back(pLoc->pkgFind(pPkg->ovrGet(j)));
+    }
+
+    // uninstall package (restore backup)
+    if(!pPkg->uninst(&this->_pkgProgressCb, this)) {
+      msg =  L"The backup of \"" + pPkg->name() + L"\" ";
+      msg += L"has not been properly restored because the following error occurred:\n\n";
+      msg += pPkg->lastError();
+      Om_dialogBoxErr(this->_hwnd, L"Package uninstall failed", msg);
+    }
+
+    if(pPkg->hasBck()) { //< this mean something went wrong
+      lvi.iImage = pLoc->bckOverlapped(pPkg) ? 6 /*OWR*/ : 5 /*BCK*/;
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    } else {
+      lvi.iImage = -1; //< not installed
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      // update status icon for overlapped packages
+      for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+        lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
+        lvi.iImage = pLoc->bckOverlapped(ovlp_ls[j]) ? 6 /*OWR*/ : 5 /*BCK*/;
+        this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      }
+    }
+
+    // reset progress bar
+    this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
+
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
+    #endif
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMainLib::_buildLvPkg()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_buildLvPkg\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
@@ -435,13 +679,13 @@ void OmUiMainLib::_buildLvPkg()
     this->_buildLvPkg_icSize = pMgr->iconsSize();
   }
 
+  // save current legacy support status
+  this->_buildLvPkg_legacy = pMgr->legacySupport();
+
   // return now if library folder cannot be accessed
   if(!pLoc->checkAccessLib()) {
     return;
   }
-
-  // force Location library refresh
-  pLoc->libRefresh();
 
   // Save list-view scroll position to lvRect
   RECT lvRec;
@@ -529,6 +773,10 @@ void OmUiMainLib::_buildLbBat()
 ///
 void OmUiMainLib::_buildCbLoc()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_buildCbLoc\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
@@ -643,23 +891,51 @@ DWORD WINAPI OmUiMainLib::_pkgInst_fth(void* arg)
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
   OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return 1;
+  if(!pCtx)return 1;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc)return 1;
+
+  // string for dialog messages
+  wstring msg;
+
+  // checks whether we have a valid Destination folder
+  if(!pLoc->checkAccessDst()) {
+    msg = L"Destination folder \""+pLoc->dstDir()+L"\""; msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(self->_hwnd, L"Package(s) install aborted", msg);
+    return 1;
+  }
+  // checks whether we have a valid Library folder
+  if(!pLoc->checkAccessLib()) {
+    msg = L"Library folder \""+pLoc->libDir()+L"\""; msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(self->_hwnd, L"Package(s) install aborted", msg);
+    return 1;
+  }
+  // checks whether we have a valid Backup folder
+  if(!pLoc->checkAccessBck()) {
+    msg = L"Backup folder \""+pLoc->bckDir()+L"\""; msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(self->_hwnd, L"Package(s) install aborted", msg);
+    return 1;
+  }
+
+  // get user selection
+  vector<OmPackage*> user_ls;
+
+  OmPackage* pPkg;
+
+  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      pPkg = pLoc->pkgGet(i);
+      if(pPkg->hasSrc() && !pPkg->hasBck())
+        user_ls.push_back(pPkg);
+    }
+  }
 
   // reset abort status
   self->_thread_abort = false;
 
-  // get user selection
-  vector<unsigned> sel_ls;
-
-  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i)
-    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED))
-      sel_ls.push_back(i);
-
-  // Launch install process
-  HWND hPb = self->getItem(IDC_PB_BAR);
-  HWND hLv = self->getItem(IDC_LV_PKG);
-  pCtx->locCur()->pkgInst(sel_ls, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+  // install packages
+  self->_pkgInstLs(user_ls, false);
 
   // send message to notify process ended
   self->postMessage(UWM_PKGINST_DONE);
@@ -696,6 +972,19 @@ void OmUiMainLib::_pkgUnin_stop()
 
   // unfreeze dialog to allow user to interact again
   static_cast<OmUiMain*>(this->root())->freeze(false);
+
+  // Uninstall process may have leaved a ghost package (no source and
+  // no backup), so we clean Library and rebuild ListView if needed
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  // clean Library list and rebuild ListView
+  if(pLoc->libClean())
+    this->_buildLvPkg();
 }
 
 ///
@@ -707,23 +996,45 @@ DWORD WINAPI OmUiMainLib::_pkgUnin_fth(void* arg)
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
   OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return 1;
+  if(!pCtx)return 1;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc)return 1;
+
+  // string for dialog messages
+  wstring msg;
+
+  // checks whether we have a valid Destination folder
+  if(!pLoc->checkAccessDst()) {
+    msg = L"Destination folder \""+pLoc->dstDir()+L"\""; msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(self->_hwnd, L"Package(s) uninstall aborted", msg);
+    return 1;
+  }
+  // checks whether we have a valid Backup folder
+  if(!pLoc->checkAccessBck()) {
+    msg = L"Backup folder \""+pLoc->bckDir()+L"\""; msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(self->_hwnd, L"Package(s) uninstall aborted", msg);
+    return 1;
+  }
+
+  // get user selection
+  vector<OmPackage*> user_ls;
+
+  OmPackage* pPkg;
+
+  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
+  for(int i = 0; i < lv_cnt; ++i) {
+    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      pPkg = pLoc->pkgGet(i);
+      if(pPkg->hasBck())
+        user_ls.push_back(pPkg);
+    }
+  }
 
   // reset abort status
   self->_thread_abort = false;
 
-  // get user selection
-  vector<unsigned> sel_ls;
-
-  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i)
-    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED))
-      sel_ls.push_back(i);
-
-  // Launch uninstall process
-  HWND hPb = self->getItem(IDC_PB_BAR);
-  HWND hLv = self->getItem(IDC_LV_PKG);
-  pCtx->locCur()->pkgUnin(sel_ls, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+  // uninstall packages
+  self->_pkgUninLs(user_ls, false);
 
   // send message to notify process ended
   self->postMessage(UWM_PKGUNIN_DONE);
@@ -761,6 +1072,19 @@ void OmUiMainLib::_batExe_stop()
 
   // unfreeze dialog to allow user to interact again
   static_cast<OmUiMain*>(this->root())->freeze(false);
+
+  // Uninstall process may have leaved a ghost package (no source and
+  // no backup), so we clean Library and rebuild ListView if needed
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  // clean Library list and rebuild ListView
+  if(pLoc->libClean())
+    this->_buildLvPkg();
 }
 
 
@@ -804,15 +1128,12 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
       pBat->locRem(uuid_ls[i]);
 
     unsigned n;
-    int p;
     OmLocation* pLoc;
 
     // create an install and an uninstall list
-    vector<unsigned> inst_list, uins_list;
+    vector<OmPackage*> inst_ls, unin_ls;
 
-    // handle to controls
-    HWND hPb = self->getItem(IDC_PB_BAR);
-    HWND hLv = self->getItem(IDC_LV_PKG);
+    OmPackage* pPkg;
 
     for(unsigned l = 0; l < pBat->locCount(); l++) {
 
@@ -830,11 +1151,9 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
       // fill the install list according the batch hash list
       n = pBat->insCount(l);
       for(unsigned i = 0; i < n; ++i) {
-        p = pLoc->pkgIndex(pBat->insGet(l, i));
-        if(p >= 0) {
-          if(!pLoc->pkgGet(p)->hasBck()) {
-            inst_list.push_back(p);
-          }
+        if((pPkg = pLoc->pkgFind(pBat->insGet(l, i))) != nullptr) {
+          if(pPkg->hasSrc() && !pPkg->hasBck())
+            inst_ls.push_back(pPkg);
         } else {
           // TODO: handle no longer available package
         }
@@ -843,20 +1162,22 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
       // create the uninstall list, here we do not care order
       n = pLoc->pkgCount();
       for(unsigned i = 0; i < n; ++i) {
-        if(!pBat->hasIns(l, pLoc->pkgGet(i)->hash())) {
-          if(pLoc->pkgGet(i)->hasBck()) {
-            uins_list.push_back(i);
+        pPkg = pLoc->pkgGet(i);
+        if(!pBat->hasIns(l, pPkg->hash())) {
+          if(pPkg->hasBck()) {
+            unin_ls.push_back(pPkg);
           }
         }
       }
 
       // first, uninstall packages which must be uninstalled
-      if(uins_list.size()) {
-        pLoc->pkgUnin(uins_list, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+      if(unin_ls.size()) {
+        // uninstall packages
+        self->_pkgUninLs(unin_ls, pMgr->quietBatches());
       }
 
       // then, install packages which must be installed
-      if(inst_list.size()) {
+      if(inst_ls.size()) {
 
         // batch execution require packages to be installed in the order
         // the user chosen, however, the package install process itself may
@@ -864,12 +1185,12 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
         //
         // To ensure both exigences are respect, we launch one install
         // process per batch install package
-        vector<unsigned> inst;
-        for(size_t i = 0; i < inst_list.size(); ++i) {
+        vector<OmPackage*> inst;
+        for(size_t i = 0; i < inst_ls.size(); ++i) {
           // clear and replace package index in vector
-          inst.clear(); inst.push_back(inst_list[i]);
+          inst.clear(); inst.push_back(inst_ls[i]);
           // Launch install process
-          pLoc->pkgInst(inst, false, self->_hwnd, hLv, hPb, &self->_thread_abort);
+          self->_pkgInstLs(inst, pMgr->quietBatches());
         }
       }
     }
@@ -943,7 +1264,6 @@ DWORD WINAPI OmUiMainLib::_dirMon_fth(void* arg)
 {
   OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
 
-
   DWORD dwObj;
 
   while(true) {
@@ -955,8 +1275,18 @@ DWORD WINAPI OmUiMainLib::_dirMon_fth(void* arg)
 
     if(dwObj == 1) { //< folder content changed event
 
-      // rebuilt package ListView
-      self->_buildLvPkg();
+      OmManager* pMgr = static_cast<OmManager*>(self->_data);
+      OmContext* pCtx = pMgr->ctxCur();
+
+      if(pCtx) { //< this should be always the case
+        if(pCtx->locCur()) { //< this should also be always the case
+          // refresh Location Library
+          if(pCtx->locCur()->libRefresh()) {
+            // if list changed, rebuilt package ListView
+            self->_buildLvPkg();
+          }
+        }
+      }
 
       FindNextChangeNotification(self->_dirMon_hev[1]);
     }
@@ -1161,6 +1491,10 @@ void OmUiMainLib::_onBcEdiBat()
 ///
 void OmUiMainLib::_onInit()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_onInit\n";
+  #endif
+
   // Defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(18, 800, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
@@ -1189,7 +1523,6 @@ void OmUiMainLib::_onInit()
   //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
   // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
   // mysterious ways... So, don't try to fix this.
-
   lvCol.pszText = const_cast<LPWSTR>(L"Status");
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
@@ -1207,6 +1540,11 @@ void OmUiMainLib::_onInit()
   lvCol.cx = 80;
   lvCol.iSubItem = 2;
   this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  // keep curent manager legacy option
+  this->_buildLvPkg_legacy = pMgr->legacySupport();
 }
 
 
@@ -1215,8 +1553,9 @@ void OmUiMainLib::_onInit()
 ///
 void OmUiMainLib::_onShow()
 {
-  // select location according current ComboBox selection
-  this->locSel(this->msgItem(IDC_CB_LOC, CB_GETCURSEL));
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_onShow\n";
+  #endif
 
   // refresh dialog
   this->_onRefresh();
@@ -1243,7 +1582,7 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_BAR, 107, this->height()-113, this->width()-315, 12);
+  this->_setItemPos(IDC_PB_PKG, 107, this->height()-113, this->width()-315, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
@@ -1275,6 +1614,10 @@ void OmUiMainLib::_onResize()
 ///
 void OmUiMainLib::_onRefresh()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_onRefresh\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
@@ -1289,13 +1632,18 @@ void OmUiMainLib::_onRefresh()
   ShowWindow(this->getItem(IDC_SB_PKG), false);
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_BAR, false);
+  this->enableItem(IDC_PB_PKG, false);
 
   // rebuild Location ComboBox
   this->_buildCbLoc();
 
   // if icon size changed, rebuild Package ListView
   if(this->_buildLvPkg_icSize != pMgr->iconsSize()) {
+    this->_buildLvPkg();
+  }
+
+  // if legacy support changed, rebuild Package ListView
+  if(this->_buildLvPkg_legacy != pMgr->legacySupport()) {
     this->_buildLvPkg();
   }
 

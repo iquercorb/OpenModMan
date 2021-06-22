@@ -52,43 +52,52 @@ long OmUiProgress::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setTitle(const wchar_t* wstr) const
+void OmUiProgress::setPbRange(uint16_t min, uint16_t max) const
 {
-  SetWindowTextW(this->_hwnd, wstr);
+  this->msgItem(IDC_PB_COM, PBM_SETRANGE, 0, MAKELPARAM(min, max));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setDesc(const wchar_t* wstr) const
+void OmUiProgress::setPbPos(uint16_t pos) const
 {
-  SetDlgItemTextW(this->_hwnd, IDC_SC_TITLE, wstr);
+  this->msgItem(IDC_PB_COM, PBM_SETPOS, pos);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setDetail(const wchar_t* wstr) const
+void OmUiProgress::setScHeadText(const wstring& text) const
 {
-  SetDlgItemTextW(this->_hwnd, IDC_SC_STATE, wstr);
+  this->setItemText(IDC_SC_HEAD, text);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HWND OmUiProgress::getPbHandle() const
+void OmUiProgress::setScItemText(const wstring& text) const
 {
-  return GetDlgItem(this->_hwnd, IDC_PB_BAR);
+  this->setItemText(IDC_SC_ITEM, text);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HWND OmUiProgress::getDescScHandle() const
+HWND OmUiProgress::hPb() const
+{
+  return GetDlgItem(this->_hwnd, IDC_PB_COM);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HWND OmUiProgress::hScHead() const
 {
   return GetDlgItem(this->_hwnd, IDC_SC_TITLE);
 }
@@ -97,9 +106,20 @@ HWND OmUiProgress::getDescScHandle() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HWND OmUiProgress::getDetailScHandle() const
+HWND OmUiProgress::hScItem() const
 {
   return GetDlgItem(this->_hwnd, IDC_SC_STATE);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiProgress::abortSet(bool enable)
+{
+  this->_abort = enable;
+
+  this->enableItem(IDC_BC_ABORT, !enable);
 }
 
 
@@ -134,11 +154,11 @@ void OmUiProgress::_onInit()
 ///
 void OmUiProgress::_onResize()
 {
-  int half_height = static_cast<int>(this->height() * 0.5f);
+  int half_h = static_cast<int>(this->height() * 0.5f);
 
   this->_setItemPos(IDC_SC_TITLE, 10, 8, this->width()-20, 12);
-  this->_setItemPos(IDC_SC_STATE, 10, half_height-15, this->width()-20, 9);
-  this->_setItemPos(IDC_PB_BAR, 10, half_height, this->width()-20, 11);
+  this->_setItemPos(IDC_SC_STATE, 10, half_h-15, this->width()-20, 9);
+  this->_setItemPos(IDC_PB_PKG, 10, half_h, this->width()-20, 11);
   this->_setItemPos(IDC_BC_ABORT, this->width()-70, this->height()-24, 60, 14);
 }
 

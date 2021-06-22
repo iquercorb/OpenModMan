@@ -97,8 +97,8 @@ void OmUiPropCtxLoc::_delLoc_init(int id)
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
     pUiProgress->open(true);
-    pUiProgress->setTitle(L"Purge Location backups data");
-    pUiProgress->setDesc(L"Backups data restoration");
+    pUiProgress->setCaption(L"Purge Location backups data");
+    pUiProgress->setScHeadText(L"Backups data restoration");
 
     DWORD dwId;
     this->_delLoc_hth = CreateThread(nullptr, 0, this->_delLoc_fth, this, 0, &dwId);
@@ -131,17 +131,23 @@ void OmUiPropCtxLoc::_delLoc_stop()
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
+  wstring msg;
+
   // check whether purge succeed
   if(exitCode == 0) {
 
     // backup data purged, now delete Location
     if(!pCtx->locRem(this->_delLoc_id)) {
-
-      wstring wrn = L"One or more error occurred during Location deletion process."
-                    L"\n\nRead debug log for more details.";
-
-      Om_dialogBoxWarn(this->_hwnd, L"Delete Location error", wrn);
+      msg = L"Errors occurred during Location deletion process, "
+            L"read debug log for more details.";
+      Om_dialogBoxWarn(this->_hwnd, L"Location deletion error", msg);
     }
+
+  } else {
+    // an error occurred during backup purge
+    msg = L"Location deletion aborted because errors occurred during "
+          L"backup purge process, read debug log for more details.";
+    Om_dialogBoxErr(this->_hwnd, L"Location backup purge error", msg);
   }
 
   // Back to main dialog window to normal state
@@ -161,27 +167,36 @@ DWORD WINAPI OmUiPropCtxLoc::_delLoc_fth(void* arg)
 
   OmContext* pCtx = static_cast<OmUiPropCtx*>(self->_parent)->ctxCur();
   if(!pCtx) return 1;
-
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
-
-  HWND hPb = pUiProgress->getPbHandle();
-  HWND hSc = pUiProgress->getDetailScHandle();
+  OmLocation* pLoc = pCtx->locGet(self->_delLoc_id);
+  if(!pLoc) return 1;
 
   DWORD exitCode = 0;
 
-  OmLocation* pLoc = pCtx->locGet(self->_delLoc_id);
-
-  // launch backups data purge process
-  if(!pLoc->bckPurge(hPb, hSc, pUiProgress->getAbortPtr())) {
-    // we encounter error during backup data purge
-    Om_dialogBoxErr(pUiProgress->hwnd(), L"Backups data purge error", pLoc->lastError());
-    exitCode = 1;
+  if(!pLoc->bckPurge(&self->_delLoc_progress_cb, self->siblingById(IDD_PROGRESS))) {
+    exitCode = 1; //< report error
   }
 
   // sends message to window to inform process ended
   PostMessage(self->_hwnd, UWM_BACKPURGE_DONE, 0, 0);
 
   return exitCode;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiPropCtxLoc::_delLoc_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+{
+  OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
+
+  if(str) {
+    pUiProgress->setScItemText(str);
+  }
+  pUiProgress->setPbRange(0, tot);
+  pUiProgress->setPbPos(cur);
+
+  return !pUiProgress->abortGet();
 }
 
 

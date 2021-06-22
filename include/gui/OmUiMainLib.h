@@ -125,6 +125,12 @@ class OmUiMainLib : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    void                _pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
+
+    void                _pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
+
+    static bool         _pkgProgressCb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+
     void                _dirMon_init(const wstring& path);
 
     void                _dirMon_stop();
@@ -164,6 +170,8 @@ class OmUiMainLib : public OmDialog
     void                _buildLvPkg();
 
     unsigned            _buildLvPkg_icSize;
+
+    bool                _buildLvPkg_legacy;
 
     void                _buildCbLoc();
 

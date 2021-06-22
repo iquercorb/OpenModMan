@@ -39,7 +39,8 @@
 ///
 OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
   _pLoc(nullptr),
-  _movBck_hth(nullptr)
+  _movBck_hth(nullptr),
+  _movBck_dest()
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
@@ -225,10 +226,11 @@ bool OmUiPropLoc::applyChanges()
     // dedicates thread
     if(this->_pLoc->bckDir() != loc_bck) {
 
-      this->_movBck_init();
+      // start move backup thread
+      this->_movBck_init(loc_bck);
 
       // if backup transfer thread is running, we do not quit since it will
-      // end the process before it ends. We will wait for the UWM_TRANSFER_ENDED
+      // end the process before it ends. We will wait for the UWM_MOVEBACKUP_DONE
       // message sent from the thread, then quit this dialog safely at this
       // moment
       return false;
@@ -274,15 +276,25 @@ bool OmUiPropLoc::applyChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropLoc::_movBck_init()
+void OmUiPropLoc::_movBck_init(const wstring& dest)
 {
+  if(!this->_pLoc) return;
+
+  // verify we have something to move
+  if(!Om_isDirEmpty(this->_pLoc->bckDir())) {
+    this->_movBck_stop();
+  }
+
+  // keep destination path
+  this->_movBck_dest = dest;
+
   // To prevent crash during operation we unselect location in the main dialog
   static_cast<OmUiMain*>(this->root())->safemode(true);
 
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
   pUiProgress->open(true);
-  pUiProgress->setTitle(L"Change backup folder");
-  pUiProgress->setDesc(L"Transferring backup data");
+  pUiProgress->setCaption(L"Change backup folder");
+  pUiProgress->setScHeadText(L"Transferring backup data");
 
   DWORD dwid;
   this->_movBck_hth = CreateThread(nullptr, 0, this->_movBck_fth, this, 0, &dwid);
@@ -294,8 +306,11 @@ void OmUiPropLoc::_movBck_init()
 ///
 void OmUiPropLoc::_movBck_stop()
 {
+  DWORD exitCode;
+
   if(this->_movBck_hth) {
     WaitForSingleObject(this->_movBck_hth, INFINITE);
+    GetExitCodeThread(this->_movBck_hth, &exitCode);
     CloseHandle(this->_movBck_hth);
     this->_movBck_hth = nullptr;
   }
@@ -306,12 +321,24 @@ void OmUiPropLoc::_movBck_stop()
   // Close progress dialog
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
 
-  // disable Apply button
-  this->enableItem(IDC_BC_APPLY, false);
+  if(exitCode == 1)  {
+    // an error occurred during backup purge
+    wstring msg = L"Errors occurred during backups data transfer, "
+                  L"read debug log for more details.";
+    Om_dialogBoxErr(this->_hwnd, L"Change backup folder error", msg);
+  }
+
+  OmUiPropLocStg* pUiPropLocStg = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
 
   // Reset parameter as unmodified
-  OmUiPropLocStg* pUiPropLocStg = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
+
+  // modify the backup path for the Location
+  if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) { // custom backup checked
+    this->_pLoc->setCustBckDir(this->_movBck_dest);
+  } else {
+    this->_pLoc->remCustBckDir();
+  }
 
   // Call apply again in case it still changes to be applied
   this->applyChanges();
@@ -324,36 +351,37 @@ void OmUiPropLoc::_movBck_stop()
 DWORD WINAPI OmUiPropLoc::_movBck_fth(void* arg)
 {
   OmUiPropLoc* self = static_cast<OmUiPropLoc*>(arg);
-  OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(self->childById(IDD_PROP_LOC_STG));
 
-  // retrieve new backup data folder
-  wstring bck_dest;
-  pUiPropLocStg->getItemText(IDC_EC_INP04, bck_dest);
+  OmLocation* pLoc = self->_pLoc;
+  if(!pLoc) return 1;
 
-  // launch move process only if directory not empty
-  if(!Om_isDirEmpty(self->_pLoc->bckDir())) {
+  DWORD exitCode = 0;
 
-    OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
-
-    HWND hPb = pUiProgress->getPbHandle();
-    HWND hSc = pUiProgress->getDetailScHandle();
-
-    if(!self->_pLoc->bckMove(bck_dest, hPb, hSc, pUiProgress->getAbortPtr())) {
-      Om_dialogBoxWarn(pUiProgress->hwnd(), L"Backup data transfer error", self->_pLoc->lastError());
-    }
-  }
-
-  // modify the backup path for the Location
-  if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) { // custom backup checked
-    self->_pLoc->setCustBckDir(bck_dest);
-  } else {
-    self->_pLoc->remCustBckDir();
+  if(!pLoc->bckMove(self->_movBck_dest, &self->_movBck_progress_cb, self->childById(IDD_PROGRESS))) {
+    exitCode = 1;
   }
 
   // send message to window, to proper quit dialog and finish
   PostMessage(self->_hwnd, UWM_MOVEBACKUP_DONE, 0, 0);
 
-  return 0;
+  return exitCode;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiPropLoc::_movBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+{
+  OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
+
+  if(str) {
+    pUiProgress->setScItemText(str);
+  }
+  pUiProgress->setPbRange(0, tot);
+  pUiProgress->setPbPos(cur);
+
+  return !pUiProgress->abortGet();
 }
 
 

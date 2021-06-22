@@ -274,7 +274,7 @@ class OmManager
     ///
     /// \return Warning for missing dependency option value.
     ///
-    bool warnMissDpnd() const {
+    bool warnMissDeps() const {
       return _warnMissingDepend;
     }
 

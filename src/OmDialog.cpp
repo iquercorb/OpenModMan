@@ -303,7 +303,7 @@ void OmDialog::loopMessage() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::setItemText(unsigned id, const wstring& text)
+void OmDialog::setItemText(unsigned id, const wstring& text) const
 {
   SendMessageW(GetDlgItem(this->_hwnd, id), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text.c_str()));
 }
@@ -334,7 +334,7 @@ size_t OmDialog::getItemText(unsigned id, wstring& text) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image)
+HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image) const
 {
   LPARAM lParam = reinterpret_cast<LPARAM>(image);
   LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), STM_SETIMAGE, IMAGE_BITMAP, lParam);
@@ -345,7 +345,7 @@ HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HBITMAP OmDialog::setBmImage(unsigned id, HBITMAP image)
+HBITMAP OmDialog::setBmImage(unsigned id, HBITMAP image) const
 {
   LPARAM lParam = reinterpret_cast<LPARAM>(image);
   LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), BM_SETIMAGE, IMAGE_BITMAP, lParam);
