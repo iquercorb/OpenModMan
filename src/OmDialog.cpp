@@ -184,9 +184,17 @@ void OmDialog::quit()
 
   this->_onQuit();
 
-  DestroyWindow(this->_hwnd);
+  if(this->_hwnd) {
 
-  this->_hwnd = nullptr;
+    if(!DestroyWindow(this->_hwnd)) {
+      int ercode = GetLastError();
+      #ifdef DEBUG
+      std::wcout << L"DEBUG => OmDialog(" << this->id() <<  L")::quit  - DestroyWindow Error: " << Om_getErrorStr(ercode) << L"\n";
+      #endif
+    }
+
+    this->_hwnd = nullptr;
+  }
 
   if(this->_modal) {
     // in case the window is modal (typically a sub-dialog window)
@@ -410,6 +418,15 @@ void OmDialog::_onShow()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDialog::_onHide()
+{
+
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialog::_onResize()
 {
 
@@ -507,6 +524,9 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
         // call user function
         dialog->_onResize();
+      } else {
+        // call user function
+        dialog->_onHide();
       }
       return false; // case WM_SHOWWINDOW:
 

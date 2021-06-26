@@ -33,6 +33,13 @@
 ///
 #define UWM_MAIN_CTX_CHANGED      (WM_APP+16)
 
+/// \brief Custom "Request Abort" window Message
+///
+/// Custom window message to notify tab child dialogs that main dialog (user)
+/// requested to quit, and must abort all running process
+///
+#define UWM_MAIN_ABORT_REQUEST    (WM_APP+17)
+
 
 /// \brief Application Main window
 ///
@@ -64,11 +71,11 @@ class OmUiMain : public OmDialog
     ///
     long id() const;
 
-    /// \brief Set dialog freeze mode
+    /// \brief Set dialog install mode
     ///
-    /// Enable or disable the dialog freeze mode.
+    /// Enable or disable the dialog install mode.
     ///
-    /// The freeze mode is a modal-kind emulation for threaded operations,
+    /// The install mode is a modal-kind emulation for threaded operations,
     /// it disables (almost) all controls of the dialog and its children
     /// to prevent user to interact with elements while a threaded process
     /// is running.
@@ -115,7 +122,7 @@ class OmUiMain : public OmDialog
 
     bool                _freeze_mode;
 
-    bool                _freeze_abort;
+    bool                _freeze_quit;
 
     void                _buildMnRct();
 

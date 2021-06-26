@@ -230,6 +230,14 @@ class OmContext
       return _locCur;
     }
 
+    /// \brief Get current Location index.
+    ///
+    /// Returns index of the current active Location.
+    ///
+    /// \return Index of the active Location.
+    ///
+    int locCurId() const;
+
     /// \brief Make new Location.
     ///
     /// Creates a new Location within the Context.

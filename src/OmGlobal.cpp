@@ -1189,7 +1189,7 @@ bool Om_isValidPath(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_sizeString(size_t bytes, bool octet)
+wstring Om_formatSizeStr(size_t bytes, bool octet)
 {
   wchar_t swp_buf[64];
   wchar_t unit = (octet) ? 'o' : 'B';
@@ -1203,19 +1203,40 @@ wstring Om_sizeString(size_t bytes, bool octet)
     } else {
       swprintf(swp_buf, 64, L"%d Byte(s)", bytes);
     }
-  } else if(bytes < 1048576) { // 1 Mo
+  } else if(bytes < 1024000) { // 1 Mo
     fbytes = (double)bytes / 1024.0;
-    swprintf(swp_buf, 64, L"%.1f Ki%lc", fbytes, unit);
-  } else if(bytes < 1073741824) { // 1 Go
-    fbytes = (double)bytes / 1048576.0;
+    if(fbytes < 10.0) {
+      swprintf(swp_buf, 64, L"%.1f Ki%lc", fbytes, unit);
+    } else {
+      swprintf(swp_buf, 64, L"%d Ki%lc", static_cast<int>(fbytes), unit);
+    }
+  } else if(bytes < 1024000000) { // 1 Go
+    fbytes = (double)bytes / 1024000.0;
     swprintf(swp_buf, 64, L"%.1f Mi%lc", fbytes, unit);
   } else {
-    fbytes = (double)bytes / 1073741824.0;
+    fbytes = (double)bytes / 1024000000.0;
     swprintf(swp_buf, 64, L"%.1f Gi%lc", fbytes, unit);
   }
 
   result = swp_buf;
   return result;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_formatSizeSysStr(size_t bytes, bool kbytes)
+{
+  wchar_t buf[64];
+
+  if(kbytes) {
+    StrFormatKBSizeW(bytes, buf, 64);
+  } else {
+    StrFormatByteSizeW(bytes, buf, 64);
+  }
+
+  return wstring(buf);
 }
 
 
@@ -1257,7 +1278,7 @@ bool Om_isVersionStr(const wstring& str)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, bool isfile, bool us2spc)
+bool Om_parsePkgIdent(wstring& name, wstring& core, wstring& vers, const wstring& filename, bool isfile, bool us2spc)
 {
   wstring ident;
 
@@ -1276,7 +1297,7 @@ bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, boo
   // by a common separator, like space, minus or underscore character, followed
   // by a number
   size_t v_pos = ident.find_last_of(L"vV");
-  if(v_pos > 0) {
+  if(v_pos > 0 && v_pos != wstring::npos) {
     // verify the V letter is preceded by a common separator
     wchar_t wc = ident[v_pos - 1];
     if(wc == L' ' || wc == L'_' || wc == L'-') {
@@ -1292,13 +1313,21 @@ bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, boo
 
   if(has_version) {
     // we extract the substring from the beginning to the version substring
-    name = ident.substr(0, v_pos);
+    core = ident.substr(0, v_pos);
   } else {
     vers.clear();
-    name = ident;
+    core = ident;
   }
 
-  // replace all underscores by spaces
+  // if the last character of core is an underscore or a space, we crop it
+  if(core.back() == L' ' || core.back() == L'_') {
+    core.pop_back();
+  }
+
+  // copy parsed core to display name
+  name = core;
+
+  // replace all underscores by spaces in name
   if(us2spc) {
     std::replace(name.begin(), name.end(), L'_', L' ');
   }
@@ -1382,11 +1411,12 @@ void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute)
 {
   wstring item;
 
-  wstring srch(orig); srch += L"\\*";
+  wstring srch(orig);
+  srch += L"\\*";
+
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
-    ls->clear();
     do {
       if(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) {
         // skip this and parent folder
@@ -1413,11 +1443,12 @@ void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute)
 {
   wstring item;
 
-  wstring srch(orig); srch += L"\\*";
+  wstring srch(orig);
+  srch += L"\\*";
+
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
-    ls->clear();
     do {
       if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
         if(absolute) {
@@ -1447,7 +1478,9 @@ static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wst
   wstring item;
   wstring root;
 
-  wstring srch(orig); srch += L"\\*";
+  wstring srch(orig);
+  srch += L"\\*";
+
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
@@ -1477,7 +1510,6 @@ static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wst
 ///
 void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool absolute)
 {
-  ls->clear();
   if(absolute) {
     __lsFile_Recurse(ls, origin.c_str(), origin.c_str());
   } else {
@@ -1495,13 +1527,11 @@ void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& 
   wstring root;
 
   wstring srch(orig);
-  srch += L"\\";
-  srch += filter;
+  srch += L"\\" + filter;
 
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
-    ls->clear();
     do {
       if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
         if(absolute) {
@@ -1528,7 +1558,6 @@ void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute)
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
-    ls->clear();
     do {
       // skip this and parent folder
       if(!wcscmp(fd.cFileName, L".")) continue;
@@ -1560,7 +1589,9 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
   wstring item;
   wstring root;
 
-  wstring srch(orig); srch += L"\\*";
+  wstring srch(orig);
+  srch += L"\\*";
+
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
@@ -1592,7 +1623,6 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
 ///
 void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute)
 {
-  ls->clear();
   if(absolute) {
     __lsAll_Recurse(ls, origin.c_str(), origin.c_str());
   } else {

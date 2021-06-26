@@ -24,9 +24,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
-  _ftMono(Om_createFont(14,400,L"Consolas")),
-  _bmThn(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_PKG_THN),IMAGE_BITMAP,0,0,0)))
+OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins)
 {
 
 }
@@ -37,8 +35,8 @@ OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiPropPkgSrc::~OmUiPropPkgSrc()
 {
-  DeleteObject(this->_ftMono);
-  if(this->_bmThn) DeleteObject(this->_bmThn);
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -57,18 +55,19 @@ long OmUiPropPkgSrc::id() const
 void OmUiPropPkgSrc::_onInit()
 {
   // defines fonts for package description, title, and log output
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(this->_ftMono), 1);
+  HFONT hFt = Om_createFont(14,400,L"Consolas");
+  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
 
   OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->pkgCur();
   if(pPkg == nullptr) return;
 
   // Ident
   this->setItemText(IDC_EC_OUT01, pPkg->ident());
-  // Name
-  this->setItemText(IDC_EC_OUT02, pPkg->name());
+  // Core name
+  this->setItemText(IDC_EC_OUT02, pPkg->core());
   // Parsed Version
   this->setItemText(IDC_EC_OUT03, pPkg->version().asString());
-  // Computed Hash
+  // Filename hash
   this->setItemText(IDC_EC_OUT04, Om_toHexString(pPkg->hash()));
 
   if(pPkg->hasSrc()) {
@@ -101,11 +100,8 @@ void OmUiPropPkgSrc::_onInit()
 
     // Snapshot image
     if(pPkg->image().thumbnail()) {
-      DeleteObject(this->_bmThn);
-      this->_bmThn = pPkg->image().thumbnail();
+      this->setStImage(IDC_SB_PKG, pPkg->image().thumbnail());
     }
-    this->setStImage(IDC_SB_PKG, this->_bmThn);
-
 
     // Package description
     this->enableItem(IDC_EC_PKTXT, true);
@@ -126,7 +122,7 @@ void OmUiPropPkgSrc::_onInit()
     this->setItemText(IDC_EC_OUT08, L"N/A");
     this->enableItem(IDC_EC_OUT08, false);
     // Snapshot image
-    this->setStImage(IDC_SB_PKG, this->_bmThn);
+    this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
     // Package description
     this->setItemText(IDC_EC_PKTXT, L"N/A");
     this->enableItem(IDC_EC_PKTXT, false);
@@ -139,50 +135,46 @@ void OmUiPropPkgSrc::_onInit()
 ///
 void OmUiPropPkgSrc::_onResize()
 {
-  // Package Identity Label & EditControl
+  // Identity Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
   this->_setItemPos(IDC_EC_OUT01, 70, 10, this->width()-90, 13);
-  // Package Display Name Label & EditControl
+  // Core name Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, 5, 26, 64, 9);
   this->_setItemPos(IDC_EC_OUT02, 70, 26, this->width()-90, 13);
-  // Package Parsed Version Label & EditControl
+  // Version Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 5, 42, 64, 9);
   this->_setItemPos(IDC_EC_OUT03, 70, 42, this->width()-90, 13);
-  // Package Computed UID Label & EditControl
+  // Filename hash Label & EditControl
   this->_setItemPos(IDC_SC_LBL04, 5, 58, 64, 9);
   this->_setItemPos(IDC_EC_OUT04, 70, 58, this->width()-90, 13);
-
-    // Package Computed CRC Label & EditControl
-  //this->_setItemPos(IDC_SC_LBL05, 5, 90, 64, 9);
-  //this->_setItemPos(IDC_EC_OUT05, 70, 90, this->width()-90, 13);
 
   // separator
   this->_setItemPos(IDC_SC_SEP01, 5, 79, this->width()-25, 1);
 
-  // Package Source Type Label & EditControl
+  // Source Type Label & EditControl
   this->_setItemPos(IDC_SC_LBL06, 5, 92, 64, 9);
   this->_setItemPos(IDC_EC_OUT06, 70, 92, this->width()-90, 13);
-  // Package Source Location Label & EditControl
+  // Source Location Label & EditControl
   this->_setItemPos(IDC_SC_LBL07, 5, 108, 64, 9);
   this->_setItemPos(IDC_EC_OUT07, 70, 108, this->width()-90, 13);
 
   // separator
   this->_setItemPos(IDC_SC_SEP02, 5, 129, this->width()-25, 1);
 
-  // Package Source Dependencies Label & EditControl
+  // Dependencies Label & EditControl
   this->_setItemPos(IDC_SC_LBL08, 5, 140, 64, 9);
   this->_setItemPos(IDC_EC_OUT08, 70, 140, this->width()-90, 26);
 
   // separator
   this->_setItemPos(IDC_SC_SEP03, 5, 177, this->width()-25, 1);
 
-  // Package Source Snapshot Label
+  // PSnapshot Label
   this->_setItemPos(IDC_SC_LBL09, 5, 188, 64, 9);
-  // Package Source Snapshot Image
+  // Snapshot Image
   this->_setItemPos(IDC_SB_PKG, 70, 188, 85, 78);
 
-  // Package Source Description Label
+  // Description Label
   this->_setItemPos(IDC_SC_LBL10, 5, 275, 64, 9);
-  // Package Source Description EditControl
+  // Description EditControl
   this->_setItemPos(IDC_EC_PKTXT, 70, 275, this->width()-90, this->height()-285);
 }

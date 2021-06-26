@@ -55,21 +55,21 @@ class OmUiToolRep : public OmDialog
 
     OmConfig            _condig;
 
-    OmXmlNode           _curEntry;
+    OmXmlNode           _rmtCur;
 
-    void                _repoInit();
+    void                _repInit();
 
-    bool                _repoOpen(const wstring& path);
+    bool                _repOpen(const wstring& path);
 
-    OmXmlNode           _repoGetEnt(const wstring& ident);
+    OmXmlNode           _rmtGet(const wstring& ident);
 
-    bool                _repAddEnt(const wstring& path);
+    bool                _rmtAdd(const wstring& path);
 
-    bool                _repoRemEnt(const wstring& ident);
+    bool                _rmtRem(const wstring& ident);
 
-    bool                _selEntry(const wstring& ident);
+    bool                _rmtSel(const wstring& ident);
 
-    int                 _getDepsList(vector<wstring>& miss_list, const wstring& ident);
+    int                 _rmtGetDeps(vector<wstring>& miss_list, const wstring& ident);
 
     void                _addDir_init(const wstring& path);
 

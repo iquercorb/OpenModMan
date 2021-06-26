@@ -49,7 +49,70 @@ class OmSocket
     ///
     /// \return True if operation succeed and data received, false otherwise.
     ///
-    bool httpGet(const string& url, string& data);
+    bool httpGet(const wstring& url, string& data);
+
+    /// \brief Send HTTP GET request
+    ///
+    /// Send an HTTP GET request and write received data to the specified file pointer.
+    ///
+    /// \param[in]  url         : URL to perform HTTP GET.
+    /// \param[out] file        : Destination file pointer.
+    /// \param[in]  download_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
+    ///
+    /// \return True if operation succeed and data received, false otherwise.
+    ///
+    bool httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr);
+
+    /// \brief Check whether downloading
+    ///
+    /// Check whether this instance is currently processing download data.
+    ///
+    /// \return True if downloading, false otherwise.
+    ///
+    bool downloading() const {
+      return this->_downloading;
+    }
+
+    /// \brief Get download progress
+    ///
+    /// Returns current download progression in percent.
+    ///
+    /// \return Download progression in percent.
+    ///
+    unsigned downPercent() const {
+      return (static_cast<double>(_progress_now) / _progress_tot) * 100;
+    }
+
+    /// \brief Get download total
+    ///
+    /// Returns download total bytes to be downloaded.
+    ///
+    /// \return Download total bytes or zero if not downloading.
+    ///
+    size_t downTot() const {
+      return _progress_tot;
+    }
+
+    /// \brief Get download current
+    ///
+    /// Returns download bytes downloaded so far.
+    ///
+    /// \return Downloaded bytes so far.
+    ///
+    size_t downCur() const {
+      return _progress_now;
+    }
+
+    /// \brief Get download rate
+    ///
+    /// Returns download rate in bytes per second.
+    ///
+    /// \return Download rate in bytes per second.
+    ///
+    double downRate() const {
+      return _progress_bps;
+    }
 
     /// \brief Clear object.
     ///
@@ -86,13 +149,35 @@ class OmSocket
 
     uint8_t*            _buff_data;
 
+    void*               _out_file;
+
+    Om_downloadCb       _user_download;
+
+    void*               _user_ptr;
+
+    bool                _downloading;
+
+    size_t              _rate_byte;
+
+    double              _rate_time;
+
+    double              _progress_bps;
+
+    size_t              _progress_tot;
+
+    size_t              _progress_now;
+
     unsigned            _ercode;
 
     unsigned            _tpcode;
 
-    static size_t       _writeCb(char*, size_t, size_t, void*);
+    static size_t       _writeMemCb(char*, size_t, size_t, void*);
 
-    static size_t       _pgresCb(void*, double, double, double, double);
+    static size_t       _writeFioCb(char *, size_t, size_t, void*);
+
+    static size_t       _writeFileCb(char*, size_t, size_t, void*);
+
+    static size_t       _progressCb(void*, int64_t, int64_t, int64_t, int64_t);
 };
 
 #endif // OMSOCKET_H

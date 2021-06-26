@@ -52,10 +52,6 @@ class OmUiPropPkgSrc : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HFONT               _ftMono;
-
-    HBITMAP             _bmThn;
-
     void                _onInit();
 
     void                _onResize();

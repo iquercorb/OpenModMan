@@ -20,24 +20,9 @@
 
 #include "OmGlobal.h"
 #include "OmConfig.h"
+#include "OmRemote.h"
 
 class OmLocation;
-
-/// \brief Package item.
-///
-/// Simple structure for package file or folder item.
-///
-struct OmRepoItem {
-
-  wstring             ident;  ///< Entry identity
-
-  string              href;   ///< file download URL
-
-  wstring             desc;   ///< Entry description
-
-  string              img;    ///< image src URL
-
-};
 
 /// \brief Repository object for Context.
 ///
@@ -62,6 +47,17 @@ class OmRepository
     ///
     ~OmRepository();
 
+    /// \brief Set repository parameters.
+    ///
+    /// Defines repository address parameter to query data.
+    ///
+    /// \param[in]  base    : Repository HTTP base address.
+    /// \param[in]  name    : Repository HTTP suffix name.
+    ///
+    /// \return True if parameters makes a valid HTTP URL, false otherwise.
+    ///
+    bool init(const wstring& base, const wstring& name);
+
     /// \brief Get last error string.
     ///
     /// Returns last error message string.
@@ -82,54 +78,110 @@ class OmRepository
       return _valid;
     }
 
-    /// \brief Get Repository base.
+    /// \brief Get base address.
     ///
-    /// Returns Repository HTTP base address.
+    /// Returns repository HTTP base address.
     ///
-    /// \return Repository HTTP base address.
+    /// \return HTTP base address.
     ///
     const wstring& base() const {
       return _base;
     }
 
-    /// \brief Get Repository name.
+    /// \brief Get name.
     ///
-    /// Returns Repository HTTP suffix name.
+    /// Returns repository suffix name (definition name).
     ///
-    /// \return Repository HTTP suffix name.
+    /// \return Suffix name.
     ///
     const wstring& name() const {
       return _name;
     }
 
-    /// \brief Get Repository URL.
+    /// \brief Get URL.
     ///
-    /// Returns Repository URL.
+    /// Returns real definition file URL as combination of base and name.
     ///
-    /// \return Repository URL.
+    /// \return Definition file URL.
     ///
-    const string& url() const {
+    const wstring& url() const {
       return _url;
     }
 
-    /// \brief Set Repository parameters.
-    ///
-    /// Define the Repository base and suffix to define HTTP URL.
-    ///
-    /// \param[in]  base    : Repository HTTP base address.
-    /// \param[in]  name    : Repository HTTP suffix name.
-    ///
-    /// \return True if parameters makes a valid HTTP URL, false otherwise.
-    ///
-    bool define(const wstring& base, const wstring& name);
-
-    /// \brief Update from remote data.
+    /// \brief Query remote data.
     ///
     /// Get data from remote server to update local data.
     ///
     /// \return True if update succeed, false if an error occurred.
     ///
-    bool update();
+    bool query();
+
+    /// \brief Get title.
+    ///
+    /// Returns repository indicative title.
+    ///
+    /// \return Indicative title.
+    ///
+    const wstring& uuid() const {
+      return _uuid;
+    }
+
+    /// \brief Get title.
+    ///
+    /// Returns repository indicative title.
+    ///
+    /// \return Indicative title.
+    ///
+    const wstring& title() const {
+      return _title;
+    }
+
+    /// \brief Get download path.
+    ///
+    /// Returns repository common download path, this is the
+    /// path added to base address where to find files to be
+    /// downloaded.
+    ///
+    /// \return Common download path.
+    ///
+    const wstring& downpath() const {
+      return _downpath;
+    }
+
+    /// \brief Merge remote package list.
+    ///
+    /// Parse remote packages list and merge them to the given
+    /// array. Remote package with same identity are merged with
+    /// multiples download URL.
+    ///
+    /// \param[in]  rmt_ls  : Package list to be filled
+    ///
+    /// \return Parsed remote packages count.
+    ///
+    size_t rmtMerge(vector<OmRemote*>& rmt_ls);
+
+    /// \brief Get remote package count.
+    ///
+    /// Returns remote package count of the repository.
+    ///
+    /// \return Packages count.
+    ///
+    size_t rmtCount();
+
+    /// \brief Check whether has remote.
+    ///
+    /// Check whether repository has remote with the specified identity.
+    ///
+    /// \return True if remote package found, false otherwise.
+    ///
+    bool rmtHas(const wstring& ident);
+
+    /// \brief Clear repository.
+    ///
+    /// Resets repository. This function does not erase the
+    /// initialization parameters (base URL and name).
+    ///
+    void clear();
 
     /// \brief Add log.
     ///
@@ -141,13 +193,19 @@ class OmRepository
 
     OmLocation*         _pLoc;
 
+    OmConfig            _config;
+
     wstring             _base;
 
     wstring             _name;
 
-    string              _url;
+    wstring             _url;
 
-    vector<OmRepoItem>  _item;
+    wstring             _uuid;
+
+    wstring             _title;
+
+    wstring             _downpath;
 
     bool                _valid;
 

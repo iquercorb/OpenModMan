@@ -78,7 +78,7 @@ bool OmUiPropLoc::checkChanges()
 {
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
-  //OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
+  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   bool changed = false;
 
@@ -123,6 +123,11 @@ bool OmUiPropLoc::checkChanges()
     }
   }
 
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_UPGD_RENAME)) {
+    bool bm_chk = pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK); //< RadioButton for Rename
+    if(this->_pLoc->upgdRename() != bm_chk) changed = true;
+  }
+
   // enable Apply button
   this->enableItem(IDC_BC_APPLY, changed);
 
@@ -137,7 +142,7 @@ bool OmUiPropLoc::applyChanges()
 {
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
- // OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
+  OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
   wstring loc_name, loc_dst, loc_lib, loc_bck;
 
@@ -188,6 +193,12 @@ bool OmUiPropLoc::applyChanges()
   }
 
   // Step 2, save changes
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_UPGD_RENAME)) {
+    this->_pLoc->setUpgdRename(pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK));
+
+    pUiPropLocNet->setChParam(LOC_PROP_NET_UPGD_RENAME, false);
+  }
+
   if(pUiPropLocBck->hasChParam(LOC_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
     if(pUiPropLocBck->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
       int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LVL, CB_GETCURSEL);

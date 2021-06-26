@@ -195,6 +195,8 @@ class OmUiMainLib : public OmDialog
 
     void                _onShow();
 
+    void                _onHide();
+
     void                _onResize();
 
     void                _onRefresh();

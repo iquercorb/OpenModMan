@@ -472,6 +472,19 @@ int OmContext::locFind(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+int OmContext::locCurId() const
+{
+  if(this->_locCur != nullptr)
+    for(size_t i = 0; i < this->_locLst.size(); ++i)
+      if(this->_locCur == this->_locLst[i])  return i;
+
+  return -1;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmContext::locAdd(const wstring& title, const wstring& install, const wstring& library, const wstring& backup)
 {
   // this theoretically can't happen, but we check to be sure

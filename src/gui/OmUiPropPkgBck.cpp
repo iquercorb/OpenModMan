@@ -92,7 +92,7 @@ void OmUiPropPkgBck::_onInit()
 
     // Total Size
     this->enableItem(IDC_EC_OUT04, true);
-    this->setItemText(IDC_EC_OUT04, Om_sizeString(Om_itemSize(pPkg->bckPath())));
+    this->setItemText(IDC_EC_OUT04, Om_formatSizeSysStr(Om_itemSize(pPkg->bckPath()), true));
 
     // Installed Files
     this->enableItem(IDC_EC_OUT05, true);

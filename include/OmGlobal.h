@@ -115,6 +115,20 @@ using namespace std;
 ///
 typedef bool (*Om_progressCb)(void* ptr, size_t tot, size_t cur, const wchar_t* str);
 
+/// \brief Progress callback.
+///
+/// Generic callback function for process progression.
+///
+/// \param[in]  ptr   : User data pointer.
+/// \param[in]  tot   : Total bytes to download.
+/// \param[in]  cur   : Bytes downloaded.
+/// \param[in]  spd   : Download speed.
+/// \param[in]  data  : Custom internal opaque data.
+///
+/// \return True to continue, false to abort process.
+///
+typedef bool (*Om_downloadCb)(void* ptr, double tot, double cur, double spd, uint64_t data);
+
 /// \brief Compute Hash.
 ///
 /// Calculates and returns 64 bits unsigned integer hash (xxHash) of the given
@@ -672,8 +686,20 @@ inline bool Om_namesMatches(const wstring& left, const wchar_t* right)
 inline bool Om_extensionMatches(const wstring& file, const wchar_t* ext)
 {
   size_t d = file.find_last_of(L'.') + 1;
-  if(d > 0) {
-    return (0 == file.compare(d, -1, ext));
+  if(d > 0 && d != wstring::npos) {
+
+    size_t len = wcslen(ext);
+
+    if(len != (file.size() - d))
+      return false;
+
+    // compare case-insensitive
+    for(size_t i = 0; i < len; ++i) {
+      if(towupper(file[d+i]) != towupper(ext[i]))
+        return false;
+    }
+
+    return true;
   } else {
     return false;
   }
@@ -785,7 +811,18 @@ inline bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring&
 ///
 /// \return Formated string describing size.
 ///
-wstring Om_sizeString(size_t bytes, bool octet = false);
+wstring Om_formatSizeStr(size_t bytes, bool octet = false);
+
+/// \brief Get system formated bytes size string
+///
+/// Create a formated string of the given size in bytes as system wide standard.
+///
+/// \param[in]  bytes   : Size in bytes.
+/// \param[in]  kbytes  : Use kilobytes representation.
+///
+/// \return Formated string describing size.
+///
+wstring Om_formatSizeSysStr(size_t bytes, bool kbytes = true);
 
 /// \brief Check whether is version string
 ///
@@ -803,6 +840,7 @@ bool Om_isVersionStr(const wstring& str);
 /// file name.
 ///
 /// \param[out] name      : Parsed display name.
+/// \param[out] core      : Parsed core name.
 /// \param[out] vers      : Parsed version if any.
 /// \param[in]  filename  : Filename to be parsed.
 /// \param[in]  isfile    : Specify whether filename is file or a folder name.
@@ -810,7 +848,7 @@ bool Om_isVersionStr(const wstring& str);
 ///
 /// \return True if version string candidate was found, false otherwise
 ///
-bool Om_parsePkgIdent(wstring& name, wstring& vers, const wstring& filename, bool isfile = true, bool us2spc = true);
+bool Om_parsePkgIdent(wstring& name, wstring& core, wstring& vers, const wstring& filename, bool isfile = true, bool us2spc = true);
 
 /// \brief Check empty folder
 ///
@@ -1022,7 +1060,7 @@ void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool abs = t
 /// \brief List files with custom filter
 ///
 /// Retrieves the list of files contained in the specified origin location using
-/// the supplied custom filter.
+/// the given custom filter.
 ///
 /// \param[out] ls      : Pointer to array of wstring to be filled with result.
 /// \param[in]  origin  : Path where to list files from.
@@ -1055,6 +1093,19 @@ void Om_lsAll(vector<wstring>* ls, const wstring& origin, bool abs = true);
 ///                       items name alone.
 ///
 void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true);
+
+/// \brief List folders and files with custom filter
+///
+/// Retrieves the list of folders and files contained in the specified origin location
+/// using the given custom filter.
+///
+/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[in]  origin  : Path where to list files from.
+/// \param[in]  filter  : Custom filter to select files.
+/// \param[in]  abs     : If true, returns files absolute path instead of
+///                       files name alone.
+///
+void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true);
 
 /// \brief Get item total size
 ///

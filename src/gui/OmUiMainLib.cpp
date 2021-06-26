@@ -100,6 +100,10 @@ long OmUiMainLib::id() const
 ///
 void OmUiMainLib::freeze(bool enable)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
   // Location ComboBox
   this->enableItem(IDC_CB_LOC, !enable);
   // Packages ListView
@@ -134,6 +138,10 @@ void OmUiMainLib::freeze(bool enable)
 ///
 void OmUiMainLib::safemode(bool enable)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
   if(enable) {
     // force to unselect current location
     this->locSel(-1);
@@ -267,16 +275,18 @@ void OmUiMainLib::pkgTogg()
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
 
-  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      if(pCtx->locCur()->pkgGet(i)->hasBck()) {
-        this->_pkgUnin_init();
-      } else {
-        this->_pkgInst_init();
-      }
-      break;
-    }
+  // Get ListView unique selection
+  int lv_sel = -1;
+  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) == 1)
+    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+  if(lv_sel < 0)
+    return;
+
+  if(pCtx->locCur()->pkgGet(lv_sel)->hasBck()) {
+    this->_pkgUnin_init();
+  } else {
+    this->_pkgInst_init();
   }
 }
 
@@ -292,13 +302,15 @@ void OmUiMainLib::pkgProp()
 
   OmPackage* pPkg = nullptr;
 
-  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      pPkg = pCtx->locCur()->pkgGet(i);
-      break;
-    }
-  }
+  // Get ListView unique selection
+  int lv_sel = -1;
+  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) == 1)
+    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+  if(lv_sel < 0)
+    return;
+
+  pPkg = pCtx->locCur()->pkgGet(lv_sel);
 
   if(pPkg) {
     OmUiPropPkg* pUiPropPkg = static_cast<OmUiPropPkg*>(this->childById(IDD_PROP_PKG));
@@ -319,15 +331,16 @@ void OmUiMainLib::pkgTrsh()
 
   vector<OmPackage*> sel_ls;
 
-  // freeze dialog so user cannot interact
-  static_cast<OmUiMain*>(this->root())->freeze(true);
+  int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
 
-  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      sel_ls.push_back(pCtx->locCur()->pkgGet(i));
-    }
+    sel_ls.push_back(pCtx->locCur()->pkgGet(lv_sel));
+
+    // next selected item
+    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
+
+  wstring msg;
 
   // Unselect all items
   LVITEM lvI = {};
@@ -336,16 +349,34 @@ void OmUiMainLib::pkgTrsh()
   this->msgItem(IDC_LV_PKG, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
   if(sel_ls.size()) {
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete package(s)", L"Move the selected package(s) to trash ?"))
+
+    msg = L"Move the selected packages to recycle bin ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete packages", msg))
       return;
 
-    for(size_t i = 0; i < sel_ls.size(); ++i) {
-      Om_moveToTrash(sel_ls[i]->srcPath());
-    }
-  }
+    // freeze dialog so user cannot interact
+    static_cast<OmUiMain*>(this->root())->freeze(true);
 
-  // unfreeze dialog to allow user to interact
-  static_cast<OmUiMain*>(this->root())->freeze(false);
+    OmPackage* pPkg;
+
+    for(size_t i = 0; i < sel_ls.size(); ++i) {
+
+      pPkg = sel_ls[i];
+
+      if(pPkg->hasSrc()) {
+        Om_moveToTrash(pPkg->srcPath());
+      } else {
+        msg =   L"The package \""+pPkg->ident()+L"\" ";
+        msg +=  L"does not have source data. To remove it from list "
+                L"restores its backup by uninstalling it.";
+        Om_dialogBoxWarn(this->_hwnd, L"No package source", msg);
+      }
+    }
+
+    // unfreeze dialog to allow user to interact
+    static_cast<OmUiMain*>(this->root())->freeze(false);
+  }
 
   // update package selection
   this->_onLvPkgSel();
@@ -363,11 +394,13 @@ void OmUiMainLib::pkgOpen()
 
   vector<OmPackage*> sel_ls;
 
-  int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      sel_ls.push_back(pCtx->locCur()->pkgGet(i));
-    }
+  int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
+
+    sel_ls.push_back(pCtx->locCur()->pkgGet(lv_sel));
+
+    // next selected item
+    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
   for(size_t i = 0; i < sel_ls.size(); ++i) {
@@ -622,6 +655,87 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMainLib::_buildCbLoc()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_buildCbLoc\n";
+  #endif
+
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // check whether any context is selected
+  if(!pCtx) {
+    // empty the Combo-Box
+    this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
+    // disable Location ComboBox
+    this->enableItem(IDC_CB_LOC, false);
+    // force to reset current selection
+    this->locSel(-1);
+    // return now
+    return;
+  }
+
+  // save current selection
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
+
+  // empty the Combo-Box
+  this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
+
+  // add Context(s) to Combo-Box
+  if(pCtx->locCount()) {
+
+    wstring label;
+
+    for(unsigned i = 0; i < pCtx->locCount(); ++i) {
+
+      // compose Location label
+      label = pCtx->locGet(i)->title() + L" - ";
+
+      if(pCtx->locGet(i)->checkAccessDst()) {
+        label += pCtx->locGet(i)->dstDir();
+      } else {
+        label += L"<folder access error>";
+      }
+
+      this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
+    }
+
+    // select the the previously selected Context
+    if(cb_sel < 0) {
+      // select the first Location by default
+      this->locSel(0);
+    } else {
+      this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cb_sel);
+    }
+
+    // enable the ComboBox control
+    this->enableItem(IDC_CB_LOC, true);
+
+  } else {
+
+    // disable Location ComboBox
+    this->enableItem(IDC_CB_LOC, false);
+    // force to reset current selection
+    this->locSel(-1);
+
+    // ask user to create at least one Location in the Context
+    wstring qry = L"The Context have not any configured "
+                  L"Location, this does not make much sense."
+                  L"\n\nDo you want to add a Location now ?";
+
+    if(Om_dialogBoxQuerry(this->_hwnd, L"Context empty", qry)) {
+      OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
+      pUiAddLoc->ctxSet(pCtx);
+      pUiAddLoc->open(true);
+    }
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMainLib::_buildLvPkg()
 {
   #ifdef DEBUG
@@ -771,87 +885,6 @@ void OmUiMainLib::_buildLbBat()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_buildCbLoc()
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainLib::_buildCbLoc\n";
-  #endif
-
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-
-  // check whether any context is selected
-  if(!pCtx) {
-    // empty the Combo-Box
-    this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
-    // disable Location ComboBox
-    this->enableItem(IDC_CB_LOC, false);
-    // force to reset current selection
-    this->locSel(-1);
-    // return now
-    return;
-  }
-
-  // save current selection
-  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
-
-  // empty the Combo-Box
-  this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
-
-  // add Context(s) to Combo-Box
-  if(pCtx->locCount()) {
-
-    wstring label;
-
-    for(unsigned i = 0; i < pCtx->locCount(); ++i) {
-
-      // compose Location label
-      label = pCtx->locGet(i)->title() + L" - ";
-
-      if(pCtx->locGet(i)->checkAccessDst()) {
-        label += pCtx->locGet(i)->dstDir();
-      } else {
-        label += L"<folder access error>";
-      }
-
-      this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
-    }
-
-    // select the the previously selected Context
-    if(cb_sel < 0) {
-      // select the first Location by default
-      this->locSel(0);
-    } else {
-      this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cb_sel);
-    }
-
-    // enable the ComboBox control
-    this->enableItem(IDC_CB_LOC, true);
-
-  } else {
-
-    // disable Location ComboBox
-    this->enableItem(IDC_CB_LOC, false);
-    // force to reset current selection
-    this->locSel(-1);
-
-    // ask user to create at least one Location in the Context
-    wstring qry = L"The Context have not any configured "
-                  L"Location, this does not make much sense."
-                  L"\n\nDo you want to add a Location now ?";
-
-    if(Om_dialogBoxQuerry(this->_hwnd, L"Context empty", qry)) {
-      OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
-      pUiAddLoc->ctxSet(pCtx);
-      pUiAddLoc->open(true);
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiMainLib::_pkgInst_init()
 {
   // Freezes the main dialog to prevent user to interact during process
@@ -922,13 +955,16 @@ DWORD WINAPI OmUiMainLib::_pkgInst_fth(void* arg)
 
   OmPackage* pPkg;
 
-  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      pPkg = pLoc->pkgGet(i);
-      if(pPkg->hasSrc() && !pPkg->hasBck())
-        user_ls.push_back(pPkg);
-    }
+  int lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
+
+    pPkg = pLoc->pkgGet(lv_sel);
+
+    if(pPkg->hasSrc() && !pPkg->hasBck())
+      user_ls.push_back(pPkg);
+
+    // next selected item
+    lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
   // reset abort status
@@ -1021,13 +1057,16 @@ DWORD WINAPI OmUiMainLib::_pkgUnin_fth(void* arg)
 
   OmPackage* pPkg;
 
-  int lv_cnt = self->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-  for(int i = 0; i < lv_cnt; ++i) {
-    if(self->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
-      pPkg = pLoc->pkgGet(i);
-      if(pPkg->hasBck())
-        user_ls.push_back(pPkg);
-    }
+  int lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
+
+    pPkg = pLoc->pkgGet(lv_sel);
+
+    if(pPkg->hasBck())
+      user_ls.push_back(pPkg);
+
+    // next selected item
+    lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
   // reset abort status
@@ -1216,6 +1255,10 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
 ///
 void OmUiMainLib::_dirMon_init(const wstring& path)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_dirMon_init\n";
+  #endif
+
   // first stops any running monitor
   if(this->_dirMon_hth) {
     this->_dirMon_stop();
@@ -1238,6 +1281,10 @@ void OmUiMainLib::_dirMon_init(const wstring& path)
 ///
 void OmUiMainLib::_dirMon_stop()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_dirMon_stop\n";
+  #endif
+
   // stops current directory monitoring thread
   if(this->_dirMon_hth) {
 
@@ -1378,26 +1425,24 @@ void OmUiMainLib::_onLvPkgSel()
       // show package description
       ShowWindow(this->getItem(IDC_EC_PKTXT), true);
 
-      // get the select item id, we must iterate over the full list
-      int lv_cnt = this->msgItem(IDC_LV_PKG, LVM_GETITEMCOUNT);
-      for(int i = 0; i < lv_cnt; ++i) {
+      OmPackage* pPkg;
 
-        // check item state, either selected or not
-        if(this->msgItem(IDC_LV_PKG, LVM_GETITEMSTATE, i, LVIS_SELECTED)) {
+      // get the selected item id (only one, no need to iterate)
+      int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+      if(lv_sel >= 0) {
 
-          // we got it...
+        pPkg = pLoc->pkgGet(lv_sel);
 
-          this->setItemText(IDC_SC_TITLE, pLoc->pkgGet(i)->name());
-          if(pLoc->pkgGet(i)->desc().size()) {
-            this->setItemText(IDC_EC_PKTXT, pLoc->pkgGet(i)->desc());
-          } else {
-            this->setItemText(IDC_EC_PKTXT, L"<no description available>");
-          }
-          if(pLoc->pkgGet(i)->image().thumbnail()) {
-            hBm = pLoc->pkgGet(i)->image().thumbnail();
-          }
+        this->setItemText(IDC_SC_TITLE, pPkg->name());
 
-          break;
+        if(pPkg->desc().size()) {
+          this->setItemText(IDC_EC_PKTXT, pPkg->desc());
+        } else {
+          this->setItemText(IDC_EC_PKTXT, L"<no description available>");
+        }
+
+        if(pPkg->image().thumbnail()) {
+          hBm = pPkg->image().thumbnail();
         }
       }
     }
@@ -1557,8 +1602,50 @@ void OmUiMainLib::_onShow()
   std::cout << "DEBUG => OmUiMainLib::_onShow\n";
   #endif
 
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+
+  // if current location selection mismatch with current
+  // ComboBox selection we select the proper location in
+  // ComboBox and update ListView
+  int cur_id = pCtx->locCurId();
+  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
+  if(cur_id != cb_sel) {
+    this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cur_id);
+  }
+
+  if(pCtx->locCur()) {
+
+    // restart folder monitoring
+    if(!this->_dirMon_hth) {
+      this->_dirMon_init(pCtx->locCur()->libDir());
+    }
+
+    // refresh package ListView
+    this->_buildLvPkg();
+  }
+
+  // disable "Edit > Remote" in main menu
+  static_cast<OmUiMain*>(this->root())->setPopupItem(1, 6, MF_GRAYED);
+
   // refresh dialog
   this->_onRefresh();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_onHide()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_onHide\n";
+  #endif
+
+  // stop folder monitoring
+  if(this->_dirMon_hth)
+    this->_dirMon_stop();
 }
 
 
@@ -1576,7 +1663,7 @@ void OmUiMainLib::_onResize()
   // Resize the ListView column
   LONG size[4];
   GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-125);
+  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-145);
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
@@ -1620,6 +1707,7 @@ void OmUiMainLib::_onRefresh()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
+  //OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -1662,6 +1750,10 @@ void OmUiMainLib::_onRefresh()
 ///
 void OmUiMainLib::_onQuit()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_onQuit\n";
+  #endif
+
   // stop Library folder changes monitoring
   this->_dirMon_stop();
 
@@ -1718,6 +1810,14 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
+  // UWM_MAIN_ABORT_REQUEST is a custom message sent from Main (parent) Dialog
+  // to notify its child tab dialogs they must abort all running threaded jobs
+  if(uMsg == UWM_MAIN_ABORT_REQUEST) {
+    this->_thread_abort = true;
+    this->enableItem(IDC_BC_ABORT, false);
+    return false;
+  }
+
   if(uMsg == WM_NOTIFY) {
 
     OmManager* pMgr = static_cast<OmManager*>(this->_data);
@@ -1760,13 +1860,13 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch(pNmlv->iSubItem)
         {
         case 0:
-          pLoc->libSetSorting(PKG_SORTING_STAT);
+          pLoc->libSetSorting(LS_SORT_STAT);
           break;
         case 2:
-          pLoc->libSetSorting(PKG_SORTING_VERS);
+          pLoc->libSetSorting(LS_SORT_VERS);
           break;
         default:
-          pLoc->libSetSorting(PKG_SORTING_NAME);
+          pLoc->libSetSorting(LS_SORT_NAME);
           break;
         }
 

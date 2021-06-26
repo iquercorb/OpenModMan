@@ -61,7 +61,7 @@ enum OmPkgItemDest {
 ///
 /// Simple structure for package file or folder item.
 ///
-struct OmPackageItem
+struct OmPkgItem
 {
   OmPkgItemType   type; ///< Item type
 
@@ -146,70 +146,99 @@ class OmPackage
       return _error;
     }
 
-    /// \brief Get package type.
+    /// \brief Get type.
     ///
-    /// Returns package current type. Package type is bitwise mask which define
-    /// what this package "is". The type mask are the followings:
+    /// Returns package type bit field, this can be a combination of the following
+    /// bit masks:
     ///
-    ///  - PKG_SRC : Package has (is) Source file and can be installed.
-    ///  - PKG_ZIP : Package Source "is" a zip file (otherwise this is a folder).
-    ///  - PKG_BCK : Package has (is) Backup file and can be restored.
+    ///  - PKG_TYPE_SRC : Package has (is) source data and can be installed.
+    ///  - PKG_TYPE_ZIP : Package source data is a zip file (otherwise this is a folder).
+    ///  - PKG_TYPE_BCK : Package has (is) backup data and can be restored.
     ///
-    /// \return Current package type mask.
+    /// \return Bit field that describe package type.
     ///
     unsigned type() const {
       return _type;
     }
 
-    /// \brief Check package type.
+    /// \brief Check type.
     ///
-    /// Checks whether package currently have the specified type, Package type is
-    /// bitwise mask which define what this package "is". The type mask are the
-    /// followings:
+    /// Checks whether remote package currently have the specified type mask defined,
+    /// possibles masks are the followings:
     ///
-    ///  - PKG_SRC : Package has (is) Source file and can be installed.
-    ///  - PKG_ZIP : Package Source "is" a zip file (otherwise this is a folder).
-    ///  - PKG_BCK : Package has (is) Backup file and can be restored.
+    ///  - PKG_TYPE_SRC : Package has (is) source data and can be installed.
+    ///  - PKG_TYPE_ZIP : Package source data is a zip file (otherwise this is a folder).
+    ///  - PKG_TYPE_BCK : Package has (is) backup data and can be restored.
     ///
-    /// \param[in]  mask    : Package type mask to test.
+    /// \param[in]  mask    : Type mask to test.
     ///
-    /// \return True if package type matches the supplied mask.
+    /// \return True if type matches the specified mask, false otherwise.
     ///
     bool isType(unsigned mask) const {
       return ((_type & mask) == mask);
     }
 
-    /// \brief Get Package identity.
+    /// \brief Get identity.
     ///
-    /// Returns package identity. This is raw file name, without zip extension,
-    /// including version substring if exists.
+    /// Returns package identity, this is the package raw full name, it is
+    /// the file name without file extension.
     ///
-    /// The package identity is used to identify one package with a specific
-    /// version accross multiples
+    /// This value is used to uniquely identify package with its specific
+    /// version independently of its file type. A package may have the same
+    /// identity simultaneously through three forms: as .zip file, .omp file
+    /// or as folder.
     ///
-    /// \return Package display name.
+    /// \return Package identity.
     ///
     const wstring& ident() const {
       return _ident;
     }
 
-    /// \brief Get package Hash.
+    /// \brief Get identity hash.
     ///
-    /// Returns package Hash computed from the package full filename, including
-    /// extension if any.
+    /// Returns package identity hash, this is an hash value computed from
+    /// filename, used to identify it as an unique file system entity.
     ///
-    /// \return Package Hash.
+    /// This value is used to uniquely identify each parsed package source
+    /// or backup, since a packages may have the same identity simultaneously
+    /// through three forms: as .zip file, .omp file or as folder.
+    ///
+    /// \return Package identity hash.
     ///
     uint64_t hash() const {
       return _hash;
     }
 
-    /// \brief Get Package name.
+    /// \brief Get core name.
     ///
-    /// Returns package display name. This is displayed name, built from file
-    /// or folder file name, or as retrieved in the Backup definition.
+    /// Returns package core name, this is the "master" name of package
+    /// used to identify it whatever its version.
     ///
-    /// \return Package display name.
+    /// This value is used to to evaluate changes in versions of what should
+    /// be considered as the same package.
+    ///
+    /// \return Package core name.
+    ///
+    const wstring& core() const {
+      return _core;
+    }
+
+    /// \brief Get version.
+    ///
+    /// Returns package version.
+    ///
+    /// \return Package version.
+    ///
+    const OmVersion& version() const {
+      return _version;
+    }
+
+    /// \brief Get displayed name.
+    ///
+    /// Returns package displayed name, this is the prettified name to
+    /// be displayed, it has only a cosmetic role.
+    ///
+    /// \return Package displayed name.
     ///
     const wstring& name() const {
       return _name;
@@ -335,7 +364,7 @@ class OmPackage
     ///
     /// \return Backup list item at specified index.
     ///
-    const OmPackageItem& bckItemGet(unsigned i) const {
+    const OmPkgItem& bckItemGet(unsigned i) const {
       return _bckItemLs[i];
     }
 
@@ -357,11 +386,11 @@ class OmPackage
     ///
     /// \return Source list item at specified index.
     ///
-    const OmPackageItem& srcItemGet(unsigned i) const {
+    const OmPkgItem& srcItemGet(unsigned i) const {
       return _srcItemLs[i];
     }
 
-    /// \brief Get source dependencies count.
+    /// \brief Get dependencies count.
     ///
     /// Returns count of source dependencies packages.
     ///
@@ -371,13 +400,13 @@ class OmPackage
       return _depLs.size();
     }
 
-    /// \brief Get source dependency package.
+    /// \brief Get dependency identity.
     ///
-    /// Returns source dependency Package.
+    /// Returns dependency package identity at index.
     ///
-    /// \param[in]  i       : Index of dependency Package.
+    /// \param[in]  i       : Index of dependency.
     ///
-    /// \return Source dependency Package.
+    /// \return Dependency identity.
     ///
     const wstring& depGet(unsigned i) const {
       return _depLs[i];
@@ -385,9 +414,9 @@ class OmPackage
 
     /// \brief Add Dependency
     ///
-    /// Add dependency Package to this instance.
+    /// Add dependency package identity to this instance.
     ///
-    /// \param[in]  ident    : Dependency Package identity to add
+    /// \param[in]  ident    : Dependency identity identity to add
     ///
     void depAdd(const wstring& ident) {
       for(size_t i = 0; i < this->_depLs.size(); ++i) {
@@ -398,9 +427,9 @@ class OmPackage
 
     /// \brief Check dependency
     ///
-    /// Checks whether package has the specified identity as dependency
+    /// Checks whether package has the specified package identity as dependency.
     ///
-    /// \param[in]  ident    : Dependency Package identity to check
+    /// \param[in]  ident    : Dependency package identity to check
     ///
     bool depHas(const wstring& ident) {
       for(size_t i = 0; i < this->_depLs.size(); ++i) {
@@ -416,7 +445,7 @@ class OmPackage
     ///
     /// \param[out] footprint  : Output backup item list resulting of simulated install.
     ///
-    void footprint(vector<OmPackageItem>& footprint) const;
+    void footprint(vector<OmPkgItem>& footprint) const;
 
     /// \brief Check installation overlapping.
     ///
@@ -428,7 +457,7 @@ class OmPackage
     /// \return True if the specified Package already have installed one or more
     /// files which this one could overwrite.
     ///
-    bool ovrTest(const vector<OmPackageItem>& footprint) const;
+    bool ovrTest(const vector<OmPkgItem>& footprint) const;
 
     /// \brief Check installation overlapping.
     ///
@@ -563,16 +592,6 @@ class OmPackage
       _desc = text;
     }
 
-    /// \brief Get version.
-    ///
-    /// Returns package version.
-    ///
-    /// \return Package version.
-    ///
-    const OmVersion& version() const {
-      return _version;
-    }
-
     /// \brief Get image.
     ///
     /// Returns package image object.
@@ -699,13 +718,17 @@ class OmPackage
 
     uint64_t            _hash;
 
+    wstring             _core;
+
+    OmVersion           _version;
+
     wstring             _name;
 
     wstring             _src;
 
     wstring             _srcDir;
 
-    vector<OmPackageItem>  _srcItemLs;
+    vector<OmPkgItem>   _srcItemLs;
 
     vector<wstring>     _depLs;
 
@@ -713,13 +736,11 @@ class OmPackage
 
     wstring             _bckDir;
 
-    vector<OmPackageItem>  _bckItemLs;
+    vector<OmPkgItem>   _bckItemLs;
 
     vector<uint64_t>    _ovrLs;
 
     wstring             _desc;
-
-    OmVersion           _version;
 
     OmImage             _image;
 

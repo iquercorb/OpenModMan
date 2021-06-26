@@ -40,7 +40,7 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   _pageName(),
   _pageDial(),
   _freeze_mode(false),
-  _freeze_abort(false)
+  _freeze_quit(false)
 {
   // create child tab dialogs
   this->_addPage(L"Library", new OmUiMainLib(hins)); // Library Tab
@@ -88,6 +88,10 @@ long OmUiMain::id() const
 ///
 void OmUiMain::freeze(bool enable)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
   this->_freeze_mode = enable;
 
   // disable Context ComboBox
@@ -124,9 +128,13 @@ void OmUiMain::freeze(bool enable)
 
   // check whether freeze was aborted, this happen if user
   // requested to close the dialog while in freeze mode.
-  if(this->_freeze_abort) {
-    // if freeze mode is disabled, we can quit the dialog.
-    if(!enable) this->quit();
+  if(this->_freeze_quit && !enable) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMain::freeze (quit)\n";
+    #endif
+
+    this->quit();
   }
 }
 
@@ -136,6 +144,10 @@ void OmUiMain::freeze(bool enable)
 ///
 void OmUiMain::safemode(bool enable)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
   // passes the message to child tab dialog
   for(size_t i = 0; i < this->_pageDial.size(); ++i) {
     if(this->_pageDial[i]->visible()) {
@@ -236,7 +248,6 @@ void OmUiMain::ctxSel(int id)
   // refresh visible tab
   for(size_t i = 0; i < this->_pageDial.size(); ++i) {
     if(this->_pageDial[i]->visible()) {
-      //this->_pageDial[i]->refresh(); break;
       // send message to notify context selection changed
       this->_pageDial[i]->postMessage(UWM_MAIN_CTX_CHANGED);
     }
@@ -419,6 +430,7 @@ void OmUiMain::_onInit()
       this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&tcPage));
 
       this->_pageDial[i]->modeless(false);
+      // set white background to fit tab background
       EnableThemeDialogTexture(this->_pageDial[i]->hwnd(), ETDT_ENABLETAB);
     }
   }
@@ -499,14 +511,22 @@ void OmUiMain::_onClose()
   // check whether dialog is in freeze mode, in this case we cannot quit
   // right now, we need to carefully abort all running threads first
   if(this->_freeze_mode) {
-    // take notes user requested to quit dialog
-    this->_freeze_abort = true;
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMain::_onClose (freeze_mode)\n";
+    #endif
+
+    // quit dialog on next unfreeze
+    this->_freeze_quit = true;
+
     // disable the window to notify user its request to quit is acknowledged
-    EnableWindow(this->_hwnd, false);
-    // send an abort message (emulate Abort button click) to all tab child dialogs
+    //EnableWindow(this->_hwnd, false);
+
+    // send message to all dialog to request abort all their jobs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-      PostMessage(this->_pageDial[i]->hwnd(), WM_COMMAND, MAKEWPARAM(IDC_BC_ABORT,0),0);
+      this->_pageDial[i]->postMessage(UWM_MAIN_ABORT_REQUEST);
     }
+
   } else {
     this->quit();
   }
@@ -518,6 +538,10 @@ void OmUiMain::_onClose()
 ///
 void OmUiMain::_onQuit()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::_onQuit\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   RECT rec;
@@ -577,6 +601,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
+    // Menu : File []
     case IDM_FILE_NEW_CTX:
       this->childById(IDD_WIZ_CTX)->open(); // New Context Wizard
       break;
@@ -601,6 +626,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->quit();
       break;
 
+    // Menu : Edit []
     case IDM_EDIT_CTX_PROP: {
       OmUiPropCtx* pUiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
       pUiPropCtx->ctxSet(pCtx);
@@ -622,6 +648,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
     }
 
+    // Menu : Edit > Package > []
     case IDM_EDIT_PKG_INST:
       static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgInst();
       break;
@@ -642,6 +669,20 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgProp();
       break;
 
+    // Menu : Edit > Remote > []
+    case IDM_EDIT_RMT_DOWN:
+      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtDown(false);
+      break;
+
+    case IDM_EDIT_RMT_UPGR:
+      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtDown(true);
+      break;
+
+    case IDM_EDIT_RMT_INFO:
+      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtProp();
+      break;
+
+    // Menu : Tools > []
     case IDM_TOOLS_EDI_REP:
       this->childById(IDD_TOOL_REP)->open();
       break;
@@ -654,6 +695,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->childById(IDD_TOOL_PKG)->open();
       break;
 
+    // Menu : Help > []
     case IDM_HELP_LOG:
       this->childById(IDD_HELP_LOG)->modeless();
       break;
@@ -662,7 +704,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->childById(IDD_HELP_ABT)->open();
       break;
 
-    case IDC_CB_CTX:
+    case IDC_CB_CTX: //< Context ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->_onCbCtxSel();
       break;

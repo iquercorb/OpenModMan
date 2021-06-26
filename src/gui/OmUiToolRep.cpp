@@ -30,9 +30,9 @@
 ///
 #define UWM_ADDENTRIES_DONE   (WM_APP+1)
 
-/// \brief Save repository entry snapshot
+/// \brief Save repository remote package snapshot
 ///
-/// Function to create and store (as Data URI) repository entry snapshot
+/// Function to create and store (as Data URI) repository remote package snapshot
 /// from the given image object. The image is:
 ///  1 - loaded as raw RGB(A) data.
 ///  2 - converted to its thumbnail version (128 x 128 pixels).
@@ -79,9 +79,9 @@ static inline bool __save_snapshot(OmXmlNode& xml_pic, const OmImage& image)
   return false;
 }
 
-/// \brief Save repository entry description
+/// \brief Save repository remote package description
 ///
-/// Function to create and store (as Data URI) repository entry description
+/// Function to create and store (as Data URI) repository remote package description
 /// from the given image object. The text is:
 ///  1 - encoded to UTF-8 text.
 ///  2 - compressed using Deflate algorithm.
@@ -128,11 +128,12 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
   _condig(),
-  _curEntry(),
+  _rmtCur(),
   _addDir_hth(nullptr),
   _addDir_path()
 {
   this->addChild(new OmUiProgress(hins));   //< for Location backup cleaning
+
 }
 
 
@@ -161,7 +162,7 @@ long OmUiToolRep::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repoInit()
+void OmUiToolRep::_repInit()
 {
   // Initialize new Repository definition XML scheme
   this->_condig.init(OMM_CFG_SIGN_REP);
@@ -173,15 +174,15 @@ void OmUiToolRep::_repoInit()
   OmXmlNode xml_def = this->_condig.xml();
   xml_def.addChild(L"uuid").setContent(uuid);
   xml_def.addChild(L"title").setContent(L"New Repository");
-  xml_def.addChild(L"download").setContent(REPO_DEFAULT_DOWLOAD);
-  xml_def.addChild(L"packages").setAttr(L"count", 0);
+  xml_def.addChild(L"downpath").setContent(REPO_DEFAULT_DOWLOAD);
+  xml_def.addChild(L"remotes").setAttr(L"count", 0);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repoOpen(const wstring& path)
+bool OmUiToolRep::_repOpen(const wstring& path)
 {
   // Initialize new Repository definition XML scheme
   if(!this->_condig.open(path, OMM_CFG_SIGN_REP)) {
@@ -197,21 +198,21 @@ bool OmUiToolRep::_repoOpen(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmXmlNode OmUiToolRep::_repoGetEnt(const wstring& ident)
+OmXmlNode OmUiToolRep::_rmtGet(const wstring& ident)
 {
   OmXmlNode result;
 
   // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
+  OmXmlNode xml_rmts = this->_condig.xml().child(L"remotes");
 
-  // Get all <entry> children
-  std::vector<OmXmlNode> xml_ent_ls;
-  xml_pkgs.children(xml_ent_ls, L"entry");
+  // Get all <remote> children
+  std::vector<OmXmlNode> xml_rmt_ls;
+  xml_rmts.children(xml_rmt_ls, L"remote");
 
-  // search <entry> with specified identity
-  for(size_t i = 0; i < xml_ent_ls.size(); ++i) {
-    if(ident == xml_ent_ls[i].attrAsString(L"ident")) {
-      result = xml_ent_ls[i]; break;
+  // search <remote> with specified identity
+  for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
+    if(ident == xml_rmt_ls[i].attrAsString(L"ident")) {
+      result = xml_rmt_ls[i]; break;
     }
   }
 
@@ -222,79 +223,79 @@ OmXmlNode OmUiToolRep::_repoGetEnt(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repAddEnt(const wstring& path)
+bool OmUiToolRep::_rmtAdd(const wstring& path)
 {
   // parse the package
-  OmXmlNode xml_node, xml_entry, xml_packages;
+  OmXmlNode xml_node, xml_rmt, xml_rmts;
 
   // try to parse package
   OmPackage pkg;
   if(!pkg.srcParse(path))
     return false;
 
-  // Search for already existing entry
-  xml_entry = this->_repoGetEnt(pkg.ident());
+  // Search for already existing <remote>
+  xml_rmt = this->_rmtGet(pkg.ident());
 
-  // if package with same identity already exist, user have to choose
-  if(!xml_entry.empty()) {
+  // if <remote> with same identity already exist, user have to choose
+  if(!xml_rmt.empty()) {
 
-    wstring qry = L"Repository entry with identity \""+pkg.ident()+L"\" already exists.";
+    wstring qry = L"Repository package with identity \""+pkg.ident()+L"\" already exists.";
     qry += L"\n\nDo you want to replace the existing one ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Duplicated entry identity", qry))
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Duplicated entry", qry))
       return true; // cancel operation
 
-    // check whether the current duplicate entry is the current selected one
-    if(!this->_curEntry.empty()) {
+    // check whether the current duplicate <remote> is the current selected one
+    if(!this->_rmtCur.empty()) {
       // unselect package in list, to prevent inconsistent control contents
-      if(this->_curEntry.attrAsString(L"ident") == pkg.ident()) {
-        this->_selEntry(L"");
+      if(this->_rmtCur.attrAsString(L"ident") == pkg.ident()) {
+        this->_rmtSel(L"");
       }
     }
 
-    // reset the current Repository entry
-    xml_entry.remChild(L"dependencies");
-    xml_entry.remChild(L"picture");
-    xml_entry.remChild(L"description");
-    xml_entry.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
-    xml_entry.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
-    xml_entry.setAttr(L"checksum",Om_getChecksum(path));
+    // reset the current Repository <remote>
+    xml_rmt.remChild(L"dependencies");
+    xml_rmt.remChild(L"picture");
+    xml_rmt.remChild(L"description");
+    xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
+    xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
+    xml_rmt.setAttr(L"checksum",Om_getChecksum(path));
 
 
   } else {
 
-    // Get the package list XML node
-    xml_packages = this->_condig.xml().child(L"packages");
+    // Get the remote package list XML node
+    xml_rmts = this->_condig.xml().child(L"remotes");
 
-    // create new entry in repository
-    xml_entry = xml_packages.addChild(L"entry");
-    xml_entry.setAttr(L"ident", pkg.ident());
-    xml_entry.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
-    xml_entry.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
-    xml_entry.setAttr(L"checksum",Om_getChecksum(path));
+    // create new <remote> in repository
+    xml_rmt = xml_rmts.addChild(L"remote");
+    xml_rmt.setAttr(L"ident", pkg.ident());
+    xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
+    xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
+    xml_rmt.setAttr(L"checksum",Om_getChecksum(path));
 
     // Add package to ListBox
     this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pkg.ident().c_str()));
 
-    // increment package count
-    int n = xml_packages.attrAsInt(L"count");
-    xml_packages.setAttr(L"count", n + 1);
+    // increment <remote> count
+    int n = xml_rmts.attrAsInt(L"count");
+    xml_rmts.setAttr(L"count", n + 1);
   }
 
   if(pkg.depCount()) {
-    xml_node = xml_entry.addChild(L"dependencies");
+    xml_node = xml_rmt.addChild(L"dependencies");
     for(size_t i = 0; i < pkg.depCount(); ++i) {
       xml_node.addChild(L"ident").setContent(pkg.depGet(i));
     }
   }
 
   if(pkg.image().valid()) {
-    xml_node = xml_entry.addChild(L"picture");
+    xml_node = xml_rmt.addChild(L"picture");
     __save_snapshot(xml_node, pkg.image());
   }
 
   if(!pkg.desc().empty()) {
-    xml_node = xml_entry.addChild(L"description");
+    xml_node = xml_rmt.addChild(L"description");
     __save_description(xml_node, pkg.desc());
   }
 
@@ -305,19 +306,24 @@ bool OmUiToolRep::_repAddEnt(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repoRemEnt(const wstring& ident)
+bool OmUiToolRep::_rmtRem(const wstring& ident)
 {
   // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
+  OmXmlNode xml_rmts = this->_condig.xml().child(L"remotes");
 
-  // Get all <entry> children
-  std::vector<OmXmlNode> xml_ent_ls;
-  xml_pkgs.children(xml_ent_ls, L"entry");
+  // Get all <remote> children
+  std::vector<OmXmlNode> xml_rmt_ls;
+  xml_rmts.children(xml_rmt_ls, L"remote");
 
-  // search <entry> with specified identity
-  for(size_t i = 0; i < xml_ent_ls.size(); ++i) {
-    if(ident == xml_ent_ls[i].attrAsString(L"ident")) {
-      xml_pkgs.remChild(xml_ent_ls[i]);
+  // search <remote> with specified identity
+  for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
+    if(ident == xml_rmt_ls[i].attrAsString(L"ident")) {
+      xml_rmts.remChild(xml_rmt_ls[i]);
+
+      // decrement package count
+      int n = xml_rmts.attrAsInt(L"count");
+      xml_rmts.setAttr(L"count", n - 1);
+
       return true;
     }
   }
@@ -329,10 +335,10 @@ bool OmUiToolRep::_repoRemEnt(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_selEntry(const wstring& ident)
+bool OmUiToolRep::_rmtSel(const wstring& ident)
 {
-  // clear current selected entry
-  this->_curEntry.clear();
+  // clear current selected <remote>
+  this->_rmtCur.clear();
 
   // check for empty selection
   if(ident.empty()) {
@@ -360,38 +366,38 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
     return true;
   }
 
-  // Get the package list XML node
-  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
+  // Get the remote packages list XML node
+  OmXmlNode xml_rmts = this->_condig.xml().child(L"remotes");
 
-  // Get all <entry> children
-  std::vector<OmXmlNode> xml_ent_ls;
-  xml_pkgs.children(xml_ent_ls, L"entry");
+  // Get all <remote> children
+  std::vector<OmXmlNode> xml_rmt_ls;
+  xml_rmts.children(xml_rmt_ls, L"remote");
 
-  // search <entry> with specified identity
-  for(size_t i = 0; i < xml_ent_ls.size(); ++i) {
-    if(ident == xml_ent_ls[i].attrAsString(L"ident")) {
-      this->_curEntry = xml_ent_ls[i]; break;
+  // search <remote> with specified identity
+  for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
+    if(ident == xml_rmt_ls[i].attrAsString(L"ident")) {
+      this->_rmtCur = xml_rmt_ls[i]; break;
     }
   }
 
   // verify we found something
-  if(this->_curEntry.empty())
+  if(this->_rmtCur.empty())
     return false;
 
   OmXmlNode xml_node;
   wstring tmp_str1, tmp_str2;
   HBITMAP hBm_new, hBm_old;
 
-  this->setItemText(IDC_EC_OUT02, this->_curEntry.attrAsString(L"file"));
+  this->setItemText(IDC_EC_OUT02, this->_rmtCur.attrAsString(L"file"));
 
   // allow custom URL CheckBox
   this->enableItem(IDC_BC_CHK01, true);
 
-  // Check whether this entry have a Custom URL
-  if(this->_curEntry.hasChild(L"url")) {
+  // Check whether this <remote> have a Custom URL
+  if(this->_rmtCur.hasChild(L"url")) {
 
     this->enableItem(IDC_EC_INP03, true);
-    this->setItemText(IDC_EC_INP03, this->_curEntry.child(L"url").content());
+    this->setItemText(IDC_EC_INP03, this->_rmtCur.child(L"url").content());
     this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
 
   } else {
@@ -404,10 +410,10 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
   // custom URL save button disabled by default
   this->enableItem(IDC_BC_SAV01, false);
 
-  // check for entry dependencies
-  if(this->_curEntry.hasChild(L"dependencies")) {
+  // check for <remote> dependencies
+  if(this->_rmtCur.hasChild(L"dependencies")) {
 
-    xml_node = this->_curEntry.child(L"dependencies");
+    xml_node = this->_rmtCur.child(L"dependencies");
     std::vector<OmXmlNode> xml_ls;
     xml_node.children(xml_ls, L"ident");
 
@@ -436,9 +442,9 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
   // for default controls state
   bool has_snap = false;
 
-  // check for entry snapshot
-  if(this->_curEntry.hasChild(L"picture")) {
-    xml_node = this->_curEntry.child(L"picture");
+  // check for <remote> snapshot
+  if(this->_rmtCur.hasChild(L"picture")) {
+    xml_node = this->_rmtCur.child(L"picture");
 
     // decode the DataURI
     size_t jpg_size;
@@ -468,7 +474,7 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
     }
 
     if(!has_snap) {
-      // TODO: do something in case snapshot entry exist but is corrupted or invalid
+      // TODO: do something in case snapshot exist but is corrupted or invalid
     }
 
   }
@@ -488,9 +494,9 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
   // for default controls state
   bool has_desc = false;
 
-  // check for entry description
-  if(this->_curEntry.hasChild(L"description")) {
-    xml_node = this->_curEntry.child(L"description");
+  // check for <remote> description
+  if(this->_rmtCur.hasChild(L"description")) {
+    xml_node = this->_rmtCur.child(L"description");
 
     // decode the DataURI
     size_t zip_size;
@@ -527,19 +533,19 @@ bool OmUiToolRep::_selEntry(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmUiToolRep::_getDepsList(vector<wstring>& miss_list, const wstring& ident)
+int OmUiToolRep::_rmtGetDeps(vector<wstring>& miss_list, const wstring& ident)
 {
   // our missing result
   int miss = 0;
 
-  // get <entry> XML node by ident
-  OmXmlNode xml_node = this->_repoGetEnt(ident);
+  // get <remote> XML node by ident
+  OmXmlNode xml_rmt = this->_rmtGet(ident);
 
   // get list of dependencies
-  if(xml_node.hasChild(L"dependencies")) {
+  if(xml_rmt.hasChild(L"dependencies")) {
 
     std::vector<OmXmlNode> xml_dep_ls;
-    xml_node.child(L"dependencies").children(xml_dep_ls, L"ident");
+    xml_rmt.child(L"dependencies").children(xml_dep_ls, L"ident");
 
     bool unique;
     wstring dep_idt;
@@ -550,10 +556,10 @@ int OmUiToolRep::_getDepsList(vector<wstring>& miss_list, const wstring& ident)
       // get dependency identity
       dep_idt = xml_dep_ls[i].content();
 
-      // try to get entry with this identity
-      xml_dep = this->_repoGetEnt(dep_idt);
+      // try to get <remote> with this identity
+      xml_dep = this->_rmtGet(dep_idt);
 
-      // if entry not found, dependency is missing
+      // if <remote> not found, dependency is missing
       if(xml_dep.empty()) {
 
         // we add only if unique
@@ -571,7 +577,7 @@ int OmUiToolRep::_getDepsList(vector<wstring>& miss_list, const wstring& ident)
         continue;
       }
       // recurse process with dependency node
-      miss += this->_getDepsList(miss_list, dep_idt);
+      miss += this->_rmtGetDeps(miss_list, dep_idt);
     }
   }
   return miss;
@@ -586,7 +592,7 @@ void OmUiToolRep::_addDir_init(const wstring& path)
 
   pUiProgress->open(true);
   pUiProgress->setCaption(L"Add multiples package entries");
-  pUiProgress->setScItemText(L"Computes packages checksum");
+  pUiProgress->setScHeadText(L"Computes packages checksum");
 
   // keep path to folder to scan
   this->_addDir_path = path;
@@ -652,7 +658,7 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
     pUiProgress->setScItemText(Om_getFilePart(ls[i]).c_str());
 
     // proceed this package
-    self->_repAddEnt(ls[i]);
+    self->_rmtAdd(ls[i]);
 
     // step progress bar
     if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
@@ -686,11 +692,11 @@ void OmUiToolRep::_onBcNew()
     }
   }
 
-  // Unselect entry
-  this->_selEntry(L"");
+  // Unselect <remote>
+  this->_rmtSel(L"");
 
   // Initialize a new Repository XML def
-  this->_repoInit();
+  this->_repInit();
 
   // reset ListBox content
   this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
@@ -698,7 +704,7 @@ void OmUiToolRep::_onBcNew()
   // Set default title and download path to controls
   OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, xml_def.child(L"download").content());
+  this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
 }
 
 
@@ -723,28 +729,28 @@ void OmUiToolRep::_onBcOpen()
     return;
 
   // unselect all
-  this->_selEntry(L"");
+  this->_rmtSel(L"");
 
   // reset ListBox content
   this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
 
-  if(!this->_repoOpen(result))
+  if(!this->_repOpen(result))
     return;
 
   // Get Repository Title
   this->setItemText(IDC_EC_INP01, this->_condig.xml().child(L"title").content());
   // Get Download path
-  this->setItemText(IDC_EC_INP02, this->_condig.xml().child(L"download").content());
+  this->setItemText(IDC_EC_INP02, this->_condig.xml().child(L"downpath").content());
 
-  OmXmlNode xml_pkgs = this->_condig.xml().child(L"packages");
+  OmXmlNode xml_rmts = this->_condig.xml().child(L"remotes");
 
-  // get all <entry> nodes within <packages>
-  std::vector<OmXmlNode> xml_ent_ls;
-  xml_pkgs.children(xml_ent_ls, L"entry");
+  // get all <remote> nodes within <remotes>
+  std::vector<OmXmlNode> xml_rmt_ls;
+  xml_rmts.children(xml_rmt_ls, L"remote");
 
-  // Add each <entry> to ListBox
-  for(size_t i = 0; i < xml_ent_ls.size(); ++i) {
-    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(xml_ent_ls[i].attrAsString(L"ident")));
+  // Add each <remote> to ListBox
+  for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
+    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(xml_rmt_ls[i].attrAsString(L"ident")));
   }
 }
 
@@ -770,7 +776,7 @@ void OmUiToolRep::_onBcBrwPkg()
     return;
 
   // add package to repository
-  if(!this->_repAddEnt(result)) {
+  if(!this->_rmtAdd(result)) {
     wstring err = L"The file \""+result+L"\" is not valid Package file.";
     Om_dialogBoxErr(this->_hwnd, L"Error parsing Package file", err);
   }
@@ -819,21 +825,21 @@ void OmUiToolRep::_onBcRemPkg()
   if(lb_sel < 0)
     return;
 
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
   // get identity from ListBox string
   wchar_t iden_buf[OMM_ITM_BUFF];
   this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
-  // remove <entry> from XML definition
-  this->_repoRemEnt(iden_buf);
+  // remove <remote> from XML definition
+  this->_rmtRem(iden_buf);
 
-  // Unselect entry
-  this->_selEntry(L"");
+  // Unselect remote
+  this->_rmtSel(L"");
 
-  // Remove entry from ListBox
+  // Remove remote from ListBox
   this->msgItem(IDC_LB_PKG, LB_DELETESTRING, lb_sel, 0);
 
   // Enable or Disable Save as... button according ListBox content
@@ -853,15 +859,15 @@ void OmUiToolRep::_onLbPkglsSel()
   // enable or disable the Package "Remove" Button
   this->enableItem(IDC_BC_REM, (lb_sel >= 0));
 
-  // if any selection, change current entry
+  // if any selection, change current remote
   if(lb_sel >= 0) {
 
     // Get identity to select
     wchar_t iden_buf[OMM_ITM_BUFF];
     this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
-    // Select entry by identity
-    this->_selEntry(iden_buf);
+    // Select remote by identity
+    this->_rmtSel(iden_buf);
   }
 }
 
@@ -871,8 +877,8 @@ void OmUiToolRep::_onLbPkglsSel()
 ///
 void OmUiToolRep::_onBcSavUrl()
 {
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
   // Get URL from EditText
@@ -890,11 +896,11 @@ void OmUiToolRep::_onBcSavUrl()
     if(Om_isValidUrl(url_str)) {
 
       // Create node if needed
-      if(!this->_curEntry.hasChild(L"url"))
-        this->_curEntry.addChild(L"url");
+      if(!this->_rmtCur.hasChild(L"url"))
+        this->_rmtCur.addChild(L"url");
 
       // Defile new URL string
-      this->_curEntry.child(L"url").setContent(url_str);
+      this->_rmtCur.child(L"url").setContent(url_str);
 
       // echo changes in EditText
       this->setItemText(IDC_EC_INP03, url_str);
@@ -911,8 +917,8 @@ void OmUiToolRep::_onBcSavUrl()
   } else {
 
     // Remove <url> node
-    if(this->_curEntry.hasChild(L"url")) {
-      this->_curEntry.remChild(L"url");
+    if(this->_rmtCur.hasChild(L"url")) {
+      this->_rmtCur.remChild(L"url");
     }
   }
 
@@ -928,26 +934,26 @@ void OmUiToolRep::_onBcSavUrl()
 ///
 void OmUiToolRep::_onBcChkDeps()
 {
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
-  // get identity for this entry
-  wstring ident = this->_curEntry.attrAsString(L"ident");
+  // get identity for this remote
+  wstring ident = this->_rmtCur.attrAsString(L"ident");
 
   // Dependencies missing list
-  vector<wstring> miss_list;
+  vector<wstring> miss_ls;
 
   // go for recursive dependencies search
-  int missing = this->_getDepsList(miss_list, ident);
+  int miss_cnt = this->_rmtGetDeps(miss_ls, ident);
 
-  if(missing > 0) {
+  if(miss_cnt > 0) {
     // Warning message
     wstring wrn =   L"The package has dependencies which was "
                     "not found in the repository:\n\n";
 
-    for(unsigned i = 0; i < miss_list.size(); ++i)
-      wrn += L"    " + miss_list[i] + L"\n";
+    for(unsigned i = 0; i < miss_ls.size(); ++i)
+      wrn += L"    " + miss_ls[i] + L"\n";
 
     Om_dialogBoxWarn(this->_hwnd, L"Missing package dependencies", wrn);
 
@@ -966,8 +972,8 @@ void OmUiToolRep::_onBcChkDeps()
 ///
 void OmUiToolRep::_onBcBrwSnap()
 {
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
@@ -990,10 +996,10 @@ void OmUiToolRep::_onBcBrwSnap()
     OmXmlNode xml_pic;
 
     // retrieve or create <picture> child in <package>
-    if(this->_curEntry.hasChild(L"picture")) {
-      xml_pic = this->_curEntry.child(L"picture");
+    if(this->_rmtCur.hasChild(L"picture")) {
+      xml_pic = this->_rmtCur.child(L"picture");
     } else {
-      xml_pic = this->_curEntry.addChild(L"picture");
+      xml_pic = this->_rmtCur.addChild(L"picture");
     }
 
     // save snapshot data to <picture>
@@ -1023,13 +1029,13 @@ void OmUiToolRep::_onBcBrwSnap()
 ///
 void OmUiToolRep::_onBcDelSnap()
 {
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
-  // retrieve or create <picture> child in <package>
-  if(this->_curEntry.hasChild(L"picture")) {
-    this->_curEntry.remChild(L"picture");
+  // retrieve or create <picture> child in <remote>
+  if(this->_rmtCur.hasChild(L"picture")) {
+    this->_rmtCur.remChild(L"picture");
   }
 
   HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
@@ -1076,8 +1082,8 @@ void OmUiToolRep::_onBcBrwDesc()
 ///
 void OmUiToolRep::_onBcSavDesc()
 {
-  // check whether any <entry> is selected
-  if(this->_curEntry.empty())
+  // check whether any <remote> is selected
+  if(this->_rmtCur.empty())
     return;
 
   // get description string
@@ -1088,11 +1094,11 @@ void OmUiToolRep::_onBcSavDesc()
 
     OmXmlNode xml_des;
 
-    // retrieve or create <description> child in <package>
-    if(this->_curEntry.hasChild(L"description")) {
-      xml_des = this->_curEntry.child(L"description");
+    // retrieve or create <description> child in <remote>
+    if(this->_rmtCur.hasChild(L"description")) {
+      xml_des = this->_rmtCur.child(L"description");
     } else {
-      xml_des = this->_curEntry.addChild(L"description");
+      xml_des = this->_rmtCur.addChild(L"description");
     }
 
     // save description string to <description>
@@ -1100,9 +1106,9 @@ void OmUiToolRep::_onBcSavDesc()
 
   } else {
 
-    // retrieve or create <description> child in <package>
-    if(this->_curEntry.hasChild(L"description")) {
-      this->_curEntry.remChild(L"description");
+    // retrieve or create <description> child in <remote>
+    if(this->_rmtCur.hasChild(L"description")) {
+      this->_rmtCur.remChild(L"description");
     }
   }
 
@@ -1146,7 +1152,7 @@ void OmUiToolRep::_onBcSave()
   }
 
   // set download path
-  xml_def.child(L"download").setContent(item_str);
+  xml_def.child(L"downpath").setContent(item_str);
   // echo changes in EditText
   this->setItemText(IDC_EC_INP02, item_str);
 
@@ -1158,6 +1164,11 @@ void OmUiToolRep::_onBcSave()
   // send save dialog to user
   if(!Om_dialogSaveFile(result, this->_hwnd, L"Save Repository definition...", OMM_XML_FILES_FILTER, start))
     return;
+
+  // check for ".xml" extension, add it if needed
+  if(!Om_extensionMatches(result, L"xml")) {
+    result += L".xml";
+  }
 
   if(Om_isValidPath(result)) {
     if(Om_isFile(result)) {
@@ -1219,20 +1230,20 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_EC_INP01, L"Indicative title");
   this->_createTooltip(IDC_EC_INP02, L"Default download path");
 
-  this->_createTooltip(IDC_LB_PKG, L"Repository package entries list");
+  this->_createTooltip(IDC_LB_PKG, L"Repository remote package list");
 
-  this->_createTooltip(IDC_BC_BRW02, L"Add Package");
-  this->_createTooltip(IDC_BC_BRW03, L"Add all Packages from folder");
-  this->_createTooltip(IDC_BC_REM, L"Remove selected entry");
+  this->_createTooltip(IDC_BC_BRW02, L"Add package");
+  this->_createTooltip(IDC_BC_BRW03, L"Add all packages from folder");
+  this->_createTooltip(IDC_BC_REM, L"Remove selected package");
 
-  this->_createTooltip(IDC_BC_CHK01, L"Use custom URL for dowload");
+  this->_createTooltip(IDC_BC_CHK01, L"Use custom URL for download");
   this->_createTooltip(IDC_EC_INP03, L"Download URL prefix");
   this->_createTooltip(IDC_BC_SAV01, L"Save custom URL");
 
   this->_createTooltip(IDC_BC_CHK, L"Check dependencies availability");
 
-  this->_createTooltip(IDC_BC_BRW08, L"Select new entry snapshot");
-  this->_createTooltip(IDC_BC_DEL, L"Remove entry snapshot");
+  this->_createTooltip(IDC_BC_BRW08, L"Select new package snapshot");
+  this->_createTooltip(IDC_BC_DEL, L"Remove package snapshot");
 
   this->_createTooltip(IDC_BC_BRW09, L"Load description text");
   this->_createTooltip(IDC_BC_SAV02, L"Save descriptions changes");
@@ -1251,12 +1262,12 @@ void OmUiToolRep::_onInit()
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
 
   // Initialize new Repository definition XML scheme
-  this->_repoInit();
+  this->_repInit();
 
   // Set default title and download path to controls
   OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, xml_def.child(L"download").content());
+  this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
 }
 
 
@@ -1469,7 +1480,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     if(has_changed) {
-      // check whether ListBox have entry to be saved
+      // check whether ListBox have remote to be saved
       int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
       this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
     }

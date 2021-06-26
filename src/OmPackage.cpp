@@ -43,7 +43,7 @@
 ///
 /// \return The filled buffer as const char
 ///
-static void __OmPackage_getItemsFromDir(vector<OmPackageItem>* ls, const wstring& orig, const wstring& from)
+static void __OmPackage_getItemsFromDir(vector<OmPkgItem>* ls, const wstring& orig, const wstring& from)
 {
   wstring item;
   wstring root;
@@ -57,7 +57,7 @@ static void __OmPackage_getItemsFromDir(vector<OmPackageItem>* ls, const wstring
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
 
-      OmPackageItem pkg_item;
+      OmPkgItem pkg_item;
       pkg_item.cdri = -1;
       pkg_item.dest = PKGITEM_DEST_NUL;
 
@@ -98,6 +98,8 @@ OmPackage::OmPackage() :
   _type(0),
   _ident(),
   _hash(0),
+  _core(),
+  _version(),
   _name(),
   _src(),
   _srcDir(),
@@ -108,7 +110,6 @@ OmPackage::OmPackage() :
   _bckItemLs(),
   _ovrLs(),
   _desc(),
-  _version(),
   _image(),
   _error()
 {
@@ -124,6 +125,8 @@ OmPackage::OmPackage(OmLocation* pLoc) :
   _type(0),
   _ident(),
   _hash(0),
+  _core(),
+  _version(),
   _name(),
   _src(),
   _srcDir(),
@@ -134,7 +137,6 @@ OmPackage::OmPackage(OmLocation* pLoc) :
   _bckItemLs(),
   _ovrLs(),
   _desc(),
-  _version(),
   _image(),
   _error()
 {
@@ -254,7 +256,7 @@ bool OmPackage::srcParse(const wstring& path)
         // make sure src list is empty
         this->_srcItemLs.clear();
         // then we now must create the tree
-        OmPackageItem pkg_item;
+        OmPkgItem pkg_item;
         pkg_item.dest = PKGITEM_DEST_NUL;
         // here we go to gather files to install
         for(unsigned i = 0; i < zcd_count; ++i) {
@@ -352,7 +354,7 @@ bool OmPackage::srcParse(const wstring& path)
         // make sure src list is empty
         this->_srcItemLs.clear();
         // then we now must create the tree
-        OmPackageItem pkg_item;
+        OmPkgItem pkg_item;
         pkg_item.dest = PKGITEM_DEST_NUL;
         // we check ALL zip CDR entries at once to get all what we can
         for(unsigned i = 0; i < zcd_count; ++i) {
@@ -456,7 +458,7 @@ bool OmPackage::srcParse(const wstring& path)
 
   // parse raw name to get display name and potential version
   wstring vers;
-  if(Om_parsePkgIdent(this->_name, vers, this->_src, this->isZip(), true)) {
+  if(Om_parsePkgIdent(this->_name, this->_core, vers, this->_src, this->isZip(), true)) {
     this->_version.parse(vers);
   }
 
@@ -619,13 +621,13 @@ bool OmPackage::bckParse(const wstring& path)
   // the identity string saved in backup definition.
   if(!this->isType(PKG_TYPE_SRC)) {
     wstring vers;
-    if(Om_parsePkgIdent(this->_name, vers, this->_ident, false, true)) {
+    if(Om_parsePkgIdent(this->_name, this->_core, vers, this->_ident, false, true)) {
       this->_version.parse(vers);
     }
   }
 
   this->_bckItemLs.clear();
-  OmPackageItem bck_item;
+  OmPkgItem bck_item;
   OmXmlNode xml_item;
 
   // get list of installed files, they are listed in the
@@ -878,11 +880,11 @@ bool OmPackage::unbackup()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::footprint(vector<OmPackageItem>& footprint) const
+void OmPackage::footprint(vector<OmPkgItem>& footprint) const
 {
   // simulate package installation to have backup item list
   wstring path;
-  OmPackageItem  item;
+  OmPkgItem  item;
 
   for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
 
@@ -902,7 +904,7 @@ void OmPackage::footprint(vector<OmPackageItem>& footprint) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::ovrTest(const vector<OmPackageItem>& footprint) const
+bool OmPackage::ovrTest(const vector<OmPkgItem>& footprint) const
 {
   if(footprint.empty())
     return false;
@@ -1423,7 +1425,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   this->_bckItemLs.clear();
 
   // stuff for Backup item list generation
-  OmPackageItem  bck_item;
+  OmPkgItem  bck_item;
   OmXmlNode  xml_item;
   wstring app_file, bck_file, zcd_entry, bck_tree;
 

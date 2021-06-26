@@ -511,9 +511,16 @@ class OmDialog
     /// \brief On show virtual function.
     ///
     /// Virtual function to be defined by derived class, called when
-    /// WM_SHOWWINDOW dialog message is received.
+    /// WM_SHOWWINDOW with True wParam dialog message is received.
     ///
     virtual void _onShow();
+
+    /// \brief On hide virtual function.
+    ///
+    /// Virtual function to be defined by derived class, called when
+    /// WM_SHOWWINDOW with False wParam dialog message is received.
+    ///
+    virtual void _onHide();
 
     /// \brief On show virtual function.
     ///

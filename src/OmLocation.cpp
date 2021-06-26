@@ -29,7 +29,7 @@
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __OmLocation_pkgCompareName(const OmPackage* a, const OmPackage* b)
+static bool __pkg_comp_name_fn(const OmPackage* a, const OmPackage* b)
 {
   // test against the shorter string
   size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
@@ -59,6 +59,42 @@ static bool __OmLocation_pkgCompareName(const OmPackage* a, const OmPackage* b)
   return false;
 }
 
+/// \brief Remote package name comparison callback
+///
+/// std::sort callback comparison function for sorting
+/// remote package by name in alphabetical order.
+///
+/// \param[in]  a     : Left Remote package.
+/// \param[in]  b     : Right Remote package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __rmt_comp_name_fn(const OmRemote* a, const OmRemote* b)
+{
+  // test against the shorter string
+  size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
+
+  const wchar_t* a_srt = a->name().c_str();
+  const wchar_t* b_str = b->name().c_str();
+
+  // test for ASCII value greater than the other
+  for(unsigned i = 0; i < l; ++i) {
+    if(towupper(a_srt[i]) != towupper(b_str[i])) {
+      if(towupper(a_srt[i]) < towupper(b_str[i])) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // strings are equals in tester portion, sort by string size
+  if(a->name().size() < b->name().size())
+    return true;
+
+  return false;
+}
+
 
 /// \brief Package version comparison callback
 ///
@@ -70,10 +106,30 @@ static bool __OmLocation_pkgCompareName(const OmPackage* a, const OmPackage* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __OmLocation_pkgCompareVers(const OmPackage* a, const OmPackage* b)
+static bool __pkg_comp_vers_fn(const OmPackage* a, const OmPackage* b)
 {
   if(a->version() == b->version()) {
-    return __OmLocation_pkgCompareName(a, b);
+    return __pkg_comp_name_fn(a, b);
+  } else {
+    return (a->version() < b->version());
+  }
+}
+
+
+/// \brief Remote package version comparison callback
+///
+/// std::sort callback comparison function for sorting remote package
+/// by version ascending.
+///
+/// \param[in]  a     : Left Remote package.
+/// \param[in]  b     : Right Remote package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __rmt_comp_vers_fn(const OmRemote* a, const OmRemote* b)
+{
+  if(a->version() == b->version()) {
+    return __rmt_comp_name_fn(a, b);
   } else {
     return (a->version() < b->version());
   }
@@ -90,12 +146,52 @@ static bool __OmLocation_pkgCompareVers(const OmPackage* a, const OmPackage* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __OmLocation_pkgCompareStat(const OmPackage* a, const OmPackage* b)
+static bool __pkg_comp_stat_fn(const OmPackage* a, const OmPackage* b)
 {
   if(a->hasBck() && b->hasBck()) {
-    return __OmLocation_pkgCompareName(a, b);
+    return __pkg_comp_name_fn(a, b);
   } else {
     return (a->hasBck() && !b->hasBck());
+  }
+}
+
+
+/// \brief Remote package state comparison callback
+///
+/// std::sort callback comparison function for sorting remote package
+/// by state order.
+///
+/// \param[in]  a     : Left Remote package.
+/// \param[in]  b     : Right Remote package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __rmt_comp_stat_fn(const OmRemote* a, const OmRemote* b)
+{
+  if(a->state() == b->state()) {
+    return __rmt_comp_name_fn(a, b);
+  } else {
+    return (a->state() < b->state());
+  }
+}
+
+
+/// \brief Remote package size comparison callback
+///
+/// std::sort callback comparison function for sorting remote package
+/// by size order.
+///
+/// \param[in]  a     : Left Package.
+/// \param[in]  b     : Right Package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __rmt_comp_size_fn(const OmRemote* a, const OmRemote* b)
+{
+  if(a->bytes() == b->bytes()) {
+    return __rmt_comp_name_fn(a, b);
+  } else {
+    return (a->bytes() < b->bytes());
   }
 }
 
@@ -118,7 +214,8 @@ OmLocation::OmLocation(OmContext* pCtx) :
   _bckDirCust(false),
   _pkgLs(),
   _bckZipLevel(-1),
-  _pkgSorting(PKG_SORTING_NAME),
+  _pkgSorting(LS_SORT_NAME),
+  _rmtSorting(LS_SORT_NAME),
   _valid(false),
   _error()
 {
@@ -138,28 +235,7 @@ OmLocation::~OmLocation()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-inline void OmLocation::_pkgSort()
-{
- if(this->_pkgSorting & PKG_SORTING_STAT) //< sorting by status
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareStat);
-
-  if(this->_pkgSorting & PKG_SORTING_NAME) //< sorting by name (alphabetical order)
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareName);
-
-  if(this->_pkgSorting & PKG_SORTING_VERS) //< sorting by version (ascending)
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __OmLocation_pkgCompareVers);
-
-  // check whether we need a normal or reverse sorting
-  if(this->_pkgSorting & PKG_SORTING_REVERSE) {
-    std::reverse(this->_pkgLs.begin(), this->_pkgLs.end());
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmLocation::libSetSorting(unsigned sorting)
+void OmLocation::libSetSorting(OmLocLsSort sorting)
 {
   // we check if the requested sorting kind is the same as the currently
   // used, in this case, this mean the sorting order must be reversed
@@ -167,10 +243,10 @@ void OmLocation::libSetSorting(unsigned sorting)
   if(sorting & this->_pkgSorting) {
 
     // check if current sorting is reversed, then switch order
-    if(this->_pkgSorting & PKG_SORTING_REVERSE) {
-      this->_pkgSorting &= ~PKG_SORTING_REVERSE; //< remove reversed flag
+    if(this->_pkgSorting & LS_SORT_REVERSE) {
+      this->_pkgSorting &= ~LS_SORT_REVERSE; //< remove reversed flag
     } else {
-      this->_pkgSorting |= PKG_SORTING_REVERSE; //< add reversed flag
+      this->_pkgSorting |= LS_SORT_REVERSE; //< add reversed flag
     }
 
   } else {
@@ -182,9 +258,9 @@ void OmLocation::libSetSorting(unsigned sorting)
   if(this->_config.valid()) {
 
     if(this->_config.xml().hasChild(L"library_sort")) {
-      this->_config.xml().child(L"library_sort").setAttr(L"sort", (int)_pkgSorting);
+      this->_config.xml().child(L"library_sort").setAttr(L"sort", static_cast<int>(this->_pkgSorting));
     } else {
-      this->_config.xml().addChild(L"library_sort").setAttr(L"sort", (int)_pkgSorting);
+      this->_config.xml().addChild(L"library_sort").setAttr(L"sort", static_cast<int>(this->_pkgSorting));
     }
 
     this->_config.save();
@@ -334,22 +410,33 @@ bool OmLocation::open(const wstring& path)
     this->_pkgSorting = this->_config.xml().child(L"library_sort").attrAsInt(L"sort");
   }
 
+  // we check for saved remotes sorting
+  if(this->_config.xml().hasChild(L"remotes_sort")) {
+    this->_pkgSorting = this->_config.xml().child(L"remotes_sort").attrAsInt(L"sort");
+  }
+
   // Get network repository list
   if(this->_config.xml().hasChild(L"network")) {
 
-    OmXmlNode xml_network = this->_config.xml().child(L"network");
+    OmXmlNode xml_net = this->_config.xml().child(L"network");
+
+    if(xml_net.hasAttr(L"upgd_rename")) {
+      this->_upgdRename = xml_net.attrAsInt(L"upgd_rename");
+    } else {
+      this->_upgdRename = false;
+    }
 
     // check whether repository already exists
     vector<OmXmlNode> xml_rep_list;
-    xml_network.children(xml_rep_list, L"repo");
+    xml_net.children(xml_rep_list, L"repository");
 
     OmRepository* pRep;
 
     for(size_t i = 0; i < xml_rep_list.size(); ++i) {
       pRep = new OmRepository(this);
-      if(pRep->define(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
+      if(pRep->init(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
         this->_repLs.push_back(pRep);
-        verbose = L"Add Repository: \""+Om_fromUtf8(pRep->url().c_str())+L"\".";
+        verbose = L"Add Repository: \""+pRep->url()+L"\".";
         this->log(2, L"Location("+this->_title+L") Load", verbose);
       } else {
         delete pRep;
@@ -402,7 +489,13 @@ bool OmLocation::checkAccessLib()
   // checks whether folder exists
   if(Om_isDir(this->_libDir)) {
     // checks for proper permissions on folder
-    if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_READ)) {
+    if(Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_READ)) {
+      if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_WRITE)) {
+        this->_error = L"Library folder \""+this->_libDir+L"\"";
+        this->_error += OMM_STR_ERR_WRITE;
+        access_ok = false;
+      }
+    } else {
       this->_error =  L"Library folder \""+this->_libDir+L"\"";
       this->_error += OMM_STR_ERR_READ;
       access_ok = false;
@@ -592,11 +685,10 @@ bool OmLocation::libRefresh()
   if(this->_pkgLs.size()) {
 
     // get content of the package Library folder
-    if(this->_context->_manager->legacySupport()) {
-      Om_lsAll(&path_ls, this->_libDir, true);
-    } else {
-      Om_lsFile(&path_ls, this->_libDir, true);
-    }
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.omp", true);
+    if(this->_context->_manager->legacySupport())
+      Om_lsDir(&path_ls, this->_libDir, true);
 
     bool in_list;
 
@@ -655,9 +747,9 @@ bool OmLocation::libRefresh()
       }
       // This is a new Package Source
       if(!in_list) {
-        changed = true;
         pPkg = new OmPackage(this);
         if(pPkg->srcParse(path_ls[i])) {
+          changed = true;
           this->_pkgLs.push_back(pPkg);
         } else {
           delete pPkg;
@@ -670,7 +762,9 @@ bool OmLocation::libRefresh()
     changed = true;
 
     // get Backup folder content
-    Om_lsAll(&path_ls, this->_bckDir, true);
+    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.zip", true);
+    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.omk", true);
+    Om_lsDir(&path_ls, this->_bckDir, true);
 
     // add all available and valid Backups
     for(size_t i = 0; i < path_ls.size(); ++i) {
@@ -682,13 +776,12 @@ bool OmLocation::libRefresh()
       }
     }
 
-    // get Backup folder content
-    if(this->_context->_manager->legacySupport()) {
-      // for legacy support, we also use folders as Package Source
-      Om_lsAll(&path_ls, this->_libDir, true);
-    } else {
-      Om_lsFile(&path_ls, this->_libDir, true);
-    }
+    // get Library folder content
+    path_ls.clear();
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.omp", true);
+    if(this->_context->_manager->legacySupport())
+      Om_lsDir(&path_ls, this->_libDir, true);
 
     bool has_bck;
 
@@ -920,6 +1013,30 @@ void OmLocation::setBckZipLevel(int level)
     } else {
       this->_config.xml().addChild(L"backup_comp").setAttr(L"level", (int)level);
     }
+
+    this->_config.save();
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::setUpgdRename(bool enable)
+{
+  if(this->_config.valid()) {
+
+    this->_upgdRename = enable;
+
+    OmXmlNode xml_net;
+
+    if(!this->_config.xml().hasChild(L"network")) {
+      xml_net = this->_config.xml().addChild(L"network");
+    } else {
+      xml_net = this->_config.xml().child(L"network");
+    }
+
+    xml_net.setAttr(L"upgd_rename", static_cast<int>(enable ? 1 : 0));
 
     this->_config.save();
   }
@@ -1275,8 +1392,8 @@ void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& 
   }
 
   // get installation footprint of packages to be installed
-  vector<OmPackageItem> footp;
-  vector<vector<OmPackageItem>> footp_ls;
+  vector<OmPkgItem> footp;
+  vector<vector<OmPkgItem>> footp_ls;
 
   // get overlaps list including simulated installation
   for(size_t i = 0; i < ins_ls.size(); ++i) {
@@ -1539,7 +1656,7 @@ bool OmLocation::repAdd(const wstring& base, const wstring& name)
 
     // check whether repository already exists
     vector<OmXmlNode> xml_rep_list;
-    xml_net.children(xml_rep_list, L"repo");
+    xml_net.children(xml_rep_list, L"repository");
 
     for(size_t i = 0; i < xml_rep_list.size(); ++i) {
       if(base == xml_rep_list[i].attrAsString(L"base") && name == xml_rep_list[i].attrAsString(L"name")) {
@@ -1550,7 +1667,7 @@ bool OmLocation::repAdd(const wstring& base, const wstring& name)
     }
 
     // add repository entry in definition
-    OmXmlNode xml_rep = xml_net.addChild(L"repo");
+    OmXmlNode xml_rep = xml_net.addChild(L"repository");
     xml_rep.setAttr(L"base", base);
     xml_rep.setAttr(L"name", name);
 
@@ -1560,7 +1677,7 @@ bool OmLocation::repAdd(const wstring& base, const wstring& name)
     OmRepository* pRep = new OmRepository(this);
 
     // set repository parameters
-    if(!pRep->define(base, name)) {
+    if(!pRep->init(base, name)) {
       this->log(1, L"Location("+this->_title+L") Add Repository", pRep->lastError());
       delete pRep;
       return false;
@@ -1589,7 +1706,7 @@ void OmLocation::repRem(unsigned id)
 
       // check whether repository already exists
       vector<OmXmlNode> xml_rep_list;
-      xml_net.children(xml_rep_list, L"repo");
+      xml_net.children(xml_rep_list, L"repository");
 
       for(size_t i = 0; i < xml_rep_list.size(); ++i) {
         if(pRep->base() == xml_rep_list[i].attrAsString(L"base") &&
@@ -1614,10 +1731,322 @@ void OmLocation::repRem(unsigned id)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmLocation::repQuery(Om_progressCb progress_cb, void* user_ptr)
+{
+  // check whether we have something to proceed
+  if(this->_repLs.empty())
+    return true;
+
+  // initialize progression
+  size_t progress_tot, progress_cur;
+  if(progress_cb) {
+    progress_tot = this->_repLs.size();
+    progress_cur = 0;
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr))
+      return true;
+  }
+
+  bool has_error = false;
+
+  // clear remote package list
+  this->_rmtLs.clear();
+
+  this->log(2, L"Location("+this->_title+L") Network refresh", L"Querying "+to_wstring(this->_repLs.size())+L" repository.");
+
+  unsigned c, n = 0;
+
+  for(size_t i = 0; i < this->_repLs.size(); ++i) {
+
+    if(this->_repLs[i]->query()) {
+      n++;
+    } else {
+      this->_error =  L"Repository \""+this->_repLs[i]->url()+L"-"+this->_repLs[i]->name()+L"\" ";
+      this->_error += L"query failed: " + this->_repLs[i]->lastError();
+      this->log(1, L"Location("+this->_title+L") Network refresh", this->_error);
+      has_error = true;
+    }
+
+    // add/merge remote packages to list
+    c = this->_repLs[i]->rmtMerge(this->_rmtLs);
+    this->log(2, L"Location("+this->_title+L") Network refresh", to_wstring(c)+L" new remote packages merged.");
+
+    // call progression callback
+    if(progress_cb) {
+      progress_cur++;
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, this->_repLs[i]->url().c_str()))
+        break;
+    }
+  }
+
+  this->log(2, L"Location("+this->_title+L") Network refresh", to_wstring(n)+L" repository successfully parsed.");
+
+  // force refresh
+  this->rmtRefresh(true);
+
+  return !has_error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::rmtSetSorting(OmLocLsSort sorting)
+{
+  // we check if the requested sorting kind is the same as the currently
+  // used, in this case, this mean the sorting order must be reversed
+
+  if(sorting & this->_rmtSorting) {
+
+    // check if current sorting is reversed, then switch order
+    if(this->_rmtSorting & LS_SORT_REVERSE) {
+      this->_rmtSorting &= ~LS_SORT_REVERSE; //< remove reversed flag
+    } else {
+      this->_rmtSorting |= LS_SORT_REVERSE; //< add reversed flag
+    }
+
+  } else {
+
+    this->_rmtSorting = sorting;
+  }
+
+  // save the current sorting
+  if(this->_config.valid()) {
+
+    if(this->_config.xml().hasChild(L"remotes_sort")) {
+      this->_config.xml().child(L"remotes_sort").setAttr(L"sort", static_cast<int>(this->_rmtSorting));
+    } else {
+      this->_config.xml().addChild(L"remotes_sort").setAttr(L"sort", static_cast<int>(this->_rmtSorting));
+    }
+
+    this->_config.save();
+  }
+
+  // finally sort packages
+  this->_rmtSort();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmLocation::rmtRefresh(bool force)
+{
+  bool changed = false;
+
+  // refresh library first
+  if(this->libRefresh() || force) {
+
+    bool in_library;
+    unsigned new_state;
+
+    // compare remote package list to define remote status
+    for(size_t r = 0; r < this->_rmtLs.size(); ++r) {
+
+      new_state = this->_rmtLs[r]->_state;
+      in_library = false;
+
+      // remove relevant states, but not all of them to
+      // keep states such as downloading or error
+      new_state &= ~RMT_STATE_UPG;
+      new_state &= ~RMT_STATE_DNG;
+      new_state &= ~RMT_STATE_LOC;
+      new_state &= ~RMT_STATE_NEW;
+
+      for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
+        // search for same core but different version
+        if(this->_rmtLs[r]->core() == this->_pkgLs[p]->core()) {
+          // check whether this identity matches
+          if(this->_rmtLs[r]->ident() != this->_pkgLs[p]->ident()) {
+            // check version changes
+            if(this->_rmtLs[r]->version() > this->_pkgLs[p]->version()) {
+              new_state |= RMT_STATE_UPG;
+              // add superseded package
+              this->_rmtLs[r]->_supLs.push_back(this->_pkgLs[p]);
+            } else {
+              new_state |= RMT_STATE_DNG;
+            }
+          } else {
+            // same identity, package already exists locally
+            new_state |= RMT_STATE_LOC;
+            in_library = true;
+          }
+          continue;
+        }
+      }
+
+      if(!in_library) {
+        new_state |= RMT_STATE_NEW;
+      }
+
+      if(new_state != this->_rmtLs[r]->_state) {
+        this->_rmtLs[r]->_state = new_state;
+        changed = true;
+      }
+    }
+  }
+
+  if(changed || force)
+    this->_rmtSort();
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmLocation::rmtRefresh " << (changed ? "+-" : "==") << "\n";
+  #endif
+
+  return changed;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& sel_ls) const
+{
+  // gather dependencies and create missing lists
+  vector<wstring> idt_ls;
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+
+    idt_ls.clear();
+    this->rmtGetDepends(dnl_ls, idt_ls, sel_ls[i]);
+
+    for(size_t j = 0; j < idt_ls.size(); ++j) {
+      // add uniques only
+      if(std::find(mis_ls.begin(), mis_ls.end(), idt_ls[j]) == mis_ls.end()) {
+        mis_ls.push_back(idt_ls[j]);
+      }
+    }
+  }
+
+  // create the extra install list
+  for(size_t i = 0; i < dnl_ls.size(); ++i) {
+    // add only if not in the initial selection
+    if(std::find(sel_ls.begin(), sel_ls.end(), dnl_ls[i]) == sel_ls.end()) {
+      dep_ls.push_back(dnl_ls[i]);
+    }
+  }
+
+  // compose the final install list
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+    // add only if not already in install list
+    if(std::find(dnl_ls.begin(), dnl_ls.end(), sel_ls[i]) == dnl_ls.end()) {
+      dnl_ls.push_back(sel_ls[i]);
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmLocation::rmtGetDepends(vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const OmRemote* rmt) const
+{
+  size_t n = 0;
+
+  bool in_library;
+  bool missing;
+
+  for(size_t i = 0; i < rmt->depCount(); ++i) {
+
+    in_library = false;
+
+    // we first check if we found the dependency in the local package list
+    for(size_t j = 0; j < this->_pkgLs.size(); ++j) {
+
+      // rely only on packages
+      if(!this->_pkgLs[j]->isZip())
+        continue;
+
+      if(rmt->depGet(i) == this->_pkgLs[j]->ident()) {
+        in_library = true; break;
+      }
+    }
+
+    // we found the dependency in library, we can go next candidate
+    if(in_library) continue;
+
+    missing = true;
+
+    // now check if we found it in remote package list
+    for(size_t j = 0; j < this->_rmtLs.size(); ++j) {
+
+      if(rmt->depGet(i) == this->_rmtLs[j]->ident()) {
+
+        n += this->rmtGetDepends(dep_ls, mis_ls, this->_rmtLs[j]);
+        // we add to list only if unique and not already installed, this allow
+        // us to get a consistent dependency list for a bunch of package by
+        // calling this function for each package without clearing the list
+        if(std::find(dep_ls.begin(), dep_ls.end(), this->_rmtLs[j]) == dep_ls.end()) {
+          dep_ls.push_back(this->_rmtLs[j]);
+          ++n;
+        }
+
+        missing = false;
+        break;
+      }
+    }
+
+    if(missing) {
+      // we add to list only if unique
+      if(std::find(mis_ls.begin(), mis_ls.end(), rmt->depGet(i)) == mis_ls.end()) {
+        mis_ls.push_back(rmt->depGet(i));
+      }
+    }
+  }
+
+  return n;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmLocation::log(unsigned level, const wstring& head, const wstring& detail)
 {
   wstring log_str = L"Context("; log_str.append(this->_context->title());
   log_str.append(L"):: "); log_str.append(head);
 
   this->_context->log(level, log_str, detail);
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+inline void OmLocation::_pkgSort()
+{
+ if(this->_pkgSorting & LS_SORT_STAT) //< sorting by status
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_stat_fn);
+
+  if(this->_pkgSorting & LS_SORT_NAME) //< sorting by name (alphabetical order)
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_name_fn);
+
+  if(this->_pkgSorting & LS_SORT_VERS) //< sorting by version (ascending)
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_vers_fn);
+
+  // check whether we need a normal or reverse sorting
+  if(this->_pkgSorting & LS_SORT_REVERSE) {
+    std::reverse(this->_pkgLs.begin(), this->_pkgLs.end());
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+inline void OmLocation::_rmtSort()
+{
+ if(this->_rmtSorting & LS_SORT_STAT) //< sorting by status
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_stat_fn);
+
+  if(this->_rmtSorting & LS_SORT_NAME) //< sorting by name (alphabetical order)
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_name_fn);
+
+  if(this->_rmtSorting & LS_SORT_VERS) //< sorting by version (ascending)
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_vers_fn);
+
+  if(this->_rmtSorting & LS_SORT_SIZE) //< sorting by version (ascending)
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_size_fn);
+
+  // check whether we need a normal or reverse sorting
+  if(this->_rmtSorting & LS_SORT_REVERSE) {
+    std::reverse(this->_rmtLs.begin(), this->_rmtLs.end());
+  }
 }

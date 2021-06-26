@@ -19,6 +19,8 @@
 
 #include <OmDialog.h>
 
+#define LOC_PROP_NET_UPGD_RENAME   0
+
 /// \brief Location Properties / Network tab child
 ///
 /// OmDialog class derived for Location Properties / Network tab child dialog window
@@ -82,6 +84,8 @@ class OmUiPropLocNet : public OmDialog
     void                _onBcChkRepo();
 
     void                _onBcDelRepo();
+
+    void                _onBcRadUpg();
 
     void                _onInit();
 

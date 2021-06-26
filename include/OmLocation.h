@@ -25,10 +25,18 @@
 
 class OmContext;
 
-#define PKG_SORTING_STAT 0x1
-#define PKG_SORTING_NAME 0x2
-#define PKG_SORTING_VERS 0x4
-#define PKG_SORTING_REVERSE 0x100
+
+/// \brief List sorting types
+///
+/// Location packages and remote packages lists sorting type.
+///
+enum OmLocLsSort : unsigned {
+  LS_SORT_STAT = 0x1,
+  LS_SORT_NAME = 0x2,
+  LS_SORT_VERS = 0x4,
+  LS_SORT_SIZE = 0x8,
+  LS_SORT_REVERSE = 0x100
+};
 
 /// \brief Location object for Context.
 ///
@@ -162,6 +170,16 @@ class OmLocation
     ///
     int bckZipLevel() const {
       return _bckZipLevel;
+    }
+
+    /// \brief Get upgrade rename mode.
+    ///
+    /// Returns defined upgrade by rename mode for remote packages.
+    ///
+    /// \return Upgrade rename mode enabled.
+    ///
+    bool upgdRename() const {
+      return _upgdRename;
     }
 
     /// \brief Verify Library folder access.
@@ -299,6 +317,14 @@ class OmLocation
     ///
     void setBckZipLevel(int level);
 
+    /// \brief Set upgrade rename mode.
+    ///
+    /// Defines and save upgrade rename mode for remote packages.
+    ///
+    /// \param[in]  enable   : Enable or upgrade rename mode.
+    ///
+    void setUpgdRename(bool always);
+
     /// \brief Clear Library.
     ///
     /// Empty and reset the packages list.
@@ -324,13 +350,14 @@ class OmLocation
     /// \brief Set package list sorting.
     ///
     /// Sets the package list sorting, available values are the following:
-    /// - \c PKG_SORTING_STAT : Sort by installation state
-    /// - \c PKG_SORTING_NAME : Sort by name
-    /// - \c PKG_SORTING_VERS : Sort by version
+    /// - \c LS_SORT_STAT : Sort by installation state
+    /// - \c LS_SORT_NAME : Sort by name
+    /// - \c LS_SORT_VERS : Sort by version
+    /// - \c LS_SORT_SIZE : Sort by size
     ///
     /// \param[in]  sorting : Package list sorting type.
     ///
-    void libSetSorting(unsigned sorting);
+    void libSetSorting(OmLocLsSort sorting);
 
     /// \brief Get package list sorting.
     ///
@@ -499,74 +526,47 @@ class OmLocation
     /// Retrieve the list of Packages the specified Package could overlap at
     /// installation.
     ///
-    /// \param[in]  pkg_list  : Array vector of Package object pointer to receive found packages.
-    /// \param[in]  package   : Package to get backup overlap.
+    /// \param[in]  ovr_ls  : Array vector of Package object pointer to receive found packages.
+    /// \param[in]  pkg     : Package to get backup overlap.
     ///
     /// \return Count of Package found.
     ///
-    size_t pkgFindOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t pkgFindOverlaps(vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
     /// \brief Get installation overlap list.
     ///
     /// Retrieve the list of Packages the specified Package could overlap at
     /// installation.
     ///
-    /// \param[in]  hash_list : Array vector of uint64_t to receive found packages Hash.
-    /// \param[in]  package   : Package to get backup overlap.
+    /// \param[in]  hash_ls : Array vector of uint64_t to receive found packages Hash.
+    /// \param[in]  pkg     : Package to get backup overlap.
     ///
     /// \return Count of Package found.
     ///
-    size_t pkgFindOverlaps(vector<uint64_t>& hash_list, const OmPackage* package) const;
+    size_t pkgFindOverlaps(vector<uint64_t>& hash_ls, const OmPackage* pkg) const;
 
     /// \brief Get installation dependency list.
     ///
     /// Retrieve the package installation dependencies.
     ///
-    /// \param[in]  pkg_list  : Array vector of Package pointer to receive found packages.
-    /// \param[in]  miss_list : Array vector of Package pointer to receive missing packages name.
-    /// \param[in]  i         : Package index in Library to get installation dependencies.
+    /// \param[in]  dep_ls  : Array vector of Package pointer to receive found packages.
+    /// \param[in]  mis_ls  : Array vector of Package pointer to receive missing packages name.
+    /// \param[in]  pkg     : Package to get installation dependencies.
     ///
     /// \return Count of Package found.
     ///
-    size_t pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, unsigned i) const {
-      return pkgGetDepends(pkg_list, miss_list, _pkgLs[i]);
-    }
-
-    /// \brief Get installation dependency list.
-    ///
-    /// Retrieve the package installation dependencies.
-    ///
-    /// \param[in]  pkg_list  : Array vector of Package pointer to receive found packages.
-    /// \param[in]  miss_list : Array vector of Package pointer to receive missing packages name.
-    /// \param[in]  package   : Package to get installation dependencies.
-    ///
-    /// \return Count of Package found.
-    ///
-    size_t pkgGetDepends(vector<OmPackage*>& pkg_list, vector<wstring>& miss_list, const OmPackage* package) const;
+    size_t pkgGetDepends(vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const OmPackage* pkg) const;
 
     /// \brief Get backup overlaps list.
     ///
     /// Retrieve list of overlapping installed packages of the specified package.
     ///
-    /// \param[in]  pkg_list  : Array vector of Package pointer to receive list.
-    /// \param[in]  i         : Package index in Library to get backup overlaps.
+    /// \param[in]  ovr_ls  : Array vector of Package pointer to receive list.
+    /// \param[in]  pkg     : Package to get backup overlaps.
     ///
     /// \return Count of Package found.
     ///
-    size_t bckGetOverlaps(vector<OmPackage*>& pkg_list, unsigned i) const {
-      return bckGetOverlaps(pkg_list, _pkgLs[i]);
-    }
-
-    /// \brief Get backup overlaps list.
-    ///
-    /// Retrieve list of overlapping installed packages of the specified package.
-    ///
-    /// \param[in]  pkg_list  : Array vector of Package pointer to receive list.
-    /// \param[in]  package   : Package to get backup overlaps.
-    ///
-    /// \return Count of Package found.
-    ///
-    size_t bckGetOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t bckGetOverlaps(vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
     /// \brief check backup overlap.
     ///
@@ -586,13 +586,13 @@ class OmLocation
     /// Checks whether the given package backup is overlapped by one or more
     /// other package(s).
     ///
-    /// \param[in]  package     : Package to checks backup overlap.
+    /// \param[in]  pkg   : Package to checks backup overlap.
     ///
     /// \return True if package is overlapped, false otherwise.
     ///
-    bool bckOverlapped(const OmPackage* package) const {
+    bool bckOverlapped(const OmPackage* pkg) const {
       for(size_t i = 0; i < _pkgLs.size(); ++i) {
-        if(_pkgLs[i]->ovrHas(package->_hash))
+        if(_pkgLs[i]->ovrHas(pkg->_hash))
           return true;
       }
       return false;
@@ -602,12 +602,12 @@ class OmLocation
     ///
     /// Retrieve list of packages that depend on this installed package.
     ///
-    /// \param[out] pkg_list  : Array vector of Package pointer to receive list.
-    /// \param[in]  package   : Package to get restoration dependencies.
+    /// \param[out] pkg_ls  : Array vector of Package pointer to receive list.
+    /// \param[in]  pkg     : Package to get restoration dependencies.
     ///
     /// \return Count of additional package found.
     ///
-    size_t bckGetNeedies(vector<OmPackage*>& pkg_list, const OmPackage* package) const;
+    size_t bckGetNeedies(vector<OmPackage*>& pkg_ls, const OmPackage* pkg) const;
 
     /// \brief Get backup extra list.
     ///
@@ -622,14 +622,14 @@ class OmLocation
     /// list, but can be costly on huge packages list with lot of overlaps and
     /// dependencies.
     ///
-    /// \param[out] pkg_ls  : Output sorted and cumulative list of package which overlaps and depend on the specified one.
+    /// \param[out] ext_ls  : Output sorted and cumulative list of package which overlaps and depend on the specified one.
     /// \param[out] dep_ls  : Output list of packages which depend on the specified one.
     /// \param[out] ovr_ls  : Output list of packages which overlaps the specified one.
     /// \param[in]  pkg     : Package to get lists from.
     ///
     /// \return Count of additional package found.
     ///
-    size_t bckGetExtras(vector<OmPackage*>& pkg_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
+    size_t bckGetExtras(vector<OmPackage*>& ext_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
     /// \brief Get repository URL count.
     ///
@@ -672,6 +672,110 @@ class OmLocation
     ///
     void repRem(unsigned i);
 
+    /// \brief Query repositories.
+    ///
+    /// Query network repositories to refresh all local remote packages.
+    ///
+    /// \param[in]  progress_cb : Optional progression callback function.
+    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
+    ///
+    /// \return True if operation succeed, false if error occurred.
+    ///
+    bool repQuery(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+
+    /// \brief Refresh Remote list.
+    ///
+    /// Refresh remote package state against local packages lst.
+    ///
+    /// \param[in] force    : Force refresh even if no changes occurred in Library.
+    ///
+    /// \return True if any remote package state changed, false otherwise.
+    ///
+    bool rmtRefresh(bool force = false);
+
+    /// \brief Set remote package list sorting.
+    ///
+    /// Sets the remote package list sorting, available values are the following:
+    /// - \c LS_SORT_STAT : Sort by installation state
+    /// - \c LS_SORT_NAME : Sort by name
+    /// - \c LS_SORT_VERS : Sort by version
+    /// - \c LS_SORT_SIZE : Sort by size
+    ///
+    /// \param[in]  sorting : Package list sorting type.
+    ///
+    void rmtSetSorting(OmLocLsSort sorting);
+
+    /// \brief Get remote package list sorting.
+    ///
+    /// Sets the remote package list sorting.
+    ///
+    /// \return current remote package sorting mask.
+    ///
+    unsigned rmtGetSorting() const {
+      return _rmtSorting;
+    }
+
+    /// \brief Get package count.
+    ///
+    /// Returns current package count in library.
+    ///
+    /// \return Package count.
+    ///
+    size_t rmtCount() const {
+      return _rmtLs.size();
+    }
+
+    /// \brief Get package.
+    ///
+    /// Returns package at index.
+    ///
+    /// \param[in]  i       : Package index to get.
+    ///
+    /// \return Package.
+    ///
+    OmRemote* rmtGet(unsigned i) const {
+      return _rmtLs[i];
+    }
+
+    /// \brief Find package by hash.
+    ///
+    /// Find package by its computed hash.
+    ///
+    /// \param[in] hash  : Package hash to search.
+    ///
+    /// \return Package or nullptr if not found.
+    ///
+    OmRemote* rmtFind(uint64_t hash) const {
+      for(size_t i = 0; i < _rmtLs.size(); ++i) {
+        if(_rmtLs[i]->hash() == hash) return _rmtLs[i];
+      }
+      return nullptr;
+    }
+
+    /// \brief Prepare remote packages download.
+    ///
+    /// Creates the full installation list, additional install list and missing
+    /// dependencies list from the given initial remote packages download selection.
+    ///
+    /// \param[out] dnl_ls  : Output full list of remote packages to be downloaded.
+    /// \param[out] dep_ls  : Output list of additional dependencies remote packages to be downloaded.
+    /// \param[out] mis_ls  : Output list of missing dependencies identities.
+    /// \param[in]  sel_ls  : Input initial packages install selection to be downloaded.
+    ///
+    void rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& sel_ls) const;
+
+    /// \brief Get remote package dependency list.
+    ///
+    /// Retrieve the remote package download dependencies.
+    ///
+    /// \param[in]  dep_ls  : Array vector of Remote package pointer to receive found packages.
+    /// \param[in]  mis_ls  : Array vector of Remote package pointer to receive missing packages name.
+    /// \param[in]  rmt     : Remote package to get download dependencies.
+    ///
+    /// \return Count of remote package found.
+    ///
+    size_t rmtGetDepends(vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const OmRemote* rmt) const;
+
     /// \brief Add log.
     ///
     /// Add entry to log file.
@@ -681,6 +785,8 @@ class OmLocation
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     void                _pkgSort();
+
+    void                _rmtSort();
 
     OmContext*          _context;
 
@@ -713,6 +819,12 @@ class OmLocation
     unsigned            _pkgSorting;
 
     vector<OmRepository*>  _repLs;
+
+    vector<OmRemote*>   _rmtLs;
+
+    bool                _upgdRename;
+
+    unsigned            _rmtSorting;
 
     bool                _valid;
 

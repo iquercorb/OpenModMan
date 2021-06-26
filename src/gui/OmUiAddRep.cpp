@@ -111,7 +111,7 @@ void OmUiAddRep::_onBcChk()
 
   this->_testLog(L"HTTP GET request: "+url+L"\r\n");
 
-  if(sock.httpGet(Om_toUtf8(url), data)) {
+  if(sock.httpGet(url, data)) {
 
     this->_testLog(L"HTTP GET succeed: "+to_wstring(data.size())+L" bytes received\r\n");
 
@@ -181,10 +181,10 @@ bool OmUiAddRep::_onBcOk()
     Om_dialogBoxErr(this->_hwnd, L"Repository creation failed", this->_pLoc->lastError());
   }
 
-  // refresh parent dialog
-  this->parent()->refresh();
-
   this->quit();
+
+  // refresh parent dialog
+  this->root()->refresh();
 
   return true;
 }

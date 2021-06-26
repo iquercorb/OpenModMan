@@ -171,6 +171,15 @@ void OmUiPropLocNet::_onBcChkRepo()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropLocNet::_onBcRadUpg()
+{
+  this->setChParam(LOC_PROP_NET_UPGD_RENAME, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropLocNet::_onInit()
 {
   // Set buttons inner icons
@@ -185,6 +194,15 @@ void OmUiPropLocNet::_onInit()
   this->_createTooltip(IDC_BC_EDI,    L"Test repository availability");
 
   this->enableItem(IDC_SC_STATE, false);
+
+  this->_createTooltip(IDC_BC_CHK01,  L"Enable upgrade always download mode");
+
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
+
+  // set Upgrade Rename
+  this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !pLoc->upgdRename());
+  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, pLoc->upgdRename());
+
 
   // Update values
   this->_onRefresh();
@@ -210,6 +228,13 @@ void OmUiPropLocNet::_onResize()
   // Test button & entry
   this->_setItemPos(IDC_BC_CHK, 70, 90, 50, 14);
   this->_setItemPos(IDC_SC_STATE, 124, 92, this->width()-137, 13);
+
+  // Package upgrade label
+  this->_setItemPos(IDC_SC_LBL03, 5, 120, 120, 9);
+  // Move to trash RadioButton
+  this->_setItemPos(IDC_BC_RAD01, 70, 120, 160, 9);
+  // Rename RadioButton
+  this->_setItemPos(IDC_BC_RAD02, 70, 135, 160, 9);
 }
 
 
@@ -270,6 +295,11 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_CHK:
       this->_onBcChkRepo();
+      break;
+
+    case IDC_BC_RAD01:
+    case IDC_BC_RAD02:
+      this->_onBcRadUpg();
       break;
     }
   }

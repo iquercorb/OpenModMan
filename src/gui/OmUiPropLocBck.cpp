@@ -74,7 +74,7 @@ void OmUiPropLocBck::setChParam(unsigned i, bool en)
 ///
 void OmUiPropLocBck::_onCkBoxZip()
 {
-  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
 
   this->enableItem(IDC_SC_LBL01, bm_chk);
   this->enableItem(IDC_CB_LVL, bm_chk);

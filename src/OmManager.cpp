@@ -186,10 +186,16 @@ void OmManager::saveWindowRect(const RECT& rect)
       window = this->_config.xml().addChild(L"window");
     }
 
-    window.setAttr(L"left", (int)rect.left);
-    window.setAttr(L"top", (int)rect.top);
-    window.setAttr(L"right", (int)rect.right);
-    window.setAttr(L"bottom", (int)rect.bottom);
+    // prevent evil values
+    int l = (rect.left >= 0 && rect.left < 2000) ? rect.left : 0;
+    int t = (rect.top >= 0 && rect.top < 2000) ? rect.top : 0;
+    int r = (rect.right >= 0 && rect.right < 2000) ? rect.right : (l + 505);
+    int b = (rect.bottom >= 0 && rect.bottom < 2000) ? rect.bottom : (t + 340);
+
+    window.setAttr(L"left", l);
+    window.setAttr(L"top", t);
+    window.setAttr(L"right", r);
+    window.setAttr(L"bottom", b);
 
     this->_config.save();
   }
@@ -440,6 +446,14 @@ void OmManager::setLegacySupport(bool enable)
     }
 
     this->_config.save();
+  }
+
+  // refresh all library for all locations
+  for(size_t i = 0; i < this->_ctxLs.size(); ++i) {
+    for(size_t j = 0; j < this->_ctxLs[i]->locCount(); ++j) {
+      this->_ctxLs[i]->locGet(j)->libClear();
+      this->_ctxLs[i]->locGet(j)->libRefresh();
+    }
   }
 }
 

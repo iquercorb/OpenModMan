@@ -78,11 +78,63 @@ class OmUiMainNet : public OmDialog
     ///
     /// Select or unselect Location then refresh dialog.
     ///
-    /// \param[in]  i  Index of Location to select or -1 to select none.
+    /// \param[in]  i     : Index of Location to select or -1 to select none.
     ///
     void locSel(int i);
 
+    /// \brief Download selection
+    ///
+    /// Launch the download for the selected remote packages.
+    ///
+    /// \param[in]  upgrade : Indicate the download process is an upgrade (remove superseded packages)
+    ///
+    void rmtDown(bool upgrade = false);
+
+    /// \brief View remote package details.
+    ///
+    /// Public function to open selected remote package property dialog.
+    ///
+    void rmtProp();
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    void                _dirMon_init(const wstring& path);
+
+    void                _dirMon_stop();
+
+    void*               _dirMon_hth;
+
+    void*               _dirMon_hev[3];
+
+    static DWORD WINAPI _dirMon_fth(void*);
+
+    void                _repQry_init();
+
+    void                _repQry_stop();
+
+    void*               _repQryt_hth;
+
+    static DWORD WINAPI _repQry_fth(void*);
+
+    static bool         _repQry_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+
+    void                _rmtDnl_stop();
+
+    bool                _rmtDnl_update(double tot, double cur, double rate, uint64_t hash);
+
+    void                _rmtDnl_finish(double tot, double cur, double rate, uint64_t hash);
+
+    static bool         _rmtDnl_download_cb(void* ptr, double tot, double cur, double rate, uint64_t data);
+
+    unsigned            _rmtDnl_count;
+
+    uint64_t            _rmtDnl_abort;
+
+    bool                _thread_abort;
+
+    void                _buildLvRmt();
+
+    unsigned            _buildLvRmt_icSize;
 
     void                _buildCbLoc();
 
@@ -90,15 +142,29 @@ class OmUiMainNet : public OmDialog
 
     void                _onCbLocSel();
 
+    void                _onLvRmtHit();
+
     void                _onLbRepSel();
+
+    void                _onLvRmtRclk();
+
+    void                _onLvRmtSel();
+
+    void                _onBcChkRep();
+
+    void                _onBcStopRep();
 
     void                _onBcNewRep();
 
     void                _onBcDelRep();
 
+    void                _onBcAbort();
+
     void                _onInit();
 
     void                _onShow();
+
+    void                _onHide();
 
     void                _onResize();
 
