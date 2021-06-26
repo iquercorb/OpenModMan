@@ -144,6 +144,7 @@
 		<Unit filename="include/OmLocation.h" />
 		<Unit filename="include/OmManager.h" />
 		<Unit filename="include/OmPackage.h" />
+		<Unit filename="include/OmRemote.h" />
 		<Unit filename="include/OmRepository.h" />
 		<Unit filename="include/OmSocket.h" />
 		<Unit filename="include/OmStrings.h" />
@@ -175,6 +176,8 @@
 		<Unit filename="include/gui/OmUiPropPkg.h" />
 		<Unit filename="include/gui/OmUiPropPkgBck.h" />
 		<Unit filename="include/gui/OmUiPropPkgSrc.h" />
+		<Unit filename="include/gui/OmUiPropRmt.h" />
+		<Unit filename="include/gui/OmUiPropRmtDet.h" />
 		<Unit filename="include/gui/OmUiToolPkg.h" />
 		<Unit filename="include/gui/OmUiToolRep.h" />
 		<Unit filename="include/gui/OmUiWizCtx.h" />
@@ -228,6 +231,7 @@
 		<Unit filename="src/OmLocation.cpp" />
 		<Unit filename="src/OmManager.cpp" />
 		<Unit filename="src/OmPackage.cpp" />
+		<Unit filename="src/OmRemote.cpp" />
 		<Unit filename="src/OmRepository.cpp" />
 		<Unit filename="src/OmSocket.cpp" />
 		<Unit filename="src/OmVersion.cpp" />
@@ -258,6 +262,8 @@
 		<Unit filename="src/gui/OmUiPropPkg.cpp" />
 		<Unit filename="src/gui/OmUiPropPkgBck.cpp" />
 		<Unit filename="src/gui/OmUiPropPkgSrc.cpp" />
+		<Unit filename="src/gui/OmUiPropRmt.cpp" />
+		<Unit filename="src/gui/OmUiPropRmtDet.cpp" />
 		<Unit filename="src/gui/OmUiToolPkg.cpp" />
 		<Unit filename="src/gui/OmUiToolRep.cpp" />
 		<Unit filename="src/gui/OmUiWizCtx.cpp" />
