@@ -52,6 +52,9 @@ Version history
  - Batch properties now ask user to clean Batch in case of invalid package reference.
  - Automatic fix Batch inconsistency in case of Context's Location changes.
  - Fix Batch execution thread not properly terminated.
+ - Consolidated package algorithms for robust dependencies and overlaps management.
+ - New Network repositories feature with Repository editor.
+ - New icons associated with application.
 
 0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.
