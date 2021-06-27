@@ -90,6 +90,8 @@ class OmUiPropCtx : public OmDialogProp
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmContext*          _pCtx;
+
+    void                _onPropInit();
 };
 
 #endif // OMUIPROPCTX_H

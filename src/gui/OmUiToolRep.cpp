@@ -1223,6 +1223,12 @@ void OmUiToolRep::_onBcClose()
 ///
 void OmUiToolRep::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
+  // dialog is modeless so we set dialog title with app name
+  this->setCaption(L"Repository editor - " OMM_APP_NAME);
+
   // define controls tool-tips
   this->_createTooltip(IDC_BC_BRW01, L"Select Repository XML file");
   this->_createTooltip(IDC_BC_NEW, L"Initialize new repository");

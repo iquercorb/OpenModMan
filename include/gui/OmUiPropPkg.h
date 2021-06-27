@@ -76,6 +76,8 @@ class OmUiPropPkg : public OmDialogProp
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmPackage*          _pPkg;
+
+    void                _onPropInit();
 };
 
 #endif // OMUIPROPPKG_H

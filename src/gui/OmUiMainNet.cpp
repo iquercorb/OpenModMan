@@ -66,11 +66,18 @@ OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMainNet::~OmUiMainNet()
 {
+  // stop Library folder changes monitoring
+  this->_dirMon_stop();
+
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
+
+  // Get the previous Image List to be destroyed (Small and Normal uses the same)
+  HIMAGELIST hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_RMT, LVM_GETIMAGELIST, LVSIL_NORMAL));
+  if(hImgLs) ImageList_Destroy(hImgLs);
 }
 
 
@@ -94,15 +101,18 @@ void OmUiMainNet::freeze(bool enable)
 
   // Location ComboBox
   this->enableItem(IDC_CB_LOC, !enable);
-  // Repository ListBox
+
+  // Repository Label ListBox & buttons
+  this->enableItem(IDC_SC_LBL01, !enable);
   this->enableItem(IDC_LB_REP, !enable);
+
   // If enter freeze mode, unselect repository
   if(enable)
     this->msgItem(IDC_LB_REP, LB_SETCURSEL, -1);
+
   // Repository Buttons
-  this->enableItem(IDC_BC_CHK, !enable);
   this->enableItem(IDC_BC_NEW, !enable);
-  this->enableItem(IDC_BC_DEL, !enable);
+  this->enableItem(IDC_BC_DEL, false);
 
   // then, user still can use Remote ListView
   // to watch, add or cancel downloads
@@ -250,7 +260,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
 
     pRmt = pLoc->rmtGet(lv_sel);
 
-    if(!pRmt->isState(RMT_STATE_LOC))
+    if(pRmt->isState(RMT_STATE_NEW))
       user_ls.push_back(pRmt);
 
     // next selected item
@@ -261,8 +271,8 @@ void OmUiMainNet::rmtDown(bool upgrade)
   if(user_ls.empty())
     return;
 
-  vector<OmRemote*> dwnl_ls; //< final download list
-  vector<OmRemote*> deps_ls; //< extra download list
+  vector<OmRemote*> dwnl_ls;  //< final download list
+  vector<OmRemote*> deps_ls;  //< extra download list
   vector<wstring> miss_ls;    //< missing dependencies lists
 
   // prepare package download
@@ -300,7 +310,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
   LVITEMW lvItem = {};
   lvItem.iSubItem = 0;
   lvItem.mask = LVIF_IMAGE;
-  lvItem.iImage = 7;
+  lvItem.iImage = 11; //< STS_DNL
 
   for(size_t i = 0; i < dwnl_ls.size(); ++i) {
 
@@ -334,12 +344,123 @@ void OmUiMainNet::rmtDown(bool upgrade)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMainNet::rmtFixd(bool upgrade)
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  // string for dialog messages
+  wstring msg;
+
+  // checks whether we have a valid Library folder
+  if(!pLoc->checkAccessLib()) {
+    msg = L"Library folder \""+pLoc->libDir()+L"\"";
+    msg += OMM_STR_ERR_DIRACCESS;
+    Om_dialogBoxErr(this->_hwnd, L"Package(s) install aborted", msg);
+    return;
+  }
+
+  // reset global abort status
+  this->_thread_abort = false;
+
+  OmRemote* pRmt;
+
+  // get selection, should be single, since UI does not allow this
+  // process for multiple selection
+  int lv_sel = -1;
+  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
+    lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+  pRmt = pLoc->rmtGet(lv_sel);
+
+  // this should never happen be we handle it
+  if(pRmt->isState(RMT_STATE_NEW)) {
+    return;
+  }
+
+  // the user single  selection
+  vector<OmRemote*> user_ls;
+  user_ls.push_back(pRmt);
+
+  // here we go like a full download
+  vector<OmRemote*> deps_ls;  //< dependency download list
+  vector<wstring> miss_ls;    //< missing dependencies lists
+
+  // Get remote package depdencies
+  pLoc->rmtGetDepends(deps_ls, miss_ls, pRmt);
+
+  // warn user for missing dependencies
+  if(miss_ls.size() && pMgr->warnMissDeps()) {
+    msg = L"The selected package have unavailable missing dependencies, "
+          L"The following packages are required but not available:\n";
+    for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
+    msg +=  L"\n\nDo you want to proceed download anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+      return;
+  }
+
+  // ask user for download X packages
+  if(deps_ls.size() && pMgr->warnExtraInst()) {
+    msg =   L"The selected package have "+to_wstring(deps_ls.size())+L" missing ";
+    msg +=  L"dependencies, the following packages will be downloaded:\n";
+    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    msg +=  L"\n\nDownload missing dependencies ?";
+
+    if(!Om_dialogBoxQuerry(this->_hwnd, L"Fix dependencies", msg))
+      return;
+  }
+
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
+
+  // necessary to update icon in ListView
+  LVFINDINFOW lvFind = {};
+  lvFind.flags = LVFI_PARAM;
+
+  LVITEMW lvItem = {};
+  lvItem.iSubItem = 0;
+  lvItem.mask = LVIF_IMAGE;
+  lvItem.iImage = 11; //< STS_DNL
+
+  for(size_t i = 0; i < deps_ls.size(); ++i) {
+
+    pRmt = deps_ls[i];
+
+    if(pRmt->download(pLoc->libDir(), upgrade, &this->_rmtDnl_download_cb, this)) {
+
+      // update state image
+      lvFind.lParam = static_cast<LPARAM>(pRmt->hash()); //< Remote package hash
+      lvItem.iItem = this->msgItem(IDC_LV_RMT, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvFind));
+      this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+      // disable download and upgrade buttons
+      this->enableItem(IDC_BC_LOAD, false);
+      this->enableItem(IDC_BC_UPGD, false);
+
+      // increment download count
+      this->_rmtDnl_count++;
+
+    } else {
+
+      msg = L"The package \"" + pRmt->ident() + L"\" ";
+      msg += L"cannot be downloaded:\n\n" + pRmt->lastError();
+      Om_dialogBoxErr(this->_hwnd, L"Package download failed", msg);
+
+    }
+  }
+
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMainNet::rmtProp()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::rmtProp\n";
-  #endif
-
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
@@ -350,10 +471,6 @@ void OmUiMainNet::rmtProp()
   int lv_sel = -1;
   if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
     lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::rmtProp select : " << lv_sel << "\n";
-  #endif
 
   if(lv_sel < 0)
     return;
@@ -466,6 +583,10 @@ DWORD WINAPI OmUiMainNet::_dirMon_fth(void* arg)
 ///
 void OmUiMainNet::_repQry_init()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainNet::_repQry_init\n";
+  #endif
+
   // Freezes the main dialog to prevent user to interact during process
   static_cast<OmUiMain*>(this->root())->freeze(true);
 
@@ -480,6 +601,10 @@ void OmUiMainNet::_repQry_init()
 ///
 void OmUiMainNet::_repQry_stop()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainNet::_repQry_stop\n";
+  #endif
+
   DWORD exitCode;
 
   // safely and cleanly close threads handles
@@ -503,6 +628,10 @@ void OmUiMainNet::_repQry_stop()
 ///
 DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainNet::_repQry_fth\n";
+  #endif
+
   OmUiMainNet* self = reinterpret_cast<OmUiMainNet*>(ptr);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
@@ -515,14 +644,20 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   self->_thread_abort = false;
 
   // enable stop button and progress bar
-  self->enableItem(IDC_BC_STOP, true);
-  self->enableItem(IDC_PB_REP, true);
+  //self->enableItem(IDC_BC_STOP, true);
+  //self->enableItem(IDC_PB_REP, true);
+
+  // change button image from refresh to stop
+  self->setBmImage(IDC_BC_CHK, Om_getResImage(self->_hins, IDB_BTN_NOT));
 
   pLoc->repQuery(&self->_repQry_progress_cb, self);
 
+  // change button image from stop to refresh
+  self->setBmImage(IDC_BC_CHK, Om_getResImage(self->_hins, IDB_BTN_REF));
+
   // disable stop button and progress bar
-  self->enableItem(IDC_BC_STOP, false);
-  self->enableItem(IDC_PB_REP, false);
+  //self->enableItem(IDC_BC_STOP, false);
+  //self->enableItem(IDC_PB_REP, false);
 
   // reset progress bar position
   self->msgItem(IDC_PB_REP, PBM_SETPOS, 0);
@@ -549,7 +684,22 @@ bool OmUiMainNet::_repQry_progress_cb(void* ptr, size_t tot, size_t cur, const w
   self->_buildLbRep();
   self->_buildLvRmt();
 
-  return !self->_thread_abort;
+  // check for abort
+  if(self->_thread_abort) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMainNet::_repQry_progress_cb - abort\n";
+    #endif
+
+    // reset abort to ensure this will not conflict with download thread
+    self->_thread_abort = false;
+
+    return false; //< abort now
+
+  } else {
+
+    return true; //< continue
+  }
 }
 
 
@@ -620,26 +770,28 @@ bool OmUiMainNet::_rmtDnl_update(double tot, double cur, double rate, uint64_t h
     }
   }
 
-  bool abort = false;
-
   // check for specific or general abort signal
   if(this->_rmtDnl_abort == hash || this->_thread_abort) {
+    // reset abort to ensure this will not conflict with repo query thread
+    this->_thread_abort = false;
     // we ensure abort is reset
     this->_rmtDnl_abort = 0;
     // we enable the button again
     this->enableItem(IDC_BC_ABORT, true);
-    // we will abort
-    abort = true;
-  }
 
-  return !abort;
+    return false; //< abort now
+
+  } else {
+
+    return true; //< continue
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainNet::_rmtDnl_finish(double tot, double cur, double rate, uint64_t hash)
+void OmUiMainNet::_rmtDnl_finish(uint64_t hash)
 {
   // retrieve ListView entry corresponding to current object
   LVFINDINFOW lvFind = {};
@@ -688,13 +840,14 @@ void OmUiMainNet::_rmtDnl_finish(double tot, double cur, double rate, uint64_t h
   // update status icon
   lvItem.mask = LVIF_IMAGE;
   lvItem.iSubItem = 0; //< this is the left most column, "Status"
-
-  if(pRmt->isState(RMT_STATE_LOC)) {
-    lvItem.iImage = 5; //< Downloaded
+  lvItem.iImage = -1; //< No Icon
+  if(pRmt->isState(RMT_STATE_NEW)) {
+    if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
+    if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
   } else if(pRmt->isState(RMT_STATE_ERR)) {
-    lvItem.iImage = 0; //< Error
+    lvItem.iImage = 5; //< STS_ERR
   } else {
-    lvItem.iImage = pRmt->isState(RMT_STATE_UPG) ? 6/*NEW*/ : -1/*void*/;
+    lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
   }
 
   // send to ListView
@@ -719,7 +872,7 @@ bool OmUiMainNet::_rmtDnl_download_cb(void* ptr, double tot, double cur, double 
 
   // special invalid rate value mean download finished
   if(rate < 0.0) {
-    self->_rmtDnl_finish(tot, cur, rate, data);
+    self->_rmtDnl_finish(data);
   } else {
     return self->_rmtDnl_update(tot, cur, rate, data);
   }
@@ -837,7 +990,7 @@ void OmUiMainNet::_buildLbRep()
       pRep = pLoc->repGet(i);
 
       ident = pRep->base() + L" - " + pRep->name();
-      label = pRep->title().empty() ? ident : (pRep->title() + L" (" + ident + L")");
+      label = pRep->title().empty() ? ident : (pRep->title() + L" - [ " + ident + L" ] - " + to_wstring(pRep->rmtCount()) + L" package(s)");
 
       this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
@@ -872,36 +1025,41 @@ void OmUiMainNet::_buildLvRmt()
   // if icon size changed, create new ImageList
   if(this->_buildLvRmt_icSize != pMgr->iconsSize()) {
 
+    HIMAGELIST hImgLs;
+
+    // Get the previous Image List to be destroyed (Small and Normal uses the same)
+    hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_RMT, LVM_GETIMAGELIST, LVSIL_NORMAL));
+    if(hImgLs) ImageList_Destroy(hImgLs);
+
+    // - 0: PKG_ERR - 1: PKG_DIR -  2: PKG_ZIP -  3: PKG_DPN
+    // - 4: STS_WIP - 5: STS_ERR -  6: STS_WRN -  7: STS_BOK
+    // - 8: STS_OWR - 9: STS_OLD - 10: STS_UPG - 11: STS_DNL
+
     // Build list of images resource ID for the required size
-    unsigned idb[9];
+    unsigned idb[] = {IDB_PKG_ERR_16, IDB_PKG_DIR_16, IDB_PKG_ZIP_16, IDB_PKG_DPN_16,
+                      IDB_STS_WIP_16, IDB_STS_ERR_16, IDB_STS_WRN_16, IDB_STS_BOK_16,
+                      IDB_STS_OWR_16, IDB_STS_OLD_16, IDB_STS_UPG_16, IDB_STS_DNL_16};
+
     switch(pMgr->iconsSize())
     {
-    case 16:
-      idb[0] = IDB_PKG_ERR_16; idb[1] = IDB_PKG_DIR_16; idb[2] = IDB_PKG_ZIP_16;
-      idb[3] = IDB_PKG_DPN_16; idb[4] = IDB_PKG_WIP_16; idb[5] = IDB_PKG_BCK_16;
-      idb[6] = IDB_PKG_NEW_16; idb[7] = IDB_PKG_DNL_16; idb[8] = IDB_PKG_OLD_16;
+    case 24:
+      for(unsigned i = 0; i < 12; ++i)
+        idb[i] += 1; //< steps IDs to 24 pixels images
       break;
     case 32:
-      idb[0] = IDB_PKG_ERR_32; idb[1] = IDB_PKG_DIR_32; idb[2] = IDB_PKG_ZIP_32;
-      idb[3] = IDB_PKG_DPN_32; idb[4] = IDB_PKG_WIP_32; idb[5] = IDB_PKG_BCK_32;
-      idb[6] = IDB_PKG_NEW_32; idb[7] = IDB_PKG_DNL_32; idb[8] = IDB_PKG_OLD_32;
-      break;
-    default:
-      idb[0] = IDB_PKG_ERR_24; idb[1] = IDB_PKG_DIR_24; idb[2] = IDB_PKG_ZIP_24;
-      idb[3] = IDB_PKG_DPN_24; idb[4] = IDB_PKG_WIP_24; idb[5] = IDB_PKG_BCK_24;
-      idb[6] = IDB_PKG_NEW_24; idb[7] = IDB_PKG_DNL_24; idb[8] = IDB_PKG_OLD_24;
+      for(unsigned i = 0; i < 12; ++i)
+        idb[i] += 2; //< steps IDs to 32 pixels images
       break;
     }
 
     // Create ImageList and fill it with bitmaps
-    HIMAGELIST hImgList = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 9, 0 );
-    for(unsigned i = 0; i < 9; ++i)
-      ImageList_Add(hImgList, Om_getResImage(this->_hins, idb[i]), nullptr);
+    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 12, 0);
+    for(unsigned i = 0; i < 12; ++i)
+      ImageList_Add(hImgLs, Om_getResImage(this->_hins, idb[i]), nullptr);
 
     // Set ImageList to ListView
-    this->msgItem(IDC_LV_RMT, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgList));
-    this->msgItem(IDC_LV_RMT, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgList));
-    DeleteObject(hImgList);
+    this->msgItem(IDC_LV_RMT, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgLs));
+    this->msgItem(IDC_LV_RMT, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgLs));
 
     // update size
     this->_buildLvRmt_icSize = pMgr->iconsSize();
@@ -929,18 +1087,19 @@ void OmUiMainNet::_buildLvRmt()
     // the first column, package status, here we INSERT the new item
     lvItem.iItem = i;
     lvItem.mask = LVIF_IMAGE|LVIF_PARAM; //< icon and special data
-
     lvItem.iSubItem = 0;
-    lvItem.iImage = -1;
-    if(pRmt->isState(RMT_STATE_LOC)) {
-      lvItem.iImage = 5/*BCK*/; //< locally present
-    } else {
+    lvItem.iImage = -1; //< No Icon
+    if(pRmt->isState(RMT_STATE_NEW)) {
       if(pRmt->isState(RMT_STATE_DNL)) {
-        lvItem.iImage = 7/*DNL*/;
+        lvItem.iImage = 11; //< STS_DNL
       } else {
-        if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 6/*NEW*/;
-        if(pRmt->isState(RMT_STATE_DNG)) lvItem.iImage = 8/*OLD*/;
+        if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
+        if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
       }
+    } else if(pRmt->isState(RMT_STATE_ERR)) {
+      lvItem.iImage = 5; //< STS_ERR
+    } else {
+      lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
     }
 
     // notice for later : to work properly the lParam must be
@@ -952,7 +1111,7 @@ void OmUiMainNet::_buildLvRmt()
     // Second column, the package name and type, here we set the sub-item
     lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
     lvItem.iSubItem = 1;
-    lvItem.iImage = pRmt->depCount() ? 3/*DPN*/ : 2/*ZIP*/;
+    lvItem.iImage = pRmt->depCount() ? 3/*PKG_DPN*/ : 2/*PKG_ZIP*/;
 
     lvItem.pszText = const_cast<LPWSTR>(pRmt->name().c_str());
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
@@ -1070,14 +1229,14 @@ void OmUiMainNet::_onLvRmtRclk()
 ///
 void OmUiMainNet::_onLvRmtSel()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::_onLvRmtSel\n";
-  #endif
+  // hide all package bottom infos
+  this->showItem(IDC_SB_PKG, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SC_TITLE, false);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx) return;
-
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
@@ -1093,35 +1252,34 @@ void OmUiMainNet::_onLvRmtSel()
   // get count of selected item
   unsigned lv_nsl = this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT);
 
-  bool progress = false; //< currently downloading, enable progress bar and abort button
-
   if(lv_nsl > 0) {
 
     // enable "Edit > Remote []" pop-up menu
     pUiMain->setPopupItem(1, 6, MF_ENABLED);
 
     // show package title and thumbnail
-    ShowWindow(this->getItem(IDC_SC_TITLE), true);
-    ShowWindow(this->getItem(IDC_SB_PKG), true);
+    this->showItem(IDC_SC_TITLE, true);
+    this->showItem(IDC_SB_PKG, true);
 
     if(lv_nsl > 1) {
 
       // disable the "Edit > Remote > View detail..." menu-item
       HMENU hPopup = pUiMain->getPopupItem(1, 6);
-      pUiMain->setPopupItem(hPopup, 3, MF_GRAYED); //< "View detail..." menu-item
+      pUiMain->setPopupItem(hPopup, 3, MF_GRAYED); //< "Fix dependencies" menu-item
+      pUiMain->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
 
       // on multiple selection, we hide package description
-      ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+      this->showItem(IDC_EC_PKTXT, false);
       this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
 
     } else {
 
       // enable the "Edit > Remote > .. " menu-item
       HMENU hPopup = pUiMain->getPopupItem(1, 6);
-      pUiMain->setPopupItem(hPopup, 3, MF_ENABLED); //< "View details" menu-item
+      pUiMain->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
 
       // show package description
-      ShowWindow(this->getItem(IDC_EC_PKTXT), true);
+      this->showItem(IDC_EC_PKTXT, true);
 
       OmRemote* pRmt;
 
@@ -1130,6 +1288,31 @@ void OmUiMainNet::_onLvRmtSel()
       if(lv_sel >= 0) {
 
         pRmt = pLoc->rmtGet(lv_sel);
+
+        // get remote package states
+        bool can_dnld = pRmt->isState(RMT_STATE_NEW) && !pRmt->isState(RMT_STATE_DNL);
+        bool can_upgd = can_dnld && pRmt->isState(RMT_STATE_UPG);
+        bool can_fixd = pRmt->isState(RMT_STATE_DEP);
+        bool progress = pRmt->isState(RMT_STATE_DNL);
+
+        pUiMain->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Dwonload" menu-item
+        pUiMain->setPopupItem(hPopup, 1, can_upgd ? MF_ENABLED : MF_GRAYED); //< "Upgrade" menu-item
+        pUiMain->setPopupItem(hPopup, 3, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
+
+        this->enableItem(IDC_BC_LOAD, can_dnld);
+        this->enableItem(IDC_BC_UPGD, can_upgd);
+        this->enableItem(IDC_BC_ABORT, progress);
+        this->enableItem(IDC_PB_PKG, progress);
+
+        if(progress) {
+          this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+          // we first go beyond value then backward to workaround the
+          // unwanted transition
+          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent() + 1);
+          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent());
+        } else {
+          this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
+        }
 
         this->setItemText(IDC_SC_TITLE, pRmt->name());
 
@@ -1143,53 +1326,17 @@ void OmUiMainNet::_onLvRmtSel()
           hBm = pRmt->image().thumbnail();
         }
 
-        if(pRmt->isState(RMT_STATE_DNL)) {
-          pUiMain->setPopupItem(hPopup, 0, MF_GRAYED); //< "Dwonload" menu-item
-          pUiMain->setPopupItem(hPopup, 1, MF_GRAYED); //< "Upgrade" menu-item
-          this->enableItem(IDC_BC_ABORT, true);
-          this->enableItem(IDC_BC_LOAD, false);
-          this->enableItem(IDC_BC_UPGD, false);
-          this->enableItem(IDC_PB_PKG, true);
-          this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-          // we first go beyond value then backward to workaround the
-          // unwanted transition
-          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent() + 1);
-          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent());
-          progress = true;
-        } else {
-          if(pRmt->isState(RMT_STATE_LOC)) {
-            this->enableItem(IDC_BC_LOAD, false);
-            this->enableItem(IDC_BC_UPGD, false);
-            pUiMain->setPopupItem(hPopup, 0, MF_GRAYED); //< "Dwonload" menu-item
-            pUiMain->setPopupItem(hPopup, 1, MF_GRAYED); //< "Upgrade" menu-item
-          } else {
-            this->enableItem(IDC_BC_LOAD, true);
-            this->enableItem(IDC_BC_UPGD, pRmt->isState(RMT_STATE_UPG));
-            pUiMain->setPopupItem(hPopup, 1, pRmt->isState(RMT_STATE_UPG)?MF_ENABLED:MF_GRAYED); //< "Upgrade" menu-item
-          }
-        }
       }
     }
-
   } else {
 
     // disable "Edit > Remote []" pop-up menu
     pUiMain->setPopupItem(1, 6, MF_GRAYED);
 
-    // hide all package bottom infos
-    ShowWindow(this->getItem(IDC_SC_TITLE), false);
-    ShowWindow(this->getItem(IDC_SB_PKG), false);
-    ShowWindow(this->getItem(IDC_EC_PKTXT), false);
-
+    // disable all action buttons
     this->enableItem(IDC_BC_LOAD, false);
     this->enableItem(IDC_BC_UPGD, false);
     this->enableItem(IDC_BC_ABORT, false);
-  }
-
-  if(!progress) {
-    this->enableItem(IDC_BC_ABORT, false);
-    this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
-    this->enableItem(IDC_PB_PKG, false);
   }
 
   // Update the selected picture
@@ -1206,8 +1353,14 @@ void OmUiMainNet::_onLvRmtSel()
 ///
 void OmUiMainNet::_onBcChkRep()
 {
-  this->enableItem(IDC_BC_CHK, false);
-  this->_repQry_init();
+  // action depend on current thread state, if thread is
+  // running, the button act as an abort button
+  if(this->_repQryt_hth) {
+    this->enableItem(IDC_BC_CHK, false);
+    this->_thread_abort = true;
+  } else {
+    this->_repQry_init();
+  }
 }
 
 
@@ -1321,22 +1474,20 @@ void OmUiMainNet::_onInit()
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active Location");
-  this->_createTooltip(IDC_LB_REP,    L"Configured repositories list");
-  this->_createTooltip(IDC_BC_CHK,    L"Query repositories");
-  this->_createTooltip(IDC_BC_STOP,   L"Cancel repositories query");
+  this->_createTooltip(IDC_LB_REP,    L"Repositories list");
+  this->_createTooltip(IDC_BC_CHK,    L"Start or stop repositories query");
   this->_createTooltip(IDC_BC_NEW,    L"Configure and add new repository");
   this->_createTooltip(IDC_BC_DEL,    L"Remove selected repository entry");
-  this->_createTooltip(IDC_LV_RMT,    L"Available remote packages list");
+  this->_createTooltip(IDC_LV_RMT,    L"Remote packages list");
   this->_createTooltip(IDC_BC_LOAD,   L"Download selected packages");
   this->_createTooltip(IDC_BC_UPGD,   L"Download selected packages for upgrade");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort download");
 
   // Initialize the ListView control
-  DWORD dwExStyle = LVS_EX_FULLROWSELECT|
-                    LVS_EX_SUBITEMIMAGES|
-                    LVS_EX_DOUBLEBUFFER;
-
+  DWORD dwExStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
   this->msgItem(IDC_LV_RMT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
+  // set explorer theme
+  SetWindowTheme(this->getItem(IDC_LV_RMT),L"Explorer",nullptr);
 
   // we now add columns into our list-view control
   LVCOLUMNW lvCol;
@@ -1374,6 +1525,11 @@ void OmUiMainNet::_onInit()
   lvCol.cx = 120;
   lvCol.iSubItem = 4;
   this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 4, reinterpret_cast<LPARAM>(&lvCol));
+
+  // hide package details
+  this->showItem(IDC_SC_TITLE, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SB_PKG, false);
 }
 
 
@@ -1410,9 +1566,8 @@ void OmUiMainNet::_onShow()
     }
 
     // refresh remote package ListView
-    if(pCtx->locCur()->rmtRefresh(true)) {
-      this->_buildLvRmt();
-    }
+    pCtx->locCur()->rmtRefresh(true);
+    this->_buildLvRmt();
   }
 
   // disable "Edit > Package" in main menu
@@ -1449,9 +1604,10 @@ void OmUiMainNet::_onResize()
   // Repositories label
   this->_setItemPos(IDC_SC_LBL01, 5, 24, 50, 12);
   // Repositories ProgressBar
-  this->_setItemPos(IDC_BC_CHK, 55, 20, 32, 14);
-  this->_setItemPos(IDC_PB_REP, 89, 21, this->width()-129, 13);
-  this->_setItemPos(IDC_BC_STOP, this->width()-37, 20, 32, 14);
+  //this->_setItemPos(IDC_BC_CHK, this->width()-42, 20, 37, 14);
+  this->_setItemPos(IDC_BC_CHK, this->width()-21, 20, 16, 14);
+  //this->_setItemPos(IDC_PB_REP, 89, 21, this->width()-129, 13);
+  //this->_setItemPos(IDC_BC_STOP, this->width()-37, 20, 32, 14);
   // Repositories ListBox
   this->_setItemPos(IDC_LB_REP, 5, 37, this->width()-30, 29);
   // Repositories Apply, New.. and Delete buttons
@@ -1470,9 +1626,9 @@ void OmUiMainNet::_onResize()
 
   // Upgrade and Sync buttons
   this->_setItemPos(IDC_BC_LOAD, 5, this->height()-114, 50, 14);
-  this->_setItemPos(IDC_BC_UPGD, 55, this->height()-114, 50, 14);
+  this->_setItemPos(IDC_BC_UPGD, 56, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 107, this->height()-113, this->width()-165, 13);
+  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-166, 13);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-114, 50, 14);
 
@@ -1497,32 +1653,39 @@ void OmUiMainNet::_onRefresh()
   #endif
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
 
   // disable all packages buttons
   this->enableItem(IDC_BC_LOAD, false);
   this->enableItem(IDC_BC_UPGD, false);
   this->enableItem(IDC_BC_ABORT, false);
 
-
   // hide package details
-  ShowWindow(this->getItem(IDC_SC_TITLE), false);
-  ShowWindow(this->getItem(IDC_EC_PKTXT), false);
-  ShowWindow(this->getItem(IDC_SB_PKG), false);
+  this->showItem(IDC_SC_TITLE, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SB_PKG, false);
 
   // disable the Progress-Bar
   this->enableItem(IDC_PB_PKG, false);
 
-  this->_buildCbLoc(); //< reload Location ComboBox
+  // reload Location ComboBox
+  this->_buildCbLoc();
 
-  this->_buildLbRep(); //< reload Repository ListBox
+  // reload Repository ListBox
+  this->_buildLbRep();
 
   // if icon size changed, rebuild Package ListView
   if(this->_buildLvRmt_icSize != pMgr->iconsSize()) {
     this->_buildLvRmt();
   }
 
+  // disable or enable elements depending context
+  this->enableItem(IDC_SC_LBL01, (pCtx != nullptr));
+  this->enableItem(IDC_LV_RMT, (pCtx != nullptr));
+  this->enableItem(IDC_LB_REP, (pCtx != nullptr));
+
   // disable all batches buttons
-  this->enableItem(IDC_BC_NEW, (pMgr->ctxCur() != nullptr));
+  this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
   this->enableItem(IDC_BC_DEL, false);
 }
 
@@ -1538,6 +1701,9 @@ void OmUiMainNet::_onQuit()
 
   // stop Library folder changes monitoring
   this->_dirMon_stop();
+
+  // this should be done already...
+  this->_thread_abort = true;
 }
 
 
@@ -1584,10 +1750,9 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_NOTIFY) {
 
     OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    if(!pMgr->ctxCur()) return false;
     OmContext* pCtx = pMgr->ctxCur();
-
-    if(!pCtx->locCur())
-      return false;
+    if(!pCtx->locCur()) return false;
 
     OmLocation* pLoc = pCtx->locCur();
 
@@ -1655,11 +1820,11 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_CB_LOC:
+    case IDC_CB_LOC: //< Location ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE) this->_onCbLocSel();
       break;
 
-    case IDC_BC_CHK:
+    case IDC_BC_CHK: //< Repository "Refresh" button
       this->_onBcChkRep();
       break;
 
@@ -1667,30 +1832,30 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcStopRep();
       break;
 
-    case IDC_LB_REP: //< Location(s) list List-Box
+    case IDC_LB_REP: //< Repository list List-Box
       if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbRepSel();
       if(HIWORD(wParam) == LBN_DBLCLK) {
         //...
       }
       break;
 
-    case IDC_BC_NEW:
+    case IDC_BC_NEW: //< Repository "Add" button
       this->_onBcNewRep();
       break;
 
-    case IDC_BC_DEL:
+    case IDC_BC_DEL: //< Repository "Delete" button
       this->_onBcDelRep();
       break;
 
-    case IDC_BC_LOAD:
+    case IDC_BC_LOAD: //< Main "Download" button
       this->rmtDown(false);
       break;
 
-    case IDC_BC_UPGD:
+    case IDC_BC_UPGD: //< Main "Upgrade" button
       this->rmtDown(true);
       break;
 
-    case IDC_BC_ABORT:
+    case IDC_BC_ABORT: //< Main "Abort" button
       this->_onBcAbort();
       break;
 
@@ -1701,6 +1866,10 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_RMT_UPGR:
       this->rmtDown(true);
+      break;
+
+    case IDM_EDIT_RMT_FIXD:
+      this->rmtFixd(false);
       break;
 
     case IDM_EDIT_RMT_INFO:

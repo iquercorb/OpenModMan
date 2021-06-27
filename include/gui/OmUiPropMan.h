@@ -64,6 +64,7 @@ class OmUiPropMan : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    void                _onPropInit();
 };
 
 #endif // OMUIPROPMAN_H

@@ -202,3 +202,13 @@ bool OmUiPropCtx::applyChanges()
 
   return true;
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropCtx::_onPropInit()
+{
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+}

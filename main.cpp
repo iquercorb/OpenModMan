@@ -17,8 +17,34 @@
 #include "OmManager.h"
 #include "gui/OmUiMain.h"
 
-int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, char* argv, int nShowCmd)
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
+  HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Instance");
+
+  // Check if another instance already running
+  if(hMutex) {
+
+    wstring msg = L"Only one instance of Open Mod Manager is allowed to run.";
+    Om_dialogBoxWarn(nullptr, L"Open Mod Manager already running", msg);
+
+    // search initial instance window
+    HWND hWnd = FindWindow(nullptr,"Open Mod Manager");
+    if(hWnd) {
+
+      // Set foreground
+      ShowWindow(hWnd, SW_SHOWNORMAL);
+      SetForegroundWindow(hWnd);
+    }
+
+    // exit now
+    return 0;
+
+  }
+
+  // Create new Mutex for single instance check
+  hMutex = CreateMutexW(nullptr, true, L"OpenModMan.Instance");
+
+
   InitCommonControls();
 
   curl_global_init(CURL_GLOBAL_ALL);
@@ -26,7 +52,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, char* argv, int nShow
   OmManager manager;
   OmUiMain dialog(hInst);
 
-  if(manager.init()) {
+  if(manager.init(lpCmdLine)) {
 
     dialog.setData(&manager);
     dialog.open(true);
@@ -36,6 +62,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, char* argv, int nShow
 
     manager.quit();
   }
+
+  // Release Mutex as application end
+  ReleaseMutex(hMutex);
+  CloseHandle(hMutex);
 
   return 0;
 }

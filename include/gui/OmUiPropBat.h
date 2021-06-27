@@ -91,6 +91,8 @@ class OmUiPropBat : public OmDialogProp
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmBatch*            _pBat;
+
+    void                _onPropInit();
 };
 
 #endif // OMUIPROPBAT_H

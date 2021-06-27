@@ -1355,17 +1355,461 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
 }
 
 
+/// \brief Get package source dependencies.
+///
+/// Recursively explores package source dependency tree to gather all
+/// found required packages and create list of missing dependencies for
+/// the specified target.
+///
+/// \param[out]   out_ls : Output list of found dependency packages.
+/// \param[out]   mis_ls : Output list missing dependency identities.
+/// \param[in]    lib_ls : Input list of available packages.
+/// \param[in]    target : Input target package to explore dependencies.
+///
+/// \return Count of dependency packages found.
+///
+static size_t __src_get_dependencies(vector<OmPackage*>& out_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  bool missing;
+
+  for(size_t i = 0; i < target->depCount(); ++i) {
+
+    missing = true;
+
+    for(size_t j = 0; j < lib_ls.size(); ++j) {
+
+      // rely only on packages
+      if(!lib_ls[j]->isZip()) continue;
+
+      if(target->depGet(i) == lib_ls[j]->ident()) {
+
+        n += __src_get_dependencies(out_ls, mis_ls, lib_ls, lib_ls[j]);
+
+        // we add to list only if unique and not already installed, this allow
+        // us to get a consistent dependency list for a bunch of package by
+        // calling this function for each package without clearing the list
+        if(!lib_ls[j]->hasBck()) {
+          if(std::find(out_ls.begin(), out_ls.end(), lib_ls[j]) == out_ls.end()) {
+            out_ls.push_back(lib_ls[j]);
+            ++n;
+          }
+        }
+
+        missing = false;
+        break;
+      }
+    }
+
+    if(missing) {
+      // we add to list only if unique
+      if(std::find(mis_ls.begin(), mis_ls.end(), target->depGet(i)) == mis_ls.end()) {
+        mis_ls.push_back(target->depGet(i));
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Get package source missing dependencies.
+///
+/// Recursively explores package source dependency tree to get
+/// list of missing dependencies for the specified target.
+///
+/// \param[out]   mis_ls : Output list missing dependency identities.
+/// \param[in]    lib_ls : Input list of available packages.
+/// \param[in]    target : Input target package to explore dependencies.
+///
+/// \return Count of missing dependency packages.
+///
+static size_t __src_get_missing_deps(vector<wstring>& mis_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  bool missing;
+
+  for(size_t i = 0; i < target->depCount(); ++i) {
+
+    missing = true;
+
+    for(size_t j = 0; j < lib_ls.size(); ++j) {
+
+      // rely only on packages
+      if(!lib_ls[j]->isZip()) continue;
+
+      if(target->depGet(i) == lib_ls[j]->ident()) {
+
+        n += __src_get_missing_deps(mis_ls, lib_ls, lib_ls[j]);
+
+        missing = false;
+        break;
+      }
+    }
+
+    if(missing) {
+      // we add to list only if unique
+      if(std::find(mis_ls.begin(), mis_ls.end(), target->depGet(i)) == mis_ls.end()) {
+        mis_ls.push_back(target->depGet(i));
+        n++;
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Check package source dependencies
+///
+/// Recursively explores package source dependency tree to check
+/// for missing dependencies of the specified target.
+///
+/// \param[in]    lib_ls : Input list of available packages.
+/// \param[in]    target : Input target package to explore dependencies.
+///
+/// \return True if no dependency missing, false otherwise.
+///
+static bool __src_chk_dependencies(const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  bool missing;
+
+  for(size_t i = 0; i < target->depCount(); ++i) {
+
+    missing = true;
+
+    for(size_t j = 0; j < lib_ls.size(); ++j) {
+
+      // rely only on packages
+      if(!lib_ls[j]->isZip()) continue;
+
+      if(target->depGet(i) == lib_ls[j]->ident()) {
+
+        // recursively check
+        if(!__src_chk_dependencies(lib_ls, lib_ls[j]))
+          return false;
+
+        missing = false;
+        break;
+      }
+    }
+
+    if(missing)
+      return false;
+  }
+
+  return true;
+}
+
+
+/// \brief Get package backup overlaps
+///
+/// Recursively explores package backup overlapping tree to gather all
+/// packages that overlaps on the specified target.
+///
+/// \param[out]   out_ls  : Output list of found overlapping packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    target  : Input target package to check overlapping.
+///
+/// \return Count of overlapping packages found.
+///
+static size_t __bck_get_overlaps(vector<OmPackage*>& out_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    // search only among installed packages
+    if(!lib_ls[i]->hasBck())
+      continue;
+
+    if(lib_ls[i]->ovrHas(target->hash())) {
+
+      // the function is recursive, we want the full list like a
+      // depth-first search in the right order
+      n += __bck_get_overlaps(out_ls, lib_ls, lib_ls[i]);
+
+      // recursive way can produce doubles, we want to avoid it
+      // so we add only if not already in the list
+      if(std::find(out_ls.begin(), out_ls.end(), lib_ls[i]) == out_ls.end()) {
+        out_ls.push_back(lib_ls[i]);
+        ++n;
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Get package backup dependents.
+///
+/// Recursively explores package backup dependency tree to gather all
+/// dependents packages of the specified target.
+///
+/// \param[out]   out_ls  : Output list of found dependents packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    target  : Input target package to check overlapping.
+///
+/// \return Count of dependents packages found.
+///
+static size_t __bck_get_dependents(vector<OmPackage*>& out_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    // search only among installed packages
+    if(!lib_ls[i]->hasBck())
+      continue;
+
+    if(lib_ls[i]->depHas(target->ident())) {
+
+      // check recursively, this give depth-first sorted list
+      n += __bck_get_dependents(out_ls, lib_ls, lib_ls[i]);
+
+      // add only if unique
+      if(std::find(out_ls.begin(), out_ls.end(), lib_ls[i]) == out_ls.end()) {
+        out_ls.push_back(lib_ls[i]);
+        ++n;
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Get package backup relations.
+///
+/// Recursively explores package backup relations tree to gather both
+/// dependents packages and overlapping packages of the specified
+/// target.
+///
+/// \param[out]   out_ls  : Output list of found related, either dependents or overlapping packages.
+/// \param[out]   ovr_ls  : Output list of found overlapping packages.
+/// \param[out]   dpt_ls  : Output list of found dependents packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    hash    : Input target package to get backup relations.
+///
+/// \return Count of dependents and overlapping packages found.
+///
+static size_t __bck_get_relations(vector<OmPackage*>& out_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dpt_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  bool is_ovr;
+  bool is_dep;
+
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    // search only among installed packages
+    if(!lib_ls[i]->hasBck())
+      continue;
+
+    // check both if package is overlapping and/or depend on
+    // the currently specified one
+    is_ovr = lib_ls[i]->ovrHas(target->hash());
+    is_dep = lib_ls[i]->depHas(target->ident());
+
+    if(is_ovr || is_dep) {
+
+      // we go for recursive search to get a properly sorted list of
+      // packages in depth-first search order.
+      n += __bck_get_relations(out_ls, ovr_ls, dpt_ls, lib_ls, lib_ls[i]);
+
+      // we now add to the proper lists
+      if(is_ovr) {
+        // add only if unique
+        if(std::find(ovr_ls.begin(), ovr_ls.end(), lib_ls[i]) == ovr_ls.end()) {
+          ovr_ls.push_back(lib_ls[i]);
+        }
+      }
+
+      if(is_dep) {
+        // add only if unique
+        if(std::find(dpt_ls.begin(), dpt_ls.end(), lib_ls[i]) == dpt_ls.end()) {
+          dpt_ls.push_back(lib_ls[i]);
+        }
+      }
+
+      // finally add to main list
+      if(std::find(out_ls.begin(), out_ls.end(), lib_ls[i]) == out_ls.end()) {
+        out_ls.push_back(lib_ls[i]);
+        ++n;
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Get package available remote dependencies.
+///
+/// Recursively explores package source dependency tree to gather all
+/// found required remote packages and create list of missing dependencies
+/// for the specified target.
+///
+/// \param[out]   out_ls : Output list of found dependency packages.
+/// \param[out]   mis_ls : Output list missing dependency identities.
+/// \param[in]    net_ls : Input list of available remote packages.
+/// \param[in]    lib_ls : Input list of available library packages.
+/// \param[in]    target : Input target remote package to explore dependencies.
+///
+/// \return Count of dependency remote packages found.
+///
+size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& net_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target);
+
+
+/// \brief Get remote package dependencies.
+///
+/// Recursively explores remote package dependency tree to gather all
+/// found required remote packages and create list of missing dependencies
+/// for the specified target.
+///
+/// \param[out]   out_ls : Output list of found dependency packages.
+/// \param[out]   mis_ls : Output list missing dependency identities.
+/// \param[in]    net_ls : Input list of available remote packages.
+/// \param[in]    lib_ls : Input list of available library packages.
+/// \param[in]    target : Input target remote package to explore dependencies.
+///
+/// \return Count of dependency remote packages found.
+///
+size_t __rmt_get_dependencies(vector<OmRemote*>& out_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmRemote* target);
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& pkg_ls) const
+size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  // get all missing dependencies for this package
+  vector<wstring> dep_ls;
+
+  __src_get_missing_deps(dep_ls, lib_ls, target);
+
+  if(dep_ls.empty())
+    return 0;
+
+  size_t n = 0;
+
+  bool missing;
+
+  // try to found packages in the remote package list
+  for(size_t i = 0; i < dep_ls.size(); ++i) {
+
+    missing = true;
+
+    for(size_t r = 0; r < net_ls.size(); ++r) {
+
+      if(dep_ls[i] == net_ls[r]->ident()) {
+
+        n += __rmt_get_dependencies(dnl_ls, mis_ls, net_ls, lib_ls, net_ls[r]);
+
+        if(std::find(dnl_ls.begin(), dnl_ls.end(), net_ls[r]) == dnl_ls.end()) {
+          dnl_ls.push_back(net_ls[r]);
+          ++n;
+        }
+
+        missing = false;
+      }
+    }
+
+    if(missing) {
+      // we add to list only if unique
+      if(std::find(mis_ls.begin(), mis_ls.end(), dep_ls[i]) == mis_ls.end()) {
+        mis_ls.push_back(dep_ls[i]);
+      }
+    }
+  }
+
+  return n;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t __rmt_get_dependencies(vector<OmRemote*>& out_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmRemote* target)
+{
+  size_t n = 0;
+
+  bool in_library;
+  bool missing;
+
+  // first check required dependency in local library to
+  // gather all missing dependencies, this will add dependencies
+  // to found in the remote package list
+  for(size_t i = 0; i < target->depCount(); ++i) {
+
+    in_library = false;
+
+    // first check whether required dependency is in package library
+    for(size_t p = 0; p < lib_ls.size(); ++p) {
+
+      // rely only on packages
+      if(!lib_ls[p]->isZip())
+        continue;
+
+      // if we found package, we must verify its dependencies list
+      if(target->depGet(i) == lib_ls[p]->ident()) {
+
+        // get all available remote dependencies for this package
+        n += __pkg_get_downloads(out_ls, mis_ls, net_ls, lib_ls, lib_ls[p]);
+
+        in_library = true;
+
+        break;
+      }
+    }
+
+    if(in_library) //< skip if already in library
+      continue;
+
+    missing = true;
+
+    for(size_t r = 0; r < net_ls.size(); ++r) {
+
+      if(target->depGet(i) == net_ls[r]->ident()) {
+
+        n += __rmt_get_dependencies(out_ls, mis_ls, net_ls, lib_ls, net_ls[r]);
+
+        if(std::find(out_ls.begin(), out_ls.end(), net_ls[r]) == out_ls.end()) {
+          out_ls.push_back(net_ls[r]);
+          ++n;
+        }
+
+        missing = false;
+        break;
+      }
+    }
+
+    if(missing) {
+      // we add to list only if unique
+      if(std::find(mis_ls.begin(), mis_ls.end(), target->depGet(i)) == mis_ls.end()) {
+        mis_ls.push_back(target->depGet(i));
+      }
+    }
+  }
+
+  return n;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& sel_ls) const
 {
   // gather dependencies and create missing lists
   vector<wstring> idt_ls;
-  for(size_t i = 0; i < pkg_ls.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     idt_ls.clear();
-    this->pkgGetDepends(ins_ls, idt_ls, pkg_ls[i]);
+    __src_get_dependencies(ins_ls, idt_ls, this->_pkgLs, sel_ls[i]);
 
     for(size_t j = 0; j < idt_ls.size(); ++j) {
       // add uniques only
@@ -1378,16 +1822,16 @@ void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& 
   // create the extra install list
   for(size_t i = 0; i < ins_ls.size(); ++i) {
     // add only if not in the initial selection
-    if(std::find(pkg_ls.begin(), pkg_ls.end(), ins_ls[i]) == pkg_ls.end()) {
+    if(std::find(sel_ls.begin(), sel_ls.end(), ins_ls[i]) == sel_ls.end()) {
       dep_ls.push_back(ins_ls[i]);
     }
   }
 
   // compose the final install list
-  for(size_t i = 0; i < pkg_ls.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
     // add only if not already in install list
-    if(std::find(ins_ls.begin(), ins_ls.end(), pkg_ls[i]) == ins_ls.end()) {
-      ins_ls.push_back(pkg_ls[i]);
+    if(std::find(ins_ls.begin(), ins_ls.end(), sel_ls[i]) == ins_ls.end()) {
+      ins_ls.push_back(sel_ls[i]);
     }
   }
 
@@ -1423,22 +1867,22 @@ void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& ovr_ls,  vector<OmPackage*>& dep_ls, const vector<OmPackage*>& pkg_ls) const
+void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& ovr_ls,  vector<OmPackage*>& dep_ls, const vector<OmPackage*>& sel_ls) const
 {
   // get overlapping packages list to be uninstalled before selection
-  for(size_t i = 0; i < pkg_ls.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     // this is the only call we do, but the function is doubly recursive and
     // can lead to huge complexity depending the actual state of package installation
     // dependencies and overlapping...
-    this->bckGetExtras(uns_ls, ovr_ls, dep_ls, pkg_ls[i]);
+    __bck_get_relations(uns_ls, ovr_ls, dep_ls, this->_pkgLs, sel_ls[i]);
   }
 
   // compose the final uninstall list
-  for(size_t i = 0; i < pkg_ls.size(); ++i) {
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
     // add only if not already in initial list
-    if(std::find(uns_ls.begin(), uns_ls.end(), pkg_ls[i]) == uns_ls.end()) {
-      uns_ls.push_back(pkg_ls[i]);
+    if(std::find(uns_ls.begin(), uns_ls.end(), sel_ls[i]) == uns_ls.end()) {
+      uns_ls.push_back(sel_ls[i]);
     }
   }
 }
@@ -1489,155 +1933,43 @@ size_t OmLocation::pkgFindOverlaps(vector<uint64_t>& hash_list, const OmPackage*
 ///
 size_t OmLocation::pkgGetDepends(vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const OmPackage* pkg) const
 {
-  size_t n = 0;
-
-  bool missing;
-
-  for(size_t i = 0; i < pkg->depCount(); ++i) {
-
-    missing = true;
-
-    for(size_t j = 0; j < this->_pkgLs.size(); ++j) {
-
-      // rely only on packages
-      if(!this->_pkgLs[j]->isZip())
-        continue;
-
-      if(pkg->depGet(i) == this->_pkgLs[j]->ident()) {
-
-        n += this->pkgGetDepends(dep_ls, mis_ls, this->_pkgLs[j]);
-        // we add to list only if unique and not already installed, this allow
-        // us to get a consistent dependency list for a bunch of package by
-        // calling this function for each package without clearing the list
-        if(!this->_pkgLs[j]->hasBck()) {
-          if(std::find(dep_ls.begin(), dep_ls.end(), this->_pkgLs[j]) == dep_ls.end()) {
-            dep_ls.push_back(this->_pkgLs[j]);
-            ++n;
-          }
-        }
-
-        missing = false;
-        break;
-      }
-    }
-
-    if(missing) {
-      // we add to list only if unique
-      if(std::find(mis_ls.begin(), mis_ls.end(), pkg->depGet(i)) == mis_ls.end()) {
-        mis_ls.push_back(pkg->depGet(i));
-      }
-    }
-  }
-
-  return n;
+  return __src_get_dependencies(dep_ls, mis_ls, this->_pkgLs, pkg);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::bckGetOverlaps(vector<OmPackage*>& pkg_list, const OmPackage* pkg) const
+bool OmLocation::pkgChkDepends(const OmPackage* pkg) const
 {
-  size_t n = 0;
-  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
-
-    // search only among installed packages
-    if(!this->_pkgLs[i]->hasBck())
-      continue;
-
-    if(this->_pkgLs[i]->ovrHas(pkg->_hash)) {
-      // the function is recursive, we want the full list like a
-      // depth-first search in the right order
-      n += this->bckGetOverlaps(pkg_list, this->_pkgLs[i]);
-      // recursive way can produce doubles, we want to avoid it
-      // so we add only if not already in the list
-      if(std::find(pkg_list.begin(), pkg_list.end(), this->_pkgLs[i]) == pkg_list.end()) {
-        pkg_list.push_back(this->_pkgLs[i]);
-        ++n;
-      }
-    }
-  }
-  return n;
+  return __src_chk_dependencies(this->_pkgLs, pkg);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::bckGetNeedies(vector<OmPackage*>& pkg_list, const OmPackage* pkg) const
+size_t OmLocation::bckGetOverlaps(vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const
 {
-  size_t n = 0;
-  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
-
-    // search only among installed packages
-    if(!this->_pkgLs[i]->hasBck())
-      continue;
-
-    if(this->_pkgLs[i]->depHas(pkg->_ident)) {
-      // check recursively, this give depth-first sorted list
-      n += this->bckGetNeedies(pkg_list, this->_pkgLs[i]);
-      // add only if unique
-      if(std::find(pkg_list.begin(), pkg_list.end(), this->_pkgLs[i]) == pkg_list.end()) {
-        pkg_list.push_back(this->_pkgLs[i]);
-        ++n;
-      }
-    }
-  }
-  return n;
+  return __bck_get_overlaps(ovr_ls, this->_pkgLs, pkg);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmLocation::bckGetExtras(vector<OmPackage*>& pkg_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, const OmPackage* pkg) const
+size_t OmLocation::bckGetDependents(vector<OmPackage*>& dpt_ls, const OmPackage* pkg) const
 {
-  size_t n = 0;
+  return __bck_get_dependents(dpt_ls, this->_pkgLs, pkg);
+}
 
-  bool is_ovr;
-  bool is_dep;
 
-  for(size_t i = 0; i < this->_pkgLs.size(); ++i) {
-
-    // search only among installed packages
-    if(!this->_pkgLs[i]->hasBck())
-      continue;
-
-    // check both if package is overlapping and/or depend on
-    // the currently specified one
-    is_ovr = this->_pkgLs[i]->ovrHas(pkg->_hash);
-    is_dep = this->_pkgLs[i]->depHas(pkg->_ident);
-
-    if(is_ovr || is_dep) {
-
-      // we go for recursive search to get a properly sorted list of
-      // packages in depth-first search order.
-      n += this->bckGetExtras(pkg_ls, ovr_ls, dep_ls, this->_pkgLs[i]);
-
-      // we now add to the proper lists
-      if(is_ovr) {
-        // add only if unique
-        if(std::find(ovr_ls.begin(), ovr_ls.end(), this->_pkgLs[i]) == ovr_ls.end()) {
-          ovr_ls.push_back(this->_pkgLs[i]);
-        }
-      }
-
-      if(is_dep) {
-        // add only if unique
-        if(std::find(dep_ls.begin(), dep_ls.end(), this->_pkgLs[i]) == dep_ls.end()) {
-          dep_ls.push_back(this->_pkgLs[i]);
-        }
-      }
-
-      // finally add to main list
-      if(std::find(pkg_ls.begin(), pkg_ls.end(), this->_pkgLs[i]) == pkg_ls.end()) {
-        pkg_ls.push_back(this->_pkgLs[i]);
-        ++n;
-      }
-    }
-  }
-
-  return n;
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmLocation::bckGetRelations(vector<OmPackage*>& rel_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, const OmPackage* pkg) const
+{
+  return __bck_get_relations(rel_ls, ovr_ls, dep_ls, this->_pkgLs, pkg);
 }
 
 
@@ -1776,6 +2108,10 @@ bool OmLocation::repQuery(Om_progressCb progress_cb, void* user_ptr)
       if(!progress_cb(user_ptr, progress_tot, progress_cur, this->_repLs[i]->url().c_str()))
         break;
     }
+
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW*5); //< for debug
+    #endif
   }
 
   this->log(2, L"Location("+this->_title+L") Network refresh", to_wstring(n)+L" repository successfully parsed.");
@@ -1836,50 +2172,58 @@ bool OmLocation::rmtRefresh(bool force)
   // refresh library first
   if(this->libRefresh() || force) {
 
-    bool in_library;
+    OmRemote* pRmt;
+    OmPackage* pPkg;
+
+    vector<OmRemote*> dep_ls;
+    vector<wstring> mis_ls;
+
     unsigned new_state;
 
     // compare remote package list to define remote status
     for(size_t r = 0; r < this->_rmtLs.size(); ++r) {
 
-      new_state = this->_rmtLs[r]->_state;
-      in_library = false;
+      pRmt = this->_rmtLs[r];
+
+      new_state = pRmt->_state;
 
       // remove relevant states, but not all of them to
       // keep states such as downloading or error
+      new_state |=  RMT_STATE_NEW;
       new_state &= ~RMT_STATE_UPG;
-      new_state &= ~RMT_STATE_DNG;
-      new_state &= ~RMT_STATE_LOC;
-      new_state &= ~RMT_STATE_NEW;
+      new_state &= ~RMT_STATE_OLD;
+      new_state &= ~RMT_STATE_DEP;
 
       for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
+
+        pPkg = this->_pkgLs[p];
+
         // search for same core but different version
-        if(this->_rmtLs[r]->core() == this->_pkgLs[p]->core()) {
+        if(pRmt->core() == pPkg->core()) {
           // check whether this identity matches
-          if(this->_rmtLs[r]->ident() != this->_pkgLs[p]->ident()) {
+          if(pRmt->ident() != pPkg->ident()) {
             // check version changes
-            if(this->_rmtLs[r]->version() > this->_pkgLs[p]->version()) {
+            if(pRmt->version() > pPkg->version()) {
               new_state |= RMT_STATE_UPG;
               // add superseded package
-              this->_rmtLs[r]->_supLs.push_back(this->_pkgLs[p]);
+              pRmt->_supLs.push_back(pPkg);
             } else {
-              new_state |= RMT_STATE_DNG;
+              new_state |= RMT_STATE_OLD;
             }
           } else {
-            // same identity, package already exists locally
-            new_state |= RMT_STATE_LOC;
-            in_library = true;
+            // same identity, package already exists in library
+            new_state &= ~RMT_STATE_NEW; //< Remove the "NEW" state
+            // check for missing dependencies
+            if(!this->pkgChkDepends(pPkg)) {
+              new_state |= RMT_STATE_DEP;
+            }
           }
           continue;
         }
       }
 
-      if(!in_library) {
-        new_state |= RMT_STATE_NEW;
-      }
-
-      if(new_state != this->_rmtLs[r]->_state) {
-        this->_rmtLs[r]->_state = new_state;
+      if(new_state != pRmt->_state) {
+        pRmt->_state = new_state;
         changed = true;
       }
     }
@@ -1937,60 +2281,7 @@ void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& de
 ///
 size_t OmLocation::rmtGetDepends(vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const OmRemote* rmt) const
 {
-  size_t n = 0;
-
-  bool in_library;
-  bool missing;
-
-  for(size_t i = 0; i < rmt->depCount(); ++i) {
-
-    in_library = false;
-
-    // we first check if we found the dependency in the local package list
-    for(size_t j = 0; j < this->_pkgLs.size(); ++j) {
-
-      // rely only on packages
-      if(!this->_pkgLs[j]->isZip())
-        continue;
-
-      if(rmt->depGet(i) == this->_pkgLs[j]->ident()) {
-        in_library = true; break;
-      }
-    }
-
-    // we found the dependency in library, we can go next candidate
-    if(in_library) continue;
-
-    missing = true;
-
-    // now check if we found it in remote package list
-    for(size_t j = 0; j < this->_rmtLs.size(); ++j) {
-
-      if(rmt->depGet(i) == this->_rmtLs[j]->ident()) {
-
-        n += this->rmtGetDepends(dep_ls, mis_ls, this->_rmtLs[j]);
-        // we add to list only if unique and not already installed, this allow
-        // us to get a consistent dependency list for a bunch of package by
-        // calling this function for each package without clearing the list
-        if(std::find(dep_ls.begin(), dep_ls.end(), this->_rmtLs[j]) == dep_ls.end()) {
-          dep_ls.push_back(this->_rmtLs[j]);
-          ++n;
-        }
-
-        missing = false;
-        break;
-      }
-    }
-
-    if(missing) {
-      // we add to list only if unique
-      if(std::find(mis_ls.begin(), mis_ls.end(), rmt->depGet(i)) == mis_ls.end()) {
-        mis_ls.push_back(rmt->depGet(i));
-      }
-    }
-  }
-
-  return n;
+  return __rmt_get_dependencies(dep_ls, mis_ls, this->_rmtLs, this->_pkgLs, rmt);
 }
 
 

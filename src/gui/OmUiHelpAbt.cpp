@@ -51,6 +51,9 @@ long OmUiHelpAbt::id() const
 ///
 void OmUiHelpAbt::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
   wstring about = OMM_APP_NAME;
   about.append(L" - version ");
   about.append(to_wstring(OMM_APP_MAJ)); about.push_back(L'.');

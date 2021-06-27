@@ -64,7 +64,7 @@ OmManager::~OmManager()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmManager::init()
+bool OmManager::init(const char* arg)
 {
   // Create application folder if does not exists
   wchar_t psz_path[MAX_PATH];
@@ -144,13 +144,32 @@ bool OmManager::init()
 
   // load startup Context files if any
   bool autoload;
-  vector<wstring> start_files;
-  this->getStartContexts(&autoload, start_files);
+  vector<wstring> path_ls;
+
+  this->getStartContexts(&autoload, path_ls);
+
   if(autoload) {
     this->log(2, L"Manager() Init", L"Load startup Context file(s)");
-    for(size_t i = 0; i < start_files.size(); ++i) {
-      this->ctxOpen(start_files[i]);
+    for(size_t i = 0; i < path_ls.size(); ++i) {
+      this->ctxOpen(path_ls[i]);
     }
+  }
+
+  // add the context file passed as argument if any
+  if(strlen(arg)) {
+
+    // convert to wstring
+    wstring path;
+    Om_fromAnsiCp(path, arg);
+
+    // check for quotes and removes them
+    if(path.back() == L'"' && path.front() == L'"') {
+      path.erase(0, 1);
+      path.pop_back();
+    }
+
+    // try to open
+    this->ctxOpen(path);
   }
 
   return true;

@@ -433,6 +433,17 @@ class OmDialog
       return IsWindowEnabled(GetDlgItem(_hwnd, id));
     }
 
+    /// \brief Show or hide control
+    ///
+    /// Show or hide the specified dialog control.
+    ///
+    /// \param[in]  id      : Control resource ID to enable or disable.
+    /// \param[in]  show    : Show or hide.
+    ///
+    void showItem(unsigned id, bool show) const {
+      ShowWindow(GetDlgItem(_hwnd, id), show);
+    }
+
     /// \brief Get menu pop-up
     ///
     /// Returns dialog main menu (menu bar) pop-up.

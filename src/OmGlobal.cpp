@@ -4517,7 +4517,7 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large)
 ///
 /// Array of loaded internal ressource image.
 ///
-static HBITMAP __internal_image[200] = {nullptr};
+static HBITMAP __internal_bmp[200] = {nullptr};
 
 
 /// Base index for image resource
@@ -4531,13 +4531,39 @@ HBITMAP Om_getResImage(HINSTANCE hins, unsigned id)
 {
   unsigned db_id = id - RES_IDB_BASE;
 
-  if(__internal_image[db_id] == nullptr) {
+  if(__internal_bmp[db_id] == nullptr) {
     HBITMAP hBm = static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(id),IMAGE_BITMAP,0,0,0));
-    __internal_image[db_id] = hBm;
+    __internal_bmp[db_id] = hBm;
   }
 
-  return __internal_image[db_id];
+  return __internal_bmp[db_id];
 }
+
+
+/// \brief Loaded internal image
+///
+/// Array of loaded internal ressource image.
+///
+static HICON __internal_ico[100][3] = {nullptr};
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size)
+{
+  unsigned db_id = id - RES_IDB_BASE;
+
+  unsigned w = (size == 0) ? 16 : (size == 1) ? 24 : 32;
+
+  if(__internal_ico[db_id][size] == nullptr) {
+    HICON hIc = static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(id),IMAGE_ICON,w,w,0));
+    __internal_ico[db_id][size] = hIc;
+  }
+
+  return __internal_ico[db_id][size];
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

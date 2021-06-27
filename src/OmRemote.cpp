@@ -335,7 +335,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
     if(Om_cmpChecksum(self->_downl_temp, self->_checksum)) {
       int result = Om_fileMove(self->_downl_temp, self->_downl_path);
       if(result == 0) {
-        self->_state |= RMT_STATE_LOC;
+        self->_state &= ~RMT_STATE_NEW; //< now in library
       } else {
         self->_error =  L"Temp download file \""+self->_downl_temp+L"\"";
         self->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));

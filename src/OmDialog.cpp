@@ -186,12 +186,7 @@ void OmDialog::quit()
 
   if(this->_hwnd) {
 
-    if(!DestroyWindow(this->_hwnd)) {
-      int ercode = GetLastError();
-      #ifdef DEBUG
-      std::wcout << L"DEBUG => OmDialog(" << this->id() <<  L")::quit  - DestroyWindow Error: " << Om_getErrorStr(ercode) << L"\n";
-      #endif
-    }
+    DestroyWindow(this->_hwnd);
 
     this->_hwnd = nullptr;
   }

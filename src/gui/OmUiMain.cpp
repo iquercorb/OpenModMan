@@ -210,8 +210,7 @@ void OmUiMain::ctxSel(int id)
 
   // update dialog window title
   wstring caption;
-  if(pCtx)
-    caption = pCtx->title() + L" - ";
+  if(pCtx) caption = pCtx->title() + L" - ";
 
   this->setCaption(caption + OMM_APP_NAME);
 
@@ -396,10 +395,11 @@ void OmUiMain::_onInit()
   std::cout << "DEBUG => OmUiMain::_onInit\n";
   #endif
 
+  // set window caption
+  //this->setCaption(OMM_APP_NAME);
+
   // set window icon
-  HICON small = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,24,24,0));
-  HICON big = static_cast<HICON>(LoadImage(this->_hins,MAKEINTRESOURCE(IDB_APP_ICON),IMAGE_ICON,32,32,0));
-  this->setIcon(big, small);
+  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
 
   this->_createTooltip(IDC_CB_CTX, L"Select active context");
 
@@ -630,21 +630,21 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDM_EDIT_CTX_PROP: {
       OmUiPropCtx* pUiPropCtx = static_cast<OmUiPropCtx*>(this->childById(IDD_PROP_CTX));
       pUiPropCtx->ctxSet(pCtx);
-      pUiPropCtx->open(true);
+      pUiPropCtx->open();
       break;
     }
 
     case IDM_EDIT_LOC_PROP: {
       OmUiPropLoc* pUiPropLoc = static_cast<OmUiPropLoc*>(this->childById(IDD_PROP_LOC));
       pUiPropLoc->locSet(pCtx->locCur());
-      pUiPropLoc->open(true);
+      pUiPropLoc->open();
       break;
     }
 
     case IDM_EDIT_ADD_LOC: {
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->childById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
-      pUiAddLoc->open(true);
+      pUiAddLoc->open();
       break;
     }
 
@@ -678,22 +678,28 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtDown(true);
       break;
 
-    case IDM_EDIT_RMT_INFO:
-      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtProp();
+    case IDM_EDIT_RMT_FIXD:
+      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtFixd(false);
       break;
 
-    // Menu : Tools > []
-    case IDM_TOOLS_EDI_REP:
-      this->childById(IDD_TOOL_REP)->open();
+    case IDM_EDIT_RMT_INFO:
+      static_cast<OmUiMainNet*>(this->childById(IDD_MAIN_NET))->rmtProp();
       break;
 
     case IDM_EDIT_OPTIONS:
       this->childById(IDD_PROP_MAN)->open();
       break;
 
-    case IDM_TOOLS_EDI_PKG:
-      this->childById(IDD_TOOL_PKG)->open();
+
+    // Menu : Tools > []
+    case IDM_TOOLS_EDI_REP:
+      this->childById(IDD_TOOL_REP)->modeless();
       break;
+
+    case IDM_TOOLS_EDI_PKG:
+      this->childById(IDD_TOOL_PKG)->modeless();
+      break;
+
 
     // Menu : Help > []
     case IDM_HELP_LOG:

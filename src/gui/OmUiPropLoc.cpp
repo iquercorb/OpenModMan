@@ -399,6 +399,16 @@ bool OmUiPropLoc::_movBck_progress_cb(void* ptr, size_t tot, size_t cur, const w
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropLoc::_onPropInit()
+{
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_MOVEBACKUP_DONE is a custom message sent from backup transfer thread

@@ -103,6 +103,8 @@ class OmUiPropLoc : public OmDialogProp
 
     static bool         _movBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
 
+    void                _onPropInit();
+
     bool                _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 

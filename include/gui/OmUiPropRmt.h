@@ -75,7 +75,9 @@ class OmUiPropRmt : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmRemote*          _pRmt;
+    OmRemote*           _pRmt;
+
+    void                _onPropInit();
 };
 
 #endif // OMUIPROPRMT_H

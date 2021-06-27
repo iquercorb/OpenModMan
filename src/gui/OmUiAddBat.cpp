@@ -473,6 +473,9 @@ bool OmUiAddBat::_onBcOk()
 ///
 void OmUiAddBat::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
   // Set icons for Up and Down buttons
   this->setBmImage(IDC_BC_UP, Om_getResImage(this->_hins, IDB_BTN_UP));
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));

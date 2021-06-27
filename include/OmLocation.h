@@ -557,6 +557,17 @@ class OmLocation
     ///
     size_t pkgGetDepends(vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const OmPackage* pkg) const;
 
+    /// \brief Check for remote package dependencies.
+    ///
+    /// Checks whether remote package have unsatisfied (not downloaded) dependencies. Notice
+    /// that this function checks only
+    ///
+    /// \param[in]  pkg     : Package to get check dependencies.
+    ///
+    /// \return True if dependencies are satisfied, false otherwise.
+    ///
+    bool pkgChkDepends(const OmPackage* pkg) const;
+
     /// \brief Get backup overlaps list.
     ///
     /// Retrieve list of overlapping installed packages of the specified package.
@@ -598,21 +609,21 @@ class OmLocation
       return false;
     }
 
-    /// \brief Get backup needies list.
+    /// \brief Get backup dependents list.
     ///
-    /// Retrieve list of packages that depend on this installed package.
+    /// Retrieve list of dependent packages of the specified installed target.
     ///
-    /// \param[out] pkg_ls  : Array vector of Package pointer to receive list.
-    /// \param[in]  pkg     : Package to get restoration dependencies.
+    /// \param[out] dpt_ls  : Array vector of Package pointer to receive list.
+    /// \param[in]  pkg     : Package to get dependent packages list.
     ///
     /// \return Count of additional package found.
     ///
-    size_t bckGetNeedies(vector<OmPackage*>& pkg_ls, const OmPackage* pkg) const;
+    size_t bckGetDependents(vector<OmPackage*>& dpt_ls, const OmPackage* pkg) const;
 
-    /// \brief Get backup extra list.
+    /// \brief Get backup relations list.
     ///
-    /// Retrieve both (and recursive) list of packages which overlaps and
-    /// depend on the given installed package.
+    /// Retrieve both (and recursive) list of overlapping packages and
+    /// are dependent packages of the the specified installed package.
     ///
     /// Notice that the routine performs dual test and recursive search,
     /// considering each additional uninstall (either because of overlaps,
@@ -622,14 +633,14 @@ class OmLocation
     /// list, but can be costly on huge packages list with lot of overlaps and
     /// dependencies.
     ///
-    /// \param[out] ext_ls  : Output sorted and cumulative list of package which overlaps and depend on the specified one.
+    /// \param[out] rel_ls  : Output sorted and cumulative list of overlapping and dependents packages.
     /// \param[out] dep_ls  : Output list of packages which depend on the specified one.
     /// \param[out] ovr_ls  : Output list of packages which overlaps the specified one.
     /// \param[in]  pkg     : Package to get lists from.
     ///
     /// \return Count of additional package found.
     ///
-    size_t bckGetExtras(vector<OmPackage*>& ext_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
+    size_t bckGetRelations(vector<OmPackage*>& rel_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
     /// \brief Get repository URL count.
     ///

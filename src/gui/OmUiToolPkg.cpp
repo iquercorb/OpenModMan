@@ -788,6 +788,12 @@ void OmUiToolPkg::_onBcSave()
 ///
 void OmUiToolPkg::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
+  // dialog is modeless so we set dialog title with app name
+  this->setCaption(L"Package editor - " OMM_APP_NAME);
+
   // define controls tool-tips
   this->_createTooltip(IDC_BC_BRW01, L"Select folder");
   this->_createTooltip(IDC_BC_BRW02, L"Select Package file");

@@ -54,7 +54,7 @@
 #else
   #define OMM_APP_ARCH            L"x86"
 #endif
-#define OMM_APP_DATE              L"May 2021"
+#define OMM_APP_DATE              L"July 2021"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2021"
@@ -432,7 +432,7 @@ size_t Om_toAnsiCp(string& ansi, const wstring& wstr);
 ///
 /// \return Count of written wide characters.
 ///
-size_t Om_fromAnsiCp(const wstring& wstr, const char* ansi);
+size_t Om_fromAnsiCp(wstring& wstr, const char* ansi);
 
 /// \brief Zip CDR entry to Windows path conversion.
 ///
@@ -1578,12 +1578,25 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
 /// Return internal resource image as HBITMAP, created handle does not
 /// have to be deleted.
 ///
-/// \param[in] id      : Handle instance to get internal resource.
+/// \param[in] hins    : Handle instance to get internal resource.
 /// \param[in] id      : Image internal resource id.
 ///
 /// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
 ///
 HBITMAP Om_getResImage(HINSTANCE hins, unsigned id);
+
+/// \brief Get internal resource icon
+///
+/// Return internal resource icon as HICON, created handle does not
+/// have to be deleted.
+///
+/// \param[in] hins    : Handle instance to get internal resource.
+/// \param[in] id      : Image internal resource id.
+/// \param[in] size    : Icon size to get.
+///
+/// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
+///
+HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size);
 
 /// \brief Create font object
 ///

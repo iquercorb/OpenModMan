@@ -195,6 +195,9 @@ bool OmUiAddRep::_onBcOk()
 ///
 void OmUiAddRep::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository base URL");
   // define controls tool-tips

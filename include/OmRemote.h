@@ -31,9 +31,9 @@ class OmPackage;
 ///
 enum OmRmtState : unsigned {
   RMT_STATE_NEW = 0x1,     ///< Remote package is new (not in local library)
-  RMT_STATE_UPG = 0x2,     ///< Remote package is an upgrade (better version)
-  RMT_STATE_DNG = 0x4,     ///< Remote package is a downgrade (older version)
-  RMT_STATE_LOC = 0x8,     ///< Remote package exists locally
+  RMT_STATE_UPG = 0x2,     ///< Remote package is an upgrade (newer version)
+  RMT_STATE_OLD = 0x4,     ///< Remote package is a downgrade (older version)
+  RMT_STATE_DEP = 0x8,     ///< Remote package is downloaded but has missing dependencies
   RMT_STATE_DNL = 0x10,    ///< Remote package is downloading
   RMT_STATE_ERR = 0x20,    ///< Remote package download error
 };
@@ -156,7 +156,7 @@ class OmRemote
     ///
     ///  - RMT_STATE_NEW : Remote package does not exists local library and can be downloaded.
     ///  - RMT_STATE_UPG : Remote package is an upgrade of an existing package in local library.
-    ///  - RMT_STATE_DNG : Remote package is a downgrade of an existing package in local library.
+    ///  - RMT_STATE_OLD : Remote package is a downgrade of an existing package in local library.
     ///  - RMT_STATE_LOC : Remote package exists locally
     ///  - RMT_STATE_DNL : Remote package is downloading
     ///
@@ -173,7 +173,7 @@ class OmRemote
     ///
     ///  - RMT_STATE_NEW : Remote package does not exists local library and can be downloaded.
     ///  - RMT_STATE_UPG : Remote package is an upgrade of an existing package in local library.
-    ///  - RMT_STATE_DNG : Remote package is a downgrade of an existing package in local library.
+    ///  - RMT_STATE_OLD : Remote package is a downgrade of an existing package in local library.
     ///  - RMT_STATE_LOC : Remote package exists locally
     ///  - RMT_STATE_DNL : Remote package is downloading
     ///

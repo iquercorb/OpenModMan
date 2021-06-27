@@ -55,6 +55,12 @@ long OmUiHelpLog::id() const
 ///
 void OmUiHelpLog::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
+  // dialog is modeless so we set dialog title with app name
+  this->setCaption(L"Debug log - " OMM_APP_NAME);
+
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 

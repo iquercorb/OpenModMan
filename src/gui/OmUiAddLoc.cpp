@@ -230,6 +230,9 @@ bool OmUiAddLoc::_onBcOk()
 ///
 void OmUiAddLoc::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 

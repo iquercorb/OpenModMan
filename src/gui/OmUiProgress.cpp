@@ -139,6 +139,9 @@ void OmUiProgress::_onBcAbort()
 ///
 void OmUiProgress::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+
   HFONT hFt = Om_createFont(16, 600, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_HEAD, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 

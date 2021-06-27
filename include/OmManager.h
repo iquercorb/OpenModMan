@@ -70,9 +70,11 @@ class OmManager
     ///
     /// Initializes the application, load or create initial configuration.
     ///
+    /// \param[in]  arg : Optional command line arguments string.
+    ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool init();
+    bool init(const char* arg = nullptr);
 
     /// \brief Quit application.
     ///

@@ -412,6 +412,16 @@ class OmPackage
       return _depLs[i];
     }
 
+    /// \brief Get dependency list.
+    ///
+    /// Returns list of dependencies identity strings.
+    ///
+    /// \return Identity strings array.
+    ///
+    const vector<wstring>& depList() const {
+      return _depLs;
+    }
+
     /// \brief Add Dependency
     ///
     /// Add dependency package identity to this instance.

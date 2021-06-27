@@ -90,6 +90,14 @@ class OmUiMainNet : public OmDialog
     ///
     void rmtDown(bool upgrade = false);
 
+    /// \brief Fix selection dependencies
+    ///
+    /// Launch the download for the required dependencies of selected remote package.
+    ///
+    /// \param[in]  upgrade : Indicate the download process is an upgrade (remove superseded packages)
+    ///
+    void rmtFixd(bool upgrade = false);
+
     /// \brief View remote package details.
     ///
     /// Public function to open selected remote package property dialog.
@@ -122,7 +130,7 @@ class OmUiMainNet : public OmDialog
 
     bool                _rmtDnl_update(double tot, double cur, double rate, uint64_t hash);
 
-    void                _rmtDnl_finish(double tot, double cur, double rate, uint64_t hash);
+    void                _rmtDnl_finish(uint64_t hash);
 
     static bool         _rmtDnl_download_cb(void* ptr, double tot, double cur, double rate, uint64_t data);
 

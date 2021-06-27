@@ -54,6 +54,8 @@ class OmUiWizCtx : public OmDialogWiz
     bool                _onWizNext();
 
     void                _onWizFinish();
+
+    void                _onWizInit();
 };
 
 #endif // OMUIWIZNEWCTX_H

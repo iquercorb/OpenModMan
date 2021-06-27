@@ -83,6 +83,10 @@ OmUiMainLib::~OmUiMainLib()
   if(hFt) DeleteObject(hFt);
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
+
+  // Get the previous Image List to be destroyed (Small and Normal uses the same)
+  HIMAGELIST hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_PKG, LVM_GETIMAGELIST, LVSIL_NORMAL));
+  if(hImgLs) ImageList_Destroy(hImgLs);
 }
 
 
@@ -106,23 +110,21 @@ void OmUiMainLib::freeze(bool enable)
 
   // Location ComboBox
   this->enableItem(IDC_CB_LOC, !enable);
-  // Packages ListView
-  this->enableItem(IDC_LV_PKG, !enable);
-  // Batches ListBox
-  this->enableItem(IDC_LB_BAT, !enable);
 
-  // Package Install and Uninstall buttons
+  // Packages ListView & buttons
+  this->enableItem(IDC_LV_PKG, !enable);
   this->enableItem(IDC_BC_INST, !enable);
   this->enableItem(IDC_BC_UNIN, !enable);
 
-  // Batch Buttons
+  // Batches Label, ListBox & Buttons
+  this->enableItem(IDC_SC_LBL01, !enable);
+  this->enableItem(IDC_LB_BAT, !enable);
+  this->enableItem(IDC_BC_NEW, !enable);
+  // Batch Launch & Delete Buttons
   if(enable) {
-    this->enableItem(IDC_BC_NEW, false);
     this->enableItem(IDC_BC_DEL, false);
     this->enableItem(IDC_BC_RUN, false);
   } else {
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    this->enableItem(IDC_BC_NEW, (pMgr->ctxCur() != nullptr));
     int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
     this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
     this->enableItem(IDC_BC_RUN, (lb_sel >= 0));
@@ -503,7 +505,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
     // set WIP status image
     lvi.iItem = pLoc->pkgIndex(pPkg);
-    lvi.iImage =  4; //< WIP
+    lvi.iImage =  4; //< STS_WIP
     this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     if(!pPkg->hasSrc() || pPkg->hasBck())
@@ -525,16 +527,16 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
     // update package icon in ListView
     if(pPkg->hasBck()) {
-      lvi.iImage = 5; //< BCK
+      lvi.iImage = 7; //< STS_BOK
       this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
       // update icons for overlapped packages
       for(size_t j = 0; j < ovlp_ls.size(); ++j) {
         lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
-        lvi.iImage = 6; //< OWR
+        lvi.iImage = 8; //< STS_OWR
         this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
       }
     } else {
-      lvi.iImage = -1; //< not installed
+      lvi.iImage = -1; //< No Icon
       this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
     }
 
@@ -608,7 +610,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
     // set WIP status image
     lvi.iItem = pLoc->pkgIndex(pPkg);
-    lvi.iImage = 4; //< WIP
+    lvi.iImage = 4; //< STS_WIP
     this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
 
     if(!pPkg->hasBck()) //< this should be always the case
@@ -629,15 +631,15 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
     }
 
     if(pPkg->hasBck()) { //< this mean something went wrong
-      lvi.iImage = pLoc->bckOverlapped(pPkg) ? 6 /*OWR*/ : 5 /*BCK*/;
+      lvi.iImage = pLoc->bckOverlapped(pPkg) ? 8/*STS_OWR*/:7/*STS_BOK*/;
       this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
     } else {
-      lvi.iImage = -1; //< not installed
+      lvi.iImage = -1; //< No Icon
       this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
       // update status icon for overlapped packages
       for(size_t j = 0; j < ovlp_ls.size(); ++j) {
         lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
-        lvi.iImage = pLoc->bckOverlapped(ovlp_ls[j]) ? 6 /*OWR*/ : 5 /*BCK*/;
+        lvi.iImage = pLoc->bckOverlapped(ovlp_ls[j]) ? 8/*STS_OWR*/:7/*STS_BOK*/;
         this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
       }
     }
@@ -758,36 +760,41 @@ void OmUiMainLib::_buildLvPkg()
   // if icon size changed, create new ImageList
   if(this->_buildLvPkg_icSize != pMgr->iconsSize()) {
 
+    HIMAGELIST hImgLs;
+
+    // Get the previous Image List to be destroyed (Small and Normal uses the same)
+    hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_PKG, LVM_GETIMAGELIST, LVSIL_NORMAL));
+    if(hImgLs) ImageList_Destroy(hImgLs);
+
+    // - 0: PKG_ERR - 1: PKG_DIR -  2: PKG_ZIP -  3: PKG_DPN
+    // - 4: STS_WIP - 5: STS_ERR -  6: STS_WRN -  7: STS_BOK
+    // - 8: STS_OWR - 9: STS_OLD - 10: STS_UPG - 11: STS_DNL
+
     // Build list of images resource ID for the required size
-    unsigned idb[7];
+    unsigned idb[] = {IDB_PKG_ERR_16, IDB_PKG_DIR_16, IDB_PKG_ZIP_16, IDB_PKG_DPN_16,
+                      IDB_STS_WIP_16, IDB_STS_ERR_16, IDB_STS_WRN_16, IDB_STS_BOK_16,
+                      IDB_STS_OWR_16, IDB_STS_OLD_16, IDB_STS_UPG_16, IDB_STS_DNL_16};
+
     switch(pMgr->iconsSize())
     {
-    case 16:
-      idb[0] = IDB_PKG_ERR_16; idb[1] = IDB_PKG_DIR_16; idb[2] = IDB_PKG_ZIP_16;
-      idb[3] = IDB_PKG_DPN_16; idb[4] = IDB_PKG_WIP_16; idb[5] = IDB_PKG_BCK_16;
-      idb[6] = IDB_PKG_OWR_16;
+    case 24:
+      for(unsigned i = 0; i < 12; ++i)
+        idb[i] += 1; //< steps IDs to 24 pixels images
       break;
     case 32:
-      idb[0] = IDB_PKG_ERR_32; idb[1] = IDB_PKG_DIR_32; idb[2] = IDB_PKG_ZIP_32;
-      idb[3] = IDB_PKG_DPN_32; idb[4] = IDB_PKG_WIP_32; idb[5] = IDB_PKG_BCK_32;
-      idb[6] = IDB_PKG_OWR_32;
-      break;
-    default:
-      idb[0] = IDB_PKG_ERR_24; idb[1] = IDB_PKG_DIR_24; idb[2] = IDB_PKG_ZIP_24;
-      idb[3] = IDB_PKG_DPN_24; idb[4] = IDB_PKG_WIP_24; idb[5] = IDB_PKG_BCK_24;
-      idb[6] = IDB_PKG_OWR_24;
+      for(unsigned i = 0; i < 12; ++i)
+        idb[i] += 2; //< steps IDs to 32 pixels images
       break;
     }
 
     // Create ImageList and fill it with bitmaps
-    HIMAGELIST hImgList = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 7, 0 );
-    for(unsigned i = 0; i < 7; ++i)
-      ImageList_Add(hImgList, Om_getResImage(this->_hins, idb[i]), nullptr);
+    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 12, 0 );
+    for(unsigned i = 0; i < 12; ++i)
+      ImageList_Add(hImgLs, Om_getResImage(this->_hins, idb[i]), nullptr);
 
     // Set ImageList to ListView
-    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgList));
-    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgList));
-    DeleteObject(hImgList);
+    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgLs));
+    this->msgItem(IDC_LV_PKG, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgLs));
 
     // update size
     this->_buildLvPkg_icSize = pMgr->iconsSize();
@@ -820,9 +827,9 @@ void OmUiMainLib::_buildLvPkg()
     lvItem.mask = LVIF_IMAGE;
     lvItem.iSubItem = 0;
     if(pPkg->isType(PKG_TYPE_BCK)) {
-      lvItem.iImage = pLoc->bckOverlapped(pPkg) ? 6/*OWR*/ : 5/*BCK*/;
+      lvItem.iImage = pLoc->bckOverlapped(pPkg) ? 8/*STS_OWR*/:7/*STS_BOK*/;
     } else {
-      lvItem.iImage = -1; // none
+      lvItem.iImage = -1; // No Icon
     }
     lvItem.iItem = this->msgItem(IDC_LV_PKG, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
@@ -830,9 +837,9 @@ void OmUiMainLib::_buildLvPkg()
     lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
     lvItem.iSubItem = 1;
     if(pPkg->isType(PKG_TYPE_SRC)) {
-      lvItem.iImage = pPkg->isZip() ? (pPkg->depCount() ? 3/*DPN*/ : 2/*ZIP*/) : 1/*DIR*/;
+      lvItem.iImage = pPkg->isZip() ? (pPkg->depCount() ? 3/*PKG_DPN*/:2/*PKG_ZIP*/):1/*PKG_DIR*/;
     } else {
-      lvItem.iImage = 0; // IDB_PKG_ERR
+      lvItem.iImage = 0; // PKG_ERR
     }
 
     lvItem.pszText = const_cast<LPWSTR>(pPkg->name().c_str());
@@ -1145,9 +1152,9 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
   if(lb_sel >= 0) {
 
     // hide package details
-    ShowWindow(self->getItem(IDC_SB_PKG), false);
-    ShowWindow(self->getItem(IDC_EC_PKTXT), false);
-    ShowWindow(self->getItem(IDC_SC_TITLE), false);
+    self->showItem(IDC_SB_PKG, false);
+    self->showItem(IDC_EC_PKTXT, false);
+    self->showItem(IDC_SC_TITLE, false);
 
     // retrieve the batch object from current selection
     OmBatch* pBat = pCtx->batGet(self->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel));
@@ -1235,9 +1242,9 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
     }
 
     // restore package details
-    ShowWindow(self->getItem(IDC_SB_PKG), true);
-    ShowWindow(self->getItem(IDC_EC_PKTXT), true);
-    ShowWindow(self->getItem(IDC_SC_TITLE), true);
+    self->showItem(IDC_SB_PKG, true);
+    self->showItem(IDC_EC_PKTXT, true);
+    self->showItem(IDC_SC_TITLE, true);
   }
 
   // Select previously selected location
@@ -1288,12 +1295,12 @@ void OmUiMainLib::_dirMon_stop()
   // stops current directory monitoring thread
   if(this->_dirMon_hth) {
 
-    // set custom event to request thread quit, then wait for it
+    // set custom event to request thread to quit, then wait for it
     SetEvent(this->_dirMon_hev[0]);
     WaitForSingleObject(this->_dirMon_hth, INFINITE);
     CloseHandle(this->_dirMon_hth);
 
-    // reset the "stop" event for further usage
+    // reset the "stop" event for next usage
     ResetEvent(this->_dirMon_hev[0]);
 
     // close previous folder monitor
@@ -1374,10 +1381,14 @@ void OmUiMainLib::_onLvPkgRclk()
 ///
 void OmUiMainLib::_onLvPkgSel()
 {
+  // hide all package bottom infos
+  this->showItem(IDC_SB_PKG, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SC_TITLE, false);
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx) return;
-
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
@@ -1403,8 +1414,8 @@ void OmUiMainLib::_onLvPkgSel()
     pUiMain->setPopupItem(1, 5, MF_ENABLED);
 
     // show package title and thumbnail
-    ShowWindow(this->getItem(IDC_SC_TITLE), true);
-    ShowWindow(this->getItem(IDC_SB_PKG), true);
+    this->showItem(IDC_SC_TITLE, true);
+    this->showItem(IDC_SB_PKG, true);
 
     if(lv_nsl > 1) {
 
@@ -1413,7 +1424,7 @@ void OmUiMainLib::_onLvPkgSel()
       pUiMain->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
 
       // on multiple selection, we hide package description
-      ShowWindow(this->getItem(IDC_EC_PKTXT), false);
+      this->showItem(IDC_EC_PKTXT, false);
       this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
 
     } else {
@@ -1423,7 +1434,7 @@ void OmUiMainLib::_onLvPkgSel()
       pUiMain->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
 
       // show package description
-      ShowWindow(this->getItem(IDC_EC_PKTXT), true);
+      this->showItem(IDC_EC_PKTXT, true);
 
       OmPackage* pPkg;
 
@@ -1451,11 +1462,6 @@ void OmUiMainLib::_onLvPkgSel()
 
     // disable "Edit > Package []" pop-up menu
     pUiMain->setPopupItem(1, 5, MF_GRAYED);
-
-    // hide all package bottom infos
-    ShowWindow(this->getItem(IDC_SC_TITLE), false);
-    ShowWindow(this->getItem(IDC_SB_PKG), false);
-    ShowWindow(this->getItem(IDC_EC_PKTXT), false);
 
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
@@ -1551,15 +1557,16 @@ void OmUiMainLib::_onInit()
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_LOC,  L"Select active location");
+  this->_createTooltip(IDC_CB_LOC,    L"Select active location");
   this->_createTooltip(IDC_BC_INST,   L"Install selected package(s)");
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected package(s)");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
 
   // Initialize the ListView control
   DWORD dwExStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
-
   this->msgItem(IDC_LV_PKG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
+  // set explorer theme
+  SetWindowTheme(this->getItem(IDC_LV_PKG),L"Explorer",nullptr);
 
   // we now add columns into our list-view control
   LVCOLUMNW lvCol;
@@ -1590,6 +1597,11 @@ void OmUiMainLib::_onInit()
 
   // keep curent manager legacy option
   this->_buildLvPkg_legacy = pMgr->legacySupport();
+
+  // hide package details
+  this->showItem(IDC_SC_TITLE, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SB_PKG, false);
 }
 
 
@@ -1667,9 +1679,9 @@ void OmUiMainLib::_onResize()
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
-  this->_setItemPos(IDC_BC_UNIN, 55, this->height()-114, 50, 14);
+  this->_setItemPos(IDC_BC_UNIN, 56, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 107, this->height()-113, this->width()-315, 12);
+  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-316, 13);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
@@ -1707,7 +1719,6 @@ void OmUiMainLib::_onRefresh()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
-  //OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   // disable all packages buttons
   this->enableItem(IDC_BC_ABORT, false);
@@ -1715,9 +1726,9 @@ void OmUiMainLib::_onRefresh()
   this->enableItem(IDC_BC_UNIN, false);
 
   // hide package details
-  ShowWindow(this->getItem(IDC_SC_TITLE), false);
-  ShowWindow(this->getItem(IDC_EC_PKTXT), false);
-  ShowWindow(this->getItem(IDC_SB_PKG), false);
+  this->showItem(IDC_SC_TITLE, false);
+  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_SB_PKG, false);
 
   // disable the Progress-Bar
   this->enableItem(IDC_PB_PKG, false);
@@ -1735,7 +1746,12 @@ void OmUiMainLib::_onRefresh()
     this->_buildLvPkg();
   }
 
-  // disable all batches buttons
+  // disable or enable elements depending context
+  this->enableItem(IDC_SC_LBL01, (pCtx != nullptr));
+  this->enableItem(IDC_LV_PKG, (pCtx != nullptr));
+  this->enableItem(IDC_LB_BAT, (pCtx != nullptr));
+
+  // disable or enable batches buttons
   this->enableItem(IDC_BC_RUN, false);
   this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
   this->enableItem(IDC_BC_EDI, false);
@@ -1757,17 +1773,8 @@ void OmUiMainLib::_onQuit()
   // stop Library folder changes monitoring
   this->_dirMon_stop();
 
-  // safely and cleanly close threads handles
-  if(this->_pkgInst_hth) {
-    WaitForSingleObject(this->_pkgInst_hth, INFINITE);
-    CloseHandle(this->_pkgInst_hth);
-    this->_pkgInst_hth = nullptr;
-  }
-  if(this->_pkgUnin_hth) {
-    WaitForSingleObject(this->_pkgUnin_hth, INFINITE);
-    CloseHandle(this->_pkgUnin_hth);
-    this->_pkgUnin_hth = nullptr;
-  }
+  // this should be done already...
+  this->_thread_abort = true;
 }
 
 
@@ -1821,10 +1828,9 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_NOTIFY) {
 
     OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    if(!pMgr->ctxCur()) return false;
     OmContext* pCtx = pMgr->ctxCur();
-
-    if(!pCtx->locCur())
-      return false;
+    if(!pCtx->locCur()) return false;
 
     OmLocation* pLoc = pCtx->locCur();
 

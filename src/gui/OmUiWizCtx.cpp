@@ -124,3 +124,13 @@ void OmUiWizCtx::_onWizFinish()
   // force parent dialog to refresh
   this->_parent->refresh();
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizCtx::_onWizInit()
+{
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+}
