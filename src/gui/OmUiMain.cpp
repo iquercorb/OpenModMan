@@ -558,6 +558,32 @@ void OmUiMain::_onQuit()
 ///
 bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  // The WM_COPYDATA is received if another instance was run
+  // with arguments, in this case it pass the argument string
+  // to initial instance using WM_COPYDATA
+  if(uMsg == WM_COPYDATA) {
+
+    COPYDATASTRUCT* pCd = reinterpret_cast<COPYDATASTRUCT*>(lParam);
+
+    if(pCd->dwData == 42) { //< this mean this is argument line from another instance
+
+      if(pCd->cbData > 3) { //< at least more than a nullchar and two quotes
+
+        // convert ANSI string to proper wide string
+        wstring path;
+        Om_fromAnsiCp(path, reinterpret_cast<char*>(pCd->lpData));
+
+        // check for quotes and removes them
+        if(path.back() == L'"' && path.front() == L'"') {
+          path.erase(0, 1);  path.pop_back();
+        }
+
+        // try to open
+        this->ctxOpen(path);
+      }
+    }
+  }
+
   if(uMsg == WM_NOTIFY) {
     // handle TabControl page selection change
     if(this->_pageDial.size()) {

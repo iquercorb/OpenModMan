@@ -159,6 +159,48 @@ void OmDialog::modeless(bool show)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDialog::registered(const char* classname, bool show)
+{
+  if(!this->id())
+    return;
+
+  if(this->_hwnd)
+    return;
+
+  // register window class
+  WNDCLASS	wc = {};
+  wc.style = CS_HREDRAW|CS_VREDRAW;
+  wc.cbWndExtra = DLGWINDOWEXTRA;
+  wc.hInstance = this->_hins;
+  wc.hCursor = LoadCursor(nullptr,IDC_ARROW);
+  wc.hIcon = nullptr;
+  wc.lpfnWndProc = DefDlgProc;
+  wc.lpszClassName = classname;
+
+  if(!RegisterClass(&wc))
+    return;
+
+  this->_hwnd = CreateDialogParamW( this->_hins,
+                                    MAKEINTRESOURCEW(this->id()),
+                                    (this->_parent) ? this->_parent->_hwnd : nullptr,
+                                    reinterpret_cast<DLGPROC>(this->_wndproc),
+                                    reinterpret_cast<LPARAM>(this));
+
+  if(this->_hwnd != nullptr) {
+
+    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    // Retrieve the associated dialog menu if exists
+    this->_menu = GetMenu(this->_hwnd);
+
+    if(show) ShowWindow(this->_hwnd, SW_SHOW);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialog::refresh()
 {
   if(this->_hwnd) {
@@ -472,7 +514,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 {
   OmDialog* dialog;
 
-  if(msg == WM_INITDIALOG ) {
+  if(msg == WM_INITDIALOG) {
     SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
     dialog = reinterpret_cast<OmDialog*>(lParam);
   } else {

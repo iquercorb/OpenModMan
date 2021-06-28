@@ -170,6 +170,16 @@ class OmDialog
     ///
     void modeless(bool show = true);
 
+    /// \brief Open registered window.
+    ///
+    /// Create the dialog window with registered class, the
+    /// template must have the proper CLASS attributes defined.
+    ///
+    /// \param[in]  classname : Window class name as defined in template.
+    /// \param[in]  show      : Show the dialog window once created.
+    ///
+    void registered(const char* classname, bool show = true);
+
     /// \brief Show window.
     ///
     /// Show the dialog window.

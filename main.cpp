@@ -19,17 +19,27 @@
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
-  HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Instance");
-
   // Check if another instance already running
+  HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Mutex");
   if(hMutex) {
 
-    wstring msg = L"Only one instance of Open Mod Manager is allowed to run.";
-    Om_dialogBoxWarn(nullptr, L"Open Mod Manager already running", msg);
-
     // search initial instance window
-    HWND hWnd = FindWindow(nullptr,"Open Mod Manager");
+    HWND hWnd = FindWindow("OpenModMan.Class",nullptr);
     if(hWnd) {
+
+      // if program is launched with argument, we pass it
+      // to the already existing instance
+      size_t len = strlen(lpCmdLine);
+      if(len) {
+
+        COPYDATASTRUCT cd;
+        cd.dwData = 42;       //< special secret code
+        cd.cbData = len + 1;  //< we need the null char
+        cd.lpData = lpCmdLine;
+
+        // send special message with argument string to initial instance
+        SendMessage(hWnd, WM_COPYDATA, reinterpret_cast<WPARAM>(hWnd), reinterpret_cast<LPARAM>(&cd));
+      }
 
       // Set foreground
       ShowWindow(hWnd, SW_SHOWNORMAL);
@@ -38,12 +48,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
 
     // exit now
     return 0;
-
   }
 
   // Create new Mutex for single instance check
-  hMutex = CreateMutexW(nullptr, true, L"OpenModMan.Instance");
-
+  hMutex = CreateMutexW(nullptr, true, L"OpenModMan.Mutex");
 
   InitCommonControls();
 
@@ -55,7 +63,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
   if(manager.init(lpCmdLine)) {
 
     dialog.setData(&manager);
-    dialog.open(true);
+    // open main dialog with registered class name
+    dialog.registered("OpenModMan.Class", true);
 
     // Window message loop
     dialog.loopMessage();
@@ -63,7 +72,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
     manager.quit();
   }
 
-  // Release Mutex as application end
+  // Release "instance" Mutex to allow application to run again
   ReleaseMutex(hMutex);
   CloseHandle(hMutex);
 
