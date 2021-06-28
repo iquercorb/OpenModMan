@@ -100,8 +100,15 @@ bool OmUiPropCtx::checkChanges()
     changed = true;
   }
 
-  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Batches index order
     changed = true;
+  }
+
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
+
+    bool bm_chk = pUiPropCtxBat->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
+
+    changed = bm_chk != this->_pCtx->batQuietMode();
   }
 
   // enable Apply button
@@ -179,7 +186,7 @@ bool OmUiPropCtx::applyChanges()
     pUiPropCtxLoc->setChParam(CTX_PROP_LOC_ORDER, false);
   }
 
-  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Location index order
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Batches index order
 
     unsigned n = this->msgItem(IDC_LB_BAT, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
@@ -192,6 +199,14 @@ bool OmUiPropCtx::applyChanges()
 
     // Reset parameter as unmodified
     pUiPropCtxBat->setChParam(CTX_PROP_LOC_ORDER, false);
+  }
+
+  if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
+
+    this->_pCtx->setBatQuietMode(pUiPropCtxBat->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropCtxBat->setChParam(CTX_PROP_BAT_QUIETMODE, false);
   }
 
   // disable Apply button

@@ -71,7 +71,7 @@ void OmUiPropLocNet::_onLbReplsSel()
   int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
   if(lb_sel >= 0) {
     this->enableItem(IDC_BC_DEL, true);
-    this->enableItem(IDC_BC_CHK, true);
+    this->enableItem(IDC_BC_QRY, true);
     this->enableItem(IDC_SC_STATE, false);
     this->setItemText(IDC_SC_STATE, L"<no test launched>");
   }
@@ -146,8 +146,8 @@ void OmUiPropLocNet::_onBcChkRepo()
       OmConfig config;
 
       if(config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
-        int n = config.xml().child(L"packages").attrAsInt(L"count");
-        msg = L"Available, providing " + std::to_wstring(n) + L" package(s)";
+        int n = config.xml().child(L"remotes").attrAsInt(L"count");
+        msg = L"Available, provides " + std::to_wstring(n) + L" package(s)";
       } else {
         msg = L"Invalid XML definition";
       }
@@ -171,9 +171,18 @@ void OmUiPropLocNet::_onBcChkRepo()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropLocNet::_onCkBoxWrn()
+{
+  this->setChParam(LOC_PROP_NET_WARNINGS, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropLocNet::_onBcRadUpg()
 {
-  this->setChParam(LOC_PROP_NET_UPGD_RENAME, true);
+  this->setChParam(LOC_PROP_NET_ONUPGRADE, true);
 }
 
 
@@ -189,20 +198,23 @@ void OmUiPropLocNet::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOC,  L"Network repositories");
 
-  this->_createTooltip(IDC_BC_DEL,    L"Remove repository");
-  this->_createTooltip(IDC_BC_ADD,    L"Add new repository");
-  this->_createTooltip(IDC_BC_EDI,    L"Test repository availability");
+  this->_createTooltip(IDC_BC_DEL,  L"Remove repository");
+  this->_createTooltip(IDC_BC_ADD,  L"Add new repository");
+  this->_createTooltip(IDC_BC_EDI,  L"Test repository availability");
 
   this->enableItem(IDC_SC_STATE, false);
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Enable upgrade always download mode");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Enable upgrade always download mode");
 
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
+
+  // set warning messages
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pLoc->warnExtraDnld());
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, pLoc->warnMissDnld());
 
   // set Upgrade Rename
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !pLoc->upgdRename());
   this->msgItem(IDC_BC_RAD02, BM_SETCHECK, pLoc->upgdRename());
-
 
   // Update values
   this->_onRefresh();
@@ -215,26 +227,29 @@ void OmUiPropLocNet::_onInit()
 void OmUiPropLocNet::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
+  this->_setItemPos(IDC_SC_LBL01, 5, 20, 68, 9);
   this->_setItemPos(IDC_LB_REP, 70, 20, this->width()-107, 30);
 
   // Remove Button
   this->_setItemPos(IDC_BC_DEL, 70, 55, 50, 14);
+  this->_setItemPos(IDC_BC_QRY, 122, 55, 50, 14);
   // Add button
   this->_setItemPos(IDC_BC_ADD, this->width()-87, 55, 50, 14);
+  // Test result static
+  this->_setItemPos(IDC_SC_STATE, 71, 75, this->width()-137, 9);
 
-  // Test label
-  this->_setItemPos(IDC_SC_LBL02, 71, 80, 40, 9);
-  // Test button & entry
-  this->_setItemPos(IDC_BC_CHK, 70, 90, 50, 14);
-  this->_setItemPos(IDC_SC_STATE, 124, 92, this->width()-137, 13);
+  // Warnings label
+  this->_setItemPos(IDC_SC_LBL02, 5, 100, 68, 9);
+  // Warnings CheckBoxes
+  this->_setItemPos(IDC_BC_CKBX1, 70, 100, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 70, 112, 180, 9);
 
   // Package upgrade label
-  this->_setItemPos(IDC_SC_LBL03, 5, 120, 120, 9);
+  this->_setItemPos(IDC_SC_LBL03, 5, 135, 68, 9);
   // Move to trash RadioButton
-  this->_setItemPos(IDC_BC_RAD01, 70, 120, 160, 9);
+  this->_setItemPos(IDC_BC_RAD01, 70, 135, 160, 9);
   // Rename RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 70, 135, 160, 9);
+  this->_setItemPos(IDC_BC_RAD02, 70, 147, 160, 9);
 }
 
 
@@ -264,7 +279,7 @@ void OmUiPropLocNet::_onRefresh()
   this->setItemText(IDC_SC_STATE, L"<no test launched>");
 
   this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_CHK,  false);
+  this->enableItem(IDC_BC_QRY,  false);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -293,8 +308,13 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcDelRepo();
       break;
 
-    case IDC_BC_CHK:
+    case IDC_BC_QRY:
       this->_onBcChkRepo();
+      break;
+
+    case IDC_BC_CKBX1:
+    case IDC_BC_CKBX2:
+      this->_onCkBoxWrn();
       break;
 
     case IDC_BC_RAD01:

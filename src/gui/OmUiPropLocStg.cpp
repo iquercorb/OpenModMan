@@ -84,7 +84,7 @@ void OmUiPropLocStg::_onCkBoxLib()
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
-  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_EC_INP03, bm_chk);
   this->enableItem(IDC_BC_BRW03, bm_chk);
@@ -121,7 +121,7 @@ void OmUiPropLocStg::_onCkBoxBck()
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
-  bool bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
 
   this->enableItem(IDC_EC_INP04, bm_chk);
   this->enableItem(IDC_BC_BRW04, bm_chk);
@@ -161,11 +161,11 @@ void OmUiPropLocStg::_onInit()
   this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
   this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Use custom Library folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom Library folder");
   this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
   this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
 
-  this->_createTooltip(IDC_BC_CHK02,  L"Use custom Backup folder");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Use custom Backup folder");
   this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
 
@@ -188,14 +188,14 @@ void OmUiPropLocStg::_onResize()
   this->_setItemPos(IDC_BC_BRW02, this->width()-35, 60, 16, 13);
 
   // Custom Library CheckBox
-  this->_setItemPos(IDC_BC_CHK01, 70, 90, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 70, 90, 120, 9);
   // Location Library Label, EditControl and Browse button
   this->_setItemPos(IDC_SC_LBL03, 5, 100, 64, 9);
   this->_setItemPos(IDC_EC_INP03, 70, 100, this->width()-108, 13);
   this->_setItemPos(IDC_BC_BRW03, this->width()-35, 100, 16, 13);
 
   // Custom Backup CheckBox
-  this->_setItemPos(IDC_BC_CHK02, 70, 120, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 70, 120, 120, 9);
   // Location Backup Label, EditControl and Browse button
   this->_setItemPos(IDC_SC_LBL04, 5, 130, 64, 9);
   this->_setItemPos(IDC_EC_INP04, 70, 130, this->width()-108, 13);
@@ -217,12 +217,12 @@ void OmUiPropLocStg::_onRefresh()
   this->setItemText(IDC_EC_INP02, pLoc->dstDir());
 
   this->setItemText(IDC_EC_INP03, pLoc->libDir());
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, pLoc->hasCustLibDir());
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pLoc->hasCustLibDir());
   this->enableItem(IDC_EC_INP03, pLoc->hasCustLibDir());
   this->enableItem(IDC_BC_BRW03, pLoc->hasCustLibDir());
 
   this->setItemText(IDC_EC_INP04, pLoc->bckDir());
-  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, pLoc->hasCustBckDir());
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, pLoc->hasCustBckDir());
   this->enableItem(IDC_EC_INP04, pLoc->hasCustBckDir());
   this->enableItem(IDC_BC_BRW04, pLoc->hasCustBckDir());
 
@@ -256,7 +256,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setChParam(LOC_PROP_STG_INSTALL, true);
       break;
 
-    case IDC_BC_CHK01: //< Check Box for custom Library path
+    case IDC_BC_CKBX1: //< Check Box for custom Library path
       this->_onCkBoxLib();
       break;
 
@@ -270,7 +270,7 @@ bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setChParam(LOC_PROP_STG_LIBRARY, true);
       break;
 
-    case IDC_BC_CHK02: //< Check Box for custom Backup path
+    case IDC_BC_CKBX2: //< Check Box for custom Backup path
       this->_onCkBoxBck();
       break;
 

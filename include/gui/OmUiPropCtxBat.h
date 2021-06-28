@@ -19,7 +19,8 @@
 
 #include "OmDialog.h"
 
-#define CTX_PROP_BAT_ORDER   0
+#define CTX_PROP_BAT_ORDER        0
+#define CTX_PROP_BAT_QUIETMODE    1
 
 /// \brief Context Properties / Batches tab child
 ///
@@ -89,6 +90,8 @@ class OmUiPropCtxBat : public OmDialog
     void                _onBcDelBat();
 
     void                _onBcAddBat();
+
+    void                _onCkBoxQuiet();
 
     void                _onInit();
 

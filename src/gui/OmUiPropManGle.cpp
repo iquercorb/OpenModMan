@@ -65,13 +65,13 @@ void OmUiPropManGle::setChParam(unsigned i, bool en)
 ///
 void OmUiPropManGle::_onCkBoxStr()
 {
-  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_LB_PATH, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
 
   // user modified parameter, notify it
-  this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+  this->setChParam(MAN_PROP_GLE_START_LIST, true);
 }
 
 
@@ -102,7 +102,7 @@ void OmUiPropManGle::_onBcBrwStr()
   this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.c_str()));
 
   // user modified parameter, notify it
-  this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+  this->setChParam(MAN_PROP_GLE_START_LIST, true);
 }
 
 
@@ -116,7 +116,7 @@ void OmUiPropManGle::_onBcRemStr()
   if(lb_sel >= 0) {
     this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
     // user modified parameter, notify it
-    this->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, true);
+    this->setChParam(MAN_PROP_GLE_START_LIST, true);
   }
 }
 
@@ -127,19 +127,51 @@ void OmUiPropManGle::_onBcRemStr()
 void OmUiPropManGle::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_ICS,  L"Packages list icon size");
+  this->_createTooltip(IDC_CB_ICS,    L"Size of icons in packages lists");
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Automatically load context at application start");
-  this->_createTooltip(IDC_LB_PATH,  L"Context files");
-  this->_createTooltip(IDC_BC_BRW01,  L"Select a context file");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Automatically load Context files at application start");
+  this->_createTooltip(IDC_LB_PATH,   L"Context files paths");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select a Context file to add");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
-
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // add items to Icon Size ComboBox
   this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
   this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 1, reinterpret_cast<LPARAM>(L"Medium"));
   this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 2, reinterpret_cast<LPARAM>(L"Large"));
+
+  // Update values
+  this->_onRefresh();
+
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropManGle::_onResize()
+{
+  // Icon size Label & ComboBox
+  this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
+  this->_setItemPos(IDC_CB_ICS, 50, 30, this->width()-100, 14);
+  // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
+  InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
+
+  // Startup Contexts list CheckBox & ListBox
+  this->_setItemPos(IDC_BC_CKBX1, 50, 59, 100, 9);
+  this->_setItemPos(IDC_LB_PATH, 50, 70, this->width()-100, this->height()-130);
+
+  // Startup Contexts list Add and Remove... buttons
+  this->_setItemPos(IDC_BC_BRW01, 50, this->height()-58, 50, 14);
+  this->_setItemPos(IDC_BC_REM, 102, this->height()-58, 50, 14);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropManGle::_onRefresh()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   switch(pMgr->iconsSize()) {
   case 16:
@@ -157,40 +189,25 @@ void OmUiPropManGle::_onInit()
   vector<wstring> path_ls;
   pMgr->getStartContexts(&auto_open, path_ls);
 
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, auto_open);
-  this->enableItem(IDC_BC_BRW01, auto_open);
+  // set Load at Startup CheckBox
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, auto_open);
 
+  // Enable or disable Browse button and ListBox
+  this->enableItem(IDC_BC_BRW01, auto_open);
   this->enableItem(IDC_LB_PATH, auto_open);
+
+  // Add paths to ListBox
   this->msgItem(IDC_LB_PATH, LB_RESETCONTENT);
+
   for(size_t i = 0; i < path_ls.size(); ++i) {
     this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(path_ls[i].c_str()));
   }
 
+  // Disable the Remove button
   this->enableItem(IDC_BC_REM, false);
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManGle::_onResize()
-{
-  // Icon size Label & ComboBox
-  this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
-  this->_setItemPos(IDC_CB_ICS, 50, 30, this->width()-100, 14);
-  // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
-  InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
-
-  // Startup Contexts list CheckBox & ListBox
-  this->_setItemPos(IDC_BC_CHK01, 50, 59, 100, 9);
-  this->_setItemPos(IDC_LB_PATH, 50, 70, this->width()-100, this->height()-130);
-
-  // Startup Contexts list Add and Remove... buttons
-  this->_setItemPos(IDC_BC_BRW01, 50, this->height()-58, 50, 14);
-  this->_setItemPos(IDC_BC_REM, 102, this->height()-58, 50, 14);
 }
 
 
@@ -209,7 +226,7 @@ bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setChParam(MAN_PROP_GLE_ICON_SIZE, true);
       break;
 
-    case IDC_BC_CHK01: //< Check-Box for Open Context(s) at startup
+    case IDC_BC_CKBX1: //< Check-Box for Open Context(s) at startup
       this->_onCkBoxStr();
       break;
 

@@ -145,7 +145,7 @@ OmUiToolRep::~OmUiToolRep()
   HBITMAP hBm = this->setStImage(IDC_SB_PKG, nullptr);
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   DeleteObject(hFt);
 }
 
@@ -351,17 +351,17 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
     this->setItemText(IDC_EC_INP03, L"");
     this->enableItem(IDC_EC_INP03, false);
     this->enableItem(IDC_BC_SAV01, false);
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
     this->setItemText(IDC_EC_OUT04, L"");
-    this->enableItem(IDC_BC_CHK, false);
+    this->enableItem(IDC_BC_QRY, false);
     this->enableItem(IDC_BC_BRW08, false);
     this->enableItem(IDC_BC_DEL, false);
     HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
     this->enableItem(IDC_BC_BRW09, false);
     this->enableItem(IDC_BC_SAV02, false);
-    this->setItemText(IDC_EC_PKTXT, L"");
-    this->enableItem(IDC_EC_PKTXT, false);
+    this->setItemText(IDC_EC_TXT, L"");
+    this->enableItem(IDC_EC_TXT, false);
 
     return true;
   }
@@ -391,20 +391,20 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   this->setItemText(IDC_EC_OUT02, this->_rmtCur.attrAsString(L"file"));
 
   // allow custom URL CheckBox
-  this->enableItem(IDC_BC_CHK01, true);
+  this->enableItem(IDC_BC_CKBX1, true);
 
   // Check whether this <remote> have a Custom URL
   if(this->_rmtCur.hasChild(L"url")) {
 
     this->enableItem(IDC_EC_INP03, true);
     this->setItemText(IDC_EC_INP03, this->_rmtCur.child(L"url").content());
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
 
   } else {
 
     this->setItemText(IDC_EC_INP03, L"");
     this->enableItem(IDC_EC_INP03, false);
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
   }
 
   // custom URL save button disabled by default
@@ -425,13 +425,13 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
       }
     }
 
-    this->enableItem(IDC_BC_CHK, true);
+    this->enableItem(IDC_BC_QRY, true);
     this->enableItem(IDC_EC_OUT04, true);
     this->setItemText(IDC_EC_OUT04, dpn_str);
 
   } else {
 
-    this->enableItem(IDC_BC_CHK, false);
+    this->enableItem(IDC_BC_QRY, false);
     this->enableItem(IDC_EC_OUT04, false);
     this->setItemText(IDC_EC_OUT04, L"");
   }
@@ -489,7 +489,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   // allow user to edit a description
   this->enableItem(IDC_BC_BRW09, true);
   this->enableItem(IDC_BC_SAV02, false);
-  this->enableItem(IDC_EC_PKTXT, true);
+  this->enableItem(IDC_EC_TXT, true);
 
   // for default controls state
   bool has_desc = false;
@@ -512,7 +512,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
 
       if(txt) {
         // set text to item
-        this->setItemText(IDC_EC_PKTXT, Om_fromUtf8(reinterpret_cast<char*>(txt)));
+        this->setItemText(IDC_EC_TXT, Om_fromUtf8(reinterpret_cast<char*>(txt)));
         Om_free(txt);
         has_desc = true;
       }
@@ -524,7 +524,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   }
 
   if(!has_desc) {
-    this->setItemText(IDC_EC_PKTXT, L"");
+    this->setItemText(IDC_EC_TXT, L"");
   }
 
   return true;
@@ -1070,7 +1070,7 @@ void OmUiToolRep::_onBcBrwDesc()
 
   // set loaded text as description
   string text_str = Om_loadPlainText(result);
-  SetDlgItemTextA(this->_hwnd, IDC_EC_PKTXT, text_str.c_str());
+  SetDlgItemTextA(this->_hwnd, IDC_EC_TXT, text_str.c_str());
 
   // enable Description "Save" Button
   this->enableItem(IDC_BC_SAV02, true);
@@ -1088,7 +1088,7 @@ void OmUiToolRep::_onBcSavDesc()
 
   // get description string
   wstring desc_str;
-  this->getItemText(IDC_EC_PKTXT, desc_str);
+  this->getItemText(IDC_EC_TXT, desc_str);
 
   if(!desc_str.empty()) {
 
@@ -1242,11 +1242,11 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_BRW03, L"Add all packages from folder");
   this->_createTooltip(IDC_BC_REM, L"Remove selected package");
 
-  this->_createTooltip(IDC_BC_CHK01, L"Use custom URL for download");
+  this->_createTooltip(IDC_BC_CKBX1, L"Use custom URL for download");
   this->_createTooltip(IDC_EC_INP03, L"Download URL prefix");
   this->_createTooltip(IDC_BC_SAV01, L"Save custom URL");
 
-  this->_createTooltip(IDC_BC_CHK, L"Check dependencies availability");
+  this->_createTooltip(IDC_BC_QRY, L"Check dependencies availability");
 
   this->_createTooltip(IDC_BC_BRW08, L"Select new package snapshot");
   this->_createTooltip(IDC_BC_DEL, L"Remove package snapshot");
@@ -1256,7 +1256,7 @@ void OmUiToolRep::_onInit()
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons icons
@@ -1328,7 +1328,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_SC_LBL06, half_w+10, 17, 54, 9);
   this->_setItemPos(IDC_EC_OUT02, half_w+65, 15, half_w-75, 12);
   // Custom Url CheckBox & EditText
-  this->_setItemPos(IDC_BC_CHK01, half_w+10, 42, 54, 9);
+  this->_setItemPos(IDC_BC_CKBX1, half_w+10, 42, 54, 9);
   this->_setItemPos(IDC_EC_INP03, half_w+65, 40, half_w-120, 12);
   // Custom url Save Button
   this->_setItemPos(IDC_BC_SAV01, this->width()-50, 40, 40, 13);
@@ -1340,7 +1340,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_SC_LBL07, half_w+10, 75, 54, 9);
   // Dependencies EditText & Check Button
   this->_setItemPos(IDC_EC_OUT04, half_w+65, 76, half_w-120, 30);
-  this->_setItemPos(IDC_BC_CHK, this->width()-50, 75, 40, 13);
+  this->_setItemPos(IDC_BC_QRY, this->width()-50, 75, 40, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -          Snapshot GroupBox           - - -
@@ -1348,7 +1348,7 @@ void OmUiToolRep::_onResize()
   // Snapshot Label
   this->_setItemPos(IDC_SC_LBL08, half_w+10, 130, 54, 9);
   // Snapshot Static Bitmap
-  this->_setItemPos(IDC_SB_PKG, half_w+65, 131, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, half_w+65, 131, 86, 79);
   // Change.. & Delete Buttons
   this->_setItemPos(IDC_BC_BRW08, this->width()-50, 130, 40, 13);
   this->_setItemPos(IDC_BC_DEL, this->width()-50, 145, 40, 13);
@@ -1364,7 +1364,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_BC_BRW09, this->width()-95, 230, 40, 13);
   this->_setItemPos(IDC_BC_SAV02, this->width()-50, 230, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_PKTXT, half_w+10, 245, half_w-20, this->height()-280);
+  this->_setItemPos(IDC_EC_TXT, half_w+10, 245, half_w-20, this->height()-280);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // ---- separator
@@ -1430,8 +1430,8 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->_onLbPkglsSel();
       break;
 
-    case IDC_BC_CHK01: // Custom Url CheckBox
-      if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    case IDC_BC_CKBX1: // Custom Url CheckBox
+      if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
         this->enableItem(IDC_EC_INP03, true);
       } else {
         this->setItemText(IDC_EC_INP03, L"");
@@ -1450,7 +1450,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcSavUrl();
       break;
 
-    case IDC_BC_CHK: //< Dependencies "Check" Button
+    case IDC_BC_QRY: //< Dependencies "Check" Button
       this->_onBcChkDeps();
       break;
 
@@ -1466,7 +1466,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwDesc();
       break;
 
-    case IDC_EC_PKTXT: //< Description EditText
+    case IDC_EC_TXT: //< Description EditText
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE)
         this->enableItem(IDC_BC_SAV02, true); //< enable Description "Save" Button

@@ -181,6 +181,95 @@ class OmLocation
     bool upgdRename() const {
       return _upgdRename;
     }
+    /// \brief Get package legacy support size option.
+    ///
+    /// Returns package legacy support option value.
+    ///
+    /// \return Package legacy support option value.
+    ///
+    bool libDevMode() const {
+      return _libDevMode;
+    }
+
+    /// \brief Set package legacy support option.
+    ///
+    /// Define and save package legacy support option value.
+    ///
+    /// \param[in]  enable    : Package legacy support enable or disable.
+    ///
+    void setLibDevMode(bool enable);
+
+    /// \brief Get warning for overlaps option.
+    ///
+    /// Returns warning for overlaps option value.
+    ///
+    /// \return Warning for overlaps option value.
+    ///
+    bool warnOverlaps() const {
+      return _warnOverlaps;
+    }
+
+    /// \brief Set warning for overlaps option.
+    ///
+    /// Define and save warning for overlaps option value.
+    ///
+    /// \param[in]  enable    : Warning for overlaps enable or disable.
+    ///
+    void setWarnOverlaps(bool enable);
+
+    /// \brief Get warning for extra install option.
+    ///
+    /// Returns warning for extra install option value.
+    ///
+    /// \return Warning for extra install option value.
+    ///
+    bool warnExtraInst() const {
+      return _warnExtraInst;
+    }
+
+    /// \brief Set warning for extra install option.
+    ///
+    /// Define and save warning for extra install option value.
+    ///
+    /// \param[in]  enable    : Warning for extra install enable or disable.
+    ///
+    void setWarnExtraInst(bool enable);
+
+    /// \brief Get warning for missing dependency option.
+    ///
+    /// Returns warning for missing dependency option value.
+    ///
+    /// \return Warning for missing dependency option value.
+    ///
+    bool warnMissDeps() const {
+      return _warnMissDeps;
+    }
+
+    /// \brief Set warning for missing dependency option.
+    ///
+    /// Define and save warning for missing dependency option value.
+    ///
+    /// \param[in]  enable    : Warning for missing dependency enable or disable.
+    ///
+    void setWarnMissDeps(bool enable);
+
+    /// \brief Get warning for extra uninstall option.
+    ///
+    /// Returns warning for extra uninstall option value.
+    ///
+    /// \return Warning for extra uninstall option value.
+    ///
+    bool warnExtraUnin() const {
+      return _warnExtraUnin;
+    }
+
+    /// \brief Set warning for extra uninstall option.
+    ///
+    /// Define and save warning for extra uninstall option value.
+    ///
+    /// \param[in]  enable    : Warning for extra uninstall enable or disable.
+    ///
+    void setWarnExtraUnin(bool enable);
 
     /// \brief Verify Library folder access.
     ///
@@ -694,6 +783,42 @@ class OmLocation
     ///
     bool repQuery(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Get warning for extra download option.
+    ///
+    /// Returns warning for extra download option value.
+    ///
+    /// \return Warning for extra download option value.
+    ///
+    bool warnExtraDnld() const {
+      return _warnExtraDnld;
+    }
+
+    /// \brief Set warning for extra download option.
+    ///
+    /// Define and save warning for extra download option value.
+    ///
+    /// \param[in]  enable    : Warning for extra download enable or disable.
+    ///
+    void setWarnExtraDnld(bool enable);
+
+    /// \brief Get warning for missing remote dependency option.
+    ///
+    /// Returns warning for missing remote dependency option value.
+    ///
+    /// \return Warning for missing remote dependency option value.
+    ///
+    bool warnMissDnld() const {
+      return _warnMissDnld;
+    }
+
+    /// \brief Set warning for missing remote dependency option.
+    ///
+    /// Define and save warning for missing remote dependency option value.
+    ///
+    /// \param[in]  enable    : Warning for missing remote dependency enable or disable.
+    ///
+    void setWarnMissDnld(bool enable);
+
     /// \brief Refresh Remote list.
     ///
     /// Refresh remote package state against local packages lst.
@@ -819,6 +944,8 @@ class OmLocation
 
     bool                _libDirCust;
 
+    bool                _libDevMode;
+
     wstring             _bckDir;
 
     bool                _bckDirCust;
@@ -836,6 +963,18 @@ class OmLocation
     bool                _upgdRename;
 
     unsigned            _rmtSorting;
+
+    bool                _warnOverlaps;
+
+    bool                _warnExtraInst;
+
+    bool                _warnMissDeps;
+
+    bool                _warnExtraUnin;
+
+    bool                _warnExtraDnld;
+
+    bool                _warnMissDnld;
 
     bool                _valid;
 

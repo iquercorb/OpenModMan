@@ -139,6 +139,7 @@ OmContext::OmContext(OmManager* pMgr) :
   _locLst(),
   _locCur(nullptr),
   _batLst(),
+  _batQuietMode(true),
   _valid(false),
   _error()
 {
@@ -212,6 +213,13 @@ bool OmContext::open(const wstring& path)
     } else {
       this->log(1, L"Context("+this->_title+L") Load", L"\""+src+L"\" icon extraction failed.");
     }
+  }
+
+  // we check for saved batches quiet mode option
+  if(this->_config.xml().hasChild(L"batches_quietmode")) {
+    this->_batQuietMode = this->_config.xml().child(L"batches_quietmode").attrAsInt(L"enable");
+  } else {
+    this->setBatQuietMode(this->_batQuietMode); //< create default
   }
 
   // load Locations for this Context
@@ -853,6 +861,25 @@ bool OmContext::batRem(unsigned id)
   return false;
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmContext::setBatQuietMode(bool enable)
+{
+  this->_batQuietMode = enable;
+
+  if(this->_config.valid()) {
+
+    if(this->_config.xml().hasChild(L"batches_quietmode")) {
+      this->_config.xml().child(L"batches_quietmode").setAttr(L"enable", this->_batQuietMode ? 1 : 0);
+    } else {
+      this->_config.xml().addChild(L"batches_quietmode").setAttr(L"enable", this->_batQuietMode ? 1 : 0);
+    }
+
+    this->_config.save();
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

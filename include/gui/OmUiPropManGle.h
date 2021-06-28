@@ -20,7 +20,7 @@
 #include "OmDialog.h"
 
 #define MAN_PROP_GLE_ICON_SIZE          0
-#define MAN_PROP_GLE_STARTUP_CONTEXTS    1
+#define MAN_PROP_GLE_START_LIST         1
 
 /// \brief Manager Options / General tab child
 ///
@@ -90,6 +90,8 @@ class OmUiPropManGle : public OmDialog
     void                _onInit();
 
     void                _onResize();
+
+    void                _onRefresh();
 
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

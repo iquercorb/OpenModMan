@@ -72,7 +72,7 @@ OmUiMainNet::~OmUiMainNet()
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
@@ -279,7 +279,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
   pLoc->rmtPrepareDown(dwnl_ls, deps_ls, miss_ls, user_ls);
 
   // warn user for missing dependencies
-  if(miss_ls.size() && pMgr->warnMissDeps()) {
+  if(miss_ls.size() && pLoc->warnMissDnld()) {
     msg = L"One or more selected packages have missing dependencies, "
           L"The following packages are required but not available:\n";
     for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
@@ -290,7 +290,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
   }
 
   // warn for additional installation
-  if(deps_ls.size() && pMgr->warnExtraInst()) {
+  if(deps_ls.size() && pLoc->warnExtraDnld()) {
     msg = L"One or more selected packages have dependencies, "
           L"the following packages will also be downloaded:\n";
     for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
@@ -393,7 +393,7 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   pLoc->rmtGetDepends(deps_ls, miss_ls, pRmt);
 
   // warn user for missing dependencies
-  if(miss_ls.size() && pMgr->warnMissDeps()) {
+  if(miss_ls.size() && pLoc->warnMissDnld()) {
     msg = L"The selected package have unavailable missing dependencies, "
           L"The following packages are required but not available:\n";
     for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
@@ -404,7 +404,7 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   }
 
   // ask user for download X packages
-  if(deps_ls.size() && pMgr->warnExtraInst()) {
+  if(deps_ls.size() && pLoc->warnExtraDnld()) {
     msg =   L"The selected package have "+to_wstring(deps_ls.size())+L" missing ";
     msg +=  L"dependencies, the following packages will be downloaded:\n";
     for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
@@ -648,12 +648,12 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   //self->enableItem(IDC_PB_REP, true);
 
   // change button image from refresh to stop
-  self->setBmImage(IDC_BC_CHK, Om_getResImage(self->_hins, IDB_BTN_NOT));
+  self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_NOT));
 
   pLoc->repQuery(&self->_repQry_progress_cb, self);
 
   // change button image from stop to refresh
-  self->setBmImage(IDC_BC_CHK, Om_getResImage(self->_hins, IDB_BTN_REF));
+  self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_REF));
 
   // disable stop button and progress bar
   //self->enableItem(IDC_BC_STOP, false);
@@ -995,7 +995,7 @@ void OmUiMainNet::_buildLbRep()
       this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
 
-    this->enableItem(IDC_BC_CHK, (pLoc->repCount() > 0));
+    this->enableItem(IDC_BC_QRY, (pLoc->repCount() > 0));
   }
 }
 
@@ -1231,7 +1231,7 @@ void OmUiMainNet::_onLvRmtSel()
 {
   // hide all package bottom infos
   this->showItem(IDC_SB_PKG, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SC_TITLE, false);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
@@ -1269,7 +1269,7 @@ void OmUiMainNet::_onLvRmtSel()
       pUiMain->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
 
       // on multiple selection, we hide package description
-      this->showItem(IDC_EC_PKTXT, false);
+      this->showItem(IDC_EC_TXT, false);
       this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
 
     } else {
@@ -1279,7 +1279,7 @@ void OmUiMainNet::_onLvRmtSel()
       pUiMain->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
 
       // show package description
-      this->showItem(IDC_EC_PKTXT, true);
+      this->showItem(IDC_EC_TXT, true);
 
       OmRemote* pRmt;
 
@@ -1314,12 +1314,12 @@ void OmUiMainNet::_onLvRmtSel()
           this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
         }
 
-        this->setItemText(IDC_SC_TITLE, pRmt->name());
+        this->setItemText(IDC_SC_TITLE, pRmt->name() + L" " + pRmt->version().asString());
 
         if(pRmt->desc().size()) {
-          this->setItemText(IDC_EC_PKTXT, pRmt->desc());
+          this->setItemText(IDC_EC_TXT, pRmt->desc());
         } else {
-          this->setItemText(IDC_EC_PKTXT, L"<no description available>");
+          this->setItemText(IDC_EC_TXT, L"<no description available>");
         }
 
         if(pRmt->image().thumbnail()) {
@@ -1344,7 +1344,7 @@ void OmUiMainNet::_onLvRmtSel()
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
   // force thumbnail static control to update its position
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
 }
 
 
@@ -1356,7 +1356,7 @@ void OmUiMainNet::_onBcChkRep()
   // action depend on current thread state, if thread is
   // running, the button act as an abort button
   if(this->_repQryt_hth) {
-    this->enableItem(IDC_BC_CHK, false);
+    this->enableItem(IDC_BC_QRY, false);
     this->_thread_abort = true;
   } else {
     this->_repQry_init();
@@ -1462,20 +1462,20 @@ void OmUiMainNet::_onInit()
   #endif
 
   // Defines fonts for package description, title, and log output
-  HFONT hFt = Om_createFont(18, 800, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
   this->setBmImage(IDC_BC_STOP, Om_getResImage(this->_hins, IDB_BTN_NOT));
   this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_ADD));
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
-  this->setBmImage(IDC_BC_CHK, Om_getResImage(this->_hins, IDB_BTN_REF));
+  this->setBmImage(IDC_BC_QRY, Om_getResImage(this->_hins, IDB_BTN_REF));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active Location");
   this->_createTooltip(IDC_LB_REP,    L"Repositories list");
-  this->_createTooltip(IDC_BC_CHK,    L"Start or stop repositories query");
+  this->_createTooltip(IDC_BC_QRY,    L"Start or stop repositories query");
   this->_createTooltip(IDC_BC_NEW,    L"Configure and add new repository");
   this->_createTooltip(IDC_BC_DEL,    L"Remove selected repository entry");
   this->_createTooltip(IDC_LV_RMT,    L"Remote packages list");
@@ -1528,7 +1528,7 @@ void OmUiMainNet::_onInit()
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SB_PKG, false);
 }
 
@@ -1604,8 +1604,8 @@ void OmUiMainNet::_onResize()
   // Repositories label
   this->_setItemPos(IDC_SC_LBL01, 5, 24, 50, 12);
   // Repositories ProgressBar
-  //this->_setItemPos(IDC_BC_CHK, this->width()-42, 20, 37, 14);
-  this->_setItemPos(IDC_BC_CHK, this->width()-21, 20, 16, 14);
+  //this->_setItemPos(IDC_BC_QRY, this->width()-42, 20, 37, 14);
+  this->_setItemPos(IDC_BC_QRY, this->width()-21, 20, 16, 14);
   //this->_setItemPos(IDC_PB_REP, 89, 21, this->width()-129, 13);
   //this->_setItemPos(IDC_BC_STOP, this->width()-37, 20, 32, 14);
   // Repositories ListBox
@@ -1628,16 +1628,16 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_BC_LOAD, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_UPGD, 56, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-166, 13);
+  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-166, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-114, 50, 14);
 
   // Package name/title
-  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-96, this->width()-161, 12);
+  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-161, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-85, 86, 79);
   // Package description
-  this->_setItemPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_TXT, 95, this->height()-85, this->width()-101, 78);
 
   InvalidateRect(this->_hwnd, nullptr, true);
 }
@@ -1662,7 +1662,7 @@ void OmUiMainNet::_onRefresh()
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SB_PKG, false);
 
   // disable the Progress-Bar
@@ -1824,7 +1824,7 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(HIWORD(wParam) == CBN_SELCHANGE) this->_onCbLocSel();
       break;
 
-    case IDC_BC_CHK: //< Repository "Refresh" button
+    case IDC_BC_QRY: //< Repository "Refresh" button
       this->_onBcChkRep();
       break;
 

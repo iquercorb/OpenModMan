@@ -96,11 +96,11 @@ void OmUiWizCtx::_onWizFinish()
   pUiWizLocCfg->getItemText(IDC_EC_INP01, loc_name);
   pUiWizLocCfg->getItemText(IDC_EC_INP02, loc_dst);
 
-  if(pUiWizLocCfg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+  if(pUiWizLocCfg->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     pUiWizLocCfg->getItemText(IDC_EC_INP03, loc_lib);
   }
 
-  if(pUiWizLocCfg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+  if(pUiWizLocCfg->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     pUiWizLocCfg->getItemText(IDC_EC_INP04, loc_bck);
   }
 

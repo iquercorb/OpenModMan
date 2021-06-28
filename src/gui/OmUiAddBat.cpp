@@ -258,7 +258,7 @@ void OmUiAddBat::_excludePkg()
 ///
 void OmUiAddBat::_onCkBoxAuto()
 {
-  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_CB_LOC, !bm_chk);
   this->enableItem(IDC_LB_EXC, !bm_chk);
@@ -483,7 +483,7 @@ void OmUiAddBat::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Create batch according current installed packages");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOC,  L"Active location");
 
   this->_createTooltip(IDC_BC_RIGH,    L"Add to install list");
@@ -496,7 +496,7 @@ void OmUiAddBat::_onInit()
   this->setItemText(IDC_EC_INP01, L"New Batch");
 
   // Enable Quick create from current state
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
 
   if(!this->_pCtx) return;
 
@@ -543,7 +543,7 @@ void OmUiAddBat::_onResize()
   this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-20, 13);
 
   // Crate from stat CheckBox
-  this->_setItemPos(IDC_BC_CHK01, 10, 50, 150, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 10, 50, 150, 9);
   // Location list ComboBox
   this->_setItemPos(IDC_CB_LOC, 10, 65, this->width()-20, 12);
   // Not-Installed label
@@ -588,7 +588,7 @@ bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_BC_CHK01:
+    case IDC_BC_CKBX1:
       this->_onCkBoxAuto();
       break;
 

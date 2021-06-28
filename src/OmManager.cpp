@@ -108,38 +108,14 @@ bool OmManager::init(const char* arg)
       Om_dialogBoxWarn(nullptr, L"Initialization error", this->_error);
       // this is not a fatal error, but this will surely be a problem...
     }
+
     // default icons size
     this->setIconsSize(this->_iconsSize);
-    // default package options
-    this->setLegacySupport(this->_folderPackages);
-    this->setWarnOverlaps(this->_warnOverlaps);
-    this->setWarnExtraInst(this->_warnExtraInstall);
-    this->setWarnMissDpnd(this->_warnMissingDepend);
-    this->setWarnExtraUnin(this->_warnExtraUninst);
-    this->setQuietBatches(this->_quietBatches);
   }
 
   // load saved parameters
   if(this->_config.xml().hasChild(L"icon_size")) {
     this->_iconsSize = this->_config.xml().child(L"icon_size").attrAsInt(L"pixels");
-  }
-  if(this->_config.xml().hasChild(L"legacy_support")) {
-    this->_folderPackages = this->_config.xml().child(L"legacy_support").attrAsInt(L"enable");
-  }
-  if(this->_config.xml().hasChild(L"warn_ovrLss")) {
-    this->_warnOverlaps = this->_config.xml().child(L"warn_ovrLss").attrAsInt(L"enable");
-  }
-  if(this->_config.xml().hasChild(L"warn_extra_inst")) {
-    this->_warnExtraInstall = this->_config.xml().child(L"warn_extra_inst").attrAsInt(L"enable");
-  }
-  if(this->_config.xml().hasChild(L"warn_miss_dpnd")) {
-    this->_warnMissingDepend = this->_config.xml().child(L"warn_miss_dpnd").attrAsInt(L"enable");
-  }
-  if(this->_config.xml().hasChild(L"warn_extra_unin")) {
-    this->_warnExtraUninst = this->_config.xml().child(L"warn_extra_unin").attrAsInt(L"enable");
-  }
-  if(this->_config.xml().hasChild(L"quiet_batches")) {
-    this->_quietBatches = this->_config.xml().child(L"quiet_batches").attrAsInt(L"enable");
   }
 
   // load startup Context files if any
@@ -376,24 +352,25 @@ void OmManager::saveStartContexts(bool enable, const vector<wstring>& path)
 {
   if(this->_config.valid()) {
 
-    OmXmlNode start_list;
+    OmXmlNode xml_stl;
+
     if(this->_config.xml().hasChild(L"start_list")) {
-      start_list = this->_config.xml().child(L"start_list");
+      xml_stl = this->_config.xml().child(L"start_list");
     } else {
-      start_list = this->_config.xml().addChild(L"start_list");
+      xml_stl = this->_config.xml().addChild(L"start_list");
     }
-    start_list.setAttr(L"enable", (int)enable);
+    xml_stl.setAttr(L"enable", enable ? 1 : 0);
 
     vector<OmXmlNode> start_file;
-    start_list.children(start_file, L"file");
+    xml_stl.children(start_file, L"file");
 
     // remove all current file list
     for(size_t i = 0; i < start_file.size(); ++i)
-      start_list.remChild(start_file[i]);
+      xml_stl.remChild(start_file[i]);
 
     // add new list
     for(size_t i = 0; i < path.size(); ++i)
-      start_list.addChild(L"file").setContent(path[i]);
+      xml_stl.addChild(L"file").setContent(path[i]);
 
     this->_config.save();
   }
@@ -442,134 +419,6 @@ void OmManager::setIconsSize(unsigned size)
       this->_config.xml().child(L"icon_size").setAttr(L"pixels", (int)this->_iconsSize);
     } else {
       this->_config.xml().addChild(L"icon_size").setAttr(L"pixels", (int)this->_iconsSize);
-    }
-
-    this->_config.save();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setLegacySupport(bool enable)
-{
-  this->_folderPackages = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"legacy_support")) {
-      this->_config.xml().child(L"legacy_support").setAttr(L"enable", (this->_folderPackages)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"legacy_support").setAttr(L"enable", (this->_folderPackages)?L"1":L"0");
-    }
-
-    this->_config.save();
-  }
-
-  // refresh all library for all locations
-  for(size_t i = 0; i < this->_ctxLs.size(); ++i) {
-    for(size_t j = 0; j < this->_ctxLs[i]->locCount(); ++j) {
-      this->_ctxLs[i]->locGet(j)->libClear();
-      this->_ctxLs[i]->locGet(j)->libRefresh();
-    }
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setWarnOverlaps(bool enable)
-{
-  this->_warnOverlaps = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"warn_ovrLss")) {
-      this->_config.xml().child(L"warn_ovrLss").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"warn_ovrLss").setAttr(L"enable", (this->_warnOverlaps)?L"1":L"0");
-    }
-
-    this->_config.save();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setWarnExtraInst(bool enable)
-{
-  this->_warnExtraInstall = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"warn_extra_inst")) {
-      this->_config.xml().child(L"warn_extra_inst").setAttr(L"enable", (this->_warnExtraInstall)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"warn_extra_inst").setAttr(L"enable", (this->_warnExtraInstall)?L"1":L"0");
-    }
-
-    this->_config.save();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setWarnMissDpnd(bool enable)
-{
-  this->_warnMissingDepend = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"warn_miss_dpnd")) {
-      this->_config.xml().child(L"warn_miss_dpnd").setAttr(L"enable", (this->_warnMissingDepend)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"warn_miss_dpnd").setAttr(L"enable", (this->_warnMissingDepend)?L"1":L"0");
-    }
-
-    this->_config.save();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setWarnExtraUnin(bool enable)
-{
-  this->_warnExtraUninst = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"warn_extra_unin")) {
-      this->_config.xml().child(L"warn_extra_unin").setAttr(L"enable", (this->_warnExtraUninst)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"warn_extra_unin").setAttr(L"enable", (this->_warnExtraUninst)?L"1":L"0");
-    }
-
-    this->_config.save();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmManager::setQuietBatches(bool enable)
-{
-  this->_quietBatches = enable;
-
-  if(this->_config.valid()) {
-
-    if(this->_config.xml().hasChild(L"quiet_batches")) {
-      this->_config.xml().child(L"quiet_batches").setAttr(L"enable", (this->_quietBatches)?L"1":L"0");
-    } else {
-      this->_config.xml().addChild(L"quiet_batches").setAttr(L"enable", (this->_quietBatches)?L"1":L"0");
     }
 
     this->_config.save();

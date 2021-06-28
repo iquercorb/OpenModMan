@@ -58,10 +58,10 @@ void OmUiAddLoc::_onTitleChange()
   if(!Om_isValidName(title))
     title = L"<invalid path>";
 
-  if(!this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+  if(!this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     this->setItemText(IDC_EC_INP03, title + L"\\Library");
   }
-  if(!this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+  if(!this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     this->setItemText(IDC_EC_INP04, title + L"\\Backup");
   }
 }
@@ -90,7 +90,7 @@ void OmUiAddLoc::_onCkBoxLib()
 {
   wstring title;
 
-  int bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_BC_BRW03, bm_chk);
   this->enableItem(IDC_EC_INP03, bm_chk);
@@ -129,7 +129,7 @@ void OmUiAddLoc::_onCkBoxBck()
 {
   wstring title;
 
-  int bm_chk = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+  int bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
 
   this->enableItem(IDC_BC_BRW04, bm_chk);
   this->enableItem(IDC_EC_INP04, bm_chk);
@@ -189,7 +189,7 @@ bool OmUiAddLoc::_onBcOk()
     return false;
   }
 
-  cust_lib = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  cust_lib = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
   if(cust_lib) {
     this->getItemText(IDC_EC_INP03, loc_lib);
     if(!Om_isDir(loc_lib)) {
@@ -200,7 +200,7 @@ bool OmUiAddLoc::_onBcOk()
     }
   }
 
-  cust_bck = this->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+  cust_bck = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
   if(cust_bck) {
     this->getItemText(IDC_EC_INP04, loc_bck);
     if(!Om_isDir(loc_bck)) {
@@ -239,11 +239,11 @@ void OmUiAddLoc::_onInit()
   this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
   this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
 
-  this->_createTooltip(IDC_BC_CHK01,  L"Use custom Library folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom Library folder");
   this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
   this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
 
-  this->_createTooltip(IDC_BC_CHK02,  L"Use custom Backup folder");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Use custom Backup folder");
   this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
   this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
 
@@ -264,12 +264,12 @@ void OmUiAddLoc::_onInit()
     this->getItemText(IDC_EC_INP02, item_str);
     if(!item_str.empty()) {
 
-      if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+      if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INP03, item_str);
         if(item_str.empty()) allow = false;
       }
 
-      if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+      if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INP04, item_str);
         if(item_str.empty()) allow = false;
       }
@@ -301,12 +301,12 @@ void OmUiAddLoc::_onResize()
   this->_setItemPos(IDC_BC_BRW02, this->width()-31, 65, 16, 13);
 
   // Custom Library Label & EditControl & Browse buttonben ess
-  this->_setItemPos(IDC_BC_CHK01, 10, 100, this->width()-25, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 10, 100, this->width()-25, 9);
   this->_setItemPos(IDC_EC_INP03, 10, 115, this->width()-45, 13);
   this->_setItemPos(IDC_BC_BRW03, this->width()-31, 115, 16, 13);
 
   // Custom Library Label & EditControl & Browse button
-  this->_setItemPos(IDC_BC_CHK02, 10, 140, this->width()-25, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 10, 140, this->width()-25, 9);
   this->_setItemPos(IDC_EC_INP04, 10, 155, this->width()-45, 13);
   this->_setItemPos(IDC_BC_BRW04, this->width()-31, 155, 16, 13);
 
@@ -343,7 +343,7 @@ bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwDst();
       break;
 
-    case IDC_BC_CHK01: //< Custom Library Checkbox
+    case IDC_BC_CKBX1: //< Custom Library Checkbox
       this->_onCkBoxLib();
       break;
 
@@ -351,7 +351,7 @@ bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwLib();
       break;
 
-    case IDC_BC_CHK02: //< Custom Backup Checkbox
+    case IDC_BC_CKBX2: //< Custom Backup Checkbox
       this->_onCkBoxBck();
       break;
 
@@ -386,12 +386,12 @@ bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->getItemText(IDC_EC_INP02, item_str);
         if(!item_str.empty()) {
 
-          if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+          if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INP03, item_str);
             if(item_str.empty()) allow = false;
           }
 
-          if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+          if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
             this->getItemText(IDC_EC_INP04, item_str);
             if(item_str.empty()) allow = false;
           }

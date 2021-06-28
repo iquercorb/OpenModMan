@@ -409,7 +409,7 @@ void OmUiPropBatStg::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,L"Indicative name");
 
-  this->_createTooltip(IDC_BC_CHK01,L"Create batch according current installed packages");
+  this->_createTooltip(IDC_BC_CKBX1,L"Create batch according current installed packages");
   this->_createTooltip(IDC_CB_LOC,  L"Active location");
 
   this->_createTooltip(IDC_BC_RIGH, L"Add to install list");

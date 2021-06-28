@@ -47,7 +47,7 @@ OmUiToolPkg::~OmUiToolPkg()
   HBITMAP hBm = this->setStImage(IDC_SB_PKG, nullptr);
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   DeleteObject(hFt);
 }
 
@@ -77,9 +77,9 @@ void OmUiToolPkg::_freeze(bool freeze)
   this->enableItem(IDC_CB_LVL, enable);
   this->enableItem(IDC_EC_INP05, enable);
   this->enableItem(IDC_BC_BRW03, enable);
-  this->enableItem(IDC_BC_CHK01, enable);
-  this->enableItem(IDC_BC_CHK02, enable);
-  this->enableItem(IDC_BC_CHK03, enable);
+  this->enableItem(IDC_BC_CKBX1, enable);
+  this->enableItem(IDC_BC_CKBX2, enable);
+  this->enableItem(IDC_BC_CKBX3, enable);
   // disable according radios and check-boxes status
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     this->enableItem(IDC_EC_INP01, enable);
@@ -88,7 +88,7 @@ void OmUiToolPkg::_freeze(bool freeze)
     this->enableItem(IDC_EC_INP02, enable);
     this->enableItem(IDC_BC_BRW02, enable);
   }
-  if(this->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+  if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     this->enableItem(IDC_EC_INP07, enable);
     if(enable) {
       wstring ident;
@@ -100,12 +100,12 @@ void OmUiToolPkg::_freeze(bool freeze)
     this->enableItem(IDC_BC_DEL, enable);
     this->enableItem(IDC_LB_DPN, enable);
   }
-  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+  if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     this->enableItem(IDC_BC_BRW04, enable);
   }
-  if(this->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
+  if(this->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
     this->enableItem(IDC_BC_BRW05, enable);
-    this->enableItem(IDC_EC_PKTXT, enable);
+    this->enableItem(IDC_EC_TXT, enable);
   }
   this->enableItem(IDC_BC_SAVE, enable);
   this->enableItem(IDC_BC_CLOSE, enable);
@@ -139,8 +139,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_BC_SAVE, false);
 
   // Dependencies initial state
-  this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
-  this->enableItem(IDC_BC_CHK01, false);
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
+  this->enableItem(IDC_BC_CKBX1, false);
   this->msgItem(IDC_LB_DPN, LB_RESETCONTENT);
   this->enableItem(IDC_LB_DPN, false);
   this->setItemText(IDC_EC_INP07, L"");
@@ -149,19 +149,19 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_BC_DEL, false);
 
   // Snapshot initial states
-  this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 0);
-  this->enableItem(IDC_BC_CHK02, false);
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
+  this->enableItem(IDC_BC_CKBX2, false);
   this->enableItem(IDC_BC_BRW04, false);
   hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
   this->setItemText(IDC_EC_INP08, L"");
 
   // Description initial states
-  this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 0);
-  this->enableItem(IDC_BC_CHK03, false);
+  this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 0);
+  this->enableItem(IDC_BC_CKBX3, false);
   this->enableItem(IDC_BC_BRW05, false);
-  this->enableItem(IDC_EC_PKTXT, false);
-  this->setItemText(IDC_EC_PKTXT, L"");
+  this->enableItem(IDC_EC_TXT, false);
+  this->setItemText(IDC_EC_TXT, L"");
 
   // check whether source path is empty to
   // reset to initial state
@@ -183,9 +183,9 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_EC_INP06, true);
   this->enableItem(IDC_BC_BRW03, true);
 
-  this->enableItem(IDC_BC_CHK01, true);
-  this->enableItem(IDC_BC_CHK02, true);
-  this->enableItem(IDC_BC_CHK03, true);
+  this->enableItem(IDC_BC_CKBX1, true);
+  this->enableItem(IDC_BC_CKBX2, true);
+  this->enableItem(IDC_BC_CKBX3, true);
 
   // set source path to input EditText depending selected Radio
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
@@ -196,7 +196,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
 
   // check for package dependencies
   if(this->_package.depCount()) {
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
     this->enableItem(IDC_LB_DPN, true);
     this->enableItem(IDC_EC_INP07, true);
     for(unsigned i = 0; i < this->_package.depCount(); ++i) {
@@ -206,7 +206,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
 
   // check for package snapshot
   if(this->_package.image().thumbnail()) {
-    this->msgItem(IDC_BC_CHK02, BM_SETCHECK, 1);
+    this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
     hBm = this->setStImage(IDC_SB_PKG, this->_package.image().thumbnail());
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
@@ -214,10 +214,10 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
 
   // check for package description
   if(this->_package.desc().size()) {
-    this->msgItem(IDC_BC_CHK03, BM_SETCHECK, 1);
+    this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW05, true);
-    this->enableItem(IDC_EC_PKTXT, true);
-    this->setItemText(IDC_EC_PKTXT, this->_package.desc());
+    this->enableItem(IDC_EC_TXT, true);
+    this->setItemText(IDC_EC_TXT, this->_package.desc());
   }
 
   // Add package content to output EditText
@@ -321,7 +321,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   wstring item_str;
 
   // get package dependencies list
-  if(self->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+  if(self->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     int lb_cnt = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
     if(lb_cnt) {
       wchar_t ident[OMM_ITM_BUFF];
@@ -333,7 +333,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   }
 
   // get package image data from specified file if any
-  if(self->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+  if(self->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     self->getItemText(IDC_EC_INP08, item_str);
     if(!item_str.empty()) {
       self->_package.loadImage(item_str, OMM_PKG_THMB_SIZE);
@@ -341,8 +341,8 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   }
 
   // get package description text
-  if(self->msgItem(IDC_BC_CHK03, BM_GETCHECK)) {
-    self->getItemText(IDC_EC_PKTXT, item_str);
+  if(self->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
+    self->getItemText(IDC_EC_TXT, item_str);
     self->_package.setDesc(item_str);
   }
 
@@ -579,7 +579,7 @@ void OmUiToolPkg::_onLbDpnlsSel()
 ///
 void OmUiToolPkg::_onCkBoxDep()
 {
-  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_EC_INP07, bm_chk);
   this->enableItem(IDC_LB_DPN, bm_chk);
@@ -632,7 +632,7 @@ void OmUiToolPkg::_onBcDelDep()
 ///
 void OmUiToolPkg::_onCkBoxSnap()
 {
-  if(this->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+  if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
 
     this->enableItem(IDC_BC_BRW04, true);
 
@@ -696,10 +696,10 @@ void OmUiToolPkg::_onBcBrwSnap()
 ///
 void OmUiToolPkg::_onCkBoxDesc()
 {
-  bool bm_chk = this->msgItem(IDC_BC_CHK03, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CKBX3, BM_GETCHECK);
 
   this->enableItem(IDC_BC_BRW05, bm_chk);
-  this->enableItem(IDC_EC_PKTXT, bm_chk);
+  this->enableItem(IDC_EC_TXT, bm_chk);
 }
 
 
@@ -726,7 +726,7 @@ void OmUiToolPkg::_onBcBrwDesc()
 
   // load as plain text and send to contro
   string text_str = Om_loadPlainText(result);
-  SetDlgItemTextA(this->_hwnd, IDC_EC_PKTXT, text_str.c_str());
+  SetDlgItemTextA(this->_hwnd, IDC_EC_TXT, text_str.c_str());
 }
 
 
@@ -810,20 +810,20 @@ void OmUiToolPkg::_onInit()
   this->_createTooltip(IDC_BC_SAVE, L"Save Package");
   this->_createTooltip(IDC_BC_ABORT, L"Abort process");
 
-  this->_createTooltip(IDC_BC_CHK01, L"Defines dependencies for this Package");
+  this->_createTooltip(IDC_BC_CKBX1, L"Defines dependencies for this Package");
   this->_createTooltip(IDC_EC_INP07, L"Dependency package identity");
   this->_createTooltip(IDC_LB_DPN, L"Dependencies list");
 
-  this->_createTooltip(IDC_BC_CHK02, L"Defines a snapshot for this Package");
+  this->_createTooltip(IDC_BC_CKBX2, L"Defines a snapshot for this Package");
   this->_createTooltip(IDC_BC_BRW04, L"Select image file");
 
-  this->_createTooltip(IDC_BC_CHK03, L"Defines a description for this Package");
+  this->_createTooltip(IDC_BC_CKBX3, L"Defines a description for this Package");
   this->_createTooltip(IDC_BC_BRW05, L"Select text file");
-  this->_createTooltip(IDC_EC_PKTXT, L"Package description text");
+  this->_createTooltip(IDC_EC_TXT, L"Package description text");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons inner icons
@@ -916,7 +916,7 @@ void OmUiToolPkg::_onResize()
   // [ - - -       Dependencies GroupBox          - - -
   this->_setItemPos(IDC_GB_GRP02, half_w+5, 0, half_w-10, 80);
   // Has Dependencies CheckBox
-  this->_setItemPos(IDC_BC_CHK01, half_w+10, 10, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX1, half_w+10, 10, 120, 9);
   // Ident Label, EditText & + Button
   this->_setItemPos(IDC_SC_LBL06, half_w+10, 27, 35, 9);
   this->_setItemPos(IDC_EC_INP07, half_w+40, 25, half_w-70, 13);
@@ -929,9 +929,9 @@ void OmUiToolPkg::_onResize()
   // [ - - -        Snapshot GroupBox             - - -
   this->_setItemPos(IDC_GB_GRP03, half_w+5, 85, half_w-10, 95);
   // Include snapshot CheckBox
-  this->_setItemPos(IDC_BC_CHK02, half_w+10, 95, 65, 9);
+  this->_setItemPos(IDC_BC_CKBX2, half_w+10, 95, 65, 9);
   // Snapshot Bitmap & Select... Button
-  this->_setItemPos(IDC_SB_PKG, this->width()-160, 96, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, this->width()-160, 96, 86, 79);
   this->_setItemPos(IDC_BC_BRW04, this->width()-50, 95, 40, 13);
   // Snapshot hidden EditText
   this->_setItemPos(IDC_EC_INP08, half_w+10, 110, 120, 13); // hidden
@@ -942,10 +942,10 @@ void OmUiToolPkg::_onResize()
   // [ - - -        Description GroupBox          - - -
   this->_setItemPos(IDC_GB_GRP04, half_w+5, 185, half_w-10, this->height()-215);
   // Description CheckBox & Load.. Button
-  this->_setItemPos(IDC_BC_CHK03, half_w+10, 195, 100, 9);
+  this->_setItemPos(IDC_BC_CKBX3, half_w+10, 195, 100, 9);
   this->_setItemPos(IDC_BC_BRW05, this->width()-50, 195, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_PKTXT, half_w+10, 210, half_w-20, this->height()-245);
+  this->_setItemPos(IDC_EC_TXT, half_w+10, 210, half_w-20, this->height()-245);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // ----- Separator
@@ -1047,7 +1047,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         has_changed = true;
       break;
 
-    case IDC_BC_CHK01: //< Has Dependencies CheckBox
+    case IDC_BC_CKBX1: //< Has Dependencies CheckBox
       this->_onCkBoxDep();
     break;
 
@@ -1073,7 +1073,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcDelDep();
       break;
 
-    case IDC_BC_CHK02:  //< Include snapshot CheckBox
+    case IDC_BC_CKBX2:  //< Include snapshot CheckBox
       this->_onCkBoxSnap();
       break;
 
@@ -1081,7 +1081,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwSnap();
       break;
 
-    case IDC_BC_CHK03: //< Include Description CheckBox
+    case IDC_BC_CKBX3: //< Include Description CheckBox
       this->_onCkBoxDesc();
     break;
 

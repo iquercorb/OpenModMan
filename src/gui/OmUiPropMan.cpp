@@ -19,7 +19,6 @@
 #include "OmManager.h"
 #include "gui/OmUiPropMan.h"
 #include "gui/OmUiPropManGle.h"
-#include "gui/OmUiPropManPkg.h"
 
 
 ///
@@ -29,7 +28,6 @@ OmUiPropMan::OmUiPropMan(HINSTANCE hins) : OmDialogProp(hins)
 {
   // create tab dialogs
   this->_addPage(L"General", new OmUiPropManGle(hins));
-  this->_addPage(L"Packages", new OmUiPropManPkg(hins));
 }
 
 
@@ -58,7 +56,6 @@ bool OmUiPropMan::checkChanges()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
-  OmUiPropManPkg* pUiPropManPkg  = static_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
 
   bool changed = false;
 
@@ -83,11 +80,7 @@ bool OmUiPropMan::checkChanges()
     }
   }
 
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_STARTUP_CONTEXTS)) {
-    changed = true;
-  }
-
-  if(pUiPropManPkg->hasChParam(MAN_PROP_PKG_PACKAGE_FLAGS)) {
+  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_START_LIST)) {
     changed = true;
   }
 
@@ -105,7 +98,6 @@ bool OmUiPropMan::applyChanges()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
-  OmUiPropManPkg* pUiPropManPkg  = static_cast<OmUiPropManPkg*>(this->childById(IDD_PROP_MAN_PKG));
 
   // Parameter: Icons size for packages List-View
   if(pUiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
@@ -130,17 +122,18 @@ bool OmUiPropMan::applyChanges()
   }
 
   // Parameter: Open Context(s) at startup
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_STARTUP_CONTEXTS)) {
+  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_START_LIST)) {
 
-    bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+    bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
     vector<wstring> path_ls;
 
-    int lb_cnt =  this->msgItem(IDC_LB_PATH, LB_GETCOUNT);
+    int lb_cnt =  pUiPropManGle->msgItem(IDC_LB_PATH, LB_GETCOUNT);
+
     if(lb_cnt > 0) {
       wchar_t item_buf[OMM_ITM_BUFF];
       for(int i = 0; i < lb_cnt; ++i) {
-        this->msgItem(IDC_LB_PATH, LB_GETTEXT, i, reinterpret_cast<LPARAM>(item_buf));
+        pUiPropManGle->msgItem(IDC_LB_PATH, LB_GETTEXT, i, reinterpret_cast<LPARAM>(item_buf));
         path_ls.push_back(item_buf);
       }
     }
@@ -148,21 +141,7 @@ bool OmUiPropMan::applyChanges()
     pMgr->saveStartContexts(bm_chk, path_ls);
 
     // Reset parameter as unmodified
-    pUiPropManGle->setChParam(MAN_PROP_GLE_STARTUP_CONTEXTS, false);
-  }
-
-  // Parameter: Various Packages options
-  if(pUiPropManPkg->hasChParam(MAN_PROP_PKG_PACKAGE_FLAGS)) {
-
-    pMgr->setLegacySupport(pUiPropManPkg->msgItem(IDC_BC_CHK01, BM_GETCHECK));
-    pMgr->setWarnOverlaps(pUiPropManPkg->msgItem(IDC_BC_CHK02, BM_GETCHECK));
-    pMgr->setWarnExtraInst(pUiPropManPkg->msgItem(IDC_BC_CHK03, BM_GETCHECK));
-    pMgr->setWarnMissDpnd(pUiPropManPkg->msgItem(IDC_BC_CHK04, BM_GETCHECK));
-    pMgr->setWarnExtraUnin(pUiPropManPkg->msgItem(IDC_BC_CHK05, BM_GETCHECK));
-    pMgr->setQuietBatches(pUiPropManPkg->msgItem(IDC_BC_CHK06, BM_GETCHECK));
-
-    // Reset parameter as unmodified
-    pUiPropManPkg->setChParam(MAN_PROP_PKG_PACKAGE_FLAGS, false);
+    pUiPropManGle->setChParam(MAN_PROP_GLE_START_LIST, false);
   }
 
   // disable Apply button

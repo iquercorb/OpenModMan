@@ -375,12 +375,12 @@ void OmUiPropCtxLoc::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOC,  L"Context's locations");
 
-  this->_createTooltip(IDC_BC_UP,     L"Move up");
-  this->_createTooltip(IDC_BC_DN,     L"Move down");
+  this->_createTooltip(IDC_BC_UP,   L"Move up");
+  this->_createTooltip(IDC_BC_DN,   L"Move down");
 
-  this->_createTooltip(IDC_BC_DEL,    L"Remove and purge location");
-  this->_createTooltip(IDC_BC_ADD,    L"Add new location");
-  this->_createTooltip(IDC_BC_EDI,   L"Location properties");
+  this->_createTooltip(IDC_BC_DEL,  L"Delete and purge Location");
+  this->_createTooltip(IDC_BC_ADD,  L"Configure new Location");
+  this->_createTooltip(IDC_BC_EDI,  L"Modify Location properties");
 
   this->enableItem(IDC_EC_INP02, false);
   this->enableItem(IDC_EC_INP03, false);

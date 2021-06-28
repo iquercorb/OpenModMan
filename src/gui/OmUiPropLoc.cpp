@@ -19,6 +19,7 @@
 #include "OmManager.h"
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropLocStg.h"
+#include "gui/OmUiPropLocLib.h"
 #include "gui/OmUiPropLocBck.h"
 #include "gui/OmUiPropLocNet.h"
 #include "gui/OmUiAddRep.h"
@@ -44,8 +45,9 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
-  this->_addPage(L"Backups", new OmUiPropLocBck(hins));
+  this->_addPage(L"Library", new OmUiPropLocLib(hins));
   this->_addPage(L"Network", new OmUiPropLocNet(hins));
+  this->_addPage(L"Backup", new OmUiPropLocBck(hins));
 
   // creates child sub-dialogs
   this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
@@ -77,6 +79,7 @@ long OmUiPropLoc::id()  const
 bool OmUiPropLoc::checkChanges()
 {
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
+  OmUiPropLocLib* pUiPropLocLib  = static_cast<OmUiPropLocLib*>(this->childById(IDD_PROP_LOC_LIB));
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
   OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
@@ -95,7 +98,7 @@ bool OmUiPropLoc::checkChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
-    if(pUiPropLocStg->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    if(pUiPropLocStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP03, item_str);
       if(this->_pLoc->libDir() != item_str || !this->_pLoc->hasCustLibDir())
         changed = true;
@@ -105,7 +108,7 @@ bool OmUiPropLoc::checkChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
-    if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) {
+    if(pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP04, item_str);
       if(this->_pLoc->bckDir() != item_str || !this->_pLoc->hasCustBckDir())
         changed = true;
@@ -115,7 +118,7 @@ bool OmUiPropLoc::checkChanges()
   }
 
   if(pUiPropLocBck->hasChParam(LOC_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
-    if(pUiPropLocBck->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LVL, CB_GETCURSEL);
       if(this->_pLoc->bckZipLevel() != cb_sel) changed = true;
     } else {
@@ -123,9 +126,32 @@ bool OmUiPropLoc::checkChanges()
     }
   }
 
-  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_UPGD_RENAME)) {
-    bool bm_chk = pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK); //< RadioButton for Rename
-    if(this->_pLoc->upgdRename() != bm_chk) changed = true;
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_DEVMODE)) {
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_pLoc->warnExtraDnld())
+      changed = true;
+  }
+
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_WARNINGS)) {
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_pLoc->warnOverlaps())
+      changed = true;
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_pLoc->warnExtraInst())
+      changed = true;
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK) != this->_pLoc->warnMissDeps())
+      changed = true;
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK) != this->_pLoc->warnExtraUnin())
+      changed = true;
+  }
+
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_WARNINGS)) {
+    if(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_pLoc->warnExtraDnld())
+      changed = true;
+    if(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_pLoc->warnMissDnld())
+      changed = true;
+  }
+
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_ONUPGRADE)) {
+    if(pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK) != this->_pLoc->upgdRename())
+      changed = true;
   }
 
   // enable Apply button
@@ -141,6 +167,7 @@ bool OmUiPropLoc::checkChanges()
 bool OmUiPropLoc::applyChanges()
 {
   OmUiPropLocBck* pUiPropLocBck  = static_cast<OmUiPropLocBck*>(this->childById(IDD_PROP_LOC_BCK));
+  OmUiPropLocLib* pUiPropLocLib  = static_cast<OmUiPropLocLib*>(this->childById(IDD_PROP_LOC_LIB));
   OmUiPropLocStg* pUiPropLocStg  = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
   OmUiPropLocNet* pUiPropLocNet  = static_cast<OmUiPropLocNet*>(this->childById(IDD_PROP_LOC_NET));
 
@@ -169,7 +196,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
-    cust_lib = pUiPropLocStg->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+    cust_lib = pUiPropLocStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
     if(cust_lib) { //< Custom Library folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP03, loc_lib);
       if(!Om_isDir(loc_lib)) {
@@ -181,7 +208,7 @@ bool OmUiPropLoc::applyChanges()
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
-    cust_bck = pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK);
+    cust_bck = pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
     if(cust_bck) { //< Custom Backup folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP04, loc_bck);
       if(!Om_isDir(loc_bck)) {
@@ -193,14 +220,45 @@ bool OmUiPropLoc::applyChanges()
   }
 
   // Step 2, save changes
-  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_UPGD_RENAME)) {
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_DEVMODE)) {
+
+    this->_pLoc->setLibDevMode(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropLocLib->setChParam(LOC_PROP_LIB_DEVMODE, false);
+  }
+
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_WARNINGS)) {
+
+    this->_pLoc->setWarnOverlaps(pUiPropLocLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+    this->_pLoc->setWarnExtraInst(pUiPropLocLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
+    this->_pLoc->setWarnMissDeps(pUiPropLocLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK));
+    this->_pLoc->setWarnExtraUnin(pUiPropLocLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropLocLib->setChParam(LOC_PROP_LIB_WARNINGS, false);
+  }
+
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_WARNINGS)) {
+
+    this->_pLoc->setWarnExtraDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    this->_pLoc->setWarnMissDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropLocNet->setChParam(LOC_PROP_NET_WARNINGS, false);
+  }
+
+
+  if(pUiPropLocNet->hasChParam(LOC_PROP_NET_ONUPGRADE)) {
+
     this->_pLoc->setUpgdRename(pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK));
 
-    pUiPropLocNet->setChParam(LOC_PROP_NET_UPGD_RENAME, false);
+    // Reset parameter as unmodified
+    pUiPropLocNet->setChParam(LOC_PROP_NET_ONUPGRADE, false);
   }
 
   if(pUiPropLocBck->hasChParam(LOC_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
-    if(pUiPropLocBck->msgItem(IDC_BC_CHK01, BM_GETCHECK)) {
+    if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       int cb_sel = pUiPropLocBck->msgItem(IDC_CB_LVL, CB_GETCURSEL);
       if(cb_sel >= 0) this->_pLoc->setBckZipLevel(cb_sel);
     } else {
@@ -345,7 +403,7 @@ void OmUiPropLoc::_movBck_stop()
   pUiPropLocStg->setChParam(LOC_PROP_STG_BACKUP, false);
 
   // modify the backup path for the Location
-  if(pUiPropLocStg->msgItem(IDC_BC_CHK02, BM_GETCHECK)) { // custom backup checked
+  if(pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) { // custom backup checked
     this->_pLoc->setCustBckDir(this->_movBck_dest);
   } else {
     this->_pLoc->remCustBckDir();

@@ -35,7 +35,7 @@ OmUiPropRmtDet::OmUiPropRmtDet(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropRmtDet::~OmUiPropRmtDet()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
 
@@ -56,7 +56,7 @@ void OmUiPropRmtDet::_onInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14,400,L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
 
   OmRemote* pRmt = static_cast<OmUiPropRmt*>(this->_parent)->rmtCur();
   if(pRmt == nullptr) return;
@@ -118,11 +118,11 @@ void OmUiPropRmtDet::_onInit()
   }
 
   // Package description
-  this->enableItem(IDC_EC_PKTXT, true);
+  this->enableItem(IDC_EC_TXT, true);
   if(pRmt->desc().size()) {
-    this->setItemText(IDC_EC_PKTXT, pRmt->desc());
+    this->setItemText(IDC_EC_TXT, pRmt->desc());
   } else {
-    this->setItemText(IDC_EC_PKTXT, L"");
+    this->setItemText(IDC_EC_TXT, L"");
   }
 }
 
@@ -183,5 +183,5 @@ void OmUiPropRmtDet::_onResize()
   // Package Source Description Label
   this->_setItemPos(IDC_SC_LBL11, 5, 280, 64, 9);
   // Package Source Description EditControl
-  this->_setItemPos(IDC_EC_PKTXT, 70, 280, this->width()-90, this->height()-285);
+  this->_setItemPos(IDC_EC_TXT, 70, 280, this->width()-90, this->height()-285);
 }

@@ -74,7 +74,7 @@ void OmUiPropLocBck::setChParam(unsigned i, bool en)
 ///
 void OmUiPropLocBck::_onCkBoxZip()
 {
-  bool bm_chk = this->msgItem(IDC_BC_CHK01, BM_GETCHECK);
+  bool bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   this->enableItem(IDC_SC_LBL01, bm_chk);
   this->enableItem(IDC_CB_LVL, bm_chk);
@@ -199,7 +199,7 @@ bool OmUiPropLocBck::_delBck_progress_cb(void* ptr, size_t tot, size_t cur, cons
 void OmUiPropLocBck::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_CHK01,  L"Store backup data as zip archives");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Store backup data as zip archives");
   this->_createTooltip(IDC_CB_LVL,  L"Compression level for backup zip files");
 
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
@@ -216,7 +216,7 @@ void OmUiPropLocBck::_onInit()
 
   if(comp_levl >= 0) {
 
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 1);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
 
     switch(comp_levl)
     {
@@ -238,7 +238,7 @@ void OmUiPropLocBck::_onInit()
 
   } else {
 
-    this->msgItem(IDC_BC_CHK01, BM_SETCHECK, 0);
+    this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
     this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 0, 0);
     this->enableItem(IDC_CB_LVL, false);
   }
@@ -254,7 +254,7 @@ void OmUiPropLocBck::_onInit()
 void OmUiPropLocBck::_onResize()
 {
   // Compressed Backup CheckBox
-  this->_setItemPos(IDC_BC_CHK01, 50, 20, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, 20, 120, 9);
   // Compression level Label & ComboBox
   this->_setItemPos(IDC_SC_LBL01, 50, 40, 120, 9);
   this->_setItemPos(IDC_CB_LVL, 50, 50, this->width()-100, 14);
@@ -283,7 +283,7 @@ bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_BC_CHK01: //< Compress backup data CheckBox
+    case IDC_BC_CKBX1: //< Compress backup data CheckBox
       this->_onCkBoxZip();
       break;
 

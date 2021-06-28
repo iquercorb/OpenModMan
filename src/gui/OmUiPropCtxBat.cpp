@@ -217,6 +217,17 @@ void OmUiPropCtxBat::_onBcAddBat()
 }
 
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropCtxBat::_onCkBoxQuiet()
+{
+  // user modified parameter, notify it
+  this->setChParam(CTX_PROP_BAT_QUIETMODE, true);
+}
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -231,12 +242,14 @@ void OmUiPropCtxBat::_onInit()
   // Define controls tool-tips
   this->_createTooltip(IDC_LB_BAT,  L"Context's batches");
 
-  this->_createTooltip(IDC_BC_UP,     L"Move up");
-  this->_createTooltip(IDC_BC_DN,     L"Move down");
+  this->_createTooltip(IDC_BC_UP,   L"Move up");
+  this->_createTooltip(IDC_BC_DN,   L"Move down");
 
-  this->_createTooltip(IDC_BC_DEL,    L"Delete batch");
-  this->_createTooltip(IDC_BC_ADD,    L"Create new batch");
-  this->_createTooltip(IDC_BC_EDI,   L"Batch properties");
+  this->_createTooltip(IDC_BC_DEL,  L"Delete selected batch");
+  this->_createTooltip(IDC_BC_ADD,  L"Create new batch");
+  this->_createTooltip(IDC_BC_EDI,  L"Edit batch properties");
+
+  this->_createTooltip(IDC_BC_CKBX1,  L"Disable installation warning messages for batches execution.");
 
   // Set controls default states and parameters
   this->enableItem(IDC_BC_DEL, false);
@@ -254,16 +267,21 @@ void OmUiPropCtxBat::_onResize()
 {
   // Locations list Label & ListBox
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_BAT, 70, 20, this->width()-107, 85);
+  this->_setItemPos(IDC_LB_BAT, 70, 20, this->width()-107, 65);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-35, 49, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-35, 65, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-35, 39, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-35, 55, 16, 15);
 
   // Remove & Modify Buttons
-  this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setItemPos(IDC_BC_EDI, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 70, 90, 50, 14);
+  this->_setItemPos(IDC_BC_EDI, 122, 90, 50, 14);
   // Add button
-  this->_setItemPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-87, 90, 50, 14);
+
+  // Options label
+  this->_setItemPos(IDC_SC_LBL02, 5, 120, 64, 9);
+  // Quiet Batches checkbox
+  this->_setItemPos(IDC_BC_CKBX1, 70, 120, 180, 9);
 }
 
 
@@ -281,6 +299,8 @@ void OmUiPropCtxBat::_onRefresh()
     this->msgItem(IDC_LB_BAT, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pCtx->batGet(i)->title().c_str()));
     this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, i, i); // for Location index reordering
   }
+
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pCtx->batQuietMode());
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -329,6 +349,10 @@ bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< "New" Button
       this->_onBcAddBat();
+      break;
+
+    case IDC_BC_CKBX1:
+      this->_onCkBoxQuiet();
       break;
     }
   }

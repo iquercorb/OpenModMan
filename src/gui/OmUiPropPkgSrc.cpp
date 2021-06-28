@@ -35,7 +35,7 @@ OmUiPropPkgSrc::OmUiPropPkgSrc(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropPkgSrc::~OmUiPropPkgSrc()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
 
@@ -56,7 +56,7 @@ void OmUiPropPkgSrc::_onInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14,400,L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
 
   OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->pkgCur();
   if(pPkg == nullptr) return;
@@ -104,11 +104,11 @@ void OmUiPropPkgSrc::_onInit()
     }
 
     // Package description
-    this->enableItem(IDC_EC_PKTXT, true);
+    this->enableItem(IDC_EC_TXT, true);
     if(pPkg->desc().size()) {
-      this->setItemText(IDC_EC_PKTXT, pPkg->desc());
+      this->setItemText(IDC_EC_TXT, pPkg->desc());
     } else {
-      this->setItemText(IDC_EC_PKTXT, L"");
+      this->setItemText(IDC_EC_TXT, L"");
     }
 
   } else {
@@ -124,8 +124,8 @@ void OmUiPropPkgSrc::_onInit()
     // Snapshot image
     this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
     // Package description
-    this->setItemText(IDC_EC_PKTXT, L"N/A");
-    this->enableItem(IDC_EC_PKTXT, false);
+    this->setItemText(IDC_EC_TXT, L"N/A");
+    this->enableItem(IDC_EC_TXT, false);
   }
 }
 
@@ -176,5 +176,5 @@ void OmUiPropPkgSrc::_onResize()
   // Description Label
   this->_setItemPos(IDC_SC_LBL10, 5, 275, 64, 9);
   // Description EditControl
-  this->_setItemPos(IDC_EC_PKTXT, 70, 275, this->width()-90, this->height()-285);
+  this->_setItemPos(IDC_EC_TXT, 70, 275, this->width()-90, this->height()-285);
 }

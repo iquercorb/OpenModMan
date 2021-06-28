@@ -35,7 +35,7 @@ OmUiPropPkgBck::OmUiPropPkgBck(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropPkgBck::~OmUiPropPkgBck()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   DeleteObject(hFt);
 }
 

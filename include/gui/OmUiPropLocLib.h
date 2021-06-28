@@ -14,18 +14,19 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPMANPKG_H
-#define OMUIPROPMANPKG_H
+#ifndef OMUIPROPLOCLIB_H
+#define OMUIPROPLOCLIB_H
 
 #include "OmDialog.h"
 
-#define MAN_PROP_PKG_PACKAGE_FLAGS    0
+#define LOC_PROP_LIB_DEVMODE     0
+#define LOC_PROP_LIB_WARNINGS    1
 
 /// \brief Manager Options / Packages tab child
 ///
 /// OmDialog class derived for Manager Options / Packages tab child dialog window
 ///
-class OmUiPropManPkg : public OmDialog
+class OmUiPropLocLib : public OmDialog
 {
   public:
 
@@ -35,13 +36,13 @@ class OmUiPropManPkg : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiPropManPkg(HINSTANCE hins);
+    OmUiPropLocLib(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiPropManPkg();
+    ~OmUiPropLocLib();
 
     /// \brief Get resource id.
     ///
@@ -78,6 +79,10 @@ class OmUiPropManPkg : public OmDialog
 
     bool                _chParam[8];
 
+    void                _onCkBoxDev();
+
+    void                _onCkBoxWrn();
+
     void                _onInit();
 
     void                _onResize();
@@ -85,4 +90,4 @@ class OmUiPropManPkg : public OmDialog
     bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROPMANPKG_H
+#endif // OMUIPROPLOCLIB_H

@@ -395,11 +395,12 @@ void OmUiMain::_onInit()
   std::cout << "DEBUG => OmUiMain::_onInit\n";
   #endif
 
-  // set window caption
-  //this->setCaption(OMM_APP_NAME);
-
   // set window icon
   this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+
+  // Defines fonts for Context ComboBox
+  HFONT hFt = Om_createFont(21, 200, L"Ms Shell Dlg");
+  this->msgItem(IDC_CB_CTX, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   this->_createTooltip(IDC_CB_CTX, L"Select active context");
 
@@ -449,14 +450,12 @@ void OmUiMain::_onInit()
 ///
 void OmUiMain::_onResize()
 {
-  // Context Icon
-  this->_setItemPos(IDC_SB_ICON, 6, 3, 19, 19);
-
   // Context list ComboBox
-  this->_setItemPos(IDC_CB_CTX, 32, 6, this->width()-38 , 12);
-
+  this->_setItemPos(IDC_CB_CTX, 6, 4, this->width()-38 , 19);
+  // Context Icon
+  this->_setItemPos(IDC_SB_ICON, this->width()-26, 3, 19, 19);
   // Main Tab Control
-  this->_setItemPos(IDC_TC_MAIN, 5, 25, this->width()-9, this->height()-30);
+  this->_setItemPos(IDC_TC_MAIN, 4, 25, this->width()-8, this->height()-30);
 
   // Resize page dialogs according IDC_TC_MAIN
   if(this->_pageDial.size()) {
@@ -469,9 +468,9 @@ void OmUiMain::_onResize()
 
     // convert into base unit and adjust to keep inside the TabControl
     pos[0] = MulDiv(pos[0], 4, this->unitX()) + 1;
-    pos[1] = MulDiv(pos[1], 8, this->unitY()) + 14;
-    pos[2] = MulDiv(pos[2], 4, this->unitX()) - 2;
-    pos[3] = MulDiv(pos[3], 8, this->unitY()) - 2;
+    pos[1] = MulDiv(pos[1], 8, this->unitY()) + 15;
+    pos[2] = MulDiv(pos[2], 4, this->unitX()) - 3;
+    pos[3] = MulDiv(pos[3], 8, this->unitY()) - 3;
 
     // Map again in pixels
     MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));

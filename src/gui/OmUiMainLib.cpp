@@ -81,7 +81,7 @@ OmUiMainLib::~OmUiMainLib()
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_PKTXT, WM_GETFONT));
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
@@ -455,7 +455,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   pLoc->pkgPrepareInst(inst_ls, over_ls, deps_ls, miss_ls, pkg_ls);
 
   // warn user for missing dependencies
-  if(!silent && miss_ls.size() && pMgr->warnMissDeps()) {
+  if(!silent && miss_ls.size() && pLoc->warnMissDeps()) {
     msg = L"One or more selected packages have missing dependencies, "
           L"The following packages are required but not available:\n";
     for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
@@ -466,7 +466,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   }
 
   // warn for additional installation
-  if(!silent && deps_ls.size() && pMgr->warnExtraInst()) {
+  if(!silent && deps_ls.size() && pLoc->warnExtraInst()) {
     msg = L"One or more selected packages have dependencies, "
           L"the following packages will also be installed:\n";
     for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
@@ -477,7 +477,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   }
 
   // if there is overlapping, ask user if he really want to continue installation
-  if(!silent && over_ls.size() && pMgr->warnOverlaps()) {
+  if(!silent && over_ls.size() && pLoc->warnOverlaps()) {
     msg = L"One or more selected packages overlaps and will overwrites "
           L"files previously installed by the following package(s):\n";
     for(size_t j = 0; j < over_ls.size(); ++j) msg += L"\n "+over_ls[j]->ident();
@@ -571,7 +571,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   pLoc->bckPrepareUnin(unin_ls, over_ls, deps_ls, pkg_ls);
 
   // check and warn for extra uninstall due to overlaps
-  if(!silent && over_ls.size() && pMgr->warnExtraUnin()) {
+  if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
     msg = L"One or more selected packages are overlapped by others later "
           L"installed, the following packages must also be uninstalled:\n";
     for(size_t i = 0; i < over_ls.size(); ++i) msg += L"\n "+over_ls[i]->ident();
@@ -582,7 +582,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   }
 
   // check and warn for extra uninstall due to dependencies
-  if(!silent && deps_ls.size() && pMgr->warnExtraUnin()) {
+  if(!silent && deps_ls.size() && pLoc->warnExtraUnin()) {
     msg = L"One or more selected packages are required as dependency "
           L"by others, the following packages will also be uninstalled:\n";
     for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
@@ -801,7 +801,7 @@ void OmUiMainLib::_buildLvPkg()
   }
 
   // save current legacy support status
-  this->_buildLvPkg_legacy = pMgr->legacySupport();
+  this->_buildLvPkg_legacy = pLoc->libDevMode();
 
   // return now if library folder cannot be accessed
   if(!pLoc->checkAccessLib()) {
@@ -1153,7 +1153,7 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
 
     // hide package details
     self->showItem(IDC_SB_PKG, false);
-    self->showItem(IDC_EC_PKTXT, false);
+    self->showItem(IDC_EC_TXT, false);
     self->showItem(IDC_SC_TITLE, false);
 
     // retrieve the batch object from current selection
@@ -1219,7 +1219,7 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
       // first, uninstall packages which must be uninstalled
       if(unin_ls.size()) {
         // uninstall packages
-        self->_pkgUninLs(unin_ls, pMgr->quietBatches());
+        self->_pkgUninLs(unin_ls, pCtx->batQuietMode());
       }
 
       // then, install packages which must be installed
@@ -1236,14 +1236,14 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
           // clear and replace package index in vector
           inst.clear(); inst.push_back(inst_ls[i]);
           // Launch install process
-          self->_pkgInstLs(inst, pMgr->quietBatches());
+          self->_pkgInstLs(inst, pCtx->batQuietMode());
         }
       }
     }
 
     // restore package details
     self->showItem(IDC_SB_PKG, true);
-    self->showItem(IDC_EC_PKTXT, true);
+    self->showItem(IDC_EC_TXT, true);
     self->showItem(IDC_SC_TITLE, true);
   }
 
@@ -1383,7 +1383,7 @@ void OmUiMainLib::_onLvPkgSel()
 {
   // hide all package bottom infos
   this->showItem(IDC_SB_PKG, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SC_TITLE, false);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
@@ -1424,7 +1424,7 @@ void OmUiMainLib::_onLvPkgSel()
       pUiMain->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
 
       // on multiple selection, we hide package description
-      this->showItem(IDC_EC_PKTXT, false);
+      this->showItem(IDC_EC_TXT, false);
       this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
 
     } else {
@@ -1434,7 +1434,7 @@ void OmUiMainLib::_onLvPkgSel()
       pUiMain->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
 
       // show package description
-      this->showItem(IDC_EC_PKTXT, true);
+      this->showItem(IDC_EC_TXT, true);
 
       OmPackage* pPkg;
 
@@ -1444,12 +1444,12 @@ void OmUiMainLib::_onLvPkgSel()
 
         pPkg = pLoc->pkgGet(lv_sel);
 
-        this->setItemText(IDC_SC_TITLE, pPkg->name());
+        this->setItemText(IDC_SC_TITLE, pPkg->name() + L" " + pPkg->version().asString());
 
         if(pPkg->desc().size()) {
-          this->setItemText(IDC_EC_PKTXT, pPkg->desc());
+          this->setItemText(IDC_EC_TXT, pPkg->desc());
         } else {
-          this->setItemText(IDC_EC_PKTXT, L"<no description available>");
+          this->setItemText(IDC_EC_TXT, L"<no description available>");
         }
 
         if(pPkg->image().thumbnail()) {
@@ -1472,7 +1472,7 @@ void OmUiMainLib::_onLvPkgSel()
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
   // force thumbnail static control to update its position
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
 }
 
 
@@ -1547,10 +1547,10 @@ void OmUiMainLib::_onInit()
   #endif
 
   // Defines fonts for package description, title, and log output
-  HFONT hFt = Om_createFont(18, 800, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_PKTXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
   this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_ADD));
   this->setBmImage(IDC_BC_EDI, Om_getResImage(this->_hins, IDB_BTN_MOD));
@@ -1593,14 +1593,9 @@ void OmUiMainLib::_onInit()
   lvCol.iSubItem = 2;
   this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
 
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // keep curent manager legacy option
-  this->_buildLvPkg_legacy = pMgr->legacySupport();
-
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SB_PKG, false);
 }
 
@@ -1681,15 +1676,15 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
   this->_setItemPos(IDC_BC_UNIN, 56, this->height()-114, 50, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-316, 13);
+  this->_setItemPos(IDC_PB_PKG, 108, this->height()-113, this->width()-315, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
-  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-96, this->width()-161, 12);
+  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-161, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 85, 78);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
   // Package description
-  this->_setItemPos(IDC_EC_PKTXT, 95, this->height()-83, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_TXT, 95, this->height()-83, this->width()-101, 78);
 
   // Vertical separator
   this->_setItemPos(IDC_SC_SEPAR, this->width()-150, 5, 1, this->height()-105);
@@ -1702,7 +1697,6 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_BC_RUN, this->width()-143, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_EDI, this->width()-51, this->height()-114, 45, 14);
-
 
   InvalidateRect(this->_hwnd, nullptr, true);
 }
@@ -1727,7 +1721,7 @@ void OmUiMainLib::_onRefresh()
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_PKTXT, false);
+  this->showItem(IDC_EC_TXT, false);
   this->showItem(IDC_SB_PKG, false);
 
   // disable the Progress-Bar
@@ -1742,8 +1736,12 @@ void OmUiMainLib::_onRefresh()
   }
 
   // if legacy support changed, rebuild Package ListView
-  if(this->_buildLvPkg_legacy != pMgr->legacySupport()) {
-    this->_buildLvPkg();
+  if(pCtx) {
+    if(pCtx->locCur()) {
+      if(this->_buildLvPkg_legacy != pCtx->locCur()->libDevMode()) {
+        this->_buildLvPkg();
+      }
+    }
   }
 
   // disable or enable elements depending context

@@ -19,7 +19,8 @@
 
 #include <OmDialog.h>
 
-#define LOC_PROP_NET_UPGD_RENAME   0
+#define LOC_PROP_NET_ONUPGRADE   0
+#define LOC_PROP_NET_WARNINGS    1
 
 /// \brief Location Properties / Network tab child
 ///
@@ -86,6 +87,8 @@ class OmUiPropLocNet : public OmDialog
     void                _onBcDelRepo();
 
     void                _onBcRadUpg();
+
+    void                _onCkBoxWrn();
 
     void                _onInit();
 

@@ -119,7 +119,7 @@ void OmUiAddRep::_onBcChk()
 
     if(config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
       this->_testLog(L"XML parse succeed.\r\n");
-      int n = config.xml().child(L"packages").attrAsInt(L"count");
+      int n = config.xml().child(L"remotes").attrAsInt(L"count");
       this->_testLog(L"Repository provides " + std::to_wstring(n) + L" package(s)\r\n");
       this->setItemText(IDC_SC_STATE, L"The Repository appear to be valid !");
       this->_testResult = 1;
@@ -243,7 +243,7 @@ void OmUiAddRep::_onResize()
 
   // Repository Test Label, Button and Result
   this->_setItemPos(IDC_SC_LBL04, 10, 55, 80, 9);
-  this->_setItemPos(IDC_BC_CHK, 10, 70, 50, 14);
+  this->_setItemPos(IDC_BC_QRY, 10, 70, 50, 14);
   this->_setItemPos(IDC_SC_STATE, 65, 73, this->width()-20, 12);
 
   // Repository Test content
@@ -274,12 +274,12 @@ bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_EC_INP01: // Title
       if(HIWORD(wParam) == EN_CHANGE) {
         this->getItemText(IDC_EC_INP01, item_str);
-        this->enableItem(IDC_BC_CHK, (item_str.size() > 7));
+        this->enableItem(IDC_BC_QRY, (item_str.size() > 7));
         has_changed = true;
       }
       break;
 
-    case IDC_BC_CHK:
+    case IDC_BC_QRY:
       this->_onBcChk();
       break;
 

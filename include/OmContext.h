@@ -312,6 +312,24 @@ class OmContext
     ///
     bool batRem(unsigned i);
 
+    /// \brief Get batches warning quiet mode.
+    ///
+    /// Returns batches warning quiet mode option value.
+    ///
+    /// \return warning quiet mode option value.
+    ///
+    bool batQuietMode() const {
+      return _batQuietMode;
+    }
+
+    /// \brief Set batches warning quiet mode.
+    ///
+    /// Define and save batches warning quiet mode option value.
+    ///
+    /// \param[in]  enable    : Warning quiet mode enable or disable.
+    ///
+    void setBatQuietMode(bool enable);
+
     /// \brief Add log.
     ///
     /// Add entry to log file.
@@ -340,6 +358,8 @@ class OmContext
     OmLocation*         _locCur;
 
     vector<OmBatch*>    _batLst;
+
+    bool                _batQuietMode;
 
     bool                _valid;
 
