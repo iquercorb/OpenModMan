@@ -159,6 +159,7 @@
 		<Unit filename="include/gui/OmUiMain.h" />
 		<Unit filename="include/gui/OmUiMainLib.h" />
 		<Unit filename="include/gui/OmUiMainNet.h" />
+		<Unit filename="include/gui/OmUiMainTst.h" />
 		<Unit filename="include/gui/OmUiProgress.h" />
 		<Unit filename="include/gui/OmUiPropBat.h" />
 		<Unit filename="include/gui/OmUiPropBatStg.h" />
@@ -245,6 +246,7 @@
 		<Unit filename="src/gui/OmUiMain.cpp" />
 		<Unit filename="src/gui/OmUiMainLib.cpp" />
 		<Unit filename="src/gui/OmUiMainNet.cpp" />
+		<Unit filename="src/gui/OmUiMainTst.cpp" />
 		<Unit filename="src/gui/OmUiProgress.cpp" />
 		<Unit filename="src/gui/OmUiPropBat.cpp" />
 		<Unit filename="src/gui/OmUiPropBatStg.cpp" />

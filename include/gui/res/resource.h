@@ -7,6 +7,7 @@
 #define IDD_MAIN                                700
 #define IDD_MAIN_LIB                            701
 #define IDD_MAIN_NET                            702
+#define IDD_MAIN_TST                            703
 #define IDD_ADD_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_ADD_BAT                             712
@@ -131,7 +132,8 @@
 #define IDC_EC_OUT08                            40217
 #define IDC_EC_OUT09                            40218
 #define IDC_EC_OUT10                            40219
-#define IDC_EC_TXT                            40250
+#define IDC_EC_TXT                              40250
+#define IDC_EC_RTF                              40251
 #define IDC_BC_BRW01                            40300
 #define IDC_BC_BRW02                            40301
 #define IDC_BC_BRW03                            40302
