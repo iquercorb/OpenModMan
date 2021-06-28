@@ -819,6 +819,25 @@ class OmLocation
     ///
     void setWarnMissDnld(bool enable);
 
+
+    /// \brief Get warning for upgrade breaking dependencies option.
+    ///
+    /// Returns warning for upgrade breaking dependencies option value.
+    ///
+    /// \return Warning for upgrade breaking dependencies option value.
+    ///
+    bool warnUpgdBrkDeps() const {
+      return _warnUpgdBrkDeps;
+    }
+
+    /// \brief Set warning for upgrade breaking dependencies.
+    ///
+    /// Define and save warning for upgrade breaking dependencies option value.
+    ///
+    /// \param[in]  enable    : Warning for upgrade breaking dependencies enable or disable.
+    ///
+    void setWarnUpgdBrkDeps(bool enable);
+
     /// \brief Refresh Remote list.
     ///
     /// Refresh remote package state against local packages lst.
@@ -896,9 +915,10 @@ class OmLocation
     /// \param[out] dnl_ls  : Output full list of remote packages to be downloaded.
     /// \param[out] dep_ls  : Output list of additional dependencies remote packages to be downloaded.
     /// \param[out] mis_ls  : Output list of missing dependencies identities.
+    /// \param[out] old_ls  : Output list of old packages required as dependency that selection will supersedes.
     /// \param[in]  sel_ls  : Input initial packages install selection to be downloaded.
     ///
-    void rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& sel_ls) const;
+    void rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls,  vector<OmPackage*>& old_ls, const vector<OmRemote*>& sel_ls) const;
 
     /// \brief Get remote package dependency list.
     ///
@@ -975,6 +995,8 @@ class OmLocation
     bool                _warnExtraDnld;
 
     bool                _warnMissDnld;
+
+    bool                _warnUpgdBrkDeps;
 
     bool                _valid;
 

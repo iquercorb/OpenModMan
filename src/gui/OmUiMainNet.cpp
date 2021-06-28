@@ -230,6 +230,10 @@ void OmUiMainNet::locSel(int id)
 ///
 void OmUiMainNet::rmtDown(bool upgrade)
 {
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT))
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx) return;
@@ -267,16 +271,13 @@ void OmUiMainNet::rmtDown(bool upgrade)
     lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
-  // this may happen if package already in library
-  if(user_ls.empty())
-    return;
-
   vector<OmRemote*> dwnl_ls;  //< final download list
   vector<OmRemote*> deps_ls;  //< extra download list
+  vector<OmPackage*> olds_ls; //< superseded required packages
   vector<wstring> miss_ls;    //< missing dependencies lists
 
   // prepare package download
-  pLoc->rmtPrepareDown(dwnl_ls, deps_ls, miss_ls, user_ls);
+  pLoc->rmtPrepareDown(dwnl_ls, deps_ls, miss_ls, olds_ls, user_ls);
 
   // warn user for missing dependencies
   if(miss_ls.size() && pLoc->warnMissDnld()) {
@@ -286,6 +287,18 @@ void OmUiMainNet::rmtDown(bool upgrade)
     msg +=  L"\n\nDo you want to proceed download anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+      return;
+  }
+
+  // warn user for superseded packages required as dependency
+  if(upgrade && olds_ls.size()) {
+    msg = L"One or more selected packages will supersedes old versions "
+          L"required as dependency by other, upgrading the following "
+          L"packages will break some dependencies:\n";
+    for(size_t k = 0; k < olds_ls.size(); ++k) msg+=L"\n  "+olds_ls[k]->ident();
+    msg +=  L"\n\nDo you want to proceed upgrade anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Upgrade breaks dependencies", msg))
       return;
   }
 
@@ -346,6 +359,10 @@ void OmUiMainNet::rmtDown(bool upgrade)
 ///
 void OmUiMainNet::rmtFixd(bool upgrade)
 {
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx) return;
@@ -370,9 +387,9 @@ void OmUiMainNet::rmtFixd(bool upgrade)
 
   // get selection, should be single, since UI does not allow this
   // process for multiple selection
-  int lv_sel = -1;
-  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
 
   pRmt = pLoc->rmtGet(lv_sel);
 
@@ -461,21 +478,20 @@ void OmUiMainNet::rmtFixd(bool upgrade)
 ///
 void OmUiMainNet::rmtProp()
 {
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
 
-  OmRemote* pRmt = nullptr;
-
-  // Get ListView unique selection
-  int lv_sel = -1;
-  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-  if(lv_sel < 0)
-    return;
-
-  pRmt = pCtx->locCur()->rmtGet(lv_sel);
+  OmRemote* pRmt = pCtx->locCur()->rmtGet(lv_sel);
 
   if(pRmt) {
     OmUiPropRmt* pUiPropRmt = static_cast<OmUiPropRmt*>(this->childById(IDD_PROP_RMT));
@@ -1166,12 +1182,12 @@ void OmUiMainNet::_onLbRepSel()
 ///
 void OmUiMainNet::_onLvRmtHit()
 {
-  int lv_sel = -1;
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
 
   // Get ListView unique selection
-  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
+  int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
   if(lv_sel < 0)
     return;
 
@@ -1427,12 +1443,12 @@ void OmUiMainNet::_onBcDelRep()
 ///
 void OmUiMainNet::_onBcAbort()
 {
-  int lv_sel = -1;
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
 
   // Get ListView unique selection
-  if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
+  int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
   if(lv_sel < 0)
     return;
 

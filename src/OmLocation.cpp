@@ -346,6 +346,33 @@ static bool __src_chk_dependencies(const vector<OmPackage*>& lib_ls, const OmPac
 }
 
 
+/// \brief Check package dependents.
+///
+/// Recursively explores package dependency tree to check
+/// for dependents packages of the specified target.
+///
+/// This function does not care if packages are currently installed
+/// or not.
+///
+/// \param[out]   out_ls  : Output list of found dependents packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    target  : Input target package to check overlapping.
+///
+/// \return True if dependents package found, false otherwise.
+///
+static size_t __src_chk_dependents(const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    if(lib_ls[i]->depHas(target->ident())) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 /// \brief Get package backup overlaps
 ///
 /// Recursively explores package backup overlapping tree to gather all
@@ -390,6 +417,9 @@ static size_t __bck_get_overlaps(vector<OmPackage*>& out_ls, const vector<OmPack
 ///
 /// Recursively explores package backup dependency tree to gather all
 /// dependents packages of the specified target.
+///
+/// This function lookup only on installed package to be used in
+/// context of package uninstall check.
 ///
 /// \param[out]   out_ls  : Output list of found dependents packages.
 /// \param[in]    lib_ls  : Input list of available packages.
@@ -488,6 +518,10 @@ static size_t __bck_get_relations(vector<OmPackage*>& out_ls, vector<OmPackage*>
   return n;
 }
 
+///
+/// Get remote package dependencies (declaration).
+///
+static size_t __rmt_get_dependencies(vector<OmRemote*>&, vector<wstring>&, const vector<OmRemote*>&, const vector<OmPackage*>&, const OmRemote*);
 
 /// \brief Get package available remote dependencies.
 ///
@@ -503,30 +537,7 @@ static size_t __bck_get_relations(vector<OmPackage*>& out_ls, vector<OmPackage*>
 ///
 /// \return Count of dependency remote packages found.
 ///
-size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& net_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target);
-
-
-/// \brief Get remote package dependencies.
-///
-/// Recursively explores remote package dependency tree to gather all
-/// found required remote packages and create list of missing dependencies
-/// for the specified target.
-///
-/// \param[out]   out_ls : Output list of found dependency packages.
-/// \param[out]   mis_ls : Output list missing dependency identities.
-/// \param[in]    net_ls : Input list of available remote packages.
-/// \param[in]    lib_ls : Input list of available library packages.
-/// \param[in]    target : Input target remote package to explore dependencies.
-///
-/// \return Count of dependency remote packages found.
-///
-size_t __rmt_get_dependencies(vector<OmRemote*>& out_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmRemote* target);
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+static size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
 {
   // get all missing dependencies for this package
   vector<wstring> dep_ls;
@@ -571,9 +582,19 @@ size_t __pkg_get_downloads(vector<OmRemote*>& dnl_ls, vector<wstring>& mis_ls, c
   return n;
 }
 
-
+/// \brief Get remote package dependencies.
 ///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+/// Recursively explores remote package dependency tree to gather all
+/// found required remote packages and create list of missing dependencies
+/// for the specified target.
+///
+/// \param[out]   out_ls : Output list of found dependency packages.
+/// \param[out]   mis_ls : Output list missing dependency identities.
+/// \param[in]    net_ls : Input list of available remote packages.
+/// \param[in]    lib_ls : Input list of available library packages.
+/// \param[in]    target : Input target remote package to explore dependencies.
+///
+/// \return Count of dependency remote packages found.
 ///
 size_t __rmt_get_dependencies(vector<OmRemote*>& out_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& net_ls, const vector<OmPackage*>& lib_ls, const OmRemote* target)
 {
@@ -639,6 +660,41 @@ size_t __rmt_get_dependencies(vector<OmRemote*>& out_ls, vector<wstring>& mis_ls
 
   return n;
 }
+
+/// \brief Get required old packages.
+///
+/// Get list of library packages that the specified remote package
+/// supersedes and is required as dependency by other.
+///
+/// \param[out]   out_ls : Output list of required old packages.
+/// \param[in]    lib_ls : Input list of available library packages.
+/// \param[in]    target : Input target remote package to explore dependencies.
+///
+/// \return Count of required old packages found.
+///
+static size_t __rmt_get_old_required(vector<OmPackage*>& out_ls, const vector<OmPackage*>& lib_ls, const OmRemote* target)
+{
+  size_t n = 0;
+
+  // check for supersedes dependencies
+  if(target->isState(RMT_STATE_UPG)) {
+
+    for(size_t i = 0; i < target->supCount(); ++i) {
+
+      if(__src_chk_dependents(lib_ls, target->supGet(i))) {
+
+        // add only if unique
+        if(std::find(out_ls.begin(), out_ls.end(), target->supGet(i)) == out_ls.end()) {
+          out_ls.push_back(target->supGet(i));
+          n++;
+        }
+      }
+    }
+  }
+
+  return n;
+}
+
 
 
 ///
@@ -1090,11 +1146,19 @@ bool OmLocation::open(const wstring& path)
     } else {
       this->setWarnMissDnld(this->_warnMissDnld);
     }
+
+    if(xml_net.hasChild(L"warn_upgd_brk_deps")) {
+      this->_warnUpgdBrkDeps = xml_net.child(L"warn_upgd_brk_deps").attrAsInt(L"enable");
+    } else {
+      this->setWarnUpgdBrkDeps(this->_warnUpgdBrkDeps);
+    }
+
   } else {
     // create default
     this->_config.xml().addChild(L"network");
     this->setWarnExtraDnld(this->_warnExtraDnld);
     this->setWarnMissDnld(this->_warnMissDnld);
+    this->setWarnUpgdBrkDeps(this->_warnUpgdBrkDeps);
   }
 
   // this location is OK and ready
@@ -2392,6 +2456,34 @@ void OmLocation::setWarnMissDnld(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmLocation::setWarnUpgdBrkDeps(bool enable)
+{
+  this->_warnUpgdBrkDeps = enable;
+
+  if(this->_config.valid()) {
+
+    OmXmlNode xml_net;
+
+    if(this->_config.xml().hasChild(L"network")) {
+      xml_net = this->_config.xml().child(L"network");
+    } else {
+      xml_net = this->_config.xml().addChild(L"network");
+    }
+
+    if(xml_net.hasChild(L"warn_upgd_brk_deps")) {
+      xml_net.child(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warnUpgdBrkDeps ? 1 : 0);
+    } else {
+      xml_net.addChild(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warnUpgdBrkDeps ? 1 : 0);
+    }
+
+    this->_config.save();
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmLocation::rmtSetSorting(OmLocLsSort sorting)
 {
   // we check if the requested sorting kind is the same as the currently
@@ -2508,14 +2600,14 @@ bool OmLocation::rmtRefresh(bool force)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const vector<OmRemote*>& sel_ls) const
+void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, vector<OmPackage*>& old_ls, const vector<OmRemote*>& sel_ls) const
 {
   // gather dependencies and create missing lists
   vector<wstring> idt_ls;
   for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     idt_ls.clear();
-    this->rmtGetDepends(dnl_ls, idt_ls, sel_ls[i]);
+    __rmt_get_dependencies(dnl_ls, idt_ls, this->_rmtLs, this->_pkgLs, sel_ls[i]);
 
     for(size_t j = 0; j < idt_ls.size(); ++j) {
       // add uniques only
@@ -2527,6 +2619,10 @@ void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& de
 
   // create the extra install list
   for(size_t i = 0; i < dnl_ls.size(); ++i) {
+
+    // check for required old packages that this one may supersedes
+    __rmt_get_old_required(old_ls, this->_pkgLs, dnl_ls[i]);
+
     // add only if not in the initial selection
     if(std::find(sel_ls.begin(), sel_ls.end(), dnl_ls[i]) == sel_ls.end()) {
       dep_ls.push_back(dnl_ls[i]);
@@ -2535,8 +2631,13 @@ void OmLocation::rmtPrepareDown(vector<OmRemote*>& dnl_ls, vector<OmRemote*>& de
 
   // compose the final install list
   for(size_t i = 0; i < sel_ls.size(); ++i) {
+
     // add only if not already in install list
     if(std::find(dnl_ls.begin(), dnl_ls.end(), sel_ls[i]) == dnl_ls.end()) {
+
+      // check for required old packages that this one may supersedes
+      __rmt_get_old_required(old_ls, this->_pkgLs, sel_ls[i]);
+
       dnl_ls.push_back(sel_ls[i]);
     }
   }

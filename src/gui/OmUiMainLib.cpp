@@ -255,6 +255,10 @@ void OmUiMainLib::locSel(int id)
 ///
 void OmUiMainLib::pkgInst()
 {
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT))
+    return;
+
   this->_pkgInst_init();
 }
 
@@ -264,6 +268,10 @@ void OmUiMainLib::pkgInst()
 ///
 void OmUiMainLib::pkgUnin()
 {
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT))
+    return;
+
   this->_pkgUnin_init();
 }
 
@@ -273,17 +281,18 @@ void OmUiMainLib::pkgUnin()
 ///
 void OmUiMainLib::pkgTogg()
 {
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
-
-  // Get ListView unique selection
-  int lv_sel = -1;
-  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-  if(lv_sel < 0)
-    return;
 
   if(pCtx->locCur()->pkgGet(lv_sel)->hasBck()) {
     this->_pkgUnin_init();
@@ -298,19 +307,20 @@ void OmUiMainLib::pkgTogg()
 ///
 void OmUiMainLib::pkgProp()
 {
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
 
   OmPackage* pPkg = nullptr;
-
-  // Get ListView unique selection
-  int lv_sel = -1;
-  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) == 1)
-    lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-  if(lv_sel < 0)
-    return;
 
   pPkg = pCtx->locCur()->pkgGet(lv_sel);
 
@@ -327,6 +337,10 @@ void OmUiMainLib::pkgProp()
 ///
 void OmUiMainLib::pkgTrsh()
 {
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT))
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;
@@ -350,35 +364,31 @@ void OmUiMainLib::pkgTrsh()
   lvI.stateMask = LVIS_SELECTED;
   this->msgItem(IDC_LV_PKG, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  if(sel_ls.size()) {
+  msg = L"Move the selected packages to recycle bin ?";
+  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete packages", msg))
+    return;
 
-    msg = L"Move the selected packages to recycle bin ?";
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete packages", msg))
-      return;
+  OmPackage* pPkg;
 
-    // freeze dialog so user cannot interact
-    static_cast<OmUiMain*>(this->root())->freeze(true);
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
 
-    OmPackage* pPkg;
+    pPkg = sel_ls[i];
 
-    for(size_t i = 0; i < sel_ls.size(); ++i) {
-
-      pPkg = sel_ls[i];
-
-      if(pPkg->hasSrc()) {
-        Om_moveToTrash(pPkg->srcPath());
-      } else {
-        msg =   L"The package \""+pPkg->ident()+L"\" ";
-        msg +=  L"does not have source data. To remove it from list "
-                L"restores its backup by uninstalling it.";
-        Om_dialogBoxWarn(this->_hwnd, L"No package source", msg);
-      }
+    if(pPkg->hasSrc()) {
+      Om_moveToTrash(pPkg->srcPath());
+    } else {
+      msg =   L"The package \""+pPkg->ident()+L"\" ";
+      msg +=  L"does not have source data. To remove it from list "
+              L"restores its backup by uninstalling it.";
+      Om_dialogBoxWarn(this->_hwnd, L"No package source", msg);
     }
-
-    // unfreeze dialog to allow user to interact
-    static_cast<OmUiMain*>(this->root())->freeze(false);
   }
+
+  // unfreeze dialog to allow user to interact
+  static_cast<OmUiMain*>(this->root())->freeze(false);
 
   // update package selection
   this->_onLvPkgSel();
@@ -390,6 +400,10 @@ void OmUiMainLib::pkgTrsh()
 ///
 void OmUiMainLib::pkgOpen()
 {
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT))
+    return;
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx->locCur()) return;

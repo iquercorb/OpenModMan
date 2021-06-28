@@ -206,16 +206,6 @@ void OmUiPropLocNet::_onInit()
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Enable upgrade always download mode");
 
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
-
-  // set warning messages
-  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pLoc->warnExtraDnld());
-  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, pLoc->warnMissDnld());
-
-  // set Upgrade Rename
-  this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !pLoc->upgdRename());
-  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, pLoc->upgdRename());
-
   // Update values
   this->_onRefresh();
 }
@@ -239,17 +229,18 @@ void OmUiPropLocNet::_onResize()
   this->_setItemPos(IDC_SC_STATE, 71, 75, this->width()-137, 9);
 
   // Warnings label
-  this->_setItemPos(IDC_SC_LBL02, 5, 100, 68, 9);
+  this->_setItemPos(IDC_SC_LBL02, 5, 95, 68, 9);
   // Warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX1, 70, 100, 180, 9);
-  this->_setItemPos(IDC_BC_CKBX2, 70, 112, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 70, 95, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 70, 107, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX3, 70, 119, 180, 9);
 
   // Package upgrade label
-  this->_setItemPos(IDC_SC_LBL03, 5, 135, 68, 9);
+  this->_setItemPos(IDC_SC_LBL03, 5, 140, 68, 9);
   // Move to trash RadioButton
-  this->_setItemPos(IDC_BC_RAD01, 70, 135, 160, 9);
+  this->_setItemPos(IDC_BC_RAD01, 70, 140, 160, 9);
   // Rename RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 70, 147, 160, 9);
+  this->_setItemPos(IDC_BC_RAD02, 70, 152, 160, 9);
 }
 
 
@@ -273,6 +264,15 @@ void OmUiPropLocNet::_onRefresh()
       this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
   }
+
+  // set warning messages
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pLoc->warnExtraDnld());
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, pLoc->warnMissDnld());
+  this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, pLoc->warnUpgdBrkDeps());
+
+  // set Upgrade Rename
+  this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !pLoc->upgdRename());
+  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, pLoc->upgdRename());
 
   // Set controls default states and parameters
   this->enableItem(IDC_SC_STATE, false);
@@ -314,6 +314,7 @@ bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_CKBX1:
     case IDC_BC_CKBX2:
+    case IDC_BC_CKBX3:
       this->_onCkBoxWrn();
       break;
 

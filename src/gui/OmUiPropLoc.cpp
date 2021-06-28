@@ -147,6 +147,8 @@ bool OmUiPropLoc::checkChanges()
       changed = true;
     if(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_pLoc->warnMissDnld())
       changed = true;
+    if(pUiPropLocNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_pLoc->warnUpgdBrkDeps())
+      changed = true;
   }
 
   if(pUiPropLocNet->hasChParam(LOC_PROP_NET_ONUPGRADE)) {
@@ -243,6 +245,7 @@ bool OmUiPropLoc::applyChanges()
 
     this->_pLoc->setWarnExtraDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
     this->_pLoc->setWarnMissDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+    this->_pLoc->setWarnUpgdBrkDeps(pUiPropLocNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
 
     // Reset parameter as unmodified
     pUiPropLocNet->setChParam(LOC_PROP_NET_WARNINGS, false);
