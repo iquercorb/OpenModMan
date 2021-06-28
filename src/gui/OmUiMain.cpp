@@ -451,9 +451,9 @@ void OmUiMain::_onInit()
 void OmUiMain::_onResize()
 {
   // Context list ComboBox
-  this->_setItemPos(IDC_CB_CTX, 6, 4, this->width()-38 , 19);
+  this->_setItemPos(IDC_CB_CTX, 4, 4, this->width()-32 , 19);
   // Context Icon
-  this->_setItemPos(IDC_SB_ICON, this->width()-26, 3, 19, 19);
+  this->_setItemPos(IDC_SB_ICON, this->width()-24, 3, 19, 19);
   // Main Tab Control
   this->_setItemPos(IDC_TC_MAIN, 4, 25, this->width()-8, this->height()-30);
 
