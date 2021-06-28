@@ -47,8 +47,9 @@ Version history
 ----------------------------------------------------------------------------------------
 
 0.9.6 (not released)
- - Overall optimization and debug.
+ - Overall optimization and various debug.
  - Repaired broken Context Wizard dialog.
+ - Fix Load Contexts At Startup option dialog not saving properly.
  - New Tools menu for editors.
  - New improved Package editor dialog (moved in Tools menu).
  - New support for .omp extension file as Open Mod Manager Package.
@@ -60,6 +61,7 @@ Version history
  - Setup now configure the system-wide application files and icons association.
  - Now only one running instance allowed to prevent conflicting usages.
  - New ability to run application and open Context files (.omc) by double-click on it.
+ - Moved dev mode and warnings parameters from Manager to Location.
  - New Network repositories feature.
    - New Repository editor to create server side repository definition files.
    - New Location's Network tab to setup client side repositories.
