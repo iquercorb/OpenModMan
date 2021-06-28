@@ -36,6 +36,8 @@ Open Mod Mananager currently implements the following key features:
 - Packages installation dependencies mechanism (advanced packages).
 - Backup data compressed as zip archives to save space (optional).
 - Batch mechanism for automatic Package installation sequences.
+- Network repositories for remote packages distribution and download.
+- Automatic package dependencies download and fix system.
 
 Screenshots
 ----------------------------------------------------------------------------------------
@@ -45,16 +47,24 @@ Version history
 ----------------------------------------------------------------------------------------
 
 0.9.6 (not released)
- - Added a Tools menu for editors and futur tools.
- - New improved Package editor dialog.
+ - Overall optimization and debug.
  - Repaired broken Context Wizard dialog.
+ - New Tools menu for editors.
+ - New improved Package editor dialog (moved in Tools menu).
+ - New support for .omp extension file as Open Mod Manager Package.
  - Fix Batch properties crash if package no longer available.
  - Batch properties now ask user to clean Batch in case of invalid package reference.
  - Automatic fix Batch inconsistency in case of Context's Location changes.
  - Fix Batch execution thread not properly terminated.
  - Consolidated package algorithms for robust dependencies and overlaps management.
- - New Network repositories feature with Repository editor.
- - New icons associated with application.
+ - Setup now configure the system-wide application files and icons association.
+ - Now only one running instance allowed to prevent conflicting usages.
+ - New ability to run application and open Context files (.omc) by double-click on it.
+ - New Network repositories feature.
+   - New Repository editor to create server side repository definition files.
+   - New Location's Network tab to setup client side repositories.
+   - New Main Network tab to query online repositories and download remote packages.
+   - Automatic dependencies download and fix system.
 
 0.9.5 (2021-05-22)
  - Fix Library list-view scroll position reset to top on refresh.
