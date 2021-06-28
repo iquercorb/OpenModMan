@@ -127,7 +127,7 @@ bool OmUiPropLoc::checkChanges()
   }
 
   if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_DEVMODE)) {
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_pLoc->warnExtraDnld())
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_pLoc->libDevMode())
       changed = true;
   }
 
