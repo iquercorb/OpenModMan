@@ -516,7 +516,7 @@ void OmUiToolPkg::_onNameChange()
     // check if version string is valid
     OmVersion version(vers_str);
     if(!version.isNull()) {
-      name_str += L"v" + version.asString();
+      name_str += L"_v" + version.asString();
     }
 
     // get chosen file extension
