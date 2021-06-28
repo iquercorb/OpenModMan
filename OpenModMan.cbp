@@ -168,11 +168,11 @@
 		<Unit filename="include/gui/OmUiPropCtxStg.h" />
 		<Unit filename="include/gui/OmUiPropLoc.h" />
 		<Unit filename="include/gui/OmUiPropLocBck.h" />
+		<Unit filename="include/gui/OmUiPropLocLib.h" />
 		<Unit filename="include/gui/OmUiPropLocNet.h" />
 		<Unit filename="include/gui/OmUiPropLocStg.h" />
 		<Unit filename="include/gui/OmUiPropMan.h" />
 		<Unit filename="include/gui/OmUiPropManGle.h" />
-		<Unit filename="include/gui/OmUiPropManPkg.h" />
 		<Unit filename="include/gui/OmUiPropPkg.h" />
 		<Unit filename="include/gui/OmUiPropPkgBck.h" />
 		<Unit filename="include/gui/OmUiPropPkgSrc.h" />
@@ -254,11 +254,11 @@
 		<Unit filename="src/gui/OmUiPropCtxStg.cpp" />
 		<Unit filename="src/gui/OmUiPropLoc.cpp" />
 		<Unit filename="src/gui/OmUiPropLocBck.cpp" />
+		<Unit filename="src/gui/OmUiPropLocLib.cpp" />
 		<Unit filename="src/gui/OmUiPropLocNet.cpp" />
 		<Unit filename="src/gui/OmUiPropLocStg.cpp" />
 		<Unit filename="src/gui/OmUiPropMan.cpp" />
 		<Unit filename="src/gui/OmUiPropManGle.cpp" />
-		<Unit filename="src/gui/OmUiPropManPkg.cpp" />
 		<Unit filename="src/gui/OmUiPropPkg.cpp" />
 		<Unit filename="src/gui/OmUiPropPkgBck.cpp" />
 		<Unit filename="src/gui/OmUiPropPkgSrc.cpp" />
