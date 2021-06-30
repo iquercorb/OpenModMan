@@ -1023,6 +1023,7 @@ inline bool Om_pathExists(const wstring& path) {
 ///
 bool Om_isFileZip(const wstring& path);
 
+
 /// \brief List folders
 ///
 /// Retrieves the list of folders contained in the specified origin location.
@@ -1188,7 +1189,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask);
 /// \param[in]  header  : Formated message header/title (not the dialog title).
 /// \param[in]  detail  : Formated message details paragraph.
 ///
-void Om_dialogBoxErr(HWND hWnd, const wstring& header, const wstring& detail);
+void Om_dialogBoxErr(HWND hwnd, const wstring& header, const wstring& detail);
 
 /// \brief Warning message box.
 ///
@@ -1198,7 +1199,7 @@ void Om_dialogBoxErr(HWND hWnd, const wstring& header, const wstring& detail);
 /// \param[in]  header  : Formated message header/title (not the dialog title).
 /// \param[in]  detail  : Formated message details paragraph.
 ///
-void Om_dialogBoxWarn(HWND hWnd, const wstring& header, const wstring& detail);
+void Om_dialogBoxWarn(HWND hwnd, const wstring& header, const wstring& detail);
 
 /// \brief Notice message box.
 ///
@@ -1208,7 +1209,7 @@ void Om_dialogBoxWarn(HWND hWnd, const wstring& header, const wstring& detail);
 /// \param[in]  header  : Formated message header/title (not the dialog title).
 /// \param[in]  detail  : Formated message details paragraph.
 ///
-void Om_dialogBoxInfo(HWND hWnd, const wstring& header, const wstring& detail);
+void Om_dialogBoxInfo(HWND hwnd, const wstring& header, const wstring& detail);
 
 /// \brief Question dialog box.
 ///
@@ -1220,7 +1221,7 @@ void Om_dialogBoxInfo(HWND hWnd, const wstring& header, const wstring& detail);
 ///
 /// \return True if user clicked on the YES button, false otherwise.
 ///
-bool Om_dialogBoxQuerry(HWND hWnd, const wstring& header, const wstring& detail);
+bool Om_dialogBoxQuerry(HWND hwnd, const wstring& header, const wstring& detail);
 
 /// \brief Question warning dialog box.
 ///
@@ -1233,7 +1234,7 @@ bool Om_dialogBoxQuerry(HWND hWnd, const wstring& header, const wstring& detail)
 ///
 /// \return True if user clicked on the YES button, false otherwise.
 ///
-bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& detail);
+bool Om_dialogBoxQuerryWarn(HWND hwnd, const wstring& header, const wstring& detail);
 
 /// \brief Select folder dialog box.
 ///
@@ -1248,7 +1249,7 @@ bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& det
 ///
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
-bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive = false);
+bool Om_dialogBrowseDir(wstring& result, HWND hwnd, const wchar_t* title, const wstring& start, bool captive = false);
 
 /// \brief Open file dialog box.
 ///
@@ -1262,7 +1263,7 @@ bool Om_dialogBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const 
 ///
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
-bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
+bool Om_dialogOpenFile(wstring& result, HWND hwnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
 
 /// \brief Save file dialog box.
 ///
@@ -1276,7 +1277,110 @@ bool Om_dialogOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 ///
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
-bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
+bool Om_dialogSaveFile(wstring& result, HWND hwnd, const wchar_t* title, const wchar_t* filter, const wstring& start);
+
+/// \brief Create folder dialog process.
+///
+/// Checks whether specified path exists, if not ask the user to create
+/// it and warn user if creation failed.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  item    : Formated message item to set in question message.
+/// \param[in]  path    : Path to check and create if required.
+///
+/// \return True if succeed, false if user canceled or an error occurred.
+///
+bool Om_dialogCreateFolder(HWND hwnd, const wstring& item, const wstring& path);
+
+/// \brief Overwrite file dialog process.
+///
+/// Checks whether specified file exists, if yes, asks user to overwrite
+/// existing file.
+///
+/// \param[in]  hwnd      : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  path      : File path to check.
+///
+/// \return True if succeed, false if user canceled or an error occurred.
+///
+bool Om_dialogOverwriteFile(HWND hwnd, const wstring& path);
+
+/// \brief Unsaved changes before closing dialog.
+///
+/// Generic dialog message to ask for saving unsaved changes before closing.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+///
+/// \return True if user choose to close anyway, false otherwise
+///
+bool Om_dialogCloseUnsaved(HWND hwnd);
+
+/// \brief Unsaved changes before reset dialog.
+///
+/// Generic dialog message to ask for saving unsaved changes before reset.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+///
+/// \return True if user choose to close anyway, false otherwise
+///
+bool Om_dialogResetUnsaved(HWND hwnd);
+
+/// \brief File save success dialog.
+///
+/// Generic dialog message for file save success.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  item    : Formated message item to set in success message.
+///
+void Om_dialogSaveSucces(HWND hwnd, const wstring& item);
+
+/// \brief File save error dialog.
+///
+/// Generic dialog message for file save error.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  item    : Formated message item to set in error message.
+/// \param[in]  error   : Formated message error to set in error message.
+///
+void Om_dialogSaveError(HWND hwnd, const wstring& item, const wstring& error);
+
+/// \brief Valid name dialog process.
+///
+/// Checks whether specified name is valid and if not warn user with proper
+/// dialog box.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  name    : Formated message item to set as invalid.
+/// \param[in]  name    : Name to check.
+///
+/// \return True if name pass validation, false otherwise.
+///
+bool Om_dialogValidName(HWND hwnd, const wstring& item,  const wstring& name);
+
+/// \brief Valid path dialog process.
+///
+/// Checks whether specified name is valid and if not warn user with proper
+/// dialog box.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  name    : Formated message item to set as invalid.
+/// \param[in]  path    : Path to check.
+///
+/// \return True if name pass validation, false otherwise.
+///
+bool Om_dialogValidPath(HWND hwnd, const wstring& item,  const wstring& path);
+
+/// \brief Valid directory dialog process.
+///
+/// Checks whether specified path is an existing directory and if not
+/// warn user with proper dialog box.
+///
+/// \param[in]  hwnd    : Dialog boxes parent window handle or nullptr to ignore.
+/// \param[in]  name    : Formated message item to set as invalid.
+/// \param[in]  path    : Path to check.
+///
+/// \return True if path pass validation, false otherwise.
+///
+bool Om_dialogValidDir(HWND hwnd, const wstring& item,  const wstring& path);
 
 /// \brief Load plan text.
 ///

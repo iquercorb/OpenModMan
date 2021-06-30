@@ -76,7 +76,7 @@ void OmUiAddLoc::_onBcBrwDst()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select installation destination folder", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Destination folder, where Mods/Packages are to be installed.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -115,7 +115,7 @@ void OmUiAddLoc::_onBcBrwLib()
 
   this->getItemText(IDC_EC_INP03, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom Library folder", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP03, result);
@@ -154,7 +154,7 @@ void OmUiAddLoc::_onBcBrwBck()
 
   this->getItemText(IDC_EC_INP04, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom Backup folder", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Backup folder, where backup data will be stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP04, result);
@@ -169,44 +169,32 @@ bool OmUiAddLoc::_onBcOk()
   if(!this->_pCtx)
     return false;
 
-  bool cust_lib, cust_bck;
-
-  wstring loc_name, loc_dst, loc_lib, loc_bck;
+  wstring loc_name, loc_dst, loc_lib, loc_bck, msg;
 
   this->getItemText(IDC_EC_INP01, loc_name);
-  if(!Om_isValidName(loc_name)) {
-    wstring wrn = L"Title";
-    wrn += OMM_STR_ERR_VALIDNAME;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
+  if(!Om_dialogValidName(this->_hwnd, L"Location title", loc_name))
     return false;
-  }
 
   this->getItemText(IDC_EC_INP02, loc_dst);
-  if(!Om_isDir(loc_dst)) {
-    wstring wrn = L"The folder \""+loc_dst+L"\"";
-    wrn += OMM_STR_ERR_ISDIR;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
+  if(!Om_dialogValidDir(this->_hwnd, L"Destination folder", loc_dst))
     return false;
-  }
 
-  cust_lib = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
-  if(cust_lib) {
+  if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Library CheckBox
     this->getItemText(IDC_EC_INP03, loc_lib);
-    if(!Om_isDir(loc_lib)) {
-      wstring wrn = L"The folder \""+loc_lib+L"\"";
-      wrn += OMM_STR_ERR_ISDIR;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
+    if(Om_dialogValidPath(this->_hwnd, L"Library folder path", loc_lib)) {
+      if(!Om_dialogCreateFolder(this->_hwnd, L"Custom Library folder", loc_lib))
+        return false;
+    } else {
       return false;
     }
   }
 
-  cust_bck = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
-  if(cust_bck) {
+  if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) { //< Custom Backup CheckBox
     this->getItemText(IDC_EC_INP04, loc_bck);
-    if(!Om_isDir(loc_bck)) {
-      wstring wrn = L"The folder \""+loc_bck+L"\"";
-      wrn += OMM_STR_ERR_ISDIR;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
+    if(Om_dialogValidPath(this->_hwnd, L"Backup folder path", loc_bck)) {
+      if(!Om_dialogCreateFolder(this->_hwnd, L"Custom Backup folder", loc_bck))
+        return false;
+    } else {
       return false;
     }
   }
@@ -234,18 +222,18 @@ void OmUiAddLoc::_onInit()
   this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Location name, to identify it and create folder");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
-  this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
+  this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom Library folder");
-  this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
-  this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use a custom Library folder instead of default one");
+  this->_createTooltip(IDC_EC_INP03,  L"Library folder path, where Mods/Packages are stored");
+  this->_createTooltip(IDC_BC_BRW03,  L"Browse to select a custom Library folder");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Use custom Backup folder");
-  this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
-  this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Use a custom Backup folder instead of default one");
+  this->_createTooltip(IDC_EC_INP04,  L"Backup folder path, where backup data will be stored");
+  this->_createTooltip(IDC_BC_BRW04,  L"Browse to select a custom Backup folder");
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"New Location");
@@ -255,34 +243,8 @@ void OmUiAddLoc::_onInit()
 
   wstring item_str;
 
-  // enable or disable "OK" button according values
-  bool allow = true;
-
-  this->getItemText(IDC_EC_INP01, item_str);
-  if(!item_str.empty()) {
-
-    this->getItemText(IDC_EC_INP02, item_str);
-    if(!item_str.empty()) {
-
-      if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INP03, item_str);
-        if(item_str.empty()) allow = false;
-      }
-
-      if(this->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
-        this->getItemText(IDC_EC_INP04, item_str);
-        if(item_str.empty()) allow = false;
-      }
-
-    } else {
-      allow = false;
-    }
-
-  } else {
-    allow = false;
-  }
-
-  this->enableItem(IDC_BC_OK, allow);
+  // disable OK button
+  this->enableItem(IDC_BC_OK, false);
 }
 
 

@@ -185,15 +185,15 @@ void OmUiPropCtxBat::_onBcDelBat()
     int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel, 0);
 
     // warns the user before committing the irreparable
-    wstring qry = L"Delete the Batch \"" + pCtx->batGet(bat_id)->title();
+    wstring qry = L"Delete the Installation Batch \"" + pCtx->batGet(bat_id)->title();
     qry += L"\" ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch", qry)) {
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Installation Batch", qry)) {
       return;
     }
 
     if(!pCtx->batRem(bat_id)) {
-      Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Batch failed", pCtx->lastError());
+      Om_dialogBoxQuerryWarn(this->_hwnd, L"Batch deletion error", pCtx->lastError());
       return;
     }
 
@@ -240,14 +240,14 @@ void OmUiPropCtxBat::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // Define controls tool-tips
-  this->_createTooltip(IDC_LB_BAT,  L"Context's batches");
+  this->_createTooltip(IDC_LB_BAT,    L"Context Installation Batches list");
 
-  this->_createTooltip(IDC_BC_UP,   L"Move up");
-  this->_createTooltip(IDC_BC_DN,   L"Move down");
+  this->_createTooltip(IDC_BC_UP,     L"Move up in list");
+  this->_createTooltip(IDC_BC_DN,     L"Move down in list");
 
-  this->_createTooltip(IDC_BC_DEL,  L"Delete selected batch");
-  this->_createTooltip(IDC_BC_ADD,  L"Create new batch");
-  this->_createTooltip(IDC_BC_EDI,  L"Edit batch properties");
+  this->_createTooltip(IDC_BC_DEL,    L"Delete the selected Installation Batch");
+  this->_createTooltip(IDC_BC_ADD,    L"Create a new Installation Batch for this Context");
+  this->_createTooltip(IDC_BC_EDI,    L"Edit Installation Batch properties");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Disable installation warning messages for batches execution.");
 

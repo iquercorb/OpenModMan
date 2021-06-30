@@ -57,6 +57,8 @@ class OmUiToolRep : public OmDialog
 
     OmXmlNode           _rmtCur;
 
+    bool                _unsaved;
+
     void                _repInit();
 
     bool                _repOpen(const wstring& path);
@@ -87,9 +89,9 @@ class OmUiToolRep : public OmDialog
 
     void                _onBcOpen();
 
-    void                _onBcBrwPkg();
+    bool                _onBcBrwPkg();
 
-    void                _onBcBrwDir();
+    bool                _onBcBrwDir();
 
     void                _onBcRemPkg();
 
@@ -97,7 +99,7 @@ class OmUiToolRep : public OmDialog
 
     void                _onBcChkDeps();
 
-    void                _onBcBrwSnap();
+    bool                _onBcBrwSnap();
 
     void                _onBcDelSnap();
 

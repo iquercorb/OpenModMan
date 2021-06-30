@@ -32,6 +32,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
+  _unsaved(false),
   _save_hth(nullptr),
   _save_abort(false)
 {
@@ -286,10 +287,8 @@ void OmUiToolPkg::_save_stop()
     wstring item_str;
     this->getItemText(IDC_EC_OUT01, item_str);
 
-    wstring info = L"The Package \""+Om_getFilePart(item_str);
-    info += L"\" was successfully created.";
-
-    Om_dialogBoxInfo(this->_hwnd, L"Package created", info);
+    // a reassuring message
+    Om_dialogSaveSucces(this->_hwnd, L"Package");
   }
 
   // refresh the main window dialog, this will also refresh this one
@@ -360,16 +359,16 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   DWORD exitCode = 0;
 
   if(!self->_package.save(out_path + L"\\" + out_file, zip_lvl, &self->_save_progress_cb, self)) {
+
     // show error dialog box
-    wstring err = L"An error occurred during Package creation:\n";
-    err += self->_package.lastError();
-    Om_dialogBoxErr(self->_hwnd, L"Package creation error", err);
+    Om_dialogSaveError(self->_hwnd, L"Package", self->_package.lastError());
 
     exitCode = 1;
   }
 
   // if user aborted, the was package not successfully created
   if(self->_save_abort) {
+    self->_unsaved = true; //< still have unsaved changes
     exitCode = 1;
   }
 
@@ -388,6 +387,17 @@ void OmUiToolPkg::_onBcRadSrc()
   // get checked Radio
   bool bm_chk = this->msgItem(IDC_BC_RAD01, BM_GETCHECK);
 
+  // Check for unsaved changes
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogResetUnsaved(this->_hwnd)) {
+      // undo the radio button changes by user
+      this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !bm_chk);
+      this->msgItem(IDC_BC_RAD02, BM_SETCHECK, bm_chk);
+      return; //< return now, don't change anything
+    }
+  }
+
   // enable or disable EditText and Buttons according selection
   this->enableItem(IDC_EC_INP01, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
@@ -400,6 +410,9 @@ void OmUiToolPkg::_onBcRadSrc()
 
   // reset package source
   this->_parseSrc(L"");
+
+  // reset unsaved changes
+  this->_unsaved = false;
 }
 
 
@@ -408,6 +421,13 @@ void OmUiToolPkg::_onBcRadSrc()
 ///
 void OmUiToolPkg::_onBcBrwDir()
 {
+  // Check for unsaved changes
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogResetUnsaved(this->_hwnd))
+      return; //< return now, don't change anything
+  }
+
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
@@ -424,11 +444,13 @@ void OmUiToolPkg::_onBcBrwDir()
 
   if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select installation file(s) location", start)) {
     this->setItemText(IDC_EC_INP01, L"");
+    this->_parseSrc(L"");
     return;
   }
 
   if(!Om_isDir(result)) {
     this->setItemText(IDC_EC_INP01, L"");
+    this->_parseSrc(L"");
     return;
   }
 
@@ -461,6 +483,13 @@ void OmUiToolPkg::_onBcBrwDir()
 ///
 void OmUiToolPkg::_onBcBrwPkg()
 {
+  // Check for unsaved changes
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogResetUnsaved(this->_hwnd))
+      return; //< return now, don't change anything
+  }
+
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
@@ -478,11 +507,13 @@ void OmUiToolPkg::_onBcBrwPkg()
   // open select file dialog
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start)) {
     this->setItemText(IDC_EC_INP02, L"");
+    this->_parseSrc(L"");
     return;
   }
 
   if(!Om_isFile(result)) {
     this->setItemText(IDC_EC_INP02, L"");
+    this->_parseSrc(L"");
     return;
   }
 
@@ -651,7 +682,7 @@ void OmUiToolPkg::_onCkBoxSnap()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_onBcBrwSnap()
+bool OmUiToolPkg::_onBcBrwSnap()
 {
   wstring result, start;
 
@@ -663,8 +694,8 @@ void OmUiToolPkg::_onBcBrwSnap()
   }
 
   // open file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select image file", OMM_IMG_FILES_FILTER, Om_getDirPart(start)))
-    return;
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, Om_getDirPart(start)))
+    return false;
 
   OmImage image;
   HBITMAP hBm;
@@ -688,6 +719,8 @@ void OmUiToolPkg::_onBcBrwSnap()
     // reset hidden EditText content
     this->setItemText(IDC_EC_INP08, L"");
   }
+
+  return true;
 }
 
 
@@ -706,7 +739,7 @@ void OmUiToolPkg::_onCkBoxDesc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_onBcBrwDesc()
+bool OmUiToolPkg::_onBcBrwDesc()
 {
   wstring result, start;
 
@@ -718,15 +751,17 @@ void OmUiToolPkg::_onBcBrwDesc()
   }
 
   // open file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select text file", OMM_TXT_FILES_FILTER, Om_getDirPart(start)))
-    return;
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open text file", OMM_TXT_FILES_FILTER, Om_getDirPart(start)))
+    return false;
 
   if(!Om_isFile(result))
-    return;
+    return false;
 
   // load as plain text and send to contro
   string text_str = Om_loadPlainText(result);
   SetDlgItemTextA(this->_hwnd, IDC_EC_TXT, text_str.c_str());
+
+  return true;
 }
 
 
@@ -735,14 +770,14 @@ void OmUiToolPkg::_onBcBrwDesc()
 ///
 void OmUiToolPkg::_onBcSave()
 {
-  wstring item_str;
+  wstring item_str, msg;
 
   // verify package has parsed source
   if(!this->_package.srcValid()) {
     // show error dialog box
-    wstring err = L"Current package source is empty or invalid, "
-                  L"please select a valid source.";
-    Om_dialogBoxErr(this->_hwnd, L"Invalid package source", err);
+    msg = L"Current package source is empty or invalid, "
+          L"please select a valid source.";
+    Om_dialogBoxErr(this->_hwnd, L"Invalid package source", msg);
     return;
   }
 
@@ -752,28 +787,21 @@ void OmUiToolPkg::_onBcSave()
   this->getItemText(IDC_EC_INP06, out_dir);
   this->getItemText(IDC_EC_OUT01, out_name);
 
-  if(Om_isDir(out_dir)) {
-    if(Om_isValidName(out_name)) {
-      wstring out_path = out_dir + L"\\" + out_name;
-      if(Om_isFile(out_path)) {
-        wstring qry = L"The file \""+out_name+L"\"";
-        qry += OMM_STR_QRY_OVERWRITE;
-        if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
-          return;
-        }
-      }
-    } else {
-      wstring err = L"File name ";
-      err += OMM_STR_ERR_VALIDNAME;
-      Om_dialogBoxErr(this->_hwnd, L"Invalid file name", err);
+  if(!Om_dialogValidName(this->_hwnd, L"Package filename", out_name))
+    return;
+
+  if(Om_dialogValidPath(this->_hwnd, L"destination folder path", out_dir)) {
+    if(!Om_dialogCreateFolder(this->_hwnd, L"Destination folder", out_dir))
       return;
-    }
   } else {
-    wstring err = L"The destination folder \""+out_dir+L"\"";
-    err += OMM_STR_ERR_ISDIR;
-    Om_dialogBoxErr(this->_hwnd, L"Invalid destination", err);
     return;
   }
+
+  if(!Om_dialogOverwriteFile(this->_hwnd, out_dir + L"\\" + out_name))
+    return;
+
+  // changes has been saved
+  this->_unsaved = false;
 
   // disable the Save button
   this->enableItem(IDC_BC_SAVE, false);
@@ -795,31 +823,37 @@ void OmUiToolPkg::_onInit()
   this->setCaption(L"Package editor - " OMM_APP_NAME);
 
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_BRW01, L"Select folder");
-  this->_createTooltip(IDC_BC_BRW02, L"Select Package file");
+  this->_createTooltip(IDC_BC_RAD01,  L"Use a folder to parse it as Package source");
+  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a folder to parse as Package source");
+  this->_createTooltip(IDC_EC_INP01,  L"Path to folder parsed as Package source");
+  this->_createTooltip(IDC_BC_RAD02,  L"Use an existing package to parse it as source");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to open a Package file to parse as source");
+  this->_createTooltip(IDC_EC_INP02,  L"Path to Package file parsed as source");
 
-  this->_createTooltip(IDC_EC_INP03, L"Package name");
-  this->_createTooltip(IDC_EC_INP04, L"Package version");
-  this->_createTooltip(IDC_CB_EXT, L"Filename extension");
+  this->_createTooltip(IDC_EC_INP03,  L"Package name");
+  this->_createTooltip(IDC_EC_INP04,  L"Package version string");
+  this->_createTooltip(IDC_CB_EXT,    L"Package filename extension");
 
-  this->_createTooltip(IDC_CB_LVL, L"Package ZIP compression level");
+  this->_createTooltip(IDC_CB_LVL,    L"Package ZIP compression level");
 
-  this->_createTooltip(IDC_EC_INP06, L"Save destination path");
-  this->_createTooltip(IDC_BC_BRW03, L"Select destination folder");
+  this->_createTooltip(IDC_EC_INP06,  L"Destination folder path, where Package will be saved");
+  this->_createTooltip(IDC_BC_BRW03,  L"Browse to select destination folder");
 
-  this->_createTooltip(IDC_BC_SAVE, L"Save Package");
-  this->_createTooltip(IDC_BC_ABORT, L"Abort process");
+  this->_createTooltip(IDC_BC_SAVE,   L"Build and save Package");
+  this->_createTooltip(IDC_BC_ABORT,  L"Abort process");
 
-  this->_createTooltip(IDC_BC_CKBX1, L"Defines dependencies for this Package");
-  this->_createTooltip(IDC_EC_INP07, L"Dependency package identity");
-  this->_createTooltip(IDC_LB_DPN, L"Dependencies list");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Define dependencies for this Package");
+  this->_createTooltip(IDC_EC_INP07,  L"Dependency identity, the Package identity to set as dependency");
+  this->_createTooltip(IDC_BC_ADD,    L"Insert identity to dependency list");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove selected entry from dependency list");
+  this->_createTooltip(IDC_LB_DPN,    L"List of package dependencies");
 
-  this->_createTooltip(IDC_BC_CKBX2, L"Defines a snapshot for this Package");
-  this->_createTooltip(IDC_BC_BRW04, L"Select image file");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Define a snapshot for this Package");
+  this->_createTooltip(IDC_BC_BRW04,  L"Browse to select an image file to set as snapshot");
 
-  this->_createTooltip(IDC_BC_CKBX3, L"Defines a description for this Package");
-  this->_createTooltip(IDC_BC_BRW05, L"Select text file");
-  this->_createTooltip(IDC_EC_TXT, L"Package description text");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Define a description for this Package");
+  this->_createTooltip(IDC_BC_BRW05,  L"Browse to open text file and use its content as description");
+  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
@@ -969,10 +1003,21 @@ void OmUiToolPkg::_onRefresh()
 ///
 void OmUiToolPkg::_onClose()
 {
-  // prevent to close dialog while in process
-  if(this->_save_hth == nullptr) {
-    this->quit();
+  // Check for unsaved changes
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogCloseUnsaved(this->_hwnd)) {
+      return; //< do NOT close
+    }
   }
+
+  // gracefully exit current thread before exist
+  if(this->_save_hth != nullptr) {
+    this->_save_abort = true;
+    this->_save_stop();
+  }
+
+  this->quit();
 }
 
 
@@ -1000,7 +1045,6 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_RAD01:
     case IDC_BC_RAD02:
       this->_onBcRadSrc();
-      has_changed = true;
       break;
 
     case IDC_BC_BRW01: //< Create from folder "Select..." Button
@@ -1067,10 +1111,12 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ADD: //< Dependencies "+" Button
       this->_onBcAddDep();
+      has_changed = true;
       break;
 
     case IDC_BC_DEL: //< Dependencies "-" Button
       this->_onBcDelDep();
+      has_changed = true;
       break;
 
     case IDC_BC_CKBX2:  //< Include snapshot CheckBox
@@ -1078,7 +1124,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW04: //< Snapshot "Select..." Button
-      this->_onBcBrwSnap();
+      has_changed = this->_onBcBrwSnap();
       break;
 
     case IDC_BC_CKBX3: //< Include Description CheckBox
@@ -1086,7 +1132,15 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     break;
 
     case IDC_BC_BRW05: //< Description "Load..." Button
-      this->_onBcBrwDesc();
+      has_changed = this->_onBcBrwDesc();
+      break;
+
+    case IDC_EC_TXT: //< Description EditText
+      // check for content changes
+      if(HIWORD(wParam) == EN_CHANGE) {
+        this->enableItem(IDC_BC_SAVE, true); //< enable "Save" Button
+        has_changed = true;
+      }
       break;
 
     case IDC_BC_SAVE: //< Main "Save" Button
@@ -1103,20 +1157,20 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     if(has_changed) {
-      bool allow = true;
+      bool allow = false;
+
+      // we have unsaved changes
+      this->_unsaved = true;
 
       if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
         this->getItemText(IDC_EC_INP01, item_str);
       } else {
         this->getItemText(IDC_EC_INP02, item_str);
       }
+
       if(!item_str.empty()) {
-
         this->getItemText(IDC_EC_INP06, item_str);
-        if(item_str.empty()) allow = false;
-
-      } else {
-        allow = false;
+        if(!item_str.empty()) allow = true;
       }
 
       this->enableItem(IDC_BC_SAVE, allow);

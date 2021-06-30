@@ -129,9 +129,9 @@ void OmUiPropManGle::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_CB_ICS,    L"Size of icons in packages lists");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Automatically load Context files at application start");
-  this->_createTooltip(IDC_LB_PATH,   L"Context files paths");
-  this->_createTooltip(IDC_BC_BRW01,  L"Select a Context file to add");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Automatically open Context files at application startup");
+  this->_createTooltip(IDC_LB_PATH,   L"Context files to be opened at application startup");
+  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Context file to add");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
 
   // add items to Icon Size ComboBox

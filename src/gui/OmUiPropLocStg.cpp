@@ -69,7 +69,7 @@ void OmUiPropLocStg::_onBcBrwDst()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select packages Destination folder", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Destination folder, where Mods/Packages are to be installed.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -106,7 +106,7 @@ void OmUiPropLocStg::_onBcBrwLib()
 
   this->getItemText(IDC_EC_INP03, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom packages Library folder", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP03, result);
@@ -143,7 +143,7 @@ void OmUiPropLocStg::_onBcBrwBck()
 
   this->getItemText(IDC_EC_INP04, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select custom Backups location", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Backup folder, where backup data will be stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP04, result);
@@ -156,18 +156,18 @@ void OmUiPropLocStg::_onBcBrwBck()
 void OmUiPropLocStg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Location name, to identify it");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Package installation destination path");
-  this->_createTooltip(IDC_BC_BRW02,  L"Select destination folder");
+  this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom Library folder");
-  this->_createTooltip(IDC_EC_INP03,  L"Custom Library folder path");
-  this->_createTooltip(IDC_BC_BRW03,  L"Select custom Library folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use a custom Library folder instead of default one");
+  this->_createTooltip(IDC_EC_INP03,  L"Library folder path, where Mods/Packages are stored");
+  this->_createTooltip(IDC_BC_BRW03,  L"Browse to select a custom Library folder");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Use custom Backup folder");
-  this->_createTooltip(IDC_EC_INP04,  L"Custom Backup folder path");
-  this->_createTooltip(IDC_BC_BRW04,  L"Select custom Backup folder");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Use a custom Backup folder instead of default one");
+  this->_createTooltip(IDC_EC_INP04,  L"Backup folder path, where backup data will be stored");
+  this->_createTooltip(IDC_BC_BRW04,  L"Browse to select a custom Backup folder");
 
   this->_onRefresh();
 }
@@ -179,25 +179,25 @@ void OmUiPropLocStg::_onInit()
 void OmUiPropLocStg::_onResize()
 {
   // Location Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
+  this->_setItemPos(IDC_SC_LBL01, 5, 22, 64, 9);
   this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
 
   // Location Location Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL02, 5, 60, 64, 9);
+  this->_setItemPos(IDC_SC_LBL02, 5, 62, 64, 9);
   this->_setItemPos(IDC_EC_INP02, 70, 60, this->width()-108, 13);
   this->_setItemPos(IDC_BC_BRW02, this->width()-35, 60, 16, 13);
 
   // Custom Library CheckBox
   this->_setItemPos(IDC_BC_CKBX1, 70, 90, 120, 9);
   // Location Library Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL03, 5, 100, 64, 9);
+  this->_setItemPos(IDC_SC_LBL03, 5, 102, 64, 9);
   this->_setItemPos(IDC_EC_INP03, 70, 100, this->width()-108, 13);
   this->_setItemPos(IDC_BC_BRW03, this->width()-35, 100, 16, 13);
 
   // Custom Backup CheckBox
   this->_setItemPos(IDC_BC_CKBX2, 70, 120, 120, 9);
   // Location Backup Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL04, 5, 130, 64, 9);
+  this->_setItemPos(IDC_SC_LBL04, 5, 132, 64, 9);
   this->_setItemPos(IDC_EC_INP04, 70, 130, this->width()-108, 13);
   this->_setItemPos(IDC_BC_BRW04, this->width()-35, 130, 16, 13);
 }

@@ -404,23 +404,14 @@ void OmUiPropBatStg::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,L"Batch name");
-
-  // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,L"Indicative name");
-
-  this->_createTooltip(IDC_BC_CKBX1,L"Create batch according current installed packages");
-  this->_createTooltip(IDC_CB_LOC,  L"Active location");
-
-  this->_createTooltip(IDC_BC_RIGH, L"Add to install list");
-  this->_createTooltip(IDC_BC_LEFT, L"Remove from install list");
-
-  this->_createTooltip(IDC_BC_UP,   L"Move up");
-  this->_createTooltip(IDC_BC_DN,   L"Move down");
-
-  // Set controls default states and parameters
-  this->setItemText(IDC_EC_INP01, L"New Batch");
-
+  this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
+  this->_createTooltip(IDC_CB_LOC,    L"Location to configure");
+  this->_createTooltip(IDC_LB_INC,    L"Packages the Batch will install (or leave installed)");
+  this->_createTooltip(IDC_LB_EXC,    L"Packages the Batch will uninstall (or leave uninstalled)");
+  this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
+  this->_createTooltip(IDC_BC_LEFT,   L"Remove from installed");
+  this->_createTooltip(IDC_BC_UP,     L"Move up in list");
+  this->_createTooltip(IDC_BC_DN,     L"Move down in list");
 
   OmBatch* pBat = static_cast<OmUiPropBat*>(this->_parent)->batCur();
   OmContext* pCtx = pBat->ownerCtx();
@@ -566,7 +557,7 @@ void OmUiPropBatStg::_onRefresh()
     // force notify change of the install list
     this->setChParam(BAT_PROP_STG_INSLS, true);
     // notify user
-    wstring wrn = L"The Batch have reference to Packages "
+    wstring wrn = L"The Installation Batch have reference to Packages "
                   L"which are no longer available."
                   L"\n\nDo you want to clean invalid references ?";
 

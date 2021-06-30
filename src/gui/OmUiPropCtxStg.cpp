@@ -81,7 +81,7 @@ void OmUiPropCtxStg::_onBcBrwIcon()
   this->getItemText(IDC_EC_INP04, start);
   start = Om_getDirPart(start);
 
-  if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select Context icon.", ICON_FILES_FILTER, start))
+  if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select icon", ICON_FILES_FILTER, start))
     return;
 
   HICON hIc;
@@ -99,7 +99,6 @@ void OmUiPropCtxStg::_onBcBrwIcon()
   InvalidateRect(this->getItem(IDC_SB_ICON), nullptr, true);
 
   this->setItemText(IDC_EC_INP04, result);
-  this->setItemText(IDC_BC_BRW01, L"Change..."); //< change browse button text
 
   // user modified parameter, notify it
   this->setChParam(CTX_PROP_STG_ICON, true);
@@ -116,7 +115,6 @@ void OmUiPropCtxStg::_onBcDelIcon()
   if(hIc) DestroyIcon(hIc);
 
   this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
-  this->setItemText(IDC_BC_BRW01, L"Select..."); //< change browse button text
 
   // user modified parameter, notify it
   this->setChParam(CTX_PROP_STG_ICON, true);
@@ -128,11 +126,15 @@ void OmUiPropCtxStg::_onBcDelIcon()
 ///
 void OmUiPropCtxStg::_onInit()
 {
-  // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP03,  L"Indicative name");
+  // add icon to buttons
+  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
-  this->_createTooltip(IDC_BC_BRW01,  L"Select application or icon file");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove custom icon");
+  // define controls tool-tips
+  this->_createTooltip(IDC_EC_INP01,  L"Context home folder path");
+  this->_createTooltip(IDC_EC_INP03,  L"Context name, to identify it");
+
+  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select an icon to associate with Context");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove the associated icon");
 
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
@@ -157,7 +159,7 @@ void OmUiPropCtxStg::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
   this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
   // Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 5, 60, 64, 9);
+  this->_setItemPos(IDC_SC_LBL03, 5, 62, 64, 9);
   this->_setItemPos(IDC_EC_INP03, 70, 60, this->width()-90, 13);
   // Icon Label & placeholder
   this->_setItemPos(IDC_SC_LBL04, 5, 90, 64, 9);
@@ -185,22 +187,15 @@ void OmUiPropCtxStg::_onRefresh()
 
   // check if the path to icon is non empty
   if(Om_isValidPath(ctx_icon)) {
-
     // reload the last selected icon
     ExtractIconExW(ctx_icon.c_str(), 0, &hIc, nullptr, 1);
-    this->setItemText(IDC_BC_BRW01, L"Change...");
-
   } else {
-
     // check whether Context already have an icon configured
     if(pCtx->icon()) {
       hIc = pCtx->icon();
-      this->setItemText(IDC_BC_BRW01, L"Change...");
     } else {
       hIc = Om_getShellIcon(SIID_APPLICATION, true);
-      this->setItemText(IDC_BC_BRW01, L"Select...");
     }
-
   }
 
   hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));

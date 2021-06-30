@@ -634,7 +634,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_FILE_OPEN:
-      if(Om_dialogOpenFile(item_str, this->_hwnd, L"Select Context file.", OMM_CTX_DEF_FILE_FILER, item_str)) {
+      if(Om_dialogOpenFile(item_str, this->_hwnd, L"Open Context file", OMM_CTX_DEF_FILE_FILER, item_str)) {
         this->ctxOpen(item_str);
       }
       break;

@@ -97,8 +97,8 @@ void OmUiPropCtxLoc::_delLoc_init(int id)
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
     pUiProgress->open(true);
-    pUiProgress->setCaption(L"Purge Location backups data");
-    pUiProgress->setScHeadText(L"Backups data restoration");
+    pUiProgress->setCaption(L"Delete Location");
+    pUiProgress->setScHeadText(L"Restoring all backup data");
 
     DWORD dwId;
     this->_delLoc_hth = CreateThread(nullptr, 0, this->_delLoc_fth, this, 0, &dwId);
@@ -312,13 +312,22 @@ void OmUiPropCtxLoc::_onBcDelLoc()
   OmLocation* pLoc = pCtx->locGet(loc_id);
 
   // warns the user before committing the irreparable
-  wstring wrn = L"The operation will permanently delete the Location "
-                L"definition file and related configuration.";
+  wstring msg;
+  msg =   L"The operation will permanently delete "
+          L"the Location and its associated data.";
+  msg +=  L"\n\nDelete the Location \"" + pLoc->title() + L"\" ?";
 
-  wrn += L"\n\nDelete the Location \""+pLoc->title()+L"\" ?";
-
-  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Location", wrn))
+  if(!Om_dialogBoxQuerry(this->_hwnd, L"Location deletion", msg))
     return;
+
+  if(pLoc->bckHasData()) {
+    msg =   L"The Location currently have installed packages, the deletion"
+            L"process will uninstall them and restore all backup data.";
+    msg +=  L"Continue ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Location deletion", msg))
+      return;
+  }
 
   // here we go for Location delete
   this->_delLoc_init(loc_id);
@@ -373,13 +382,13 @@ void OmUiPropCtxLoc::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,  L"Context's locations");
+  this->_createTooltip(IDC_LB_LOC,  L"Context Locations list");
 
-  this->_createTooltip(IDC_BC_UP,   L"Move up");
-  this->_createTooltip(IDC_BC_DN,   L"Move down");
+  this->_createTooltip(IDC_BC_UP,   L"Move up in list");
+  this->_createTooltip(IDC_BC_DN,   L"Move down in list");
 
-  this->_createTooltip(IDC_BC_DEL,  L"Delete and purge Location");
-  this->_createTooltip(IDC_BC_ADD,  L"Configure new Location");
+  this->_createTooltip(IDC_BC_DEL,  L"Delete Location and its associated data");
+  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Location for this Context");
   this->_createTooltip(IDC_BC_EDI,  L"Modify Location properties");
 
   this->enableItem(IDC_EC_INP02, false);
@@ -435,9 +444,9 @@ void OmUiPropCtxLoc::_onRefresh()
   }
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INP02, L"<no Location selected>");
-  this->setItemText(IDC_EC_INP03, L"<no Location selected>");
-  this->setItemText(IDC_EC_INP04, L"<no Location selected>");
+  this->setItemText(IDC_EC_INP02, L"<no selection>");
+  this->setItemText(IDC_EC_INP03, L"<no selection>");
+  this->setItemText(IDC_EC_INP04, L"<no selection>");
 
   this->enableItem(IDC_BC_DEL,  false);
   this->enableItem(IDC_BC_EDI, false);

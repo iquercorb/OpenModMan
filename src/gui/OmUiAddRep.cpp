@@ -198,17 +198,19 @@ void OmUiAddRep::_onInit()
   // set dialog icon
   this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
 
-  // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Repository base URL");
-  // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Repository name");
-
   HFONT hFt;
   // set specific fonts
   hFt = Om_createFont(12, 800, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(12, 400, L"Consolas");
   this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+
+  // define controls tool-tips
+  this->_createTooltip(IDC_EC_INP01,  L"Repository base URL, the root HTTP address");
+  this->_createTooltip(IDC_EC_INP02,  L"Repository name, the repository identifier");
+  this->_createTooltip(IDC_BC_QRY,    L"Query the Repository to check its availability");
+  this->_createTooltip(IDC_SC_STATE,  L"Repository query test result");
+  this->_createTooltip(IDC_EC_OUT01,  L"Repository query test logs");
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"http://");

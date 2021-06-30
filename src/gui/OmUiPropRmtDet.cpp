@@ -58,6 +58,18 @@ void OmUiPropRmtDet::_onInit()
   HFONT hFt = Om_createFont(14,400,L"Consolas");
   this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
 
+  // define controls tool-tips
+  this->_createTooltip(IDC_EC_OUT01,  L"Package identity, the raw filename without extension");
+  this->_createTooltip(IDC_EC_OUT02,  L"Package core (or master) name, raw filename without version");
+  this->_createTooltip(IDC_EC_OUT03,  L"Package version number");
+  this->_createTooltip(IDC_EC_OUT04,  L"Package filename hash value, an unique file/folder identifer");
+  this->_createTooltip(IDC_EC_OUT05,  L"Package download URLs");
+  this->_createTooltip(IDC_EC_OUT06,  L"Package file size");
+  this->_createTooltip(IDC_EC_OUT08,  L"List of package that this one supersedes as newer version");
+  this->_createTooltip(IDC_EC_OUT09,  L"List of package dependencies");
+  this->_createTooltip(IDC_SB_PKG,    L"Package snapshot image");
+  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
+
   OmRemote* pRmt = static_cast<OmUiPropRmt*>(this->_parent)->rmtCur();
   if(pRmt == nullptr) return;
 

@@ -56,26 +56,14 @@ bool OmUiWizCtxCfg::hasValidParams() const
   wstring item_str;
 
   this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_isValidName(item_str)) {
-    wstring wrn = L"The title";
-    wrn += OMM_STR_ERR_VALIDNAME;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context title", wrn);
+  if(!Om_dialogValidName(this->_hwnd, L"Context name", item_str))
     return false;
-  }
 
   this->getItemText(IDC_EC_INP02, item_str);
-  if(!Om_isValidPath(item_str)) {
-    wstring wrn = L"The path";
-    wrn += OMM_STR_ERR_VALIDPATH;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context home path", wrn);
-    return false;
-  }
-
-  this->getItemText(IDC_EC_INP03, item_str);
-  if(!Om_isValidPath(item_str)) {
-    wstring wrn = L"The filename";
-    wrn += OMM_STR_ERR_VALIDPATH;
-    Om_dialogBoxWarn(this->_hwnd, L"Invalid Context definition filename", wrn);
+  if(Om_dialogValidPath(this->_hwnd, L"Context path", item_str)) {
+    if(!Om_dialogCreateFolder(this->_hwnd, L"Context path", item_str))
+      return false;
+  } else {
     return false;
   }
 
@@ -112,7 +100,7 @@ void OmUiWizCtxCfg::_onBcBrwHome()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select folder where to create Context home", start))
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select Context path, where to create the Context home folder", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -125,10 +113,10 @@ void OmUiWizCtxCfg::_onBcBrwHome()
 void OmUiWizCtxCfg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Indicative name");
+  this->_createTooltip(IDC_EC_INP01,  L"Context name, both to identify it and create home folder");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Context home folder location");
-  this->_createTooltip(IDC_BC_BRW02,  L"Select context location");
+  this->_createTooltip(IDC_EC_INP02,  L"Context path, where to create the Context home folder");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select Context path");
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"New Context");

@@ -196,15 +196,20 @@ void OmUiPropLocNet::_onInit()
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,  L"Network repositories");
+  this->_createTooltip(IDC_LB_LOC,  L"Location network Repositories list");
 
-  this->_createTooltip(IDC_BC_DEL,  L"Remove repository");
-  this->_createTooltip(IDC_BC_ADD,  L"Add new repository");
-  this->_createTooltip(IDC_BC_EDI,  L"Test repository availability");
+  this->_createTooltip(IDC_BC_DEL,  L"Remove selection Repository");
+  this->_createTooltip(IDC_BC_EDI,  L"Test for Repository availability");
+  this->_createTooltip(IDC_BC_ADD,  L"Configure a new network Repository");
+
+  this->_createTooltip(IDC_BC_CKBX1,  L"Warn when packages download require additional dependencies download");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Warn when packages to download have missing dependencies");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Warn when packages upgrade will delete older versions required by other");
+
+  this->_createTooltip(IDC_BC_RAD01,  L"On upgrade, the older version package is moved to recycle bin");
+  this->_createTooltip(IDC_BC_RAD02,  L"On upgrade, the older version package is left in Library but renamed with .old extension");
 
   this->enableItem(IDC_SC_STATE, false);
-
-  this->_createTooltip(IDC_BC_CKBX1,  L"Enable upgrade always download mode");
 
   // Update values
   this->_onRefresh();

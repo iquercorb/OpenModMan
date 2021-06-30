@@ -90,12 +90,12 @@ void OmUiPropLocBck::_onBcDelBck()
 {
   // warns the user before committing the irreparable
   wstring wrn = L"This will permanently delete all existing "
-                L"backups data without restoring them (which should "
+                L"backup data without restoring them (which should "
                 "never be done except in emergency situation)."
 
-                L"\n\nDiscard all backups data for this Location ?";
+                L"\n\nDiscard all backup data for this Location ?";
 
-  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backups data", wrn))
+  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backup data", wrn))
     return;
 
   // Launch backup discard process
@@ -114,8 +114,8 @@ void OmUiPropLocBck::_delBck_init()
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setCaption(L"Discard Location backups data");
-  pUiProgress->setScHeadText(L"Backups data deletion");
+  pUiProgress->setCaption(L"Location backup data discard");
+  pUiProgress->setScHeadText(L"Deleting backup data");
 
   DWORD dwId;
   this->_delBck_hth = CreateThread(nullptr, 0, this->_delBck_fth, this, 0, &dwId);
@@ -200,7 +200,8 @@ void OmUiPropLocBck::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_BC_CKBX1,  L"Store backup data as zip archives");
-  this->_createTooltip(IDC_CB_LVL,  L"Compression level for backup zip files");
+  this->_createTooltip(IDC_CB_LVL,    L"Compression level for backup zip archives");
+  this->_createTooltip(IDC_BC_DEL,    L"Delete all backup data without restoring it (emergency use only)");
 
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
 

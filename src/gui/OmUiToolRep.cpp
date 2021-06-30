@@ -129,6 +129,7 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
   _condig(),
   _rmtCur(),
+  _unsaved(false),
   _addDir_hth(nullptr),
   _addDir_path()
 {
@@ -187,7 +188,7 @@ bool OmUiToolRep::_repOpen(const wstring& path)
   // Initialize new Repository definition XML scheme
   if(!this->_condig.open(path, OMM_CFG_SIGN_REP)) {
     wstring err = L"The file \""+path+L"\" is not valid Repository file.";
-    Om_dialogBoxErr(this->_hwnd, L"Error parsing Repository file", err);
+    Om_dialogBoxErr(this->_hwnd, L"Repository parse error", err);
     return false;
   }
 
@@ -239,8 +240,8 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
   // if <remote> with same identity already exist, user have to choose
   if(!xml_rmt.empty()) {
 
-    wstring qry = L"Repository package with identity \""+pkg.ident()+L"\" already exists.";
-    qry += L"\n\nDo you want to replace the existing one ?";
+    wstring qry = L"Package with same identity already exists in Repository.\n\n\"";
+    qry += pkg.ident() + L"\"\n\nDo you want to replace the existing one ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Duplicated entry", qry))
       return true; // cancel operation
@@ -591,8 +592,8 @@ void OmUiToolRep::_addDir_init(const wstring& path)
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setCaption(L"Add multiples package entries");
-  pUiProgress->setScHeadText(L"Computes packages checksum");
+  pUiProgress->setCaption(L"Parse packages");
+  pUiProgress->setScHeadText(L"Computing packages checksum");
 
   // keep path to folder to scan
   this->_addDir_path = path;
@@ -621,10 +622,6 @@ void OmUiToolRep::_addDir_stop()
 
   // quit the progress dialog
   static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
-
-  // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
-  this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
 }
 
 
@@ -683,12 +680,10 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
 void OmUiToolRep::_onBcNew()
 {
   // Check for unsaved changes
-  if(this->itemEnabled(IDC_BC_SAVE)) {
-
-    wstring qry = L"Do you want to save Repository before continue ?";
-
-    if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Unsaved changes", qry)) {
-      this->_onBcSave();
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogResetUnsaved(this->_hwnd)) {
+      return; //< don't change anything
     }
   }
 
@@ -705,6 +700,9 @@ void OmUiToolRep::_onBcNew()
   OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
   this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
+
+  // reset unsaved changes
+  this->_unsaved = false;
 }
 
 
@@ -713,6 +711,14 @@ void OmUiToolRep::_onBcNew()
 ///
 void OmUiToolRep::_onBcOpen()
 {
+  // Check for unsaved changes
+  if(this->_unsaved) {
+    // ask user to save
+    if(!Om_dialogResetUnsaved(this->_hwnd)) {
+      return; //< don't change anything
+    }
+  }
+
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
@@ -722,7 +728,7 @@ void OmUiToolRep::_onBcOpen()
   if(pLoc) start = pLoc->libDir();
 
   // new dialog to open file
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select XML repository file", OMM_XML_FILES_FILTER, start))
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open Repository definition", OMM_XML_FILES_FILTER, start))
     return;
 
   if(!Om_isFile(result))
@@ -752,13 +758,16 @@ void OmUiToolRep::_onBcOpen()
   for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
     this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(xml_rmt_ls[i].attrAsString(L"ident")));
   }
+
+  // reset unsaved changes
+  this->_unsaved = false;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_onBcBrwPkg()
+bool OmUiToolRep::_onBcBrwPkg()
 {
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
@@ -769,28 +778,26 @@ void OmUiToolRep::_onBcBrwPkg()
   if(pLoc) start = pLoc->libDir();
 
   // open file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start))
-    return;
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open Package file", OMM_PKG_FILES_FILTER, start))
+    return false;
 
   if(!Om_isFile(result))
-    return;
+    return false;
 
   // add package to repository
   if(!this->_rmtAdd(result)) {
     wstring err = L"The file \""+result+L"\" is not valid Package file.";
-    Om_dialogBoxErr(this->_hwnd, L"Error parsing Package file", err);
+    Om_dialogBoxErr(this->_hwnd, L"Package parse error", err);
   }
 
-  // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
-  this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
+  return true;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_onBcBrwDir()
+bool OmUiToolRep::_onBcBrwDir()
 {
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
@@ -801,16 +808,18 @@ void OmUiToolRep::_onBcBrwDir()
   if(pLoc) start = pLoc->libDir();
 
   // open dialog to select folder
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select folder to search for packages", start))
-    return;
+  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select a folder where to find packages to parse and add", start))
+    return false;
 
   if(!Om_isDir(result))
-    return;
+    return false;
 
   // each add need to compute the file checksum, this operation can take
   // long time specially with huge files, to prevent unpleasant freeze of
   // dialog, we proceed through progress dialog within new thread.
   this->_addDir_init(result);
+
+  return true;
 }
 
 
@@ -841,10 +850,6 @@ void OmUiToolRep::_onBcRemPkg()
 
   // Remove remote from ListBox
   this->msgItem(IDC_LB_PKG, LB_DELETESTRING, lb_sel, 0);
-
-  // Enable or Disable Save as... button according ListBox content
-  int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
-  this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
 }
 
 
@@ -924,8 +929,6 @@ void OmUiToolRep::_onBcSavUrl()
 
   // disable Custom Url "Save" Button
   this->enableItem(IDC_BC_SAV01, false);
-  // enable Main "Save as..." Button
-  this->enableItem(IDC_BC_SAVE, true);
 }
 
 
@@ -949,19 +952,14 @@ void OmUiToolRep::_onBcChkDeps()
 
   if(miss_cnt > 0) {
     // Warning message
-    wstring wrn =   L"The package has dependencies which was "
-                    "not found in the repository:\n\n";
-
-    for(unsigned i = 0; i < miss_ls.size(); ++i)
-      wrn += L"    " + miss_ls[i] + L"\n";
-
+    wstring wrn =   L"The package has dependencies which was not found in the repository:\n\n";
+    for(unsigned i = 0; i < miss_ls.size(); ++i) wrn += L"   " + miss_ls[i] + L"\n";
     Om_dialogBoxWarn(this->_hwnd, L"Missing package dependencies", wrn);
 
   } else {
 
     //Peaceful message
-    wstring msg =   L"All dependencies for this package "
-                    "was found in the repository.";
+    wstring msg =   L"All dependencies for this package was found in the repository.";
     Om_dialogBoxInfo(this->_hwnd, L"Dependencies package satisfied", msg);
   }
 }
@@ -970,11 +968,11 @@ void OmUiToolRep::_onBcChkDeps()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_onBcBrwSnap()
+bool OmUiToolRep::_onBcBrwSnap()
 {
   // check whether any <remote> is selected
   if(this->_rmtCur.empty())
-    return;
+    return false;
 
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
@@ -985,8 +983,8 @@ void OmUiToolRep::_onBcBrwSnap()
   if(pLoc) start = pLoc->libDir();
 
   // open file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select image file", OMM_IMG_FILES_FILTER, start))
-    return;
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, start))
+    return false;
 
   OmImage image;
 
@@ -1008,19 +1006,18 @@ void OmUiToolRep::_onBcBrwSnap()
       HBITMAP hBm = this->setStImage(IDC_SB_PKG, image.thumbnail());
       if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
 
-      // enable General "Save as..." Button
-      this->enableItem(IDC_BC_SAVE, true);
-
       // enable Snapshot "Delete" Button
       this->enableItem(IDC_BC_DEL, true);
 
       // return now
-      return;
+      return true;
     }
   }
 
   // this what happen if something went wrong
   this->_onBcDelSnap(); //< delete Snapshot and reset controls
+
+  return true;
 }
 
 
@@ -1043,8 +1040,6 @@ void OmUiToolRep::_onBcDelSnap()
 
   // disable Snapshot "Delete" Button
   this->enableItem(IDC_BC_DEL, false);
-  // Enable Save as... button
-  this->enableItem(IDC_BC_SAVE, true);
 }
 
 
@@ -1062,7 +1057,7 @@ void OmUiToolRep::_onBcBrwDesc()
   if(pLoc) start = pLoc->libDir();
 
   // open file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select text file", OMM_TXT_FILES_FILTER, start))
+  if(!Om_dialogOpenFile(result, this->_hwnd, L"Open text file", OMM_TXT_FILES_FILTER, start))
     return;
 
   if(!Om_isFile(result))
@@ -1114,8 +1109,6 @@ void OmUiToolRep::_onBcSavDesc()
 
   // disable Description "Save" button
   this->enableItem(IDC_BC_SAV02, false);
-  // enable General "Save as.." button
-  this->enableItem(IDC_BC_SAVE, true);
 }
 
 
@@ -1170,30 +1163,26 @@ void OmUiToolRep::_onBcSave()
     result += L".xml";
   }
 
-  if(Om_isValidPath(result)) {
-    if(Om_isFile(result)) {
-      wstring qry = L"The file \""+Om_getFilePart(result)+L"\"";
-      qry += OMM_STR_QRY_OVERWRITE;
-      if(!Om_dialogBoxQuerry(this->_hwnd, L"File already exists", qry)) {
-        return;
-      }
-    }
+  if(Om_dialogValidPath(this->_hwnd, L"file path", result)) {
+    if(!Om_dialogOverwriteFile(this->_hwnd, result))
+      return;
   } else {
-    wstring err = L"File name ";
-    err += OMM_STR_ERR_VALIDNAME;
-    Om_dialogBoxErr(this->_hwnd, L"Invalid file name", err);
     return;
   }
 
   if(!this->_condig.save(result)) {
-    wstring err = L"Failed to save file "+Om_getFilePart(result)+L"\", ";
-    err += this->_condig.lastErrorStr();
-    Om_dialogBoxErr(this->_hwnd, L"Unable to save file", err);
+    Om_dialogSaveError(this->_hwnd, L"Repository definition", this->_condig.lastErrorStr());
     return;
   }
 
   // Disable Save as... button
   this->enableItem(IDC_BC_SAVE, false);
+
+  // reset unsaved changes
+  this->_unsaved = false;
+
+  // a reassuring message
+  Om_dialogSaveSucces(this->_hwnd, L"Repository definition");
 }
 
 
@@ -1203,13 +1192,10 @@ void OmUiToolRep::_onBcSave()
 void OmUiToolRep::_onBcClose()
 {
   // check whether there is unsaved changes
-  if(this->itemEnabled(IDC_BC_SAVE)) {
-
+  if(this->_unsaved) {
     // ask user to save
-    wstring qry = L"Do you want to save Repository before closing ?";
-
-    if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Unsaved changes", qry)) {
-      this->_onBcSave(); //< emulate Save as.. button click
+    if(!Om_dialogCloseUnsaved(this->_hwnd)) {
+      return; //< do NOT close
     }
   }
 
@@ -1230,29 +1216,30 @@ void OmUiToolRep::_onInit()
   this->setCaption(L"Repository editor - " OMM_APP_NAME);
 
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_BRW01, L"Select Repository XML file");
-  this->_createTooltip(IDC_BC_NEW, L"Initialize new repository");
+  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Repository XML file");
+  this->_createTooltip(IDC_BC_NEW,    L"Erase current and initialize a new definition from scratch");
 
-  this->_createTooltip(IDC_EC_INP01, L"Indicative title");
-  this->_createTooltip(IDC_EC_INP02, L"Default download path");
+  this->_createTooltip(IDC_EC_INP01,  L"Repository title, to name it indicatively");
+  this->_createTooltip(IDC_EC_INP02,  L"Path from base URL where to find packages to be downloaded");
 
-  this->_createTooltip(IDC_LB_PKG, L"Repository remote package list");
+  this->_createTooltip(IDC_LB_PKG,    L"Repository remote package list");
 
-  this->_createTooltip(IDC_BC_BRW02, L"Add package");
-  this->_createTooltip(IDC_BC_BRW03, L"Add all packages from folder");
-  this->_createTooltip(IDC_BC_REM, L"Remove selected package");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select a package to parse and add to Repository");
+  this->_createTooltip(IDC_BC_BRW03,  L"Browse to select a folder where to find packages to parse and add");
+  this->_createTooltip(IDC_BC_REM,    L"Remove the selected package from Repository");
 
-  this->_createTooltip(IDC_BC_CKBX1, L"Use custom URL for download");
-  this->_createTooltip(IDC_EC_INP03, L"Download URL prefix");
-  this->_createTooltip(IDC_BC_SAV01, L"Save custom URL");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Define a custom URL where to download this package");
+  this->_createTooltip(IDC_EC_INP03,  L"Custom full URL to download this package file");
+  this->_createTooltip(IDC_BC_SAV01,  L"Save custom URL setting to Repository");
 
-  this->_createTooltip(IDC_BC_QRY, L"Check dependencies availability");
+  this->_createTooltip(IDC_BC_QRY,    L"Check for package dependencies availability within the Repository");
 
-  this->_createTooltip(IDC_BC_BRW08, L"Select new package snapshot");
-  this->_createTooltip(IDC_BC_DEL, L"Remove package snapshot");
+  this->_createTooltip(IDC_BC_BRW08,  L"Browse to select an image to set as Package snapshot");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove the current snapshot image");
 
-  this->_createTooltip(IDC_BC_BRW09, L"Load description text");
-  this->_createTooltip(IDC_BC_SAV02, L"Save descriptions changes");
+  this->_createTooltip(IDC_BC_BRW09,  L"Browse to open text file and use its content as description");
+  this->_createTooltip(IDC_BC_SAV02,  L"Save description changes to Repository");
+  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
@@ -1274,6 +1261,9 @@ void OmUiToolRep::_onInit()
   OmXmlNode xml_def = this->_condig.xml();
   this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
   this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
+
+  // reset unsaved changes
+  this->_unsaved = false;
 }
 
 
@@ -1379,16 +1369,17 @@ void OmUiToolRep::_onResize()
 ///
 bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    bool has_changed = false;
+
   // UWM_ADDENTRIES_DONE is a custom message sent from add entries thread
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_ADDENTRIES_DONE) {
     // end the removing Location process
     this->_addDir_stop();
+    has_changed = true;
   }
 
   if(uMsg == WM_COMMAND) {
-
-    bool has_changed = false;
 
     switch(LOWORD(wParam))
     {
@@ -1413,15 +1404,16 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW02: //< Add Package Button
-      this->_onBcBrwPkg();
+      has_changed = this->_onBcBrwPkg();
       break;
 
     case IDC_BC_BRW03: //< Add Package folder Button
-      this->_onBcBrwDir();
+      has_changed = this->_onBcBrwDir();
       break;
 
     case IDC_BC_REM:
       this->_onBcRemPkg();
+      has_changed = true;
       break;
 
     case IDC_LB_PKG: //< Packages list ListBox
@@ -1437,10 +1429,11 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setItemText(IDC_EC_INP03, L"");
         this->_onBcSavUrl();
         this->enableItem(IDC_EC_INP03, false);
+        has_changed = true;
       }
       break;
 
-    case IDC_EC_INP03:
+    case IDC_EC_INP03: //< Custon URL EditText
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE)
         this->enableItem(IDC_BC_SAV01, true);
@@ -1448,6 +1441,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_SAV01: //< Custom Url "Save" Button
       this->_onBcSavUrl();
+      has_changed = true;
       break;
 
     case IDC_BC_QRY: //< Dependencies "Check" Button
@@ -1455,11 +1449,12 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW08: //< Snapshot "Select..." Button
-      this->_onBcBrwSnap();
+      has_changed = this->_onBcBrwSnap();
       break;
 
     case IDC_BC_DEL: //< Snapshot "Delete" Button
       this->_onBcDelSnap();
+      has_changed = true;
       break;
 
     case IDC_BC_BRW09: //< Description "Load.." Button
@@ -1474,6 +1469,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_SAV02: //< Description "Save" Button
       this->_onBcSavDesc();
+      has_changed = true;
       break;
 
     case IDC_BC_SAVE: //< General "Save as.." Button
@@ -1484,12 +1480,16 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcClose();
       break;
     }
+  }
 
-    if(has_changed) {
-      // check whether ListBox have remote to be saved
-      int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
-      this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
-    }
+  if(has_changed) {
+
+    // we have unsaved changes
+    this->_unsaved = true;
+
+    // check whether ListBox have remote to be saved
+    int lb_cnt = this->msgItem(IDC_LB_PKG, LB_GETCOUNT, 0, 0);
+    this->enableItem(IDC_BC_SAVE, (lb_cnt > 0));
   }
 
   return false;

@@ -2046,6 +2046,181 @@ bool Om_dialogSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const w
 }
 
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogCreateFolder(HWND hwnd, const wstring& item, const wstring& path)
+{
+  if(!PathFileExistsW(path.c_str())) {
+
+    wstring msg;
+
+    msg = item + L" does not exists.\n\n  \"";
+    msg += path + L"\"\n\nDo you want to create it ?";
+
+    if(IDYES == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_YESNO|MB_ICONQUESTION)) {
+
+      int result = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
+      if(result != 0) {
+
+        msg = item + L" cannot be created.\n\n  \"";
+        msg += path + L"\"\n\nError : " + Om_getErrorStr(result);
+
+        MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONERROR);
+        return false;
+      }
+
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogOverwriteFile(HWND hwnd, const wstring& path)
+{
+  // check whether file already exists
+  DWORD attr = GetFileAttributesW(path.c_str());
+
+  if(attr != INVALID_FILE_ATTRIBUTES) {
+    if(attr & FILE_ATTRIBUTE_DIRECTORY)
+      return true; //< file does not exists, no overwriting possible
+  } else {
+    return true; //< file does not exists, no overwriting possible
+  }
+
+  return (IDYES == MessageBoxW(hwnd,
+                              L"The file already exists. Do you want to overwrite it ?",
+                              OMM_APP_NAME, MB_YESNO|MB_ICONQUESTION));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogValidName(HWND hwnd, const wstring& item, const wstring& name)
+{
+  wstring msg;
+
+  if(!name.empty()) {
+
+    for(unsigned i = 0; i < 8; ++i) { // forbids all including back-slash
+      if(name.find_first_of(__illegal_win_chr[i]) != wstring::npos) {
+        msg = L"Invalid " + item + L".\n\n  \"";
+        msg += name + L"\"\n\nName cannot contain the following characters: / * ? \" < > | \\";
+        break;
+      }
+    }
+
+  } else {
+    msg = L"Invalid " + item + L".\n\n";
+    msg += item + L" cannot be empty.";
+  }
+
+  if(!msg.empty()) {
+    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogValidPath(HWND hwnd, const wstring& item, const wstring& path)
+{
+  wstring msg;
+
+  if(!path.empty()) {
+
+    for(unsigned i = 0; i < 7; ++i) { // forbids all except back-slash
+      if(path.find_first_of(__illegal_win_chr[i]) != wstring::npos) {
+        msg = L"Invalid " + item + L".\n\n  \"";
+        msg += path + L"\"\n\nPath cannot contain the following characters: / * ? \" < > |";
+        break;
+      }
+    }
+
+  } else {
+    msg = L"Invalid " + item + L".\n\n";
+    msg += item + L" cannot be empty.";
+  }
+
+  if(!msg.empty()) {
+    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogValidDir(HWND hwnd, const wstring& item,  const wstring& path)
+{
+  // check whether file already exists
+  DWORD attr = GetFileAttributesW(path.c_str());
+
+  if(attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+    wstring msg = L"Invalid" + item + L".\n\n\"";
+    msg += L"\"\n\nFolder does not exists, " + item + L" must be an existing directory.";
+    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogCloseUnsaved(HWND hwnd)
+{
+  wstring msg = L"You made unsaved changes. Close without saving ?";
+  return (IDOK == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OKCANCEL|MB_ICONQUESTION));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dialogResetUnsaved(HWND hwnd)
+{
+  wstring msg = L"You made unsaved changes. Continue without saving ?";
+  return (IDOK == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OKCANCEL|MB_ICONQUESTION));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_dialogSaveSucces(HWND hwnd, const wstring& item)
+{
+  wstring msg = item + L" file was successfully saved.";
+  MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONINFORMATION);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_dialogSaveError(HWND hwnd, const wstring& item, const wstring& error)
+{
+  wstring msg = L"Unable to save " + item + L" file.\n\n" + error;
+  MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONERROR);
+}
+
+
+
 /// \brief Load plain text.
 ///
 /// Loads content of the specified file as plain-text into the given

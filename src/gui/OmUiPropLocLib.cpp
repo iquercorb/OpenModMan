@@ -92,7 +92,7 @@ void OmUiPropLocLib::_onInit()
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn when packages install will overlap any previously installed");
   this->_createTooltip(IDC_BC_CKBX3,  L"Warn when packages install require additional dependencies installation");
   this->_createTooltip(IDC_BC_CKBX4,  L"Warn when packages dependencies are missing");
-  this->_createTooltip(IDC_BC_CKBX5,  L"Warn when packages uninstall require additional uninstall");
+  this->_createTooltip(IDC_BC_CKBX5,  L"Warn when packages uninstall require additional uninstallations");
 
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
@@ -117,13 +117,13 @@ void OmUiPropLocLib::_onResize()
   this->_setItemPos(IDC_BC_CKBX1, 50, 20, 200, 9);
 
   // Enable warnings Label
-  this->_setItemPos(IDC_SC_LBL01, 50, 40, 200, 9);
+  this->_setItemPos(IDC_SC_LBL01, 50, 45, 200, 9);
 
   // Enable warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX2, 65, 55, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX3, 65, 70, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX4, 65, 85, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX5, 65, 100, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 65, 60, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX3, 65, 75, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX4, 65, 90, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX5, 65, 105, 200, 9);
 }
 
 

@@ -56,6 +56,8 @@ class OmUiToolPkg : public OmDialog
 
     OmPackage           _package;
 
+    bool                _unsaved;
+
     bool                _parseSrc(const wstring& path);
 
     void                _freeze(bool freeze);
@@ -92,11 +94,11 @@ class OmUiToolPkg : public OmDialog
 
     void                _onCkBoxSnap();
 
-    void                _onBcBrwSnap();
+    bool                _onBcBrwSnap();
 
     void                _onCkBoxDesc();
 
-    void                _onBcBrwDesc();
+    bool                _onBcBrwDesc();
 
     void                _onBcSave();
 

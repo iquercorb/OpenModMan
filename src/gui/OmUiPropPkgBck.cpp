@@ -58,6 +58,13 @@ void OmUiPropPkgBck::_onInit()
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_OUT05, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
+  // define controls tool-tips
+  this->_createTooltip(IDC_EC_OUT01,  L"Package backup type, either zip archive or subfolder");
+  this->_createTooltip(IDC_EC_OUT02,  L"Package backup location path");
+  this->_createTooltip(IDC_EC_OUT03,  L"List of packages that the installation of this one overlaps");
+  this->_createTooltip(IDC_EC_OUT04,  L"If any, the total size of current backup data");
+  this->_createTooltip(IDC_EC_OUT05,  L"If any, list of currently installed files");
+
   OmPackage* pPkg = static_cast<OmUiPropPkg*>(this->_parent)->pkgCur();
   if(pPkg == nullptr) return;
 
@@ -65,7 +72,7 @@ void OmUiPropPkgBck::_onInit()
 
     // Type
     if(Om_isDir(pPkg->bckPath())) {
-      this->setItemText(IDC_EC_OUT01, L"Sub-folder");
+      this->setItemText(IDC_EC_OUT01, L"Subfolder");
     } else {
       this->setItemText(IDC_EC_OUT01, L"Zip archive");
     }
