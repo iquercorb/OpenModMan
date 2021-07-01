@@ -44,6 +44,7 @@
 OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
   _dirMon_hth(nullptr),
   _dirMon_hev{0,0,0},
+  _repQry_sel(-1),
   _repQryt_hth(nullptr),
   _rmtDnl_count(0),
   _rmtDnl_abort(0),
@@ -105,11 +106,7 @@ void OmUiMainNet::freeze(bool enable)
 
   // Repository Label ListBox & buttons
   this->enableItem(IDC_SC_LBL01, !enable);
-  this->enableItem(IDC_LB_REP, !enable);
-
-  // If enter freeze mode, unselect repository
-  if(enable)
-    this->msgItem(IDC_LB_REP, LB_SETCURSEL, -1);
+  this->enableItem(IDC_LV_REP, !enable);
 
   // Repository Buttons
   this->enableItem(IDC_BC_NEW, !enable);
@@ -598,7 +595,7 @@ DWORD WINAPI OmUiMainNet::_dirMon_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainNet::_repQry_init()
+void OmUiMainNet::_repQry_init(int sel)
 {
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMainNet::_repQry_init\n";
@@ -607,6 +604,7 @@ void OmUiMainNet::_repQry_init()
   // Freezes the main dialog to prevent user to interact during process
   static_cast<OmUiMain*>(this->root())->freeze(true);
 
+  this->_repQry_sel = sel;
 
   DWORD dwId;
   this->_repQryt_hth = CreateThread(nullptr, 0, this->_repQry_fth, this, 0, &dwId);
@@ -667,7 +665,18 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
 
   OmRepository* pRep;
   LVITEMW lvItem;
-  for(size_t i = 0; i < pLoc->repCount(); ++i) {
+
+  size_t i, n;
+
+  if(self->_repQry_sel >= 0) {
+    i = self->_repQry_sel;
+    n = i + 1;
+  } else {
+    i = 0;
+    n = pLoc->repCount();
+  }
+
+  for(; i < n; ++i) {
 
     // the first column, repository status, here we INSERT the new item
     lvItem.iItem = i;
@@ -696,9 +705,6 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
 
   // change button image from stop to refresh
   self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_REF));
-
-  // reset progress bar position
-  self->msgItem(IDC_PB_REP, PBM_SETPOS, 0);
 
   // send message to notify process ended
   self->postMessage(UWM_REPQUERY_DONE);
@@ -1234,8 +1240,28 @@ void OmUiMainNet::_onLvRepSel()
   // get count of selected item
   unsigned lv_nsl = this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT);
 
-  this->enableItem(IDC_BC_DEL, (lv_nsl >= 0));
+  this->enableItem(IDC_BC_DEL, (lv_nsl > 0));
 }
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainNet::_onLvRepHit()
+{
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
+  this->_repQry_init(lv_sel);
+}
+
 
 
 ///
@@ -1862,6 +1888,20 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if(this->_repQryt_hth)
       return false;
 
+    if(LOWORD(wParam) == IDC_LV_REP) {
+
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
+        this->_onLvRepHit();
+        break;
+
+      case LVN_ITEMCHANGED:
+        this->_onLvRepSel();
+        break;
+      }
+    }
+
     if(LOWORD(wParam) == IDC_LV_RMT) {
 
       switch(reinterpret_cast<NMHDR*>(lParam)->code)
@@ -1898,21 +1938,6 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
       }
     }
-
-    if(LOWORD(wParam) == IDC_LV_REP) {
-
-      switch(reinterpret_cast<NMHDR*>(lParam)->code)
-      {
-      case NM_DBLCLK:
-        //this->_onLvRmtHit();
-        break;
-
-      case LVN_ITEMCHANGED:
-        this->_onLvRepSel();
-        break;
-      }
-    }
-
     return false;
   }
 

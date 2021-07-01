@@ -116,7 +116,9 @@ class OmUiMainNet : public OmDialog
 
     static DWORD WINAPI _dirMon_fth(void*);
 
-    void                _repQry_init();
+    void                _repQry_init(int sel = -1);
+
+    int                 _repQry_sel;
 
     void                _repQry_stop();
 
@@ -153,6 +155,8 @@ class OmUiMainNet : public OmDialog
     void                _onLvRmtHit();
 
     void                _onLvRepSel();
+
+    void                _onLvRepHit();
 
     void                _onLvRmtRclk();
 

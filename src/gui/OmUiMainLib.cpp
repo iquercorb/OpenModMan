@@ -1968,7 +1968,7 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
       case NM_RCLICK:
-        this->_onLvPkgSel();
+        this->_onLvPkgRclk();
         break;
 
       case LVN_ITEMCHANGED:
