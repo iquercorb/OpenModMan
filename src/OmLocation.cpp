@@ -1871,7 +1871,7 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = pkg_ls.size();
     progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr))
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0))
       return true;
   }
 
@@ -1896,7 +1896,7 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, unin_ls[i]->ident().c_str()))
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(unin_ls[i]->ident().c_str())))
         break;
     }
 
@@ -1948,7 +1948,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
   if(progress_cb) {
     progress_tot = path_ls.size();
     progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr))
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0))
       return true;
   }
 
@@ -1965,7 +1965,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, path_ls[i].c_str()))
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(path_ls[i].c_str())))
         break;
     }
 
@@ -2028,7 +2028,7 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = pkg_ls.size();
     progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr))
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0))
       return true;
   }
 
@@ -2044,7 +2044,7 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, pkg_ls[i]->ident().c_str()))
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(pkg_ls[i]->ident().c_str())))
         break;
     }
 
@@ -2336,58 +2336,26 @@ void OmLocation::repRem(unsigned id)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::repQuery(Om_progressCb progress_cb, void* user_ptr)
+bool OmLocation::repQuery(unsigned i)
 {
   // check whether we have something to proceed
-  if(this->_repLs.empty())
-    return true;
-
-  // initialize progression
-  size_t progress_tot, progress_cur;
-  if(progress_cb) {
-    progress_tot = this->_repLs.size();
-    progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr))
-      return true;
-  }
+  if(i >= this->_repLs.size())
+    return false;
 
   bool has_error = false;
 
-  // clear remote package list
-  this->_rmtLs.clear();
+  this->log(2, L"Location("+this->_title+L") Query repository", this->_repLs[i]->url()+L"-"+this->_repLs[i]->name());
 
-  this->log(2, L"Location("+this->_title+L") Network refresh", L"Querying "+to_wstring(this->_repLs.size())+L" repository.");
-
-  unsigned c, n = 0;
-
-  for(size_t i = 0; i < this->_repLs.size(); ++i) {
-
-    if(this->_repLs[i]->query()) {
-      n++;
-    } else {
-      this->_error =  L"Repository \""+this->_repLs[i]->url()+L"-"+this->_repLs[i]->name()+L"\" ";
-      this->_error += L"query failed: " + this->_repLs[i]->lastError();
-      this->log(1, L"Location("+this->_title+L") Network refresh", this->_error);
-      has_error = true;
-    }
-
-    // add/merge remote packages to list
-    c = this->_repLs[i]->rmtMerge(this->_rmtLs);
-    this->log(2, L"Location("+this->_title+L") Network refresh", to_wstring(c)+L" new remote packages merged.");
-
-    // call progression callback
-    if(progress_cb) {
-      progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, this->_repLs[i]->url().c_str()))
-        break;
-    }
-
-    #ifdef DEBUG
-    Sleep(OMM_DEBUG_SLOW*5); //< for debug
-    #endif
+  if(!this->_repLs[i]->query()) {
+    this->_error =  L"Repository \""+this->_repLs[i]->url()+L"-"+this->_repLs[i]->name()+L"\" ";
+    this->_error += L"query failed: " + this->_repLs[i]->lastError();
+    this->log(1, L"Location("+this->_title+L") Query repository", this->_error);
+    has_error = true;
   }
 
-  this->log(2, L"Location("+this->_title+L") Network refresh", to_wstring(n)+L" repository successfully parsed.");
+  // add/merge remote packages to list
+  unsigned c = this->_repLs[i]->rmtMerge(this->_rmtLs);
+  this->log(2, L"Location("+this->_title+L") Query repository", to_wstring(c)+L" new remote packages merged.");
 
   // force refresh
   this->rmtRefresh(true);

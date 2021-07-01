@@ -68,7 +68,7 @@ class OmUiToolPkg : public OmDialog
 
     void*               _save_hth;
 
-    static bool         _save_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+    static bool         _save_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     static DWORD WINAPI _save_fth(void*);
 
@@ -76,9 +76,9 @@ class OmUiToolPkg : public OmDialog
 
     void                _onBcRadSrc();
 
-    void                _onBcBrwDir();
+    bool                _onBcBrwDir();
 
-    void                _onBcBrwPkg();
+    bool                _onBcBrwPkg();
 
     void                _onNameChange();
 

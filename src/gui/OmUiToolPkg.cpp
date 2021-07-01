@@ -167,6 +167,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   // check whether source path is empty to
   // reset to initial state
   if(path.empty()) {
+    this->_unsaved = false; //< reset unsaved changes
     return true;
   }
 
@@ -299,7 +300,7 @@ void OmUiToolPkg::_save_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_save_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+bool OmUiToolPkg::_save_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
 {
   OmUiToolPkg* self = reinterpret_cast<OmUiToolPkg*>(ptr);
 
@@ -419,13 +420,13 @@ void OmUiToolPkg::_onBcRadSrc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_onBcBrwDir()
+bool OmUiToolPkg::_onBcBrwDir()
 {
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
     if(!Om_dialogResetUnsaved(this->_hwnd))
-      return; //< return now, don't change anything
+      return false; //< return now, don't change anything
   }
 
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
@@ -445,13 +446,13 @@ void OmUiToolPkg::_onBcBrwDir()
   if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select installation file(s) location", start)) {
     this->setItemText(IDC_EC_INP01, L"");
     this->_parseSrc(L"");
-    return;
+    return false;
   }
 
   if(!Om_isDir(result)) {
     this->setItemText(IDC_EC_INP01, L"");
     this->_parseSrc(L"");
-    return;
+    return false;
   }
 
   // check whether selected folder is empty
@@ -464,7 +465,8 @@ void OmUiToolPkg::_onBcBrwDir()
 
     if(!Om_dialogBoxQuerry(this->_hwnd, L"Empty source folder", wrn)) {
       this->setItemText(IDC_EC_INP01, L"");
-      return;
+      this->_parseSrc(L"");
+      return false;
     }
   }
 
@@ -475,20 +477,25 @@ void OmUiToolPkg::_onBcBrwDir()
     Om_dialogBoxErr(this->_hwnd, L"Error parsing Package source folder", err);
     this->setItemText(IDC_EC_INP01, L"");
   }
+
+  return true;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_onBcBrwPkg()
+bool OmUiToolPkg::_onBcBrwPkg()
 {
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
     if(!Om_dialogResetUnsaved(this->_hwnd))
-      return; //< return now, don't change anything
+      return false; //< return now, don't change anything
   }
+
+  // reset unsaved changes
+  this->_unsaved = false;
 
   OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
   OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
@@ -508,13 +515,13 @@ void OmUiToolPkg::_onBcBrwPkg()
   if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start)) {
     this->setItemText(IDC_EC_INP02, L"");
     this->_parseSrc(L"");
-    return;
+    return false;
   }
 
   if(!Om_isFile(result)) {
     this->setItemText(IDC_EC_INP02, L"");
     this->_parseSrc(L"");
-    return;
+    return false;
   }
 
   // parse this package source
@@ -523,6 +530,8 @@ void OmUiToolPkg::_onBcBrwPkg()
     Om_dialogBoxErr(this->_hwnd, L"Error parsing Package source file", err);
     this->setItemText(IDC_EC_INP02, L"");
   }
+
+  return true;
 }
 
 
@@ -861,6 +870,8 @@ void OmUiToolPkg::_onInit()
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons inner icons
+  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_NEW));
+  this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_OPN));
   this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ENT));
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
@@ -901,14 +912,14 @@ void OmUiToolPkg::_onResize()
   // From folder RadioButton
   this->_setItemPos(IDC_BC_RAD01, 10, 10, 150, 9);
   // From Folder EditControl & Browse Button
-  this->_setItemPos(IDC_EC_INP01, 10, 20, half_w-65, 13);
-  this->_setItemPos(IDC_BC_BRW01, half_w-50, 20, 40, 13);
+  this->_setItemPos(IDC_EC_INP01, 10, 20, half_w-75, 13);
+  this->_setItemPos(IDC_BC_BRW01, half_w-60, 19, 50, 14);
 
   // From existing Package RadioButton
   this->_setItemPos(IDC_BC_RAD02, 10, 40, 150, 9);
   // From existing Package EditControl & Browse Button
-  this->_setItemPos(IDC_EC_INP02, 10, 50, half_w-65, 13);
-  this->_setItemPos(IDC_BC_BRW02, half_w-50, 50, 40, 13);
+  this->_setItemPos(IDC_EC_INP02, 10, 50, half_w-75, 13);
+  this->_setItemPos(IDC_BC_BRW02, half_w-60, 49, 50, 14);
 
   // [ - - - File name & Zip compression GroupBox - - -
   this->_setItemPos(IDC_GB_GRP01, 5, 65, half_w-10, this->height()-147);
@@ -1048,7 +1059,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW01: //< Create from folder "Select..." Button
-      this->_onBcBrwDir();
+      has_changed = this->_onBcBrwDir();
       break;
 
     case IDC_EC_INP01:
@@ -1058,7 +1069,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW02: //< Edit from existing "Open..." Button
-      this->_onBcBrwPkg();
+      has_changed = this->_onBcBrwPkg();
       break;
 
     case IDC_EC_INP02:

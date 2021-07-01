@@ -179,27 +179,25 @@ void OmUiPropLocStg::_onInit()
 void OmUiPropLocStg::_onResize()
 {
   // Location Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 5, 22, 64, 9);
-  this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 220, 9);
+  this->_setItemPos(IDC_EC_INP01, 50, 25, this->width()-90, 13);
 
   // Location Location Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL02, 5, 62, 64, 9);
-  this->_setItemPos(IDC_EC_INP02, 70, 60, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BRW02, this->width()-35, 60, 16, 13);
+  this->_setItemPos(IDC_SC_LBL02, 50, 50, 220, 9);
+  this->_setItemPos(IDC_EC_INP02, 50, 60, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW02, this->width()-55, 60, 16, 13);
 
   // Custom Library CheckBox
-  this->_setItemPos(IDC_BC_CKBX1, 70, 90, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, 90, 240, 9);
   // Location Library Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL03, 5, 102, 64, 9);
-  this->_setItemPos(IDC_EC_INP03, 70, 100, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BRW03, this->width()-35, 100, 16, 13);
+  this->_setItemPos(IDC_EC_INP03, 50, 100, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW03, this->width()-55, 100, 16, 13);
 
   // Custom Backup CheckBox
-  this->_setItemPos(IDC_BC_CKBX2, 70, 120, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 50, 120, 240, 9);
   // Location Backup Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL04, 5, 132, 64, 9);
-  this->_setItemPos(IDC_EC_INP04, 70, 130, this->width()-108, 13);
-  this->_setItemPos(IDC_BC_BRW04, this->width()-35, 130, 16, 13);
+  this->_setItemPos(IDC_EC_INP04, 50, 130, this->width()-108, 13);
+  this->_setItemPos(IDC_BC_BRW04, this->width()-55, 130, 16, 13);
 }
 
 

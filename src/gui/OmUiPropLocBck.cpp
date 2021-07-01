@@ -179,12 +179,12 @@ DWORD WINAPI OmUiPropLocBck::_delBck_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLocBck::_delBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+bool OmUiPropLocBck::_delBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
 {
   OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
 
-  if(str) {
-    pUiProgress->setScItemText(str);
+  if(data) {
+    pUiProgress->setScItemText(reinterpret_cast<wchar_t*>(data));
   }
   pUiProgress->setPbRange(0, tot);
   pUiProgress->setPbPos(cur);

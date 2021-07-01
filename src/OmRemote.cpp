@@ -223,7 +223,8 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
 bool OmRemote::urlAdd(const wstring& url)
 {
   if(Om_isValidUrl(url)) {
-    this->_url.push_back(url);
+    if(find(this->_url.begin(), this->_url.end(), url) == this->_url.end())
+      this->_url.push_back(url);
   }
   return false;
 }

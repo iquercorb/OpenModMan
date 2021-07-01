@@ -57,7 +57,8 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _batExe_hth(nullptr),
   _thread_abort(false),
   _buildLvPkg_icSize(0),
-  _buildLvPkg_legacy(true)
+  _buildLvPkg_legacy(true),
+  _buildLvBat_icSize(0)
 {
   // Package info sub-dialog
   this->addChild(new OmUiPropPkg(hins));
@@ -86,6 +87,10 @@ OmUiMainLib::~OmUiMainLib()
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
   HIMAGELIST hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_PKG, LVM_GETIMAGELIST, LVSIL_NORMAL));
+  if(hImgLs) ImageList_Destroy(hImgLs);
+
+  // Get the previous Image List to be destroyed (Small and Normal uses the same)
+  hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_BAT, LVM_GETIMAGELIST, LVSIL_NORMAL));
   if(hImgLs) ImageList_Destroy(hImgLs);
 }
 
@@ -153,7 +158,7 @@ void OmUiMainLib::safemode(bool enable)
     this->_buildCbLoc();
 
     // rebuild Batches ListBox
-    this->_buildLbBat();
+    this->_buildLvBat();
   }
 }
 
@@ -436,7 +441,7 @@ void OmUiMainLib::pkgOpen()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainLib::_pkgProgressCb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+bool OmUiMainLib::_pkgProgressCb(void* ptr, size_t tot, size_t cur, uint64_t data)
 {
   OmUiMainLib* self = reinterpret_cast<OmUiMainLib*>(ptr);
 
@@ -880,26 +885,85 @@ void OmUiMainLib::_buildLvPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_buildLbBat()
+void OmUiMainLib::_buildLvBat()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_buildLvBat\n";
+  #endif
+
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
-  // empty List-Box
-  this->msgItem(IDC_LB_BAT, LB_RESETCONTENT);
-
-  if(pCtx) {
-
-    OmBatch* pBat;
-
-    for(unsigned i = 0; i < pCtx->batCount(); ++i) {
-
-      pBat = pCtx->batGet(i);
-
-      this->msgItem(IDC_LB_BAT, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pBat->title().c_str()));
-      this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, i, i); // for Location index reordering
-    }
+  if(!pCtx) {
+    // empty ListView
+    this->msgItem(IDC_LV_BAT, LVM_DELETEALLITEMS);
+    // disable ListView
+    this->enableItem(IDC_LV_BAT, false);
+    // return now
+    return;
   }
+
+  // if icon size changed, create new ImageList
+  if(this->_buildLvBat_icSize != pMgr->iconsSize()) {
+
+    HIMAGELIST hImgLs;
+
+    // Get the previous Image List to be destroyed (Small and Normal uses the same)
+    hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_BAT, LVM_GETIMAGELIST, LVSIL_NORMAL));
+    if(hImgLs) ImageList_Destroy(hImgLs);
+
+    // Build list of images resource ID for the required size
+    unsigned idb = IDB_BAT_16;
+
+    switch(pMgr->iconsSize())
+    {
+    case 24:
+      idb += 1; //< steps IDs to 24 pixels images
+      break;
+    case 32:
+      idb += 2; //< steps IDs to 32 pixels images
+      break;
+    }
+
+    // Create ImageList and fill it with bitmaps
+    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 1, 0 );
+    ImageList_Add(hImgLs, Om_getResImage(this->_hins, idb), nullptr);
+
+    // Set ImageList to ListView
+    this->msgItem(IDC_LV_BAT, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgLs));
+    this->msgItem(IDC_LV_BAT, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgLs));
+
+    // update size
+    this->_buildLvBat_icSize = pMgr->iconsSize();
+  }
+
+  // Save list-view scroll position to lvRect
+  RECT lvRec;
+  this->msgItem(IDC_LV_BAT, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
+
+  // empty list view
+  this->msgItem(IDC_LV_BAT, LVM_DELETEALLITEMS);
+
+  OmBatch* pBat;
+  LVITEMW lvItem;
+  for(unsigned i = 0; i < pCtx->batCount(); ++i) {
+
+    pBat = pCtx->batGet(i);
+
+    lvItem.mask = LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE; //< text and special data
+    lvItem.iSubItem = 0;
+    lvItem.iImage = 0;
+    lvItem.pszText = const_cast<LPWSTR>(pBat->title().c_str());
+    lvItem.lParam = static_cast<LPARAM>(i); // for Location index reordering
+
+    this->msgItem(IDC_LV_BAT, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+  }
+
+  // we enable the List-View
+  this->enableItem(IDC_LV_BAT, true);
+
+  // restore list-view scroll position from lvRec
+  this->msgItem(IDC_LV_BAT, LVM_SCROLL, 0, -lvRec.top );
 }
 
 
@@ -1108,6 +1172,10 @@ DWORD WINAPI OmUiMainLib::_pkgUnin_fth(void* arg)
 ///
 void OmUiMainLib::_batExe_init()
 {
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
   // freeze dialog so user cannot interact
   static_cast<OmUiMain*>(this->root())->freeze(true);
 
@@ -1160,18 +1228,26 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
 
   // save current selected location
   int cb_sel = self->msgItem(IDC_CB_LOC, CB_GETCURSEL);
-  // save current select batch
-  int lb_sel = self->msgItem(IDC_LB_BAT, LB_GETCURSEL);
 
-  if(lb_sel >= 0) {
+  // Get Batches ListView unique selection
+  int lv_sel = self->msgItem(IDC_LV_BAT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+  if(lv_sel >= 0) {
 
     // hide package details
     self->showItem(IDC_SB_PKG, false);
     self->showItem(IDC_EC_TXT, false);
     self->showItem(IDC_SC_TITLE, false);
 
+    // structure for ListView update
+    LVITEMW lvItem = {};
+    lvItem.mask = LVIF_PARAM; //< we want item param
+    lvItem.iItem = lv_sel;
+    lvItem.lParam = -1;
+    self->msgItem(IDC_LV_BAT, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
     // retrieve the batch object from current selection
-    OmBatch* pBat = pCtx->batGet(self->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel));
+    OmBatch* pBat = pCtx->batGet(lvItem.lParam);
 
     // Automatic fix Batch / Context Location inconsistency
     for(size_t l = 0; l < pCtx->locCount(); ++l) //< Add missing Location
@@ -1493,12 +1569,13 @@ void OmUiMainLib::_onLvPkgSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainLib::_onLbBatSel()
+void OmUiMainLib::_onLvBatSel()
 {
-  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
+  // get count of selected item
+  unsigned lv_nsl = this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT);
 
-  this->enableItem(IDC_BC_RUN, (lb_sel >= 0));
-  this->enableItem(IDC_BC_EDI, (lb_sel >= 0));
+  this->enableItem(IDC_BC_RUN, (lv_nsl > 0));
+  this->enableItem(IDC_BC_EDI, (lv_nsl > 0));
 }
 
 
@@ -1519,7 +1596,6 @@ void OmUiMainLib::_onBcNewBat()
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
-
   OmUiAddBat* pUiNewBat = static_cast<OmUiAddBat*>(this->siblingById(IDD_ADD_BAT));
   pUiNewBat->ctxSet(pCtx);
   pUiNewBat->open(true);
@@ -1531,23 +1607,35 @@ void OmUiMainLib::_onBcNewBat()
 ///
 void OmUiMainLib::_onBcEdiBat()
 {
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
 
-  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_BAT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
 
-  if(lb_sel >= 0) {
+  // structure for ListView update
+  LVITEMW lvItem = {};
+  lvItem.mask = LVIF_PARAM; //< we want item param
+  lvItem.iItem = lv_sel;
+  lvItem.lParam = -1;
+  this->msgItem(IDC_LV_BAT, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-    int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel);
+  if(lvItem.lParam >= 0) {
+
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->ctxCur();
+    if(!pCtx) return;
 
     OmUiPropBat* pUiPropBat = static_cast<OmUiPropBat*>(this->siblingById(IDD_PROP_BAT));
-    pUiPropBat->batSet(pCtx->batGet(bat_id));
+    pUiPropBat->batSet(pCtx->batGet(lvItem.lParam));
     pUiPropBat->open();
   }
 
   // reload the batch list-box
-  this->_buildLbBat();
+  this->_buildLvBat();
 }
 
 
@@ -1576,16 +1664,16 @@ void OmUiMainLib::_onInit()
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected package(s)");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
 
-  // Initialize the ListView control
-  DWORD dwExStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
-  this->msgItem(IDC_LV_PKG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
+  DWORD lvStyle;
+  LVCOLUMNW lvCol;
+  // Initialize Packages ListView control
+  lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
+  this->msgItem(IDC_LV_PKG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
   // set explorer theme
   SetWindowTheme(this->getItem(IDC_LV_PKG),L"Explorer",nullptr);
 
   // we now add columns into our list-view control
-  LVCOLUMNW lvCol;
   lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
-
   //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
   // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
   // mysterious ways... So, don't try to fix this.
@@ -1606,6 +1694,18 @@ void OmUiMainLib::_onInit()
   lvCol.cx = 80;
   lvCol.iSubItem = 2;
   this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+
+  // Initialize Batches ListView control
+  this->msgItem(IDC_LV_BAT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
+  // set explorer theme
+  SetWindowTheme(this->getItem(IDC_LV_BAT),L"Explorer",nullptr);
+
+  // we now add columns into our list-view control
+  lvCol.mask = LVCF_WIDTH;
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 440;
+  lvCol.iSubItem = 0;
+  this->msgItem(IDC_LV_BAT, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
@@ -1675,14 +1775,15 @@ void OmUiMainLib::_onHide()
 ///
 void OmUiMainLib::_onResize()
 {
+  LONG size[4];
+
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-161, 12);
   // Library path EditControl
   this->_setItemPos(IDC_EC_INP01, 5, 20, this->width()-161, 12);
   // Package List ListView
   this->_setItemPos(IDC_LV_PKG, 5, 35, this->width()-161, this->height()-151);
-  // Resize the ListView column
-  LONG size[4];
+  // Resize the Packages ListView column
   GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
   this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-145);
 
@@ -1706,8 +1807,13 @@ void OmUiMainLib::_onResize()
   // Batches label
   this->_setItemPos(IDC_SC_LBL01, this->width()-143, 8, 136, 12);
   // Batches List-Box
-  this->_setItemPos(IDC_LB_BAT, this->width()-143, 20, 136, this->height()-137);
+  //this->_setItemPos(IDC_LB_BAT, this->width()-143, 20, 136, this->height()-137);
+  this->_setItemPos(IDC_LV_BAT, this->width()-143, 20, 136, this->height()-137);
+  // Resize the Batches ListView column
+  GetClientRect(this->getItem(IDC_LV_BAT), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_BAT, LVM_SETCOLUMNWIDTH, 0, size[2]);
   // Batches Apply, New.. and Delete buttons
+
   this->_setItemPos(IDC_BC_RUN, this->width()-143, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_EDI, this->width()-51, this->height()-114, 45, 14);
@@ -1744,17 +1850,20 @@ void OmUiMainLib::_onRefresh()
   // rebuild Location ComboBox
   this->_buildCbLoc();
 
-  // if icon size changed, rebuild Package ListView
-  if(this->_buildLvPkg_icSize != pMgr->iconsSize()) {
-    this->_buildLvPkg();
-  }
-
   // if legacy support changed, rebuild Package ListView
   if(pCtx) {
     if(pCtx->locCur()) {
-      if(this->_buildLvPkg_legacy != pCtx->locCur()->libDevMode()) {
+
+      if(this->_buildLvPkg_legacy != pCtx->locCur()->libDevMode() ||
+         this->_buildLvPkg_icSize != pMgr->iconsSize()) {
         this->_buildLvPkg();
       }
+
+      // if icon size changed, rebuild Package ListView
+      if(this->_buildLvBat_icSize != pMgr->iconsSize()) {
+        this->_buildLvBat();
+      }
+
     }
   }
 
@@ -1769,7 +1878,7 @@ void OmUiMainLib::_onRefresh()
   this->enableItem(IDC_BC_EDI, false);
 
   // rebuild Batches ListBox
-  this->_buildLbBat();
+  this->_buildLvBat();
 }
 
 
@@ -1837,16 +1946,14 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return false;
+
   if(uMsg == WM_NOTIFY) {
 
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    if(!pMgr->ctxCur()) return false;
-    OmContext* pCtx = pMgr->ctxCur();
-    if(!pCtx->locCur()) return false;
-
     OmLocation* pLoc = pCtx->locCur();
-
-    NMHDR* pNmhdr = reinterpret_cast<NMHDR*>(lParam);
+    if(!pLoc) return false;
 
     if(LOWORD(wParam) == IDC_LV_PKG) {
 
@@ -1854,28 +1961,22 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(this->_pkgInst_hth || this->_pkgUnin_hth)
         return false;
 
-      if(pNmhdr->code == NM_DBLCLK) {
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
         this->pkgTogg();
-        return false;
-      }
+        break;
 
-      if(pNmhdr->code == LVN_ITEMCHANGED) {
-        // update package(s) selection
+      case NM_RCLICK:
         this->_onLvPkgSel();
-        return false;
-      }
+        break;
 
-      if(pNmhdr->code == NM_RCLICK) {
-        // Open the popup menu
-        this->_onLvPkgRclk();
-        return false;
-      }
+      case LVN_ITEMCHANGED:
+        this->_onLvPkgSel();
+        break;
 
-      if(pNmhdr->code == LVN_COLUMNCLICK) {
-
-        NMLISTVIEW* pNmlv = reinterpret_cast<NMLISTVIEW*>(lParam);
-
-        switch(pNmlv->iSubItem)
+      case LVN_COLUMNCLICK:
+        switch(reinterpret_cast<NMLISTVIEW*>(lParam)->iSubItem)
         {
         case 0:
           pLoc->libSetSorting(LS_SORT_STAT);
@@ -1887,32 +1988,39 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           pLoc->libSetSorting(LS_SORT_NAME);
           break;
         }
-
-        // rebuild package ListView
-        this->_buildLvPkg();
-
-        return false;
+        this->_buildLvPkg(); //< rebuild ListView
+        break;
       }
     }
+
+    if(LOWORD(wParam) == IDC_LV_BAT) {
+
+      // if thread is running we block all interaction
+      if(this->_pkgInst_hth || this->_pkgUnin_hth)
+        return false;
+
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
+        this->_onBcRunBat();
+        break;
+
+      case LVN_ITEMCHANGED:
+        this->_onLvBatSel();
+        break;
+      }
+    }
+
+    return false;
   }
 
   if(uMsg == WM_COMMAND) {
-
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    OmContext* pCtx = pMgr->ctxCur();
-
-    if(!pCtx) return false;
 
     switch(LOWORD(wParam))
     {
 
     case IDC_CB_LOC:
       if(HIWORD(wParam) == CBN_SELCHANGE) this->_onCbLocSel();
-      break;
-
-    case IDC_LB_BAT: //< Location(s) list List-Box
-      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbBatSel();
-      if(HIWORD(wParam) == LBN_DBLCLK) this->_onBcRunBat();
       break;
 
     case IDC_BC_INST:

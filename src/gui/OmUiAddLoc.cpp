@@ -172,7 +172,7 @@ bool OmUiAddLoc::_onBcOk()
   wstring loc_name, loc_dst, loc_lib, loc_bck, msg;
 
   this->getItemText(IDC_EC_INP01, loc_name);
-  if(!Om_dialogValidName(this->_hwnd, L"Location title", loc_name))
+  if(!Om_dialogValidName(this->_hwnd, L"Target location name", loc_name))
     return false;
 
   this->getItemText(IDC_EC_INP02, loc_dst);
@@ -203,7 +203,7 @@ bool OmUiAddLoc::_onBcOk()
 
   // create new Location in Context
   if(!this->_pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
-    Om_dialogBoxErr(this->_hwnd, L"Location creation failed", this->_pCtx->lastError());
+    Om_dialogBoxErr(this->_hwnd, L"Target location creation failed", this->_pCtx->lastError());
   }
 
   // refresh all tree from the main dialog
@@ -222,7 +222,7 @@ void OmUiAddLoc::_onInit()
   this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Location name, to identify it and create folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Target location name, to identify it and create folder");
 
   this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");

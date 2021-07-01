@@ -20,15 +20,6 @@
 #include "gui/OmUiPropCtxStg.h"
 #include "gui/OmUiPropCtx.h"
 
-
-#define ICON_FILES_FILTER L"Icon files (*.ico,*.exe)      \
-                          \0*.ICO;*.EXE;                  \
-                          \0Programs (*.exe)              \
-                          \0*.EXE;                         \
-                          \0Icons (*.ico)                 \
-                          \0*.ICO;\0"                      \
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -81,7 +72,7 @@ void OmUiPropCtxStg::_onBcBrwIcon()
   this->getItemText(IDC_EC_INP04, start);
   start = Om_getDirPart(start);
 
-  if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select icon", ICON_FILES_FILTER, start))
+  if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select icon", OMM_ICO_FILES_FILTER, start))
     return;
 
   HICON hIc;
@@ -127,12 +118,12 @@ void OmUiPropCtxStg::_onBcDelIcon()
 void OmUiPropCtxStg::_onInit()
 {
   // add icon to buttons
+  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_OPN));
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Context home folder path");
   this->_createTooltip(IDC_EC_INP03,  L"Context name, to identify it");
-
   this->_createTooltip(IDC_BC_BRW01,  L"Browse to select an icon to associate with Context");
   this->_createTooltip(IDC_BC_DEL,    L"Remove the associated icon");
 
@@ -156,18 +147,19 @@ void OmUiPropCtxStg::_onInit()
 void OmUiPropCtxStg::_onResize()
 {
   // home location Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_EC_INP01, 70, 20, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 180, 9);
+  this->_setItemPos(IDC_EC_INP01, 50, 25, this->width()-90, 13);
   // Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 5, 62, 64, 9);
-  this->_setItemPos(IDC_EC_INP03, 70, 60, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL03, 50, 50, 180, 9);
+  this->_setItemPos(IDC_EC_INP03, 50, 60, this->width()-90, 13);
   // Icon Label & placeholder
-  this->_setItemPos(IDC_SC_LBL04, 5, 90, 64, 9);
-  this->_setItemPos(IDC_EC_INP04, 170, 90, 50, 13); // not visible
-  this->_setItemPos(IDC_SB_ICON, 70, 90, 30, 30);
+  this->_setItemPos(IDC_SC_LBL04, 50, 90, 180, 9);
+  this->_setItemPos(IDC_EC_INP04, 190, 90, 50, 13); //< hidden field
+  this->_setItemPos(IDC_SB_ICON, 50, 100, 30, 30);
+
   // Select & Remove Buttons
-  this->_setItemPos(IDC_BC_BRW01, 110, 90, 50, 14);
-  this->_setItemPos(IDC_BC_DEL, 110, 105, 50, 14);
+  this->_setItemPos(IDC_BC_BRW01, 85, 100, 16, 14);
+  this->_setItemPos(IDC_BC_DEL, 85, 115, 16, 14);
 }
 
 

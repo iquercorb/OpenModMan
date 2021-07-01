@@ -770,18 +770,19 @@ class OmLocation
     /// Removes the current custom Backup configuration and reset to
     /// default settings.
     ///
+    /// \param[in]  i       : Repository URL index to delete.
+    ///
     void repRem(unsigned i);
 
-    /// \brief Query repositories.
+    /// \brief Query repository.
     ///
-    /// Query network repositories to refresh all local remote packages.
+    /// Query network repository to refresh available remote packages.
     ///
-    /// \param[in]  progress_cb : Optional progression callback function.
-    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
+    /// \param[in]  i       : Repository URL index to query.
     ///
     /// \return True if operation succeed, false if error occurred.
     ///
-    bool repQuery(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    bool repQuery(unsigned i);
 
     /// \brief Get warning for extra download option.
     ///

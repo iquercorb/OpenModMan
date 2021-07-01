@@ -483,7 +483,7 @@ void OmUiAddBat::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
   this->_createTooltip(IDC_BC_CKBX1,  L"Create the installation Batch according the current installed and not installed packages");
-  this->_createTooltip(IDC_CB_LOC,    L"Location to configure");
+  this->_createTooltip(IDC_CB_LOC,    L"Target location to configure");
   this->_createTooltip(IDC_LB_INC,    L"Packages the Batch will install (or leave installed)");
   this->_createTooltip(IDC_LB_EXC,    L"Packages the Batch will uninstall (or leave uninstalled)");
   this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
@@ -492,7 +492,7 @@ void OmUiAddBat::_onInit()
   this->_createTooltip(IDC_BC_DN,     L"Move down in list");
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INP01, L"New Install Batch");
+  this->setItemText(IDC_EC_INP01, L"New Installation Batch");
 
   // Enable Quick create from current state
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
@@ -537,28 +537,30 @@ void OmUiAddBat::_onResize()
   int helf_h = this->height() * 0.5f;
 
   // Title label
-  this->_setItemPos(IDC_SC_LBL01, 10, 10, 150, 9);
+  this->_setItemPos(IDC_SC_LBL01, 10, 10, 180, 9);
   // Title entry
   this->_setItemPos(IDC_EC_INP01, 10, 20, this->width()-20, 13);
 
+  // Per Location Config label
+  this->_setItemPos(IDC_SC_LBL02, 10, 45, 180, 9);
   // Crate from stat CheckBox
-  this->_setItemPos(IDC_BC_CKBX1, 10, 50, 150, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 10, 56, 150, 9);
   // Location list ComboBox
-  this->_setItemPos(IDC_CB_LOC, 10, 65, this->width()-20, 12);
+  this->_setItemPos(IDC_CB_LOC, 10, 69, this->width()-20, 12);
   // Not-Installed label
-  this->_setItemPos(IDC_SC_LBL02, 10, 85, 150, 9);
+  this->_setItemPos(IDC_SC_LBL03, 10, 85, 150, 9);
   // Not-Installed ListBox
-  this->_setItemPos(IDC_LB_EXC, 10, 95, half_w-35, this->height()-130);
+  this->_setItemPos(IDC_LB_EXC, 10, 95, half_w-30, this->height()-130);
   // Add and Rem buttons
-  this->_setItemPos(IDC_BC_RIGH, half_w-20, helf_h+15, 16, 15);
-  this->_setItemPos(IDC_BC_LEFT, half_w-20, helf_h+30, 16, 15);
+  this->_setItemPos(IDC_BC_RIGH, half_w-18, helf_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_LEFT, half_w-18, helf_h+30, 16, 15);
   // Installed label
-  this->_setItemPos(IDC_SC_LBL03, half_w, 85, 150, 9);
+  this->_setItemPos(IDC_SC_LBL04, half_w, 85, 150, 9);
   // Installed ListBox
-  this->_setItemPos(IDC_LB_INC, half_w, 95, half_w-35, this->height()-130);
+  this->_setItemPos(IDC_LB_INC, half_w, 95, half_w-30, this->height()-130);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-30, helf_h+15, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-30, helf_h+30, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-28, helf_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-28, helf_h+30, 16, 15);
 
   // ----- Separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);

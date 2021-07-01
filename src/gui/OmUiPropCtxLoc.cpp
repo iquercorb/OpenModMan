@@ -97,7 +97,7 @@ void OmUiPropCtxLoc::_delLoc_init(int id)
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
     pUiProgress->open(true);
-    pUiProgress->setCaption(L"Delete Location");
+    pUiProgress->setCaption(L"Delete Target location");
     pUiProgress->setScHeadText(L"Restoring all backup data");
 
     DWORD dwId;
@@ -138,16 +138,16 @@ void OmUiPropCtxLoc::_delLoc_stop()
 
     // backup data purged, now delete Location
     if(!pCtx->locRem(this->_delLoc_id)) {
-      msg = L"Errors occurred during Location deletion process, "
+      msg = L"Errors occurred during Target location deletion process, "
             L"read debug log for more details.";
-      Om_dialogBoxWarn(this->_hwnd, L"Location deletion error", msg);
+      Om_dialogBoxWarn(this->_hwnd, L"Target location deletion error", msg);
     }
 
   } else {
     // an error occurred during backup purge
-    msg = L"Location deletion aborted because errors occurred during "
+    msg = L"Target location deletion aborted because errors occurred during "
           L"backup purge process, read debug log for more details.";
-    Om_dialogBoxErr(this->_hwnd, L"Location backup purge error", msg);
+    Om_dialogBoxErr(this->_hwnd, L"Target location backup purge error", msg);
   }
 
   // Back to main dialog window to normal state
@@ -186,12 +186,12 @@ DWORD WINAPI OmUiPropCtxLoc::_delLoc_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropCtxLoc::_delLoc_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+bool OmUiPropCtxLoc::_delLoc_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
 {
   OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
 
-  if(str) {
-    pUiProgress->setScItemText(str);
+  if(data) {
+    pUiProgress->setScItemText(reinterpret_cast<wchar_t*>(data));
   }
   pUiProgress->setPbRange(0, tot);
   pUiProgress->setPbPos(cur);
@@ -215,9 +215,16 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
 
     OmLocation* pLoc = pCtx->locGet(loc_id);
 
-    this->setItemText(IDC_EC_INP02, pLoc->dstDir());
-    this->setItemText(IDC_EC_INP03, pLoc->libDir());
-    this->setItemText(IDC_EC_INP04, pLoc->bckDir());
+    this->setItemText(IDC_EC_OUT01, pLoc->dstDir());
+    this->setItemText(IDC_EC_OUT02, pLoc->libDir());
+    this->setItemText(IDC_EC_OUT03, pLoc->bckDir());
+
+    this->enableItem(IDC_SC_LBL02, true);
+    this->enableItem(IDC_EC_OUT01, true);
+    this->enableItem(IDC_SC_LBL03, true);
+    this->enableItem(IDC_EC_OUT02, true);
+    this->enableItem(IDC_SC_LBL04, true);
+    this->enableItem(IDC_EC_OUT03, true);
 
     this->enableItem(IDC_BC_DEL, true);
     this->enableItem(IDC_BC_EDI, true);
@@ -225,6 +232,20 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
     this->enableItem(IDC_BC_UP, (lb_sel > 0));
     int lb_max = this->msgItem(IDC_LB_LOC, LB_GETCOUNT) - 1;
     this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+  } else {
+    this->setItemText(IDC_EC_OUT01, L"<no selection>");
+    this->setItemText(IDC_EC_OUT02, L"<no selection>");
+    this->setItemText(IDC_EC_OUT03, L"<no selection>");
+
+    this->enableItem(IDC_SC_LBL02, false);
+    this->enableItem(IDC_EC_OUT01, false);
+    this->enableItem(IDC_SC_LBL03, false);
+    this->enableItem(IDC_EC_OUT02, false);
+    this->enableItem(IDC_SC_LBL04, false);
+    this->enableItem(IDC_EC_OUT03, false);
+
+    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_BC_EDI, false);
   }
 }
 
@@ -314,18 +335,18 @@ void OmUiPropCtxLoc::_onBcDelLoc()
   // warns the user before committing the irreparable
   wstring msg;
   msg =   L"The operation will permanently delete "
-          L"the Location and its associated data.";
+          L"the Target location and its associated data.";
   msg +=  L"\n\nDelete the Location \"" + pLoc->title() + L"\" ?";
 
-  if(!Om_dialogBoxQuerry(this->_hwnd, L"Location deletion", msg))
+  if(!Om_dialogBoxQuerry(this->_hwnd, L"Target location deletion", msg))
     return;
 
   if(pLoc->bckHasData()) {
-    msg =   L"The Location currently have installed packages, the deletion"
-            L"process will uninstall them and restore all backup data.";
-    msg +=  L"Continue ?";
+    msg =   L"The Target location currently have installed packages, the "
+            L"deletion process will uninstall them and restore all backup data.";
+    msg +=  L"\n\nContinue ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Location deletion", msg))
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Target location deletion", msg))
       return;
   }
 
@@ -382,18 +403,12 @@ void OmUiPropCtxLoc::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,  L"Context Locations list");
-
+  this->_createTooltip(IDC_LB_LOC,  L"Target locations list");
   this->_createTooltip(IDC_BC_UP,   L"Move up in list");
   this->_createTooltip(IDC_BC_DN,   L"Move down in list");
-
-  this->_createTooltip(IDC_BC_DEL,  L"Delete Location and its associated data");
-  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Location for this Context");
-  this->_createTooltip(IDC_BC_EDI,  L"Modify Location properties");
-
-  this->enableItem(IDC_EC_INP02, false);
-  this->enableItem(IDC_EC_INP03, false);
-  this->enableItem(IDC_EC_INP04, false);
+  this->_createTooltip(IDC_BC_DEL,  L"Delete Target location and its associated data");
+  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Target location for this Context");
+  this->_createTooltip(IDC_BC_EDI,  L"Modify Target location properties");
 
   // Update values
   this->_onRefresh();
@@ -406,25 +421,25 @@ void OmUiPropCtxLoc::_onInit()
 void OmUiPropCtxLoc::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_LOC, 70, 20, this->width()-107, 30);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 64, 9);
+  this->_setItemPos(IDC_LB_LOC, 50, 25, this->width()-107, 30);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-35, 20, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-35, 36, 16, 15);
-  // Location Destination Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, 71, 60, 40, 9);
-  this->_setItemPos(IDC_EC_INP02, 115, 60, this->width()-125, 13);
-  // Location Library Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 71, 75, 40, 9);
-  this->_setItemPos(IDC_EC_INP03, 115, 75, this->width()-125, 13);
-  // Location Backup Label & EditControl
-  this->_setItemPos(IDC_SC_LBL04, 71, 90, 40, 9);
-  this->_setItemPos(IDC_EC_INP04, 115, 90, this->width()-125, 13);
+  this->_setItemPos(IDC_BC_UP, this->width()-55, 25, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-55, 40, 16, 15);
   // Remove & Modify Buttons
-  this->_setItemPos(IDC_BC_DEL, 70, 110, 50, 14);
-  this->_setItemPos(IDC_BC_EDI, 122, 110, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 50, 57, 50, 14);
+  this->_setItemPos(IDC_BC_EDI, 105, 57, 50, 14);
   // Add button
-  this->_setItemPos(IDC_BC_ADD, this->width()-87, 110, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-108, 57, 50, 14);
+  // Location Destination Label & EditControl
+  this->_setItemPos(IDC_SC_LBL02, 50, 75, 110, 9);
+  this->_setItemPos(IDC_EC_OUT01, 115, 75, this->width()-155, 13);
+  // Location Library Label & EditControl
+  this->_setItemPos(IDC_SC_LBL03, 50, 87, 110, 9);
+  this->_setItemPos(IDC_EC_OUT02, 115, 87, this->width()-155, 13);
+  // Location Backup Label & EditControl
+  this->_setItemPos(IDC_SC_LBL04, 50, 99, 110, 9);
+  this->_setItemPos(IDC_EC_OUT03, 115, 99, this->width()-155, 13);
 }
 
 
@@ -444,9 +459,16 @@ void OmUiPropCtxLoc::_onRefresh()
   }
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INP02, L"<no selection>");
-  this->setItemText(IDC_EC_INP03, L"<no selection>");
-  this->setItemText(IDC_EC_INP04, L"<no selection>");
+  this->setItemText(IDC_EC_OUT01, L"<no selection>");
+  this->setItemText(IDC_EC_OUT02, L"<no selection>");
+  this->setItemText(IDC_EC_OUT03, L"<no selection>");
+
+  this->enableItem(IDC_SC_LBL02, false);
+  this->enableItem(IDC_EC_OUT01, false);
+  this->enableItem(IDC_SC_LBL03, false);
+  this->enableItem(IDC_EC_OUT02, false);
+  this->enableItem(IDC_SC_LBL04, false);
+  this->enableItem(IDC_EC_OUT03, false);
 
   this->enableItem(IDC_BC_DEL,  false);
   this->enableItem(IDC_BC_EDI, false);

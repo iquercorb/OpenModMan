@@ -45,9 +45,9 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
-  this->_addPage(L"Library", new OmUiPropLocLib(hins));
-  this->_addPage(L"Network", new OmUiPropLocNet(hins));
-  this->_addPage(L"Backup", new OmUiPropLocBck(hins));
+  this->_addPage(L"Packages library", new OmUiPropLocLib(hins));
+  this->_addPage(L"Network repositories", new OmUiPropLocNet(hins));
+  this->_addPage(L"Backup options", new OmUiPropLocBck(hins));
 
   // creates child sub-dialogs
   this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
@@ -443,12 +443,12 @@ DWORD WINAPI OmUiPropLoc::_movBck_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLoc::_movBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
+bool OmUiPropLoc::_movBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
 {
   OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
 
-  if(str) {
-    pUiProgress->setScItemText(str);
+  if(data) {
+    pUiProgress->setScItemText(reinterpret_cast<wchar_t*>(data));
   }
   pUiProgress->setPbRange(0, tot);
   pUiProgress->setPbPos(cur);

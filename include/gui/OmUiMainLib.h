@@ -129,7 +129,7 @@ class OmUiMainLib : public OmDialog
 
     void                _pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
 
-    static bool         _pkgProgressCb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+    static bool         _pkgProgressCb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     void                _dirMon_init(const wstring& path);
 
@@ -173,9 +173,11 @@ class OmUiMainLib : public OmDialog
 
     bool                _buildLvPkg_legacy;
 
+    unsigned            _buildLvBat_icSize;
+
     void                _buildCbLoc();
 
-    void                _buildLbBat();
+    void                _buildLvBat();
 
     void                _onCbLocSel();
 
@@ -183,7 +185,7 @@ class OmUiMainLib : public OmDialog
 
     void                _onLvPkgSel();
 
-    void                _onLbBatSel();
+    void                _onLvBatSel();
 
     void                _onBcRunBat();
 

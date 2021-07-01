@@ -90,7 +90,7 @@ class OmUiPropLocBck : public OmDialog
 
     static DWORD WINAPI _delBck_fth(void*);
 
-    static bool         _delBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+    static bool         _delBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     void                _onInit();
 

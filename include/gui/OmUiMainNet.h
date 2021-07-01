@@ -124,8 +124,6 @@ class OmUiMainNet : public OmDialog
 
     static DWORD WINAPI _repQry_fth(void*);
 
-    static bool         _repQry_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
-
     void                _rmtDnl_stop();
 
     bool                _rmtDnl_update(double tot, double cur, double rate, uint64_t hash);
@@ -140,19 +138,21 @@ class OmUiMainNet : public OmDialog
 
     bool                _thread_abort;
 
-    void                _buildLvRmt();
+    void                _buildLvRep();
 
-    unsigned            _buildLvRmt_icSize;
+    unsigned            _buildLvRep_icSize;
 
     void                _buildCbLoc();
 
-    void                _buildLbRep();
+    void                _buildLvRmt();
+
+    unsigned            _buildLvRmt_icSize;
 
     void                _onCbLocSel();
 
     void                _onLvRmtHit();
 
-    void                _onLbRepSel();
+    void                _onLvRepSel();
 
     void                _onLvRmtRclk();
 

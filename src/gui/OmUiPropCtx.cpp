@@ -38,8 +38,8 @@ OmUiPropCtx::OmUiPropCtx(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Settings", new OmUiPropCtxStg(hins));
-  this->_addPage(L"Locations", new OmUiPropCtxLoc(hins));
-  this->_addPage(L"Batches", new OmUiPropCtxBat(hins));
+  this->_addPage(L"Target locations", new OmUiPropCtxLoc(hins));
+  this->_addPage(L"Installation batches", new OmUiPropCtxBat(hins));
 
   this->addChild(new OmUiAddLoc(hins));     //< Dialog for Location creation
   this->addChild(new OmUiAddBat(hins));     //< Dialog for Batch creation

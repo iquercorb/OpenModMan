@@ -1247,6 +1247,8 @@ void OmUiToolRep::_onInit()
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons icons
+  this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_NEW));
+  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_OPN));
   this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_ADD));
   this->setBmImage(IDC_BC_BRW03, Om_getResImage(this->_hins, IDB_BTN_DIR));
   this->setBmImage(IDC_BC_REM, Om_getResImage(this->_hins, IDB_BTN_REM));

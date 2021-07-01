@@ -26,6 +26,7 @@
 !define CRYPTO_32_DLL     "..\dll\32-bit\libcrypto-1_1.dll"
 
 !define OMM_ICO           "..\include\gui\res\bitmap\omm_icon.ico"
+!define OMB_ICO           "..\include\gui\res\bitmap\omb_icon.ico"
 !define OMX_ICO           "..\include\gui\res\bitmap\omx_icon.ico"
 !define OMP_ICO           "..\include\gui\res\bitmap\omp_icon.ico"
 !define OMK_ICO           "..\include\gui\res\bitmap\omk_icon.ico"

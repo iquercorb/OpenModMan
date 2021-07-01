@@ -74,6 +74,7 @@
 #define OMM_IMG_FILES_FILTER      L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
 #define OMM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
 #define OMM_TXT_FILES_FILTER      L"Text file (*.txt)\0*.TXT\0"
+#define OMM_ICO_FILES_FILTER      L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0"
 
 #define OMM_CTX_DEF_FILE_FILER    L"Context definition (*.omc)\0*.OMC;\0"
 #define OMM_LOC_DEF_FILE_FILER    L"Location definition (*.oml)\0*.OML;\0"
@@ -106,14 +107,14 @@ using namespace std;
 ///
 /// Generic callback function for process progression.
 ///
-/// \param[in]  ptr : User data pointer.
-/// \param[in]  tot : Number total count of items.
-/// \param[in]  cur : Number processed item count.
-/// \param[in]  str : String for current stage description or item name.
+/// \param[in]  ptr   : User data pointer.
+/// \param[in]  tot   : Number total count of items.
+/// \param[in]  cur   : Number processed item count.
+/// \param[in]  data  : Custom internal opaque data.
 ///
 /// \return True to continue, false to abort process.
 ///
-typedef bool (*Om_progressCb)(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+typedef bool (*Om_progressCb)(void* ptr, size_t tot, size_t cur, uint64_t data);
 
 /// \brief Progress callback.
 ///

@@ -196,11 +196,11 @@ void OmUiPropLocNet::_onInit()
   this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,  L"Location network Repositories list");
+  this->_createTooltip(IDC_LB_LOC,    L"Location network Repositories list");
 
-  this->_createTooltip(IDC_BC_DEL,  L"Remove selection Repository");
-  this->_createTooltip(IDC_BC_EDI,  L"Test for Repository availability");
-  this->_createTooltip(IDC_BC_ADD,  L"Configure a new network Repository");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove selection Repository");
+  this->_createTooltip(IDC_BC_EDI,    L"Test for Repository availability");
+  this->_createTooltip(IDC_BC_ADD,    L"Configure a new network Repository");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Warn when packages download require additional dependencies download");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn when packages to download have missing dependencies");
@@ -222,30 +222,30 @@ void OmUiPropLocNet::_onInit()
 void OmUiPropLocNet::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 68, 9);
-  this->_setItemPos(IDC_LB_REP, 70, 20, this->width()-107, 30);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 68, 9);
+  this->_setItemPos(IDC_LB_REP, 50, 25, this->width()-107, 20);
 
   // Remove Button
-  this->_setItemPos(IDC_BC_DEL, 70, 55, 50, 14);
-  this->_setItemPos(IDC_BC_QRY, 122, 55, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 50, 48, 50, 14);
+  this->_setItemPos(IDC_BC_QRY, 105, 48, 50, 14);
   // Add button
-  this->_setItemPos(IDC_BC_ADD, this->width()-87, 55, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-107, 48, 50, 14);
   // Test result static
-  this->_setItemPos(IDC_SC_STATE, 71, 75, this->width()-137, 9);
+  this->_setItemPos(IDC_SC_STATE, 51, 64, this->width()-137, 9);
 
   // Warnings label
-  this->_setItemPos(IDC_SC_LBL02, 5, 95, 68, 9);
+  this->_setItemPos(IDC_SC_LBL02, 50, 85, 180, 9);
   // Warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX1, 70, 95, 180, 9);
-  this->_setItemPos(IDC_BC_CKBX2, 70, 107, 180, 9);
-  this->_setItemPos(IDC_BC_CKBX3, 70, 119, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 65, 95, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 65, 105, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX3, 65, 115, 180, 9);
 
   // Package upgrade label
-  this->_setItemPos(IDC_SC_LBL03, 5, 140, 68, 9);
+  this->_setItemPos(IDC_SC_LBL03, 50, 135, 180, 9);
   // Move to trash RadioButton
-  this->_setItemPos(IDC_BC_RAD01, 70, 140, 160, 9);
+  this->_setItemPos(IDC_BC_RAD01, 65, 145, 180, 9);
   // Rename RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 70, 152, 160, 9);
+  this->_setItemPos(IDC_BC_RAD02, 65, 155, 180, 9);
 }
 
 

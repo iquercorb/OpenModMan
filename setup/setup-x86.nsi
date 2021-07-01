@@ -65,12 +65,13 @@ Section "Install (required)"
   File "/oname=libssl-1_1.dll"            "${SSL_32_DLL}"
   File "/oname=libcrypto-1_1.dll"         "${CRYPTO_32_DLL}"
   File "/oname=libcurl.dll"               "${CURL_32_DLL}"
-  
+
   file "/oname=omm_icon.ico"              "${OMM_ICO}"
+  file "/oname=omb_icon.ico"            "${OMB_ICO}"
   file "/oname=omx_icon.ico"              "${OMX_ICO}"
   file "/oname=omp_icon.ico"              "${OMP_ICO}"
   file "/oname=omk_icon.ico"              "${OMK_ICO}"
-  
+
   File "/oname=LICENSE.TXT"               "..\LICENSE.TXT"
   File "/oname=CREDITS.TXT"               "..\CREDITS.TXT"
 
@@ -94,12 +95,12 @@ Section "Install (required)"
   WriteRegStr HKCR "${APP_REG_NAME}.Context" "" "${APP_NAME} Context"
   WriteRegStr HKCR "${APP_REG_NAME}.Context\shell" "" "open"
   WriteRegStr HKCR "${APP_REG_NAME}.Context\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
-  
+
   WriteRegStr HKCR ".omp" "" "${APP_REG_NAME}.Package"
   WriteRegStr HKCR ".omp" "Content Type" "application/x-zip-compressed"
   WriteRegStr HKCR "${APP_REG_NAME}.Package\DefaultIcon" "" "$INSTDIR\omp_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.Package" "" "${APP_NAME} Package"
-  
+
   WriteRegStr HKCR ".omk" "" "${APP_REG_NAME}.Backup"
   WriteRegStr HKCR ".omk" "Content Type" "application/x-zip-compressed"
   WriteRegStr HKCR "${APP_REG_NAME}.Backup\DefaultIcon" "" "$INSTDIR\omk_icon.ico"
@@ -109,12 +110,12 @@ Section "Install (required)"
   WriteRegStr HKCR ".oml" "Content Type" "text/xml"
   WriteRegStr HKCR "${APP_REG_NAME}.Location\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.Location" "" "${APP_NAME} Location Definition"
-  
+
   WriteRegStr HKCR ".omb" "" "${APP_REG_NAME}.Batch"
   WriteRegStr HKCR ".omb" "Content Type" "text/xml"
-  WriteRegStr HKCR "${APP_REG_NAME}.Batch\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
+  WriteRegStr HKCR "${APP_REG_NAME}.Batch\DefaultIcon" "" "$INSTDIR\omb_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.Batch" "" "${APP_NAME} Batch Definition"
-  
+
 SectionEnd
 
 ; Optional section (can be disabled by the user)
@@ -145,21 +146,21 @@ Section "Uninstall"
   ; Remove directories used
   RMDir "$SMPROGRAMS\${APP_NAME}"
   RMDir "$INSTDIR"
-  
+
   ; Remove file association
   DeleteRegKey HKCR ".omc"
   DeleteRegKey HKCR "${APP_REG_NAME}.Context"
-      
+
   DeleteRegKey HKCR ".omp"
   DeleteRegKey HKCR "${APP_REG_NAME}.Package"
-  
+
   DeleteRegKey HKCR ".omk"
   DeleteRegKey HKCR "${APP_REG_NAME}.Backup"
-  
+
   DeleteRegKey HKCR ".oml"
   DeleteRegKey HKCR "${APP_REG_NAME}.Location"
-  
+
   DeleteRegKey HKCR ".omb"
   DeleteRegKey HKCR "${APP_REG_NAME}.Batch"
-  
+
 SectionEnd

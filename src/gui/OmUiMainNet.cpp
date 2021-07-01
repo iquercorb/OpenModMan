@@ -48,6 +48,7 @@ OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
   _rmtDnl_count(0),
   _rmtDnl_abort(0),
   _thread_abort(false),
+  _buildLvRep_icSize(0),
   _buildLvRmt_icSize(0)
 {
   // Package info sub-dialog
@@ -136,8 +137,8 @@ void OmUiMainNet::safemode(bool enable)
     // will also select the default Location
     this->_buildCbLoc();
 
-    // rebuild Batches ListBox
-    this->_buildLbRep();
+    // rebuild Repository ListView
+    this->_buildLvRep();
   }
 }
 
@@ -217,7 +218,7 @@ void OmUiMainNet::locSel(int id)
   }
 
   // refresh
-  this->_buildLbRep();
+  this->_buildLvRep();
   this->_buildLvRmt();
 
   // forces control to select item
@@ -656,24 +657,45 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc)return 1;
 
+  DWORD exitCode = 0;
+
   // reset abort status
   self->_thread_abort = false;
-
-  // enable stop button and progress bar
-  //self->enableItem(IDC_BC_STOP, true);
-  //self->enableItem(IDC_PB_REP, true);
 
   // change button image from refresh to stop
   self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_NOT));
 
-  pLoc->repQuery(&self->_repQry_progress_cb, self);
+  OmRepository* pRep;
+  LVITEMW lvItem;
+  for(size_t i = 0; i < pLoc->repCount(); ++i) {
+
+    // the first column, repository status, here we INSERT the new item
+    lvItem.iItem = i;
+    lvItem.mask = LVIF_IMAGE;
+    lvItem.iSubItem = 0;
+    lvItem.iImage = 0; //< WIP
+    self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    if(!pLoc->repQuery(i)) {
+      exitCode = 1;
+      lvItem.iImage = 1; //< ERR
+      self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+    } else {
+      lvItem.iImage = 3; //< BOK
+      self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+      pRep = pLoc->repGet(i);
+
+      // Third column, the repository title
+      lvItem.mask = LVIF_TEXT;
+      lvItem.iSubItem = 2;
+      lvItem.pszText = const_cast<LPWSTR>(pRep->title().c_str());
+      self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+    }
+  }
 
   // change button image from stop to refresh
   self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_REF));
-
-  // disable stop button and progress bar
-  //self->enableItem(IDC_BC_STOP, false);
-  //self->enableItem(IDC_PB_REP, false);
 
   // reset progress bar position
   self->msgItem(IDC_PB_REP, PBM_SETPOS, 0);
@@ -681,42 +703,9 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   // send message to notify process ended
   self->postMessage(UWM_REPQUERY_DONE);
 
-  return 0;
+  return exitCode;
 }
 
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiMainNet::_repQry_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str)
-{
-  OmUiMainNet* self = reinterpret_cast<OmUiMainNet*>(ptr);
-
-  self->msgItem(IDC_PB_REP, PBM_SETRANGE, 0, MAKELPARAM(0, tot));
-  self->msgItem(IDC_PB_REP, PBM_SETPOS, cur+1);
-  self->msgItem(IDC_PB_REP, PBM_SETPOS, cur);
-
-  // refresh remote package list
-  self->_buildLbRep();
-  self->_buildLvRmt();
-
-  // check for abort
-  if(self->_thread_abort) {
-
-    #ifdef DEBUG
-    std::cout << "DEBUG => OmUiMainNet::_repQry_progress_cb - abort\n";
-    #endif
-
-    // reset abort to ensure this will not conflict with download thread
-    self->_thread_abort = false;
-
-    return false; //< abort now
-
-  } else {
-
-    return true; //< continue
-  }
-}
 
 
 ///
@@ -981,38 +970,109 @@ void OmUiMainNet::_buildCbLoc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainNet::_buildLbRep()
+void OmUiMainNet::_buildLvRep()
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::_buildLbRep\n";
+  std::cout << "DEBUG => OmUiMainNet::_buildLvRep\n";
   #endif
-
-  // empty List-Box
-  this->msgItem(IDC_LB_REP, LB_RESETCONTENT);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
-  if(pCtx->locCur()) {
+  if(!pLoc) {
+    // empty ListView
+    this->msgItem(IDC_LV_BAT, LVM_DELETEALLITEMS);
+    // disable ListView
+    this->enableItem(IDC_LV_BAT, false);
+    // disable query button
+    this->enableItem(IDC_BC_QRY, false);
+    // return now
+    return;
+  }
 
-    OmLocation* pLoc = pCtx->locCur();
+  // if icon size changed, create new ImageList
+  if(this->_buildLvRep_icSize != pMgr->iconsSize()) {
 
-    wstring ident, label;
-    OmRepository* pRep;
+    HIMAGELIST hImgLs;
 
-    for(unsigned i = 0; i < pLoc->repCount(); ++i) {
+    // Get the previous Image List to be destroyed (Small and Normal uses the same)
+    hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_REP, LVM_GETIMAGELIST, LVSIL_NORMAL));
+    if(hImgLs) ImageList_Destroy(hImgLs);
 
-      pRep = pLoc->repGet(i);
+    // - 0: STS_WIP - 1: STS_ERR -  2: STS_WRN -  3: STS_BOK
 
-      ident = pRep->base() + L" - " + pRep->name();
-      label = pRep->title().empty() ? ident : (pRep->title() + L" - [ " + ident + L" ] - " + to_wstring(pRep->rmtCount()) + L" package(s)");
+    // Build list of images resource ID for the required size
+    unsigned idb[] = {IDB_STS_WIP_16, IDB_STS_ERR_16, IDB_STS_WRN_16, IDB_STS_BOK_16};
 
-      this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
+    switch(pMgr->iconsSize())
+    {
+    case 24:
+      for(unsigned i = 0; i < 4; ++i)
+        idb[i] += 1; //< steps IDs to 24 pixels images
+      break;
+    case 32:
+      for(unsigned i = 0; i < 4; ++i)
+        idb[i] += 2; //< steps IDs to 32 pixels images
+      break;
     }
 
-    this->enableItem(IDC_BC_QRY, (pLoc->repCount() > 0));
+    // Create ImageList and fill it with bitmaps
+    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 4, 0 );
+    for(unsigned i = 0; i < 4; ++i)
+      ImageList_Add(hImgLs, Om_getResImage(this->_hins, idb[i]), nullptr);
+
+    // Set ImageList to ListView
+    this->msgItem(IDC_LV_REP, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgLs));
+    this->msgItem(IDC_LV_REP, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgLs));
+
+    // update size
+    this->_buildLvRep_icSize = pMgr->iconsSize();
   }
+
+  // Save list-view scroll position to lvRect
+  RECT lvRec;
+  this->msgItem(IDC_LV_REP, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
+
+  // empty list view
+  this->msgItem(IDC_LV_REP, LVM_DELETEALLITEMS);
+
+  wstring item_str;
+  OmRepository* pRep;
+  LVITEMW lvItem;
+  for(unsigned i = 0; i < pLoc->repCount(); ++i) {
+
+    pRep = pLoc->repGet(i);
+
+    // the first column, repository status, here we INSERT the new item
+    lvItem.iItem = i;
+    lvItem.mask = LVIF_IMAGE;
+    lvItem.iSubItem = 0;
+    lvItem.iImage = pRep->isValid() ? 3 /*BOK*/ : -1/*No image*/;
+    lvItem.iItem = this->msgItem(IDC_LV_REP, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Second column, the repository address, now empty, here we set the sub-item
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 1;
+    item_str = pRep->base() + L" - " + pRep->name();
+    lvItem.pszText = const_cast<LPWSTR>(item_str.c_str());
+    this->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Third column, the repository title
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 2;
+    lvItem.pszText = const_cast<LPWSTR>(pRep->title().c_str());
+    this->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+  }
+
+  // we enable the List-View
+  this->enableItem(IDC_LV_REP, true);
+
+  // restore list-view scroll position from lvRec
+  this->msgItem(IDC_LV_REP, LVM_SCROLL, 0, -lvRec.top );
+
+  // enable or disable query button
+  this->enableItem(IDC_BC_QRY, (pLoc->repCount() > 0));
 }
 
 
@@ -1169,11 +1229,12 @@ void OmUiMainNet::_onCbLocSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMainNet::_onLbRepSel()
+void OmUiMainNet::_onLvRepSel()
 {
-  int lb_sel = this->msgItem(IDC_LB_BAT, LB_GETCURSEL);
+  // get count of selected item
+  unsigned lv_nsl = this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT);
 
-  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
+  this->enableItem(IDC_BC_DEL, (lv_nsl >= 0));
 }
 
 
@@ -1434,7 +1495,7 @@ void OmUiMainNet::_onBcDelRep()
   pLoc->repRem(lb_sel);
 
   // reload the repository ListBox
-  this->_buildLbRep();
+  this->_buildLvRep();
 }
 
 
@@ -1499,19 +1560,41 @@ void OmUiMainNet::_onInit()
   this->_createTooltip(IDC_BC_UPGD,   L"Download selected packages for upgrade");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort download");
 
-  // Initialize the ListView control
-  DWORD dwExStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
-  this->msgItem(IDC_LV_RMT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwExStyle);
+  DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
+  LVCOLUMNW lvCol;
+
+  // Initialize Repository ListView control
+  this->msgItem(IDC_LV_REP, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
+  // set explorer theme
+  SetWindowTheme(this->getItem(IDC_LV_REP),L"Explorer",nullptr);
+
+  // we now add columns into our list-view control
+  lvCol.mask = LVCF_WIDTH|LVCF_FMT;
+  //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
+  // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
+  // mysterious ways... So, don't try to fix this.
+  lvCol.fmt = LVCFMT_RIGHT;
+  lvCol.cx = 43;
+  lvCol.iSubItem = 0;
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
+
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 300;
+  lvCol.iSubItem = 1;
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
+
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 300;
+  lvCol.iSubItem = 2;
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+
+  // Initialize Remote Packages ListView control
+  this->msgItem(IDC_LV_RMT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
   // set explorer theme
   SetWindowTheme(this->getItem(IDC_LV_RMT),L"Explorer",nullptr);
 
   // we now add columns into our list-view control
-  LVCOLUMNW lvCol;
   lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
-
-  //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
-  // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
-  // mysterious ways... So, don't try to fix this.
   lvCol.pszText = const_cast<LPWSTR>(L"Status");
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
@@ -1574,7 +1657,7 @@ void OmUiMainNet::_onShow()
   if(pCtx->locCur()) {
 
     // rebuild elements
-    this->_buildLbRep();
+    this->_buildLvRep();
 
     // restart folder monitoring
     if(!this->_dirMon_hth) {
@@ -1614,21 +1697,25 @@ void OmUiMainNet::_onHide()
 ///
 void OmUiMainNet::_onResize()
 {
+  LONG size[4], half_s;
+
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-10, 12);
-
   // Repositories label
-  this->_setItemPos(IDC_SC_LBL01, 5, 24, 50, 12);
+  this->_setItemPos(IDC_SC_LBL01, 5, 24, 180, 12);
   // Repositories ProgressBar
-  //this->_setItemPos(IDC_BC_QRY, this->width()-42, 20, 37, 14);
-  this->_setItemPos(IDC_BC_QRY, this->width()-21, 20, 16, 14);
+  this->_setItemPos(IDC_BC_QRY, this->width()-20, 20, 16, 14);
   //this->_setItemPos(IDC_PB_REP, 89, 21, this->width()-129, 13);
   //this->_setItemPos(IDC_BC_STOP, this->width()-37, 20, 32, 14);
   // Repositories ListBox
-  this->_setItemPos(IDC_LB_REP, 5, 37, this->width()-30, 29);
+  this->_setItemPos(IDC_LV_REP, 5, 37, this->width()-30, 29);
+  GetClientRect(this->getItem(IDC_LV_REP), reinterpret_cast<LPRECT>(&size));
+  half_s = static_cast<float>(size[2]) * 0.5f;
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 1, half_s-40);
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 2, half_s-40);
   // Repositories Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_NEW, this->width()-21, 36, 16, 14);
-  this->_setItemPos(IDC_BC_DEL, this->width()-21, 52, 16, 14);
+  this->_setItemPos(IDC_BC_NEW, this->width()-20, 36, 16, 14);
+  this->_setItemPos(IDC_BC_DEL, this->width()-20, 52, 16, 14);
 
   // Horizontal separator
   this->_setItemPos(IDC_SC_SEPAR, 5, 70, this->width()-10, 1);
@@ -1636,7 +1723,6 @@ void OmUiMainNet::_onResize()
   // Package List ListView
   this->_setItemPos(IDC_LV_RMT, 5, 75, this->width()-10, this->height()-191);
   // Resize the ListView column
-  LONG size[4];
   GetClientRect(this->getItem(IDC_LV_RMT), reinterpret_cast<LPRECT>(&size));
   this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-345);
 
@@ -1688,7 +1774,7 @@ void OmUiMainNet::_onRefresh()
   this->_buildCbLoc();
 
   // reload Repository ListBox
-  this->_buildLbRep();
+  this->_buildLvRep();
 
   // if icon size changed, rebuild Package ListView
   if(this->_buildLvRmt_icSize != pMgr->iconsSize()) {
@@ -1763,45 +1849,37 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return false;
+
   if(uMsg == WM_NOTIFY) {
 
-    OmManager* pMgr = static_cast<OmManager*>(this->_data);
-    if(!pMgr->ctxCur()) return false;
-    OmContext* pCtx = pMgr->ctxCur();
-    if(!pCtx->locCur()) return false;
-
     OmLocation* pLoc = pCtx->locCur();
+    if(!pLoc) return false;
 
-    NMHDR* pNmhdr = reinterpret_cast<NMHDR*>(lParam);
+    // if repositories query is running we block all interaction
+    if(this->_repQryt_hth)
+      return false;
 
     if(LOWORD(wParam) == IDC_LV_RMT) {
 
-      // if repositories query is running we block all interaction
-      if(this->_repQryt_hth)
-        return false;
-
-      if(pNmhdr->code == NM_DBLCLK) {
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
         this->_onLvRmtHit();
-        return false;
-      }
+        break;
 
-      if(pNmhdr->code == LVN_ITEMCHANGED) {
-        // update package(s) selection
-        this->_onLvRmtSel();
-        return false;
-      }
-
-      if(pNmhdr->code == NM_RCLICK) {
-        // Open the popup menu
+      case NM_RCLICK:
         this->_onLvRmtRclk();
-        return false;
-      }
+        break;
 
-      if(pNmhdr->code == LVN_COLUMNCLICK) {
+      case LVN_ITEMCHANGED:
+        this->_onLvRmtSel();
+        break;
 
-        NMLISTVIEW* pNmlv = reinterpret_cast<NMLISTVIEW*>(lParam);
-
-        switch(pNmlv->iSubItem)
+      case LVN_COLUMNCLICK:
+        switch(reinterpret_cast<NMLISTVIEW*>(lParam)->iSubItem)
         {
         case 0:
           pLoc->rmtSetSorting(LS_SORT_STAT);
@@ -1816,13 +1894,26 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           pLoc->rmtSetSorting(LS_SORT_NAME);
           break;
         }
-
-        // rebuild remote packages ListView
-        this->_buildLvRmt();
-
-        return false;
+        this->_onLvRmtRclk();
+        break;
       }
     }
+
+    if(LOWORD(wParam) == IDC_LV_REP) {
+
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
+        //this->_onLvRmtHit();
+        break;
+
+      case LVN_ITEMCHANGED:
+        this->_onLvRepSel();
+        break;
+      }
+    }
+
+    return false;
   }
 
   if(uMsg == WM_COMMAND) {
@@ -1846,13 +1937,6 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_STOP:
       this->_onBcStopRep();
-      break;
-
-    case IDC_LB_REP: //< Repository list List-Box
-      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbRepSel();
-      if(HIWORD(wParam) == LBN_DBLCLK) {
-        //...
-      }
       break;
 
     case IDC_BC_NEW: //< Repository "Add" button

@@ -101,7 +101,7 @@ class OmUiPropLoc : public OmDialogProp
 
     static DWORD WINAPI _movBck_fth(void*);
 
-    static bool         _movBck_progress_cb(void* ptr, size_t tot, size_t cur, const wchar_t* str);
+    static bool         _movBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     void                _onPropInit();
 

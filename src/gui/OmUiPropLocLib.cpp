@@ -120,10 +120,10 @@ void OmUiPropLocLib::_onResize()
   this->_setItemPos(IDC_SC_LBL01, 50, 45, 200, 9);
 
   // Enable warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX2, 65, 60, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX3, 65, 75, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX4, 65, 90, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX5, 65, 105, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 65, 55, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX3, 65, 65, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX4, 65, 75, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX5, 65, 85, 200, 9);
 }
 
 

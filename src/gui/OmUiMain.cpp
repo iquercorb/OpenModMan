@@ -210,25 +210,11 @@ void OmUiMain::ctxSel(int id)
   pMgr->ctxSel(id);
   OmContext* pCtx = pMgr->ctxCur();
 
-  // update dialog window title
-  wstring caption;
-  if(pCtx) caption = pCtx->title() + L" - ";
+  // update window caption
+  this->_buildCaption();
 
-  this->setCaption(caption + OMM_APP_NAME);
-
-  // update the Context icon
-  HICON hIcon = nullptr;
-
-  // get context icon
-  if(pCtx)
-    if(pCtx->icon())
-      hIcon = pCtx->icon();
-
-  // Get default icon
-  if(!hIcon)
-    hIcon = Om_getShellIcon(SIID_APPLICATION, true);
-
-  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
+  // update Context Icon
+  this->_buildSbCtx();
 
   // update menus
   int state = pCtx ? MF_ENABLED : MF_GRAYED;
@@ -264,6 +250,46 @@ void OmUiMain::_addPage(const wstring& title, OmDialog* dialog)
   this->addChild(dialog);
   this->_pageDial.push_back(dialog);
   this->_pageName.push_back(title);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMain::_buildCaption()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // update dialog window title
+  wstring caption;
+  if(pCtx) caption = pCtx->title() + L" - ";
+
+  this->setCaption(caption + OMM_APP_NAME);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMain::_buildSbCtx()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // update the Context icon
+  HICON hIcon = nullptr;
+
+  // get context icon
+  if(pCtx)
+    if(pCtx->icon())
+      hIcon = pCtx->icon();
+
+  // Get default icon
+  if(!hIcon)
+    hIcon = Om_getShellIcon(SIID_APPLICATION, true);
+
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
 }
 
 
@@ -501,6 +527,12 @@ void OmUiMain::_onRefresh()
 
   // rebuild the Context list Combo-Box
   this->_buildCbCtx();
+
+  // update window caption
+  this->_buildCaption();
+
+  // update Context Icon
+  this->_buildSbCtx();
 }
 
 

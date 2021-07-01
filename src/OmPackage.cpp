@@ -775,7 +775,7 @@ bool OmPackage::uninst(Om_progressCb progress_cb, void* user_ptr)
     progress_tot = this->_bckItemLs.size();
     progress_cur = 0;
     // it still time to abort
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
       this->log(1, L"Package("+this->_ident+L") Uninstall", L"Aborted.");
       return true;
     }
@@ -822,7 +822,7 @@ bool OmPackage::install(unsigned zipLvl, Om_progressCb progress_cb, void* user_p
     progress_tot = 2 * this->_srcItemLs.size();
     progress_cur = 0;
     // it still time to abort
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
       this->log(1, L"Package("+this->_ident+L") Install", L"Aborted.");
       return true;
     }
@@ -1037,7 +1037,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   if(progress_cb) {
     progress_tot = this->_srcItemLs.size();
     progress_cur = 0;
-    progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+    progress_cb(user_ptr, progress_tot, progress_cur, 0);
   }
 
   wstring src_path, zcd_entry;
@@ -1050,7 +1050,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
         has_aborted = true;
         break;
       }
@@ -1318,7 +1318,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = this->_srcItemLs.size() * 2;   //< backup + install
     progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
       return true;
     }
   }
@@ -1510,7 +1510,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
         // call progression callback
         if(progress_cb) {
           progress_cur++;
-          if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+          if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
             has_aborted = true;
             break;
           }
@@ -1540,7 +1540,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
         has_aborted = true;
         break;
       }
@@ -1631,7 +1631,7 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = this->_srcItemLs.size() * 2;   //< item we must install
     progress_cur = this->_srcItemLs.size();       //< start at half the total, backup was the first half
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
       return true;
     }
   }
@@ -1702,7 +1702,7 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
     // call progression callback
     if(progress_cb) {
       progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
         has_aborted = true;
         break;
       }
@@ -1750,7 +1750,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = this->_bckItemLs.size();   //< item we must restore
     progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, nullptr)) {
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
       return true;
     }
   }
@@ -1787,7 +1787,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
         // call progression callback
         if(progress_cb) {
           progress_cur++;
-          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+          progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
         Sleep(OMM_DEBUG_SLOW); //< for debug
@@ -1850,7 +1850,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
         // call progression callback
         if(progress_cb) {
           progress_cur++;
-          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+          progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
         Sleep(OMM_DEBUG_SLOW); //< for debug
@@ -1895,7 +1895,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
       // call progression callback
       if(progress_cb) {
         progress_cur++;
-        progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+        progress_cb(user_ptr, progress_tot, progress_cur, 0);
       }
       #ifdef DEBUG
       Sleep(OMM_DEBUG_SLOW); //< for debug
@@ -1946,7 +1946,7 @@ void OmPackage::_undoInstall(Om_progressCb progress_cb, void* user_ptr)
   if(progress_cb) {
     progress_tot = this->_bckItemLs.size() * 2; //< item we must uninstall
     progress_cur = this->_bckItemLs.size(); //< start at half the total
-    progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+    progress_cb(user_ptr, progress_tot, progress_cur, 0);
   }
 
   // This function restores partial unfinished backup data, avoiding checks
@@ -2000,7 +2000,7 @@ void OmPackage::_undoInstall(Om_progressCb progress_cb, void* user_ptr)
         // call progression callback
         if(progress_cb) {
           progress_cur--; //< step backward
-          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+          progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
         Sleep(OMM_DEBUG_SLOW); //< for debug
@@ -2046,7 +2046,7 @@ void OmPackage::_undoInstall(Om_progressCb progress_cb, void* user_ptr)
         // call progression callback
         if(progress_cb) {
           progress_cur--; //< step backward
-          progress_cb(user_ptr, progress_tot, progress_cur, nullptr);
+          progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
         std::wcout << del_file << "\n";

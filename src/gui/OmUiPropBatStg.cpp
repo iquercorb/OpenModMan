@@ -405,7 +405,7 @@ void OmUiPropBatStg::_onInit()
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
-  this->_createTooltip(IDC_CB_LOC,    L"Location to configure");
+  this->_createTooltip(IDC_CB_LOC,    L"Target location to configure");
   this->_createTooltip(IDC_LB_INC,    L"Packages the Batch will install (or leave installed)");
   this->_createTooltip(IDC_LB_EXC,    L"Packages the Batch will uninstall (or leave uninstalled)");
   this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
@@ -442,30 +442,32 @@ void OmUiPropBatStg::_onInit()
 void OmUiPropBatStg::_onResize()
 {
   int half_w = this->width() * 0.5f;
-  int helf_h = this->height() * 0.5f;
+  int half_h = this->height() * 0.5f;
 
   // Batch Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
-  this->_setItemPos(IDC_EC_INP01, 70, 10, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 240, 9);
+  this->_setItemPos(IDC_EC_INP01, 50, 25, this->width()-100, 13);
 
+  // Batch Configuration Label
+  this->_setItemPos(IDC_SC_LBL02, 50, 45, 240, 9);
   // Location list ComboBox
-  this->_setItemPos(IDC_CB_LOC, 5, 35, this->width()-15, 12);
+  this->_setItemPos(IDC_CB_LOC, 50, 55, this->width()-100, 12);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_LOC), nullptr, true);
   // Not-Installed label
-  this->_setItemPos(IDC_SC_LBL02, 10, 55, 150, 9);
+  this->_setItemPos(IDC_SC_LBL03, 50, 70, 150, 9);
   // Not-Installed ListBox
-  this->_setItemPos(IDC_LB_EXC, 10, 65, half_w-35, this->height()-80);
+  this->_setItemPos(IDC_LB_EXC, 50, 80, half_w-70, this->height()-95);
   // Add and Rem buttons
-  this->_setItemPos(IDC_BC_RIGH, half_w-20, helf_h+10, 16, 15);
-  this->_setItemPos(IDC_BC_LEFT, half_w-20, helf_h+25, 16, 15);
+  this->_setItemPos(IDC_BC_RIGH, half_w-18, half_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_LEFT, half_w-18, half_h+30, 16, 15);
   // Installed label
-  this->_setItemPos(IDC_SC_LBL03, half_w, 55, 150, 9);
+  this->_setItemPos(IDC_SC_LBL04, half_w, 70, 150, 9);
   // Installed ListBox
-  this->_setItemPos(IDC_LB_INC, half_w, 65, half_w-35, this->height()-80);
+  this->_setItemPos(IDC_LB_INC, half_w, 80, half_w-70, this->height()-95);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-30, helf_h+10, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-30, helf_h+25, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-68, half_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-68, half_h+30, 16, 15);
 }
 
 
@@ -557,7 +559,7 @@ void OmUiPropBatStg::_onRefresh()
     // force notify change of the install list
     this->setChParam(BAT_PROP_STG_INSLS, true);
     // notify user
-    wstring wrn = L"The Installation Batch have reference to Packages "
+    wstring wrn = L"The Installation batch have reference to Packages "
                   L"which are no longer available."
                   L"\n\nDo you want to clean invalid references ?";
 

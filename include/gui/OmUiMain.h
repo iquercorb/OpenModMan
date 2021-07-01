@@ -124,6 +124,10 @@ class OmUiMain : public OmDialog
 
     bool                _freeze_quit;
 
+    void                _buildCaption();
+
+    void                _buildSbCtx();
+
     void                _buildMnRct();
 
     void                _buildCbCtx();

@@ -240,15 +240,12 @@ void OmUiPropCtxBat::_onInit()
   this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
 
   // Define controls tool-tips
-  this->_createTooltip(IDC_LB_BAT,    L"Context Installation Batches list");
-
+  this->_createTooltip(IDC_LB_BAT,    L"Installation batches list");
   this->_createTooltip(IDC_BC_UP,     L"Move up in list");
   this->_createTooltip(IDC_BC_DN,     L"Move down in list");
-
-  this->_createTooltip(IDC_BC_DEL,    L"Delete the selected Installation Batch");
-  this->_createTooltip(IDC_BC_ADD,    L"Create a new Installation Batch for this Context");
-  this->_createTooltip(IDC_BC_EDI,    L"Edit Installation Batch properties");
-
+  this->_createTooltip(IDC_BC_DEL,    L"Delete the selected Installation batch");
+  this->_createTooltip(IDC_BC_ADD,    L"Create a new Installation batch for this Context");
+  this->_createTooltip(IDC_BC_EDI,    L"Edit Installation batch properties");
   this->_createTooltip(IDC_BC_CKBX1,  L"Disable installation warning messages for batches execution.");
 
   // Set controls default states and parameters
@@ -266,22 +263,22 @@ void OmUiPropCtxBat::_onInit()
 void OmUiPropCtxBat::_onResize()
 {
   // Locations list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 5, 20, 64, 9);
-  this->_setItemPos(IDC_LB_BAT, 70, 20, this->width()-107, 65);
+  this->_setItemPos(IDC_SC_LBL01, 50, 15, 180, 9);
+  this->_setItemPos(IDC_LB_BAT, 50, 25, this->width()-107, 58);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->width()-35, 39, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->width()-35, 55, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->width()-55, 39, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->width()-55, 55, 16, 15);
 
   // Remove & Modify Buttons
-  this->_setItemPos(IDC_BC_DEL, 70, 90, 50, 14);
-  this->_setItemPos(IDC_BC_EDI, 122, 90, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 50, 85, 50, 14);
+  this->_setItemPos(IDC_BC_EDI, 105, 85, 50, 14);
   // Add button
-  this->_setItemPos(IDC_BC_ADD, this->width()-87, 90, 50, 14);
+  this->_setItemPos(IDC_BC_ADD, this->width()-108, 85, 50, 14);
 
   // Options label
-  this->_setItemPos(IDC_SC_LBL02, 5, 120, 64, 9);
+  //this->_setItemPos(IDC_SC_LBL02, 50, 120, 180, 9);
   // Quiet Batches checkbox
-  this->_setItemPos(IDC_BC_CKBX1, 70, 120, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, 125, 240, 9);
 }
 
 
