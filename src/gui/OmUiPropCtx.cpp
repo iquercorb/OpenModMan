@@ -130,7 +130,7 @@ bool OmUiPropCtx::applyChanges()
   OmUiPropCtxLoc* pUiPropCtxLoc  = static_cast<OmUiPropCtxLoc*>(this->childById(IDD_PROP_CTX_LOC));
   OmUiPropCtxBat* pUiPropCtxBat  = static_cast<OmUiPropCtxBat*>(this->childById(IDD_PROP_CTX_BAT));
 
-  wstring ctx_name, ctx_icon;
+  wstring ctx_name, ico_path;
 
   // Step 1, verify everything
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
@@ -142,10 +142,6 @@ bool OmUiPropCtx::applyChanges()
     }
   }
 
-  if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    pUiPropCtxStg->getItemText(IDC_EC_INP04, ctx_icon);
-  }
-
   // Step 2, save changes
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     this->_pCtx->setTitle(ctx_name);
@@ -154,8 +150,11 @@ bool OmUiPropCtx::applyChanges()
   }
 
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_ICON)) { // parameter for Context icon
-    if(Om_isValidPath(ctx_icon)) {
-      this->_pCtx->setIcon(ctx_icon);
+
+    pUiPropCtxStg->getItemText(IDC_EC_INP04, ico_path);
+
+    if(Om_isValidPath(ico_path)) {
+      this->_pCtx->setIcon(ico_path);
     } else {
       this->_pCtx->setIcon(L""); //< remove current icon
     }
@@ -168,10 +167,10 @@ bool OmUiPropCtx::applyChanges()
     // To prevent inconsistency we unselect location in the main dialog
     static_cast<OmUiMain*>(this->root())->safemode(true);
 
-    unsigned n = this->msgItem(IDC_LB_LOC, LB_GETCOUNT);
+    unsigned n = pUiPropCtxLoc->msgItem(IDC_LB_LOC, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      this->_pCtx->locGet(this->msgItem(IDC_LB_LOC, LB_GETITEMDATA, i))->setIndex(i);
+      this->_pCtx->locGet(pUiPropCtxLoc->msgItem(IDC_LB_LOC, LB_GETITEMDATA, i))->setIndex(i);
     }
 
     // unselect Location in context
@@ -188,10 +187,10 @@ bool OmUiPropCtx::applyChanges()
 
   if(pUiPropCtxBat->hasChParam(CTX_PROP_BAT_ORDER)) { // parameter for Batches index order
 
-    unsigned n = this->msgItem(IDC_LB_BAT, LB_GETCOUNT);
+    unsigned n = pUiPropCtxBat->msgItem(IDC_LB_BAT, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Location according current List-Box order
-      this->_pCtx->batGet(this->msgItem(IDC_LB_BAT, LB_GETITEMDATA,i))->setIndex(i);
+      this->_pCtx->batGet(pUiPropCtxBat->msgItem(IDC_LB_BAT, LB_GETITEMDATA,i))->setIndex(i);
     }
 
     // sort Location list

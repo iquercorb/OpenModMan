@@ -946,13 +946,13 @@ void OmUiMainLib::_buildLvBat()
 
   OmBatch* pBat;
   LVITEMW lvItem;
+  lvItem.mask = LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE; //< text and special data
+  lvItem.iSubItem = 0;
+  lvItem.iImage = 0;
   for(unsigned i = 0; i < pCtx->batCount(); ++i) {
 
     pBat = pCtx->batGet(i);
-
-    lvItem.mask = LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE; //< text and special data
-    lvItem.iSubItem = 0;
-    lvItem.iImage = 0;
+    lvItem.iItem = i; //< to order list according insertion order
     lvItem.pszText = const_cast<LPWSTR>(pBat->title().c_str());
     lvItem.lParam = static_cast<LPARAM>(i); // for Location index reordering
 
@@ -1653,9 +1653,11 @@ void OmUiMainLib::_onInit()
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(14, 700, L"Consolas");
   this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+
   // Set batches New and Delete buttons icons
-  this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_ADD));
-  this->setBmImage(IDC_BC_EDI, Om_getResImage(this->_hins, IDB_BTN_MOD));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_ADD));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDB_BTN_MOD));
+  // set default package thumbnail
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
 
   // define controls tool-tips

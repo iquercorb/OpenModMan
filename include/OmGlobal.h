@@ -36,11 +36,11 @@
 
 #include "curl/curl.h"
 
-#include <Windows.h>
-#include <Shlobj.h>
-#include <Shlwapi.h>
-#include <Gdiplus.h>
-#include <Uxtheme.h>
+#include <windows.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#include <gdiplus.h>
+#include <uxtheme.h>
 #include <shellapi.h>
 
 #define OMM_APP_NAME              L"Open Mod Manager"
@@ -1701,7 +1701,7 @@ HBITMAP Om_getResImage(HINSTANCE hins, unsigned id);
 ///
 /// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
 ///
-HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size);
+HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size = 0);
 
 /// \brief Create font object
 ///

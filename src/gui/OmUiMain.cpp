@@ -278,18 +278,18 @@ void OmUiMain::_buildSbCtx()
   OmContext* pCtx = pMgr->ctxCur();
 
   // update the Context icon
-  HICON hIcon = nullptr;
+  HICON hIc = nullptr;
 
   // get context icon
   if(pCtx)
     if(pCtx->icon())
-      hIcon = pCtx->icon();
+      hIc = pCtx->icon();
 
   // Get default icon
-  if(!hIcon)
-    hIcon = Om_getShellIcon(SIID_APPLICATION, true);
+  if(!hIc)
+    hIc = Om_getShellIcon(SIID_APPLICATION, true);
 
-  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon));
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc));
 }
 
 

@@ -11,47 +11,47 @@
 // Bitmap resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_ADD        BITMAP         ".\\bitmap\\btn_ico_add.bmp"
+IDB_BTN_ADD        ICON         ".\\bitmap\\btn_add.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_MOD        BITMAP         ".\\bitmap\\btn_ico_mod.bmp"
+IDB_BTN_MOD        ICON         ".\\bitmap\\btn_mod.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_REM        BITMAP         ".\\bitmap\\btn_ico_rem.bmp"
+IDB_BTN_REM        ICON         ".\\bitmap\\btn_rem.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_REF        BITMAP         ".\\bitmap\\btn_ico_ref.bmp"
+IDB_BTN_REF        ICON         ".\\bitmap\\btn_ref.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_DIR        BITMAP         ".\\bitmap\\btn_ico_dir.bmp"
+IDB_BTN_DIR        ICON         ".\\bitmap\\btn_dir.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_ENT        BITMAP         ".\\bitmap\\btn_ico_ent.bmp"
+IDB_BTN_ENT        ICON         ".\\bitmap\\btn_ent.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_NOT        BITMAP         ".\\bitmap\\btn_ico_not.bmp"
+IDB_BTN_NOT        ICON         ".\\bitmap\\btn_not.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_OPN        BITMAP         ".\\bitmap\\btn_ico_opn.bmp"
+IDB_BTN_OPN        ICON         ".\\bitmap\\btn_opn.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_NEW        BITMAP         ".\\bitmap\\btn_ico_new.bmp"
+IDB_BTN_NEW        ICON         ".\\bitmap\\btn_new.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_UP         BITMAP         ".\\bitmap\\btn_ico_up.bmp"
+IDB_BTN_UP         ICON         ".\\bitmap\\btn_up.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BTN_DN         BITMAP         ".\\bitmap\\btn_ico_dn.bmp"
+IDB_BTN_DN         ICON         ".\\bitmap\\btn_dn.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

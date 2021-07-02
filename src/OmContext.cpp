@@ -202,16 +202,16 @@ bool OmContext::open(const wstring& path)
   if(this->_config.xml().hasChild(L"icon")) {
 
     // we got a banner
-    wstring src = this->_config.xml().child(L"icon").content();
+    wstring ico_path = this->_config.xml().child(L"icon").content();
 
-    HICON hicon = nullptr;
-    ExtractIconExW(src.c_str(), 0, &hicon, nullptr, 1); //< large icon
-    //ExtractIconExW(src.c_str(), 0, nullptr, &hicon, 1); //< small icon
+    HICON hIc = nullptr;
+    ExtractIconExW(ico_path.c_str(), 0, &hIc, nullptr, 1); //< large icon
+    //ExtractIconExW(ico_path.c_str(), 0, nullptr, &hIc, 1); //< small icon
 
-    if(hicon) {
-      this->_icon = hicon;
+    if(hIc) {
+      this->_icon = hIc;
     } else {
-      this->log(1, L"Context("+this->_title+L") Load", L"\""+src+L"\" icon extraction failed.");
+      this->log(1, L"Context("+this->_title+L") Load", L"\""+ico_path+L"\" icon extraction failed.");
     }
   }
 
@@ -363,28 +363,21 @@ void OmContext::setIcon(const wstring& src)
 {
   if(this->_config.valid()) {
 
-    HICON hicon = nullptr;
+    // delete previous object
+    if(this->_icon) DestroyIcon(this->_icon);
+    this->_icon = nullptr;
 
     // empty source path mean remove icon
-    if(src.empty()) {
+    if(!src.empty()) {
 
-      // remove icon entry
-      if(this->_icon) DestroyIcon(this->_icon);
-      this->_icon = nullptr;
+      HICON hIc = nullptr;
 
-      if(this->_config.xml().hasChild(L"icon")) {
-        this->_config.xml().remChild(this->_config.xml().child(L"icon"));
-      }
+      if(Om_isFile(src))
+        ExtractIconExW(src.c_str(), 0, &hIc, nullptr, 1);
 
-    } else {
+      if(hIc) {
 
-      if(Om_isFile(src)) {
-        ExtractIconExW(src.c_str(), 0, &hicon, nullptr, 1);
-      }
-
-      if(hicon) {
-        if(this->_icon) DeleteObject(_icon);
-        this->_icon = hicon;
+        this->_icon = hIc;
 
         if(this->_config.xml().hasChild(L"icon")) {
           this->_config.xml().child(L"icon").setContent(src);
@@ -394,6 +387,13 @@ void OmContext::setIcon(const wstring& src)
 
       } else {
         this->log(1, L"Context("+this->_title+L") Set Icon", L"\""+src+L"\" icon extraction failed.");
+      }
+    }
+
+    if(!this->_icon) {
+
+      if(this->_config.xml().hasChild(L"icon")) {
+        this->_config.xml().remChild(this->_config.xml().child(L"icon"));
       }
     }
 

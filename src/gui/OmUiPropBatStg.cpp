@@ -400,8 +400,8 @@ void OmUiPropBatStg::_onBcDnPkg()
 void OmUiPropBatStg::_onInit()
 {
   // Set icons for Up and Down buttons
-  this->setBmImage(IDC_BC_UP, Om_getResImage(this->_hins, IDB_BTN_UP));
-  this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");

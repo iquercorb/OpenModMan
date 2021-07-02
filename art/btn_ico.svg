@@ -14,7 +14,7 @@
    id="svg8"
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
    sodipodi:docname="btn_ico.svg"
-   inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\btn_opn.png"
+   inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\btn_new.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96">
   <defs
@@ -27,8 +27,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="31.678384"
-     inkscape:cx="8.3814644"
-     inkscape:cy="9.7684382"
+     inkscape:cx="6.4378805"
+     inkscape:cy="10.871966"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -36,8 +36,8 @@
      units="px"
      inkscape:window-width="1451"
      inkscape:window-height="943"
-     inkscape:window-x="212"
-     inkscape:window-y="50"
+     inkscape:window-x="162"
+     inkscape:window-y="44"
      inkscape:window-maximized="0"
      inkscape:snap-bbox="true"
      inkscape:bbox-nodes="true"
@@ -85,7 +85,12 @@
     <path
        d="M 0.52916667,3.4395833 H 3.4885265 L 3.5071325,3.3465557 3.8052989,1.9153574 3.8351159,1.7698523 H 3.5108296 V 1.0542529 H 2.0124843 L 1.8075844,0.84911465 1.7701352,0.81572005 H 0.52916703 Z M 0.76769966,2.3512762 V 1.0542529 H 1.6697123 l 0.2048999,0.2051384 0.037449,0.033395 h 1.3602344 v 0.4770659 h -1.062187 l -0.03733,0.033394 -0.2048997,0.2051384 H 0.85357155 l -0.0226607,0.08945 z M 0.80109418,3.2010504 1.0396272,2.246918 H 2.0685395 L 2.1058715,2.213524 2.3106519,2.0083856 H 3.5442238 L 3.2947184,3.2010504 H 0.80133289 Z"
        id="path1424"
-       style="stroke-width:0.119266"
+       style="display:none;stroke-width:0.119266"
        inkscape:label="opn" />
+    <path
+       d="M 0.79375,0.52668303 V 3.7041667 H 3.2379682 V 1.3325417 L 3.2037494,1.2942894 2.4704839,0.56102415 2.4321098,0.52680505 H 0.79375 Z M 1.0381719,0.77110488 H 2.260281 V 1.5043703 H 2.9935464 V 3.4597448 H 1.0381719 Z M 2.5047029,0.94684415 2.8179294,1.2599485 H 2.5047029 V 0.94672193 Z"
+       id="path1465"
+       style="stroke-width:0.122212"
+       inkscape:label="new" />
   </g>
 </svg>

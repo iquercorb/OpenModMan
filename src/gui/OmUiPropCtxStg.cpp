@@ -37,8 +37,7 @@ OmUiPropCtxStg::OmUiPropCtxStg(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropCtxStg::~OmUiPropCtxStg()
 {
-  HICON hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_GETICON));
-  if(hIc) DestroyIcon(hIc);
+
 }
 
 
@@ -75,21 +74,22 @@ void OmUiPropCtxStg::_onBcBrwIcon()
   if(!Om_dialogOpenFile(result, this->_parent->hwnd(), L"Select icon", OMM_ICO_FILES_FILTER, start))
     return;
 
-  HICON hIc;
+  HICON hIc = nullptr;
 
   // check if the path to icon is non empty
-  if(Om_isValidPath(result)) {
+  if(Om_isValidPath(result))
     ExtractIconExW(result.c_str(), 0, &hIc, nullptr, 1);
+
+  if(hIc) {
+    this->setItemText(IDC_EC_INP04, result);
   } else {
     hIc = Om_getShellIcon(SIID_APPLICATION, true);
+    this->setItemText(IDC_EC_INP04, L"<none>");
   }
 
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
-  if(hIc) DestroyIcon(hIc);
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc));
 
   InvalidateRect(this->getItem(IDC_SB_ICON), nullptr, true);
-
-  this->setItemText(IDC_EC_INP04, result);
 
   // user modified parameter, notify it
   this->setChParam(CTX_PROP_STG_ICON, true);
@@ -102,10 +102,9 @@ void OmUiPropCtxStg::_onBcBrwIcon()
 void OmUiPropCtxStg::_onBcDelIcon()
 {
   HICON hIc = Om_getShellIcon(SIID_APPLICATION, true);
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
-  if(hIc) DestroyIcon(hIc);
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc));
 
-  this->setItemText(IDC_EC_INP04, L"<delete>"); //< set invalid path
+  this->setItemText(IDC_EC_INP04, L"<none>"); //< set invalid path
 
   // user modified parameter, notify it
   this->setChParam(CTX_PROP_STG_ICON, true);
@@ -118,8 +117,8 @@ void OmUiPropCtxStg::_onBcDelIcon()
 void OmUiPropCtxStg::_onInit()
 {
   // add icon to buttons
-  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_OPN));
-  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_OPN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Context home folder path");
@@ -134,7 +133,7 @@ void OmUiPropCtxStg::_onInit()
   this->setItemText(IDC_EC_INP02, pCtx->uuid());
   this->setItemText(IDC_EC_INP03, pCtx->title());
 
-  this->setItemText(IDC_EC_INP04, L"<invalid>"); //< hidden icon path
+  this->setItemText(IDC_EC_INP04, L"<none>"); //< hidden icon path
 
   // refresh with default values
   this->_onRefresh();
@@ -171,27 +170,26 @@ void OmUiPropCtxStg::_onRefresh()
   OmContext* pCtx = static_cast<OmUiPropCtx*>(this->_parent)->ctxCur();
   if(!pCtx) return;
 
-  wstring ctx_icon;
+  HICON hIc = nullptr;
+  wstring ico_path;
 
-  this->getItemText(IDC_EC_INP04, ctx_icon);
-
-  HICON hIc;
-
-  // check if the path to icon is non empty
-  if(Om_isValidPath(ctx_icon)) {
+  // check if the path to icon is valid
+  this->getItemText(IDC_EC_INP04, ico_path);
+  if(Om_isValidPath(ico_path)) {
     // reload the last selected icon
-    ExtractIconExW(ctx_icon.c_str(), 0, &hIc, nullptr, 1);
+    ExtractIconExW(ico_path.c_str(), 0, &hIc, nullptr, 1);
   } else {
     // check whether Context already have an icon configured
-    if(pCtx->icon()) {
+    if(pCtx->icon())
       hIc = pCtx->icon();
-    } else {
-      hIc = Om_getShellIcon(SIID_APPLICATION, true);
-    }
   }
 
-  hIc = reinterpret_cast<HICON>(this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc)));
-  if(hIc) DestroyIcon(hIc);
+  if(!hIc) {
+    hIc = Om_getShellIcon(SIID_APPLICATION, true);
+    this->setItemText(IDC_EC_INP04, L"<none>");
+  }
+
+  this->msgItem(IDC_SB_ICON, STM_SETICON, reinterpret_cast<WPARAM>(hIc));
 
   InvalidateRect(this->getItem(IDC_SB_ICON), nullptr, true);
 

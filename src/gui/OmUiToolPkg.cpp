@@ -870,10 +870,10 @@ void OmUiToolPkg::_onInit()
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons inner icons
-  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_NEW));
-  this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_OPN));
-  this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ENT));
-  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_NEW));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDB_BTN_OPN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ENT));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
 
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);

@@ -401,6 +401,17 @@ HBITMAP OmDialog::setBmImage(unsigned id, HBITMAP image) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+HICON OmDialog::setBmIcon(unsigned id, HICON icon) const
+{
+  LPARAM lParam = reinterpret_cast<LPARAM>(icon);
+  LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), BM_SETIMAGE, IMAGE_ICON, lParam);
+  return reinterpret_cast<HICON>(lResult);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h)
 {
   long rect[4] = {x, y, w, h};

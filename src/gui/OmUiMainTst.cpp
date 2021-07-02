@@ -19,7 +19,7 @@
 #include "gui/OmUiMainTst.h"
 #include "gui/OmUiMain.h"
 
-#include <Richedit.h>
+#include <richedit.h>
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

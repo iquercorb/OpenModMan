@@ -138,7 +138,7 @@ void OmUiPropCtxBat::_onBcDnBat()
 
   this->msgItem(IDC_LB_BAT, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
   this->msgItem(IDC_LB_BAT, LB_SETITEMDATA, lb_sel, idx);
-  this->msgItem(IDC_LB_BAT, LB_SETCURSEL, true, lb_sel);
+  this->msgItem(IDC_LB_BAT, LB_SETCURSEL, lb_sel);
 
   this->enableItem(IDC_BC_UP, true);
   this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
@@ -233,11 +233,11 @@ void OmUiPropCtxBat::_onCkBoxQuiet()
 ///
 void OmUiPropCtxBat::_onInit()
 {
-  this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ADD));
-  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
-  this->setBmImage(IDC_BC_EDI, Om_getResImage(this->_hins, IDB_BTN_MOD));
-  this->setBmImage(IDC_BC_UP, Om_getResImage(this->_hins, IDB_BTN_UP));
-  this->setBmImage(IDC_BC_DN, Om_getResImage(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDB_BTN_MOD));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
 
   // Define controls tool-tips
   this->_createTooltip(IDC_LB_BAT,    L"Installation batches list");

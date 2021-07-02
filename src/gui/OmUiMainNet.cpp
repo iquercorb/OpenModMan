@@ -661,7 +661,7 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   self->_thread_abort = false;
 
   // change button image from refresh to stop
-  self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_NOT));
+  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDB_BTN_NOT));
 
   OmRepository* pRep;
   LVITEMW lvItem;
@@ -676,8 +676,7 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
     n = pLoc->repCount();
   }
 
-  for(; i < n; ++i) {
-
+  for( ; i < n; ++i) {
     // the first column, repository status, here we INSERT the new item
     lvItem.iItem = i;
     lvItem.mask = LVIF_IMAGE;
@@ -704,7 +703,7 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   }
 
   // change button image from stop to refresh
-  self->setBmImage(IDC_BC_QRY, Om_getResImage(self->_hins, IDB_BTN_REF));
+  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDB_BTN_REF));
 
   // send message to notify process ended
   self->postMessage(UWM_REPQUERY_DONE);
@@ -1570,10 +1569,10 @@ void OmUiMainNet::_onInit()
   hFt = Om_createFont(14, 700, L"Consolas");
   this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
-  this->setBmImage(IDC_BC_STOP, Om_getResImage(this->_hins, IDB_BTN_NOT));
-  this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_ADD));
-  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
-  this->setBmImage(IDC_BC_QRY, Om_getResImage(this->_hins, IDB_BTN_REF));
+  this->setBmIcon(IDC_BC_STOP, Om_getResIcon(this->_hins, IDB_BTN_NOT));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDB_BTN_REF));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active Location");

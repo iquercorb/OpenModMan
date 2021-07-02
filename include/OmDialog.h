@@ -405,6 +405,17 @@ class OmDialog
     ///
     HBITMAP setBmImage(unsigned id, HBITMAP image) const;
 
+    /// \brief Set button control icon
+    ///
+    /// Define icon for the specified dialog button control.
+    ///
+    /// \param[in]  id    : Button control resource ID to set image to.
+    /// \param[in]  icon  : Icon to set.
+    ///
+    /// \return Previously associated image to control, or nullptr.
+    ///
+    HICON setBmIcon(unsigned id, HICON icon) const;
+
     /// \brief Send message to control
     ///
     /// Send the message with parameters to the specified dialog control.

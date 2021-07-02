@@ -192,8 +192,8 @@ void OmUiPropLocNet::_onBcRadUpg()
 void OmUiPropLocNet::_onInit()
 {
   // Set buttons inner icons
-  this->setBmImage(IDC_BC_ADD, Om_getResImage(this->_hins, IDB_BTN_ADD));
-  this->setBmImage(IDC_BC_DEL, Om_getResImage(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOC,    L"Location network Repositories list");

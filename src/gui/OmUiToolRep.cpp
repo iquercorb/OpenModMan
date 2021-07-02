@@ -345,7 +345,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   if(ident.empty()) {
 
     // unselect all in ListBox
-    this->msgItem(IDC_LB_PKG, LB_SETCURSEL, -1, 0);
+    this->msgItem(IDC_LB_PKG, LB_SETCURSEL, -1);
 
     // no package selected, disable and reset all related controls
     this->setItemText(IDC_EC_OUT02, L"");
@@ -1247,11 +1247,11 @@ void OmUiToolRep::_onInit()
   // Set default package picture
   this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
   // Set buttons icons
-  this->setBmImage(IDC_BC_NEW, Om_getResImage(this->_hins, IDB_BTN_NEW));
-  this->setBmImage(IDC_BC_BRW01, Om_getResImage(this->_hins, IDB_BTN_OPN));
-  this->setBmImage(IDC_BC_BRW02, Om_getResImage(this->_hins, IDB_BTN_ADD));
-  this->setBmImage(IDC_BC_BRW03, Om_getResImage(this->_hins, IDB_BTN_DIR));
-  this->setBmImage(IDC_BC_REM, Om_getResImage(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_NEW));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_OPN));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDB_BTN_ADD));
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDB_BTN_DIR));
+  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDB_BTN_REM));
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
