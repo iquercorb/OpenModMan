@@ -3,7 +3,7 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="Open Mod Manager" />
-		<Option platforms="Windows;" />
+		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<MakeCommands>
@@ -101,6 +101,62 @@
 					<Add directory="lib/32-bit" />
 				</Linker>
 			</Target>
+			<Target title="Linux 64-bit Release">
+				<Option platforms="Windows;Unix;" />
+				<Option output="bin/64-bit/Release/OpenModMan-linux" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/64-bit/Release" />
+				<Option type="0" />
+				<Option compiler="mingw-w64_x86-64" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-pedantic" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-m64" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="include/gui/res" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+					<Add library="lib/64-bit/libcurl.dll.a" />
+					<Add directory="lib/64-bit" />
+				</Linker>
+			</Target>
+			<Target title="Linux 32-bit Release">
+				<Option platforms="Windows;Unix;" />
+				<Option output="bin/32-bit/Release/OpenModMan-linux" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/32-bit/Release" />
+				<Option type="0" />
+				<Option compiler="mingw-w64_i686" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-pedantic" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-m32" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
+					<Add directory="/usr/i686-w64-mingw32/include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="include/gui/res" />
+					<Add directory="include/gui" />
+					<Add directory="include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m32" />
+					<Add library="lib/32-bit/libcurl.dll.a" />
+					<Add directory="lib/32-bit" />
+					<Add directory="/usr/i686-w64-mingw32/lib" />
+				</Linker>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-DCURL_STATICLIB" />
@@ -121,14 +177,14 @@
 		<Linker>
 			<Add option="-static-libstdc++" />
 			<Add option="-static-libgcc" />
-			<Add library="Comctl32" />
-			<Add library="Gdi32" />
-			<Add library="Shlwapi" />
-			<Add library="Comdlg32" />
-			<Add library="Ole32" />
-			<Add library="Shell32" />
-			<Add library="Uuid" />
-			<Add library="UxTheme" />
+			<Add library="comctl32" />
+			<Add library="gdi32" />
+			<Add library="shlwapi" />
+			<Add library="comdlg32" />
+			<Add library="ole32" />
+			<Add library="shell32" />
+			<Add library="uuid" />
+			<Add library="uxtheme" />
 		</Linker>
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />
