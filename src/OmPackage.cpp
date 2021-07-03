@@ -103,6 +103,7 @@ OmPackage::OmPackage() :
   _name(),
   _src(),
   _srcDir(),
+  _srcTime(0),
   _srcItemLs(),
   _depLs(),
   _bck(),
@@ -130,6 +131,7 @@ OmPackage::OmPackage(OmLocation* pLoc) :
   _name(),
   _src(),
   _srcDir(),
+  _srcTime(0),
   _srcItemLs(),
   _depLs(),
   _bck(),
@@ -462,6 +464,9 @@ bool OmPackage::srcParse(const wstring& path)
     this->_version.parse(vers);
   }
 
+  // store source last write time
+  this->_srcTime = Om_itemTime(this->_src);
+
   // create hash from file name
   this->_hash = Om_getXXHash3(Om_getFilePart(this->_src));
 
@@ -681,6 +686,7 @@ void OmPackage::srcClear()
   this->_depLs.clear();
   this->_src.clear();
   this->_srcDir.clear();
+  this->_srcTime = 0;
   this->_srcItemLs.clear();
 }
 
@@ -943,6 +949,7 @@ bool OmPackage::ovrTest(const vector<OmPkgItem>& footprint) const
 ///
 void OmPackage::loadImage(const wstring& path, unsigned size)
 {
+  this->_image.clear();
   this->_image.open(path, size);
 }
 
@@ -1279,6 +1286,7 @@ void OmPackage::clear()
   this->_ident.clear();
   this->_src.clear();
   this->_srcDir.clear();
+  this->_srcTime = 0;
   this->_srcItemLs.clear();
   this->_depLs.clear();
   this->_bck.clear();

@@ -1375,8 +1375,8 @@ void OmUiMainLib::_dirMon_init(const wstring& path)
   if(this->_dirMon_hth) this->_dirMon_stop();
 
   // create a new folder change notification event
-  DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
-  mask |= FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
+  DWORD mask =  FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
+                FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
 
   this->_dirMon_hev[1] = FindFirstChangeNotificationW(path.c_str(), false, mask);
 
@@ -1431,6 +1431,10 @@ DWORD WINAPI OmUiMainLib::_dirMon_fth(void* arg)
       break;
 
     if(dwObj == 1) { //< folder content changed event
+
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmUiMainLib::_dirMon_fth (changes)\n";
+      #endif
 
       OmManager* pMgr = static_cast<OmManager*>(self->_data);
       OmContext* pCtx = pMgr->ctxCur();
@@ -1857,9 +1861,7 @@ void OmUiMainLib::_onRefresh()
 
       // restart folder monitoring if required
       if(pCtx->locCur()->libDirAccess(false)) {
-        if(!this->_dirMon_hth) {
-          this->_dirMon_init(pCtx->locCur()->libDir());
-        }
+        this->_dirMon_init(pCtx->locCur()->libDir());
       } else {
         lib_access = false;
       }

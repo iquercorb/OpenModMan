@@ -255,6 +255,16 @@ class OmPackage
       return _src;
     }
 
+    /// \brief Get package Source last write time.
+    ///
+    /// Returns package Source last write time.
+    ///
+    /// \return Package Source last write time.
+    ///
+    time_t srcTime() const {
+      return _srcTime;
+    }
+
     /// \brief Get package Backup file path.
     ///
     /// Returns package Backup file path. This is the path to the backup file this
@@ -737,6 +747,8 @@ class OmPackage
     wstring             _src;
 
     wstring             _srcDir;
+
+    time_t              _srcTime;
 
     vector<OmPkgItem>   _srcItemLs;
 

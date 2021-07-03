@@ -1438,7 +1438,17 @@ bool OmLocation::libRefresh()
       in_list = false;
       for(size_t k = 0; k < path_ls.size(); ++k) {
         if(this->_pkgLs[p]->srcPath() == path_ls[k]) { //< compare Source paths
-          in_list = true; break;
+          in_list = true;
+
+          // compare last write time
+          if(this->_pkgLs[p]->srcTime() != Om_itemTime(path_ls[k])) {
+            // file changed, we parse again to update
+
+            this->_pkgLs[p]->srcClear();
+            this->_pkgLs[p]->srcParse(path_ls[k]);
+            changed = true;
+          }
+          break;
         }
       }
 

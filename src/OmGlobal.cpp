@@ -1682,7 +1682,7 @@ void __folderSize(size_t* size, const wstring& orig)
 ///
 size_t Om_itemSize(const wstring& path)
 {
-  size_t ret;
+  size_t ret = 0;
 
   if(Om_isFile(path)) {
     HANDLE hFile = CreateFileW(path.c_str(),
@@ -1708,31 +1708,26 @@ size_t Om_itemSize(const wstring& path)
 ///
 time_t Om_itemTime(const wstring& path)
 {
-  time_t ret;
+  HANDLE hFile = CreateFileW(path.c_str(),
+                             GENERIC_READ,
+                             FILE_SHARE_READ,
+                             nullptr,
+                             OPEN_EXISTING,
+                             FILE_ATTRIBUTE_NORMAL,
+                             nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return 0;
+
   FILETIME fTime;
+  GetFileTime(hFile, nullptr, nullptr, &fTime);
+  CloseHandle(hFile);
 
-  if(Om_isFile(path)) {
-    HANDLE hFile = CreateFileW(path.c_str(),
-                               GENERIC_READ,
-                               FILE_SHARE_READ,
-                               nullptr,
-                               OPEN_EXISTING,
-                               FILE_ATTRIBUTE_NORMAL,
-                               nullptr);
+  ULARGE_INTEGER ull;
+  ull.LowPart = fTime.dwLowDateTime;
+  ull.HighPart = fTime.dwHighDateTime;
 
-    GetFileTime(hFile, nullptr, nullptr, &fTime);
-    CloseHandle(hFile);
-
-    ULARGE_INTEGER ull;
-    ull.LowPart = fTime.dwLowDateTime;
-    ull.HighPart = fTime.dwHighDateTime;
-    ret = ull.QuadPart / 10000000ULL - 11644473600ULL;
-
-  } else {
-    ret = 0;
-  }
-
-  return ret;
+  return ull.QuadPart / 10000000ULL - 11644473600ULL;
 }
 
 
