@@ -90,6 +90,9 @@ void OmUiPropCtxLoc::_delLoc_init(int id)
   // To prevent crash during operation we unselect location in the main dialog
   static_cast<OmUiMain*>(this->root())->safemode(true);
 
+  // unselect location
+  pCtx->locSel(-1);
+
   // if Location does not have backup data, we can bypass the purge and
   // do directly to the end
   if(pLoc->bckHasData()) {
@@ -149,6 +152,9 @@ void OmUiPropCtxLoc::_delLoc_stop()
           L"backup purge process, read debug log for more details.";
     Om_dialogBoxErr(this->_hwnd, L"Target location backup purge error", msg);
   }
+
+  // select the first location in list
+  pCtx->locSel(0);
 
   // Back to main dialog window to normal state
   static_cast<OmUiMain*>(this->root())->safemode(false);

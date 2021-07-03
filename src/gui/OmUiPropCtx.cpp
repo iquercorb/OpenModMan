@@ -177,6 +177,8 @@ bool OmUiPropCtx::applyChanges()
     this->_pCtx->locSel(-1);
     // sort Location list
     this->_pCtx->locSort();
+    // select the first location in list
+    this->_pCtx->locSel(0);
 
     // restore main dialog to normal state
     static_cast<OmUiMain*>(this->root())->safemode(false);
