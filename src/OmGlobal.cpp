@@ -1815,7 +1815,19 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   AccessCheck(pSd, hTokenUser, mask, &gm, &ps, &psSize, &allowed, &status);
 
   if(!status) {
-    std::wcout << L"__checkAccess: denied, allowed access (mask): \n";
+    #ifdef DEBUG
+    std::wcout << L"__checkAccess(";
+    if(mask & FILE_LIST_DIRECTORY) std::wcout << L"FILE_LIST_DIRECTORY | ";
+    if(mask & FILE_TRAVERSE) std::wcout << L"FILE_TRAVERSE | ";
+    if(mask & FILE_ADD_FILE) std::wcout << L"FILE_ADD_FILE | ";
+    if(mask & FILE_ADD_SUBDIRECTORY) std::wcout << L"FILE_ADD_SUBDIRECTORY | ";
+    if(mask & FILE_READ_DATA) std::wcout << L"FILE_READ_DATA | ";
+    if(mask & FILE_WRITE_DATA) std::wcout << L"FILE_WRITE_DATA | ";
+    if(mask & FILE_APPEND_DATA) std::wcout << L"FILE_APPEND_DATA | ";
+    if(mask & FILE_EXECUTE) std::wcout << L"FILE_EXECUTE";
+    if(mask & FILE_READ_ATTRIBUTES) std::wcout << L"FILE_READ_ATTRIBUTES";
+    if(mask & FILE_WRITE_ATTRIBUTES) std::wcout << L"FILE_WRITE_ATTRIBUTES";
+    std::wcout << L") : denied, allowed access: \n";
     AccessCheck(pSd, hTokenUser, FILE_READ_DATA, &gm, &ps, &psSize, &allowed, &status);
     std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_DATA + LIST_DIRECTORY\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_DATA, &gm, &ps, &psSize, &allowed, &status);
@@ -1844,6 +1856,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
     std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  WRITE_OWNER\n";
     AccessCheck(pSd, hTokenUser, SYNCHRONIZE, &gm, &ps, &psSize, &allowed, &status);
     std::wcout << ((status) ? L"[x]" : L"[ ]") << L"  SYNCHRONIZE\n";
+    #endif
     status = 0;
   }
 

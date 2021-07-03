@@ -132,7 +132,7 @@ class OmLocation
       return _path;
     }
 
-    /// \brief Get Location destination path.
+    /// \brief Get Destination path.
     ///
     /// Returns Location packages installation destination directory.
     ///
@@ -141,6 +141,7 @@ class OmLocation
     const wstring& dstDir() const {
       return _dstDir;
     }
+
 
     /// \brief Get Location library path.
     ///
@@ -271,35 +272,6 @@ class OmLocation
     ///
     void setWarnExtraUnin(bool enable);
 
-    /// \brief Verify Library folder access.
-    ///
-    /// Checks whether the Library folder is accessible. If Library folder is
-    /// not valid, the function prompt a message dialog box to warn user and
-    /// select a valid folder.
-    ///
-    /// \return True if Library folder is accessible, false otherwise.
-    ///
-    bool checkAccessLib();
-
-    /// \brief Verify Backup folder access.
-    ///
-    /// Checks whether the Backup folder is accessible. If Backup folder is
-    /// not valid, the function prompt a message dialog box to warn user and
-    /// select a valid folder.
-    ///
-    /// \return True if Backup folder is accessible, false otherwise.
-    ///
-    bool checkAccessBck();
-
-    /// \brief Verify Location folder access.
-    ///
-    /// Checks whether the Location folder is accessible. If Location folder is
-    /// not valid, the function prompt a message dialog box to warn user and
-    /// select a valid folder.
-    ///
-    /// \return True if Location folder is accessible, false otherwise.
-    ///
-    bool checkAccessDst();
 
     /// \brief Open Location.
     ///
@@ -414,11 +386,46 @@ class OmLocation
     ///
     void setUpgdRename(bool always);
 
+    /// \brief Verify Destination folder access.
+    ///
+    /// Checks whether the software has access to Destination folder for
+    /// reading or reading & writing.
+    ///
+    /// \param[in]  rw  : Also check for write access.
+    ///
+    /// \return True if software has required access, false otherwise.
+    ///
+    bool dstDirAccess(bool rw = true);
+
+    /// \brief Verify Library folder access.
+    ///
+    /// Checks whether the software has access to Library folder for
+    /// reading or reading & writing.
+    ///
+    /// \param[in]  rw  : Also check for write access.
+    ///
+    /// \return True if software has required access, false otherwise.
+    ///
+    bool libDirAccess(bool rw = false);
+
+    /// \brief Verify Backup folder access.
+    ///
+    /// Checks whether the software has access to Backup folder for
+    /// reading or reading & writing.
+    ///
+    /// \param[in]  rw  : Also check for write access.
+    ///
+    /// \return True if software has required access, false otherwise.
+    ///
+    bool bckDirAccess(bool rw = true);
+
     /// \brief Clear Library.
     ///
     /// Empty and reset the packages list.
     ///
-    void libClear();
+    /// \return True if list composition changed, false otherwise.
+    ///
+    bool libClear();
 
     /// \brief Refresh Library.
     ///

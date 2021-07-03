@@ -1199,7 +1199,47 @@ void OmLocation::close()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::checkAccessLib()
+bool OmLocation::dstDirAccess(bool rw)
+{
+  bool access_ok = true;
+
+  // checks whether folder exists
+  if(Om_isDir(this->_dstDir)) {
+    // checks for proper permissions on folder
+    if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
+      if(rw) { //< check for writing access
+        if(!Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_WRITE)) {
+          this->_error = L"Destination folder \""+this->_dstDir+L"\"";
+          this->_error += OMM_STR_ERR_WRITE;
+          access_ok = false;
+        }
+      }
+    } else {
+      this->_error = L"Destination folder \""+this->_dstDir+L"\"";
+      this->_error += OMM_STR_ERR_READ;
+      access_ok = false;
+    }
+  } else {
+    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
+    this->_error += OMM_STR_ERR_ISDIR;
+    access_ok = false;
+  }
+
+  if(!access_ok) {
+
+    this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
+
+    return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmLocation::libDirAccess(bool rw)
 {
   bool access_ok = true;
 
@@ -1207,10 +1247,12 @@ bool OmLocation::checkAccessLib()
   if(Om_isDir(this->_libDir)) {
     // checks for proper permissions on folder
     if(Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_READ)) {
-      if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_WRITE)) {
-        this->_error = L"Library folder \""+this->_libDir+L"\"";
-        this->_error += OMM_STR_ERR_WRITE;
-        access_ok = false;
+      if(rw) { //< check for writing access
+        if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_WRITE)) {
+          this->_error = L"Library folder \""+this->_libDir+L"\"";
+          this->_error += OMM_STR_ERR_WRITE;
+          access_ok = false;
+        }
       }
     } else {
       this->_error =  L"Library folder \""+this->_libDir+L"\"";
@@ -1247,7 +1289,7 @@ bool OmLocation::checkAccessLib()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmLocation::checkAccessBck()
+bool OmLocation::bckDirAccess(bool rw)
 {
   bool access_ok = true;
 
@@ -1255,10 +1297,12 @@ bool OmLocation::checkAccessBck()
   if(Om_isDir(this->_bckDir)) {
     // checks for proper permissions on folder
     if(Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_READ)) {
-      if(!Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_WRITE)) {
-        this->_error = L"Backup folder \""+this->_bckDir+L"\"";
-        this->_error += OMM_STR_ERR_WRITE;
-        access_ok = false;
+      if(rw) { //< check for writing access
+        if(!Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_WRITE)) {
+          this->_error = L"Backup folder \""+this->_bckDir+L"\"";
+          this->_error += OMM_STR_ERR_WRITE;
+          access_ok = false;
+        }
       }
     } else {
       this->_error = L"Backup folder \""+this->_bckDir+L"\"";
@@ -1292,52 +1336,23 @@ bool OmLocation::checkAccessBck()
 }
 
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmLocation::checkAccessDst()
-{
-  bool access_ok = true;
-
-  // checks whether folder exists
-  if(Om_isDir(this->_dstDir)) {
-    // checks for proper permissions on folder
-    if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
-      if(!Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_WRITE)) {
-        this->_error = L"Destination folder \""+this->_dstDir+L"\"";
-        this->_error += OMM_STR_ERR_WRITE;
-        access_ok = false;
-      }
-    } else {
-      this->_error = L"Destination folder \""+this->_dstDir+L"\"";
-      this->_error += OMM_STR_ERR_READ;
-      access_ok = false;
-    }
-  } else {
-    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
-    this->_error += OMM_STR_ERR_ISDIR;
-    access_ok = false;
-  }
-
-  if(!access_ok) {
-
-    this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
-
-    return false;
-  }
-
-  return true;
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::libClear()
+bool OmLocation::libClear()
 {
-  for(size_t i = 0; i < this->_pkgLs.size(); ++i)
-    delete this->_pkgLs[i];
-  this->_pkgLs.clear();
+  if(!this->_pkgLs.empty()) {
+
+    for(size_t i = 0; i < this->_pkgLs.size(); ++i)
+      delete this->_pkgLs[i];
+
+    this->_pkgLs.clear();
+
+    return true;
+  }
+
+  return false;
 }
 
 
@@ -1346,6 +1361,13 @@ void OmLocation::libClear()
 ///
 bool OmLocation::libRefresh()
 {
+  if(!this->libDirAccess(false)) { // check for read access
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmLocation::libRefresh X\n";
+    #endif
+    return this->libClear();
+  }
+
   // some explanation about how Packages and Backups are managed...
   //
   // One Package object can incarnate two totally different things which
@@ -1842,14 +1864,14 @@ bool OmLocation::bckHasData()
 bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
 {
   // checks for access to backup folder
-  if(!this->checkAccessBck()) {
+  if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
   // checks for access to destination folder
-  if(!this->checkAccessDst()) {
+  if(!this->dstDirAccess(true)) { //< check for read and write
     this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
@@ -1932,7 +1954,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
     return true;
 
   // verify backup folder access
-  if(!this->checkAccessBck()) {
+  if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
@@ -2005,7 +2027,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
 bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
 {
   // verify backup folder access
-  if(!this->checkAccessBck()) {
+  if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
     this->_error += OMM_STR_ERR_DIRACCESS;
     this->log(1, L"Location("+this->_title+L") Move backups", this->_error);

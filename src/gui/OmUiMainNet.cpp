@@ -69,7 +69,7 @@ OmUiMainNet::OmUiMainNet(HINSTANCE hins) : OmDialog(hins),
 OmUiMainNet::~OmUiMainNet()
 {
   // stop Library folder changes monitoring
-  this->_dirMon_stop();
+  if(this->_dirMon_hth) this->_dirMon_stop();
 
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
@@ -156,7 +156,7 @@ void OmUiMainNet::locSel(int id)
   OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
   // stop Library folder monitoring
-  this->_dirMon_stop();
+  if(this->_dirMon_hth) this->_dirMon_stop();
 
   // disable "Edit > Package []" in main menu
   pUiMain->setPopupItem(1, 5, MF_GRAYED);
@@ -170,38 +170,12 @@ void OmUiMainNet::locSel(int id)
 
     if(pLoc) {
 
-      // Check Location Destination folder access
-      if(!pLoc->checkAccessDst()) {
-
-        wstring wrn = L"Configured Location's destination folder \"";
-        wrn += pLoc->dstDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
-        wrn += L"\n\nPlease check Location's settings and folder permissions.";
-
-        Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", wrn);
-      }
-
-      // Check Location Backup folder access
-      if(!pLoc->checkAccessBck()) {
-
-        wstring wrn = L"Configured Location's backup folder \"";
-        wrn += pLoc->bckDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
-        wrn += L"\n\nPlease check Location's settings and folder permissions.";
-
-        Om_dialogBoxWarn(this->_hwnd, L"Backup folder access error", wrn);
-      }
-
       // Check Location Library folder access
-      if(pLoc->checkAccessLib()) {
-
+      if(pLoc->libDirAccess(false)) { //< check only for reading
         // start Library folder monitoring
         this->_dirMon_init(pLoc->libDir());
-
       } else {
-        wstring wrn = L"Configured Location's library folder \"";
-        wrn += pLoc->bckDir()+L"\""; wrn += OMM_STR_ERR_DIRACCESS;
-        wrn += L"\n\nPlease check Location's settings and folder permissions.";
-
-        Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", wrn);
+        // warning message will be already thrown by Library tab
       }
 
       // enable the "Edit > Location properties..." menu
@@ -233,24 +207,12 @@ void OmUiMainNet::rmtDown(bool upgrade)
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
   OmContext* pCtx = pMgr->ctxCur();
   if(!pCtx) return;
+
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
-
-  // string for dialog messages
-  wstring msg;
-
-  // checks whether we have a valid Library folder
-  if(!pLoc->checkAccessLib()) {
-    msg = L"Library folder \""+pLoc->libDir()+L"\"";
-    msg += OMM_STR_ERR_DIRACCESS;
-    Om_dialogBoxErr(this->_hwnd, L"Package(s) install aborted", msg);
-    return;
-  }
-
-  // reset global abort status
-  this->_thread_abort = false;
 
   // get user selection
   vector<OmRemote*> user_ls;
@@ -268,6 +230,24 @@ void OmUiMainNet::rmtDown(bool upgrade)
     // next selected item
     lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
+
+  if(user_ls.empty())
+    return;
+
+  // string for dialog messages
+  wstring msg;
+
+  // checks whether we have a valid Library folder
+  if(!pLoc->libDirAccess(true)) { //< check for read and write
+    msg = L"\""+pLoc->libDir()+L"\"\n\n";
+    msg +=  L"Either the Library folder does not exist or it have write access restrictions. "
+            L"Please check target location settings and folder permissions.";
+    Om_dialogBoxErr(this->_hwnd, L"Package download aborted (Library access error)", msg);
+    return;
+  }
+
+  // reset global abort status
+  this->_thread_abort = false;
 
   vector<OmRemote*> dwnl_ls;  //< final download list
   vector<OmRemote*> deps_ls;  //< extra download list
@@ -371,10 +351,11 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   wstring msg;
 
   // checks whether we have a valid Library folder
-  if(!pLoc->checkAccessLib()) {
-    msg = L"Library folder \""+pLoc->libDir()+L"\"";
-    msg += OMM_STR_ERR_DIRACCESS;
-    Om_dialogBoxErr(this->_hwnd, L"Package(s) install aborted", msg);
+  if(!pLoc->libDirAccess(true)) { //< check for read and write
+    wstring msg = L"\""+pLoc->libDir()+L"\"\n\n";
+    msg +=  L"Either the Library folder does not exist or it have write access restrictions. "
+            L"Please check target location settings and folder permissions.";
+    Om_dialogBoxErr(this->_hwnd, L"Package download aborted (Library access error)", msg);
     return;
   }
 
@@ -510,9 +491,7 @@ void OmUiMainNet::_dirMon_init(const wstring& path)
   #endif
 
   // first stops any running monitor
-  if(this->_dirMon_hth) {
-    this->_dirMon_stop();
-  }
+  if(this->_dirMon_hth) this->_dirMon_stop();
 
   // create a new folder change notification event
   DWORD mask = FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME;
@@ -542,6 +521,7 @@ void OmUiMainNet::_dirMon_stop()
     SetEvent(this->_dirMon_hev[0]);
     WaitForSingleObject(this->_dirMon_hth, INFINITE);
     CloseHandle(this->_dirMon_hth);
+    this->_dirMon_hth = nullptr;
 
     // reset the "stop" event for further usage
     ResetEvent(this->_dirMon_hev[0]);
@@ -549,7 +529,6 @@ void OmUiMainNet::_dirMon_stop()
     // close previous folder monitor
     FindCloseChangeNotification(this->_dirMon_hev[1]);
     this->_dirMon_hev[1] = nullptr;
-    this->_dirMon_hth = nullptr;
   }
 }
 
@@ -915,9 +894,6 @@ void OmUiMainNet::_buildCbLoc()
     return;
   }
 
-  // save current selection
-  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
-
   // empty the Combo-Box
   this->msgItem(IDC_CB_LOC, CB_RESETCONTENT);
 
@@ -931,7 +907,7 @@ void OmUiMainNet::_buildCbLoc()
       // compose Location label
       label = pCtx->locGet(i)->title() + L" - ";
 
-      if(pCtx->locGet(i)->checkAccessDst()) {
+      if(pCtx->locGet(i)->dstDirAccess(true)) { //< check for read and write
         label += pCtx->locGet(i)->dstDir();
       } else {
         label += L"<folder access error>";
@@ -940,13 +916,8 @@ void OmUiMainNet::_buildCbLoc()
       this->msgItem(IDC_CB_LOC, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(label.c_str()));
     }
 
-    // select the the previously selected Context
-    if(cb_sel < 0) {
-      // select the first Location by default
-      this->locSel(0);
-    } else {
-      this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cb_sel);
-    }
+    // set selection to current active location
+    this->msgItem(IDC_CB_LOC, CB_SETCURSEL, pCtx->locCurId());
 
     // enable the ComboBox control
     this->enableItem(IDC_CB_LOC, true);
@@ -955,8 +926,8 @@ void OmUiMainNet::_buildCbLoc()
 
     // disable Location ComboBox
     this->enableItem(IDC_CB_LOC, false);
-    // force to reset current selection
-    this->locSel(-1);
+    // no selection
+    this->msgItem(IDC_CB_LOC, CB_SETCURSEL, -1);
 
     // ask user to create at least one Location in the Context
     wstring qry = L"The Context have not any configured "
@@ -982,19 +953,6 @@ void OmUiMainNet::_buildLvRep()
   #endif
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
-
-  if(!pLoc) {
-    // empty ListView
-    this->msgItem(IDC_LV_BAT, LVM_DELETEALLITEMS);
-    // disable ListView
-    this->enableItem(IDC_LV_BAT, false);
-    // disable query button
-    this->enableItem(IDC_BC_QRY, false);
-    // return now
-    return;
-  }
 
   // if icon size changed, create new ImageList
   if(this->_buildLvRep_icSize != pMgr->iconsSize()) {
@@ -1042,6 +1000,21 @@ void OmUiMainNet::_buildLvRep()
   // empty list view
   this->msgItem(IDC_LV_REP, LVM_DELETEALLITEMS);
 
+  // get current context and location
+  OmContext* pCtx = pMgr->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+
+  if(!pLoc) {
+    // disable ListView
+    this->enableItem(IDC_LV_REP, false);
+    // disable query button
+    this->enableItem(IDC_BC_QRY, false);
+    // update Repositories ListView selection
+    this->_onLvRepSel();
+    // return now
+    return;
+  }
+
   wstring item_str;
   OmRepository* pRep;
   LVITEMW lvItem;
@@ -1078,6 +1051,9 @@ void OmUiMainNet::_buildLvRep()
 
   // enable or disable query button
   this->enableItem(IDC_BC_QRY, (pLoc->repCount() > 0));
+
+  // update Repositories ListView selection
+  this->_onLvRepSel();
 }
 
 
@@ -1091,17 +1067,6 @@ void OmUiMainNet::_buildLvRmt()
   #endif
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
-
-  if(!pLoc) {
-    // empty ListView
-    this->msgItem(IDC_LV_RMT, LVM_DELETEALLITEMS);
-    // disable ListView
-    this->enableItem(IDC_LV_RMT, false);
-    // return now
-    return;
-  }
 
   // if icon size changed, create new ImageList
   if(this->_buildLvRmt_icSize != pMgr->iconsSize()) {
@@ -1146,17 +1111,25 @@ void OmUiMainNet::_buildLvRmt()
     this->_buildLvRmt_icSize = pMgr->iconsSize();
   }
 
-  // return now if library folder cannot be accessed
-  if(!pLoc->checkAccessLib()) {
-    return;
-  }
-
   // Save list-view scroll position to lvRect
   RECT lvRec;
   this->msgItem(IDC_LV_RMT, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
 
   // empty list view
   this->msgItem(IDC_LV_RMT, LVM_DELETEALLITEMS);
+
+  // get current context and location
+  OmContext* pCtx = pMgr->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+
+  if(!pLoc) {
+    // disable ListView
+    this->enableItem(IDC_LV_RMT, false);
+    // update Package ListView selection
+    this->_onLvRmtSel();
+    // return now
+    return;
+  }
 
   // add item to list view
   OmRemote* pRmt;
@@ -1331,10 +1304,27 @@ void OmUiMainNet::_onLvRmtRclk()
 ///
 void OmUiMainNet::_onLvRmtSel()
 {
-  // hide all package bottom infos
-  this->showItem(IDC_SB_PKG, false);
-  this->showItem(IDC_EC_TXT, false);
-  this->showItem(IDC_SC_TITLE, false);
+   // get count of selected item
+   unsigned lv_nsl = this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT);
+
+  if(!lv_nsl) {
+
+    // hide all package bottom infos
+    this->showItem(IDC_SB_PKG, false);
+    this->showItem(IDC_EC_TXT, false);
+    this->showItem(IDC_SC_TITLE, false);
+
+    // disable all action buttons
+    this->enableItem(IDC_BC_LOAD, false);
+    this->enableItem(IDC_BC_UPGD, false);
+    this->enableItem(IDC_BC_ABORT, false);
+
+    // disable "Edit > Remote []" pop-up menu
+    static_cast<OmUiMain*>(this->_parent)->setPopupItem(1, 6, MF_GRAYED);
+
+    // return now
+    return;
+  }
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
@@ -1345,108 +1335,95 @@ void OmUiMainNet::_onLvRmtSel()
   // keep handle to main dialog
   OmUiMain* pUiMain = static_cast<OmUiMain*>(this->_parent);
 
-  // disable "Edit > Remote" in main menu
-  pUiMain->setPopupItem(1, 6, MF_GRAYED);
+  // at least one selected, enable "Edit > Remote []" pop-up menu
+  pUiMain->setPopupItem(1, 6, MF_ENABLED);
+  HMENU hPopup = pUiMain->getPopupItem(1, 6);
 
-  // Handle to bitmap for package picture
-  HBITMAP hBm = Om_getResImage(this->_hins, IDB_PKG_THN);
+  if(lv_nsl > 1) {
 
-  // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT);
+    // multiple selection, we allow more than one download at a time
+    this->enableItem(IDC_BC_LOAD, true);
+    this->enableItem(IDC_BC_UPGD, true); //< enable anyway when multiple selection
 
-  if(lv_nsl > 0) {
+    // disable the "Edit > Remote > View detail..." menu-item
+    pUiMain->setPopupItem(hPopup, 3, MF_GRAYED); //< "Fix dependencies" menu-item
+    pUiMain->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
 
-    // enable "Edit > Remote []" pop-up menu
-    pUiMain->setPopupItem(1, 6, MF_ENABLED);
+    // on multiple selection, we hide package description
+    this->showItem(IDC_EC_TXT, false);
+    this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
+    this->showItem(IDC_SB_PKG, false);
+
+  } else {
 
     // show package title and thumbnail
     this->showItem(IDC_SC_TITLE, true);
     this->showItem(IDC_SB_PKG, true);
 
-    if(lv_nsl > 1) {
+    // enable the "Edit > Remote > .. " menu-item
+    pUiMain->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
 
-      // disable the "Edit > Remote > View detail..." menu-item
-      HMENU hPopup = pUiMain->getPopupItem(1, 6);
-      pUiMain->setPopupItem(hPopup, 3, MF_GRAYED); //< "Fix dependencies" menu-item
-      pUiMain->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
+    // show package description
+    this->showItem(IDC_EC_TXT, true);
 
-      // on multiple selection, we hide package description
-      this->showItem(IDC_EC_TXT, false);
-      this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
+    OmRemote* pRmt;
 
-    } else {
+    // get the selected item id (only one, no need to iterate)
+    int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    if(lv_sel >= 0) {
 
-      // enable the "Edit > Remote > .. " menu-item
-      HMENU hPopup = pUiMain->getPopupItem(1, 6);
-      pUiMain->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
+      pRmt = pLoc->rmtGet(lv_sel);
 
-      // show package description
-      this->showItem(IDC_EC_TXT, true);
+      // get remote package states
+      bool can_dnld = pRmt->isState(RMT_STATE_NEW) && !pRmt->isState(RMT_STATE_DNL);
+      bool can_upgd = can_dnld && pRmt->isState(RMT_STATE_UPG);
+      bool can_fixd = pRmt->isState(RMT_STATE_DEP);
+      bool progress = pRmt->isState(RMT_STATE_DNL);
 
-      OmRemote* pRmt;
+      pUiMain->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Dwonload" menu-item
+      pUiMain->setPopupItem(hPopup, 1, can_upgd ? MF_ENABLED : MF_GRAYED); //< "Upgrade" menu-item
+      pUiMain->setPopupItem(hPopup, 3, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
 
-      // get the selected item id (only one, no need to iterate)
-      int lv_sel = this->msgItem(IDC_LV_RMT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-      if(lv_sel >= 0) {
+      this->enableItem(IDC_BC_LOAD, can_dnld);
+      this->enableItem(IDC_BC_UPGD, can_upgd);
+      this->enableItem(IDC_BC_ABORT, progress);
+      this->enableItem(IDC_PB_PKG, progress);
 
-        pRmt = pLoc->rmtGet(lv_sel);
-
-        // get remote package states
-        bool can_dnld = pRmt->isState(RMT_STATE_NEW) && !pRmt->isState(RMT_STATE_DNL);
-        bool can_upgd = can_dnld && pRmt->isState(RMT_STATE_UPG);
-        bool can_fixd = pRmt->isState(RMT_STATE_DEP);
-        bool progress = pRmt->isState(RMT_STATE_DNL);
-
-        pUiMain->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Dwonload" menu-item
-        pUiMain->setPopupItem(hPopup, 1, can_upgd ? MF_ENABLED : MF_GRAYED); //< "Upgrade" menu-item
-        pUiMain->setPopupItem(hPopup, 3, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
-
-        this->enableItem(IDC_BC_LOAD, can_dnld);
-        this->enableItem(IDC_BC_UPGD, can_upgd);
-        this->enableItem(IDC_BC_ABORT, progress);
-        this->enableItem(IDC_PB_PKG, progress);
-
-        if(progress) {
-          this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-          // we first go beyond value then backward to workaround the
-          // unwanted transition
-          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent() + 1);
-          this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent());
-        } else {
-          this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
-        }
-
-        this->setItemText(IDC_SC_TITLE, pRmt->name() + L" " + pRmt->version().asString());
-
-        if(pRmt->desc().size()) {
-          this->setItemText(IDC_EC_TXT, pRmt->desc());
-        } else {
-          this->setItemText(IDC_EC_TXT, L"<no description available>");
-        }
-
-        if(pRmt->image().thumbnail()) {
-          hBm = pRmt->image().thumbnail();
-        }
-
+      if(progress) {
+        this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+        // we first go beyond value then backward to workaround the
+        // unwanted transition
+        this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent() + 1);
+        this->msgItem(IDC_PB_PKG, PBM_SETPOS, pRmt->downPercent());
+      } else {
+        this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
       }
+
+      this->setItemText(IDC_SC_TITLE, pRmt->name() + L" " + pRmt->version().asString());
+
+      if(pRmt->desc().size()) {
+        this->setItemText(IDC_EC_TXT, pRmt->desc());
+      } else {
+        this->setItemText(IDC_EC_TXT, L"<no description available>");
+      }
+
+      HBITMAP hBm;
+
+      if(pRmt->image().thumbnail()) {
+        hBm = pRmt->image().thumbnail();
+      } else {
+        hBm = Om_getResImage(this->_hins, IDB_PKG_THN);
+      }
+
+      // Update the selected picture
+      hBm = this->setStImage(IDC_SB_PKG, hBm);
+      if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+
+      // force thumbnail static control to update its position
+      this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
     }
-  } else {
-
-    // disable "Edit > Remote []" pop-up menu
-    pUiMain->setPopupItem(1, 6, MF_GRAYED);
-
-    // disable all action buttons
-    this->enableItem(IDC_BC_LOAD, false);
-    this->enableItem(IDC_BC_UPGD, false);
-    this->enableItem(IDC_BC_ABORT, false);
   }
 
-  // Update the selected picture
-  hBm = this->setStImage(IDC_SB_PKG, hBm);
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
-
-  // force thumbnail static control to update its position
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
 }
 
 
@@ -1666,37 +1643,6 @@ void OmUiMainNet::_onShow()
   std::cout << "DEBUG => OmUiMainNet::_onShow\n";
   #endif
 
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-
-  // if current location selection mismatch with current
-  // ComboBox selection we select the proper location in
-  // ComboBox and update ListView
-  int cur_id = pCtx->locCurId();
-  int cb_sel = this->msgItem(IDC_CB_LOC, CB_GETCURSEL);
-  if(cur_id != cb_sel) {
-    this->msgItem(IDC_CB_LOC, CB_SETCURSEL, cur_id);
-  }
-
-  if(pCtx->locCur()) {
-
-    // rebuild elements
-    this->_buildLvRep();
-
-    // restart folder monitoring
-    if(!this->_dirMon_hth) {
-      this->_dirMon_init(pCtx->locCur()->libDir());
-    }
-
-    // refresh remote package ListView
-    pCtx->locCur()->rmtRefresh(true);
-    this->_buildLvRmt();
-  }
-
-  // disable "Edit > Package" in main menu
-  static_cast<OmUiMain*>(this->root())->setPopupItem(1, 5, MF_GRAYED);
-
   // refresh dialog
   this->_onRefresh();
 }
@@ -1711,9 +1657,11 @@ void OmUiMainNet::_onHide()
   std::cout << "DEBUG => OmUiMainNet::_onHide\n";
   #endif
 
+  // disable "Edit > Remote" in main menu
+  static_cast<OmUiMain*>(this->root())->setPopupItem(1, 6, MF_GRAYED);
+
   // stop folder monitoring
-  if(this->_dirMon_hth)
-    this->_dirMon_stop();
+  if(this->_dirMon_hth) this->_dirMon_stop();
 }
 
 
@@ -1782,16 +1730,6 @@ void OmUiMainNet::_onRefresh()
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
 
-  // disable all packages buttons
-  this->enableItem(IDC_BC_LOAD, false);
-  this->enableItem(IDC_BC_UPGD, false);
-  this->enableItem(IDC_BC_ABORT, false);
-
-  // hide package details
-  this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_TXT, false);
-  this->showItem(IDC_SB_PKG, false);
-
   // disable the Progress-Bar
   this->enableItem(IDC_PB_PKG, false);
 
@@ -1801,19 +1739,46 @@ void OmUiMainNet::_onRefresh()
   // reload Repository ListBox
   this->_buildLvRep();
 
-  // if icon size changed, rebuild Package ListView
-  if(this->_buildLvRmt_icSize != pMgr->iconsSize()) {
-    this->_buildLvRmt();
-  }
-
   // disable or enable elements depending context
   this->enableItem(IDC_SC_LBL01, (pCtx != nullptr));
   this->enableItem(IDC_LV_RMT, (pCtx != nullptr));
   this->enableItem(IDC_LB_REP, (pCtx != nullptr));
-
-  // disable all batches buttons
   this->enableItem(IDC_BC_NEW, (pCtx != nullptr));
-  this->enableItem(IDC_BC_DEL, false);
+
+  // values for access errors
+  bool lib_access = true;
+
+  // We try to avoid unnecessary refresh of ListView by
+  // select specific condition of refresh
+  if(pCtx) {
+    if(pCtx->locCur()) {
+
+      // restart folder monitoring if required
+      if(pCtx->locCur()->libDirAccess(true)) {
+        if(!this->_dirMon_hth) {
+          this->_dirMon_init(pCtx->locCur()->libDir());
+        }
+      } else {
+        lib_access = false;
+      }
+
+      pCtx->locCur()->rmtRefresh(true);
+    }
+  }
+
+  this->_buildLvRmt();
+
+  if(!pCtx) return;
+
+  // Display error dialog AFTER ListView refreshed its content
+  if(pCtx->locCur()) {
+    if(!lib_access) {
+      wstring msg = L"\""+pCtx->locCur()->libDir()+L"\"\n\n";
+      msg +=  L"Either the folder does not exist or it have write access restrictions. "
+              L"Please check target location settings and folder permissions.";
+      Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", msg);
+    }
+  }
 }
 
 
@@ -1827,7 +1792,7 @@ void OmUiMainNet::_onQuit()
   #endif
 
   // stop Library folder changes monitoring
-  this->_dirMon_stop();
+  if(this->_dirMon_hth) this->_dirMon_stop();
 
   // this should be done already...
   this->_thread_abort = true;

@@ -167,17 +167,19 @@ class OmUiMainLib : public OmDialog
 
     bool                _thread_abort;
 
+    void                _buildCbLoc();
+
+    void                _buildLvBat();
+
+    unsigned            _buildLvBat_icSize;
+
+    void                _buildEcLib();
+
     void                _buildLvPkg();
 
     unsigned            _buildLvPkg_icSize;
 
     bool                _buildLvPkg_legacy;
-
-    unsigned            _buildLvBat_icSize;
-
-    void                _buildCbLoc();
-
-    void                _buildLvBat();
 
     void                _onCbLocSel();
 

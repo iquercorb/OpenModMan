@@ -115,13 +115,23 @@ class OmManager
     ///
     void ctxSel(int i);
 
-    /// \brief Get selected Context.
+    /// \brief Get active Context.
     ///
-    /// Returns current selected Context.
+    /// Returns current active Context.
     ///
-    /// \return Current selected Context.
+    /// \return Current active Context.
     ///
     OmContext* ctxCur() const {
+      return _ctxCur >= 0 ? _ctxLs[_ctxCur] : nullptr;
+    }
+
+    /// \brief Get active Context index.
+    ///
+    /// Returns current active Context index.
+    ///
+    /// \return Current active Context index.
+    ///
+    int ctxCurId() const {
       return _ctxCur;
     }
 
@@ -264,7 +274,7 @@ class OmManager
 
     vector<OmContext*>  _ctxLs;
 
-    OmContext*          _ctxCur;
+    int                 _ctxCur;
 
     // general options
     unsigned            _iconsSize;

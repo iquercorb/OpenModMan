@@ -104,6 +104,12 @@ class OmUiMain : public OmDialog
     ///
     void ctxOpen(const wstring& path);
 
+    /// \brief Close current Context
+    ///
+    /// Close the current active Context file then refresh dialog.
+    ///
+    void ctxClose();
+
     /// \brief Select Context
     ///
     /// Select or unselect Context then refresh dialog.

@@ -28,7 +28,7 @@ OmManager::OmManager() :
   _home(),
   _config(),
   _ctxLs(),
-  _ctxCur(nullptr),
+  _ctxCur(-1),
   _iconsSize(16),
   _folderPackages(true),
   _warnEnabled(true),
@@ -511,6 +511,9 @@ bool OmManager::ctxOpen(const wstring& path)
 
   this->saveRecentFile(path);
 
+  // the last loaded context become the active one
+  this->ctxSel(this->_ctxLs.size() - 1);
+
   return true;
 }
 
@@ -522,17 +525,12 @@ void OmManager::ctxClose(int id)
 {
   if(id < 0) {
 
-    if(!this->_ctxCur)
+    if(this->_ctxCur < 0)
       return;
 
-    // search current context index
-    for(size_t i = 0; i < this->_ctxLs.size(); ++i) {
-      if(this->_ctxCur == this->_ctxLs[i]) {
-        id = i; break;
-      }
-    }
+    id = this->_ctxCur;
 
-    this->_ctxCur = nullptr;
+    this->_ctxCur = -1;
   }
 
   if(id < static_cast<int>(this->_ctxLs.size())) {
@@ -540,6 +538,9 @@ void OmManager::ctxClose(int id)
     delete _ctxLs[id];
     this->_ctxLs.erase(this->_ctxLs.begin()+id);
   }
+
+  // the last loaded context become the active one
+  this->ctxSel(this->_ctxLs.size() - 1);
 }
 
 
@@ -549,10 +550,10 @@ void OmManager::ctxClose(int id)
 void OmManager::ctxSel(int i)
 {
   if(i >= 0 && i < (int)this->_ctxLs.size()) {
-    this->_ctxCur = this->_ctxLs[i];
-    this->log(2, L"Manager", L"Select Context: \""+this->_ctxCur->title()+L"\".");
+    this->_ctxCur = i;
+    this->log(2, L"Manager", L"Select Context: \""+this->_ctxLs[_ctxCur]->title()+L"\".");
   } else {
-    this->_ctxCur = nullptr;
+    this->_ctxCur = -1;
     this->log(2, L"Manager", L"Select Context: <NONE>");
   }
 }

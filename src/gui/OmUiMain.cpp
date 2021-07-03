@@ -179,19 +179,31 @@ void OmUiMain::ctxOpen(const wstring& path)
   // Try to open Context
   if(pMgr->ctxOpen(path)) {
 
-    // unselect context
-    pMgr->ctxSel(-1);
-    this->msgItem(IDC_CB_CTX, CB_SETCURSEL, -1);
-
-    // rebuild "Recent Files" pop-up list
-    this->_buildMnRct();
-
-    // rebuild Context ComboBox
-    this->_buildCbCtx(); //< this will select the last added context
+    // refresh
+    this->refresh();
 
   } else {
     Om_dialogBoxErr(this->_hwnd, L"Unable to load Context", pMgr->lastError());
   }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMain::ctxClose()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMain::ctxClose\n";
+  #endif
+
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  // close the current context
+  pMgr->ctxClose();
+
+  // refresh
+  this->refresh();
 }
 
 
@@ -208,37 +220,9 @@ void OmUiMain::ctxSel(int id)
 
   // select the requested Context
   pMgr->ctxSel(id);
-  OmContext* pCtx = pMgr->ctxCur();
 
-  // update window caption
-  this->_buildCaption();
-
-  // update Context Icon
-  this->_buildSbCtx();
-
-  // update menus
-  int state = pCtx ? MF_ENABLED : MF_GRAYED;
-  this->setPopupItem(static_cast<int>(0), 5, state); // File > Close
-  this->setPopupItem(static_cast<int>(1), 0, state); // Edit > Context properties...
-  this->setPopupItem(static_cast<int>(1), 3, state); // Edit > Add Location...
-  if(pCtx) {
-    // Edit > Location properties...
-    this->setPopupItem(static_cast<int>(1), 2, pCtx->locCur() ? MF_ENABLED : MF_GRAYED);
-  } else {
-    this->setPopupItem(static_cast<int>(1), 2, MF_GRAYED); // Edit > Location properties...
-    this->setPopupItem(static_cast<int>(1), 5, MF_GRAYED); // Edit > Package []
-  }
-
-  // forces ComboBox control to select or unselect
-  this->msgItem(IDC_CB_CTX, CB_SETCURSEL, id);
-
-  // refresh visible tab
-  for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-    if(this->_pageDial[i]->visible()) {
-      // send message to notify context selection changed
-      this->_pageDial[i]->postMessage(UWM_MAIN_CTX_CHANGED);
-    }
-  }
+  // refresh all
+  this->refresh();
 }
 
 
@@ -349,9 +333,6 @@ void OmUiMain::_buildCbCtx()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  // save current selection
-  int cb_sel = this->msgItem(IDC_CB_CTX, CB_GETCURSEL);
-
   // empty the Combo-Box
   this->msgItem(IDC_CB_CTX, CB_RESETCONTENT);
 
@@ -369,21 +350,16 @@ void OmUiMain::_buildCbCtx()
       this->msgItem(IDC_CB_CTX, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     }
 
-    // select the the previously selected Context
-    if(cb_sel < 0) {
-      // select the last added Context by default
-      this->ctxSel(pMgr->ctxCount() - 1);
-    } else {
-      this->msgItem(IDC_CB_CTX, CB_SETCURSEL, cb_sel);
-    }
+    // select context according current active one
+    this->msgItem(IDC_CB_CTX, CB_SETCURSEL, pMgr->ctxCurId());
 
     // enable the ComboBox control
     this->enableItem(IDC_CB_CTX, true);
 
   } else {
 
-    // force to unselect
-    this->ctxSel(-1);
+    // no selection
+    this->msgItem(IDC_CB_CTX, CB_SETCURSEL, -1);
 
     // disable the ComboBox control
     this->enableItem(IDC_CB_CTX, false);
@@ -521,6 +497,22 @@ void OmUiMain::_onRefresh()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMain::_onRefresh\n";
   #endif
+
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+
+  // update menus
+  int state = pCtx ? MF_ENABLED : MF_GRAYED;
+  this->setPopupItem(static_cast<int>(0), 5, state); // File > Close
+  this->setPopupItem(static_cast<int>(1), 0, state); // Edit > Context properties...
+  this->setPopupItem(static_cast<int>(1), 3, state); // Edit > Add Location...
+  if(pCtx) {
+    // Edit > Location properties...
+    this->setPopupItem(static_cast<int>(1), 2, pMgr->ctxCur()->locCur() ? MF_ENABLED : MF_GRAYED);
+  } else {
+    this->setPopupItem(static_cast<int>(1), 2, MF_GRAYED); // Edit > Location properties...
+    this->setPopupItem(static_cast<int>(1), 5, MF_GRAYED); // Edit > Package []
+  }
 
   // rebuild the Recent Contect menu
   this->_buildMnRct();
@@ -672,8 +664,7 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_FILE_CLOSE:
-      pMgr->ctxClose();
-      this->_buildCbCtx();
+      this->ctxClose();
       break;
 
     case IDM_FILE_CLEAR_HIST:

@@ -159,7 +159,7 @@ class OmContext
     /// \return Location count.
     ///
     size_t locCount() {
-      return _locLst.size();
+      return _locLs.size();
     }
 
     /// \brief Get Location.
@@ -171,7 +171,7 @@ class OmContext
     /// \return Location object at index or nullptr if index is out of bound.
     ///
     OmLocation* locGet(unsigned i) {
-      return (i < _locLst.size()) ? _locLst[i] : nullptr;
+      return (i < _locLs.size()) ? _locLs[i] : nullptr;
     }
 
     /// \brief Get Location.
@@ -220,23 +220,25 @@ class OmContext
     ///
     bool locSel(const wstring& uuid);
 
-    /// \brief Get current Location.
+    /// \brief Get active Location.
     ///
     /// Returns current active Location.
     ///
     /// \return Current active Location or nullptr if none is active.
     ///
     OmLocation* locCur() {
-      return _locCur;
+      return _locCur >= 0 ? _locLs[_locCur] : nullptr;
     }
 
-    /// \brief Get current Location index.
+    /// \brief Get active Location index.
     ///
     /// Returns index of the current active Location.
     ///
     /// \return Index of the active Location.
     ///
-    int locCurId() const;
+    int locCurId() const {
+      return _locCur;
+    }
 
     /// \brief Make new Location.
     ///
@@ -353,9 +355,9 @@ class OmContext
 
     HICON               _icon;
 
-    vector<OmLocation*> _locLst;
+    vector<OmLocation*> _locLs;
 
-    OmLocation*         _locCur;
+    int                 _locCur;
 
     vector<OmBatch*>    _batLst;
 
