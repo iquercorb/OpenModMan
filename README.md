@@ -5,7 +5,7 @@ Open Mod Mananager
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.5 (beta)
+Version: 0.9.6 (beta)
 ----------------------------------------------------------------------------------------
 
 
@@ -46,7 +46,7 @@ Screenshots
 Version history
 ----------------------------------------------------------------------------------------
 
-0.9.6 (not released)
+0.9.6
  - Overall optimization and various debug.
  - Repaired broken Context Wizard dialog.
  - Fix Load Contexts At Startup option dialog not saving properly.
