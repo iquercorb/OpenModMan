@@ -508,7 +508,7 @@ bool OmXmlDoc::load(const wstring& src)
 ///
 bool OmXmlDoc::save(const wstring& dst)
 {
-  if(!static_cast<pugi::xml_document*>(_data)->save_file(dst.c_str(), L"\t", pugi::format_default, pugi::encoding_utf8)) {
+  if(!static_cast<pugi::xml_document*>(_data)->save_file(dst.c_str(), L"  ", pugi::format_default|pugi::format_save_file_text, pugi::encoding_utf8)) {
     _ercode = 17;
     return false;
   }

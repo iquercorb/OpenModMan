@@ -28,8 +28,8 @@
 !define OMM_ICO           "..\include\gui\res\bitmap\omm_icon.ico"
 !define OMB_ICO           "..\include\gui\res\bitmap\omb_icon.ico"
 !define OMX_ICO           "..\include\gui\res\bitmap\omx_icon.ico"
-!define OMP_ICO           "..\include\gui\res\bitmap\omp_icon.ico"
-!define OMK_ICO           "..\include\gui\res\bitmap\omk_icon.ico"
+!define OZP_ICO           "..\include\gui\res\bitmap\ozp_icon.ico"
+!define OZB_ICO           "..\include\gui\res\bitmap\ozb_icon.ico"
 
 ; Build Unicode installer
 Unicode True

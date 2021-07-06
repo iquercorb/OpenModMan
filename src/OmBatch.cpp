@@ -338,7 +338,7 @@ bool OmBatch::rename(const wstring& name)
 
   // compose new Batch full path
   wstring new_path = old_path.substr(0, old_path.find_last_of(L"\\") + 1);
-  new_path += name; new_path += L"."; new_path += OMM_BAT_FILE_EXT;
+  new_path += name; new_path += L"."; new_path += OMM_BAT_DEF_FILE_EXT;
 
   // close to rename file safely
   this->close();

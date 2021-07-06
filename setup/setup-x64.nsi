@@ -69,8 +69,8 @@ Section "Install (required)"
   file "/oname=omm_icon.ico"            "${OMM_ICO}"
   file "/oname=omb_icon.ico"            "${OMB_ICO}"
   file "/oname=omx_icon.ico"            "${OMX_ICO}"
-  file "/oname=omp_icon.ico"            "${OMP_ICO}"
-  file "/oname=omk_icon.ico"            "${OMK_ICO}"
+  file "/oname=ozp_icon.ico"            "${OZP_ICO}"
+  file "/oname=ozb_icon.ico"            "${OZB_ICO}"
 
   File "/oname=LICENSE.TXT"             "..\LICENSE.TXT"
   File "/oname=CREDITS.TXT"             "..\CREDITS.TXT"
@@ -96,20 +96,30 @@ Section "Install (required)"
   WriteRegStr HKCR "${APP_REG_NAME}.Context\shell" "" "open"
   WriteRegStr HKCR "${APP_REG_NAME}.Context\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
 
-  WriteRegStr HKCR ".omp" "" "${APP_REG_NAME}.Package"
-  WriteRegStr HKCR ".omp" "Content Type" "application/x-zip-compressed"
-  WriteRegStr HKCR "${APP_REG_NAME}.Package\DefaultIcon" "" "$INSTDIR\omp_icon.ico"
-  WriteRegStr HKCR "${APP_REG_NAME}.Package" "" "${APP_NAME} Package"
+  WriteRegStr HKCR ".ozp" "" "${APP_REG_NAME}.Package"
+  WriteRegStr HKCR ".ozp" "Content Type" "application/x-zip-compressed"
+  WriteRegStr HKCR "${APP_REG_NAME}.Package\DefaultIcon" "" "$INSTDIR\ozp_icon.ico"
+  WriteRegStr HKCR "${APP_REG_NAME}.Package" "" "${APP_NAME} Zip Package"
 
-  WriteRegStr HKCR ".omk" "" "${APP_REG_NAME}.Backup"
-  WriteRegStr HKCR ".omk" "Content Type" "application/x-zip-compressed"
-  WriteRegStr HKCR "${APP_REG_NAME}.Backup\DefaultIcon" "" "$INSTDIR\omk_icon.ico"
-  WriteRegStr HKCR "${APP_REG_NAME}.Backup" "" "${APP_NAME} Backup"
+  WriteRegStr HKCR ".ozb" "" "${APP_REG_NAME}.Backup"
+  WriteRegStr HKCR ".ozb" "Content Type" "application/x-zip-compressed"
+  WriteRegStr HKCR "${APP_REG_NAME}.Backup\DefaultIcon" "" "$INSTDIR\ozb_icon.ico"
+  WriteRegStr HKCR "${APP_REG_NAME}.Backup" "" "${APP_NAME} Zip Backup"
 
   WriteRegStr HKCR ".oml" "" "${APP_REG_NAME}.Location"
   WriteRegStr HKCR ".oml" "Content Type" "text/xml"
   WriteRegStr HKCR "${APP_REG_NAME}.Location\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.Location" "" "${APP_NAME} Location Definition"
+
+  WriteRegStr HKCR ".omp" "" "${APP_REG_NAME}.Location"
+  WriteRegStr HKCR ".omp" "Content Type" "text/xml"
+  WriteRegStr HKCR "${APP_REG_NAME}.PkgDef\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
+  WriteRegStr HKCR "${APP_REG_NAME}.PkgDef" "" "${APP_NAME} Package Definition"
+
+  WriteRegStr HKCR ".omk" "" "${APP_REG_NAME}.Location"
+  WriteRegStr HKCR ".omk" "Content Type" "text/xml"
+  WriteRegStr HKCR "${APP_REG_NAME}.BckDef\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
+  WriteRegStr HKCR "${APP_REG_NAME}.BckDef" "" "${APP_NAME} Backup Definition"
 
   WriteRegStr HKCR ".omb" "" "${APP_REG_NAME}.Batch"
   WriteRegStr HKCR ".omb" "Content Type" "text/xml"
@@ -151,14 +161,20 @@ Section "Uninstall"
   DeleteRegKey HKCR ".omc"
   DeleteRegKey HKCR "${APP_REG_NAME}.Context"
 
-  DeleteRegKey HKCR ".omp"
+  DeleteRegKey HKCR ".ozp"
   DeleteRegKey HKCR "${APP_REG_NAME}.Package"
 
-  DeleteRegKey HKCR ".omk"
+  DeleteRegKey HKCR ".ozb"
   DeleteRegKey HKCR "${APP_REG_NAME}.Backup"
 
   DeleteRegKey HKCR ".oml"
   DeleteRegKey HKCR "${APP_REG_NAME}.Location"
+
+  DeleteRegKey HKCR ".omp"
+  DeleteRegKey HKCR "${APP_REG_NAME}.PkgDef"
+
+  DeleteRegKey HKCR ".omk"
+  DeleteRegKey HKCR "${APP_REG_NAME}.BckDef"
 
   DeleteRegKey HKCR ".omb"
   DeleteRegKey HKCR "${APP_REG_NAME}.Batch"

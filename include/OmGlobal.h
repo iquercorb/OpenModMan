@@ -69,8 +69,8 @@
 #define OMM_CFG_SIGN_BAT          L"Open_Mod_Manager_Batch"
 #define OMM_CFG_SIGN_REP          L"Open_Mod_Manager_Repository"
 
-#define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.omp)\0*.ZIP;*.OMP;\0"
-#define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.omk)\0*.ZIP;*.OMK;\0"
+#define OMM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
+#define OMM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
 #define OMM_IMG_FILES_FILTER      L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
 #define OMM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
 #define OMM_TXT_FILES_FILTER      L"Text file (*.txt)\0*.TXT\0"
@@ -82,11 +82,13 @@
 #define OMM_BCK_DEF_FILE_FILER    L"Backup definition (*.omk)\0*.OMK;\0"
 #define OMM_BAT_DEF_FILE_FILER    L"Batch definition (*.omb)\0*.OMB;\0"
 
-#define OMM_CTX_FILE_EXT          L"omc"
-#define OMM_LOC_FILE_EXT          L"oml"
-#define OMM_PKG_FILE_EXT          L"omp"
-#define OMM_BCK_FILE_EXT          L"omk"
-#define OMM_BAT_FILE_EXT          L"omb"
+#define OMM_CTX_DEF_FILE_EXT      L"omc"
+#define OMM_LOC_DEF_FILE_EXT      L"oml"
+#define OMM_BAT_DEF_FILE_EXT      L"omb"
+#define OMM_PKG_DEF_FILE_EXT      L"omp"
+#define OMM_BCK_DEF_FILE_EXT      L"omk"
+#define OMM_PKG_FILE_EXT          L"ozp"
+#define OMM_BCK_FILE_EXT          L"ozb"
 
 #define OMM_IMAGE_TYPE_BMP        1
 #define OMM_IMAGE_TYPE_JPG        2

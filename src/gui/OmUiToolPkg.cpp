@@ -879,9 +879,8 @@ void OmUiToolPkg::_onInit()
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);
 
   // add items to extension ComboBox
-  wstring ext = L"."; ext += OMM_PKG_FILE_EXT;
   this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L".zip"));
-  this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ext.c_str()));
+  this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"." OMM_PKG_FILE_EXT));
   this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0, 0);
 
   // add items into Zip Level ComboBox

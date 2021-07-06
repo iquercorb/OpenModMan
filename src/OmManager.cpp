@@ -454,7 +454,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
 
   // compose Context definition file name
   wstring ctx_def_path = ctx_home + L"\\" + title;
-  ctx_def_path += L"."; ctx_def_path += OMM_CTX_FILE_EXT;
+  ctx_def_path += L"."; ctx_def_path += OMM_CTX_DEF_FILE_EXT;
 
   // initialize an empty Context definition file
   OmConfig ctx_def;

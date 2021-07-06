@@ -127,15 +127,10 @@ void OmUiMainNet::safemode(bool enable)
   #endif
 
   if(enable) {
-    // force to unselect current location
-    this->locSel(-1);
+    this->_dirMon_stop();
   } else {
-    // rebuild Location ComboBox, this
-    // will also select the default Location
-    this->_buildCbLoc();
-
-    // rebuild Repository ListView
-    this->_buildLvRep();
+    if(this->visible())
+      this->_onRefresh();
   }
 }
 

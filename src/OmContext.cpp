@@ -36,7 +36,7 @@ static inline int __OmContext_lsLocDef(vector<wstring>& omt_list, const wstring&
   vector<wstring> ls;
 
   wstring filter = L"*.";
-  filter += OMM_LOC_FILE_EXT;
+  filter += OMM_LOC_DEF_FILE_EXT;
 
   Om_lsFileFiltered(&ls, path, filter, true);
 
@@ -232,7 +232,7 @@ bool OmContext::open(const wstring& path)
 
     for(size_t i = 0; i < subdir.size(); ++i) {
 
-      // search for file(s) with the OMM_LOC_FILE_EXT extension within the sub-folder
+      // search for file(s) with the OMM_LOC_DEF_FILE_EXT extension within the sub-folder
       if(__OmContext_lsLocDef(omt_list, this->_home + L"\\" + subdir[i]) > 0) {
 
         // we use the first file we found
@@ -260,7 +260,7 @@ bool OmContext::open(const wstring& path)
 
   // Load batches for this Context
   vector<wstring> omb_list;
-  wstring filter = L"*."; filter += OMM_BAT_FILE_EXT;
+  wstring filter = L"*."; filter += OMM_BAT_DEF_FILE_EXT;
   Om_lsFileFiltered(&omb_list, this->_home, filter, true);
 
   if(omb_list.size()) {
@@ -514,7 +514,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
 
   // compose Location definition file name
   wstring loc_def_path = loc_home + L"\\" + title;
-  loc_def_path += L"."; loc_def_path += OMM_LOC_FILE_EXT;
+  loc_def_path += L"."; loc_def_path += OMM_LOC_DEF_FILE_EXT;
 
   // check whether definition file already exists and delete it
   if(Om_isFile(loc_def_path)) {
@@ -736,7 +736,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
 
   // compose path using title and context home
   wstring bat_def_path = this->_home + L"\\";
-  bat_def_path += title; bat_def_path += L"."; bat_def_path += OMM_BAT_FILE_EXT;
+  bat_def_path += title; bat_def_path += L"."; bat_def_path += OMM_BAT_DEF_FILE_EXT;
 
   // initialize new definition file
   OmConfig bat_def;

@@ -45,9 +45,9 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
-  this->_addPage(L"Packages library", new OmUiPropLocLib(hins));
-  this->_addPage(L"Network repositories", new OmUiPropLocNet(hins));
+  this->_addPage(L"Library options", new OmUiPropLocLib(hins));
   this->_addPage(L"Backup options", new OmUiPropLocBck(hins));
+  this->_addPage(L"Network repositories", new OmUiPropLocNet(hins));
 
   // creates child sub-dialogs
   this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository

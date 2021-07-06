@@ -1425,7 +1425,7 @@ bool OmLocation::libRefresh()
 
     // get content of the package Library folder
     Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.omp", true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true);
     if(this->_libDevMode)
       Om_lsDir(&path_ls, this->_libDir, true);
 
@@ -1512,7 +1512,7 @@ bool OmLocation::libRefresh()
 
     // get Backup folder content
     Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.omk", true);
+    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*." OMM_BCK_FILE_EXT, true);
     Om_lsDir(&path_ls, this->_bckDir, true);
 
     // add all available and valid Backups
@@ -1528,7 +1528,7 @@ bool OmLocation::libRefresh()
     // get Library folder content
     path_ls.clear();
     Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.omp", true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true);
     if(this->_libDevMode)
       Om_lsDir(&path_ls, this->_libDir, true);
 
@@ -1809,7 +1809,7 @@ bool OmLocation::renameHome(const wstring& name)
   // compose new Location definition file name
   wstring new_file = name;
   new_file += L".";
-  new_file += OMM_LOC_FILE_EXT;
+  new_file += OMM_LOC_DEF_FILE_EXT;
 
   // Rename Location definition file
   int result = Om_fileMove(old_path, old_home + L"\\" + new_file);

@@ -150,15 +150,10 @@ void OmUiMainLib::safemode(bool enable)
   #endif
 
   if(enable) {
-    // force to unselect current location
-    this->locSel(-1);
+    this->_dirMon_stop();
   } else {
-    // rebuild Location ComboBox, this
-    // will also select the default Location
-    this->_buildCbLoc();
-
-    // rebuild Batches ListBox
-    this->_buildLvBat();
+    if(this->visible())
+      this->_onRefresh();
   }
 }
 

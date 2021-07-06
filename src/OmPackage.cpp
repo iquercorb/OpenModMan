@@ -205,7 +205,7 @@ bool OmPackage::srcParse(const wstring& path)
 
         src_zip.index(zcd_entry, zcd_index); //< get Central Directory Record entry
 
-        if(Om_extensionMatches(zcd_entry, OMM_PKG_FILE_EXT)) {
+        if(Om_extensionMatches(zcd_entry, OMM_PKG_DEF_FILE_EXT)) {
           // good candidate for Package definition, try to load it
           char* cbuf = nullptr;
           size_t s = src_zip.size(zcd_index);
@@ -513,7 +513,7 @@ bool OmPackage::bckParse(const wstring& path)
 
       bck_zip.index(zcd_entry, zcd_index); //< get Central Directory Record entry
 
-      if(Om_extensionMatches(zcd_entry, OMM_BCK_FILE_EXT)) {
+      if(Om_extensionMatches(zcd_entry, OMM_BCK_DEF_FILE_EXT)) {
         // good candidate for Package definition, try to load it
         char* cbuf = nullptr;
         size_t s = bck_zip.size(zcd_index);
@@ -574,7 +574,7 @@ bool OmPackage::bckParse(const wstring& path)
     Om_lsFile(&ls, this->_bck, true);
 
     for(size_t i = 0; i < ls.size(); ++i) {
-      if(Om_extensionMatches(ls[i], OMM_BCK_FILE_EXT)) {
+      if(Om_extensionMatches(ls[i], OMM_BCK_DEF_FILE_EXT)) {
         if(bck_def.open(ls[i], OMM_CFG_SIGN_BCK)) {
           has_def = true;
           break;
@@ -1231,7 +1231,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   // compose source definition file name
   wstring pkg_def_name = PKG_SOURCE_DEF;
   pkg_def_name += L".";
-  pkg_def_name += OMM_PKG_FILE_EXT;
+  pkg_def_name += OMM_PKG_DEF_FILE_EXT;
 
   // get XML backup data
   string pkg_def_data = pkg_def.data();
@@ -1412,7 +1412,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   // compose the Backup definition file name
   wstring back_def_name = PKG_BACKUP_DEF;
   back_def_name += L".";
-  back_def_name += OMM_BCK_FILE_EXT;
+  back_def_name += OMM_BCK_DEF_FILE_EXT;
 
   OmConfig bck_def;
   if(is_zip) {
