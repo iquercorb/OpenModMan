@@ -89,6 +89,7 @@
 #define IDB_BTN_NOT                             856
 #define IDB_BTN_OPN                             857
 #define IDB_BTN_NEW                             858
+#define IDB_BTN_WRN                             859
 #define IDB_BTN_UP                              860
 #define IDB_BTN_DN                              861
 #define IDB_PKG_THN                             870

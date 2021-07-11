@@ -203,7 +203,8 @@ void OmUiPropLocBck::_onInit()
   this->_createTooltip(IDC_CB_LVL,    L"Compression level for backup zip archives");
   this->_createTooltip(IDC_BC_DEL,    L"Delete all backup data without restoring it (emergency use only)");
 
-  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
+  // Set buttons inner icons
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_WRN));
 
   // add items to Zip Level ComboBox
   this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
@@ -211,6 +212,7 @@ void OmUiPropLocBck::_onInit()
   this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
   this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
 
+  OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
 
   int comp_levl = pLoc->bckZipLevel();
@@ -264,7 +266,7 @@ void OmUiPropLocBck::_onResize()
   // Maintenance operations Label
   this->_setItemPos(IDC_SC_LBL02, 50, 80, 120, 9);
   // Discard backups Button
-  this->_setItemPos(IDC_BC_DEL, 50, 90, 80, 15);
+  this->_setItemPos(IDC_BC_DEL, 50, 90, 90, 15);
 }
 
 

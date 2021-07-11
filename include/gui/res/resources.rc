@@ -47,6 +47,10 @@ IDB_BTN_NEW        ICON         ".\\bitmap\\btn_new.ico"
 
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_BTN_WRN        ICON         ".\\bitmap\\btn_wrn.ico"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_BTN_UP         ICON         ".\\bitmap\\btn_up.ico"
 
 
@@ -544,7 +548,7 @@ IDD_PROP_LOC_BCK DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    AUTOCHECKBOX    "Store backup data as Zip archives", IDC_BC_CKBX1, 50, 20, 120, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Store backup data as compressed archives", IDC_BC_CKBX1, 50, 20, 120, 9, 0, WS_EX_LEFT
     LTEXT           "Backup compression level :", IDC_SC_LBL01, 50, 40, 120, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_LVL, 50, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     LTEXT           "Maintenance operations :", IDC_SC_LBL02, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
