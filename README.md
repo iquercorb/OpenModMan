@@ -48,7 +48,7 @@ Version history
 
 0.9.7 (not released)
  - Developer mode back as enabled by default.
- - Fix undo install not working with archives file backup.
+ - Fix undo install not working with archive files backup.
  - Package created folders no longer generate overlapping.
 
 0.9.6

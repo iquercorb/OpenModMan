@@ -43,10 +43,12 @@
 ///
 /// \return The filled buffer as const char
 ///
-static void __OmPackage_getItemsFromDir(vector<OmPkgItem>* ls, const wstring& orig, const wstring& from)
+static void __get_folder_src_items(vector<OmPkgItem>* ls, const wstring& orig, const wstring& from)
 {
   wstring item;
   wstring root;
+
+  OmPkgItem pkg_item;
 
   wstring srch(orig); srch += L"\\*";
   WIN32_FIND_DATAW fd;
@@ -57,7 +59,6 @@ static void __OmPackage_getItemsFromDir(vector<OmPkgItem>* ls, const wstring& or
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
 
-      OmPkgItem pkg_item;
       pkg_item.cdri = -1;
       pkg_item.dest = PKGITEM_DEST_NUL;
 
@@ -75,7 +76,7 @@ static void __OmPackage_getItemsFromDir(vector<OmPkgItem>* ls, const wstring& or
         ls->push_back(pkg_item);
 
         // go deep in hierarchy
-        __OmPackage_getItemsFromDir(ls, root, item);
+        __get_folder_src_items(ls, root, item);
 
       } else {
         Om_concatPaths(item, from, fd.cFileName);
@@ -447,7 +448,7 @@ bool OmPackage::srcParse(const wstring& path)
       this->_srcItemLs.clear();
 
       // get Package item list from folder content (recursive function)
-      __OmPackage_getItemsFromDir(&this->_srcItemLs, this->_src, L"");
+      __get_folder_src_items(&this->_srcItemLs, this->_src, L"");
 
     } else {
 
@@ -1311,43 +1312,40 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 ///
 void OmPackage::_srcItemAdd(const OmPkgItem& item) {
 
-  // we decompose the item path to add parent folder as source item
-  // to properly and robustly track folder creation and deletion.
-  bool exists;
+  if(item.type == PKGITEM_TYPE_F) {
 
-  OmPkgItem parent;
-  parent.type = PKGITEM_TYPE_D;
-  parent.dest = PKGITEM_DEST_NUL;
-  parent.cdri = -1;
+    // we decompose the item path to add parent folder as source item
+    // to properly and robustly track folder creation and deletion.
 
-  size_t s = 0;
-  size_t last = item.path.size() - 1;
+    bool exists;
 
-  while(true) {
+    OmPkgItem parent;
+    parent.type = PKGITEM_TYPE_D;
+    parent.dest = PKGITEM_DEST_NUL;
+    parent.cdri = -1;
 
-    // get next parent
-    s = item.path.find(L'\\', s + 1);
+    size_t s = 0;
 
-    if(s == wstring::npos || s == last)
-      break;
+    while((s = item.path.find(L'\\', s + 1)) != wstring::npos) {
 
-    parent.path = item.path.substr(0, s) + L"\\";
+      parent.path = item.path.substr(0, s) + L"\\";
 
-    // add uniques only
-    exists = false;
-    for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
-      if(this->_srcItemLs[i].type == PKGITEM_TYPE_D) {
-        if(this->_srcItemLs[i].path == parent.path) {
-          exists = true; break;
+      // add uniques only
+      exists = false;
+      for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
+        if(this->_srcItemLs[i].type == PKGITEM_TYPE_D) {
+          if(this->_srcItemLs[i].path == parent.path) {
+            exists = true; break;
+          }
         }
       }
-    }
 
-    if(!exists) {
-      #ifdef DEBUG
-      std::wcout << L"DEBUG => OmPackage::_srcItemAdd : add parent : " << parent.path << L"\n";
-      #endif
-      this->_srcItemLs.push_back(parent);
+      if(!exists) {
+        #ifdef DEBUG
+        std::wcout << L"DEBUG => OmPackage::_srcItemAdd : add parent : " << parent.path << L"\n";
+        #endif
+        this->_srcItemLs.push_back(parent);
+      }
     }
   }
 
@@ -1496,7 +1494,8 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
       if(this->_srcItemLs[i].type == PKGITEM_TYPE_F) { //< this is a file
         // add a 'copy' entry into backup definition
         xml_item = def_xml.addChild(L"cpy");
-        xml_item.setAttr(L"dir", L"0");
+        xml_item.setContent(this->_srcItemLs[i].path);
+        xml_item.setAttr(L"dir", 0);
         xml_item.setAttr(L"cdi", (int)z); //< CDR index in zip
         if(is_zip) {
           // backup file path in zip archive
@@ -1560,6 +1559,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
           #endif
           // add a "To be deleted" entry into backup definition
           xml_item = def_xml.addChild(L"del");
+          xml_item.setContent(this->_srcItemLs[i].path);
           xml_item.setAttr(L"dir", 1);
           // this thing is now part of backup tree
           bck_item.cdri = -1;
@@ -1581,24 +1581,12 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
             break;
           }
         }
-
-        // call progression callback
-        if(progress_cb) {
-          progress_cur++;
-          if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
-            has_aborted = true;
-            break;
-          }
-        }
-
-        #ifdef DEBUG
-        Sleep(OMM_DEBUG_SLOW); //< for debug
-        #endif
       }
 
     } else { // item doesn't exists in destination, it should be deleted at restore
       // add a "To be deleted" entry into backup definition
       xml_item = def_xml.addChild(L"del");
+      xml_item.setContent(this->_srcItemLs[i].path);
       xml_item.setAttr(L"dir", this->_srcItemLs[i].type == PKGITEM_TYPE_F ? 0 : 1 );
 
       // this thing is now part of backup tree
@@ -1607,8 +1595,6 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
       this->_bckItemLs.push_back(bck_item);
     }
 
-    // set destination path of this entry in backup definition
-    xml_item.setContent(this->_srcItemLs[i].path);
     // call progression callback
     if(progress_cb) {
       progress_cur++;
@@ -1617,6 +1603,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
         break;
       }
     }
+
     #ifdef DEBUG
     Sleep(OMM_DEBUG_SLOW); //< for debug
     #endif
