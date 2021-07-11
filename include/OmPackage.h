@@ -378,6 +378,26 @@ class OmPackage
       return _bckItemLs[i];
     }
 
+    /// \brief Check whether has backup item.
+    ///
+    /// Check whether this package has backup item corresponding to the
+    /// given criteria.
+    ///
+    /// \param[in]  path      : Backup item path.
+    /// \param[in]  dest      : Backup item destination.
+    ///
+    /// \return True if item found, false otherwise.
+    ///
+    bool bckItemHas(const wstring& path, OmPkgItemDest dest) const {
+      for(size_t i = 0; i < _bckItemLs.size(); ++i) {
+        if(_bckItemLs[i].dest == dest) {
+          if(_bckItemLs[i].path == path)
+            return true;
+        }
+      }
+      return false;
+    }
+
     /// \brief Get source list item count.
     ///
     /// Returns count of item in source tree list.
@@ -675,6 +695,14 @@ class OmPackage
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    /// \brief Add source item
+    ///
+    /// Sub-routine to add source item and create parent folder item as required.
+    ///
+    /// \param[in]  item        : Item to add.
+    ///
+    void _srcItemAdd(const OmPkgItem& item);
+
     /// \brief Create backup data.
     ///
     /// Sub-routine for backup data creation
@@ -685,7 +713,7 @@ class OmPackage
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doBackup(int zipLvl = 0, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    bool _backup(int zipLvl = 0, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Install source data.
     ///
@@ -696,7 +724,7 @@ class OmPackage
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doInstall(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    bool _apply(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Uninstall package and restore backup data.
     ///
@@ -704,21 +732,11 @@ class OmPackage
     ///
     /// \param[in]  progress_cb : Optional progression callback function.
     /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
+    /// \param[in]  undo        : Indicate the uninstallation operation is an undo install.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doUninst(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
-
-    /// \brief Undo backup data.
-    ///
-    /// Sub-routine to restore partial, erroneous or aborted backup
-    ///
-    /// \param[in]  progress_cb : Optional progression callback function.
-    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
-    ///
-    /// \return True if operation succeed, false otherwise.
-    ///
-    void _undoInstall(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    bool _restore(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr, bool undo = false);
 
     /// \brief Discard backup data.
     ///
@@ -726,7 +744,7 @@ class OmPackage
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool _doUnbackup();
+    bool _discard();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

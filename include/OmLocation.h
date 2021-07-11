@@ -738,6 +738,24 @@ class OmLocation
     ///
     size_t bckGetRelations(vector<OmPackage*>& rel_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const OmPackage* pkg) const;
 
+    /// \brief Check whether backup item exists.
+    ///
+    /// Check whether any package has the backup item corresponding to
+    /// the given criteria.
+    ///
+    /// \param[in]  path      : Backup item path.
+    /// \param[in]  dest      : Backup item destination.
+    ///
+    /// \return True if item found, false otherwise.
+    ///
+    bool bckItemExists(const wstring& path, OmPkgItemDest dest) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->bckItemHas(path, dest))
+          return true;
+      }
+      return false;
+    }
+
     /// \brief Get repository URL count.
     ///
     /// Returns current repository URL count in library.

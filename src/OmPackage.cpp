@@ -263,14 +263,14 @@ bool OmPackage::srcParse(const wstring& path)
         // here we go to gather files to install
         for(unsigned i = 0; i < zcd_count; ++i) {
           src_zip.index(zcd_entry, i); //< get Central Directory Record entry
-
           // we check for all entry with the specified destination folder as
           // root, then we get only the relative path for the Package Item.
           if(Om_getRelativePath(pkg_item.path, this->_srcDir, zcd_entry)) {
             // we got one, lets add it to the package tree
             pkg_item.cdri = i; //< keep Zip CDR index
             pkg_item.type = src_zip.indexIsDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
-            this->_srcItemLs.push_back(pkg_item);
+            // add source item and create parent folder items
+            this->_srcItemAdd(pkg_item);
           }
         }
         // make sure dependency list is empty
@@ -360,16 +360,15 @@ bool OmPackage::srcParse(const wstring& path)
         pkg_item.dest = PKGITEM_DEST_NUL;
         // we check ALL zip CDR entries at once to get all what we can
         for(unsigned i = 0; i < zcd_count; ++i) {
-
           src_zip.index(zcd_entry, i); //< get Central Directory Record entry
-
           // we check for all entry with the package identity folder as
           // root, then we get only the relative path for the Package Item.
           if(Om_getRelativePath(pkg_item.path, this->_ident, zcd_entry)) {
             // we got one, lets add it to the package tree
             pkg_item.cdri = i; //< keep Zip CDR index
             pkg_item.type = src_zip.indexIsDir(i) ? PKGITEM_TYPE_D : PKGITEM_TYPE_F;
-            this->_srcItemLs.push_back(pkg_item);
+            // add source item and create parent folder items
+            this->_srcItemAdd(pkg_item);
           }
           // lookup for a readme file to get description
           if(Om_namesMatches(zcd_entry, L"readme.txt")) {
@@ -788,7 +787,7 @@ bool OmPackage::uninst(Om_progressCb progress_cb, void* user_ptr)
   }
 
   // restore backed files into destination tree
-  if(!this->_doUninst(progress_cb, user_ptr)) {
+  if(!this->_restore(progress_cb, user_ptr)) {
     return false;
   }
 
@@ -835,12 +834,12 @@ bool OmPackage::install(unsigned zipLvl, Om_progressCb progress_cb, void* user_p
   }
 
   // Step 1 : Create backups of destination files overwritten by package
-  if(!this->_doBackup(zipLvl, progress_cb, user_ptr)) {
+  if(!this->_backup(zipLvl, progress_cb, user_ptr)) {
     return false;
   }
 
   // Step 2 : Install package files into destination tree
-  if(!this->_doInstall(progress_cb, user_ptr)) {
+  if(!this->_apply(progress_cb, user_ptr)) {
     return false;
   }
 
@@ -875,7 +874,7 @@ bool OmPackage::unbackup()
   }
 
   // restore backed files into destination tree
-  if(!this->_doUnbackup()) {
+  if(!this->_discard()) {
     return false;
   }
 
@@ -917,21 +916,15 @@ bool OmPackage::ovrTest(const vector<OmPkgItem>& footprint) const
 
   for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
 
+    // we care only about files
+    if(this->_srcItemLs[i].type != PKGITEM_TYPE_F)
+      continue;
+
     for(size_t j = 0; j < footprint.size(); ++j) {
 
-      // compare only if both are file or folder
-      if(this->_srcItemLs[i].type != footprint[j].type)
+      // we care only about files
+      if(footprint[j].type != PKGITEM_TYPE_F)
         continue;
-
-      // Directories to be cleaned need to be empty first, so we also
-      // lookup for created directories overlap
-      if(footprint[j].type == PKGITEM_TYPE_D) {
-        // compare only if other entry is "To Delete", meaning this was a
-        // created directory, to be deleted at restore
-        if(footprint[j].dest != PKGITEM_DEST_DEL) {
-          continue;
-        }
-      }
 
       // same path mean overlap
       if(this->_srcItemLs[i].path == footprint[j].path) {
@@ -1316,8 +1309,61 @@ void OmPackage::log(unsigned level, const wstring& head, const wstring& detail)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
+void OmPackage::_srcItemAdd(const OmPkgItem& item) {
+
+  // we decompose the item path to add parent folder as source item
+  // to properly and robustly track folder creation and deletion.
+  bool exists;
+
+  OmPkgItem parent;
+  parent.type = PKGITEM_TYPE_D;
+  parent.dest = PKGITEM_DEST_NUL;
+  parent.cdri = -1;
+
+  size_t s = 0;
+  size_t last = item.path.size() - 1;
+
+  while(true) {
+
+    // get next parent
+    s = item.path.find(L'\\', s + 1);
+
+    if(s == wstring::npos || s == last)
+      break;
+
+    parent.path = item.path.substr(0, s) + L"\\";
+
+    // add uniques only
+    exists = false;
+    for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
+      if(this->_srcItemLs[i].type == PKGITEM_TYPE_D) {
+        if(this->_srcItemLs[i].path == parent.path) {
+          exists = true; break;
+        }
+      }
+    }
+
+    if(!exists) {
+      #ifdef DEBUG
+      std::wcout << L"DEBUG => OmPackage::_srcItemAdd : add parent : " << parent.path << L"\n";
+      #endif
+      this->_srcItemLs.push_back(parent);
+    }
+  }
+
+  this->_srcItemLs.push_back(item);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
 {
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmPackage::_backup\n";
+  #endif
+
   // initialize local timer
   clock_t time = clock();
 
@@ -1495,12 +1541,32 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
             break;
           }
         }
+
         // this thing is now part of backup tree
         bck_item.cdri = z;
         bck_item.dest = PKGITEM_DEST_CPY;
         this->_bckItemLs.push_back(bck_item);
+
         z++; //< increment CDR index
+
       } else {
+
+        // check whether folder was created by another package, in this case
+        // we add it as to be deleted by this one too, this allow to
+        // automatically delete unused shared folders when empty by any package
+        if(this->_location->bckItemExists(bck_item.path, PKGITEM_DEST_DEL)) {
+          #ifdef DEBUG
+          std::wcout << L"DEBUG => OmPackage::_backup : shared temp dir: " << bck_item.path << L"\n";
+          #endif
+          // add a "To be deleted" entry into backup definition
+          xml_item = def_xml.addChild(L"del");
+          xml_item.setAttr(L"dir", 1);
+          // this thing is now part of backup tree
+          bck_item.cdri = -1;
+          bck_item.dest = PKGITEM_DEST_DEL;
+          this->_bckItemLs.push_back(bck_item);
+        }
+
         if(!is_zip) {
           // path of item in backup directory
           Om_concatPaths(bck_file, bck_dir_path, this->_srcItemLs[i].path);
@@ -1515,6 +1581,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
             break;
           }
         }
+
         // call progression callback
         if(progress_cb) {
           progress_cur++;
@@ -1523,26 +1590,23 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
             break;
           }
         }
+
         #ifdef DEBUG
         Sleep(OMM_DEBUG_SLOW); //< for debug
         #endif
+      }
 
-        // do not care about folders
-        continue;
-      }
     } else { // item doesn't exists in destination, it should be deleted at restore
-      // adds a "To be deleted" entry into backup definition
+      // add a "To be deleted" entry into backup definition
       xml_item = def_xml.addChild(L"del");
-      if(this->_srcItemLs[i].type == PKGITEM_TYPE_F) { //< this is a file
-        xml_item.setAttr(L"dir", L"0");
-      } else {
-        xml_item.setAttr(L"dir", L"1");
-      }
+      xml_item.setAttr(L"dir", this->_srcItemLs[i].type == PKGITEM_TYPE_F ? 0 : 1 );
+
       // this thing is now part of backup tree
       bck_item.cdri = -1;
       bck_item.dest = PKGITEM_DEST_DEL;
       this->_bckItemLs.push_back(bck_item);
     }
+
     // set destination path of this entry in backup definition
     xml_item.setContent(this->_srcItemLs[i].path);
     // call progression callback
@@ -1562,7 +1626,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   if(has_aborted) {
     this->log(1, L"Package("+this->_ident+L") Backup", L"Aborted.");
     if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
-    this->_undoInstall(progress_cb, user_ptr);
+    this->_restore(progress_cb, user_ptr, true); //< undo
     return true;
   }
 
@@ -1570,7 +1634,7 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   if(has_failed) {
     this->log(1, L"Package("+this->_ident+L") Backup", L"Failed.");
     if(is_zip) bck_zip.close(); //< make sure file is not longer used in order to delete it
-    this->_undoInstall(progress_cb, user_ptr);
+    this->_restore(progress_cb, user_ptr, true); //< undo
     return false;
   }
 
@@ -1629,8 +1693,12 @@ bool OmPackage::_doBackup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
+bool OmPackage::_apply(Om_progressCb progress_cb, void* user_ptr)
 {
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmPackage::_apply\n";
+  #endif
+
   // initialize local timer
   clock_t time = clock();
 
@@ -1658,7 +1726,7 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
       this->_error += OMM_STR_ERR_ZIPOPEN(zip.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Install", this->_error);
       zip.close();
-      this->_undoInstall(progress_cb, user_ptr); //< automatically uninstall the package
+      this->_restore(progress_cb, user_ptr, true); //< undo
       return false;
     }
   }
@@ -1724,7 +1792,7 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
   if(has_aborted) {
     this->log(1, L"Package("+this->_ident+L") Install", L"Aborted.");
     if(this->_type & PKG_TYPE_ZIP) zip.close();
-    this->_undoInstall(progress_cb, user_ptr);
+    this->_restore(progress_cb, user_ptr, true); //< undo
     return true;
   }
 
@@ -1732,7 +1800,7 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
   if(has_failed) {
     this->log(1, L"Package("+this->_ident+L") Install", L"Failed.");
     if(this->_type & PKG_TYPE_ZIP) zip.close();
-    this->_undoInstall(progress_cb, user_ptr);
+    this->_restore(progress_cb, user_ptr, true); //< undo
     return false;
   }
 
@@ -1748,17 +1816,26 @@ bool OmPackage::_doInstall(Om_progressCb progress_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
+bool OmPackage::_restore(Om_progressCb progress_cb, void* user_ptr, bool undo)
 {
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmPackage::_restore\n";
+  #endif
+
   // initialize local timer
   clock_t time = clock();
 
   // initialize progression callback
   size_t progress_tot, progress_cur;
   if(progress_cb) {
-    progress_tot = this->_bckItemLs.size();   //< item we must restore
-    progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0)) {
+    if(undo) {
+      progress_tot = this->_bckItemLs.size() * 2; //< item we must restore
+      progress_cur = this->_bckItemLs.size(); //< start at half the total
+    } else {
+      progress_tot = this->_bckItemLs.size();   //< item we must restore
+      progress_cur = 0;
+    }
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0) && !undo) { //< do not abort if undo
       return true;
     }
   }
@@ -1772,7 +1849,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
     if(!zip.load(this->_bck)) {
       this->_error = L"Backup ZIP archive \""+this->_bck+L"\"";
       this->_error += OMM_STR_ERR_ZIPOPEN(zip.lastErrorStr());
-      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
       return false;
     }
 
@@ -1790,11 +1867,15 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
         if(!zip.extract(this->_bckItemLs[i].cdri, app_file)) {
           this->_error = L"Backup file \""+this->_bckItemLs[i].path+L"\"";
           this->_error += OMM_STR_ERR_ZIPINFL(zip.lastErrorStr());
-          this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+          this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
         }
         // call progression callback
         if(progress_cb) {
-          progress_cur++;
+          if(undo) {
+            progress_cur--; //< for undo we step backward
+          } else {
+            progress_cur++;
+          }
           progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
@@ -1810,7 +1891,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
     if(!Om_isDir(this->_bck)) {
       this->_error =  L"Backup data \""+this->_bck+L"\"";
       this->_error += L" is neither a valid ZIP archive or directory.";
-      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
       return false;
     }
 
@@ -1820,7 +1901,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
     if(!Om_isDir(bck_dir_path)) {
       this->_error = L"Backup data subfolder \""+bck_dir_path+L"\"";
       this->_error += OMM_STR_ERR_ISDIR;
-      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
       return false;
     }
 
@@ -1837,27 +1918,20 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
         Om_concatPaths(bck_file, bck_dir_path, this->_bckItemLs[i].path);
         // path to destination file to be overwritten
         Om_concatPaths(app_file, this->_location->_dstDir, this->_bckItemLs[i].path);
-        // move file from backup sub-directory
-
-        // Move file from backup directory to destination, notice that the
-        // Om_fileDelete + Om_fileMove method is way faster than the
-        // Om_fileCopy method
-        result = Om_fileDelete(app_file);
-        if(result == 0) {
-          result = Om_fileMove(bck_file, app_file);
-          if(result != 0) {
-            this->_error = L"Backup file \""+bck_file+L"\"";
-            this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
-            this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
-          }
-        } else {
-          this->_error = L"Installed file \""+app_file+L"\"";
-          this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+        // Move file from backup directory to destination, replacing destination
+        result = Om_fileMove(bck_file, app_file);
+        if(result != 0) {
+          this->_error = L"Backup file \""+bck_file+L"\"";
+          this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
+          this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
         }
         // call progression callback
         if(progress_cb) {
-          progress_cur++;
+          if(undo) {
+            progress_cur--; //< for undo we step backward
+          } else {
+            progress_cur++;
+          }
           progress_cb(user_ptr, progress_tot, progress_cur, 0);
         }
         #ifdef DEBUG
@@ -1884,25 +1958,38 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
     if(this->_bckItemLs[n].dest == PKGITEM_DEST_DEL) {
       // get destination file (to be deleted) path
       Om_concatPaths(del_file, this->_location->_dstDir, this->_bckItemLs[n].path);
+      // in case we undo, the file may be not installed already, to prevent
+      // useless warnings we test existing file/folder before trying to delete
+      if(undo) {
+        if(!Om_pathExists(del_file))
+          continue;
+      }
       // check whether this is a file or directory
       if(this->_bckItemLs[n].type == PKGITEM_TYPE_F) {
         result = Om_fileDelete(del_file);
         if(result != 0) {
           this->_error = L"Installed file \""+del_file+L"\"";
           this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(1, L"Package("+this->_ident+L") Uninstall", this->_error);
+          this->log(1, L"Package("+this->_ident+L") Restore", this->_error);
         }
       } else {
-        result = Om_dirDelete(del_file);
-        if(result != 0) {
-          this->_error = L"Installed subfolder \""+del_file+L"\"";
-          this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-          this->log(1, L"Package("+this->_ident+L") Uninstall", this->_error);
+        // we delete folder only if empty
+        if(Om_isDirEmpty(del_file)) {
+          result = Om_dirDelete(del_file);
+          if(result != 0) {
+            this->_error = L"Installed subfolder \""+del_file+L"\"";
+            this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+            this->log(1, L"Package("+this->_ident+L") Restore", this->_error);
+          }
         }
       }
       // call progression callback
       if(progress_cb) {
-        progress_cur++;
+        if(undo) {
+          progress_cur--; //< for undo we step backward
+        } else {
+          progress_cur++;
+        }
         progress_cb(user_ptr, progress_tot, progress_cur, 0);
       }
       #ifdef DEBUG
@@ -1917,14 +2004,14 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
     if(result != 0) {
       this->_error = L"Backup ZIP archive \""+this->_bck+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
     }
   } else {
     result = Om_dirDeleteRecursive(this->_bck);
     if(result != 0) {
       this->_error = L"Backup main directory \""+this->_bck+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+this->_ident+L") Uninstall", this->_error);
+      this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
     }
   }
 
@@ -1935,7 +2022,7 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
   wchar_t log_buf[32];
   swprintf(log_buf, 32, L"Done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
 
-  log(2, L"Package("+this->_ident+L") Uninstall", log_buf);
+  log(2, L"Package("+this->_ident+L") Restore", log_buf);
 
   return true;
 }
@@ -1944,160 +2031,12 @@ bool OmPackage::_doUninst(Om_progressCb progress_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::_undoInstall(Om_progressCb progress_cb, void* user_ptr)
+bool OmPackage::_discard()
 {
-  // initialize local timer
-  clock_t time = clock();
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmPackage::_discard\n";
+  #endif
 
-  // initialize progression callback
-  size_t progress_tot, progress_cur;
-  if(progress_cb) {
-    progress_tot = this->_bckItemLs.size() * 2; //< item we must uninstall
-    progress_cur = this->_bckItemLs.size(); //< start at half the total
-    progress_cb(user_ptr, progress_tot, progress_cur, 0);
-  }
-
-  // This function restores partial unfinished backup data, avoiding checks
-  // for valid package backup entry
-  //
-  // Its main purpose is to be called after a failed sub-directory backup process
-  // to move back the destination genuine file which was moved into the backup
-  // sub-directory right before a package installation
-  //
-  // as the problem does not concern the zipped backup method, this function only
-  // restore files from sub-directory backup, and simply cleanup the zipped backup
-  // if it exists.
-
-  // TODO: refactor this to support undo of zipped backup
-
-  int result;
-
-  if(Om_isDir(this->_bck)) {
-
-    // compose the path to backup root path
-    wstring bck_dir_path = this->_bck + L"\\" + this->_bckDir;
-
-    wstring bck_file, app_file, del_file;
-
-    // first we restore genuine files from zip
-    for(size_t i = 0; i < this->_bckItemLs.size(); ++i) {
-      // we are interested only by backup file to copy
-      if(this->_bckItemLs[i].dest == PKGITEM_DEST_CPY) {
-        // path to file in the backup sub-directory
-        Om_concatPaths(bck_file, bck_dir_path, this->_bckItemLs[i].path);
-        // path to file in the destination to be restored
-        Om_concatPaths(app_file, this->_location->_dstDir, this->_bckItemLs[i].path);
-        // check whether we need to delete an already installed file, it should
-        // be an non-genuine destination file, moved here during an aborted
-        // install process
-        if(Om_isFile(app_file)) {
-          result = Om_fileDelete(app_file);
-          if(result != 0) {
-            this->_error = L"Installed file \""+app_file+L"\"";
-            this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-            this->log(0, L"Package("+this->_ident+L") Undo", this->_error);
-          }
-        }
-        // move the backed file to the destination
-        result = Om_fileMove(bck_file, app_file);
-        if(result != 0) {
-          this->_error = L"Bakcup file \""+bck_file+L"\"";
-          this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
-          this->log(1, L"Package("+this->_ident+L") Undo", this->_error);
-        }
-        // call progression callback
-        if(progress_cb) {
-          progress_cur--; //< step backward
-          progress_cb(user_ptr, progress_tot, progress_cur, 0);
-        }
-        #ifdef DEBUG
-        Sleep(OMM_DEBUG_SLOW); //< for debug
-        #endif
-      }
-    }
-
-    // Now delete the added (not modified) files and/or folders by the Package
-    // installation.
-    //
-    // the <del> entries are listed in the depth-first order, so, reading list
-    // in backward give us the perfect order to delete elements: from "leaves"
-    // to "root".
-    // Otherwise, we may  have to request to delete folders before their
-    // contents, which simply does not work.
-
-    size_t n = this->_bckItemLs.size();
-    while(n--) {
-      // we are interested only by file to cleanup
-      if(this->_bckItemLs[n].dest == PKGITEM_DEST_DEL) {
-        // get destination file (to be deleted) path
-        Om_concatPaths(del_file, this->_location->_dstDir, this->_bckItemLs[n].path);
-        // check whether this is a file or directory
-        if(this->_bckItemLs[n].type == PKGITEM_TYPE_F) {
-          if(Om_isFile(del_file)) {
-            result = Om_fileDelete(del_file);
-            if(result != 0) {
-              this->_error = L"Installed file \""+del_file+L"\"";
-              this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-              this->log(1, L"Package("+this->_ident+L") Undo", this->_error);
-            }
-          }
-        } else {
-          if(Om_isDir(del_file)) {
-            result = Om_dirDelete(del_file);
-            if(result != 0) {
-              this->_error = L"Installed subfolder \""+del_file+L"\"";
-              this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-              this->log(1, L"Package("+this->_ident+L") Undo", this->_error);
-            }
-          }
-        }
-        // call progression callback
-        if(progress_cb) {
-          progress_cur--; //< step backward
-          progress_cb(user_ptr, progress_tot, progress_cur, 0);
-        }
-        #ifdef DEBUG
-        std::wcout << del_file << "\n";
-        Sleep(OMM_DEBUG_SLOW); //< for debug
-        #endif
-      }
-    }
-    // cleanup backup sub-directory
-    result = Om_dirDeleteRecursive(this->_bck);
-    if(result != 0) {
-      this->_error = L"Backup main direcotry \""+this->_bck+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-      this->log(0, L"Package("+this->_ident+L") Undo", this->_error);
-    }
-
-  } else {
-    // cleanup backup zip file if exists
-    if(Om_isFileZip(this->_bck)) {
-      result = Om_fileDelete(this->_bck);
-      if(result != 0) {
-        this->_error = L"Backup ZIP archive \""+this->_bck+L"\"";
-        this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
-        this->log(0, L"Package("+this->_ident+L") Undo", this->_error);
-      }
-    }
-  }
-
-  // revoke the backup property of this package
-  this->bckClear();
-
-  // making report
-  wchar_t log_buf[32];
-  swprintf(log_buf, 32, L"Done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
-
-  log(2, L"Package("+this->_ident+L") Undo", log_buf);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmPackage::_doUnbackup()
-{
   // initialize local timer
   clock_t time = clock();
 
@@ -2143,14 +2082,14 @@ bool OmPackage::_doUnbackup()
 
   // cleanup backup data either zip file or sub-directory...
   if(is_zip) {
-    result = Om_fileDelete(this->_bck);
+    result = Om_moveToTrash(this->_bck);
     if(result != 0) {
       this->_error = L"Backup ZIP archive \""+this->_bck+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
       this->log(0, L"Package("+this->_ident+L") Unbackup", this->_error);
     }
   } else {
-    result = Om_dirDeleteRecursive(this->_bck);
+    result = Om_moveToTrash(this->_bck);
     if(result != 0) {
       this->_error = L"Backup main directory \""+this->_bck+L"\"";
       this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));

@@ -711,7 +711,7 @@ OmLocation::OmLocation(OmContext* pCtx) :
   _dstDir(),
   _libDir(),
   _libDirCust(false),
-  _libDevMode(false),
+  _libDevMode(true),
   _bckDir(),
   _bckDirCust(false),
   _pkgLs(),

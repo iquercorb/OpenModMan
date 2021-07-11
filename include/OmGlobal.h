@@ -1016,6 +1016,36 @@ inline bool Om_pathExists(const wstring& path) {
   return PathFileExistsW(path.c_str());
 }
 
+/// \brief Set item attribute
+///
+/// Set attribute to specified item, either file or folder.
+///
+/// \param[in]  path   : Path to item to set attribute.
+/// \param[in]  attr   : Attribute to set.
+///
+/// \return True if operation succeed, false otherwise.
+///
+inline bool Om_itemSetAttr(const wstring& path, uint32_t attr) {
+  return SetFileAttributesW(path.c_str(), attr);
+}
+
+/// \brief Check item attributes
+///
+/// Check whether item has the specified attribute mask, either file
+/// or folder.
+///
+/// \param[in]  path   : Path to item to check attributes.
+/// \param[in]  mask   : Attributes mask to check.
+///
+/// \return True if mask matches item attributes, false otherwise.
+///
+inline bool Om_itemHasAttr(const wstring& path, uint32_t mask) {
+  DWORD attr = GetFileAttributesW(path.c_str());
+  if(attr != INVALID_FILE_ATTRIBUTES)
+    return ((mask & attr) == mask);
+  return false;
+}
+
 /// \brief Check valid Zip file
 ///
 /// Checks whether the specified item is file with Zip signature.
@@ -1025,7 +1055,6 @@ inline bool Om_pathExists(const wstring& path) {
 /// \return True if item is actually a file with Zip signature, false otherwise.
 ///
 bool Om_isFileZip(const wstring& path);
-
 
 /// \brief List folders
 ///
