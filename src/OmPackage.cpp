@@ -886,6 +886,23 @@ bool OmPackage::unbackup()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmPackage::bckItemHas(const wstring& path, OmPkgItemDest dest) const
+{
+  for(size_t i = 0; i < this->_bckItemLs.size(); ++i) {
+
+    if(this->_bckItemLs[i].dest == dest) {
+      if(this->_bckItemLs[i].path == path)
+        return true;
+    }
+  }
+
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmPackage::footprint(vector<OmPkgItem>& footprint) const
 {
   // simulate package installation to have backup item list

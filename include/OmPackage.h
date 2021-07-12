@@ -388,15 +388,7 @@ class OmPackage
     ///
     /// \return True if item found, false otherwise.
     ///
-    bool bckItemHas(const wstring& path, OmPkgItemDest dest) const {
-      for(size_t i = 0; i < _bckItemLs.size(); ++i) {
-        if(_bckItemLs[i].dest == dest) {
-          if(_bckItemLs[i].path == path)
-            return true;
-        }
-      }
-      return false;
-    }
+    bool bckItemHas(const wstring& path, OmPkgItemDest dest) const;
 
     /// \brief Get source list item count.
     ///

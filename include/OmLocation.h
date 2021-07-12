@@ -748,13 +748,7 @@ class OmLocation
     ///
     /// \return True if item found, false otherwise.
     ///
-    bool bckItemExists(const wstring& path, OmPkgItemDest dest) const {
-      for(size_t i = 0; i < _pkgLs.size(); ++i) {
-        if(_pkgLs[i]->bckItemHas(path, dest))
-          return true;
-      }
-      return false;
-    }
+    bool bckItemExists(const wstring& path, OmPkgItemDest dest) const;
 
     /// \brief Get repository URL count.
     ///

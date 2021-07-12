@@ -2281,6 +2281,22 @@ size_t OmLocation::bckGetRelations(vector<OmPackage*>& rel_ls, vector<OmPackage*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmLocation::bckItemExists(const wstring& path, OmPkgItemDest dest) const
+{
+  for(size_t i = 0; i < _pkgLs.size(); ++i) {
+
+    if(_pkgLs[i]->hasBck())
+      if(_pkgLs[i]->bckItemHas(path, dest))
+        return true;
+  }
+
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmLocation::repAdd(const wstring& base, const wstring& name)
 {
   if(this->_config.valid()) {
