@@ -963,9 +963,7 @@ bool OmLocation::open(const wstring& path)
     // we check whether destination folder is valid
     this->_dstDir = this->_config.xml().child(L"install").content();
     if(!Om_isDir(this->_dstDir)) {
-      verbose = L"Destination folder \""+this->_dstDir+L"\"";
-      verbose += OMM_STR_ERR_ISDIR;
-      this->log(1, L"Location("+this->_title+L") Load", verbose);
+      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Destination folder", this->_dstDir));
     } else {
       verbose = L"Using destination folder: \"";
       verbose += this->_dstDir + L"\".";
@@ -985,9 +983,7 @@ bool OmLocation::open(const wstring& path)
     // notify we use a custom Library path
     this->_libDirCust = true;
     if(!Om_isDir(this->_libDir)) {
-      verbose = L"Custom library folder \""+this->_libDir+L"\"";
-      verbose += OMM_STR_ERR_ISDIR;
-      this->log(1, L"Location("+this->_title+L") Load", verbose);
+      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Custom Library folder", this->_libDir));
     } else {
       verbose = L"Using custom library folder: \""+this->_libDir+L"\".";
       this->log(2, L"Location("+this->_title+L") Load", verbose);
@@ -998,8 +994,7 @@ bool OmLocation::open(const wstring& path)
     if(!Om_isDir(this->_libDir)) {
       int result = Om_dirCreate(this->_libDir);
       if(result != 0) {
-        this->_error = L"Default library folder \""+this->_libDir+L"\".";
-        this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+        this->_error = Om_errCreate(L"Library folder", this->_libDir, result);
         this->log(0, L"Location("+this->_title+L") Load", this->_error);
         this->close();
         return false;
@@ -1016,9 +1011,7 @@ bool OmLocation::open(const wstring& path)
     // notify we use a custom Backup path
     this->_bckDirCust = true;
     if(!Om_isDir(this->_bckDir)) {
-      verbose = L"Custom backup folder \""+this->_bckDir+L"\"";
-      verbose += OMM_STR_ERR_ISDIR;
-      this->log(1, L"Location("+this->_title+L") Load", verbose);
+      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Custom Backup folder", this->_bckDir));
     } else {
       verbose = L"Using custom backup folder: \""+this->_bckDir+L"\".";
       this->log(2, L"Location("+this->_title+L") Load", verbose);
@@ -1029,8 +1022,7 @@ bool OmLocation::open(const wstring& path)
     if(!Om_isDir(this->_bckDir)) {
       int result = Om_dirCreate(this->_bckDir);
       if(result != 0) {
-        this->_error = L"Default backup folder \""+this->_bckDir+L"\"";
-        this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+        this->_error = Om_errCreate(L"Backup folder", this->_bckDir, result);
         this->log(0, L"Location("+this->_title+L") Load", this->_error);
         this->close();
         return false;
@@ -1209,19 +1201,16 @@ bool OmLocation::dstDirAccess(bool rw)
     if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
       if(rw) { //< check for writing access
         if(!Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_WRITE)) {
-          this->_error = L"Destination folder \""+this->_dstDir+L"\"";
-          this->_error += OMM_STR_ERR_WRITE;
+          this->_error = Om_errWriteAccess(L"Destination folder", this->_dstDir);
           access_ok = false;
         }
       }
     } else {
-      this->_error = L"Destination folder \""+this->_dstDir+L"\"";
-      this->_error += OMM_STR_ERR_READ;
+      this->_error = Om_errReadAccess(L"Destination folder", this->_dstDir);
       access_ok = false;
     }
   } else {
-    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
-    this->_error += OMM_STR_ERR_ISDIR;
+    this->_error = Om_errIsDir(L"Destination folder", this->_dstDir);
     access_ok = false;
   }
 
@@ -1249,27 +1238,23 @@ bool OmLocation::libDirAccess(bool rw)
     if(Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_READ)) {
       if(rw) { //< check for writing access
         if(!Om_checkAccess(this->_libDir, OMM_ACCESS_DIR_WRITE)) {
-          this->_error = L"Library folder \""+this->_libDir+L"\"";
-          this->_error += OMM_STR_ERR_WRITE;
+          this->_error = Om_errWriteAccess(L"Library folder", this->_libDir);
           access_ok = false;
         }
       }
     } else {
-      this->_error =  L"Library folder \""+this->_libDir+L"\"";
-      this->_error += OMM_STR_ERR_READ;
+      this->_error = Om_errReadAccess(L"Library folder", this->_libDir);
       access_ok = false;
     }
   } else {
     if(this->_libDirCust) {
-      this->_error =  L"Custom library folder \""+this->_libDir+L"\"";
-      this->_error += OMM_STR_ERR_ISDIR;
+      this->_error = Om_errIsDir(L"Custom Library folder", this->_libDir);
       access_ok = false;
     } else {
       // try to create it
       int result = Om_dirCreate(this->_libDir);
       if(result != 0) {
-        this->_error = L"Default library folder \""+this->_libDir+L"\"";
-        this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+        this->_error = Om_errCreate(L"Library folder", this->_libDir, result);
         access_ok = false;
       }
     }
@@ -1299,27 +1284,23 @@ bool OmLocation::bckDirAccess(bool rw)
     if(Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_READ)) {
       if(rw) { //< check for writing access
         if(!Om_checkAccess(this->_bckDir, OMM_ACCESS_DIR_WRITE)) {
-          this->_error = L"Backup folder \""+this->_bckDir+L"\"";
-          this->_error += OMM_STR_ERR_WRITE;
+          this->_error = Om_errWriteAccess(L"Backup folder", this->_bckDir);
           access_ok = false;
         }
       }
     } else {
-      this->_error = L"Backup folder \""+this->_bckDir+L"\"";
-      this->_error += OMM_STR_ERR_READ;
+      this->_error = Om_errReadAccess(L"Backup folder", this->_bckDir);
       access_ok = false;
     }
   } else {
     if(this->_bckDirCust) {
-      this->_error =  L"Custom backup folder \""+this->_bckDir+L"\"";
-      this->_error += OMM_STR_ERR_ISDIR;
+      this->_error = Om_errIsDir(L"Custom Backup folder", this->_bckDir);
       access_ok = false;
     } else {
       // try to create it
       int result = Om_dirCreate(this->_bckDir);
       if(result != 0) {
-        this->_error = L"Default backup folder \""+this->_bckDir+L"\"";
-        this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+        this->_error = Om_errCreate(L"Backup folder", this->_bckDir, result);
         access_ok = false;
       }
     }
@@ -1814,8 +1795,7 @@ bool OmLocation::renameHome(const wstring& name)
   // Rename Location definition file
   int result = Om_fileMove(old_path, old_home + L"\\" + new_file);
   if(result != 0) {
-    this->_error =  L"Definition file \""+old_path+L"\"";
-    this->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));
+    this->_error = Om_errRename(L"Definition file", old_path, result);
     this->log(0, L"Location("+title+L") Rename", this->_error);
     // get back the old file name to restore Location properly
     new_file = Om_getFilePart(old_path);
@@ -1833,14 +1813,13 @@ bool OmLocation::renameHome(const wstring& name)
   // Rename Location home folder
   result = Om_fileMove(old_home, new_home);
   if(result != 0) {
-    this->_error =  L"Location subfolder \""+old_home+L"\"";
-    this->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));
+    this->_error = Om_errRename(L"Home folder", old_home, result);
     this->log(0, L"Location("+title+L") Rename", this->_error);
     // get back the old home folder to restore Location properly
     new_home = old_home;
     has_error = true;
   } else {
-    this->log(2, L"Location("+title+L") Rename", L"subfolder renamed to \""+new_home+L"\"");
+    this->log(2, L"Location("+title+L") Rename", L"Home folder renamed to \""+new_home+L"\"");
   }
 
   // Reload location
@@ -1875,15 +1854,13 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
 {
   // checks for access to backup folder
   if(!this->bckDirAccess(true)) { //< check for read and write
-    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
-    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
   // checks for access to destination folder
   if(!this->dstDirAccess(true)) { //< check for read and write
-    this->_error =  L"Destination folder \""+this->_dstDir+L"\"";
-    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->_error =  L"Destination folder \""+this->_dstDir+L"\" access error.";
     this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
@@ -1965,8 +1942,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
 
   // verify backup folder access
   if(!this->bckDirAccess(true)) { //< check for read and write
-    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
-    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
     this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
     return false;
   }
@@ -2008,8 +1984,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
     // move file
     result = Om_fileMove(src, dst);
     if(result != 0) {
-      this->_error =  L"Backup data \""+src+L"\"";
-      this->_error += OMM_STR_ERR_MOVE(Om_getErrorStr(result));
+      this->_error = Om_errMove(L"Backup data", src, result);
       this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
       has_error = true;
     } else {
@@ -2038,8 +2013,7 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
 {
   // verify backup folder access
   if(!this->bckDirAccess(true)) { //< check for read and write
-    this->_error =  L"Backup folder \""+this->_bckDir+L"\"";
-    this->_error += OMM_STR_ERR_DIRACCESS;
+    this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
     this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
     return false;
   }

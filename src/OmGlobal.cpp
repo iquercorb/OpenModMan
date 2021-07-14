@@ -4898,3 +4898,136 @@ wstring Om_getErrorStr(int code) {
 
   return ret;
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errIsDir(const wstring& item,  const wstring& path)
+{
+  return item + L" \"" + path + L"\" does not exist or is not a directory.";
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errCreate(const wstring& item,  const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" creation error: " + Om_getErrorStr(result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errDelete(const wstring& item,  const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" delete error: " + Om_getErrorStr(result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errRename(const wstring& item,  const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" rename error: " + Om_getErrorStr(result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errMove(const wstring& item,  const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" move error: " + Om_getErrorStr(result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errCopy(const wstring& item, const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" copy error: " + Om_getErrorStr(result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errReadAccess(const wstring& item, const wstring& path)
+{
+  return item + L" \"" + path + L"\" read access denied";
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errWriteAccess(const wstring& item, const wstring& path)
+{
+  return item + L" \"" + path + L"\" write access denied";
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errZipInit(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" zip init error: " + mesg;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errZipOpen(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" zip open error: " + mesg;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" zip compress error: " + mesg;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" zip extract error: " + mesg;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errDefInit(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" xml init error: " + mesg;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errDefOpen(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" xml load error: " + mesg;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errDefSave(const wstring& item, const wstring& path, const wstring& mesg)
+{
+  return item + L" \"" + path + L"\" xml save error: " + mesg;
+}

@@ -181,29 +181,24 @@ bool OmUiPropLoc::applyChanges()
   // Step 1, verify everything
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
     pUiPropLocStg->getItemText(IDC_EC_INP01, loc_name);
-    if(!Om_isValidName(loc_name)) {
-      wstring wrn = L"The title"; wrn += OMM_STR_ERR_VALIDNAME;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Location title", wrn);
+    if(!Om_dialogValidName(this->_hwnd, L"Target Location name", loc_name))
       return false;
-    }
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
     pUiPropLocStg->getItemText(IDC_EC_INP02, loc_dst);
-    if(!Om_isDir(loc_dst)) {
-      wstring wrn = L"The folder \""+loc_dst+L"\""; wrn += OMM_STR_ERR_ISDIR;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid install destination folder", wrn);
+    if(!Om_dialogValidDir(this->_hwnd, L"Destination folder", loc_dst))
       return false;
-    }
   }
 
   if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
     cust_lib = pUiPropLocStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
     if(cust_lib) { //< Custom Library folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP03, loc_lib);
-      if(!Om_isDir(loc_lib)) {
-        wstring wrn = L"The folder \""+loc_lib+L"\""; wrn += OMM_STR_ERR_ISDIR;
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom library folder", wrn);
+      if(Om_dialogValidPath(this->_hwnd, L"Library folder path", loc_lib)) {
+        if(!Om_dialogCreateFolder(this->_hwnd, L"Custom Library folder", loc_lib))
+          return false;
+      } else {
         return false;
       }
     }
@@ -213,9 +208,10 @@ bool OmUiPropLoc::applyChanges()
     cust_bck = pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
     if(cust_bck) { //< Custom Backup folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP04, loc_bck);
-      if(!Om_isDir(loc_bck)) {
-        wstring wrn = L"The folder \""+loc_bck+L"\""; wrn += OMM_STR_ERR_ISDIR;
-        Om_dialogBoxWarn(this->_hwnd, L"Invalid custom backup folder", wrn);
+      if(Om_dialogValidPath(this->_hwnd, L"Backup folder path", loc_lib)) {
+        if(!Om_dialogCreateFolder(this->_hwnd, L"Custom Backup folder", loc_lib))
+          return false;
+      } else {
         return false;
       }
     }

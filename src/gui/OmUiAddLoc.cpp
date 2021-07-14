@@ -172,7 +172,7 @@ bool OmUiAddLoc::_onBcOk()
   wstring loc_name, loc_dst, loc_lib, loc_bck, msg;
 
   this->getItemText(IDC_EC_INP01, loc_name);
-  if(!Om_dialogValidName(this->_hwnd, L"Target location name", loc_name))
+  if(!Om_dialogValidName(this->_hwnd, L"Target Location name", loc_name))
     return false;
 
   this->getItemText(IDC_EC_INP02, loc_dst);

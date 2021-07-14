@@ -102,20 +102,15 @@ bool OmUiPropBat::applyChanges()
   // Step 1, verify everything
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INP01, bat_name);
-    if(!Om_isValidName(bat_name)) {
-      wstring wrn = L"The title"; wrn += OMM_STR_ERR_VALIDNAME;
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid Batch title", wrn);
-      return false;
-    }
+    if(!Om_dialogValidName(this->_hwnd, L"Installation Batch name", bat_name))
+    return false;
+
     // Check whether name already exists
     for(unsigned i = 0; i < pCtx->batCount(); ++i) {
       if(pCtx->batGet(i)->title() == bat_name) {
-
-        wstring err = L"A Batch with the same title already "
-                      L"exists. Please choose another title.";
-
-        Om_dialogBoxErr(this->_hwnd, L"Batch title already exists",err);
-
+        wstring err = L"Installation Batch with the same name "
+                      L"already exists. Please choose another name.";
+        Om_dialogBoxErr(this->_hwnd, L"Name already exists",err);
         return false;
       }
     }
@@ -125,7 +120,7 @@ bool OmUiPropBat::applyChanges()
   // Step 2, save changes
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
     if(!this->_pBat->rename(bat_name)) { //< rename Batch filename
-      Om_dialogBoxErr(this->_hwnd, L"Batch rename failed", this->_pBat->lastError());
+      Om_dialogBoxErr(this->_hwnd, L"Installation Batch rename failed", this->_pBat->lastError());
     }
     this->_pBat->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified

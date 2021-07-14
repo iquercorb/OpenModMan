@@ -169,8 +169,7 @@ bool OmContext::open(const wstring& path)
 
   // try to open and parse the XML file
   if(!this->_config.open(path, OMM_CFG_SIGN_CTX)) {
-    this->_error =  L"Definition file \""+path+L"\"";
-    this->_error += OMM_STR_ERR_DEFOPEN(this->_config.lastErrorStr());
+    this->_error = Om_errDefOpen(L"Definition file", path, this->_config.lastErrorStr());
     this->log(0, L"Context(<anonymous>) Load", this->_error);
     return false;
   }
@@ -501,8 +500,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   if(!Om_isDir(loc_home)) {
     int result = Om_dirCreate(loc_home);
     if(result != 0) {
-      this->_error = L"Location subfolder \""+loc_home+L"\"";
-      this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+      this->_error = Om_errCreate(L"Target Location home", loc_home, result);
       this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
       return false;
     }
@@ -523,8 +521,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
     this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
     int result = Om_fileDelete(loc_def_path);
     if(result != 0) {
-      this->_error = L"Previous definition \""+loc_def_path+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->_error = Om_errDelete(L"Old definition file", loc_def_path, result);
       this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
       return false;
     }
@@ -533,8 +530,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   // initialize new definition file
   OmConfig loc_def;
   if(!loc_def.init(loc_def_path, OMM_CFG_SIGN_LOC)) {
-    this->_error =  L"Definition file \""+loc_def_path+L"\"";
-    this->_error += OMM_STR_ERR_DEFINIT(loc_def.lastErrorStr());
+    this->_error = Om_errDefInit(L"Definition file", loc_def_path, loc_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
     return false;
   }
@@ -562,8 +558,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(backup)) {
-      this->_error = L"Custom backup folder \""+backup+L"\"";
-      this->_error += OMM_STR_ERR_ISDIR;
+      this->_error = Om_errIsDir(L"Custom Backup folder", backup);
       this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
     }
     // add custom backup in definition
@@ -577,8 +572,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(library)) {
-      this->_error = L"Custom library folder \""+library+L"\"";
-      this->_error += OMM_STR_ERR_ISDIR;
+      this->_error = Om_errIsDir(L"Custom Library folder", library);
       this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
     }
     // add custom library in definition
@@ -640,8 +634,7 @@ bool OmContext::locRem(unsigned id)
     // this will fails if folder not empty, this is intended
     int result = Om_dirDelete(bck_path);
     if(result != 0) {
-      this->_error =  L"Backup folder \""+bck_path+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->_error = Om_errDelete(L"Backup folder", bck_path, result);
       this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
     }
   }
@@ -652,8 +645,7 @@ bool OmContext::locRem(unsigned id)
     // this will fails if folder not empty, this is intended
     int result = Om_dirDelete(lib_path);
     if(result != 0) {
-      this->_error =  L"Library folder \""+lib_path+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->_error = Om_errDelete(L"Library folder", lib_path, result);
       this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
     }
   }
@@ -664,8 +656,7 @@ bool OmContext::locRem(unsigned id)
     this->_config.close();
     int result = Om_fileDelete(loc_path);
     if(result != 0) {
-      this->_error =  L"Definition file \""+loc_path+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->_error = Om_errDelete(L"Definition file", loc_path, result);
       this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
       has_error = true; //< this is considered as a real error
     }
@@ -675,8 +666,7 @@ bool OmContext::locRem(unsigned id)
   if(Om_isDirEmpty(loc_home)) {
     int result = Om_dirDelete(loc_home);
     if(result != 0) {
-      this->_error =  L"Location subfolder \""+loc_home+L"\"";
-      this->_error += OMM_STR_ERR_DELETE(Om_getErrorStr(result));
+      this->_error = Om_errDelete(L"Home folder", loc_home, result);
       this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
       has_error = true; //< this is considered as a real error
     }
@@ -741,8 +731,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
   // initialize new definition file
   OmConfig bat_def;
   if(!bat_def.init(bat_def_path, OMM_CFG_SIGN_BAT)) {
-    this->_error = L"Definition file \""+bat_def_path+L"\"";
-    this->_error += OMM_STR_ERR_DEFINIT(bat_def.lastErrorStr());
+    this->_error = Om_errDefInit(L"Definition file", bat_def_path, bat_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
     return false;
   }

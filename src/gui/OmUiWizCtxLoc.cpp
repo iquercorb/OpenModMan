@@ -55,7 +55,7 @@ bool OmUiWizCtxLoc::hasValidParams() const
   wstring item_str, msg;
 
   this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_dialogValidName(this->_hwnd, L"Location title", item_str))
+  if(!Om_dialogValidName(this->_hwnd, L"Target Location name", item_str))
     return false;
 
   this->getItemText(IDC_EC_INP02, item_str);

@@ -252,8 +252,8 @@ bool OmRemote::download(const wstring& path, bool supersedes, Om_downloadCb down
 
   // Open file for writing
   if((this->_downl_file = _wfopen(this->_downl_temp.c_str(), L"wb")) == nullptr) {
-    this->_error =  L"Temp download file \""+this->_downl_temp+L"\"";
-    this->_error += OMM_STR_ERR_CREATE(wstring(L"unable to open file for writing."));
+    this->_error =  L"Temporary file \""+this->_downl_temp+L"\" creation failed: ";
+    this->_error += L"Unable to open file for writing.";
     this->log(0, L"Remote("+this->_ident+L") Download", this->_error);
     return false;
   }
@@ -338,8 +338,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       if(result == 0) {
         self->_state &= ~RMT_STATE_NEW; //< now in library
       } else {
-        self->_error =  L"Temp download file \""+self->_downl_temp+L"\"";
-        self->_error += OMM_STR_ERR_RENAME(Om_getErrorStr(result));
+        self->_error = Om_errRename(L"Temporary file", self->_downl_temp, result);
         self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
         Om_fileDelete(self->_downl_temp);
         self->_state |= RMT_STATE_ERR;

@@ -96,8 +96,7 @@ bool OmRepository::query()
 
   // try to parse received data as repository
   if(!this->_config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
-    this->_error = L"Repository definition \""+this->_url+L"\"";
-    this->_error += OMM_STR_ERR_DEFOPEN(this->_config.lastErrorStr());
+    this->_error = Om_errDefOpen(L"Repository definition", this->_url, this->_config.lastErrorStr());
     this->log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;

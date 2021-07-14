@@ -29,8 +29,6 @@
 #include <locale>
 #include <codecvt>
 
-#include "OmStrings.h"
-
 #define NTDDI_VERSION             0x06000000    // NTDDI_VISTA
 #define WINVER                    0x0600        // _WIN32_WINNT_VISTA
 
@@ -48,7 +46,7 @@
 
 #define OMM_APP_MAJ               0
 #define OMM_APP_MIN               9
-#define OMM_APP_REV               6
+#define OMM_APP_REV               7
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
 #else
@@ -1781,6 +1779,183 @@ uint8_t* Om_zInflate(const uint8_t* in_data, size_t in_size, size_t def_size);
 /// \return Error string.
 ///
 wstring Om_getErrorStr(int code);
+
+/// \brief Invalid directory error message.
+///
+/// Compose error string for invalid or non existing directory.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+///
+/// \return Formated error log message.
+///
+wstring Om_errIsDir(const wstring& item,  const wstring& path);
+
+/// \brief Create error message.
+///
+/// Compose error string for unable to create.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errCreate(const wstring& item,  const wstring& path, int result);
+
+/// \brief Delete error message.
+///
+/// Compose error string for unable to delete.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errDelete(const wstring& item,  const wstring& path, int result);
+
+/// \brief Rename error message.
+///
+/// Compose error string for unable to rename.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errRename(const wstring& item, const wstring& path, int result);
+
+/// \brief Move error message.
+///
+/// Compose error string for unable to move.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errMove(const wstring& item, const wstring& path, int result);
+
+/// \brief Copy error message.
+///
+/// Compose error string for unable to copy.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errCopy(const wstring& item, const wstring& path, int result);
+
+/// \brief Read access error message.
+///
+/// Compose error string for unable to read access.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+///
+/// \return Formated error log message.
+///
+wstring Om_errReadAccess(const wstring& item, const wstring& path);
+
+/// \brief Write access error message.
+///
+/// Compose error string for unable to write access.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+///
+/// \return Formated error log message.
+///
+wstring Om_errWriteAccess(const wstring& item, const wstring& path);
+
+/// \brief Zip init error message.
+///
+/// Compose error string for unable to init zip.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errZipInit(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Zip open error message.
+///
+/// Compose error string for unable to open zip.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errZipOpen(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Zip deflate error message.
+///
+/// Compose error string for unable to deflate file.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Zip inflate error message.
+///
+/// Compose error string for unable to inflate file.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Definition init error message.
+///
+/// Compose error string for unable to init definition.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errDefInit(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Definition open error message.
+///
+/// Compose error string for unable to open definition.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errDefOpen(const wstring& item, const wstring& path, const wstring& mesg);
+
+/// \brief Definition parse error message.
+///
+/// Compose error string for unable to parse definition.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  mesg    : Additional error message.
+///
+/// \return Formated error log message.
+///
+wstring Om_errDefSave(const wstring& item, const wstring& path, const wstring& mesg);
 
 /// \brief Memory allocation.
 ///

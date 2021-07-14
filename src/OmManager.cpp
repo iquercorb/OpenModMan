@@ -80,8 +80,7 @@ bool OmManager::init(const char* arg)
 
     result = Om_dirCreate(this->_home);
     if(result != 0) {
-      this->_error =  L"Application home folder \""+this->_home+L"\"";
-      this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
+      this->_error = Om_errCreate(L"Application home folder", this->_home, result);
       Om_dialogBoxErr(nullptr, L"Initialization error", this->_error);
       return false;
     }
@@ -102,8 +101,7 @@ bool OmManager::init(const char* arg)
     wstring conf_path = this->_home + L"\\config.xml";
 
     if(!_config.init(conf_path, OMM_CFG_SIGN_APP)) {
-      this->_error =  L"Configuration file \""+conf_path+L"\"";
-      this->_error += OMM_STR_ERR_DEFINIT(this->_config.lastErrorStr());
+      this->_error = Om_errDefInit(L"Configuration file", conf_path, this->_config.lastErrorStr());
       this->log(1, L"Manager() Init", this->_error);
       Om_dialogBoxWarn(nullptr, L"Initialization error", this->_error);
       // this is not a fatal error, but this will surely be a problem...
@@ -434,9 +432,8 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
 
   // check whether install path exists
   if(!Om_isDir(path)) {
-    this->_error =  L"Path \""+path+L"\"";
-    this->_error += OMM_STR_ERR_ISDIR;
-    this->log(0, L"Manager() Create Context", this->_error);
+    this->_error = Om_errIsDir(L"Home location path", path);
+    this->log(0, L"Manager() Create Software Context", this->_error);
     return false;
   }
 
@@ -446,9 +443,8 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
   // create Context home folder
   int result = Om_dirCreate(ctx_home);
   if(result != 0) {
-    this->_error =  L"Home folder \""+ctx_home+L"\"";
-    this->_error += OMM_STR_ERR_CREATE(Om_getErrorStr(result));
-    this->log(0, L"Manager() Create Context", this->_error);
+    this->_error = Om_errCreate(L"Home folder", ctx_home, result);
+    this->log(0, L"Manager() Create Software Context", this->_error);
     return false;
   }
 
