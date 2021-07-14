@@ -203,7 +203,6 @@
 		<Unit filename="include/OmRemote.h" />
 		<Unit filename="include/OmRepository.h" />
 		<Unit filename="include/OmSocket.h" />
-		<Unit filename="include/OmStrings.h" />
 		<Unit filename="include/OmVersion.h" />
 		<Unit filename="include/OmXmlDoc.h" />
 		<Unit filename="include/OmZipFile.h" />
