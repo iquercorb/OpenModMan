@@ -1,0 +1,723 @@
+<html>
+  <head>
+    <title>Open Mod Manager - Target Location</title>
+    
+    <meta name="keywords" content="target,location,developer,warning,installation,
+                                    uninstallation,backup,package,repositories,
+                                    repository,network,upgrade,download" >
+    
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    
+  </head>
+  <body>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="title"></a>
+    <h1>Target Location</h1>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The <b>Target Location</b> is the main sub-element of a 
+    <a href="2A_context.html">Software Context</a> and in some
+    way, a key part of the
+    <a href="1A_manager.html">Manager</a>. Since the 
+    <a href="1A_manager.html">Manager</a> is due to apply and 
+    manage Mods (modifications) for a third-party softwares (or 
+    games), the relation between the third-party software and Mods 
+    (modifications) to be installed is at center of its procedures. 
+    The <i>Target Location</i> is the entity that incarnate this 
+    relation, it is the route between the 
+    <a href="1A_manager.html">Manager</a> and the third-party 
+    software.</p>
+    
+    <h3>Table of content</h3>
+    <ul class="toc">
+      <li><a href="#ovw">Target Location Overview</a>
+        <ul>
+          <li><a href="#ovw_dir">The Target Location home folder</a></li>
+          <li><a href="#ovw_def">The Target Location definition (.omc) file</a></li>
+          <li><a href="#ovw_sub">Custom Library and Backup folders</a></li>
+        </ul>
+      </li>
+      
+      <li><a href="#new">Creating a new Target Location</a>
+        <ul>
+          <li><a href="#new_opn">Launching Target Location Creation dialog</a></li>
+          <li><a href="#new_cfg">Target Location Creation parameters</a></li>
+        </ul>
+      </li>
+      
+      <li><a href="#prop">Target Location properties</a>
+        <ul>
+          <li><a href="#prop_stg">Proterties dialog Settings tab</a></li>
+          <li><a href="#prop_lib">Properties dialog Library options tab</a></li>
+          <li><a href="#prop_bck">Properties dialog Backup options tab</a></li>
+          <li><a href="#prop_net">Properties dialog Network Repositories tab</a></li>
+        </ul>
+      </li>
+    </ul>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="ovw"></a>
+    <h2>Target Location Overview</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>A good way to understand <i>Target Location</i> is to view it as a 
+    port of the <a href="1A_manager.html">Manager</a> that 
+    both serve as warehouse and make a route to the third-party 
+    software. The <i>Target Location</i> not only describes a route to 
+    the third-party software, it also hold - in tis default 
+    configuration - in its own folder the subfolders dedicated to 
+    store <a href="2C_package.html">Packages</a> (Mods) 
+    and backup data.</p>
+    
+    <p>The <i>Target Location</i> embed many parameters such as Network
+    repositories or how to store backup data, but the most important, 
+    it defines three key parameters to interact wit the third-party 
+    software:</p>
+    
+    <ul>
+      <li><b>The <i>Target Destination</i> folder</b>
+        <p>This is the folder where the 
+        <a href="2C_package.html">Packages</a>'s (Mods) files are 
+        copied (installed) to modify the targeted third-party software. 
+        This is usually the third-party software root (or installation) 
+        folder.</p>
+      </li>
+      <li><b>The <i>Library</i> folder</b>
+        <p>This is the folder where the 
+        <a href="1A_manager.html">Manager</a>
+        seeks for available <a href="2C_package.html">Packages</a>
+        to be installed into the <i>Target Destination</i> folder.</p>
+        
+        <p>The <a href="2C_package.html">Packages</a> are 
+        (should be) created by developers in accordance to the 
+        third-party file tree and the <i>Target Destination</i> folder 
+        to be properly installed, this is why a <i>Library</i> folder is 
+        usually very specific to one particular <i>Target Location</i> 
+        and should never be shared between several ones.</p>
+
+        <blockquote class="note icon-info">
+        See the <a href="2C_package.html">Mod Package chapter</a> 
+        for more informations about the Target Destination folder, the 
+        <a href="2C_package.html">Packages</a>'s architecture 
+        and how they are installed.
+        </blockquote>
+          
+        <p></p>
+      </li>
+      <li><b>The <i>Backup</i> folder</b>
+        <p>This is the folder where the 
+        <a href="1A_manager.html">Manager</a> will store 
+        backup of third-party software's overwritten files and  the  
+        related restoration informations so to be able to properly  
+        uninstall <a href="2C_package.html">Packages</a> and 
+        restore the third-party software files to their original 
+        state.</p>
+        
+        <p>The Backup folder is a sensitive part, if this folder
+        is deleted, or its content alterated, the 
+        <a href="1A_manager.html">Manager</a> will no longer
+        be able to restore the original third-party software files.</p>
+        
+        <blockquote class="note icon-note">
+        The way the <a href="1A_manager.html">Manager</a>
+        create and store backup data should allow this folder to be
+        shared between several <i>Target Location</i>. However because a 
+        small risk of name collision remains, and because mixed backup 
+        data would be harder to identify in case of manual intervention, 
+        this is not encouraged.
+        </blockquote>
+        <p></p>
+      </li>
+    </ul>
+
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_dir"></a>
+    <h3>The Target Location home folder</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>Like its parent element (<a href="2A_context.html">Software 
+    Context</a>) the <i>Target Location</i> takes place in its 
+    <i>home folder</i> where are placed the <i>Location definition</i> 
+    file (.oml) itself and, in its default configuration, one 
+    <i>Library</i> subfolder to place aivailable <a href="2C_package.html">Packages</a> and a 
+    <i>Backup</i> subfolder to store backup data.</p>
+    
+    <img src="../images/2B_loc_home.png"/>
+    
+    <p>Any <i>Target Location</i> must have its own <i>home folder</i>, 
+    not shared with another, itself placed intot a 
+    <a href="2A_context.html">Software Context</a>'s 
+    <i>home folder</i>.</p> 
+    
+    <blockquote class="note icon-note">
+    The <i>Target Location</i> <i>home folder</i> can be renamed as 
+    wants. The definition file can also be renamed and <u>not</u> 
+    necessarily identical to its home folder.
+    </blockquote>
+    
+    <p>
+    <ul>
+      <li>A <i>Target Location</i> <i>home folder</i> alone out
+      of a <a href="2A_context.html">Software Context</a>'s <i>home 
+      folder</i> <u>is unusable</u>.</li> 
+      
+      <li>A <i>Target Location definition</i> file (.oml) alone, 
+      out of its <i>home folder</i> (eg. directly placed into the <a href="2A_context.html">Software 
+      Context</a> <i>home folder</i>) <u>is unusable</u>.</li>
+      
+      <li>A <i>Target Location</i> <i>home folder</i> within another 
+      subfolder of a <a href="2A_context.html">Software Context</a>'s <i>home 
+      folder</i> <u>will be unreachable</u>.</li> 
+    </ul>
+    </p>
+    
+    <p>The reason is that <i>Target Locations</i> 
+    are discovered during <a href="2A_context.html">Software Context</a> 
+    loading in a specific way: 
+    When a <a href="2A_context.html">Software Context</a> loads, 
+    the <a href="1A_manager.html">Manager</a> seeks for 
+    subfolders within the <a href="2A_context.html">Software 
+    Context</a>'s <i>home folder</i>, in each subfolder search for a 
+    <i>Target Location definition</i> 
+    file (.oml) and if found, loads the <i>Target 
+    Location</i> like a 
+    <a href="2A_context.html">Software Context</a>'s module. So, 
+    <u><i>Target Locations</i> and 
+    <a href="2A_context.html">Software Context</a> are not 
+    formally linked together</u>, this linking is dynamic, created at 
+    <a href="2A_context.html">Software Context</a> loading 
+    depending on found <i>Target Locations</i> within the 
+    <a href="2A_context.html">Software Context</a>'s <i>home folder</i>.</p>
+    
+    <blockquote class="note icon-note">
+    What should be understood here is that it is actualy possible 
+    to move or copy a <i>Target Location</i>
+    from one <a href="2A_context.html">Software Context</a> to 
+    another simply by moving or copying its <i>home folder</i> with its 
+    content from a <a href="2A_context.html">Software Context</a> 
+    <i>home folder</i> to another one.
+    </blockquote>
+    
+    <p>In default configuration, a <i>Target Locations</i> <i>home 
+    folder</i> contain the two Library and Backup subfolders. 
+    However they are not necessarly used since <i>Target Locations</i> 
+    options allow to use custom external folders instead of the 
+    default ones. This subject is more detailed in <a href="#ovw_sub">the 
+    dedicated section bellow</a>.</p>
+
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_def"></a>
+    <h3>The Target Location definition (.OML) file</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The parameters related to a <i>Target Locations</i> is saved in 
+    a file with the OML extension (.oml). This is the first file created 
+    within the <i>home folder</i> and it is the file 
+    <a href="1A_manager.html">Manager</a> seeks 
+    for to set a <i>Software Context</i> subfolder as a <i>Target 
+    Location</i> <i>home</i>.
+    </p>
+    
+    <p><u>The location of the <i>Target Locations</i> <i>definition file</i> 
+    determins the  <i>Target Locations</i> <i>home folder</i></u>. In other 
+    words, if you move the <i>definition file</i> to another <i>Software 
+    Context</i> <i>home</i>'s direct subfolder, the new subfolder where 
+    you moved the <i>definition file</i> will becomes its <i>home 
+    folder</i>, and this whatever its content.
+    </p>
+    
+    <blockquote class="note icon-note">
+    The OML file is actualy a standard UTF-8 encoded XML file. It 
+    can be viewed and edited using any text editor supporting UTF-8 
+    encoding.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_sub"></a>
+    <h3>Custom Library and Backup folders</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>In the default configuration, the <i>Library</i> and 
+    <i>Backup</i> folders are direct subfolders within the <i>Target 
+    Location</i>'s <i>home folder</i>. Not only by convenience but 
+    also because this is <u>technically relevant</u>:</p>
+    
+    <ul>
+      <li>
+        First, the backup data are related to alterated files of 
+        the <i>Target Location</i>'s <i>Destination</i> folder, 
+        it is so better to keep all backup data related to one 
+        <i>Target Location</i> together and apart of others.
+      </li>
+    
+      <li>
+        Second, <a href="2C_package.html">Packages</a> are created 
+        in accordance to the third-party software's files tree and the 
+        corresponding root <i>Target Destination</i> folder, so 
+        <a href="2C_package.html">Packages</a> mades for one 
+        <i>Target Location</i> cannot <u>theoretically</u> be compatible 
+        with another one. It is so <u>theoretically</u> useless and 
+        irrelevant to mix <a href="2C_package.html">Packages</a> 
+        destinated to several different <i>Target Locations</i>.
+      </li>
+    </ul>
+    
+    <p>For these reasons, it is encouraged to use the default 
+    configuration, with <i>Library</i> and <i>Backup</i> folders as
+    subfolders within the <i>Target Location</i>'s <i>home folder</i>.
+    <b>However</b>, because there are always particular case and 
+    exceptions and because choice is better than no choice, it is 
+    possible to define custom and external folders as <i>Target 
+    Location</i>'s <i>Library</i> and (or) <i>Backup</i> folders. These 
+    options are perfectly valid and technically transparent. In 
+    charge of the  user to be care of what he is doing.</p>
+    
+    <blockquote class="note icon-info">
+    See the <a href="2C_package.html">Mod Package chapter</a> 
+    for more informations about the Target Destination folder, the 
+    <a href="2C_package.html">Packages</a>'s architecture and how they are installed.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="new"></a>
+    <h2>Creating a new Target Location</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>A <i>Target Location</i> can be created only within a 
+    <a href="2A_context.html">Software Context</a>, so it is 
+    required to first open or select the 
+    <a href="2A_context.html">Software Context</a> where the
+    <i>Target Location</i> are to be created, then creating
+    a new <i>Target Location</i> can be done using the <i>Target 
+    Location Creation dialog</i>.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="new_opn"></a>
+    <h3>Launching Target Location Creation dialog</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The same Target Location Creation dialog can be accessed through 
+    two several ways:
+    </p>
+    
+    <ul>
+      <li><h4>Via the Edit menu</h4>
+        <p>Click on the <b>Edit</b> menu, then select <b>Add Target Location...</b></p>
+        <blockquote class="hint-menu">
+          <span>Edit</span>
+          <br> &nbsp; <big>&vellip;</big> 
+          <br> <span>&nbsp;&nbsp; Add Target Location... &nbsp;&nbsp;</span>
+        </blockquote>
+      </li>
+      <li><h4>Via the Software Context properties dialog</h4>
+        <p>Open the <a href="2A_context.html#prop">Software Context</a> properties
+        dialog as described in the <a href="2A_context.html#prop">Software 
+        Context chapter</a>, then select the <i>Target Location</i> tab and click
+        to the <img src="../images/2B_ctx_prop_loc_btn_new.png"></img> button.</p>
+      </li>
+    </ul>
+
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="new_cfg"></a>
+    <h3>Target Location Creation parameters</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <h4>Target Location Name</h4>
+    
+    <p>This is the indicative name used to identify the 
+    <i>Target Location</i>
+    among the others. By convention its <i>home subfolder</i> 
+    and <i>definition file</i> will be named according this value, 
+    however, it is a <i>Target Location</i> own value which is displayed 
+    as this name whathever how its <i>home subfolder</i> or 
+    <i>definition file</i> are named.</p>
+    
+    <h4>Target Destination folder</h4>
+    
+    <p>This is the third-party software reference target folder, 
+    where Packages are to be installed. This is the root of the the 
+    third-party software's file tree, and where the 
+    Packages's files will be copied to complete or overwrite 
+    third-party software's files. This is usually the targeted 
+    third-party software root (or installation) folder.</p>
+    
+    <blockquote class="note icon-info">
+    See the <a href="2C_package.html">Mod Package chapter</a> 
+    for more informations about the Target Destination folder, the 
+    <a href="2C_package.html">Packages</a>'s architecture and how 
+    they are installed.
+    </blockquote>
+    
+    <h4>Use custom Library folder</h4>
+    
+    <p>This parameter allow you to specify a custom folder as Packages 
+    Library. The Package Library folder is where the Manager will look 
+    at to find available Packages to be installed. By default, each 
+    <i>Target Location</i> have its own 
+    Library folder within its home folder, it is however possible to 
+    specify a custom folder, extern from home folder, and shared with 
+    others.</p>
+    
+    <h4>Use custom Backup folder</h4>
+    
+    <p>This parameter allow you to specify a custom folder as Backup 
+    storage. The Backup folder is where the Manager will store all 
+    backup data required to properly restore original third-party 
+    software files. By default, each Target Location have its own 
+    Backup folder within its home folder, it is however possible to 
+    specify a custom folder, extern from home folder, and shared with 
+    others.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="prop"></a>
+    <h2>Target Location properties</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>To edit <i>Target Location</i> parameter, select the 
+    <i>Target Location</i> you want to edit parameters and click on 
+    the <b>Edit</b> menu then select <b>Target Location 
+    properties...</b></p>
+    
+    <blockquote class="hint-menu">
+      <span>Edit</span>
+      <br> &nbsp; <big>&vellip;</big> 
+      <br> <span>&nbsp;&nbsp; Target Location properties... &nbsp;&nbsp;</span>
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_stg"></a>
+    <h3>Properties dialog <span class="tab">Settings</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>This properties tab gather the <i>Target Location</i>'s key 
+    parameters.</p>
+    
+    <h4>Indicative name</h4>
+    <p>This is the indicative name or title, used to identify the 
+    <i>Target Location</i> among the others. 
+    </p>
+    
+    <blockquote class="note icon-note">
+    Changing this value <u>will also</u> rename the <i>Target 
+    Location</i>'s <i>home folder</i> and <i>definition</i> file. 
+    However this is done for consistency purposes only. <i>Target 
+    Location</i>'s indicative name, definition files and <i>home 
+    folder</i> can each be named diferently, it still technically valid.
+    </blockquote>
+    
+    <h4>Target Destination folder</h4>
+
+    <p>This is the folder where the 
+    <a href="2C_package.html">Packages</a>'s (Mods) files are
+    copied (installed) to modify the targeted third-party software. 
+    This is usually the third-party software root (or installation) 
+    folder.</p>
+    
+    <blockquote class="note icon-info">
+    See the <a href="2C_package.html">Mod Package chapter</a> 
+    for more informations about the Target Destination folder, the 
+    <a href="2C_package.html">Packages</a>'s architecture and 
+    how they are installed.
+    </blockquote>
+        
+    <h4>Use custom Library folder</h4>
+    
+    <p>This parameter allow to use a custom external folder as 
+    <i>Library</i> folder. This is the folder where the 
+    <a href="1A_manager.html">Manager</a> 
+    seeks for available <a href="2C_package.html">Packages</a>
+    to be installed into the <i>Target Destination</i> folder.</p>
+    
+    <h4>Use custom Backup folder</h4>
+
+    <p>This parameter allow to use a custom external folder as
+    <i>Backup</i> folder. This is the folder where 
+    <a href="1A_manager.html">Manager</a> will store 
+    backup of third-party software's overwritten files and the  
+    related restoration informations so to be able to properly  
+    uninstall <a href="2C_package.html">Packages</a> and 
+    restore the third-party software files to their original 
+    state.
+    </p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_lib"></a>
+    <h3>Properties dialog <span class="tab">Library options</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>This properties tab gather parameters related to 
+    <a href="2C_package.html">Packages</a> installation and 
+    Library options.</p>
+    
+    <h4>Developer mode</h4>
+
+    <p>The <i>developer mode</i> enable the detection and parse of 
+    folders as <a href="2C_package.html">Packages</a>'s source.
+    This mode has two purposes, the first one is to allow Mods 
+    developpers to easily test and modify their mods before turning 
+    them into packages. The second is to offer a "legacy" Mods 
+    installation process, such as JSGME does.
+    </p>
+
+    
+    <h4>Enable warning messages for</h4>
+    
+    <p>Theses parameter allow to enable or disable warning messages 
+    related to <a href="2C_package.html">Packages</a> 
+    installation and uninstallation.</p>
+    
+    <ul>
+      <li><b>Package installation overlapping</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      installation, 
+      the <a href="1A_manager.html">Manager</a> 
+      verify whether <a href="2C_package.html">Packages</a> to be 
+      installed may overwrite some files that was already modified by 
+      previously installed <a href="2C_package.html">Packages</a>, 
+      which is called an <b>overlapping</b>. If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time it detect overlapping.</p>
+      </li>
+    
+      <li><b>Additional installations of package dependencies</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      installation, the <a href="1A_manager.html">Manager</a> check
+      all dependencies and may have find some required 
+      <a href="2C_package.html">Packages</a> to be installed. 
+      If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time dependencies 
+      <a href="2C_package.html">Packages</a> will be installed
+      in addition to the initial selection.</p>
+      </li>
+      
+      <li><b>Package installation dependencies missing</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      installation, the <a href="1A_manager.html">Manager</a> check
+      all dependencies and verify their availability. 
+      If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time dependencies 
+      <a href="2C_package.html">Packages</a> are missing and
+      wont be able to be installed as required.</p>
+      </li>
+      
+      <li><b>Additional uninstallations of overlapping or dependents</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      uninstallation, the <a href="1A_manager.html">Manager</a> 
+      check for both all dependents and overlapping 
+      <a href="2C_package.html">Packages</a> installed after or 
+      over the selection. This may require to add some 
+      <a href="2C_package.html">Packages</a> to be uninstalled
+      before and in addition to the initial selection.
+      If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time dependents or overlapping 
+      <a href="2C_package.html">Packages</a> will be uninstalled
+      in addition to the initial selection.</p>
+      </li>
+
+    </ul>
+
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_bck"></a>
+    <h3>Properties dialog <span class="tab">Backup options</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>This properties tab gather parameters related to 
+    backup data storage options.</p>
+    
+    <h4>Store backup data as archive files</h4>
+    
+    <p>If this option is enabled, the generated backup data are stored
+    as archive files (with the OZB extension (.ozb)) instead 
+    of regular subfolders within the <i>Backup</i> folder. It is 
+    encouraged to enable this option to avoid repetitive creation and 
+    deletion of entires trees of files and subfolders within the Backup 
+    folder. Using archive files, there is only one file created per 
+    <a href="2C_package.html">Package</a> installation.</p>
+    
+    <blockquote class="note icon-note">
+    The OZB format is actually a standard ZIP file with specific
+    extension and can be opened either using a specific application or
+    via Windows Explorer after having renamed it with .zip extension.
+    </blockquote>
+    
+    <h4>Backup archive files compression</h4>
+    
+    <p>If store backup as archive files option is enabled, this 
+    parameter allow to disable or choose the archive compression level. 
+    Notice that the more the compression level is high, the more it 
+    require computational ressources and time.</p>
+    
+    <blockquote class="note icon-note">
+    Unless you really need to save disk space, it is encouraged to leave 
+    the compression disabled to keep good performances and take 
+    advantage of using archive files.
+    </blockquote>
+    
+    <h4>Discard backup data</h4>
+    
+    <p>This is a kind of <u>emergency</u> process to delete 
+    (move to recycle bin) all existing backup data of the current 
+    <i>Target Location</i> <b>without restoring them</b>. In other words 
+    the backed original files of the third-party software will be 
+    deleted (move to recycle bin) without being restored into the 
+    third-party software file tree.</p>
+    
+    <blockquote class="note icon-warn">
+    <b>This action should never be done unless very specific cases</b>. For 
+    instance, when the third-party software updated itself while 
+    some <a href="2C_package.html">Packages</a> still stood 
+    installed, turning backup data as outdated by the fact, and so
+    not to be restored.
+    </blockquote>
+
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_net"></a>
+    <h3>Properties dialog <span class="tab">Network Repositories</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>This properties tab gather parameters related to 
+    Network Repositories and download options.</p>
+    
+    <blockquote class="note icon-info">
+    The <a href="3B_network.html">Network Repositories</a> is 
+    not the purpose of this chapter, it has <a href="3B_network.html">
+    its own chapter</a> which explain its principle, review its 
+    components and related parameters.
+    </blockquote>
+    
+    <p></p>
+    
+    <img src="../images/2B_loc_prop_net.png"/>
+    
+    <ol class="numberpile">
+      <li>
+      <h4>Network Repositories list</h4>
+      <p>The list of the current 
+      <a href="3B_network.html">Network Repositories</a>
+      linked to the <i>Target Location</i>.</p>
+      </li>
+      
+      <li>
+      <h4>Delete Network Repository button</h4>
+      <p>Deletes (permanently) the selected 
+      <a href="3B_network.html">Network Repository</a> in list.
+      </p>
+      </li>
+      
+      <li>
+      <h4>Test Network Repository button</h4>
+      <p>Try to connect to the selected 
+      <a href="3B_network.html">Network Repository</a> in list 
+      and get repository data to check whether server is available and 
+      provide a valid repository definition.</p>
+      </li>
+      
+      <li>
+      <h4>Add Network Repository button</h4>
+      <p>Opens the <a href="3B_network.html">Network Repository</a>
+      Configuration</i> dialog to add a new 
+      <a href="3B_network.html">Network Repository</a> for
+      this <i>Target Location</i>.</p>
+      </li>
+      
+      <li>
+      <h4>Repository Test result</h4>
+      <p>Show the last test result of the selected 
+      <a href="3B_network.html">Network Repository</a></p>
+      </li>
+    </ol>
+    
+    
+    <h4>Enable warning messages for</h4>
+    
+    <p>Theses parameter allow to enable or disable warning messages 
+    related to <a href="2C_package.html">Packages</a> 
+    installation and uninstallation.</p>
+    
+    <ul>
+
+      <li><b>Additional download of package dependencies</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      download, the <a href="1A_manager.html">Manager</a> check
+      all dependencies and may have find some required 
+      <a href="2C_package.html">Packages</a> to be downloaded. 
+      If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time dependencies 
+      <a href="2C_package.html">Packages</a> will be downloaded
+      in addition to the initial selection.</p>
+      </li>
+      
+      <li><b>Package download dependencies missing</b>
+      
+      <p>Before <a href="2C_package.html">Packages</a> 
+      download, the <a href="1A_manager.html">Manager</a> check
+      all dependencies and verify their availability. 
+      If this option is enabled, 
+      the <a href="1A_manager.html">Manager</a> will so show a 
+      warning message each time dependencies 
+      <a href="2C_package.html">Packages</a> are missing and
+      wont be able to be downloaded as required.</p>
+      </li>
+      
+      <li><b>Package upgrade breaks dependencies</b>
+      
+      <p>Before <a href="2C_package.html">Package</a> 
+      upgrade to a newer version, the 
+      <a href="1A_manager.html">Manager</a> 
+      check for <a href="2C_package.html">Packages</a> that 
+      depend on the older version to be superseded.
+      If this option is enabled, the 
+      <a href="1A_manager.html">Manager</a> will so show a warning 
+      message each time an old version of a package that others depend 
+      on is about to be superseded, resulting in dependencies breaks.</p>
+      </li>
+
+    </ul>
+    
+    <h4>On package upgrade</h4>
+    
+    <p>This parameter allow to choose how to deal with the older version
+    of <a href="2C_package.html">Packages</a> when upgraded.</p>
+    
+    <ul>
+      
+      <li><b>Move older version to recycle bin</b>
+      <p>When the newer version of the 
+      <a href="2C_package.html">Packages</a> successfully 
+      downloaded, the older one is moved to the recycle bin.</p>
+      </li>
+      
+      <li><b>Renaùe older version with .old extension</b>
+      <p>When the newer version of the 
+      <a href="2C_package.html">Packages</a> successfully 
+      downloaded, the older one is left in the <i>Library</i> folder
+      and is renamed with an extra .old extension.</p>
+      </li>
+      
+    </ul>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+  </body>
+</html>

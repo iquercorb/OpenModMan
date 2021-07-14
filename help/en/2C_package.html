@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <title>Open Mod Manager - Mod Packages</title>
+    
+    <meta name="keywords" content="package,destination,install,
+                                  installation,uninstall,uninstallation" >
+    
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    
+  </head>
+  <body>
+    <!-- ----------------------------------------------------------- -->
+    <a id="title"></a>
+    <h1>Mod Packages</h1>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The <b>Mod Packages</b> or simply <b>Packages</b> are the objects
+    that apply the modifications to the third-party software. They are
+    in some way the heart of the modding process and what the
+    Manager is built around.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="ovw"></a>
+    <h2>Mod Packages Overview</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The purpose of the <i>Mod Package</i> is to provide an easy and 
+    standard way to install but also create modifications (Mods) to 
+    apply to a third-party software.</p>
+    
+    <h3>Mod Package base concept and architecture</h3>
+    
+    <p>Since each (third-party) software have its own file tree and 
+    architecture, the Manager canno guess which file must be copied or 
+    added where. One solution could be to write, for each package, a 
+    kind of script file that tell where to put each file, but for large 
+    amount of file this become fastidious for the Mod creator and 
+    multply the risk of error.</p>
+    
+    <p>A good and simple solution allowing to easily adapt genericaly 
+    any Mods to any third-party sofrware were found some year ago by 
+    other mod managing software. This solution consists on, for the mod 
+    creator, to strictly replicate the targeted third-party software's 
+    folders tree, in order to allow the mod managing software to 
+    perform an automatic comparison, then overwriting or adding each 
+    file (or folder) where it is supposed to be within the third-party 
+    file tree.</p>
+    
+    <img src="../images/2C_pkg_arch.png"/>
+    
+    <p>Since a same third-party software have the same file tree every 
+    where it is installed, the only thing the mod creator had to do, is 
+    to tell people to find the third-party software's installation 
+    folder (root of the file tree), then applying mods from there. And 
+    this is exactly the way Open Mod Manager works, through its object 
+    of Target Location.</p>
+    
+    
+  </body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Strict//EN">
+<html>
+  <head>
+    <title>Open Mod Manager - Software Context</title>
+    <meta name="keywords" content="context,location,batch,batches,quiet,icon">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+  </head>
+  <body>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="title"></a>
+    <h1>Software Context</h1>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The <b>Software Context</b> is the 
+    <a href="1A_manager.html">Manager</a> related primary object. 
+    Since the <a href="1A_manager.html">Manager</a> is due to 
+    apply and manage Mods (modifications) 
+    for a third-party softwares (or games), the primary objects it 
+    handle are the workspaces related to these third-party softwares, 
+    which here, are called <i>Software Context</i> or simply 
+    <i>Context</i>. So to say, like an image editor deals with images, 
+    Open Mod Manager deals with <i>Software Context</i>.</p>
+    
+    <h3>Table of content</h3>
+    <ul class="toc">
+      <li><a href="#ovw">Software Context Overview</a>
+        <ul>
+          <li><a href="#ovw_dir">The Software Context home folder</a></li>
+          <li><a href="#ovw_def">The Software Context definition (.omc) file</a></li>
+          <li><a href="#ovw_loc">The Software Context's Target Locations</a></li>
+        </ul>
+      </li>
+      
+      <li><a href="#new">Creating a new Software Context</a>
+        <ul>
+          <li><a href="#wiz_beg">Launching Software Context Creation wizard</a></li>
+          <li><a href="#wiz_cfg">Wizard's Software Context parameters</a></li>
+          <li><a href="#wiz_loc">Wizard's Target Location parameters</a></li>
+        </ul>
+      </li>
+      
+      <li><a href="#prop">Software Context properties</a>
+        <ul>
+          <li><a href="#prop_stg">Proterties Settings tab</a></li>
+          <li><a href="#prop_loc">Properties Target Locations tab</a></li>
+          <li><a href="#prop_bat">Properties Installation Batches tab</a></li>
+        </ul>
+      </li>
+    </ul>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="ovw"></a>
+    <h2>Software Context Overview</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>A simple way to understand <i>Software Context</i> is to view it 
+    as the root of a workspace related to a third-party software. This 
+    workspace is both abstract and concrete by the way a <i>Software 
+    Context</i> is located in its own standalone folder which will 
+    contains sub-elements related to this <i>Context</i>.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_dir"></a>
+    <h3>The Software Context home folder</h3>
+    <!-- ----------------------------------------------------------- -->
+        
+    <p>A <i>Software Context</i> take place in its <i>home folder</i> 
+    where are placed the Context definition file (.omc) itself, related 
+    <i>Target Location</i> subfolders and eventual additional files.
+    This <i>home folder</i> can be located anywhere and is usually 
+    automatically created via the <a href="#new">Context 
+    Creation Wizard</a>.</p>
+    
+    <img src="../images/2A_ctx_home.png"/>
+    
+    <p>Each <i>Software Context</i> should have its own 
+    <i>home folder</i>, not shared with another. It is technically 
+    possible to use the same home folder for multiple Software Context, 
+    however this has few interest and is not encouraged.</p>
+    
+    <blockquote class="note icon-note">
+    The <i>Software Context</i> <i>home folder</i> can be moved and 
+    renamed as wants. The definition file can also be renamed and 
+    <u>not</u> necessarily identical to its home folder.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_def"></a>
+    <h3>The Software Context definition (.omc) file</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The parameters related to a <i>Software Context</i> is saved in 
+    a file with the OMC extension (.omc). This is the first file created 
+    within the <i>home folder</i> and it is the file you must open
+    to load a <i>Software Context</i>.
+    </p>
+    
+    <p><u>The location of the <i>Software Context</i> <i>definition file</i> 
+    determins the  <i>Software Context</i> <i>home folder</i></u>. In other 
+    words, if you move the <i>definition file</i> to another folder, the 
+    new folder where you moved the <i>definition file</i> will
+    becomes its <i>home folder</i>, and this whatever its content.
+    </p>
+    
+    <blockquote class="note icon-note">
+    The OMC file is actualy a standard UTF-8 encoded XML file. It 
+    can be viewed and edited using any text editor supporting UTF-8 
+    encoding.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="ovw_loc"></a>
+    <h3>The Software Context's Target Locations</h3>
+    <!-- ----------------------------------------------------------- -->
+      
+    <p>As <i>Software Context</i> itself is more a container, most 
+    relevant things are its components, the main one is 
+    the <a href="2B_location.html">Target Location</a>. The 
+    <a href="2B_location.html">Target Location</a> define a workspace 
+    related to a specific <i>Target Destination</i> folder (where 
+    Mods are to be installed) which is usualy the targeted third-party 
+    software root folder.</p>
+    
+    <blockquote class="note icon-info">
+    The <a href="2B_location.html">Target Location</a> is not the 
+    purpose of this chapter, it has <a href="2B_location.html">its own 
+    chapter</a> which explain its principle, review its components and 
+    related parameters.
+    </blockquote>
+    
+    <p>A <i>Software Context</i> should have at least ONE 
+    <a href="2B_location.html">Target Location</a>, otherwise it is 
+    like an empty shell, with only a name and some basic defined 
+    parameters. 
+    </p>
+    
+    <h4>Target Locations modularity</h4>
+    
+    <p>Like the <i>Software Context</i>, in a modular mechanism purpose, 
+    the <a href="2B_location.html">Target Location</a> consist on an 
+    <i>home folder</i> with an inner <i>definition file</i> where the 
+    location of the <i>definition file</i> itself defines the 
+    <a href="2B_location.html">Target Location</a> <i>home folder</i>.</p>
+    
+    <p>In practical, When a <i>Software Context</i> loads, the 
+    <a href="1A_manager.html">Manager</a> seeks for 
+    subfolders within the <i>Software Context</i>'s <i>home folder</i>, 
+    in each subfolder search for a 
+    <a href="2B_location.html">Target Location</a> definition</i> 
+    file (.oml) and if found, loads the <a href="2B_location.html">Target 
+    Location</a> like a <i>Software Context</i>'s module. So, 
+    <a href="2B_location.html">Target Locations</a> and 
+    <u><i>Software Contexts</i> are not formally linked together</u>, this 
+    linking is dynamic, created at <i>Software Context</i> loading 
+    depending on found <a href="2B_location.html">Target Locations</a> 
+    within the <i>Software Context</i>'s <i>home folder</i>.</p>
+    
+    <blockquote class="note icon-note">
+    What should be understood here is that it is actualy possible 
+    to move or copy a <a href="2B_location.html">Target Location</a>
+    from one <i>Software Context</i> to another simply by moving or 
+    copying its <i>home folder</i> with its content from a 
+    <i>Software Context</i> <i>home folder</i> to another one.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="new"></a>
+    <h2>Creating a new Software Context</h2>
+    <!-- ----------------------------------------------------------- -->
+        
+    <p>Open Mod Manager provides a Software Context creation Wizard 
+    which will guide you through the creation of a new 
+    <i>Software Context</i> and its first 
+    <a href="2B_location.html">Target Location</a>. This chapter
+    will details each steps and parameters related to this procedure.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="wiz_beg"></a>
+    <h3>Launching Software Context Creation wizard</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>To launch the <i>Software Context</i> Creation Wizard, go to the
+    <b>File</b> menu, select <b>New</b> then <b>Software Context...</b>
+    
+    <blockquote class="hint-menu">
+      <span>File</span>
+      <br> &nbsp; <big>&vellip;</big> 
+      <br> <span>&nbsp;&nbsp; New &nbsp;&nbsp; &rsaquo; </span> &nbsp;&rsaquo; <span>&nbsp;&nbsp; Software Context... &nbsp;&nbsp;</span>
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="wiz_cfg"></a>
+    <h3>Wizard's Software Context parameters</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <h4>Software Context Name</h4>
+    
+    <p>This is the indicative name used to identify the <i>Software 
+    Context</i> among the others. By convention the <i>home folder</i> 
+    and <i>definition file</i> will be named according this value, 
+    however, it is a <i>Software Context</i> own value which is 
+    displayed as this name whathever how its <i>home folder</i> or 
+    <i>definition file</i> are named.</p>
+    
+    <h4>Path where to create Software Context home folder</h4>
+    
+    <p>This is the path to the folder where the wizard will create the 
+    <i>Software Context home folder</i>. This can be literally anywhere 
+    you want.</p>
+    
+    <blockquote class="note icon-note">
+    The Software Context home folder can be moved or renamed after the 
+    creation. Naming home folder and definition file the same as its 
+    name value is not mandatory, it is a simple convention.
+    </blockquote>
+    
+    <h4>Resulting Software Context home</h4>
+    
+    <p>This is the resulting path composed from name and path parameters 
+    to show where the Wizard will actually create the <i>Software 
+    Context home folder</i>.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+  
+    <a id="wiz_loc"></a>
+    <h3>Wizard's Target Location parameters</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <blockquote class="note icon-info">
+    The <a href="2B_location.html">Target Location</a> is not the 
+    purpose of this chapter, it has <a href="2B_location.html">its own 
+    chapter</a> which explain its principle, review its components and 
+    related parameters.
+    </blockquote>
+    
+    <h4>Target Location Name</h4>
+    
+    <p>This is the indicative name used to identify the 
+    <a href="2B_location.html">Target Location</a>
+    among the others. By convention its <i>home subfolder</i> 
+    and <i>definition file</i> will be named according this value, 
+    however, it is a <a href="2B_location.html">Target Location</a>
+    own value which is displayed as this name whathever how 
+    its <i>home subfolder</i> or <i>definition file</i> are named.</p>
+    
+    <h4>Target Destination folder</h4>
+    
+    <p>This is the third-party software reference target folder, 
+    where Packages are to be installed. This is the root of the the 
+    third-party software's file tree, and where the 
+    Packages's files will be copied to complete or overwrite 
+    third-party software's files. This is usually the targeted 
+    third-party software root (or installation) folder.</p>
+    
+    <blockquote class="note icon-info">
+    See the <a href="2C_package.html">Mod Package chapter</a> 
+    for more informations about the Target Destination folder, the 
+    <a href="2C_package.html">Packages</a>'s architecture and how 
+    they are installed.
+    </blockquote>
+    
+    <h4>Use custom Library folder</h4>
+    
+    <p>This parameter allow you to specify a custom folder as Packages 
+    Library. The Package Library folder is where the Manager will look 
+    at to find available Packages to be installed. By default, each 
+    <a href="2B_location.html">Target Location</a> have its own 
+    Library folder within its home folder, it is however possible to 
+    specify a custom folder, extern from home folder, and shared with 
+    others.</p>
+    
+    <h4>Use custom Backup folder</h4>
+    
+    <p>This parameter allow you to specify a custom folder as Backup 
+    storage. The Backup folder is where the Manager will store all 
+    backup data required to properly restore original third-party 
+    software files. By default, each Target Location have its own 
+    Backup folder within its home folder, it is however possible to 
+    specify a custom folder, extern from home folder, and shared with 
+    others.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="prop"></a>
+    <h2>Software Context Properties</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>To edit <i>Software Context</i> parameter, open and select the 
+    <i>Software Context</i> you want to edit parameters and click on 
+    the <b>Edit</b> menu then select <b>Software Context 
+    properties...</b></p>
+    
+    <blockquote class="hint-menu">
+      <span>Edit</span>
+      <br> &nbsp; <big>&vellip;</big> 
+      <br> <span>&nbsp;&nbsp; Software Context properties... &nbsp;&nbsp;</span>
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_stg"></a>
+    <h3>Proterties dialog <span class="tab">Settings</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>This properties tab gather the <i>Software Context</i>'s base 
+    parameters.</p>
+    
+    <h4>Home folder</h4>
+    
+    <p>Displays the <i>Software Context</i> <i>home folder</i> path.</p>
+    
+    <h4>Indicative name</h4>
+    
+    <p>This is the indicative name or title, used to identify the 
+    <i>Software Context</i> among the others.</p>
+    
+    <blockquote class="note icon-note">
+    Changing this value <u>does not</u> rename the <i>Software Context's
+    definition</i> file nor its <i>home folder</i>. You can freely 
+    rename these both element in the common way via Windows Explorer.
+    </blockquote>
+    
+    <h4>Associated application icon</h4>
+    
+    <p>The <i>Software Context</i> associated application icon. A 
+    <i>Software Context</i> can be associated with an external icon, 
+    usualy from the third-party software it is related to.</p>
+    
+    <p>To select an icon to associate, click on the 
+    <img src="../images/2A_ctx_prop_stg_btn_open.png"/> button then
+    choose either an icon file or an application executable that display 
+    the desired icon.</p>
+    
+    <p>To remove the current associated icon, click on the 
+    <img src="../images/2A_ctx_prop_stg_btn_trash.png"/> button.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_loc"></a>
+    <h3>Properties dialog <span class="tab">Target Locations</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+
+    <p>This properties tab gather the <i>Software Context</i>'s 
+    <a href="2B_location.html">Target Locations</a> list and 
+    related actions.</p>
+    
+    <blockquote class="note icon-info">
+    The <a href="2B_location.html">Target Location</a> is not the 
+    purpose of this chapter, it has <a href="2B_location.html">its own 
+    chapter</a> which explain its principle, review its components and 
+    related parameters.
+    </blockquote>
+    
+    <p></p>
+    
+    <img src="../images/2A_ctx_prop_loc.png"/>
+    
+    <ol class="numberpile">
+      <li>
+      <h4>Target Locations list</h4>
+      <p>The list of the current <a href="2B_location.html">Target Location</a>
+      linked to the <i>Software Context</i>. The list is ordered by 
+      internal indexation automatically incremented by order of creation. 
+      In case of multiple 
+      <a href="2B_location.html">Target Locations</a> 
+      this order can be modified as user preferences.</p>
+      </li>
+      
+      <li>
+      <h4>Delete Target Location button</h4>
+      <p>Deletes the selected 
+      <a href="2B_location.html">Target Location</a> in list.
+      This operation permanently deletes the 
+      <a href="2B_location.html">Target Location</a> <i>home 
+      folder</i> and all its content <u>except if the Library 
+      folder is not empty</u> (in this case, the Library folder is 
+      left alone and untouched within the <i>home folder</i>).
+      
+      <blockquote class="note icon-note">
+      The deletion process also uninstall all packages in order to
+      delete all backup data and restore the third-party software 
+      initial state.
+      </blockquote>
+    
+      </p>
+      </li>
+      
+      <li>
+      <h4>Modify Target Location button</h4>
+      <p>Opens the <a href="2B_location.html">Target Location</a> 
+      properties</i> dialog window for the selected
+      <a href="2B_location.html">Target Location</a> in list.</p>
+      </li>
+      
+      <li>
+      <h4>New Target Location button</h4>
+      <p>Opens the <a href="2B_location.html">Target Location</a>
+      Creation</i> dialog window to add an new 
+      <a href="2B_location.html">Target Location</a> within the
+      <i>Software Context</i> <i>home folder</i>.</p>
+      </li>
+      
+      <li>
+      <h4>Up and Down buttons</h4>
+      <p>In case of multiple 
+      <a href="2B_location.html">Target Locations</a>, allow to
+      change the position in list of the selected 
+      <a href="2B_location.html">Target Location</a>.</p>
+      </li>
+
+    </ol>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    
+    <a id="prop_bat"></a>
+    <h3>Properties dialog <span class="tab">Installation Batches</span> tab</h3>
+    <!-- ----------------------------------------------------------- -->
+
+    <p>This properties tab gather the <i>Software Context</i>'s 
+    <a href="2C_batches.html">Installation Batches</a> list and 
+    related actions.</p>
+    
+    <blockquote class="note icon-info">
+    The <a href="2C_batches.html">Installation Batch</a> is 
+    not the purpose of this chapter, it has <a href="2C_batches.html">
+    its own chapter</a> which explain its principle, review its 
+    components and related parameters.
+    </blockquote>
+    
+    <p></p>
+    
+    <img src="../images/2A_ctx_prop_bat.png"/>
+
+    <ol class="numberpile">
+      <li>
+      <h4>Installation Batches list</h4>
+      <p>The list of the current 
+      <a href="2C_batches.html">Installation Batches</a>
+      linked to the <i>Software Context</i>. The list is ordered by 
+      internal indexation automatically incremented by order of creation. 
+      In case of multiple 
+      <a href="2C_batches.html">Installation Batches</a> 
+      this order can be modified as user preferences.</p>
+      </li>
+      
+      <li>
+      <h4>Delete Installation Batch button</h4>
+      <p>Deletes (permanently) the selected 
+      <a href="2C_batches.html">Installation Batch</a> in list.
+      </p>
+      </li>
+      
+      <li>
+      <h4>Modify Installation Batch button</h4>
+      <p>Opens the <a href="2C_batches.html">Installation Batch</a> 
+      properties</i> dialog window for the selected
+      <a href="2C_batches.html">Installation Batch</a> in list.</p>
+      </li>
+      
+      <li>
+      <h4>New Installation Batch button</h4>
+      <p>Opens the <a href="2C_batches.html">Installation Batch</a>
+      Creation</i> dialog window to create a new 
+      <a href="2C_batches.html">Installation Batch</a> for
+      the <i>Software Context</i>.</p>
+      </li>
+      
+      <li>
+      <h4>Up and Down buttons</h4>
+      <p>In case of multiple 
+      <a href="2C_batches.html">Installation Batch</a>, allow to
+      change the position in list of the selected 
+      <a href="2C_batches.html">Installation Batch</a>.</p>
+      </li>
+    </ol>
+        
+    <h4>Batches execution in Quiet Mode</h4>
+    
+    <p>If enabled, the Quiet Mode for Installation Batches execution 
+    disables all the usual packages installation and uninstallation 
+    related warnings messages. This allow fluent batch executions to 
+    its conclusion witout interruption nor required action.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+  </body>
+</html>

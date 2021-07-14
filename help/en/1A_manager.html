@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Strict//EN">
+<html>
+  <head>
+    <title>Open Mod Manager - Manager</title>
+    <meta name="keywords" content="manager,context" >
+    <link rel="stylesheet" type="text/css" href="../style.css">
+  </head>
+  <body>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="title"></a>
+    <h1>The Manager</h1>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The term <b>Manager</b> refers to the <b>Open Mod Manager</b> 
+    software itself and its main window. This chapter review and 
+    explain the <i>Manager</i>'s base principles, base interface,  
+    paramete
+    rs and some technical considerations.
+    </p>
+    
+    <!-- ----------------------------------------------------------- -->
+    <a id="ovw"></a>
+    <h2>Manager Overview</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The <i>Manager</i> is the base application and engine which allow  
+    to manage what is called <a href="2A_context.html">Software Context</a> 
+    and their related components.</p>
+    
+    <blockquote class="note icon-info">
+    The <a href="2A_context.html">Software Context</a> is not the 
+    purpose of this chapter, it has <a href="2A_context.html">its own 
+    chapter</a> which explain its principle, review its components and 
+    related parameters.
+    </blockquote>
+    
+    <p>Since the Manager is due to apply and manage Mods (modifications) 
+    for a third-party softwares (or games), the primary objects it 
+    handle are the workspaces related to these third-party softwares, 
+    which here, are called <a href="2A_context.html">Software 
+    Context</a> or simply <a href="2A_context.html">Context</a>. 
+    So to say, like an image editor deals with images, Open Mod Manager 
+    deals with <a href="2A_context.html">Software Context</a>.</p>
+    
+    <blockquote class="note icon-note">
+    The <i>Manager</i> can load and manage several 
+    <a href="2A_context.html">Software Context</a> within a single instance. Once loaded each
+    <a href="2A_context.html">Software Context</a> is accessible via the
+    <i>Software Context selector</i>
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="gui"></a>
+    <h2>Manager Interface</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <h3>Manager base controls</h3>
+    
+    <p>Because most features are related to 
+    <a href="2A_context.html">Software Context</a>, the 
+    <i>Manager</i>'s base interface is very simple and count 
+    few elements:</p>
+    
+    <img src="../images/1A_interface.png">
+    <p>
+    </p>
+    
+    <ol class="numberpile">
+      <li>
+      <h4>Software Context selector</h4>
+      <p>The Context selector holds the list of the currently opened 
+      <a href="2A_context.html">Software Contexts</a> and show the current active 
+      one. Several <a href="2A_context.html">Software Contexts</a> can 
+      be opened at the same time, you can switch from one to another 
+      easly and quickly by selecting it here.</p>
+      </li>
+      
+      <li>
+      <h4>Software Context associated icon</h4>
+      <p>This is the icon associated with the current active <a href="2A_context.html">Software 
+      Context</a>. Each <a href="2A_context.html">Software Context</a> can have a specific custom icon associated, 
+      usually related to the application it represents.</p>
+      </li>
+      
+      <li>
+      <h4>Manager modules tabs</h4>
+      <p>The manager features are grouped into several big modules related 
+      to a specific theme. this tab lists and provides quick access to 
+      each of them.</p>
+      </li>
+    </ol>
+    
+    <h3>Library module tab</h3>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="prop"></a>
+    <h2>Manager Options</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The manager have few global parameters since most of parameters 
+    are Context related. To access to the manager global parameters go 
+    to the menu <b>Edit</b> and select <b>Manager options...</b></p>
+    
+    <blockquote class="hint-menu">
+      <span>Edit</span>
+      <br> &nbsp; <big>&vellip;</big> 
+      <br> <span>&nbsp;&nbsp; Manager options... &nbsp;&nbsp;</span>
+    </blockquote>
+    
+    <h3>General parameters</h3>
+    
+    <p>This the main and alone <i>Manager</i>'s parameters section.</p>
+    
+    <h4>List views icons size</h4>
+    
+    <p>Defines icons size for all List Views of the application 
+    interface. There are three possible sizes: 
+      <ul>
+        <li><b>Small</b> : shows icons of 16 pixels wide.</li>
+        <li><b>Medium</b> : shows icons of 24 pixels wide.</li>
+        <li><b>Large</b> : shows icons of 32 pixels wide.</li>
+      </ul>
+    </p>
+    
+    <h4>Open Contexts at startup</h4>
+    
+    <p>This parameter allow to define a list of 
+    <a href="2A_context.html">Software Context</a> files which 
+    will be  automatically opened when application starts. The files 
+    must be <i>Context definition</i> files (.omc) whithin their <i>home 
+    folder</i>.</p>
+    
+    <blockquote class="note icon-note">
+    The <a href="2A_context.html">Software Contexts</a> will be 
+    opened in the order the files are in the startup list.
+    </blockquote>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+    <!-- ----------------------------------------------------------- -->
+    <a id="files"></a>
+    <h2>Manager configuration and log files</h2>
+    <!-- ----------------------------------------------------------- -->
+    
+    <p>The manager stores its global configuration and log files in a 
+    folder named <i>Open Mod Manager</i> located according the 
+    <kbd>CSIDL_APPDATA</kbd> Windows environement variable which, on 
+    modern systems is the following local to user application data 
+    folder:
+    
+    <blockquote>
+      <kbd>C:\Users\&lt;username&gt;\AppData\Roaming\Open Mod Manager\</kbd>
+    </blockquote>
+    
+    </p>
+    
+    
+    <h3>config.xml</h3>
+    
+    <p>This is the main application configuration file. It is an human 
+    readable UTF-8 encoded XML file. It stores only Manager's global 
+    parameters and some software session data.
+    </p>
+    
+    <h3>log.txt</h3>
+    
+    <p>This is the outup log file which contain the output log of the
+    application <u>last session</u>. This file is erased and recreated
+    each time the application start and quit.</p>
+    
+    <p><b><a href="#title">Back to top</a></b></p>
+  </body>
+</html>
