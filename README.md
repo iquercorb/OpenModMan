@@ -1,30 +1,50 @@
 ----------------------------------------------------------------------------------------
-Open Mod Mananager
+# Open Mod Mananager
 ----------------------------------------------------------------------------------------
 
 Open source and generic Mod ("Modifications") manager.
 
 
-Version: 0.9.6 (beta)
+## Version: 0.9.7 (beta)
 ----------------------------------------------------------------------------------------
 
 
-Presentation
+## Presentation
 ----------------------------------------------------------------------------------------
-The purpose of Open Mod Manager is to provide an easy and safety way to organize,
-install, uninstall and create generic packages of third-party tweaks or add-ons (also
-called "mod") to be applied to any software (usually games).
+Open Mod Manager is an open source and generic Mod manager. Mod term come from
+Modification and refers to one or several unofficial files which are added to, or
+replace original editor's files of a software (usually a game) to change its behaviour,
+add features, components or items.
 
-It provide an advanced "mod" management using "packages" paradigm with support for
-dependencies and advanced automatic backup logics to prevent software's original files
-corruption.
+While these Mods's files can be manually installed and origina files backed by the user,
+Open Mod Manager provide a safe, automated and advanced environement to store, install,
+back and restore original files, and create Mods as encapsuled packages.
 
-Accent is made to flexibility and modularity by providing an open configuration logics
-based on human-readable XML files and simple folders architecture witch can be easily
-saved, deleted or altered.
+### Modern package management
 
+Cumulative installations, backup then restoration of original files are key feature,
+Open Mod Manager embed safe and smart automatic backup mechanism to garantish user can
+always and at any time restore editor's original files. Finally, as any modern package
+manager, Open Mod Manager support versioning and dependencies mechanisms.
 
-Features
+### Network oriented
+
+Since most of mods are provided by users or communities, and downloaded by other, Open
+Mod Manager provides an open online repository mechanism allowing any community or
+individual to provides its encapsuled packages within public online repositories. Users
+can configure repositories to check for updates or new availables packages from their
+favorite communities.
+
+### Generic and versatile
+
+Open Mod Mod manager is not focused to work with a specific game or software, it is in
+contrary designed to be generic, very flexible, and to adapt to the most configurations
+as possible and even for what was not though in the start. The configuration
+architecture is modular, stored as human readable XML files. Editing merging or
+deleting configuration modules can be as simple as - litteraly - moving subfolders
+from one location to another.
+
+## Features
 ----------------------------------------------------------------------------------------
 Open Mod Mananager currently implements the following key features:
 
@@ -39,11 +59,11 @@ Open Mod Mananager currently implements the following key features:
 - Network repositories for remote packages distribution and download.
 - Automatic package dependencies download and fix system.
 
-Screenshots
+## Screenshot
 ----------------------------------------------------------------------------------------
 ![Open Mod Mananager Screenshot](screenshot.png)
 
-Version history
+## Version history
 ----------------------------------------------------------------------------------------
 
 0.9.7
