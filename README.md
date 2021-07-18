@@ -1,16 +1,11 @@
-----------------------------------------------------------------------------------------
 # Open Mod Mananager
-----------------------------------------------------------------------------------------
 
 Open source and generic Mod ("Modifications") manager.
 
-
 ## Version: 0.9.7 (beta)
-----------------------------------------------------------------------------------------
-
 
 ## Presentation
-----------------------------------------------------------------------------------------
+
 Open Mod Manager is an open source and generic Mod manager. Mod term come from
 Modification and refers to one or several unofficial files which are added to, or
 replace original editor's files of a software (usually a game) to change its behaviour,
@@ -45,7 +40,7 @@ deleting configuration modules can be as simple as - litteraly - moving subfolde
 from one location to another.
 
 ## Features
-----------------------------------------------------------------------------------------
+
 Open Mod Mananager currently implements the following key features:
 
 - Flexible and modular XML and folder configuration logic.
@@ -60,11 +55,10 @@ Open Mod Mananager currently implements the following key features:
 - Automatic package dependencies download and fix system.
 
 ## Screenshot
-----------------------------------------------------------------------------------------
+
 ![Open Mod Mananager Screenshot](screenshot.png)
 
 ## Version history
-----------------------------------------------------------------------------------------
 
 0.9.7
  - Developer mode back as enabled by default.
