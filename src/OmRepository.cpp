@@ -24,7 +24,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRepository::OmRepository(OmLocation* pLoc) :
-  _pLoc(pLoc),
+  _location(pLoc),
   _base(),
   _name(),
   _url(),
@@ -54,9 +54,9 @@ bool OmRepository::init(const wstring& base, const wstring& name)
 
   // check for valid url
   if(!Om_isValidUrl(url)) {
-    this->_error =  L"Parameters make an invalid URL: ";
-    this->_error += L"\"" + url + L"\"";
-    this->log(1, L"Repository("+base+L"-"+name+L") Define", this->_error);
+    this->_error =  L"Invalid parameters: ";
+    this->_error += L"\"" + url + L"\" is not a valid URL";
+    this->log(1, L"Repository("+base+L"-"+name+L") Init", this->_error);
     return false;
   }
 
@@ -85,8 +85,7 @@ bool OmRepository::query()
   // Get remote XML repository data
   string data;
   if(!sock.httpGet(this->_url, data)) {
-    this->_error =  L"\""+this->_url+L"\" ";
-    this->_error += L"HTTP GET error: "+sock.lastErrorStr();
+    this->_error = L"\""+this->_url+L"\" HTTP GET error: "+sock.lastErrorStr();
     this->log(1, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -96,7 +95,7 @@ bool OmRepository::query()
 
   // try to parse received data as repository
   if(!this->_config.parse(Om_fromUtf8(data.c_str()), OMM_CFG_SIGN_REP)) {
-    this->_error = Om_errDefOpen(L"Repository definition", this->_url, this->_config.lastErrorStr());
+    this->_error = Om_errParse(L"Repository definition", this->_url, this->_config.lastErrorStr());
     this->log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -104,8 +103,7 @@ bool OmRepository::query()
 
   // check for the presence of <uuid> entry
   if(!this->_config.xml().hasChild(L"uuid")) {
-    this->_error =  L"\"" + this->_url;
-    this->_error += L"\" invalid definition: <uuid> node missing.";
+    this->_error =  L"\"" + this->_url + L"\" invalid definition: <uuid> node missing.";
     log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -113,8 +111,7 @@ bool OmRepository::query()
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"title")) {
-    this->_error =  L"\"" + this->_url;
-    this->_error += L"\" invalid definition: <title> node missing.";
+    this->_error =  L"\"" + this->_url + L"\" invalid definition: <title> node missing.";
     log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -122,8 +119,7 @@ bool OmRepository::query()
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"downpath")) {
-    this->_error =  L"\"" + this->_url;
-    this->_error += L"\" invalid definition: <downpath> node missing.";
+    this->_error =  L"\"" + this->_url + L"\" invalid definition: <downpath> node missing.";
     log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -131,8 +127,7 @@ bool OmRepository::query()
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"remotes")) {
-    this->_error =  L"\"" + this->_url;
-    this->_error += L"\" invalid definition: <remotes> node missing.";
+    this->_error =  L"\"" + this->_url + L"\" invalid definition: <remotes> node missing.";
     log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();
     return false;
@@ -175,7 +170,7 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
   OmRemote* pRmt;
   for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
 
-    pRmt = new OmRemote(this->_pLoc);
+    pRmt = new OmRemote(this->_location);
 
     if(pRmt->parse(url, xml_rmt_ls[i])) {
 
@@ -263,11 +258,11 @@ void OmRepository::clear()
 ///
 void OmRepository::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  if(this->_pLoc != nullptr) {
+  if(this->_location != nullptr) {
 
-    wstring log_str = L"Location("; log_str.append(this->_pLoc->title());
+    wstring log_str = L"Location("; log_str.append(this->_location->title());
     log_str.append(L"):: "); log_str.append(head);
 
-    this->_pLoc->log(level, log_str, detail);
+    this->_location->log(level, log_str, detail);
   }
 }

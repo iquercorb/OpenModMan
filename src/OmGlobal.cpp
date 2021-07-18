@@ -4971,20 +4971,67 @@ wstring Om_errWriteAccess(const wstring& item, const wstring& path)
   return item + L" \"" + path + L"\" write access denied";
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errInit(const wstring& item, const wstring& path, const wstring& error)
+{
+  return item + L" \"" + path + L"\" cannot be created: " + error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errOpen(const wstring& item, const wstring& path, const wstring& error)
+{
+  return item + L" \"" + path + L"\" cannot be opened: " + error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errLoad(const wstring& item, const wstring& path, const wstring& error)
+{
+  return item + L" \"" + path + L"\" cannot be loaded: " + error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errSave(const wstring& item, const wstring& path, const wstring& error)
+{
+  return item + L" \"" + path + L"\" cannot be saved: " + error;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_errParse(const wstring& item, const wstring& path, const wstring& error)
+{
+  return item + L" \"" + path + L"\" parse error: " + error;
+}
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 wstring Om_errZipInit(const wstring& item, const wstring& path, const wstring& mesg)
 {
-  return item + L" \"" + path + L"\" zip init error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP create error: " + mesg;
 }
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errZipOpen(const wstring& item, const wstring& path, const wstring& mesg)
+wstring Om_errZipLoad(const wstring& item, const wstring& path, const wstring& mesg)
 {
-  return item + L" \"" + path + L"\" zip open error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP open error: " + mesg;
 }
 
 
@@ -4993,7 +5040,7 @@ wstring Om_errZipOpen(const wstring& item, const wstring& path, const wstring& m
 ///
 wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& mesg)
 {
-  return item + L" \"" + path + L"\" zip compress error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP compress error: " + mesg;
 }
 
 
@@ -5002,32 +5049,14 @@ wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& m
 ///
 wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& mesg)
 {
-  return item + L" \"" + path + L"\" zip extract error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP extract error: " + mesg;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errDefInit(const wstring& item, const wstring& path, const wstring& mesg)
+wstring Om_errExists(const wstring& item, const wstring& path)
 {
-  return item + L" \"" + path + L"\" xml init error: " + mesg;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_errDefOpen(const wstring& item, const wstring& path, const wstring& mesg)
-{
-  return item + L" \"" + path + L"\" xml load error: " + mesg;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_errDefSave(const wstring& item, const wstring& path, const wstring& mesg)
-{
-  return item + L" \"" + path + L"\" xml save error: " + mesg;
+  return item + L" \"" + path + L"\" already exists";
 }

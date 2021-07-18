@@ -183,7 +183,7 @@ bool OmPackage::srcParse(const wstring& path)
       // we got a zip file, checks whether it is formated like we expect it
       OmZipFile src_zip;
       if(!src_zip.load(this->_src)) {
-        this->_error = Om_errZipOpen(L"Package file", this->_src, src_zip.lastErrorStr());
+        this->_error = Om_errLoad(L"Package file", this->_src, src_zip.lastErrorStr());
         this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
         src_zip.close();
         this->srcClear();
@@ -210,7 +210,7 @@ bool OmPackage::srcParse(const wstring& path)
           char* str_buf = new(std::nothrow) char[s+1];
           if(str_buf) {
             if(!src_zip.extract(zcd_index, str_buf, s)) {
-              this->_error = Om_errZipInfl(L"Definition file", zcd_entry, src_zip.lastErrorStr());
+              this->_error = Om_errZipInfl(L"Package definition", zcd_entry, src_zip.lastErrorStr());
               this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
               src_zip.close();
               delete [] str_buf;
@@ -223,12 +223,12 @@ bool OmPackage::srcParse(const wstring& path)
               delete [] str_buf;
               break;
             } else {
-              this->_error = Om_errDefOpen(L"Package definition", zcd_entry, src_def.lastErrorStr());
+              this->_error = Om_errParse(L"Package definition", zcd_entry, src_def.lastErrorStr());
               this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
             }
             delete [] str_buf;
           } else {
-            this->_error = Om_errZipInfl(L"Definition file", zcd_entry, L"bad alloc");
+            this->_error = Om_errZipInfl(L"Package definition", zcd_entry, L"bad alloc");
             this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
             src_zip.close();
             this->srcClear();
@@ -300,22 +300,21 @@ bool OmPackage::srcParse(const wstring& path)
               if(src_zip.extract(zcrd_index, img_data, s)) {
                 // finally load picture data
                 if(!this->_image.open(img_data, s, OMM_PKG_THMB_SIZE)) {
-                  this->_error = L"Image file \""+pic_name+L"\"";
+                  this->_error = L"Snapshot file \""+pic_name+L"\"";
                   this->_error += L"cannot be loaded: "+_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
-                this->_error = Om_errZipInfl(L"Image file", pic_name, src_zip.lastErrorStr());
+                this->_error = Om_errZipInfl(L"Snapshot file", pic_name, src_zip.lastErrorStr());
                 this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
               }
               delete [] img_data;
             } else {
-              this->_error = Om_errZipInfl(L"Image file", pic_name, L"bad alloc");
+              this->_error = Om_errZipInfl(L"Snapshot file", pic_name, L"bad alloc");
               this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
             }
           } else {
-            this->_error =  L"Referenced image file \""+pic_name+L"\"";
-            this->_error += L" was not found in ZIP archive.";
+            this->_error = L"Referenced Snapshot file \""+pic_name+L"\" was not found in archive.";
             this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
           }
         }
@@ -336,8 +335,7 @@ bool OmPackage::srcParse(const wstring& path)
         }
         if(!has_mirror) {
           // bad luck, this one is not is not a good one
-          this->_error =  L"Source ZIP archive \""+this->_src+L"\"";
-          this->_error += L" is not a valid Package: mirror folder missing.";
+          this->_error =  L"Source archive file \""+this->_src+L"\" is not a valid Package: missing root folder.";
           this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
           src_zip.close();
           this->srcClear();
@@ -472,7 +470,7 @@ bool OmPackage::bckParse(const wstring& path)
 
     // load the backup Zip file
     if(!bck_zip.load(this->_bck)) {
-      this->_error = Om_errZipOpen(L"Backup archive file", this->_bck, bck_zip.lastErrorStr());
+      this->_error = Om_errLoad(L"Backup archive file", this->_bck, bck_zip.lastErrorStr());
       this->log(0, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
       bck_zip.close();
       this->bckClear();
@@ -496,7 +494,7 @@ bool OmPackage::bckParse(const wstring& path)
         char* str_buf = new(std::nothrow) char[s+1];
         if(str_buf) {
           if(!bck_zip.extract(zcd_index, str_buf, s)) {
-            this->_error = Om_errZipInfl(L"Definition file", zcd_entry, bck_zip.lastErrorStr());
+            this->_error = Om_errZipInfl(L"Backup definition", zcd_entry, bck_zip.lastErrorStr());
             this->log(0, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
             bck_zip.close();
             delete [] str_buf;
@@ -509,12 +507,12 @@ bool OmPackage::bckParse(const wstring& path)
             delete [] str_buf;
             break;
           } else {
-            this->_error = Om_errDefOpen(L"Bakcup definition", zcd_entry, bck_def.lastErrorStr());
+            this->_error = Om_errParse(L"Backup definition", zcd_entry, bck_def.lastErrorStr());
             this->log(1, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
           }
           delete [] str_buf;
         } else {
-          this->_error = Om_errZipInfl(L"Definition file", zcd_entry, L"Bad alloc");
+          this->_error = Om_errZipInfl(L"Backup definition", zcd_entry, L"Bad alloc");
           this->log(0, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
           bck_zip.close();
           this->bckClear();
@@ -524,7 +522,7 @@ bool OmPackage::bckParse(const wstring& path)
     }
 
     if(!has_def) {
-      this->_error =  L"Invalid backup data ZIP archive: Definition file missing.";
+      this->_error =  L"Invalid backup archive file: Backup definition missing.";
       this->log(1, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
       this->bckClear();
       return false;
@@ -536,7 +534,7 @@ bool OmPackage::bckParse(const wstring& path)
   } else {
 
     if(!Om_isDir(this->_bck)) {
-      this->_error =  L"Found Invalid backup data: File is not a ZIP archive.";
+      this->_error =  L"Found invalid backup: File is not a ZIP archive.";
       this->log(1, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
       this->bckClear();
       return false;
@@ -552,14 +550,14 @@ bool OmPackage::bckParse(const wstring& path)
           has_def = true;
           break;
         } else {
-          this->_error = Om_errDefOpen(L"Bakcup definition", ls[i], bck_def.lastErrorStr());
+          this->_error = Om_errParse(L"Backup definition", ls[i], bck_def.lastErrorStr());
           this->log(1, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
         }
       }
     }
 
     if(!has_def) {
-      this->_error = L"Invalid backup data: Definition file missing.";
+      this->_error = L"Invalid backup: Definition file missing.";
       this->log(0, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
       this->bckClear();
       return false;
@@ -962,18 +960,18 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
         return false;
       }
     } else {
-      this->_error = Om_errIsDir(L"Source directory", this->_src);
+      this->_error = Om_errIsDir(L"Source folder", this->_src);
       this->log(0, L"Package("+out_path+L") Save", this->_error);
       return false;
     }
   }
-
+/*
   if(!this->_srcItemLs.size()) {
     this->_error = L"Package does not contain any data to be saved.";
     this->log(0, L"Package("+out_path+L") Save", this->_error);
     return false;
   }
-
+*/
   // create package identity according destination path
   wstring pkg_ext = Om_getExtensionPart(out_path);
   wstring pkg_ident = Om_getNamePart(out_path);
@@ -984,10 +982,10 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   bool has_failed = false;
   bool has_aborted = false;
 
-  // do we got a Zip file or a legacy Folder
+  // do we got a ZIP file or a Folder
   if(this->_type & PKG_TYPE_ZIP) {
     if(!src_zip.load(this->_src)) {
-      this->_error = Om_errZipOpen(L"Archive file", this->_src, src_zip.lastErrorStr());
+      this->_error = Om_errLoad(L"Input Package file", this->_src, src_zip.lastErrorStr());
       this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
       src_zip.close();
       return false;
@@ -1003,7 +1001,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
 
   // initialize zip archive
   if(!pkg_zip.init(pkg_tmp_path)) {
-    this->_error = Om_errZipInit(L"Package file", out_path, pkg_zip.lastErrorStr());
+    this->_error = Om_errInit(L"Package (temp) file", out_path, pkg_zip.lastErrorStr());
     this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
@@ -1057,7 +1055,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
           if(file_data) {
             // extract source zip content to buffer
             if(!src_zip.extract(this->_srcItemLs[i].cdri, file_data, file_size)) {
-              this->_error = Om_errZipInfl(L"Source file", this->_srcItemLs[i].path, src_zip.lastErrorStr());
+              this->_error = Om_errZipInfl(L"Item (file)", this->_srcItemLs[i].path, src_zip.lastErrorStr());
               this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
               has_failed = true;
               delete [] file_data;
@@ -1065,7 +1063,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
             }
             // append data to destination zip archive
             if(!pkg_zip.append(file_data, file_size, zcd_entry, zipLvl)) {
-              this->_error = Om_errZipDefl(L"Source file", zcd_entry, pkg_zip.lastErrorStr());
+              this->_error = Om_errZipDefl(L"Item (file)", zcd_entry, pkg_zip.lastErrorStr());
               this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
               has_failed = true;
               delete [] file_data;
@@ -1073,7 +1071,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
             }
             delete [] file_data;
           } else {
-            this->_error = Om_errZipInfl(L"Source file", this->_srcItemLs[i].path, L"Bad alloc");
+            this->_error = Om_errZipInfl(L"Item (file)", this->_srcItemLs[i].path, L"Bad alloc");
             this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
             has_failed = true;
             break;
@@ -1084,7 +1082,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
         Om_concatPaths(src_path, this->_src, this->_srcItemLs[i].path);
         // add file to destination zip archive
         if(!pkg_zip.append(src_path, zcd_entry, zipLvl)) {
-          this->_error = Om_errZipDefl(L"Source file", zcd_entry, pkg_zip.lastErrorStr());
+          this->_error = Om_errZipDefl(L"Item (file)", zcd_entry, pkg_zip.lastErrorStr());
           this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
           has_failed = true;
           break;
@@ -1093,7 +1091,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
     } else {
       // add folder to destination zip archive
       if(!pkg_zip.append(nullptr, 0, zcd_entry, zipLvl)) {
-        this->_error = Om_errZipDefl(L"Source folder", zcd_entry, pkg_zip.lastErrorStr());
+        this->_error = Om_errZipDefl(L"Item (directory)", zcd_entry, pkg_zip.lastErrorStr());
         this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
         has_failed = true;
         break;
@@ -1141,7 +1139,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
     }
     // add image in zip archive
     if(!pkg_zip.append(this->_image.data(), this->_image.data_size(), zcd_entry, zipLvl)) {
-      this->_error = Om_errZipDefl(L"Image file", zcd_entry, pkg_zip.lastErrorStr());
+      this->_error = Om_errZipDefl(L"Snapshot file", zcd_entry, pkg_zip.lastErrorStr());
       this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
       pkg_zip.close();
       Om_fileDelete(pkg_tmp_path);
@@ -1228,7 +1226,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   // the original file if exists
   result = Om_fileMove(pkg_tmp_path, pkg_path);
   if(result != 0) {
-    this->_error = Om_errRename(L"Temporary file", pkg_tmp_path, result);
+    this->_error = Om_errRename(L"Package (temp) file", pkg_tmp_path, result);
     this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
     Om_fileDelete(pkg_tmp_path);
     return false;
@@ -1387,7 +1385,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
 
     // initialize zip archive
     if(!bck_zip.init(this->_bck)) {
-      this->_error = Om_errZipInit(L"Archive file", this->_bck, bck_zip.lastErrorStr());
+      this->_error = Om_errInit(L"Archive file", this->_bck, bck_zip.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Backup", this->_error);
 
       bck_zip.close();
@@ -1619,7 +1617,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   } else {
     // save XML backup data
     if(!bck_def.save()) {
-      Om_errDefSave(L"Backup definition", back_def_name, bck_def.lastErrorStr());
+      Om_errSave(L"Backup definition", back_def_name, bck_def.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Backup", this->_error);
       Om_dirDeleteRecursive(this->_bck);
       return false;
@@ -1677,7 +1675,7 @@ bool OmPackage::_apply(Om_progressCb progress_cb, void* user_ptr)
   // do we got a Zip file or a legacy Folder
   if(this->_type & PKG_TYPE_ZIP) {
     if(!zip.load(this->_src)) {
-      this->_error = Om_errZipOpen(L"Package file", this->_src, zip.lastErrorStr());
+      this->_error = Om_errLoad(L"Package file", this->_src, zip.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Install", this->_error);
       zip.close();
       this->_restore(progress_cb, user_ptr, true); //< undo
@@ -1798,7 +1796,7 @@ bool OmPackage::_restore(Om_progressCb progress_cb, void* user_ptr, bool undo)
 
     OmZipFile zip;
     if(!zip.load(this->_bck)) {
-      this->_error = Om_errZipOpen(L"Backup archive file", this->_bck, zip.lastErrorStr());
+      this->_error = Om_errLoad(L"Backup archive file", this->_bck, zip.lastErrorStr());
       this->log(0, L"Package("+this->_ident+L") Restore", this->_error);
       return false;
     }

@@ -1873,29 +1873,65 @@ wstring Om_errReadAccess(const wstring& item, const wstring& path);
 ///
 wstring Om_errWriteAccess(const wstring& item, const wstring& path);
 
-/// \brief Zip init error message.
+/// \brief Init (create) error message.
 ///
-/// Compose error string for unable to init zip.
+/// Compose error string for unable to init (create).
 ///
 /// \param[in]  name    : Formated message item designation.
 /// \param[in]  path    : Formated message item path.
-/// \param[in]  mesg    : Additional error message.
+/// \param[in]  error   : Additional error message details.
 ///
 /// \return Formated error log message.
 ///
-wstring Om_errZipInit(const wstring& item, const wstring& path, const wstring& mesg);
+wstring Om_errInit(const wstring& item, const wstring& path, const wstring& error);
 
-/// \brief Zip open error message.
+/// \brief Open error message.
 ///
-/// Compose error string for unable to open zip.
+/// Compose error string for unable to open.
 ///
 /// \param[in]  name    : Formated message item designation.
 /// \param[in]  path    : Formated message item path.
-/// \param[in]  mesg    : Additional error message.
+/// \param[in]  error   : Additional error message details.
 ///
 /// \return Formated error log message.
 ///
-wstring Om_errZipOpen(const wstring& item, const wstring& path, const wstring& mesg);
+wstring Om_errOpen(const wstring& item, const wstring& path, const wstring& error);
+
+/// \brief Load error message.
+///
+/// Compose error string for unable to load.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  error   : Additional error message details.
+///
+/// \return Formated error log message.
+///
+wstring Om_errLoad(const wstring& item, const wstring& path, const wstring& error);
+
+/// \brief Save error message.
+///
+/// Compose error string for unable to save.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  error   : Additional error message details.
+///
+/// \return Formated error log message.
+///
+wstring Om_errSave(const wstring& item, const wstring& path, const wstring& error);
+
+/// \brief Save error message.
+///
+/// Compose error string for unable to save.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  error   : Additional error message details.
+///
+/// \return Formated error log message.
+///
+wstring Om_errParse(const wstring& item, const wstring& path, const wstring& error);
 
 /// \brief Zip deflate error message.
 ///
@@ -1921,41 +1957,16 @@ wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& m
 ///
 wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& mesg);
 
-/// \brief Definition init error message.
+/// \brief Already exists error message.
 ///
-/// Compose error string for unable to init definition.
-///
-/// \param[in]  name    : Formated message item designation.
-/// \param[in]  path    : Formated message item path.
-/// \param[in]  mesg    : Additional error message.
-///
-/// \return Formated error log message.
-///
-wstring Om_errDefInit(const wstring& item, const wstring& path, const wstring& mesg);
-
-/// \brief Definition open error message.
-///
-/// Compose error string for unable to open definition.
+/// Compose error string for already existing item.
 ///
 /// \param[in]  name    : Formated message item designation.
 /// \param[in]  path    : Formated message item path.
-/// \param[in]  mesg    : Additional error message.
 ///
 /// \return Formated error log message.
 ///
-wstring Om_errDefOpen(const wstring& item, const wstring& path, const wstring& mesg);
-
-/// \brief Definition parse error message.
-///
-/// Compose error string for unable to parse definition.
-///
-/// \param[in]  name    : Formated message item designation.
-/// \param[in]  path    : Formated message item path.
-/// \param[in]  mesg    : Additional error message.
-///
-/// \return Formated error log message.
-///
-wstring Om_errDefSave(const wstring& item, const wstring& path, const wstring& mesg);
+wstring Om_errExists(const wstring& item, const wstring& path);
 
 /// \brief Memory allocation.
 ///

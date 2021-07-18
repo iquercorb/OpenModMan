@@ -220,7 +220,7 @@ wstring OmConfig::lastErrorStr() const
     return _xmlDoc.lastErrorStr();
     break;
   case OMM_CONFIG_ERR_SIGN:
-    return L"Bad signature.";
+    return L"Wrong definition signature.";
     break;
   default:
     return L"";

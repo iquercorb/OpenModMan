@@ -191,7 +191,7 @@ class OmRepository
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _pLoc;
+    OmLocation*         _location;
 
     OmConfig            _config;
 

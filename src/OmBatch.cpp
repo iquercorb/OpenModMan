@@ -76,21 +76,21 @@ bool OmBatch::open(const wstring& path)
   if(!this->_config.open(path, OMM_CFG_SIGN_BAT)) {
     this->_error = L"Error loading Batch definition: ";
     this->_error += this->_config.lastErrorStr();
-    this->log(0, wstring(L"Batch(")+path+L") Parse", this->_error);
+    this->log(0, wstring(L"Batch(")+path+L") Open", this->_error);
     return false;
   }
 
   // check for the presence of <uuid> entry
   if(!this->_config.xml().hasChild(L"uuid")) {
     this->_error = L"Parse error: <uuid> node missing, malformed Batch definition file.";
-    log(0, L"Batch("+path+L")", this->_error);
+    this->log(0, L"Batch("+path+L") Open", this->_error);
     return false;
   }
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"title")) {
     this->_error = L"Parse error: <title> node missing, malformed Batch definition file.";
-    log(0, L"Batch("+path+L")", this->_error);
+    this->log(0, L"Batch("+path+L") Open", this->_error);
     return false;
   }
 
@@ -98,6 +98,8 @@ bool OmBatch::open(const wstring& path)
   this->_uuid = this->_config.xml().child(L"uuid").content();
   this->_title = this->_config.xml().child(L"title").content();
   this->_index = this->_config.xml().child(L"title").attrAsInt(L"index");
+
+  this->log(2, L"Batch("+this->_title+L") Open", L"Definition parsed.");
 
   // get <location> entries
   vector<OmXmlNode> xml_loc_list;

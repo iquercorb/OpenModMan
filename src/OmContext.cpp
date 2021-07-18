@@ -20,77 +20,6 @@
 #include "OmContext.h"
 
 
-/// \brief Search for valid Location file
-///
-/// Search for one or more valid Location file(s) in the specified location.
-///
-/// \param[in]  omt_list  : Array of strings to be filled with valid file(s) path.
-/// \param[in]  path      : Path where to search file.
-///
-/// \return The count of valid file found, or -1 if an error occurred.
-///
-static inline int __OmContext_lsLocDef(vector<wstring>& omt_list, const wstring& path)
-{
-  omt_list.clear();
-
-  vector<wstring> ls;
-
-  wstring filter = L"*.";
-  filter += OMM_LOC_DEF_FILE_EXT;
-
-  Om_lsFileFiltered(&ls, path, filter, true);
-
-  OmConfig cfg;
-
-  int n = 0;
-  for(unsigned i = 0; i < ls.size(); ++i) {
-    // search for proper XML root node
-    if(cfg.open(ls[i], OMM_CFG_SIGN_LOC)) {
-      omt_list.push_back(ls[i]); ++n;
-    }
-    cfg.close();
-  }
-
-  return n;
-}
-
-
-/*
-/// \brief Location name comparison callback
-///
-/// std::sort callback comparison function for sorting Locations
-/// by alphabetical order.
-///
-/// \param[in]  a     : Left Location.
-/// \param[in]  b     : Right Location.
-///
-/// \return True if Location a is "before" Location b, false otherwise
-///
-static bool __OmContext_locCompareName(const OmLocation* a, const OmLocation* b)
-{
-  // test against the shorter string
-  size_t l = a->title().size() > b->title().size() ? b->title().size() : a->title().size();
-
-  // test for ASCII value greater than the other
-  for(unsigned i = 0; i < l; ++i) {
-    if(towupper(a->title()[i]) != towupper(b->title()[i])) {
-      if(towupper(a->title()[i]) < towupper(b->title()[i])) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
-
-  // strings are equals in tester portion, sort by string size
-  if(a->title().size() < b->title().size())
-    return true;
-
-  return false;
-}
-*/
-
-
 /// \brief Location index comparison callback
 ///
 /// std::sort callback comparison function for sorting Locations
@@ -101,7 +30,7 @@ static bool __OmContext_locCompareName(const OmLocation* a, const OmLocation* b)
 ///
 /// \return True if Location a is "before" Location b, false otherwise
 ///
-static bool __OmContext_locCompareIndex(const OmLocation* a, const OmLocation* b)
+static bool __loc_sort_index_fn(const OmLocation* a, const OmLocation* b)
 {
   return (a->index() < b->index());
 }
@@ -117,7 +46,7 @@ static bool __OmContext_locCompareIndex(const OmLocation* a, const OmLocation* b
 ///
 /// \return True if OmBatch a is "before" OmBatch b, false otherwise
 ///
-static bool __OmContext_batCompareIndex(const OmBatch* a, const OmBatch* b)
+static bool __bat_sort_index_fn(const OmBatch* a, const OmBatch* b)
 {
   return (a->index() < b->index());
 }
@@ -165,28 +94,24 @@ bool OmContext::open(const wstring& path)
 
   this->close();
 
-  this->log(2, L"Context(<anonymous>) Load", L"\""+path+L"\"");
-
   // try to open and parse the XML file
   if(!this->_config.open(path, OMM_CFG_SIGN_CTX)) {
-    this->_error = Om_errDefOpen(L"Definition file", path, this->_config.lastErrorStr());
-    this->log(0, L"Context(<anonymous>) Load", this->_error);
+    this->_error = Om_errParse(L"Definition file", path, this->_config.lastErrorStr());
+    this->log(0, L"Context(<anonymous>) Open", this->_error);
     return false;
   }
 
   // check for the presence of <uuid> entry
   if(!this->_config.xml().hasChild(L"uuid")) {
-    this->_error =  L"\"" + Om_getFilePart(path);
-    this->_error += L"\" invalid definition: <uuid> node missing.";
-    log(0, L"Context(<anonymous>) Load", this->_error);
+    this->_error =  L"\""+Om_getFilePart(path)+L"\" invalid definition: <uuid> node missing.";
+    log(0, L"Context(<anonymous>) Open", this->_error);
     return false;
   }
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"title")) {
-    this->_error =  L"\"" + Om_getFilePart(path);
-    this->_error += L"\" invalid definition: <title> node missing.";
-    log(0, L"Context(<anonymous>) Load", this->_error);
+    this->_error = L"\""+Om_getFilePart(path)+L"\" invalid definition: <title> node missing.";
+    log(0, L"Context(<anonymous>) Open", this->_error);
     return false;
   }
 
@@ -197,11 +122,17 @@ bool OmContext::open(const wstring& path)
   this->_title = this->_config.xml().child(L"title").content();
   this->_valid = true;
 
+  this->log(2, L"Context("+this->_title+L") Open",
+            L"Definition parsed.");
+
   // lookup for a icon
   if(this->_config.xml().hasChild(L"icon")) {
 
     // we got a banner
     wstring ico_path = this->_config.xml().child(L"icon").content();
+
+    this->log(2, L"Context("+this->_title+L") Open",
+              L"Associated icon \""+ico_path+L"\"");
 
     HICON hIc = nullptr;
     ExtractIconExW(ico_path.c_str(), 0, &hIc, nullptr, 1); //< large icon
@@ -210,7 +141,8 @@ bool OmContext::open(const wstring& path)
     if(hIc) {
       this->_icon = hIc;
     } else {
-      this->log(1, L"Context("+this->_title+L") Load", L"\""+ico_path+L"\" icon extraction failed.");
+      this->log(1, L"Context("+this->_title+L") Open",
+                L"\""+ico_path+L"\" icon extraction failed.");
     }
   }
 
@@ -222,81 +154,66 @@ bool OmContext::open(const wstring& path)
   }
 
   // load Locations for this Context
-  vector<wstring> subdir;
-  Om_lsDir(&subdir, this->_home, false);
+  vector<wstring> loc_home_ls;
+  Om_lsDir(&loc_home_ls, this->_home, false);
 
-  if(subdir.size()) {
+  if(loc_home_ls.size()) {
 
-    vector<wstring> omt_list;
+    OmConfig cfg;
+    vector<wstring> oml_ls;
 
-    for(size_t i = 0; i < subdir.size(); ++i) {
+    for(size_t i = 0; i < loc_home_ls.size(); ++i) {
 
-      // search for file(s) with the OMM_LOC_DEF_FILE_EXT extension within the sub-folder
-      if(__OmContext_lsLocDef(omt_list, this->_home + L"\\" + subdir[i]) > 0) {
+      // get list of files with proper extension
+      oml_ls.clear();
+      Om_lsFileFiltered(&oml_ls, this->_home+L"\\"+loc_home_ls[i], L"*." OMM_LOC_DEF_FILE_EXT, true);
+
+      // we parse the fist definition file found in directory
+      if(oml_ls.size()) {
+
+        this->log(2, L"Context("+this->_title+L") Open",
+                  L"Linking Location \""+Om_getFilePart(oml_ls[0])+L"\"");
 
         // we use the first file we found
-        verbose =  L"Found Location definition: \"";
-        verbose += Om_getFilePart(omt_list[0]) + L"\".";
-        this->log(2, L"Context("+this->_title+L") Load", verbose);
-
         OmLocation* pLoc = new OmLocation(this);
 
-        if(pLoc->open(omt_list[0])) {
+        if(pLoc->open(oml_ls[0])) {
           this->_locLs.push_back(pLoc);
         } else {
           delete pLoc;
-          verbose =  L"Ignoring Location (open failed): \"";
-          verbose += Om_getFilePart(omt_list[0]) + L"\".";
-          this->log(1, L"Context("+this->_title+L") Load", verbose);
         }
       }
     }
 
     // sort Locations by index
     if(this->_locLs.size() > 1)
-      sort(this->_locLs.begin(), this->_locLs.end(), __OmContext_locCompareIndex);
+      sort(this->_locLs.begin(), this->_locLs.end(), __loc_sort_index_fn);
   }
 
   // Load batches for this Context
-  vector<wstring> omb_list;
-  wstring filter = L"*."; filter += OMM_BAT_DEF_FILE_EXT;
-  Om_lsFileFiltered(&omb_list, this->_home, filter, true);
+  vector<wstring> omb_ls;
+  Om_lsFileFiltered(&omb_ls, this->_home, L"*." OMM_BAT_DEF_FILE_EXT, true);
 
-  if(omb_list.size()) {
+  if(omb_ls.size()) {
 
-    for(size_t i = 0; i < omb_list.size(); ++i) {
+    for(size_t i = 0; i < omb_ls.size(); ++i) {
 
-      verbose =  L"Found Batch definition: \"";
-      verbose += Om_getFilePart(omb_list[i]) + L"\".";
-      this->log(2, L"Context("+this->_title+L") Load", verbose);
+      this->log(2, L"Context("+this->_title+L") Open",
+                L"Linking Batch \""+Om_getFilePart(omb_ls[i])+L"\"");
 
       OmBatch* pBat = new OmBatch(this);
 
-      if(pBat->open(omb_list[i])) {
-
+      if(pBat->open(omb_ls[i])) {
         this->_batLst.push_back(pBat);
-
-        verbose =  L"Batch \"" + pBat->title();
-        verbose += L"\" added to list.";
-        this->log(2, L"Context("+this->_title+L") Load", verbose);
-
       } else {
-
-        verbose =  L"Batch \"" + pBat->title();
-        verbose += L"\" parse error:";
-        verbose += pBat->lastError();
-        this->log(1, L"Context("+this->_title+L") Load", verbose);
-
         delete pBat;
       }
     }
 
     // sort Batches by index
     if(this->_batLst.size() > 1)
-      sort(this->_batLst.begin(), this->_batLst.end(), __OmContext_batCompareIndex);
+      sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
   }
-
-  this->log(2, L"Context("+this->_title+L") Load", L"Success");
 
   // the first location in list become the default active one
   if(this->_locLs.size()) {
@@ -334,7 +251,8 @@ void OmContext::close()
 
     this->_valid = false;
 
-    this->log(2, L"Context("+title+L") Close", L"Success");
+    this->log(2, L"Context("+title+L") Close",
+              L"Success");
   }
 }
 
@@ -390,7 +308,8 @@ void OmContext::setIcon(const wstring& src)
         }
 
       } else {
-        this->log(1, L"Context("+this->_title+L") Set Icon", L"\""+src+L"\" icon extraction failed.");
+        this->log(1, L"Context("+this->_title+L") Set Icon",
+                  L"\""+src+L"\" icon extraction failed.");
       }
     }
 
@@ -425,7 +344,7 @@ OmLocation* OmContext::locGet(const wstring& uuid)
 void OmContext::locSort()
 {
   if(this->_locLs.size() > 1)
-    sort(this->_locLs.begin(), this->_locLs.end(), __OmContext_locCompareIndex);
+    sort(this->_locLs.begin(), this->_locLs.end(), __loc_sort_index_fn);
 }
 
 
@@ -437,7 +356,8 @@ bool OmContext::locSel(int i)
   if(i >= 0) {
     if(i < (int)this->_locLs.size()) {
       this->_locCur = i;
-      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_locLs[_locCur]->title()+L"\".");
+      this->log(2, L"Context("+this->_title+L") Select Location",
+                L"\""+this->_locLs[_locCur]->title()+L"\".");
     } else {
       return false;
     }
@@ -457,7 +377,8 @@ bool OmContext::locSel(const wstring& uuid)
   for(size_t i = 0; i < this->_locLs.size(); ++i) {
     if(uuid == this->_locLs[i]->uuid()) {
       this->_locCur = i;
-      this->log(2, L"Context("+this->_title+L") Select Location", L"\""+this->_locLs[_locCur]->title()+L"\".");
+      this->log(2, L"Context("+this->_title+L") Select Location",
+                L"\""+this->_locLs[_locCur]->title()+L"\".");
       return true;
     }
   }
@@ -493,21 +414,22 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
     return false;
   }
 
+  int result;
+
   // compose Location home path
   wstring loc_home = this->_home + L"\\" + title;
 
   // create Location sub-folder
   if(!Om_isDir(loc_home)) {
-    int result = Om_dirCreate(loc_home);
+    result = Om_dirCreate(loc_home);
     if(result != 0) {
       this->_error = Om_errCreate(L"Target Location home", loc_home, result);
       this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
       return false;
     }
   } else {
-    this->_error =  L"Location subfolder \""+loc_home+L"\"";
-    this->_error += L" already exists";
-    this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
+    this->log(1, L"Context("+this->_title+L") Create Location",
+              Om_errExists(L"Target Location home",loc_home));
   }
 
   // compose Location definition file name
@@ -516,9 +438,10 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
 
   // check whether definition file already exists and delete it
   if(Om_isFile(loc_def_path)) {
-    this->_error =  L"Definition file \""+loc_def_path+L"\"";
-    this->_error += L" already exists, deleting previous file.";
-    this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
+
+    this->log(1, L"Context("+this->_title+L") Create Location",
+              Om_errExists(L"Definition file",loc_def_path));
+
     int result = Om_fileDelete(loc_def_path);
     if(result != 0) {
       this->_error = Om_errDelete(L"Old definition file", loc_def_path, result);
@@ -530,7 +453,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   // initialize new definition file
   OmConfig loc_def;
   if(!loc_def.init(loc_def_path, OMM_CFG_SIGN_LOC)) {
-    this->_error = Om_errDefInit(L"Definition file", loc_def_path, loc_def.lastErrorStr());
+    this->_error = Om_errInit(L"Definition file", loc_def_path, loc_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
     return false;
   }
@@ -539,17 +462,17 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   wstring uuid = Om_genUUID();
 
   // Get XML document instance
-  OmXmlNode xml_def = loc_def.xml();
+  OmXmlNode loc_xml = loc_def.xml();
 
   // define uuid and title in definition file
-  xml_def.addChild(L"uuid").setContent(uuid);
-  xml_def.addChild(L"title").setContent(title);
+  loc_xml.addChild(L"uuid").setContent(uuid);
+  loc_xml.addChild(L"title").setContent(title);
 
   // define ordering index in definition file
-  xml_def.child(L"title").setAttr(L"index", static_cast<int>(this->_locLs.size()));
+  loc_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_locLs.size()));
 
   // define installation destination folder in definition file
-  xml_def.addChild(L"install").setContent(install);
+  loc_xml.addChild(L"install").setContent(install);
 
   // checks whether we have custom Backup folder
   if(backup.empty()) {
@@ -558,11 +481,11 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(backup)) {
-      this->_error = Om_errIsDir(L"Custom Backup folder", backup);
-      this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
+      this->log(1, L"Context("+this->_title+L") Create Location",
+                Om_errIsDir(L"Custom Backup folder", backup));
     }
     // add custom backup in definition
-    xml_def.addChild(L"backup").setContent(backup);
+    loc_xml.addChild(L"backup").setContent(backup);
   }
 
   // checks whether we have custom Library folder
@@ -572,11 +495,11 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   } else {
     // check whether custom Library folder exists
     if(!Om_isDir(library)) {
-      this->_error = Om_errIsDir(L"Custom Library folder", library);
-      this->log(1, L"Context("+this->_title+L") Create Location", this->_error);
+      this->log(1, L"Context("+this->_title+L") Create Location",
+                Om_errIsDir(L"Custom Library folder", library));
     }
     // add custom library in definition
-    xml_def.addChild(L"library").setContent(library);
+    loc_xml.addChild(L"library").setContent(library);
   }
 
   // save and close definition file
@@ -611,10 +534,8 @@ bool OmContext::locRem(unsigned id)
   OmLocation* pLoc = this->_locLs[id];
 
   if(pLoc->bckHasData()) {
-    this->_error = L"The Location \""+pLoc->title()+L"\"";
-    this->_error += L" cannot be deleted: Location still has backup data";
-    this->_error += L"to be restored.";
-    this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
+    this->_error = L"Aborted: Still have backup data to be restored.";
+    this->log(0, L"Context("+this->_title+L") Delete Location", this->_error);
     return false;
   }
 
@@ -634,8 +555,8 @@ bool OmContext::locRem(unsigned id)
     // this will fails if folder not empty, this is intended
     int result = Om_dirDelete(bck_path);
     if(result != 0) {
-      this->_error = Om_errDelete(L"Backup folder", bck_path, result);
-      this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
+      this->log(1, L"Context("+this->_title+L") Delete Location",
+                Om_errDelete(L"Backup folder", bck_path, result));
     }
   }
 
@@ -643,10 +564,15 @@ bool OmContext::locRem(unsigned id)
   wstring lib_path = loc_home + L"\\Library";
   if(Om_isDir(lib_path)) {
     // this will fails if folder not empty, this is intended
-    int result = Om_dirDelete(lib_path);
-    if(result != 0) {
-      this->_error = Om_errDelete(L"Library folder", lib_path, result);
-      this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
+    if(Om_isDirEmpty(lib_path)) {
+      int result = Om_dirDelete(lib_path);
+      if(result != 0) {
+        this->log(1, L"Context("+this->_title+L") Delete Location",
+                  Om_errDelete(L"Library folder", lib_path, result));
+      }
+    } else {
+      this->log(1, L"Context("+this->_title+L") Delete Location",
+              L"Non-empty Library folder will not be deleted");
     }
   }
 
@@ -671,12 +597,12 @@ bool OmContext::locRem(unsigned id)
       has_error = true; //< this is considered as a real error
     }
   } else {
-    this->_error = L"Non-empty subfolder \""+loc_home+L"\"";
-    this->_error += L" will not be deleted";
-    this->log(1, L"Context("+this->_title+L") Delete Location", this->_error);
+    this->log(1, L"Context("+this->_title+L") Delete Location",
+              L"Non-empty home folder \""+loc_home+L"\" will not be deleted");
   }
 
-  this->log(2, L"Context("+this->_title+L") Delete Location", L"Location \""+loc_title+L"\" deleted.");
+  this->log(2, L"Context("+this->_title+L") Delete Location",
+            L"Location \""+loc_title+L"\" deleted.");
 
   // delete object
   delete pLoc;
@@ -705,7 +631,7 @@ bool OmContext::locRem(unsigned id)
 void OmContext::batSort()
 {
   if(this->_batLst.size() > 1)
-    sort(this->_batLst.begin(), this->_batLst.end(), __OmContext_batCompareIndex);
+    sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
 }
 
 
@@ -716,10 +642,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
 {
   // check whether we have same count of Location and hash list
   if(loc_hash_list.size() != loc_uuid.size()) {
-    this->_error = L"Hash list and Location count mismatches, expected \"";
-    this->_error += loc_uuid.size();
-    this->_error += L"\", found ";
-    this->_error += loc_hash_list.size();
+    this->_error = L"Supplied hash and location arrays size mismatches";
     this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
     return false;
   }
@@ -731,7 +654,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
   // initialize new definition file
   OmConfig bat_def;
   if(!bat_def.init(bat_def_path, OMM_CFG_SIGN_BAT)) {
-    this->_error = Om_errDefInit(L"Definition file", bat_def_path, bat_def.lastErrorStr());
+    this->_error = Om_errInit(L"Definition file", bat_def_path, bat_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
     return false;
   }
@@ -819,8 +742,7 @@ bool OmContext::batRem(unsigned id)
       this->_config.close();
       int result = Om_fileDelete(bat_path);
       if(result != 0) {
-        this->_error = L"Unable to delete Batch definition file \""+bat_path+L"\": ";
-        this->_error += Om_getErrorStr(result);
+        this->_error = Om_errDelete(L"Batch definition file", bat_path, result);
         this->log(1, L"Context("+this->_title+L") Delete Batch", this->_error);
         return false;
       }
@@ -840,7 +762,7 @@ bool OmContext::batRem(unsigned id)
     // sort Batches by index
     this->batSort();
 
-    this->log(2, L"Context("+this->_title+L") Delete Batch", L"Batch \""+bat_title+L"\" deleted.");
+    this->log(2, L"Context("+this->_title+L") Delete Batch", L"Installation Batch \""+bat_title+L"\" deleted.");
 
     return true;
   }

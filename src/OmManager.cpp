@@ -88,7 +88,12 @@ bool OmManager::init(const char* arg)
 
   // initialize log file
   wstring log_path = this->_home + L"\\log.txt";
-  this->_logFile = CreateFileW(log_path.c_str(), GENERIC_WRITE, 0, nullptr,
+
+  // rename previous log file if exists
+  if(Om_pathExists(log_path))
+    Om_fileMove(log_path, this->_home + L"\\log.old.txt");
+
+  this->_logFile = CreateFileW(log_path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
   // first log line
   this->log(2, L"Manager() Init", L"Start");
@@ -101,10 +106,10 @@ bool OmManager::init(const char* arg)
     wstring conf_path = this->_home + L"\\config.xml";
 
     if(!_config.init(conf_path, OMM_CFG_SIGN_APP)) {
-      this->_error = Om_errDefInit(L"Configuration file", conf_path, this->_config.lastErrorStr());
-      this->log(1, L"Manager() Init", this->_error);
-      Om_dialogBoxWarn(nullptr, L"Initialization error", this->_error);
       // this is not a fatal error, but this will surely be a problem...
+      wstring msg = Om_errInit(L"Configuration file",conf_path,this->_config.lastErrorStr());
+      this->log(1, L"Manager() Init", msg);
+      Om_dialogBoxWarn(nullptr, L"Initialization error", msg);
     }
 
     // default icons size
@@ -433,7 +438,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
   // check whether install path exists
   if(!Om_isDir(path)) {
     this->_error = Om_errIsDir(L"Home location path", path);
-    this->log(0, L"Manager() Create Software Context", this->_error);
+    this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
 
@@ -444,7 +449,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
   int result = Om_dirCreate(ctx_home);
   if(result != 0) {
     this->_error = Om_errCreate(L"Home folder", ctx_home, result);
-    this->log(0, L"Manager() Create Software Context", this->_error);
+    this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
 
@@ -455,8 +460,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
   // initialize an empty Context definition file
   OmConfig ctx_def;
   if(!ctx_def.init(ctx_def_path, OMM_CFG_SIGN_CTX)) {
-    this->_error =  L"Definition file \""+ctx_def_path+L"\"";
-    this->_error += L"initialization error: "+ctx_def.lastErrorStr();
+    this->_error =  Om_errInit(L"Definition file",ctx_def_path,ctx_def.lastErrorStr());
     this->log(0, L"Manager() Create Context", this->_error);
     return false;
   }
@@ -495,10 +499,12 @@ bool OmManager::ctxOpen(const wstring& path)
       return true;
   }
 
-  OmContext* pCtx = new OmContext(this);
+  this->log(2, L"Manager() Open Context", L"Load \""+path+L"\"");
 
+  OmContext* pCtx = new OmContext(this);
   if(!pCtx->open(path)) {
-    this->_error = pCtx->lastError();
+    this->_error = L"Context open failed: "+pCtx->lastError();
+    this->log(0, L"Manager() Open Context", this->_error);
     delete pCtx;
     return false;
   }
@@ -547,10 +553,10 @@ void OmManager::ctxSel(int i)
 {
   if(i >= 0 && i < (int)this->_ctxLs.size()) {
     this->_ctxCur = i;
-    this->log(2, L"Manager", L"Select Context: \""+this->_ctxLs[_ctxCur]->title()+L"\".");
+    this->log(2, L"Manager() Select Context", to_wstring(i)+L" \""+this->_ctxLs[_ctxCur]->title()+L"\"");
   } else {
     this->_ctxCur = -1;
-    this->log(2, L"Manager", L"Select Context: <NONE>");
+    this->log(2, L"Manager() Select Context", L"<NONE>");
   }
 }
 

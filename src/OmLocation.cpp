@@ -29,7 +29,7 @@
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __pkg_comp_name_fn(const OmPackage* a, const OmPackage* b)
+static bool __pkg_sort_name_fn(const OmPackage* a, const OmPackage* b)
 {
   // test against the shorter string
   size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
@@ -69,7 +69,7 @@ static bool __pkg_comp_name_fn(const OmPackage* a, const OmPackage* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __rmt_comp_name_fn(const OmRemote* a, const OmRemote* b)
+static bool __rmt_sort_name_fn(const OmRemote* a, const OmRemote* b)
 {
   // test against the shorter string
   size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
@@ -106,10 +106,10 @@ static bool __rmt_comp_name_fn(const OmRemote* a, const OmRemote* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __pkg_comp_vers_fn(const OmPackage* a, const OmPackage* b)
+static bool __pkg_sort_vers_fn(const OmPackage* a, const OmPackage* b)
 {
   if(a->version() == b->version()) {
-    return __pkg_comp_name_fn(a, b);
+    return __pkg_sort_name_fn(a, b);
   } else {
     return (a->version() < b->version());
   }
@@ -126,10 +126,10 @@ static bool __pkg_comp_vers_fn(const OmPackage* a, const OmPackage* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __rmt_comp_vers_fn(const OmRemote* a, const OmRemote* b)
+static bool __rmt_sort_vers_fn(const OmRemote* a, const OmRemote* b)
 {
   if(a->version() == b->version()) {
-    return __rmt_comp_name_fn(a, b);
+    return __rmt_sort_name_fn(a, b);
   } else {
     return (a->version() < b->version());
   }
@@ -146,10 +146,10 @@ static bool __rmt_comp_vers_fn(const OmRemote* a, const OmRemote* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __pkg_comp_stat_fn(const OmPackage* a, const OmPackage* b)
+static bool __pkg_sort_stat_fn(const OmPackage* a, const OmPackage* b)
 {
   if(a->hasBck() && b->hasBck()) {
-    return __pkg_comp_name_fn(a, b);
+    return __pkg_sort_name_fn(a, b);
   } else {
     return (a->hasBck() && !b->hasBck());
   }
@@ -166,10 +166,10 @@ static bool __pkg_comp_stat_fn(const OmPackage* a, const OmPackage* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __rmt_comp_stat_fn(const OmRemote* a, const OmRemote* b)
+static bool __rmt_sort_stat_fn(const OmRemote* a, const OmRemote* b)
 {
   if(a->state() == b->state()) {
-    return __rmt_comp_name_fn(a, b);
+    return __rmt_sort_name_fn(a, b);
   } else {
     return (a->state() < b->state());
   }
@@ -186,10 +186,10 @@ static bool __rmt_comp_stat_fn(const OmRemote* a, const OmRemote* b)
 ///
 /// \return True if Package a is "before" Package b, false otherwise
 ///
-static bool __rmt_comp_size_fn(const OmRemote* a, const OmRemote* b)
+static bool __rmt_sort_size_fn(const OmRemote* a, const OmRemote* b)
 {
   if(a->bytes() == b->bytes()) {
-    return __rmt_comp_name_fn(a, b);
+    return __rmt_sort_name_fn(a, b);
   } else {
     return (a->bytes() < b->bytes());
   }
@@ -920,34 +920,26 @@ void OmLocation::setWarnExtraUnin(bool enable)
 ///
 bool OmLocation::open(const wstring& path)
 {
-  wstring verbose; //< for log message compositing
-
   this->close();
-
-  this->log(2, L"Location(<anonymous>) Load", L"\""+path+L"\"");
 
   // try to open and parse the XML file
   if(!this->_config.open(path, OMM_CFG_SIGN_LOC)) {
-    this->_error =  L"\"" + Om_getFilePart(path);
-    this->_error += L"\" definition file open error: ";
-    this->_error += this->_config.lastErrorStr();
-    this->log(0, L"Location(<anonymous>) Load", this->_error);
+    this->_error = Om_errParse(L"Definition file", Om_getFilePart(path), this->_config.lastErrorStr());
+    this->log(0, L"Location(<anonymous>) Open", this->_error);
     return false;
   }
 
   // check for the presence of <uuid> entry
   if(!this->_config.xml().hasChild(L"uuid")) {
-    this->_error =  L"\"" + Om_getFilePart(path);
-    this->_error += L"\" invalid definition: <uuid> node missing.";
-    log(0, L"Location(<anonymous>) Load", this->_error);
+    this->_error =  L"\""+Om_getFilePart(path)+L"\" invalid definition: <uuid> node missing.";
+    log(0, L"Location(<anonymous>) Open", this->_error);
     return false;
   }
 
   // check for the presence of <title> entry
   if(!this->_config.xml().hasChild(L"title")) {
-    this->_error =  L"\"" + Om_getFilePart(path);
-    this->_error += L"\" invalid definition: <title> node missing.";
-    log(0, L"Location(<anonymous>) Load", this->_error);
+    this->_error =  L"\""+Om_getFilePart(path)+L"\" invalid definition: <title> node missing.";
+    log(0, L"Location(<anonymous>) Open", this->_error);
     return false;
   }
 
@@ -958,20 +950,20 @@ bool OmLocation::open(const wstring& path)
   this->_title = this->_config.xml().child(L"title").content();
   this->_index = this->_config.xml().child(L"title").attrAsInt(L"index");
 
+  this->log(2, L"Location("+this->_title+L") Open", L"Definition parsed.");
+
   // check for the presence of <install> entry
   if(this->_config.xml().hasChild(L"install")) {
     // we check whether destination folder is valid
     this->_dstDir = this->_config.xml().child(L"install").content();
     if(!Om_isDir(this->_dstDir)) {
-      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Destination folder", this->_dstDir));
+      this->log(1, L"Location("+this->_title+L") Open", Om_errIsDir(L"Destination folder", this->_dstDir));
     } else {
-      verbose = L"Using destination folder: \"";
-      verbose += this->_dstDir + L"\".";
-      this->log(2, L"Location("+this->_title+L") Load", verbose);
+      this->log(2, L"Location("+this->_title+L") Open", L"Using destination folder: \""+this->_dstDir+L"\".");
     }
   } else {
     this->_error = L"Invalid definition: <install> node missing.";
-    this->log(0, L"Location("+this->_title+L") Load", this->_error);
+    this->log(0, L"Location("+this->_title+L") Open", this->_error);
     this->close();
     return false;
   }
@@ -983,10 +975,9 @@ bool OmLocation::open(const wstring& path)
     // notify we use a custom Library path
     this->_libDirCust = true;
     if(!Om_isDir(this->_libDir)) {
-      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Custom Library folder", this->_libDir));
+      this->log(1, L"Location("+this->_title+L") Open", Om_errIsDir(L"Custom Library folder", this->_libDir));
     } else {
-      verbose = L"Using custom library folder: \""+this->_libDir+L"\".";
-      this->log(2, L"Location("+this->_title+L") Load", verbose);
+      this->log(2, L"Location("+this->_title+L") Open", L"Using custom library folder: \""+this->_libDir+L"\".");
     }
   } else {
     // no <library> node in config, use default settings
@@ -995,13 +986,12 @@ bool OmLocation::open(const wstring& path)
       int result = Om_dirCreate(this->_libDir);
       if(result != 0) {
         this->_error = Om_errCreate(L"Library folder", this->_libDir, result);
-        this->log(0, L"Location("+this->_title+L") Load", this->_error);
+        this->log(0, L"Location("+this->_title+L") Open", this->_error);
         this->close();
         return false;
       }
     }
-    verbose = L"Using default library folder: \""+this->_libDir+L"\".";
-    this->log(2, L"Location("+this->_title+L") Load", verbose);
+    this->log(2, L"Location("+this->_title+L") Open", L"Using default library folder: \""+this->_libDir+L"\".");
   }
 
   // check for the presence of <backup> entry for custom Backup path
@@ -1011,10 +1001,9 @@ bool OmLocation::open(const wstring& path)
     // notify we use a custom Backup path
     this->_bckDirCust = true;
     if(!Om_isDir(this->_bckDir)) {
-      this->log(1, L"Location("+this->_title+L") Load", Om_errIsDir(L"Custom Backup folder", this->_bckDir));
+      this->log(1, L"Location("+this->_title+L") Open", Om_errIsDir(L"Custom Backup folder", this->_bckDir));
     } else {
-      verbose = L"Using custom backup folder: \""+this->_bckDir+L"\".";
-      this->log(2, L"Location("+this->_title+L") Load", verbose);
+      this->log(2, L"Location("+this->_title+L") Open", L"Using custom backup folder: \""+this->_bckDir+L"\".");
     }
   } else {
     // no <backup> node in config, use default settings
@@ -1023,13 +1012,12 @@ bool OmLocation::open(const wstring& path)
       int result = Om_dirCreate(this->_bckDir);
       if(result != 0) {
         this->_error = Om_errCreate(L"Backup folder", this->_bckDir, result);
-        this->log(0, L"Location("+this->_title+L") Load", this->_error);
+        this->log(0, L"Location("+this->_title+L") Open", this->_error);
         this->close();
         return false;
       }
     }
-    verbose = L"Using default backup folder: \""+this->_bckDir+L"\".";
-    this->log(2, L"Location("+this->_title+L") Load", verbose);
+    this->log(2, L"Location("+this->_title+L") Open", L"Using default backup folder: \""+this->_bckDir+L"\".");
   }
 
   // we check for backup compression level
@@ -1120,8 +1108,7 @@ bool OmLocation::open(const wstring& path)
       pRep = new OmRepository(this);
       if(pRep->init(xml_rep_list[i].attrAsString(L"base"), xml_rep_list[i].attrAsString(L"name"))) {
         this->_repLs.push_back(pRep);
-        verbose = L"Add Repository: \""+pRep->url()+L"\".";
-        this->log(2, L"Location("+this->_title+L") Load", verbose);
+        this->log(2, L"Location("+this->_title+L") Load", L"Configured Repository: \""+pRep->url()+L"\".");
       } else {
         delete pRep;
       }
@@ -1156,8 +1143,6 @@ bool OmLocation::open(const wstring& path)
   // this location is OK and ready
   this->_valid = true;
 
-  this->log(2, L"Location("+this->_title+L") Load", L"Success");
-
   // Refresh library
   this->libRefresh();
 
@@ -1183,8 +1168,6 @@ void OmLocation::close()
   this->_bckDirCust = false;
   this->_config.close();
   this->_valid = false;
-
-  this->log(2, L"Location("+title+L") Close", L"Success");
 }
 
 
@@ -1215,9 +1198,7 @@ bool OmLocation::dstDirAccess(bool rw)
   }
 
   if(!access_ok) {
-
     this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
-
     return false;
   }
 
@@ -1261,9 +1242,7 @@ bool OmLocation::libDirAccess(bool rw)
   }
 
   if(!access_ok) {
-
     this->log(0, L"Location("+this->_title+L") Library access", this->_error);
-
     return false;
   }
 
@@ -1307,9 +1286,7 @@ bool OmLocation::bckDirAccess(bool rw)
   }
 
   if(!access_ok) {
-
     this->log(0, L"Location("+this->_title+L") Backup access", this->_error);
-
     return false;
   }
 
@@ -1801,7 +1778,7 @@ bool OmLocation::renameHome(const wstring& name)
     new_file = Om_getFilePart(old_path);
     has_error = true;
   } else {
-    this->log(2, L"Location("+title+L") Rename", L"definition file renamed to \""+new_file+L"\"");
+    this->log(2, L"Location("+title+L") Rename", L"Definition file renamed to \""+new_file+L"\"");
   }
 
   // compose new Location home folder
@@ -1825,9 +1802,7 @@ bool OmLocation::renameHome(const wstring& name)
   // Reload location
   this->open(new_home + L"\\" + new_file);
 
-  if(has_error) {
-    this->log(2, L"Location("+title+L") Rename", L"Failed");
-  } else {
+  if(!has_error) {
     this->log(2, L"Location("+title+L") Rename", L"Success");
   }
 
@@ -1855,13 +1830,13 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
   // checks for access to backup folder
   if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
-    this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
+    this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
   // checks for access to destination folder
   if(!this->dstDirAccess(true)) { //< check for read and write
     this->_error =  L"Destination folder \""+this->_dstDir+L"\" access error.";
-    this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
+    this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
 
@@ -1913,9 +1888,9 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
     if(unin_ls[i]->uninst()) {
       n++; //< increase counter
     } else {
-      this->_error =  L"Package \""+unin_ls[i]->ident()+L"\"";
-      this->_error += L" uninstall failed: "+unin_ls[i]->lastError();
-      this->log(1, L"Location("+this->_title+L") Purge backups", this->_error);
+      this->_error = L"Package \""+unin_ls[i]->ident()+L"\" uninstall failed: ";
+      this->_error += unin_ls[i]->lastError();
+      this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
       has_error = true;
     }
 
@@ -1943,7 +1918,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
   // verify backup folder access
   if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
-    this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
+    this->log(0, L"Location("+this->_title+L") Move backups", this->_error);
     return false;
   }
 
@@ -1985,7 +1960,7 @@ bool OmLocation::bckMove(const wstring& path, Om_progressCb progress_cb, void* u
     result = Om_fileMove(src, dst);
     if(result != 0) {
       this->_error = Om_errMove(L"Backup data", src, result);
-      this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
+      this->log(0, L"Location("+this->_title+L") Move backups", this->_error);
       has_error = true;
     } else {
       n++; //< increase counter
@@ -2014,7 +1989,7 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
   // verify backup folder access
   if(!this->bckDirAccess(true)) { //< check for read and write
     this->_error =  L"Backup folder \""+this->_bckDir+L"\" access error.";
-    this->log(1, L"Location("+this->_title+L") Move backups", this->_error);
+    this->log(0, L"Location("+this->_title+L") Move backups", this->_error);
     return false;
   }
 
@@ -2288,7 +2263,7 @@ bool OmLocation::repAdd(const wstring& base, const wstring& name)
     for(size_t i = 0; i < xml_rep_list.size(); ++i) {
       if(base == xml_rep_list[i].attrAsString(L"base") && name == xml_rep_list[i].attrAsString(L"name")) {
         this->_error = L"Repository with same parameters already exists";
-        this->log(1, L"Location("+this->_title+L") Add Repository", this->_error);
+        this->log(0, L"Location("+this->_title+L") Add Repository", this->_error);
         return false;
       }
     }
@@ -2305,7 +2280,7 @@ bool OmLocation::repAdd(const wstring& base, const wstring& name)
 
     // set repository parameters
     if(!pRep->init(base, name)) {
-      this->log(1, L"Location("+this->_title+L") Add Repository", pRep->lastError());
+      this->log(0, L"Location("+this->_title+L") Add Repository", pRep->lastError());
       delete pRep;
       return false;
     }
@@ -2369,9 +2344,8 @@ bool OmLocation::repQuery(unsigned i)
   this->log(2, L"Location("+this->_title+L") Query repository", this->_repLs[i]->url()+L"-"+this->_repLs[i]->name());
 
   if(!this->_repLs[i]->query()) {
-    this->_error =  L"Repository \""+this->_repLs[i]->url()+L"-"+this->_repLs[i]->name()+L"\" ";
-    this->_error += L"query failed: " + this->_repLs[i]->lastError();
-    this->log(1, L"Location("+this->_title+L") Query repository", this->_error);
+    this->_error = L"Repository query failed: "+this->_repLs[i]->lastError();
+    this->log(0, L"Location("+this->_title+L") Query repository", this->_error);
     has_error = true;
   }
 
@@ -2661,13 +2635,13 @@ void OmLocation::log(unsigned level, const wstring& head, const wstring& detail)
 inline void OmLocation::_pkgSort()
 {
  if(this->_pkgSorting & LS_SORT_STAT) //< sorting by status
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_stat_fn);
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_sort_stat_fn);
 
   if(this->_pkgSorting & LS_SORT_NAME) //< sorting by name (alphabetical order)
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_name_fn);
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_sort_name_fn);
 
   if(this->_pkgSorting & LS_SORT_VERS) //< sorting by version (ascending)
-    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_comp_vers_fn);
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_sort_vers_fn);
 
   // check whether we need a normal or reverse sorting
   if(this->_pkgSorting & LS_SORT_REVERSE) {
@@ -2682,16 +2656,16 @@ inline void OmLocation::_pkgSort()
 inline void OmLocation::_rmtSort()
 {
  if(this->_rmtSorting & LS_SORT_STAT) //< sorting by status
-    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_stat_fn);
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_stat_fn);
 
   if(this->_rmtSorting & LS_SORT_NAME) //< sorting by name (alphabetical order)
-    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_name_fn);
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_name_fn);
 
   if(this->_rmtSorting & LS_SORT_VERS) //< sorting by version (ascending)
-    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_vers_fn);
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_vers_fn);
 
   if(this->_rmtSorting & LS_SORT_SIZE) //< sorting by version (ascending)
-    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_comp_size_fn);
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_size_fn);
 
   // check whether we need a normal or reverse sorting
   if(this->_rmtSorting & LS_SORT_REVERSE) {
