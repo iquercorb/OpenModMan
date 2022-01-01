@@ -314,12 +314,12 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
   self->_state |= RMT_STATE_DNL;
 
-  self->log(2, L"Remote("+self->_ident+L") Download", L"Get file at \""+self->_url[0]+L"\".");
+  self->log(2, L"Remote("+self->_ident+L") Download", L"Start \""+self->_url[0]+L"\"");
 
   if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self)) {
 
     exitCode = sock.lastError(); //< curl error code
-    self->_error = L"Download error \""+self->_url[0]+L"\" ";
+    self->_error = L"Error \""+self->_url[0]+L"\": ";
     self->_error += sock.lastErrorStr();
 
     if(exitCode == 42) { //< CURLE_ABORTED_BY_CALLBACK
@@ -346,7 +346,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         self->_state |= RMT_STATE_ERR;
       }
     } else {
-      self->_error =  L"Downloaded file checksum mismatch the reference";
+      self->_error =  L"File checksum mismatch the reference";
       self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
       Om_fileDelete(self->_downl_temp);
       self->_state |= RMT_STATE_ERR;
