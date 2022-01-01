@@ -312,6 +312,8 @@ void OmUiMainNet::rmtDown(bool upgrade)
       // disable download and upgrade buttons
       this->enableItem(IDC_BC_LOAD, false);
       this->enableItem(IDC_BC_UPGD, false);
+      // enable abort button
+      this->enableItem(IDC_BC_ABORT, true);
 
       // increment download count
       this->_rmtDnl_count++;
@@ -1180,6 +1182,12 @@ void OmUiMainNet::_buildLvRmt()
     lvItem.iSubItem = 3;
     lvItem.pszText = const_cast<LPWSTR>(Om_formatSizeSysStr(pRmt->bytes(), true).c_str());
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Fifth column, the package download progress, we set to empty
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 4;
+    lvItem.pszText = const_cast<LPWSTR>(L""); //< download string will be updated if currently running
+    this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
   // we enable the List-View
@@ -1891,11 +1899,13 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         case 3:
           pLoc->rmtSetSorting(LS_SORT_SIZE);
           break;
+        case 4:
+          return false; // ignore action
         default:
           pLoc->rmtSetSorting(LS_SORT_NAME);
           break;
         }
-        this->_onLvRmtRclk();
+        this->_buildLvRmt(); //< rebuild ListView
         break;
       }
     }
