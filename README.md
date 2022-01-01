@@ -60,6 +60,9 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
+0.9.8 (not yet released)
+- Add support and automatic follow of HTTP redirect responses.
+
 0.9.7
  - Developer mode back as enabled by default.
  - Fix undo install not working with archive files backup.
