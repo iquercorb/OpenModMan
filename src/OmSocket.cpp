@@ -69,7 +69,10 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_NOPROGRESS, 1L);
 
-  /* we use a self-signed test server, skip verification during debugging */
+  // follow HTTP redirections
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FOLLOWLOCATION, 1L);
+
+  // we use a self-signed test server, skip verification during debugging
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);
@@ -126,7 +129,10 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFOFUNCTION, &this->_progressCb);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFODATA, this);
 
-  /* we use a self-signed test server, skip verification during debugging */
+  // follow HTTP redirections
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FOLLOWLOCATION, 1L);
+
+  // we use a self-signed test server, skip verification during debugging
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);

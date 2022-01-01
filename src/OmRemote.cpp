@@ -314,6 +314,8 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
   self->_state |= RMT_STATE_DNL;
 
+  self->log(2, L"Remote("+self->_ident+L") Download", L"Get file at \""+self->_url[0]+L"\".");
+
   if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self)) {
 
     exitCode = sock.lastError(); //< curl error code
