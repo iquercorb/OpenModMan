@@ -62,6 +62,9 @@ Open Mod Mananager currently implements the following key features:
 
 0.9.8 (not yet released)
 - Add support and automatic follow of HTTP redirect responses.
+- Fix Network ListView columns click wrongly pops up contextual menu.
+- Fix Network ListView not properly redrawn after item sorting.
+- Fix Network Abort button not properly enabled at downloard start.
 
 0.9.7
  - Developer mode back as enabled by default.
