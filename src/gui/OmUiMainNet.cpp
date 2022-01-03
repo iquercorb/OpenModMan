@@ -1217,7 +1217,7 @@ void OmUiMainNet::_onCbLocSel()
 void OmUiMainNet::_onLvRepSel()
 {
   // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT);
+  unsigned lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
 
   this->enableItem(IDC_BC_DEL, (lv_nsl > 0));
 }
