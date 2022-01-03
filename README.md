@@ -67,6 +67,7 @@ Open Mod Mananager currently implements the following key features:
 - Fix Network Abort button not properly enabled at download start.
 - Fix Package Editor not properly clear properties of modified existing package.
 - New menu and shortcut to load seleted package in Package Editor.
+- Fix not working delete repository button of Network tab.
 
 0.9.7
  - Developer mode back as enabled by default.
