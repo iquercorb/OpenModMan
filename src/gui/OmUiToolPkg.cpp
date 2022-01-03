@@ -320,7 +320,8 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 
   wstring item_str;
 
-  // get package dependencies list
+  // get/update package dependencies list
+  self->_package.depClear(); //< clear previous list
   if(self->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     int lb_cnt = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
     if(lb_cnt) {
@@ -338,12 +339,16 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
     if(!item_str.empty()) {
       self->_package.loadImage(item_str, OMM_PKG_THMB_SIZE);
     }
+  } else {
+    self->_package.clearImage();
   }
 
   // get package description text
   if(self->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
     self->getItemText(IDC_EC_TXT, item_str);
     self->_package.setDesc(item_str);
+  } else {
+    self->_package.setDesc(L"");
   }
 
   // get package compression level

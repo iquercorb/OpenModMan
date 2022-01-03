@@ -470,6 +470,14 @@ class OmPackage
       return false;
     }
 
+    /// \brief Clear dependencies list
+    ///
+    /// Empties the package's dependencies list.
+    ///
+    void depClear() {
+      this->_depLs.clear();
+    }
+
     /// \brief Get install footprint.
     ///
     /// Simulate package installation and create backup item list as if
