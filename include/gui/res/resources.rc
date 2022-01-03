@@ -261,6 +261,8 @@ IDR_MENU MENU
             MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_PKG_OPEN
             MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_PKG_TRSH
             MENUITEM SEPARATOR
+            MENUITEM "Load in Package &Editor...\tCtrl+S", IDM_EDIT_PKG_EDIT
+            MENUITEM SEPARATOR
             MENUITEM "View &details...\tCtrl+I", IDM_EDIT_PKG_INFO
         }
         POPUP "&Remote", GRAYED
@@ -1070,6 +1072,7 @@ IDR_ACCEL ACCELERATORS
     VK_BACK,        IDM_EDIT_PKG_UINS, VIRTKEY
     "E",            IDM_EDIT_PKG_OPEN, VIRTKEY, CONTROL
     VK_DELETE,      IDM_EDIT_PKG_TRSH, VIRTKEY
+    "S",            IDM_EDIT_PKG_EDIT, VIRTKEY, CONTROL
     "I",            IDM_EDIT_PKG_INFO, VIRTKEY, CONTROL
     VK_RETURN,      IDM_EDIT_RMT_DOWN, VIRTKEY
     VK_RETURN,      IDM_EDIT_RMT_UPGR, VIRTKEY, SHIFT

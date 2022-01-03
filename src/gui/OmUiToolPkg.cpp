@@ -65,6 +65,23 @@ long OmUiToolPkg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolPkg::selSrc(const wstring& path)
+{
+  bool is_dir = Om_isDir(path);
+
+  this->msgItem(IDC_BC_RAD01, BM_SETCHECK, is_dir);
+  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, !is_dir);
+
+  if(is_dir) {
+    this->_onBcBrwDir(path.c_str());
+  } else {
+    this->_onBcBrwPkg(path.c_str());
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiToolPkg::_freeze(bool freeze)
 {
   bool enable = !freeze;
@@ -190,10 +207,16 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_BC_CKBX3, true);
 
   // set source path to input EditText depending selected Radio
+  this->enableItem(IDC_EC_INP01, true);
+  this->enableItem(IDC_EC_INP02, true);
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     this->setItemText(IDC_EC_INP01, path);
+    this->setItemText(IDC_EC_INP02, L"");
+    this->enableItem(IDC_EC_INP02, false);
   } else {
     this->setItemText(IDC_EC_INP02, path);
+    this->setItemText(IDC_EC_INP01, L"");
+    this->enableItem(IDC_EC_INP01, false);
   }
 
   // check for package dependencies
@@ -236,6 +259,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
 
   if(!this->_package.version().isNull())
     this->setItemText(IDC_EC_INP04, this->_package.version().asString());
+
+  this->_unsaved = false; //< reset unsaved changes
 
   return true;
 }
@@ -404,15 +429,17 @@ void OmUiToolPkg::_onBcRadSrc()
     }
   }
 
+  // reset source input EditText
+  this->enableItem(IDC_EC_INP01, true);
+  this->setItemText(IDC_EC_INP01, L"");
+  this->enableItem(IDC_EC_INP02, true);
+  this->setItemText(IDC_EC_INP02, L"");
+
   // enable or disable EditText and Buttons according selection
   this->enableItem(IDC_EC_INP01, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
   this->enableItem(IDC_EC_INP02, !bm_chk);
   this->enableItem(IDC_BC_BRW02, !bm_chk);
-
-  // reset source input EditText
-  this->setItemText(IDC_EC_INP01, L"");
-  this->setItemText(IDC_EC_INP02, L"");
 
   // reset package source
   this->_parseSrc(L"");
@@ -425,7 +452,7 @@ void OmUiToolPkg::_onBcRadSrc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_onBcBrwDir()
+bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
 {
   // Check for unsaved changes
   if(this->_unsaved) {
@@ -439,19 +466,27 @@ bool OmUiToolPkg::_onBcBrwDir()
 
   wstring result, start;
 
-  // Select start directory, either previous one or current location library
-  this->getItemText(IDC_EC_INP01, start);
+  if(path != nullptr) {
 
-  if(start.empty()) {
-    if(pLoc) start = pLoc->libDir();
+    result = path;
+
   } else {
-    start = Om_getDirPart(start);
-  }
 
-  if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select installation file(s) location", start)) {
-    this->setItemText(IDC_EC_INP01, L"");
-    this->_parseSrc(L"");
-    return false;
+    // Select start directory, either previous one or current location library
+    this->getItemText(IDC_EC_INP01, start);
+
+    if(start.empty()) {
+      if(pLoc) start = pLoc->libDir();
+    } else {
+      start = Om_getDirPart(start);
+    }
+
+    if(!Om_dialogBrowseDir(result, this->_hwnd, L"Select installation file(s) location", start)) {
+      this->setItemText(IDC_EC_INP01, L"");
+      this->_parseSrc(L"");
+      return false;
+    }
+
   }
 
   if(!Om_isDir(result)) {
@@ -490,7 +525,7 @@ bool OmUiToolPkg::_onBcBrwDir()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_onBcBrwPkg()
+bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
 {
   // Check for unsaved changes
   if(this->_unsaved) {
@@ -507,20 +542,28 @@ bool OmUiToolPkg::_onBcBrwPkg()
 
   wstring result, start;
 
-  // Select start directory, either previous one or current location library
-  this->getItemText(IDC_EC_INP02, start);
+  if(path != nullptr) {
 
-  if(start.empty()) {
-    if(pLoc) start = pLoc->libDir();
+    result = path;
+
   } else {
-    start = Om_getDirPart(start);
-  }
 
-  // open select file dialog
-  if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start)) {
-    this->setItemText(IDC_EC_INP02, L"");
-    this->_parseSrc(L"");
-    return false;
+    // Select start directory, either previous one or current location library
+    this->getItemText(IDC_EC_INP02, start);
+
+    if(start.empty()) {
+      if(pLoc) start = pLoc->libDir();
+    } else {
+      start = Om_getDirPart(start);
+    }
+
+    // open select file dialog
+    if(!Om_dialogOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start)) {
+      this->setItemText(IDC_EC_INP02, L"");
+      this->_parseSrc(L"");
+      return false;
+    }
+
   }
 
   if(!Om_isFile(result)) {
@@ -901,6 +944,16 @@ void OmUiToolPkg::_onInit()
   // disable the Save & Abort button
   this->enableItem(IDC_BC_SAVE, false);
   this->enableItem(IDC_BC_ABORT, false);
+
+  // Parse initial source if any
+  if(!this->_initsrc.empty()) {
+
+    // select initial source
+    this->selSrc(this->_initsrc);
+
+    // Reset initial source path
+    this->_initsrc.clear();
+  }
 }
 
 
@@ -1068,8 +1121,8 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INP01:
       // check for content changes
-      if(HIWORD(wParam) == EN_CHANGE)
-        has_changed = true;
+      //if(HIWORD(wParam) == EN_CHANGE)
+        //has_changed = true;
       break;
 
     case IDC_BC_BRW02: //< Edit from existing "Open..." Button
@@ -1078,8 +1131,8 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_INP02:
       // check for content changes
-      if(HIWORD(wParam) == EN_CHANGE)
-        has_changed = true;
+      //if(HIWORD(wParam) == EN_CHANGE)
+        //has_changed = true;
       break;
 
     case IDC_EC_INP03: //< Package Name input EditText

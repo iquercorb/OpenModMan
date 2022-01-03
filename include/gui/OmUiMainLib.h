@@ -123,6 +123,12 @@ class OmUiMainLib : public OmDialog
     ///
     void pkgOpen();
 
+    /// \brief Open package in package editor.
+    ///
+    /// Public function to open package in package editor.
+    ///
+    void pkgEdit();
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     void                _pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent = false);

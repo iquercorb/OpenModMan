@@ -247,6 +247,7 @@
 #define IDM_EDIT_PKG_INFO                       40826
 #define IDM_EDIT_PKG_TRSH                       40827
 #define IDM_EDIT_PKG_OPEN                       40828
+#define IDM_EDIT_PKG_EDIT                       40829
 #define IDM_EDIT_RMT_DOWN                       40830
 #define IDM_EDIT_RMT_UPGR                       40831
 #define IDM_EDIT_RMT_FIXD                       40832

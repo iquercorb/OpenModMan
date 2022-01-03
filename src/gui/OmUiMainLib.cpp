@@ -22,6 +22,7 @@
 #include "gui/OmUiPropBat.h"
 #include "gui/OmUiAddLoc.h"
 #include "gui/OmUiAddBat.h"
+#include "gui/OmUiToolPkg.h"
 #include "gui/OmUiMain.h"
 
 
@@ -393,6 +394,40 @@ void OmUiMainLib::pkgOpen()
 
     if(ShellExecuteW(this->_hwnd, L"explore", sel_ls[i]->srcPath().c_str(), nullptr, nullptr, SW_NORMAL ) <= (HINSTANCE)32) {
       ShellExecuteW(this->_hwnd, L"open", sel_ls[i]->srcPath().c_str(), nullptr, nullptr, SW_NORMAL );
+    }
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::pkgEdit()
+{
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx->locCur()) return;
+
+  OmPackage* pPkg = nullptr;
+
+  pPkg = pCtx->locCur()->pkgGet(lv_sel);
+
+  if(pPkg) {
+    OmUiToolPkg* pUiToolPkg = static_cast<OmUiToolPkg*>(this->siblingById(IDD_TOOL_PKG));
+    if(pUiToolPkg->visible()) {
+      pUiToolPkg->selSrc(pPkg->srcPath());
+    } else {
+      pUiToolPkg->setSrc(pPkg->srcPath());
+      pUiToolPkg->modeless(true);
     }
   }
 }
@@ -2074,6 +2109,10 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_PKG_OPEN:
       this->pkgOpen();
+      break;
+
+    case IDM_EDIT_PKG_EDIT:
+      this->pkgEdit();
       break;
 
     case IDM_EDIT_PKG_INFO:

@@ -50,6 +50,24 @@ class OmUiToolPkg : public OmDialog
     ///
     long id() const;
 
+    /// \brief Set initial source path.
+    ///
+    /// Set path to package source to be parsed at dialog initialization.
+    ///
+    /// \param[in]  path    : Path to source to parse.
+    ///
+    void setSrc(const wstring& path) {
+      this->_initsrc = path;
+    }
+
+    /// \brief Select source path.
+    ///
+    /// Force to load the specified path as source.
+    ///
+    /// \param[in]  path    : Path to source to parse.
+    ///
+    void selSrc(const wstring& path);
+
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,6 +75,8 @@ class OmUiToolPkg : public OmDialog
     OmPackage           _package;
 
     bool                _unsaved;
+
+    wstring             _initsrc;
 
     bool                _parseSrc(const wstring& path);
 
@@ -76,9 +96,9 @@ class OmUiToolPkg : public OmDialog
 
     void                _onBcRadSrc();
 
-    bool                _onBcBrwDir();
+    bool                _onBcBrwDir(const wchar_t* path = nullptr);
 
-    bool                _onBcBrwPkg();
+    bool                _onBcBrwPkg(const wchar_t* path = nullptr);
 
     void                _onNameChange();
 
