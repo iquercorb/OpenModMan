@@ -245,20 +245,35 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     this->setItemText(IDC_EC_TXT, this->_package.desc());
   }
 
+  wstring item_str;
+
   // Add package content to output EditText
-  wstring content;
   unsigned n = this->_package.srcItemCount();
   for(unsigned i = 0; i < this->_package.srcItemCount(); ++i) {
-    content.append(this->_package.srcItemGet(i).path);
-    if(i < n - 1) content.append(L"\r\n");
+    item_str.append(this->_package.srcItemGet(i).path);
+    if(i < n - 1) item_str.append(L"\r\n");
   }
-  this->setItemText(IDC_EC_OUT02, content);
+  this->setItemText(IDC_EC_OUT02, item_str);
 
   // update name and version
   this->setItemText(IDC_EC_INP03, this->_package.name());
 
   if(!this->_package.version().isNull())
     this->setItemText(IDC_EC_INP04, this->_package.version().asString());
+
+  // prefill destination path
+  item_str.clear();
+  if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+    this->getItemText(IDC_EC_INP01, item_str);
+  } else {
+    this->getItemText(IDC_EC_INP02, item_str);
+  }
+
+  item_str = Om_getDirPart(item_str);
+
+  if(Om_isDir(item_str))
+    this->setItemText(IDC_EC_INP06, item_str);
+
 
   this->_unsaved = false; //< reset unsaved changes
 
@@ -632,10 +647,14 @@ void OmUiToolPkg::_onBcBrwDest()
   wstring result, start;
 
   // select start directory
-  if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
-    this->getItemText(IDC_EC_INP01, start);
-  } else {
-    this->getItemText(IDC_EC_INP02, start);
+  this->getItemText(IDC_EC_INP06, start);
+
+  if(start.empty()) {
+    if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
+      this->getItemText(IDC_EC_INP01, start);
+    } else {
+      this->getItemText(IDC_EC_INP02, start);
+    }
   }
 
   // open select folder dialog
