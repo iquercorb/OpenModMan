@@ -66,6 +66,7 @@ Open Mod Mananager currently implements the following key features:
 - Fix Network ListView not properly redrawn after item sorting.
 - Fix Network Abort button not properly enabled at download start.
 - Fix Package Editor not properly clear properties of modified existing package.
+- New menu and shortcut to load seleted package in Package Editor.
 
 0.9.7
  - Developer mode back as enabled by default.
