@@ -60,7 +60,7 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
-0.9.8 (not yet released)
+0.9.8
 - Add support and automatic follow of HTTP redirect responses.
 - Fix Network ListView columns click wrongly pops up contextual menu.
 - Fix Network ListView not properly redrawn after item sorting.
