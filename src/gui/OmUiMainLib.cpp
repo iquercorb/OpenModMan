@@ -47,6 +47,54 @@
 ///
 #define UWM_BATEXE_DONE       (WM_APP+3)
 
+/// \brief Add package list for warning messages
+///
+/// Add packages list for warning messages with a fixed limit to prevent
+/// overly long messages.
+///
+/// \param[in]  msg       Dialog box message string to add list.
+/// \param[in]  pkgs_ls   List of package pointers to iterate to.
+/// \param[in]  max       Maximum count of package to display.
+///
+inline static void __msg_package_list(wstring& msg, const vector<OmPackage*>& pkgs_ls, size_t max)
+{
+  size_t i = 0;
+
+  for( ; i < pkgs_ls.size() && i < max; ++i) {
+    msg += L"\n " + pkgs_ls[i]->ident();
+  }
+
+  if(pkgs_ls.size() > i) {
+    msg += L"\n ...\n and ";
+    msg += std::to_wstring(pkgs_ls.size() - i);
+    msg += L" other package(s)";
+  }
+}
+
+/// \brief Add package list for warning messages
+///
+/// Add packages list for warning messages with a fixed limit to prevent
+/// overly long messages.
+///
+/// \param[in]  msg       Dialog box message string to add list.
+/// \param[in]  pkgs_ls   List of package's identity string to iterate to.
+/// \param[in]  max       Maximum count of package to display.
+///
+inline static void __msg_package_list(wstring& msg, const vector<wstring>& ident_ls, size_t max)
+{
+  size_t i = 0;
+
+  for( ; i < ident_ls.size() && i < max; ++i) {
+    msg += L"\n ...\n and " + ident_ls[i];
+  }
+
+  if(ident_ls.size() > i) {
+    msg += L"\n\n and ";
+    msg += std::to_wstring(ident_ls.size() - i);
+    msg += L" other package(s)";
+  }
+}
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -472,7 +520,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   if(!silent && miss_ls.size() && pLoc->warnMissDeps()) {
     msg = L"One or more selected packages have missing dependencies, "
           L"The following packages are required but not available:\n";
-    for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
+    __msg_package_list(msg, miss_ls, 5);
     msg +=  L"\n\nDo you want to proceed installation anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
@@ -483,7 +531,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   if(!silent && deps_ls.size() && pLoc->warnExtraInst()) {
     msg = L"One or more selected packages have dependencies, "
           L"the following packages will also be installed:\n";
-    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    __msg_package_list(msg, deps_ls, 5);
     msg +=  L"\n\nContinue installation ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
@@ -494,7 +542,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   if(!silent && over_ls.size() && pLoc->warnOverlaps()) {
     msg = L"One or more selected packages overlaps and will overwrites "
           L"files previously installed by the following package(s):\n";
-    for(size_t j = 0; j < over_ls.size(); ++j) msg += L"\n "+over_ls[j]->ident();
+    __msg_package_list(msg, over_ls, 5);
     msg +=  L"\n\nDo you want to continue installation anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
@@ -588,7 +636,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
     msg = L"One or more selected packages are overlapped by others later "
           L"installed, the following packages must also be uninstalled:\n";
-    for(size_t i = 0; i < over_ls.size(); ++i) msg += L"\n "+over_ls[i]->ident();
+    __msg_package_list(msg, over_ls, 5);
     msg += L"\n\nDo you want to continue anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
@@ -599,7 +647,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   if(!silent && deps_ls.size() && pLoc->warnExtraUnin()) {
     msg = L"One or more selected packages are required as dependency "
           L"by others, the following packages will also be uninstalled:\n";
-    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    __msg_package_list(msg, deps_ls, 5);
     msg += L"\n\nDo you want to continue anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))

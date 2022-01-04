@@ -38,6 +38,79 @@
 ///
 #define UWM_DOWNLOADS_DONE    (WM_APP+2)
 
+/// \brief Add package list for warning messages
+///
+/// Add packages list for warning messages with a fixed limit to prevent
+/// overly long messages.
+///
+/// \param[in]  msg       Dialog box message string to add list.
+/// \param[in]  pkgs_ls   List of package pointers to iterate to.
+/// \param[in]  max       Maximum count of package to display.
+///
+inline static void __msg_package_list(wstring& msg, const vector<OmPackage*>& pkgs_ls, size_t max)
+{
+  size_t i = 0;
+
+  for( ; i < pkgs_ls.size() && i < max; ++i) {
+    msg += L"\n " + pkgs_ls[i]->ident();
+  }
+
+  if(pkgs_ls.size() > i) {
+    msg += L"\n ...\n and ";
+    msg += std::to_wstring(pkgs_ls.size() - i);
+    msg += L" other package(s)";
+  }
+}
+
+/// \brief Add package list for warning messages
+///
+/// Add packages list for warning messages with a fixed limit to prevent
+/// overly long messages.
+///
+/// \param[in]  msg       Dialog box message string to add list.
+/// \param[in]  pkgs_ls   List of remote object pointers to iterate to.
+/// \param[in]  max       Maximum count of package to display.
+///
+inline static void __msg_package_list(wstring& msg, const vector<OmRemote*>& rmts_ls, size_t max)
+{
+  size_t i = 0;
+
+  for( ; i < rmts_ls.size() && i < max; ++i) {
+    msg += L"\n " + rmts_ls[i]->ident();
+  }
+
+  if(rmts_ls.size() > i) {
+    msg += L"\n ...\n and ";
+    msg += std::to_wstring(rmts_ls.size() - i);
+    msg += L" other package(s)";
+  }
+}
+
+/// \brief Add package list for warning messages
+///
+/// Add packages list for warning messages with a fixed limit to prevent
+/// overly long messages.
+///
+/// \param[in]  msg       Dialog box message string to add list.
+/// \param[in]  pkgs_ls   List of package's identity string to iterate to.
+/// \param[in]  max       Maximum count of package to display.
+///
+inline static void __msg_package_list(wstring& msg, const vector<wstring>& ident_ls, size_t max)
+{
+  size_t i = 0;
+
+  for( ; i < ident_ls.size() && i < max; ++i) {
+    msg += L"\n " + ident_ls[i];
+  }
+
+  if(ident_ls.size() > i) {
+    msg += L"\n ...\n and ";
+    msg += std::to_wstring(ident_ls.size() - i);
+    msg += L" other package(s)";
+  }
+}
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -256,7 +329,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
   if(miss_ls.size() && pLoc->warnMissDnld()) {
     msg = L"One or more selected packages have missing dependencies, "
           L"The following packages are required but not available:\n";
-    for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
+    __msg_package_list(msg, miss_ls, 5);
     msg +=  L"\n\nDo you want to proceed download anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
@@ -268,7 +341,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
     msg = L"One or more selected packages will supersedes old versions "
           L"required as dependency by other, upgrading the following "
           L"packages will break some dependencies:\n";
-    for(size_t k = 0; k < olds_ls.size(); ++k) msg+=L"\n  "+olds_ls[k]->ident();
+    __msg_package_list(msg, olds_ls, 5);
     msg +=  L"\n\nDo you want to proceed upgrade anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Upgrade breaks dependencies", msg))
@@ -279,7 +352,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
   if(deps_ls.size() && pLoc->warnExtraDnld()) {
     msg = L"One or more selected packages have dependencies, "
           L"the following packages will also be downloaded:\n";
-    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    __msg_package_list(msg, deps_ls, 5);
     msg +=  L"\n\nDo you want to continue ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
@@ -389,7 +462,7 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   if(miss_ls.size() && pLoc->warnMissDnld()) {
     msg = L"The selected package have unavailable missing dependencies, "
           L"The following packages are required but not available:\n";
-    for(size_t k = 0; k < miss_ls.size(); ++k) msg+=L"\n  "+miss_ls[k];
+    __msg_package_list(msg, miss_ls, 5);
     msg +=  L"\n\nDo you want to proceed download anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
@@ -400,7 +473,7 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   if(deps_ls.size() && pLoc->warnExtraDnld()) {
     msg =   L"The selected package have "+to_wstring(deps_ls.size())+L" missing ";
     msg +=  L"dependencies, the following packages will be downloaded:\n";
-    for(size_t i = 0; i < deps_ls.size(); ++i) msg += L"\n "+deps_ls[i]->ident();
+    __msg_package_list(msg, deps_ls, 5);
     msg +=  L"\n\nDownload missing dependencies ?";
 
     if(!Om_dialogBoxQuerry(this->_hwnd, L"Fix dependencies", msg))
