@@ -338,7 +338,6 @@ class OmContext
     ///
     void log(unsigned level, const wstring& head, const wstring& detail);
 
-           ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   private: ///              - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmManager*          _manager;

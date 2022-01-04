@@ -171,7 +171,11 @@ static bool __rmt_sort_stat_fn(const OmRemote* a, const OmRemote* b)
   if(a->state() == b->state()) {
     return __rmt_sort_name_fn(a, b);
   } else {
-    return (a->state() < b->state());
+    if(a->isState(RMT_STATE_NEW) == b->isState(RMT_STATE_NEW)) {
+      return (a->state() < b->state());
+    } else {
+      return (!a->isState(RMT_STATE_NEW) && b->isState(RMT_STATE_NEW));
+    }
   }
 }
 
