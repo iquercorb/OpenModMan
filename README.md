@@ -68,6 +68,7 @@ Open Mod Mananager currently implements the following key features:
 - Fix Package Editor not properly clear properties of modified existing package.
 - New menu and shortcut to load seleted package in Package Editor.
 - Fix not working delete repository button of Network tab.
+- Fix overly long warning messages with huge packages list.
 
 0.9.7
  - Developer mode back as enabled by default.
