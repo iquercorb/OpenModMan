@@ -635,8 +635,18 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMain::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    #endif
+
+    // Prevent command/shorcut execution when dialog is not active
+    if(!this->active())
+      return false;
+
     OmManager* pMgr = static_cast<OmManager*>(this->_data);
     OmContext* pCtx = pMgr->ctxCur();
+
+    wstring item_str;
 
     // handle "File > Recent Files" path click
     if(LOWORD(wParam) >= IDM_FILE_RECENT_PATH) { // recent
@@ -648,10 +658,15 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->ctxOpen(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
     }
 
-    wstring item_str;
-
+    // Menus and Shortcuts Messages
     switch(LOWORD(wParam))
     {
+
+    case IDC_CB_CTX: //< Context ComboBox
+      if(HIWORD(wParam) == CBN_SELCHANGE)
+        this->_onCbCtxSel();
+      break;
+
     // Menu : File []
     case IDM_FILE_NEW_CTX:
       this->childById(IDD_WIZ_CTX)->open(); // New Context Wizard
@@ -762,11 +777,6 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_HELP_ABOUT:
       this->childById(IDD_HELP_ABT)->open();
-      break;
-
-    case IDC_CB_CTX: //< Context ComboBox
-      if(HIWORD(wParam) == CBN_SELCHANGE)
-        this->_onCbCtxSel();
       break;
     }
   }
