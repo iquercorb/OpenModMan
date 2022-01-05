@@ -60,7 +60,10 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
-0.9.8
+0.9.9 (not released yet)
+- Fix command shortcuts still working when main dialog is not active.
+
+0.9.8 (04-01-2022)
 - Add support and automatic follow of HTTP redirect responses.
 - Fix Network ListView columns click wrongly pops up contextual menu.
 - Fix Network ListView not properly redrawn after item sorting.
@@ -70,12 +73,12 @@ Open Mod Mananager currently implements the following key features:
 - Fix not working delete repository button of Network tab.
 - Fix overly long warning messages with huge packages list.
 
-0.9.7
+0.9.7 (07-18-2021)
  - Developer mode back as enabled by default.
  - Fix undo install not working with archive files backup.
  - Package created folders no longer generate overlapping.
 
-0.9.6
+0.9.6 (07-07-2021)
  - Overall optimization and various debug.
  - Repaired broken Context Wizard dialog.
  - Fix Load Contexts At Startup option dialog not saving properly.
