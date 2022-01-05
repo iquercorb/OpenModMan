@@ -31,7 +31,8 @@ OmDialog::OmDialog(HINSTANCE hins) :
   _rect(),
   _data(nullptr),
   _init(true),
-  _modal(false)
+  _modal(false),
+  _active(false)
 {
 
 }
@@ -539,6 +540,17 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     switch(msg)
     {
 
+    case WM_ACTIVATE:
+      dialog->_active = (LOWORD(wParam) != WA_INACTIVE);
+      #ifdef DEBUG
+        if(LOWORD(wParam) == WA_INACTIVE) {
+          std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WA_INACTIVE\n";
+        } else {
+          std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WA_ACTIVE\n";
+        }
+      #endif
+      break; // case WM_ACTIVATE:
+
     case WM_INITDIALOG:
       dialog->_init = true;
       return true; // case WM_INITDIALOG:
@@ -605,7 +617,9 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       return false; // case WM_GETMINMAXINFO:
 
     case 736: // WM_DPICHANGED
-      std::cout << "WM_DPICHANGED\n";
+      #ifdef DEBUG
+        std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_DPICHANGED\n";
+      #endif
       return false; // case WM_DPICHANGED:
 
     case WM_CLOSE:

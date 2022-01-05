@@ -200,6 +200,8 @@ class OmDialog
     ///
     /// Checks whether dialog window is visible (shown)
     ///
+    /// \return True if dialog is currently visible, false otherwise
+    ///
     bool visible() const {
       return IsWindowVisible(_hwnd);
     }
@@ -208,8 +210,20 @@ class OmDialog
     ///
     /// Checks whether dialog window is enabled
     ///
+    /// \return True if dialog is currently enabled, false otherwise
+    ///
     bool enabled() const {
       return IsWindowEnabled(_hwnd);
+    }
+
+    /// \brief Check active.
+    ///
+    /// Checks whether dialog window is currently active
+    ///
+    /// \return True if dialog is currently active, false otherwise
+    ///
+    bool active() const {
+      return _active;
     }
 
     /// \brief Refresh window.
@@ -624,6 +638,8 @@ class OmDialog
     long                _limit[2];  //< Dialog window size limits
 
     long                _size[2];   //< Dialog window size in base unit
+
+    bool                _active;    //< Dialog window tracked ACTIVE state
 
     static INT_PTR CALLBACK  _wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
