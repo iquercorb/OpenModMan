@@ -40,12 +40,19 @@
 ///
 #define UWM_PKGUNIN_DONE      (WM_APP+2)
 
+/// \brief Custom "Package Clean Done" Message
+///
+/// Custom "Package Clean Done" window message to notify the dialog that the
+/// running thread finished his job.
+///
+#define UWM_PKGCLNS_DONE     (WM_APP+3)
+
 /// \brief Custom "Package Uninstall Done" Message
 ///
 /// Custom "Package Uninstall Done" window message to notify the dialog that the
 /// running thread finished his job.
 ///
-#define UWM_BATEXE_DONE       (WM_APP+3)
+#define UWM_BATEXE_DONE       (WM_APP+4)
 
 /// \brief Add package list for warning messages
 ///
@@ -103,6 +110,7 @@ OmUiMainLib::OmUiMainLib(HINSTANCE hins) : OmDialog(hins),
   _dirMon_hev{0,0,0},
   _pkgInst_hth(nullptr),
   _pkgUnin_hth(nullptr),
+  _pkgClns_hth(nullptr),
   _batExe_hth(nullptr),
   _thread_abort(false),
   _buildLvBat_icSize(0),
@@ -287,6 +295,19 @@ void OmUiMainLib::pkgUnin()
     return;
 
   this->_pkgUnin_init();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::pkgClns()
+{
+  // prevent useless processing
+  if(!this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT))
+    return;
+
+  this->_pkgClns_init();
 }
 
 
@@ -510,11 +531,11 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
   vector<OmPackage*> inst_ls; //< final install list
   vector<OmPackage*> over_ls; //< overlapping list
-  vector<OmPackage*> deps_ls; //< extra install list
+  vector<OmPackage*> dpcs_ls; //< extra dependencies install list
   vector<wstring> miss_ls;    //< missing dependencies lists
 
   // prepare package installation
-  pLoc->pkgPrepareInst(inst_ls, over_ls, deps_ls, miss_ls, pkg_ls);
+  pLoc->pkgPrepareInst(inst_ls, over_ls, dpcs_ls, miss_ls, pkg_ls);
 
   // warn user for missing dependencies
   if(!silent && miss_ls.size() && pLoc->warnMissDeps()) {
@@ -528,10 +549,10 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   }
 
   // warn for additional installation
-  if(!silent && deps_ls.size() && pLoc->warnExtraInst()) {
+  if(!silent && dpcs_ls.size() && pLoc->warnExtraInst()) {
     msg = L"One or more selected packages have dependencies, "
           L"the following packages will also be installed:\n";
-    __msg_package_list(msg, deps_ls, 5);
+    __msg_package_list(msg, dpcs_ls, 5);
     msg +=  L"\n\nContinue installation ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
@@ -625,12 +646,12 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
   wstring msg;
 
-  vector<OmPackage*> over_ls;
-  vector<OmPackage*> deps_ls;
-  vector<OmPackage*> unin_ls;
+  vector<OmPackage*> over_ls; // extra overlapped uninstall list
+  vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
+  vector<OmPackage*> unin_ls; // final uninstall list
 
   // prepare packages uninstall and backups restoration
-  pLoc->bckPrepareUnin(unin_ls, over_ls, deps_ls, pkg_ls);
+  pLoc->bckPrepareUnin(unin_ls, over_ls, dpnd_ls, pkg_ls);
 
   // check and warn for extra uninstall due to overlaps
   if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
@@ -644,10 +665,10 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   }
 
   // check and warn for extra uninstall due to dependencies
-  if(!silent && deps_ls.size() && pLoc->warnExtraUnin()) {
+  if(!silent && dpnd_ls.size() && pLoc->warnExtraUnin()) {
     msg = L"One or more selected packages are required as dependency "
           L"by others, the following packages will also be uninstalled:\n";
-    __msg_package_list(msg, deps_ls, 5);
+    __msg_package_list(msg, dpnd_ls, 5);
     msg += L"\n\nDo you want to continue anyway ?";
 
     if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
@@ -665,6 +686,123 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   for(size_t i = 0; i < unin_ls.size(); ++i) {
 
     pPkg = unin_ls[i];
+
+    // check whether abort is requested
+    if(this->_thread_abort)
+      break;
+
+    // set WIP status image
+    lvi.iItem = pLoc->pkgIndex(pPkg);
+    lvi.iImage = 4; //< STS_WIP
+    this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+
+    if(!pPkg->hasBck()) //< this should be always the case
+      continue;
+
+    // before uninstall, get list of overlapped packages (by this one)
+    ovlp_ls.clear();
+    for(size_t j = 0; j < pPkg->ovrCount(); ++j) {
+      ovlp_ls.push_back(pLoc->pkgFind(pPkg->ovrGet(j)));
+    }
+
+    // uninstall package (restore backup)
+    if(!pPkg->uninst(&this->_pkgProgressCb, this)) {
+      msg =  L"The backup of \"" + pPkg->name() + L"\" ";
+      msg += L"has not been properly restored because the following error occurred:\n\n";
+      msg += pPkg->lastError();
+      Om_dialogBoxErr(this->_hwnd, L"Package uninstall failed", msg);
+    }
+
+    if(pPkg->hasBck()) { //< this mean something went wrong
+      lvi.iImage = pLoc->bckOverlapped(pPkg) ? 8/*STS_OWR*/:7/*STS_BOK*/;
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    } else {
+      lvi.iImage = -1; //< No Icon
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      // update status icon for overlapped packages
+      for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+        lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
+        lvi.iImage = pLoc->bckOverlapped(ovlp_ls[j]) ? 8/*STS_OWR*/:7/*STS_BOK*/;
+        this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      }
+    }
+
+    // reset progress bar
+    this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
+
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
+    #endif
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  wstring msg;
+
+
+  vector<OmPackage*> over_ls; // extra overlapped uninstall list
+  vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
+  vector<OmPackage*> dpcs_ls; // extra dependencies uninstall list
+  vector<OmPackage*> clns_ls; // final clean uninstall list
+
+  // prepare packages uninstall and backups restoration
+  pLoc->bckPrepareClns(clns_ls, over_ls, dpnd_ls, dpcs_ls, pkg_ls);
+
+  // check and warn for extra uninstall due to dependencies
+  if(!silent && dpcs_ls.size() && pLoc->warnExtraUnin()) {
+    msg = L"This will uninstall selected packages including all "
+          L"dependencies, the following packages will also be uninstalled:\n";
+    __msg_package_list(msg, dpcs_ls, 5);
+    msg += L"\n\nDo you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerry(this->_hwnd, L"Uninstall tree", msg))
+      return;
+  }
+
+  // check and warn for extra uninstall due to overlaps
+  if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
+    msg = L"One or more selected packages are overlapped by others later "
+          L"installed, the following packages must also be uninstalled:\n";
+    __msg_package_list(msg, over_ls, 5);
+    msg += L"\n\nDo you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+      return;
+  }
+
+  // check and warn for extra uninstall due to dependencies
+  if(!silent && dpnd_ls.size() && pLoc->warnExtraUnin()) {
+    msg = L"One or more selected packages are required as dependency "
+          L"by others, the following packages will also be uninstalled:\n";
+    __msg_package_list(msg, dpnd_ls, 5);
+    msg += L"\n\nDo you want to continue anyway ?";
+
+    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+      return;
+  }
+
+  // this is to update list view item's icon individually
+  LVITEMW lvi;
+  lvi.mask = LVIF_IMAGE;
+  lvi.iSubItem = 0;
+
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< overlapped packages list
+
+  for(size_t i = 0; i < clns_ls.size(); ++i) {
+
+    pPkg = clns_ls[i];
 
     // check whether abort is requested
     if(this->_thread_abort)
@@ -1255,6 +1393,122 @@ DWORD WINAPI OmUiMainLib::_pkgUnin_fth(void* arg)
 
   // send message to notify process ended
   self->postMessage(UWM_PKGUNIN_DONE);
+
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgClns_init()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx)return;
+
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc)return;
+
+  // checks whether we have a valid Destination folder
+  if(!pLoc->dstDirAccess(true)) { //< check for read and write
+    wstring msg = L"\""+pLoc->dstDir()+L"\"\n\n";
+    msg +=  L"Either the Destination folder does not exist or it have read or write access restrictions. "
+            L"Please check target location settings and folder permissions.";
+    Om_dialogBoxErr(this->_hwnd, L"Package clean aborted (Destination access error)", msg);
+    return;
+  }
+  // checks whether we have a valid Backup folder
+  if(!pLoc->bckDirAccess(true)) { //< check for read and write
+    wstring msg = L"\""+pLoc->bckDir()+L"\"\n\n";
+    msg +=  L"Either the Backup folder does not exist or it have read or write access restrictions. "
+            L"Please check target location settings and folder permissions.";
+    Om_dialogBoxErr(this->_hwnd, L"Package clean aborted (Backup access error)", msg);
+    return;
+  }
+
+  // freeze dialog so user cannot interact
+  static_cast<OmUiMain*>(this->root())->freeze(true);
+
+  DWORD dwId;
+  this->_pkgClns_hth = CreateThread(nullptr, 0, this->_pkgClns_fth, this, 0, &dwId);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_pkgClns_stop()
+{
+  DWORD exitCode;
+
+  if(this->_pkgClns_hth) {
+    WaitForSingleObject(this->_pkgClns_hth, INFINITE);
+    GetExitCodeThread(this->_pkgClns_hth, &exitCode);
+    CloseHandle(this->_pkgClns_hth);
+    this->_pkgClns_hth = nullptr;
+  }
+
+  // unfreeze dialog to allow user to interact again
+  static_cast<OmUiMain*>(this->root())->freeze(false);
+
+  // Uninstall process may have leaved a ghost package (no source and
+  // no backup), so we clean Library and rebuild ListView if needed
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx) return;
+
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc) return;
+
+  // clean Library list and rebuild ListView
+  if(pLoc->libClean())
+    this->_buildLvPkg();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMainLib::_pkgClns_fth(void* arg)
+{
+  OmUiMainLib* self = static_cast<OmUiMainLib*>(arg);
+
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx)return 1;
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc)return 1;
+
+  // string for dialog messages
+  wstring msg;
+
+  // get user selection
+  vector<OmPackage*> user_ls;
+
+  OmPackage* pPkg;
+
+  int lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
+
+    pPkg = pLoc->pkgGet(lv_sel);
+
+    if(pPkg->hasBck())
+      user_ls.push_back(pPkg);
+
+    // next selected item
+    lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
+  }
+
+  // reset abort status
+  self->_thread_abort = false;
+
+  // uninstall packages
+  self->_pkgClnsLs(user_ls, false);
+
+  // send message to notify process ended
+  self->postMessage(UWM_PKGCLNS_DONE);
 
   return 0;
 }
@@ -2015,6 +2269,14 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
+  // UWM_PKGCLNS_DONE is a custom message sent from Package Clean
+  // thread function, to notify the thread ended is job.
+  if(uMsg == UWM_PKGCLNS_DONE) {
+    // properly stop the running thread and finish process
+    this->_pkgClns_stop();
+    return false;
+  }
+
   // UWM_BATEXE_DONE is a custom message sent from Batch Execution
   // thread function, to notify the thread ended is job.
   if(uMsg == UWM_BATEXE_DONE) {
@@ -2157,6 +2419,10 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_PKG_UINS:
       this->pkgUnin();
+      break;
+
+    case IDM_EDIT_PKG_CLNS:
+      this->pkgClns();
       break;
 
     case IDM_EDIT_PKG_TRSH:

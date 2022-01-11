@@ -98,6 +98,13 @@ class OmUiMainLib : public OmDialog
     ///
     void pkgUnin();
 
+    /// \brief Cleanse selected packages.
+    ///
+    /// Public function to launch cleanse unsintall process for selected packages if
+    /// any.
+    ///
+    void pkgClns();
+
     /// \brief Toggle selected packages installation.
     ///
     /// Public function to toggle installation (either install or uninstall) of
@@ -135,6 +142,8 @@ class OmUiMainLib : public OmDialog
 
     void                _pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
 
+    void                _pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
+
     static bool         _pkgProgressCb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     void                _dirMon_init(const wstring& path);
@@ -162,6 +171,14 @@ class OmUiMainLib : public OmDialog
     void*               _pkgUnin_hth;
 
     static DWORD WINAPI _pkgUnin_fth(void*);
+
+    void                _pkgClns_init();
+
+    void                _pkgClns_stop();
+
+    void*               _pkgClns_hth;
+
+    static DWORD WINAPI _pkgClns_fth(void*);
 
     void                _batExe_init();
 

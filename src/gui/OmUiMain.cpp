@@ -722,6 +722,10 @@ bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgUnin();
       break;
 
+    case IDM_EDIT_PKG_CLNS:
+      static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgClns();
+      break;
+
     case IDM_EDIT_PKG_TRSH:
       static_cast<OmUiMainLib*>(this->childById(IDD_MAIN_LIB))->pkgTrsh();
       break;

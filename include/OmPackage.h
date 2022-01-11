@@ -463,7 +463,7 @@ class OmPackage
     ///
     /// \param[in]  ident    : Dependency package identity to check
     ///
-    bool depHas(const wstring& ident) {
+    bool depHas(const wstring& ident) const {
       for(size_t i = 0; i < this->_depLs.size(); ++i) {
         if(ident == this->_depLs[i]) return true;
       }

@@ -329,7 +329,8 @@ static bool __src_chk_dependencies(const vector<OmPackage*>& lib_ls, const OmPac
     for(size_t j = 0; j < lib_ls.size(); ++j) {
 
       // rely only on packages
-      if(!lib_ls[j]->isZip()) continue;
+      if(!lib_ls[j]->isZip())
+        continue;
 
       if(target->depGet(i) == lib_ls[j]->ident()) {
 
@@ -364,9 +365,12 @@ static bool __src_chk_dependencies(const vector<OmPackage*>& lib_ls, const OmPac
 ///
 /// \return True if dependents package found, false otherwise.
 ///
-static size_t __src_chk_dependents(const vector<OmPackage*>& lib_ls, const OmPackage* target)
+static bool __src_chk_dependents(const vector<OmPackage*>& lib_ls, const OmPackage* target)
 {
   for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    if(lib_ls[i] == target)
+      continue;
 
     if(lib_ls[i]->depHas(target->ident())) {
       return true;
@@ -396,6 +400,9 @@ static size_t __bck_get_overlaps(vector<OmPackage*>& out_ls, const vector<OmPack
 
     // search only among installed packages
     if(!lib_ls[i]->hasBck())
+      continue;
+
+    if(lib_ls[i] == target)
       continue;
 
     if(lib_ls[i]->ovrHas(target->hash())) {
@@ -441,10 +448,82 @@ static size_t __bck_get_dependents(vector<OmPackage*>& out_ls, const vector<OmPa
     if(!lib_ls[i]->hasBck())
       continue;
 
+    if(lib_ls[i] == target)
+      continue;
+
     if(lib_ls[i]->depHas(target->ident())) {
 
       // check recursively, this give depth-first sorted list
       n += __bck_get_dependents(out_ls, lib_ls, lib_ls[i]);
+
+      // add only if unique
+      if(std::find(out_ls.begin(), out_ls.end(), lib_ls[i]) == out_ls.end()) {
+        out_ls.push_back(lib_ls[i]);
+        ++n;
+      }
+    }
+  }
+
+  return n;
+}
+
+
+/// \brief Check for package backup dependents.
+///
+/// Recursively explores package backup dependency tree to check
+/// whether the specified target has installed dependents package.
+///
+/// This function lookup only on installed package to be used in
+/// context of package uninstall check.
+///
+/// \param[out]   out_ls  : Output list of found dependents packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    target  : Input target package to check overlapping.
+///
+/// \return Count of dependents packages found.
+///
+static bool __bck_chk_dependents(const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    // search only among installed packages
+    if(lib_ls[i]->hasBck() && lib_ls[i] != target) {
+
+      if(lib_ls[i]->depHas(target->ident())) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+/// \brief Get package backup dependencies.
+///
+/// Recursively explores installed package backup dependency tree to
+/// gather all dependencies of the specified installed target.
+///
+/// \param[out]   out_ls  : Output list of found dependencies packages.
+/// \param[in]    lib_ls  : Input list of available packages.
+/// \param[in]    target  : Input target package to check overlapping.
+///
+/// \return Count of dependencies packages found.
+///
+static size_t __bck_get_dependencies(vector<OmPackage*>& out_ls, const vector<OmPackage*>& lib_ls, const OmPackage* target)
+{
+  size_t n = 0;
+
+  for(size_t i = 0; i < lib_ls.size(); ++i) {
+
+    // search only among installed packages
+    if(!lib_ls[i]->hasBck())
+      continue;
+
+    if(target->depHas(lib_ls[i]->ident())) {
+
+      // check recursively, this give depth-first sorted list
+      n += __bck_get_dependencies(out_ls, lib_ls, lib_ls[i]);
 
       // add only if unique
       if(std::find(out_ls.begin(), out_ls.end(), lib_ls[i]) == out_ls.end()) {
@@ -2060,7 +2139,7 @@ bool OmLocation::bckDcard(Om_progressCb progress_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& sel_ls) const
+void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dps_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& sel_ls) const
 {
   // gather dependencies and create missing lists
   vector<wstring> idt_ls;
@@ -2081,7 +2160,7 @@ void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& 
   for(size_t i = 0; i < ins_ls.size(); ++i) {
     // add only if not in the initial selection
     if(std::find(sel_ls.begin(), sel_ls.end(), ins_ls[i]) == sel_ls.end()) {
-      dep_ls.push_back(ins_ls[i]);
+      dps_ls.push_back(ins_ls[i]);
     }
   }
 
@@ -2125,7 +2204,7 @@ void OmLocation::pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& ovr_ls,  vector<OmPackage*>& dep_ls, const vector<OmPackage*>& sel_ls) const
+void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& ovr_ls,  vector<OmPackage*>& dpt_ls, const vector<OmPackage*>& sel_ls) const
 {
   // get overlapping packages list to be uninstalled before selection
   for(size_t i = 0; i < sel_ls.size(); ++i) {
@@ -2133,7 +2212,7 @@ void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& 
     // this is the only call we do, but the function is doubly recursive and
     // can lead to huge complexity depending the actual state of package installation
     // dependencies and overlapping...
-    __bck_get_relations(uns_ls, ovr_ls, dep_ls, this->_pkgLs, sel_ls[i]);
+    __bck_get_relations(uns_ls, ovr_ls, dpt_ls, this->_pkgLs, sel_ls[i]);
   }
 
   // compose the final uninstall list
@@ -2141,6 +2220,46 @@ void OmLocation::bckPrepareUnin(vector<OmPackage*>& uns_ls, vector<OmPackage*>& 
     // add only if not already in initial list
     if(std::find(uns_ls.begin(), uns_ls.end(), sel_ls[i]) == uns_ls.end()) {
       uns_ls.push_back(sel_ls[i]);
+    }
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::bckPrepareClns(vector<OmPackage*>& cln_ls, vector<OmPackage*>& ovr_ls,  vector<OmPackage*>& dpt_ls, vector<OmPackage*>& dps_ls, const vector<OmPackage*>& sel_ls) const
+{
+  // get list of extra dependencies to clean uninstall
+  for(size_t i = 0; i < sel_ls.size(); ++i) {
+    __bck_get_dependencies(dps_ls, this->_pkgLs, sel_ls[i]);
+  }
+
+  // we compose final selection with extra dependencies
+  vector<OmPackage*> mix_ls(sel_ls);
+
+  // then add the extra dependencies
+  for(size_t i = 0; i < dps_ls.size(); ++i) {
+    // add only if not already in initial list
+    if(std::find(mix_ls.begin(), mix_ls.end(), dps_ls[i]) == mix_ls.end()) {
+      mix_ls.push_back(dps_ls[i]);
+    }
+  }
+
+  // get overlapping packages list to be uninstalled before selection
+  for(size_t i = 0; i < mix_ls.size(); ++i) {
+
+    // this is the only call we do, but the function is doubly recursive and
+    // can lead to huge complexity depending the actual state of package installation
+    // dependencies and overlapping...
+    __bck_get_relations(cln_ls, ovr_ls, dpt_ls, this->_pkgLs, mix_ls[i]);
+  }
+
+  // compose the final uninstall list
+  for(size_t i = 0; i < mix_ls.size(); ++i) {
+    // add only if not already in initial list
+    if(std::find(cln_ls.begin(), cln_ls.end(), mix_ls[i]) == cln_ls.end()) {
+      cln_ls.push_back(mix_ls[i]);
     }
   }
 }
@@ -2219,6 +2338,15 @@ size_t OmLocation::bckGetOverlaps(vector<OmPackage*>& ovr_ls, const OmPackage* p
 size_t OmLocation::bckGetDependents(vector<OmPackage*>& dpt_ls, const OmPackage* pkg) const
 {
   return __bck_get_dependents(dpt_ls, this->_pkgLs, pkg);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmLocation::bckChkDependents(const OmPackage* pkg) const
+{
+  return __bck_chk_dependents(this->_pkgLs, pkg);
 }
 
 

@@ -599,23 +599,38 @@ class OmLocation
     ///
     /// \param[out] ins_ls  : Output full list of packages to be installed.
     /// \param[out] ovr_ls  : Output list of overlapped packages after installation.
-    /// \param[out] dep_ls  : Output list of additional dependencies packages to be installed.
+    /// \param[out] dps_ls  : Output list of additional dependencies packages to be installed.
     /// \param[out] mis_ls  : Output list of missing dependencies identities.
     /// \param[in]  pkg_ls  : Input initial packages install selection to be installed.
     ///
-    void pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dep_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& pkg_ls) const;
+    void pkgPrepareInst(vector<OmPackage*>& ins_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dps_ls, vector<wstring>& mis_ls, const vector<OmPackage*>& pkg_ls) const;
 
     /// \brief Prepare bakcups restoration.
     ///
-    /// Creates the full installation list, additional install list and missing
-    /// dependencies list from the given initial packages installation selection.
+    /// Creates the full uninstall list, additional uninstall list and dependencies
+    /// list from the given initial packages installation selection.
     ///
     /// \param[out] uni_ls  : Output full list of packages to be uninstalled.
-    /// \param[out] dep_ls  : Output list of additional packages which depend on selection.
     /// \param[out] ovr_ls  : Output list of additional packages which overlap the selection.
+    /// \param[out] dpt_ls  : Output list of additional packages which depend on selection.
     /// \param[in]  pkg_ls  : Input initial packages install selection to be uninstalled.
     ///
-    void bckPrepareUnin(vector<OmPackage*>& uni_ls, vector<OmPackage*>& dep_ls, vector<OmPackage*>& ovr_ls, const vector<OmPackage*>& pkg_ls) const;
+    void bckPrepareUnin(vector<OmPackage*>& uni_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dpt_ls, const vector<OmPackage*>& pkg_ls) const;
+
+    /// \brief Prepare bakcups clean restoration.
+    ///
+    /// Creates the full uninstall list, additional uninstall list and missing
+    /// dependencies list from the given initial packages installation selection.
+    /// The algorithm does not includes dependencies that also have dependents
+    /// packages installed.
+    ///
+    /// \param[out] cln_ls  : Output full list of packages to be uninstalled including dependencies.
+    /// \param[out] ovr_ls  : Output list of additional packages which overlap the final selection.
+    /// \param[out] dpt_ls  : Output list of additional packages which depend on initial selection.
+    /// \param[out] dps_ls  : Output list of additional dependencies packages of the initial selection.
+    /// \param[in]  pkg_ls  : Input initial packages install selection to be uninstalled with dependencies.
+    ///
+    void bckPrepareClns(vector<OmPackage*>& cln_ls, vector<OmPackage*>& ovr_ls, vector<OmPackage*>& dpt_ls, vector<OmPackage*>& dps_ls, const vector<OmPackage*>& pkg_ls) const;
 
     /// \brief Get installation overlap list.
     ///
@@ -715,6 +730,17 @@ class OmLocation
     /// \return Count of additional package found.
     ///
     size_t bckGetDependents(vector<OmPackage*>& dpt_ls, const OmPackage* pkg) const;
+
+    /// \brief Check whether backup has dependents.
+    ///
+    /// Checks whether the the specified installed target has one or more dependent
+    /// package also installed.
+    ///
+    /// \param[in]  pkg     : Installed package to check.
+    ///
+    /// \return Count of additional package found.
+    ///
+    bool bckChkDependents(const OmPackage* pkg) const;
 
     /// \brief Get backup relations list.
     ///
