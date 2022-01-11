@@ -61,17 +61,18 @@ Open Mod Mananager currently implements the following key features:
 ## Version history
 
 0.9.9 (not released yet)
-- Fix command shortcuts still working when main dialog is not active.
+ - Fix command shortcuts still working when main dialog is not active.
+ - New Uninstall tree - uninstall with dependencies - feature.
 
 0.9.8 (04-01-2022)
-- Add support and automatic follow of HTTP redirect responses.
-- Fix Network ListView columns click wrongly pops up contextual menu.
-- Fix Network ListView not properly redrawn after item sorting.
-- Fix Network Abort button not properly enabled at download start.
-- Fix Package Editor not properly clear properties of modified existing package.
-- New menu and shortcut to load seleted package in Package Editor.
-- Fix not working delete repository button of Network tab.
-- Fix overly long warning messages with huge packages list.
+ - Add support and automatic follow of HTTP redirect responses.
+ - Fix Network ListView columns click wrongly pops up contextual menu.
+ - Fix Network ListView not properly redrawn after item sorting.
+ - Fix Network Abort button not properly enabled at download start.
+ - Fix Package Editor not properly clear properties of modified existing package.
+ - New menu and shortcut to load seleted package in Package Editor.
+ - Fix not working delete repository button of Network tab.
+ - Fix overly long warning messages with huge packages list.
 
 0.9.7 (07-18-2021)
  - Developer mode back as enabled by default.
