@@ -63,6 +63,7 @@ Open Mod Mananager currently implements the following key features:
 0.9.9 (not released yet)
  - Fix command shortcuts still working when main dialog is not active.
  - New Uninstall tree - uninstall with dependencies - feature.
+ - Add scroll for Overlap and Dependencies in Package Properties Dialog.
 
 0.9.8 (04-01-2022)
  - Add support and automatic follow of HTTP redirect responses.
