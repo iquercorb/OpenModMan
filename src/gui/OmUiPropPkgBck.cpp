@@ -17,6 +17,7 @@
 
 #include "gui/res/resource.h"
 #include "OmPackage.h"
+#include "OmLocation.h"
 #include "gui/OmUiPropPkg.h"
 #include "gui/OmUiPropPkgBck.h"
 
@@ -84,12 +85,22 @@ void OmUiPropPkgBck::_onInit()
     // Overlap by
     this->enableItem(IDC_EC_OUT03, true);
     if(pPkg->ovrCount()) {
+
+      OmLocation* pLoc = pPkg->pLoc();
+
       wstring olap_str;
+      uint64_t olap_hsh;
+      OmPackage* olap_pkg;
+
       unsigned n = pPkg->ovrCount();
       for(unsigned i = 0; i < n; ++i) {
-        olap_str += Om_toHexString(pPkg->ovrGet(i));
+
+        olap_hsh = pPkg->ovrGet(i);
+        olap_pkg = pLoc->pkgFind(olap_hsh);
+        olap_str += olap_pkg != nullptr ? olap_pkg->ident() : Om_toHexString(olap_hsh);
+
         if(i < (n - 1)) {
-          olap_str += L"; ";
+          olap_str += L"\r\n";
         }
       }
       this->setItemText(IDC_EC_OUT03, olap_str);

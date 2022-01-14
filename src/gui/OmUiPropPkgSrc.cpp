@@ -101,7 +101,7 @@ void OmUiPropPkgSrc::_onInit()
       for(unsigned i = 0; i < pPkg->depCount(); ++i) {
         dpn_str += pPkg->depGet(i);
         if(i < (pPkg->depCount() - 1)) {
-          dpn_str += L"; ";
+          dpn_str += L"\r\n";
         }
       }
       this->setItemText(IDC_EC_OUT08, dpn_str);

@@ -693,6 +693,16 @@ class OmPackage
     ///
     void log(unsigned level, const wstring& head, const wstring& detail);
 
+    /// \brief Package Location.
+    ///
+    /// Returns Package affiliated Target Location.
+    ///
+    /// \return Pointer to Location object.
+    ///
+    OmLocation* pLoc() const {
+      return this->_location;
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     /// \brief Add source item
