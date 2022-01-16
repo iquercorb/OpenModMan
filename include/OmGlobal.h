@@ -162,7 +162,7 @@ uint64_t Om_getXXHash3(const wstring& str);
 ///
 /// \return 16 hexadecimal characters hash string.
 ///
-wstring Om_getChecksum(const wstring& path);
+wstring Om_getXXHsum(const wstring& path);
 
 /// \brief Get file checksum.
 ///
@@ -173,7 +173,7 @@ wstring Om_getChecksum(const wstring& path);
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_getChecksum(wstring& hex, const wstring& path);
+bool Om_getXXHsum(wstring& hex, const wstring& path);
 
 /// \brief Compare file checksum.
 ///
@@ -184,7 +184,7 @@ bool Om_getChecksum(wstring& hex, const wstring& path);
 ///
 /// \return true if checksum matches, false otherwise
 ///
-bool Om_cmpChecksum(const wstring& path, const wstring& hex);
+bool Om_cmpXXHsum(const wstring& path, const wstring& hex);
 
 /// \brief Get file MD5 checksum.
 ///

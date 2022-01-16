@@ -318,7 +318,7 @@ static inline bool __XXHash3_cmp_checksum(const wstring& hex, const void* data, 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getChecksum(const wstring& path)
+wstring Om_getXXHsum(const wstring& path)
 {
   wstring hex;
 
@@ -349,7 +349,7 @@ wstring Om_getChecksum(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getChecksum(wstring& hex, const wstring& path)
+bool Om_getXXHsum(wstring& hex, const wstring& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -377,7 +377,7 @@ bool Om_getChecksum(wstring& hex, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_cmpChecksum(const wstring& path, const wstring& hex)
+bool Om_cmpXXHsum(const wstring& path, const wstring& hex)
 {
   HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);

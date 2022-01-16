@@ -395,6 +395,8 @@ class OmRemote
 
     wstring             _checksum;
 
+    bool                _usemd5;
+
     unsigned            _state;
 
     wstring             _ident;

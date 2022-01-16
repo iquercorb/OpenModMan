@@ -31,6 +31,7 @@ OmRemote::OmRemote() :
   _file(),
   _bytes(0),
   _checksum(),
+  _usemd5(false),
   _state(0),
   _ident(),
   _hash(0),
@@ -63,6 +64,7 @@ OmRemote::OmRemote(OmLocation* pLoc) :
   _file(),
   _bytes(0),
   _checksum(),
+  _usemd5(false),
   _state(0),
   _ident(),
   _hash(0),
@@ -110,18 +112,20 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
     return false;
   }
 
-  // check for propers attributes
   if(!entry.hasAttr(L"bytes")) {
     this->_error = L"Invalid definition : 'bytes' attribute missing.";
     this->log(0, L"Remote(<anonymous>) Parse", this->_error);
     return false;
   }
 
-  // check for propers attributes
+  // check for checksum attribute
   if(!entry.hasAttr(L"checksum")) {
-    this->_error = L"Invalid definition : 'checksum' attribute missing.";
-    this->log(0, L"Remote(<anonymous>) Parse", this->_error);
-    return false;
+    // try to get alternative md5sum attribute
+    if(!entry.hasAttr(L"md5sum")) {
+      this->_error = L"Invalid definition : 'checksum'/'md5sum' attribute missing.";
+      this->log(0, L"Remote(<anonymous>) Parse", this->_error);
+      return false;
+    }
   }
 
   // check for propers attributes
@@ -134,7 +138,13 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
   // get file informations
   this->_file = entry.attrAsString(L"file");
   this->_bytes = entry.attrAsInt(L"bytes");
-  this->_checksum = entry.attrAsString(L"checksum");
+  if(entry.hasAttr(L"checksum")) {
+    this->_usemd5 = false;
+    this->_checksum = entry.attrAsString(L"checksum");
+  } else {
+    this->_usemd5 = true;
+    this->_checksum = entry.attrAsString(L"md5sum");
+  }
 
   // get packages informations
   this->_ident = entry.attrAsString(L"ident");
@@ -334,7 +344,9 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
   if(exitCode == 0) {
     // compare checksum
-    if(Om_cmpChecksum(self->_downl_temp, self->_checksum)) {
+    bool mach = (self->_usemd5) ? Om_cmpMD5sum(self->_downl_temp, self->_checksum) :
+                                  Om_cmpXXHsum(self->_downl_temp, self->_checksum);
+    if(mach) {
       int result = Om_fileMove(self->_downl_temp, self->_downl_path);
       if(result == 0) {
         self->_state &= ~RMT_STATE_NEW; //< now in library
