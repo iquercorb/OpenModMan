@@ -395,8 +395,7 @@ void OmUiMainNet::rmtDown(bool upgrade)
 
       msg = L"The package \"" + pRmt->ident() + L"\" ";
       msg += L"cannot be downloaded:\n\n" + pRmt->lastError();
-      Om_dialogBoxErr(this->_hwnd, L"Package download failed", msg);
-
+      Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
     }
   }
 }
@@ -514,7 +513,7 @@ void OmUiMainNet::rmtFixd(bool upgrade)
 
       msg = L"The package \"" + pRmt->ident() + L"\" ";
       msg += L"cannot be downloaded:\n\n" + pRmt->lastError();
-      Om_dialogBoxErr(this->_hwnd, L"Package download failed", msg);
+      Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
 
     }
   }
@@ -904,17 +903,27 @@ void OmUiMainNet::_rmtDnl_finish(uint64_t hash)
   lvItem.mask = LVIF_IMAGE;
   lvItem.iSubItem = 0; //< this is the left most column, "Status"
   lvItem.iImage = -1; //< No Icon
-  if(pRmt->isState(RMT_STATE_NEW)) {
+
+  if(pRmt->isState(RMT_STATE_ERR)) {
+    lvItem.iImage = 5; //< STS_ERR
+  } else if(pRmt->isState(RMT_STATE_DNL)) {
+    lvItem.iImage = 11; //< STS_DNL
+  } else if(pRmt->isState(RMT_STATE_NEW)) {
     if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
     if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
-  } else if(pRmt->isState(RMT_STATE_ERR)) {
-    lvItem.iImage = 5; //< STS_ERR
   } else {
     lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
   }
 
   // send to ListView
   this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+  // if an error occurred, display error dialog
+  if(pRmt->isState(RMT_STATE_ERR)) {
+    wstring msg = L"The package \"" + pRmt->ident() + L"\" ";
+    msg += L"download has encountered an error:\n\n" + pRmt->lastError();
+    Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
+  }
 
   // decrement download count
   this->_rmtDnl_count--;
@@ -1217,15 +1226,13 @@ void OmUiMainNet::_buildLvRmt()
     lvItem.mask = LVIF_IMAGE|LVIF_PARAM; //< icon and special data
     lvItem.iSubItem = 0;
     lvItem.iImage = -1; //< No Icon
-    if(pRmt->isState(RMT_STATE_NEW)) {
-      if(pRmt->isState(RMT_STATE_DNL)) {
-        lvItem.iImage = 11; //< STS_DNL
-      } else {
-        if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
-        if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
-      }
-    } else if(pRmt->isState(RMT_STATE_ERR)) {
+    if(pRmt->isState(RMT_STATE_ERR)) {
       lvItem.iImage = 5; //< STS_ERR
+    } else if(pRmt->isState(RMT_STATE_DNL)) {
+      lvItem.iImage = 11; //< STS_DNL
+    } else if(pRmt->isState(RMT_STATE_NEW)) {
+      if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
+      if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
     } else {
       lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
     }
@@ -1503,7 +1510,6 @@ void OmUiMainNet::_onLvRmtSel()
       this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
     }
   }
-
 }
 
 

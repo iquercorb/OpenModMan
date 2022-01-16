@@ -319,8 +319,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self)) {
 
     exitCode = sock.lastError(); //< curl error code
-    self->_error = L"Error \""+self->_url[0]+L"\": ";
-    self->_error += sock.lastErrorStr();
+    self->_error = L"HTTP request failed: "+sock.lastErrorStr();
 
     if(exitCode == 42) { //< CURLE_ABORTED_BY_CALLBACK
       self->log(1, L"Remote("+self->_ident+L") Download", self->_error);
@@ -346,9 +345,10 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         self->_state |= RMT_STATE_ERR;
       }
     } else {
-      self->_error =  L"File checksum mismatch the reference";
+      self->_error = L"The downloaded data checksum mismatch the reference";
       self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
-      Om_fileDelete(self->_downl_temp);
+      // Delete or not delete ? that is the question...
+      //Om_fileDelete(self->_downl_temp);
       self->_state |= RMT_STATE_ERR;
     }
 
@@ -386,6 +386,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
   // last call to callback so it can check for download result
   if(self->_downl_user_download) {
+    // download rate less than 0.0 is signal for ended download
     self->_downl_user_download(self->_downl_user_ptr, 0.0, 0.0, -1.0, self->_hash);
   }
 
