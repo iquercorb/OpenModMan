@@ -186,6 +186,39 @@ bool Om_getChecksum(wstring& hex, const wstring& path);
 ///
 bool Om_cmpChecksum(const wstring& path, const wstring& hex);
 
+/// \brief Get file MD5 checksum.
+///
+/// Calculates and returns the 32 characters MD5 digest string of the
+/// given data.
+///
+/// \param[in]  path    : Path to file to generate checksum.
+///
+/// \return 32 hexadecimal characters hash string.
+///
+wstring Om_getMD5sum(const wstring& path);
+
+/// \brief Get file MD5 checksum.
+///
+/// Calculates the 32 characters MD5 digest string of the given data.
+///
+/// \param[in]  hex     : String to set as MD5 checksum string.
+/// \param[in]  path    : Path to file to generate checksum.
+///
+/// \return True if operation succeed, false otherwise
+///
+bool Om_getMD5sum(wstring& hex, const wstring& path);
+
+/// \brief Compare file MD5 checksum.
+///
+/// Calculates the 32 characters MD5 digest string of the given data.
+///
+/// \param[in]  path    : Path to file to generate checksum.
+/// \param[in]  hex     : Checksum hexadecimal string to compare.
+///
+/// \return true if checksum matches, false otherwise
+///
+bool Om_cmpMD5sum(const wstring& path, const wstring& hex);
+
 /// \brief Calculate CRC64 value.
 ///
 /// Calculates and returns the CRC64 unsigned integer value of the given
