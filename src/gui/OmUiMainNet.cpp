@@ -906,8 +906,6 @@ void OmUiMainNet::_rmtDnl_finish(uint64_t hash)
 
   if(pRmt->isState(RMT_STATE_ERR)) {
     lvItem.iImage = 5; //< STS_ERR
-  } else if(pRmt->isState(RMT_STATE_DNL)) {
-    lvItem.iImage = 11; //< STS_DNL
   } else if(pRmt->isState(RMT_STATE_NEW)) {
     if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
     if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
