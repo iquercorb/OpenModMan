@@ -1794,9 +1794,9 @@ void OmUiMainNet::_onResize()
   // Package name/title
   this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-161, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-85, 86, 79);
+  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
   // Package description
-  this->_setItemPos(IDC_EC_TXT, 95, this->height()-85, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_TXT, 95, this->height()-83, this->width()-101, 78);
 
   InvalidateRect(this->_hwnd, nullptr, true);
 }
