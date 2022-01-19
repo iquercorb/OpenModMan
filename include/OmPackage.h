@@ -612,6 +612,26 @@ class OmPackage
       return (_type & PKG_TYPE_ZIP);
     }
 
+    /// \brief Get category.
+    ///
+    /// Returns package category if any.
+    ///
+    /// \return Package category.
+    ///
+    const wstring& category() const {
+      return _category;
+    }
+
+    /// \brief Set category.
+    ///
+    /// Sets Package category string.
+    ///
+    /// \param[in]  str    : Category string to set.
+    ///
+    void setCategory(const wstring& str) {
+      _category = str;
+    }
+
     /// \brief Get description.
     ///
     /// Returns package description (README) content if any.
@@ -789,6 +809,8 @@ class OmPackage
     vector<OmPkgItem>   _bckItemLs;
 
     vector<uint64_t>    _ovrLs;
+
+    wstring             _category;
 
     wstring             _desc;
 

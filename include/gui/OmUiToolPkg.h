@@ -106,6 +106,8 @@ class OmUiToolPkg : public OmDialog
 
     void                _onLbDpnlsSel();
 
+    void                _onCbCatSel();
+
     void                _onCkBoxDep();
 
     void                _onBcAddDep();

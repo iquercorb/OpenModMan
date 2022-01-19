@@ -189,6 +189,7 @@
 #define IDC_CB_LVL                              40412
 #define IDC_CB_ICS                              40413
 #define IDC_CB_EXT                              40414
+#define IDC_CB_CAT                              40415
 #define IDC_LB_BAT                              40420
 #define IDC_LB_PATH                             40421
 #define IDC_LB_LOC                              40422

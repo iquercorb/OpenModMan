@@ -360,6 +360,20 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 
   wstring item_str;
 
+  // get package category
+  int cb_sel = self->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+  if(cb_sel == self->msgItem(IDC_CB_CAT, CB_GETCOUNT)-1) {
+    // get category from text field
+    self->getItemText(IDC_EC_INP09, item_str);
+  } else {
+    // Get from ComboBox
+    wchar_t catg[OMM_ITM_BUFF];
+    self->msgItem(IDC_CB_CAT, CB_GETLBTEXT, cb_sel, reinterpret_cast<LPARAM>(catg));
+    item_str = catg;
+  }
+  self->_package.setCategory(item_str);
+
+
   // get/update package dependencies list
   self->_package.depClear(); //< clear previous list
   if(self->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
@@ -684,6 +698,24 @@ void OmUiToolPkg::_onLbDpnlsSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolPkg::_onCbCatSel()
+{
+  int cb_sel = this->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+
+  // check whether user selected the last item (GENERIC)
+  if(cb_sel == this->msgItem(IDC_CB_CAT, CB_GETCOUNT)-1) {
+    // enable the text field
+    this->enableItem(IDC_EC_INP09, true);
+  } else {
+    this->setItemText(IDC_EC_INP09, L"");
+    this->enableItem(IDC_EC_INP09, false);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiToolPkg::_onCkBoxDep()
 {
   bool bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
@@ -957,6 +989,19 @@ void OmUiToolPkg::_onInit()
   this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
   this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2, 0);
 
+  // add items into Category ComboBox
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Generic"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Texture"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Model"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Level"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Mission"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"UI"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Audio"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Feature"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Script"));
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"- Custom -"));
+  this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0, 0);
+
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
 
@@ -1034,39 +1079,48 @@ void OmUiToolPkg::_onResize()
 
   // -- Right Frame --
 
+  // [ - - -         Category GroupBox           - - -
+  this->_setItemPos(IDC_GB_GRP02, half_w+5, 0, half_w-10, 60);
+  // Category Label
+  this->_setItemPos(IDC_SC_LBL08, half_w+10, 10, 120, 9);
+  // Category ComboBox & EditText
+  this->_setItemPos(IDC_CB_CAT, half_w+10, 25, half_w-20, 14);
+  // Category ComboBox & EditText
+  this->_setItemPos(IDC_EC_INP09, half_w+10, 40, half_w-20, 14);
+
   // [ - - -       Dependencies GroupBox          - - -
-  this->_setItemPos(IDC_GB_GRP02, half_w+5, 0, half_w-10, 80);
+  this->_setItemPos(IDC_GB_GRP03, half_w+5, 60, half_w-10, 75);
   // Has Dependencies CheckBox
-  this->_setItemPos(IDC_BC_CKBX1, half_w+10, 10, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX1, half_w+10, 70, 120, 9);
   // Ident Label, EditText & + Button
-  this->_setItemPos(IDC_SC_LBL06, half_w+10, 27, 35, 9);
-  this->_setItemPos(IDC_EC_INP07, half_w+40, 25, half_w-70, 13);
-  this->_setItemPos(IDC_BC_ADD, this->width()-25, 25, 16, 13);
+  this->_setItemPos(IDC_SC_LBL06, half_w+10, 87, 35, 9);
+  this->_setItemPos(IDC_EC_INP07, half_w+40, 85, half_w-70, 13);
+  this->_setItemPos(IDC_BC_ADD, this->width()-25, 85, 16, 13);
   // Depend ListBox & Trash Button
-  this->_setItemPos(IDC_LB_DPN, half_w+10, 45, half_w-40, 30);
-  this->_setItemPos(IDC_BC_DEL, this->width()-25, 45, 16, 13);
+  this->_setItemPos(IDC_LB_DPN, half_w+10, 100, half_w-40, 30);
+  this->_setItemPos(IDC_BC_DEL, this->width()-25, 100, 16, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -        Snapshot GroupBox             - - -
-  this->_setItemPos(IDC_GB_GRP03, half_w+5, 85, half_w-10, 95);
+  this->_setItemPos(IDC_GB_GRP04, half_w+5, 135, half_w-10, 95);
   // Include snapshot CheckBox
-  this->_setItemPos(IDC_BC_CKBX2, half_w+10, 95, 65, 9);
+  this->_setItemPos(IDC_BC_CKBX2, half_w+10, 145, 120, 9);
   // Snapshot Bitmap & Select... Button
-  this->_setItemPos(IDC_SB_PKG, this->width()-160, 96, 86, 79);
-  this->_setItemPos(IDC_BC_BRW04, this->width()-50, 95, 40, 13);
+  this->_setItemPos(IDC_SB_PKG, this->width()-160, 146, 86, 79);
+  this->_setItemPos(IDC_BC_BRW04, this->width()-50, 145, 40, 13);
   // Snapshot hidden EditText
-  this->_setItemPos(IDC_EC_INP08, half_w+10, 110, 120, 13); // hidden
+  this->_setItemPos(IDC_EC_INP08, half_w+10, 160, 120, 13); // hidden
   // Snapshot helper Static text
-  this->_setItemPos(IDC_SC_NOTES, this->width()-230, 125, 60, 35);
+  this->_setItemPos(IDC_SC_NOTES, this->width()-230, 180, 60, 35);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -        Description GroupBox          - - -
-  this->_setItemPos(IDC_GB_GRP04, half_w+5, 185, half_w-10, this->height()-215);
+  this->_setItemPos(IDC_GB_GRP05, half_w+5, 230, half_w-10, this->height()-260);
   // Description CheckBox & Load.. Button
-  this->_setItemPos(IDC_BC_CKBX3, half_w+10, 195, 100, 9);
-  this->_setItemPos(IDC_BC_BRW05, this->width()-50, 195, 40, 13);
+  this->_setItemPos(IDC_BC_CKBX3, half_w+10, 240, 100, 9);
+  this->_setItemPos(IDC_BC_BRW05, this->width()-50, 240, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_TXT, half_w+10, 210, half_w-20, this->height()-245);
+  this->_setItemPos(IDC_EC_TXT, half_w+10, 255, half_w-20, this->height()-290);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // ----- Separator
@@ -1176,6 +1230,10 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE)
         has_changed = true;
+      break;
+
+    case IDC_CB_CAT: //< Location ComboBox
+      if(HIWORD(wParam) == CBN_SELCHANGE) this->_onCbCatSel();
       break;
 
     case IDC_BC_CKBX1: //< Has Dependencies CheckBox

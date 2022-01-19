@@ -278,6 +278,10 @@ bool OmPackage::srcParse(const wstring& path)
             this->_depLs.push_back(dpnd_node.child(L"ident", i).content());
           }
         }
+        // check for Package category
+        if(cfg_xml.hasChild(L"category")) {
+          this->_category = cfg_xml.child(L"category").content();
+        }
         // check for Package description
         if(cfg_xml.hasChild(L"description")) {
           this->_desc = cfg_xml.child(L"description").content();
@@ -1112,6 +1116,11 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
     return true;
+  }
+
+  // add category to source definition
+  if(!this->_category.empty()) {
+    def_xml.addChild(L"category").setContent(this->_category);
   }
 
   // add dependency to source definition
