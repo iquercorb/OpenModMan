@@ -56,7 +56,6 @@ enum OmPkgItemDest {
   PKGITEM_DEST_DEL = 2    ///< Delete destination
 };
 
-
 /// \brief Package item.
 ///
 /// Simple structure for package file or folder item.
@@ -70,6 +69,31 @@ struct OmPkgItem
   int             cdri; ///<  Zip CDR index
 
   wstring         path; ///<  Relative path
+};
+
+/// \brief Package default category count.
+///
+/// Package default Mod category count.
+///
+const size_t OmPkgCatCnt = 12;
+
+/// \brief Package default category list.
+///
+/// Package default Mod category string list.
+///
+const wchar_t OmPkgCatStr[][16] = {
+  L"GENERIC",
+  L"TEXTURE",
+  L"SKIN",
+  L"MODEL",
+  L"LEVEL",
+  L"MISSION",
+  L"UI",
+  L"AUDIO",
+  L"FEATURE",
+  L"PLUGIN",
+  L"SCRIPT",
+  L"PATCH",
 };
 
 

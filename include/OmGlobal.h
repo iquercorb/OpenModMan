@@ -379,6 +379,17 @@ void Om_getRandBytes(uint8_t* dest, size_t size);
 ///
 wstring Om_genUUID();
 
+/// \brief Convert string to upper case.
+///
+/// Convert the given string to its upper case version.
+///
+/// \param[in]  str    : String to convert.
+///
+inline void Om_strToUpper(wstring& str) {
+  for(size_t i = 0; i < str.size(); ++i)
+    str[i] = std::towupper(str[i]);
+}
+
 /// \brief UTF-8 to UTF-16 conversion.
 ///
 /// Convert the given UTF-8 multibyte string into UTF-16 wide char string.

@@ -158,6 +158,11 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
     this->_version.parse(vers);
   }
 
+  // check for category
+  if(entry.hasAttr(L"category")) {
+    this->_category = entry.attrAsString(L"category");
+  }
+
   OmXmlNode xml_node;
 
   // check custom URL
@@ -170,11 +175,9 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
 
   // check for dependencies
   if(entry.hasChild(L"dependencies")) {
-
     xml_node = entry.child(L"dependencies");
     std::vector<OmXmlNode> xml_ls;
     xml_node.children(xml_ls, L"ident");
-
     for(unsigned i = 0; i < xml_ls.size(); ++i) {
       this->_depLs.push_back(xml_ls[i].content());
     }

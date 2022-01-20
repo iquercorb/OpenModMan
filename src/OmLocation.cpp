@@ -96,6 +96,82 @@ static bool __rmt_sort_name_fn(const OmRemote* a, const OmRemote* b)
 }
 
 
+/// \brief Package category comparison callback
+///
+/// std::sort callback comparison function for sorting
+/// package by category in alphabetical order.
+///
+/// \param[in]  a     : Left Package.
+/// \param[in]  b     : Right Package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __pkg_sort_catg_fn(const OmPackage* a, const OmPackage* b)
+{
+  // test against the shorter string
+  size_t l = a->category().size() > b->category().size() ? b->category().size() : a->category().size();
+
+  const wchar_t* a_srt = a->category().c_str();
+  const wchar_t* b_str = b->category().c_str();
+
+  // test for ASCII value greater than the other
+  for(unsigned i = 0; i < l; ++i) {
+    if(towupper(a_srt[i]) != towupper(b_str[i])) {
+      if(towupper(a_srt[i]) < towupper(b_str[i])) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // strings are equals in tester portion, sort by string size
+  if(a->category().size() < b->category().size())
+    return true;
+
+  // strings are strictly equals, we sort by name
+  return __pkg_sort_name_fn(a, b);
+}
+
+
+/// \brief Remote package category comparison callback
+///
+/// std::sort callback comparison function for sorting
+/// remote package by category in alphabetical order.
+///
+/// \param[in]  a     : Left Remote package.
+/// \param[in]  b     : Right Remote package.
+///
+/// \return True if Package a is "before" Package b, false otherwise
+///
+static bool __rmt_sort_catg_fn(const OmRemote* a, const OmRemote* b)
+{
+  // test against the shorter string
+  size_t l = a->category().size() > b->category().size() ? b->category().size() : a->category().size();
+
+  const wchar_t* a_srt = a->category().c_str();
+  const wchar_t* b_str = b->category().c_str();
+
+  // test for ASCII value greater than the other
+  for(unsigned i = 0; i < l; ++i) {
+    if(towupper(a_srt[i]) != towupper(b_str[i])) {
+      if(towupper(a_srt[i]) < towupper(b_str[i])) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // strings are equals in tester portion, sort by string size
+  if(a->category().size() < b->category().size())
+    return true;
+
+  // strings are strictly equals, we sort by name
+  return __rmt_sort_name_fn(a, b);
+}
+
+
 /// \brief Package version comparison callback
 ///
 /// std::sort callback comparison function for sorting package
@@ -2775,6 +2851,9 @@ inline void OmLocation::_pkgSort()
   if(this->_pkgSorting & LS_SORT_VERS) //< sorting by version (ascending)
     std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_sort_vers_fn);
 
+  if(this->_pkgSorting & LS_SORT_CATG) //< sorting by version (ascending)
+    std::sort(this->_pkgLs.begin(), this->_pkgLs.end(), __pkg_sort_catg_fn);
+
   // check whether we need a normal or reverse sorting
   if(this->_pkgSorting & LS_SORT_REVERSE) {
     std::reverse(this->_pkgLs.begin(), this->_pkgLs.end());
@@ -2798,6 +2877,9 @@ inline void OmLocation::_rmtSort()
 
   if(this->_rmtSorting & LS_SORT_SIZE) //< sorting by version (ascending)
     std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_size_fn);
+
+  if(this->_rmtSorting & LS_SORT_CATG) //< sorting by version (ascending)
+    std::sort(this->_rmtLs.begin(), this->_rmtLs.end(), __rmt_sort_catg_fn);
 
   // check whether we need a normal or reverse sorting
   if(this->_rmtSorting & LS_SORT_REVERSE) {

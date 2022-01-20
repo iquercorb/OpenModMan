@@ -261,7 +261,7 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
     xml_rmt.setAttr(L"md5sum",Om_getMD5sum(path));
-
+    xml_rmt.setAttr(L"category", pkg.category());
 
   } else {
 
@@ -273,7 +273,8 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.setAttr(L"ident", pkg.ident());
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
-    xml_rmt.setAttr(L"md5sum",Om_getMD5sum(path));
+    xml_rmt.setAttr(L"md5sum", Om_getMD5sum(path));
+    xml_rmt.setAttr(L"category", pkg.category());
 
     // Add package to ListBox
     this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pkg.ident().c_str()));
@@ -349,6 +350,8 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
 
     // no package selected, disable and reset all related controls
     this->setItemText(IDC_EC_OUT02, L"");
+    this->setItemText(IDC_EC_OUT03, L"");
+    this->setItemText(IDC_EC_OUT05, L"");
     this->setItemText(IDC_EC_INP03, L"");
     this->enableItem(IDC_EC_INP03, false);
     this->enableItem(IDC_BC_SAV01, false);
@@ -390,6 +393,8 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   HBITMAP hBm_new, hBm_old;
 
   this->setItemText(IDC_EC_OUT02, this->_rmtCur.attrAsString(L"file"));
+  this->setItemText(IDC_EC_OUT03, this->_rmtCur.attrAsString(L"md5sum"));
+  this->setItemText(IDC_EC_OUT05, this->_rmtCur.attrAsString(L"category"));
 
   // allow custom URL CheckBox
   this->enableItem(IDC_BC_CKBX1, true);
@@ -1279,85 +1284,101 @@ void OmUiToolRep::_onResize()
   // -- Left Frame --
 
   // New and Open.. Buttons
-  this->_setItemPos(IDC_BC_NEW, 10, 10, 50, 14);
-  this->_setItemPos(IDC_BC_BRW01, 65, 10, 50, 14);
+  this->_setItemPos(IDC_BC_NEW, 5, 5, 50, 14);
+  this->_setItemPos(IDC_BC_BRW01, 60, 5, 50, 14);
 
   // [ - - -       Packages Title GroupBox        - - -
-  this->_setItemPos(IDC_GB_GRP01, 5, 30, half_w-10, 45);
+  this->_setItemPos(IDC_GB_GRP01, 5, 20, half_w-10, 45);
   // Title Label & EditText
-  this->_setItemPos(IDC_SC_LBL01, 10, 40, 120, 9);
-  this->_setItemPos(IDC_EC_INP01, 10, 55, half_w-20, 12);
+  this->_setItemPos(IDC_SC_LBL01, 10, 30, 120, 9);
+  this->_setItemPos(IDC_EC_INP01, 10, 45, half_w-20, 12);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -        Download path GroupBox        - - -
-  this->_setItemPos(IDC_GB_GRP02, 5, 80, half_w-10, 45);
+  this->_setItemPos(IDC_GB_GRP02, 5, 65, half_w-10, 45);
   // Download path Label & EditText
-  this->_setItemPos(IDC_SC_LBL03, 10, 90, 120, 9);
-  this->_setItemPos(IDC_EC_INP02, 10, 105, half_w-20, 12);
+  this->_setItemPos(IDC_SC_LBL03, 10, 75, 120, 9);
+  this->_setItemPos(IDC_EC_INP02, 10, 90, half_w-20, 12);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -       Packages List GroupBox        - - -
-  this->_setItemPos(IDC_GB_GRP03, 5, 130, half_w-10, this->height()-185);
+  this->_setItemPos(IDC_GB_GRP03, 5, 110, half_w-10, this->height()-160);
   // Packages list Label
-  this->_setItemPos(IDC_SC_LBL02, 10, 147, 120, 9);
-  // Packages list ListBox
-  this->_setItemPos(IDC_LB_PKG, 10, 160, half_w-20, this->height()-223);
+  this->_setItemPos(IDC_SC_LBL02, 10, 122, 120, 9);
   // Add folder.. , Add... & Remove Buttons
-  this->_setItemPos(IDC_BC_BRW02, half_w-125, 144, 40, 14);
-  this->_setItemPos(IDC_BC_BRW03, half_w-80, 144, 40, 14);
-  this->_setItemPos(IDC_BC_REM, half_w-26, 144, 16, 14);
+  this->_setItemPos(IDC_BC_BRW02, half_w-125, 120, 40, 14);
+  this->_setItemPos(IDC_BC_BRW03, half_w-80, 120, 40, 14);
+  this->_setItemPos(IDC_BC_REM, half_w-26, 120, 16, 14);
+  // Packages list ListBox
+  this->_setItemPos(IDC_LB_PKG, 10, 138, half_w-20, this->height()-195);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
 
   // Save As.. Button
-  this->_setItemPos(IDC_BC_SAVE, 10, this->height()-45, 50, 14);
+  this->_setItemPos(IDC_BC_SAVE, 5, this->height()-45, 55, 14);
 
   // -- Right Frame --
 
   // [ - - -     Package Name & Url GroupBox      - - -
-  this->_setItemPos(IDC_GB_GRP06, half_w+5, 5, half_w-10, 55);
+  this->_setItemPos(IDC_GB_GRP06, half_w+5, 0, half_w-10, 55);
   // Filename Label & EditText
-  this->_setItemPos(IDC_SC_LBL06, half_w+10, 17, 54, 9);
-  this->_setItemPos(IDC_EC_OUT02, half_w+65, 15, half_w-75, 12);
-  // Custom Url CheckBox & EditText
-  this->_setItemPos(IDC_BC_CKBX1, half_w+10, 42, 54, 9);
-  this->_setItemPos(IDC_EC_INP03, half_w+65, 40, half_w-120, 12);
-  // Custom url Save Button
-  this->_setItemPos(IDC_BC_SAV01, this->width()-50, 40, 40, 13);
+  this->_setItemPos(IDC_SC_LBL06, half_w+10, 10, 54, 9);
+  this->_setItemPos(IDC_EC_OUT02, half_w+65, 10, half_w-75, 11);
+  // Md5sum Label & EditText
+  this->_setItemPos(IDC_SC_LBL10, half_w+10, 25, 54, 9);
+  this->_setItemPos(IDC_EC_OUT03, half_w+65, 25, half_w-75, 11);
+  // Category Label & EditText
+  this->_setItemPos(IDC_SC_LBL11, half_w+10, 40, 54, 9);
+  this->_setItemPos(IDC_EC_OUT05, half_w+65, 40, half_w-75, 11);
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -        Dependencies GroupBox         - - -
-  this->_setItemPos(IDC_GB_GRP07, half_w+5, 65, half_w-10, 50);
+  this->_setItemPos(IDC_GB_GRP07, half_w+5, 55, half_w-10, 50);
   // Dependencies Label
-  this->_setItemPos(IDC_SC_LBL07, half_w+10, 75, 54, 9);
+  this->_setItemPos(IDC_SC_LBL07, half_w+10, 65, 54, 9);
   // Dependencies EditText & Check Button
-  this->_setItemPos(IDC_EC_OUT04, half_w+65, 76, half_w-120, 30);
-  this->_setItemPos(IDC_BC_QRY, this->width()-50, 75, 40, 13);
+  this->_setItemPos(IDC_EC_OUT04, half_w+65, 66, half_w-120, 30);
+  this->_setItemPos(IDC_BC_QRY, this->width()-50, 65, 40, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -          Snapshot GroupBox           - - -
-  this->_setItemPos(IDC_GB_GRP08, half_w+5, 120, half_w-10, 95);
+  this->_setItemPos(IDC_GB_GRP08, half_w+5, 105, half_w-10, 95);
   // Snapshot Label
-  this->_setItemPos(IDC_SC_LBL08, half_w+10, 130, 54, 9);
+  this->_setItemPos(IDC_SC_LBL08, half_w+10, 115, 54, 9);
   // Snapshot Static Bitmap
-  this->_setItemPos(IDC_SB_PKG, half_w+65, 131, 86, 79);
+  this->_setItemPos(IDC_SB_PKG, half_w+65, 115, 86, 79);
   // Change.. & Delete Buttons
-  this->_setItemPos(IDC_BC_BRW08, this->width()-50, 130, 40, 13);
-  this->_setItemPos(IDC_BC_DEL, this->width()-50, 145, 40, 13);
+  this->_setItemPos(IDC_BC_BRW08, this->width()-50, 115, 40, 13);
+  this->_setItemPos(IDC_BC_DEL, this->width()-50, 130, 40, 13);
   // Snapshot helper Static text
-  this->_setItemPos(IDC_SC_NOTES, half_w+165, 170, 60, 30);
+  this->_setItemPos(IDC_SC_NOTES, half_w+165, 155, 60, 30);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -        Description GroupBox          - - -
-  this->_setItemPos(IDC_GB_GRP09, half_w+5, 220, half_w-10, this->height()-250);
+  this->_setItemPos(IDC_GB_GRP09, half_w+5, 200, half_w-10, this->height()-270);
   // Description Label
-  this->_setItemPos(IDC_SC_LBL09, half_w+10, 232, 54, 9);
+  this->_setItemPos(IDC_SC_LBL09, half_w+10, 211, 54, 9);
   // Load.. & Save Buttons
-  this->_setItemPos(IDC_BC_BRW09, this->width()-95, 230, 40, 13);
-  this->_setItemPos(IDC_BC_SAV02, this->width()-50, 230, 40, 13);
+  this->_setItemPos(IDC_BC_BRW09, this->width()-95, 210, 40, 13);
+  this->_setItemPos(IDC_BC_SAV02, this->width()-50, 210, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_TXT, half_w+10, 245, half_w-20, this->height()-280);
+  this->_setItemPos(IDC_EC_TXT, half_w+10, 225, half_w-20, this->height()-300);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
+
+  // force controls to repaint
+  InvalidateRect(this->getItem(IDC_GB_GRP10), nullptr, true);
+  InvalidateRect(this->getItem(IDC_BC_CKBX1), nullptr, true);
+  InvalidateRect(this->getItem(IDC_EC_INP03), nullptr, true);
+  InvalidateRect(this->getItem(IDC_BC_SAV01), nullptr, true);
+
+  // [ - - -        Description GroupBox          - - -
+  this->_setItemPos(IDC_GB_GRP10, half_w+5, this->height()-70, half_w-10, 40);
+  // Custom Url CheckBox & EditText
+  this->_setItemPos(IDC_BC_CKBX1, half_w+10, this->height()-60, 54, 9);
+  this->_setItemPos(IDC_EC_INP03, half_w+65, this->height()-60, half_w-120, 12);
+  // Custom url Save Button
+  this->_setItemPos(IDC_BC_SAV01, this->width()-50, this->height()-60, 40, 13);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);

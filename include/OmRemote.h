@@ -251,6 +251,16 @@ class OmRemote
       return _name;
     }
 
+    /// \brief Get category.
+    ///
+    /// Returns remote package category if any.
+    ///
+    /// \return Category string.
+    ///
+    const wstring& category() const {
+      return _category;
+    }
+
     /// \brief Get description.
     ///
     /// Returns remote package description if any.
@@ -410,6 +420,8 @@ class OmRemote
     wstring             _name;
 
     vector<wstring>     _depLs;
+
+    wstring             _category;
 
     wstring             _desc;
 

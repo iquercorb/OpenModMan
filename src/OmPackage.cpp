@@ -1269,6 +1269,7 @@ void OmPackage::clear()
   this->_bckDir.clear();
   this->_bckItemLs.clear();
   this->_ovrLs.clear();
+  this->_category.clear();
   this->_desc.clear();
   this->_version.define(0,0,0);
 }

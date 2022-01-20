@@ -1060,7 +1060,6 @@ void OmUiMainLib::_buildLvPkg()
     } else {
       lvItem.iImage = 0; // PKG_ERR
     }
-
     lvItem.pszText = const_cast<LPWSTR>(pPkg->name().c_str());
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
@@ -1068,6 +1067,12 @@ void OmUiMainLib::_buildLvPkg()
     lvItem.mask = LVIF_TEXT;
     lvItem.iSubItem = 2;
     lvItem.pszText = const_cast<LPWSTR>(pPkg->version().asString().c_str());
+    this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Fourth column, the package category, we set the sub-item
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 3;
+    lvItem.pszText = const_cast<LPWSTR>(pPkg->category().c_str());
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
@@ -2026,7 +2031,7 @@ void OmUiMainLib::_onInit()
   // set explorer theme
   SetWindowTheme(this->getItem(IDC_LV_PKG),L"Explorer",nullptr);
 
-  // we now add columns into our list-view control
+  // we now add columns into Packages list-view control
   lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
   //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
   // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
@@ -2039,22 +2044,28 @@ void OmUiMainLib::_onInit()
 
   lvCol.pszText = const_cast<LPWSTR>(L"Name");
   lvCol.fmt = LVCFMT_LEFT;
-  lvCol.cx = 550;
-  lvCol.iSubItem = 1;
-  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.cx = 440;
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Version");
   lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 70;
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
+
+  lvCol.pszText = const_cast<LPWSTR>(L"Category");
+  lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 80;
-  lvCol.iSubItem = 2;
-  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_PKG, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   // Initialize Batches ListView control
   this->msgItem(IDC_LV_BAT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
   // set explorer theme
   SetWindowTheme(this->getItem(IDC_LV_BAT),L"Explorer",nullptr);
 
-  // we now add columns into our list-view control
+  // we now add columns into Batches list-view control
   lvCol.mask = LVCF_WIDTH;
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 440;
@@ -2114,7 +2125,7 @@ void OmUiMainLib::_onResize()
   this->_setItemPos(IDC_LV_PKG, 5, 35, this->width()-161, this->height()-151);
   // Resize the Packages ListView column
   GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-145);
+  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-210);
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
@@ -2340,6 +2351,9 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           break;
         case 2:
           pLoc->libSetSorting(LS_SORT_VERS);
+          break;
+        case 3:
+          pLoc->libSetSorting(LS_SORT_CATG);
           break;
         default:
           pLoc->libSetSorting(LS_SORT_NAME);

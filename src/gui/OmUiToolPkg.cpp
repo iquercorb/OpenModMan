@@ -156,9 +156,16 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   // disable the save button
   this->enableItem(IDC_BC_SAVE, false);
 
+  // category initial state
+  this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0);
+  this->enableItem(IDC_CB_CAT, false);
+  this->setItemText(IDC_EC_INP09, L"");
+  this->enableItem(IDC_EC_INP09, false);
+
   // Dependencies initial state
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CKBX1, false);
+  this->enableItem(IDC_SC_LBL06, false); //< "Ident" label
   this->msgItem(IDC_LB_DPN, LB_RESETCONTENT);
   this->enableItem(IDC_LB_DPN, false);
   this->setItemText(IDC_EC_INP07, L"");
@@ -206,6 +213,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_BC_CKBX2, true);
   this->enableItem(IDC_BC_CKBX3, true);
 
+  this->enableItem(IDC_CB_CAT, true);
+
   // set source path to input EditText depending selected Radio
   this->enableItem(IDC_EC_INP01, true);
   this->enableItem(IDC_EC_INP02, true);
@@ -219,9 +228,28 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     this->enableItem(IDC_EC_INP01, false);
   }
 
+  // check for package category
+  if(!this->_package.category().empty()) {
+    int cb_idx = this->msgItem(IDC_CB_CAT, CB_FINDSTRING, -1, reinterpret_cast<LPARAM>(this->_package.category().c_str()));
+    if(cb_idx >= 0) {
+      this->msgItem(IDC_CB_CAT, CB_SETCURSEL, cb_idx);
+      this->setItemText(IDC_EC_INP09, L"");
+      this->enableItem(IDC_EC_INP09, false);
+    } else {
+      this->msgItem(IDC_CB_CAT, CB_SETCURSEL, OmPkgCatCnt);
+      this->enableItem(IDC_EC_INP09, true);
+      this->setItemText(IDC_EC_INP09, this->_package.category());
+    }
+  } else {
+    this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0);
+    this->setItemText(IDC_EC_INP09, L"");
+    this->enableItem(IDC_EC_INP09, false);
+  }
+
   // check for package dependencies
   if(this->_package.depCount()) {
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
+    this->enableItem(IDC_SC_LBL06, true); //< "Ident" label
     this->enableItem(IDC_LB_DPN, true);
     this->enableItem(IDC_EC_INP07, true);
     for(unsigned i = 0; i < this->_package.depCount(); ++i) {
@@ -365,6 +393,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   if(cb_sel == self->msgItem(IDC_CB_CAT, CB_GETCOUNT)-1) {
     // get category from text field
     self->getItemText(IDC_EC_INP09, item_str);
+    Om_strToUpper(item_str); //< convert to upper case
   } else {
     // Get from ComboBox
     wchar_t catg[OMM_ITM_BUFF];
@@ -720,6 +749,7 @@ void OmUiToolPkg::_onCkBoxDep()
 {
   bool bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
+  this->enableItem(IDC_SC_LBL06, bm_chk); //< "Ident" label
   this->enableItem(IDC_EC_INP07, bm_chk);
   this->enableItem(IDC_LB_DPN, bm_chk);
 }
@@ -990,16 +1020,10 @@ void OmUiToolPkg::_onInit()
   this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2, 0);
 
   // add items into Category ComboBox
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Generic"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Texture"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Model"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Level"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Mission"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"UI"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Audio"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Feature"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Script"));
-  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"- Custom -"));
+  for(size_t i = 0; i < OmPkgCatCnt; ++i) {
+    this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(OmPkgCatStr[i]));
+  }
+  this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"- CUSTOM -"));
   this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0, 0);
 
   // Set snapshot format advice
@@ -1104,7 +1128,7 @@ void OmUiToolPkg::_onResize()
   // [ - - -        Snapshot GroupBox             - - -
   this->_setItemPos(IDC_GB_GRP04, half_w+5, 135, half_w-10, 95);
   // Include snapshot CheckBox
-  this->_setItemPos(IDC_BC_CKBX2, half_w+10, 145, 120, 9);
+  this->_setItemPos(IDC_BC_CKBX2, half_w+10, 145, 70, 9);
   // Snapshot Bitmap & Select... Button
   this->_setItemPos(IDC_SB_PKG, this->width()-160, 146, 86, 79);
   this->_setItemPos(IDC_BC_BRW04, this->width()-50, 145, 40, 13);

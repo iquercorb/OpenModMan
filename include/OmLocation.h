@@ -31,10 +31,11 @@ class OmContext;
 /// Location packages and remote packages lists sorting type.
 ///
 enum OmLocLsSort : unsigned {
-  LS_SORT_STAT = 0x1,
-  LS_SORT_NAME = 0x2,
-  LS_SORT_VERS = 0x4,
-  LS_SORT_SIZE = 0x8,
+  LS_SORT_STAT = 0x01,
+  LS_SORT_NAME = 0x02,
+  LS_SORT_VERS = 0x04,
+  LS_SORT_SIZE = 0x08,
+  LS_SORT_CATG = 0x10,
   LS_SORT_REVERSE = 0x100
 };
 

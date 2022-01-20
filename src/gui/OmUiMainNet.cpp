@@ -808,7 +808,7 @@ bool OmUiMainNet::_rmtDnl_update(double tot, double cur, double rate, uint64_t h
 
   // update download percent
   lvItem.mask = LVIF_TEXT;
-  lvItem.iSubItem = 4; //< this is the right most column, "Download"
+  lvItem.iSubItem = 5; //< this is the right most column, "Download"
   // compute and format remaining time according download rate
   wchar_t time_str[64];
   StrFromTimeIntervalW(time_str, 64, static_cast<unsigned>(((tot-cur)/rate))*1000, 3);
@@ -873,7 +873,7 @@ void OmUiMainNet::_rmtDnl_finish(uint64_t hash)
 
   // update download percent
   lvItem.mask = LVIF_TEXT;
-  lvItem.iSubItem = 4; //< this is the right most column, "Download"
+  lvItem.iSubItem = 5; //< this is the right most column, "Download"
   lvItem.pszText = 0; // download finished, we erase text
 
   // send to ListView
@@ -1255,15 +1255,21 @@ void OmUiMainNet::_buildLvRmt()
     lvItem.pszText = const_cast<LPWSTR>(pRmt->version().asString().c_str());
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-    // Fourth column, the package size, we set the sub-item
+    // Fourth column, the package category, we set the sub-item
     lvItem.mask = LVIF_TEXT;
     lvItem.iSubItem = 3;
+    lvItem.pszText = const_cast<LPWSTR>(pRmt->category().c_str());
+    this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // Fifth column, the package size, we set the sub-item
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 4;
     lvItem.pszText = const_cast<LPWSTR>(Om_formatSizeSysStr(pRmt->bytes(), true).c_str());
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-    // Fifth column, the package download progress, we set to empty
+    // Sixth column, the package download progress, we set to empty
     lvItem.mask = LVIF_TEXT;
-    lvItem.iSubItem = 4;
+    lvItem.iSubItem = 5;
     lvItem.pszText = const_cast<LPWSTR>(L""); //< download string will be updated if currently running
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
@@ -1662,17 +1668,17 @@ void OmUiMainNet::_onInit()
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
   lvCol.iSubItem = 0;
-  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 300;
-  lvCol.iSubItem = 1;
-  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 300;
-  lvCol.iSubItem = 2;
-  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   // Initialize Remote Packages ListView control
   this->msgItem(IDC_LV_RMT, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
@@ -1685,31 +1691,37 @@ void OmUiMainNet::_onInit()
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
   lvCol.iSubItem = 0;
-  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Name");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 300;
-  lvCol.iSubItem = 1;
-  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 1, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Version");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 80;
-  lvCol.iSubItem = 2;
-  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 2, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
+
+  lvCol.pszText = const_cast<LPWSTR>(L"Category");
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 80;
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Size");
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 80;
-  lvCol.iSubItem = 3;
-  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 3, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.pszText = const_cast<LPWSTR>(L"Download");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 120;
-  lvCol.iSubItem = 4;
-  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, 4, reinterpret_cast<LPARAM>(&lvCol));
+  lvCol.iSubItem++;
+  this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
@@ -1781,7 +1793,7 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_LV_RMT, 5, 75, this->width()-10, this->height()-191);
   // Resize the ListView column
   GetClientRect(this->getItem(IDC_LV_RMT), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-345);
+  this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-420);
 
   // Upgrade and Sync buttons
   this->_setItemPos(IDC_BC_LOAD, 5, this->height()-114, 50, 14);
@@ -1974,9 +1986,12 @@ bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           pLoc->rmtSetSorting(LS_SORT_VERS);
           break;
         case 3:
-          pLoc->rmtSetSorting(LS_SORT_SIZE);
+          pLoc->rmtSetSorting(LS_SORT_CATG);
           break;
         case 4:
+          pLoc->rmtSetSorting(LS_SORT_SIZE);
+          break;
+        case 5:
           return false; // ignore action
         default:
           pLoc->rmtSetSorting(LS_SORT_NAME);
