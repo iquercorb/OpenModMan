@@ -1076,14 +1076,34 @@ void OmUiMainLib::_buildLvPkg()
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
-  // we enable the List-View
+  // we enable the ListView
   this->enableItem(IDC_LV_PKG, true);
 
-  // restore list-view scroll position from lvRec
+  // restore ListView scroll position from lvRec
   this->msgItem(IDC_LV_PKG, LVM_SCROLL, 0, -lvRec.top );
+
+  // adapt ListView column size to client area
+  this->_rsizeLvPkg();
 
   // update Package ListView selection
   this->_onLvPkgSel();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_rsizeLvPkg()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_rsizeLvPkg\n";
+  #endif
+
+  LONG size[4];
+
+  // Resize the Packages ListView column
+  GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-195);
 }
 
 
@@ -1166,14 +1186,34 @@ void OmUiMainLib::_buildLvBat()
     this->msgItem(IDC_LV_BAT, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
-  // we enable the List-View
+  // we enable the ListView
   this->enableItem(IDC_LV_BAT, true);
 
-  // restore list-view scroll position from lvRec
+  // restore ListView scroll position from lvRec
   this->msgItem(IDC_LV_BAT, LVM_SCROLL, 0, -lvRec.top );
+
+  // resize ListView columns to adapt client area
+  this->_rsizeLvBat();
 
   // update Batches ListView selection
   this->_onLvBatSel();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainLib::_rsizeLvBat()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainLib::_rsizeLvBat\n";
+  #endif
+
+  LONG size[4];
+
+  // Resize the Batches ListView columns
+  GetClientRect(this->getItem(IDC_LV_BAT), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_BAT, LVM_SETCOLUMNWIDTH, 0, size[2]);
 }
 
 
@@ -2115,8 +2155,6 @@ void OmUiMainLib::_onHide()
 ///
 void OmUiMainLib::_onResize()
 {
-  LONG size[4];
-
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-161, 12);
   // Library path EditControl
@@ -2124,8 +2162,7 @@ void OmUiMainLib::_onResize()
   // Package List ListView
   this->_setItemPos(IDC_LV_PKG, 5, 35, this->width()-161, this->height()-151);
   // Resize the Packages ListView column
-  GetClientRect(this->getItem(IDC_LV_PKG), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_PKG, LVM_SETCOLUMNWIDTH, 1, size[2]-210);
+  this->_rsizeLvPkg();
 
   // Install and Uninstall buttons
   this->_setItemPos(IDC_BC_INST, 5, this->height()-114, 50, 14);
@@ -2149,11 +2186,7 @@ void OmUiMainLib::_onResize()
   // Batches List-Box
   //this->_setItemPos(IDC_LB_BAT, this->width()-143, 20, 136, this->height()-137);
   this->_setItemPos(IDC_LV_BAT, this->width()-143, 20, 136, this->height()-137);
-  // Resize the Batches ListView column
-  GetClientRect(this->getItem(IDC_LV_BAT), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_BAT, LVM_SETCOLUMNWIDTH, 0, size[2]);
   // Batches Apply, New.. and Delete buttons
-
   this->_setItemPos(IDC_BC_RUN, this->width()-143, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_NEW, this->width()-97, this->height()-114, 45, 14);
   this->_setItemPos(IDC_BC_EDI, this->width()-51, this->height()-114, 45, 14);

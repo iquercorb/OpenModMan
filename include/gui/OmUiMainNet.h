@@ -142,11 +142,15 @@ class OmUiMainNet : public OmDialog
 
     void                _buildLvRep();
 
+    void                _rsizeLvRep();
+
     unsigned            _buildLvRep_icSize;
 
     void                _buildCbLoc();
 
     void                _buildLvRmt();
+
+    void                _rsizeLvRmt();
 
     unsigned            _buildLvRmt_icSize;
 

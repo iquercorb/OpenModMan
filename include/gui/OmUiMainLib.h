@@ -194,11 +194,15 @@ class OmUiMainLib : public OmDialog
 
     void                _buildLvBat();
 
+    void                _rsizeLvBat();
+
     unsigned            _buildLvBat_icSize;
 
     void                _buildEcLib();
 
     void                _buildLvPkg();
+
+    void                _rsizeLvPkg();
 
     unsigned            _buildLvPkg_icSize;
 

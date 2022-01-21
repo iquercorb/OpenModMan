@@ -1133,8 +1133,29 @@ void OmUiMainNet::_buildLvRep()
   // enable or disable query button
   this->enableItem(IDC_BC_QRY, (pLoc->repCount() > 0));
 
+  // resize ListView columns adapted to client area
+  this->_rsizeLvRep();
+
   // update Repositories ListView selection
   this->_onLvRepSel();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainNet::_rsizeLvRep()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainNet::_rsizeLvRep\n";
+  #endif
+
+  LONG size[4], half_s;
+
+  GetClientRect(this->getItem(IDC_LV_REP), reinterpret_cast<LPRECT>(&size));
+  half_s = static_cast<float>(size[2]) * 0.5f;
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 1, half_s-25);
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 2, half_s-25);
 }
 
 
@@ -1274,14 +1295,34 @@ void OmUiMainNet::_buildLvRmt()
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
-  // we enable the List-View
+  // we enable the ListView
   this->enableItem(IDC_LV_RMT, true);
 
-  // restore list-view scroll position from lvRec
+  // restore ListView scroll position from lvRec
   this->msgItem(IDC_LV_RMT, LVM_SCROLL, 0, -lvRec.top );
+
+  // resize ListView columns adapted to client area
+  this->_rsizeLvRmt();
 
   // update Package ListView selection
   this->_onLvRmtSel();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMainNet::_rsizeLvRmt()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMainNet::_rsizeLvRmt\n";
+  #endif
+
+  LONG size[4];
+
+  // Resize the ListView column
+  GetClientRect(this->getItem(IDC_LV_RMT), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-405);
 }
 
 
@@ -1766,8 +1807,6 @@ void OmUiMainNet::_onHide()
 ///
 void OmUiMainNet::_onResize()
 {
-  LONG size[4], half_s;
-
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOC, 5, 5, this->width()-10, 12);
   // Repositories label
@@ -1778,10 +1817,9 @@ void OmUiMainNet::_onResize()
   //this->_setItemPos(IDC_BC_STOP, this->width()-37, 20, 32, 14);
   // Repositories ListBox
   this->_setItemPos(IDC_LV_REP, 5, 37, this->width()-30, 29);
-  GetClientRect(this->getItem(IDC_LV_REP), reinterpret_cast<LPRECT>(&size));
-  half_s = static_cast<float>(size[2]) * 0.5f;
-  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 1, half_s-40);
-  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 2, half_s-40);
+  // resize ListView columns adapted to client area
+  this->_rsizeLvRep();
+
   // Repositories Apply, New.. and Delete buttons
   this->_setItemPos(IDC_BC_NEW, this->width()-20, 36, 16, 14);
   this->_setItemPos(IDC_BC_DEL, this->width()-20, 52, 16, 14);
@@ -1791,9 +1829,8 @@ void OmUiMainNet::_onResize()
 
   // Package List ListView
   this->_setItemPos(IDC_LV_RMT, 5, 75, this->width()-10, this->height()-191);
-  // Resize the ListView column
-  GetClientRect(this->getItem(IDC_LV_RMT), reinterpret_cast<LPRECT>(&size));
-  this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-420);
+  // resize ListView columns adapted to client area
+  this->_rsizeLvRmt();
 
   // Upgrade and Sync buttons
   this->_setItemPos(IDC_BC_LOAD, 5, this->height()-114, 50, 14);
