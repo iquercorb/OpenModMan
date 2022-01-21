@@ -66,6 +66,7 @@ Open Mod Mananager currently implements the following key features:
  - Fix missing dialogs for package download errors.
  - New Uninstall tree - uninstall with dependencies - feature.
  - New MD5 (md5sum) as default alogirthm for repository files checksum.
+ - New Category field for Packages.
 
 
 0.9.8 (04-01-2022)
