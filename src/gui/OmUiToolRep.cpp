@@ -898,31 +898,26 @@ void OmUiToolRep::_onBcSavUrl()
   // Check for empty string
   if(!url_str.empty()) {
 
-    // add a lasting / if needed
-    if(url_str.back() != L'/')
-      url_str.push_back(L'/');
+    if(!Om_isValidUrlPath(url_str) && !Om_isValidUrl(url_str)) {
 
-    // Check for valid URL
-    if(Om_isValidUrl(url_str)) {
+      wstring msg = L"The path or URL \""+url_str+L"\" is not suitable or "
+                    "contains illegal characters.";
 
-      // Create node if needed
-      if(!this->_rmtCur.hasChild(L"url"))
-        this->_rmtCur.addChild(L"url");
-
-      // Defile new URL string
-      this->_rmtCur.child(L"url").setContent(url_str);
-
-      // echo changes in EditText
-      this->setItemText(IDC_EC_INP03, url_str);
-
-    } else {
-
-      wstring err = L"\""+url_str+L"\" is not a valid URL.";
-      Om_dialogBoxErr(this->_hwnd, L"Invalid URL", err);
+      Om_dialogBoxWarn(this->_hwnd, L"Invalid URL path or address", msg);
 
       // return now
       return;
     }
+
+    // Create node if needed
+    if(!this->_rmtCur.hasChild(L"url"))
+      this->_rmtCur.addChild(L"url");
+
+    // Defile new URL string
+    this->_rmtCur.child(L"url").setContent(url_str);
+
+    // echo changes in EditText
+    this->setItemText(IDC_EC_INP03, url_str);
 
   } else {
 
@@ -1225,17 +1220,13 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_NEW,    L"Erase current and initialize a new definition from scratch");
 
   this->_createTooltip(IDC_EC_INP01,  L"Repository title, to name it indicatively");
-  this->_createTooltip(IDC_EC_INP02,  L"Path from base URL where to find packages to be downloaded");
+  this->_createTooltip(IDC_EC_INP02,  L"Default path appended to repository URL to download files");
 
   this->_createTooltip(IDC_LB_PKG,    L"Repository remote package list");
 
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select a package to parse and add to Repository");
   this->_createTooltip(IDC_BC_BRW03,  L"Browse to select a folder where to find packages to parse and add");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected package from Repository");
-
-  this->_createTooltip(IDC_BC_CKBX1,  L"Define a custom URL where to download this package");
-  this->_createTooltip(IDC_EC_INP03,  L"Custom full URL to download this package file");
-  this->_createTooltip(IDC_BC_SAV01,  L"Save custom URL setting to Repository");
 
   this->_createTooltip(IDC_BC_QRY,    L"Check for package dependencies availability within the Repository");
 
@@ -1245,6 +1236,10 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_BRW09,  L"Browse to open text file and use its content as description");
   this->_createTooltip(IDC_BC_SAV02,  L"Save description changes to Repository");
   this->_createTooltip(IDC_EC_TXT,    L"Package description text");
+
+  this->_createTooltip(IDC_BC_CKBX1,  L"Define a custom download path or URL to download file");
+  this->_createTooltip(IDC_EC_INP03,  L"Custom download path, base or full URL to download file");
+  this->_createTooltip(IDC_BC_SAV01,  L"Save custom download path setting to Repository");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
@@ -1375,10 +1370,10 @@ void OmUiToolRep::_onResize()
   // [ - - -        Description GroupBox          - - -
   this->_setItemPos(IDC_GB_GRP10, half_w+5, this->height()-70, half_w-10, 40);
   // Custom Url CheckBox & EditText
-  this->_setItemPos(IDC_BC_CKBX1, half_w+10, this->height()-60, 54, 9);
-  this->_setItemPos(IDC_EC_INP03, half_w+65, this->height()-60, half_w-120, 12);
+  this->_setItemPos(IDC_BC_CKBX1, half_w+10, this->height()-60, 120, 9);
+  this->_setItemPos(IDC_EC_INP03, half_w+10, this->height()-48, half_w-62, 12);
   // Custom url Save Button
-  this->_setItemPos(IDC_BC_SAV01, this->width()-50, this->height()-60, 40, 13);
+  this->_setItemPos(IDC_BC_SAV01, this->width()-50, this->height()-48, 40, 13);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);

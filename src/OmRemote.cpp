@@ -100,7 +100,7 @@ OmRemote::~OmRemote()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmRemote::parse(const wstring& url, OmXmlNode entry)
+bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode entry)
 {
   // reset this instance
   this->clear();
@@ -165,13 +165,36 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
 
   OmXmlNode xml_node;
 
-  // check custom URL
+  wstring cust_url;
+  wstring down_url;
+
+  // check for custom URL or download path
   if(entry.hasChild(L"url")) {
-    this->_url.push_back(entry.child(L"url").content());
+
+    // get custom path
+    cust_url = entry.child(L"url").content();
+
+    // check whether the supplied custom path is a full URL
+    if(Om_isValidUrl(cust_url)) {
+      // set dwonload URL as supplied custom path
+      down_url = cust_url;
+    } else {
+      // compose basic download URL with custom path
+      Om_concatURLs(down_url, base_url, cust_url);
+    }
   } else {
-    // compose download url from repository file path
-    this->_url.push_back(url + this->_file);
+    // compose download URL from common default parameters
+    Om_concatURLs(down_url, base_url, path_url);
   }
+
+  // if download path is not already a full URL to file, add file
+  if(!Om_isValidFileUrl(down_url)) {
+    // finally add file to this URL
+    Om_concatURLs(down_url, down_url, this->_file);
+  }
+
+  // add download URL to list
+  this->_url.push_back(down_url);
 
   // check for dependencies
   if(entry.hasChild(L"dependencies")) {
@@ -235,7 +258,7 @@ bool OmRemote::parse(const wstring& url, OmXmlNode entry)
 ///
 bool OmRemote::urlAdd(const wstring& url)
 {
-  if(Om_isValidUrl(url)) {
+  if(Om_isValidFileUrl(url)) {
     if(find(this->_url.begin(), this->_url.end(), url) == this->_url.end())
       this->_url.push_back(url);
   }

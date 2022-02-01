@@ -1326,13 +1326,14 @@ static const wchar_t __illegal_win_chr[] = L"/*?\"<>|\\";
 ///
 /// Regular expression pattern for URL.
 ///
-static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\w\.%-]*)(\?[\w%-=&]+)?)");
+static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\.\w%-]*\/)([\w.%-]*)?(\?[\w%-=&]+)?)");
 
 /// \brief Illegal URL path characters
 ///
 /// List of forbidden characters to test validity of URL path.
 ///
 static const wchar_t __illegal_url_chr[] = L"#\"<>|\\{}^[]`+:@$";
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1348,14 +1349,13 @@ bool Om_isValidUrl(const wchar_t* url)
     // 1) http(s)://
     // 2) xxx.www.domain.tld
     // 3) :1234
-    // 4) /folder/file.ext
-    // 5) ?x=1&y=2...
+    // 4) /path/
+    // 5) file.ext
+    // 6) ?x=1&y=2...
 
-    // search for minimum required matches to have a full valid URL
+    // search for minimum required matches to have a full valid base URL
     if(matches[1].length() != 0) { //< http(s)://
-      if(matches[2].length() != 0) { //< xxx.www.domain.tld
-        return (matches[4].length() != 0); //< /folder/file.ext
-      }
+      return (matches[2].length() != 0); //< xxx.www.domain.tld
     }
   }
 
@@ -1369,6 +1369,46 @@ bool Om_isValidUrl(const wchar_t* url)
 bool Om_isValidUrl(const wstring& url)
 {
   return Om_isValidUrl(url.c_str());
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidFileUrl(const wchar_t* url)
+{
+  std::match_results<const wchar_t*> matches;
+
+  if(std::regex_match(url, matches, __url_reg)) {
+
+    // matches :
+    // 0) full match (almost never happen)
+    // 1) http(s)://
+    // 2) xxx.www.domain.tld
+    // 3) :1234
+    // 4) /path/
+    // 5) file.ext
+    // 6) ?x=1&y=2...
+
+    // search for minimum required matches to have a full valid URL
+    // including path to file
+    if(matches[1].length() != 0) { //< http(s)://
+      if(matches[2].length() != 0) { //< xxx.www.domain.tld
+        return (matches[5].length() != 0); //< file.ext
+      }
+    }
+  }
+
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isValidFileUrl(const wstring& url)
+{
+  return Om_isValidFileUrl(url.c_str());
 }
 
 
@@ -4981,7 +5021,7 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large)
 
 /// \brief Loaded internal image
 ///
-/// Array of loaded internal ressource image.
+/// Array of loaded internal resource image.
 ///
 static HBITMAP __internal_bmp[200] = {nullptr};
 
@@ -5006,9 +5046,9 @@ HBITMAP Om_getResImage(HINSTANCE hins, unsigned id)
 }
 
 
-/// \brief Loaded internal image
+/// \brief Loaded internal icon
 ///
-/// Array of loaded internal ressource image.
+/// Array of loaded internal resource icon.
 ///
 static HICON __internal_ico[100][3] = {nullptr};
 

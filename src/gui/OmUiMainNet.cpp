@@ -1146,10 +1146,6 @@ void OmUiMainNet::_buildLvRep()
 ///
 void OmUiMainNet::_rsizeLvRep()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::_rsizeLvRep\n";
-  #endif
-
   LONG size[4], half_s;
 
   GetClientRect(this->getItem(IDC_LV_REP), reinterpret_cast<LPRECT>(&size));
@@ -1314,12 +1310,7 @@ void OmUiMainNet::_buildLvRmt()
 ///
 void OmUiMainNet::_rsizeLvRmt()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainNet::_rsizeLvRmt\n";
-  #endif
-
   LONG size[4];
-
   // Resize the ListView column
   GetClientRect(this->getItem(IDC_LV_RMT), reinterpret_cast<LPRECT>(&size));
   this->msgItem(IDC_LV_RMT, LVM_SETCOLUMNWIDTH, 1, size[2]-405);
@@ -1841,7 +1832,7 @@ void OmUiMainNet::_onResize()
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-114, 50, 14);
 
   // Package name/title
-  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-161, 12);
+  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-10, 12);
   // Package snapshot
   this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
   // Package description

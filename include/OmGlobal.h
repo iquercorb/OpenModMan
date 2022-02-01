@@ -46,13 +46,13 @@
 
 #define OMM_APP_MAJ               0
 #define OMM_APP_MIN               9
-#define OMM_APP_REV               8
+#define OMM_APP_REV               9
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
 #else
   #define OMM_APP_ARCH            L"x86"
 #endif
-#define OMM_APP_DATE              L"Junary 2022"
+#define OMM_APP_DATE              L"Feburary 2022"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2022"
@@ -528,7 +528,7 @@ void Om_sortStrings(vector<wstring>* strings);
 ///
 /// Checks whether the given string is a valid HTTP(S) URL.
 ///
-/// \param[in]  url     : URL to check.
+/// \param[in]  url     : URL string to check.
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
@@ -538,11 +538,33 @@ bool Om_isValidUrl(const wchar_t* url);
 ///
 /// Checks whether the given string is a valid HTTP(S) URL.
 ///
-/// \param[in]  url     : URL to check.
+/// \param[in]  url     : URL string to check.
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
 bool Om_isValidUrl(const wstring& url);
+
+/// \brief Check file URL validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL including
+/// path to file.
+///
+/// \param[in]  url     : URL string to check.
+///
+/// \return True if the given string is a valid URL, false otherwise.
+///
+bool Om_isValidFileUrl(const wchar_t* url);
+
+/// \brief Check file URL validity
+///
+/// Checks whether the given string is a valid HTTP(S) URL including
+///  path to file.
+///
+/// \param[in]  url     : URL string to check.
+///
+/// \return True if the given string is a valid URL, false otherwise.
+///
+bool Om_isValidFileUrl(const wstring& url);
 
 /// \brief Check URL path validity
 ///
@@ -844,6 +866,47 @@ inline bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring&
   }
 
   return false;
+}
+
+/// \brief Concatenate paths
+///
+/// Concatenates two paths, adding separator if necessary.
+///
+/// \param[in]  left    : Left path part to concatenate.
+/// \param[in]  right   : Right path part to concatenate.
+///
+/// \return Result of the concatenation.
+///
+inline wstring Om_concatURLs(const wstring& left, const wstring& right) {
+
+  wstring result;
+  if(left.empty()) {
+    result = right;
+  } else {
+    result = left;
+    if(left.back() != L'/' && right.front() != L'/') result += L"/";
+    result += right;
+  }
+  return result;
+}
+
+/// \brief Concatenate paths
+///
+/// Concatenates two paths, adding separator if necessary.
+///
+/// \param[out] conc    : String to be set as the result of concatenation.
+/// \param[in]  left    : Left path part to concatenate.
+/// \param[in]  right   : Right path part to concatenate.
+///
+inline void Om_concatURLs(wstring& conc, const wstring& left, const wstring& right) {
+
+  if(left.empty()) {
+    conc = right;
+  } else {
+    conc = left;
+    if(left.back() != L'/' && right.front() != L'/') conc += L"/";
+    conc += right;
+  }
 }
 
 /// \brief Get formated bytes/octets size string
@@ -1769,7 +1832,7 @@ HBITMAP Om_getResImage(HINSTANCE hins, unsigned id);
 /// have to be deleted.
 ///
 /// \param[in] hins    : Handle instance to get internal resource.
-/// \param[in] id      : Image internal resource id.
+/// \param[in] id      : Icon internal resource id.
 /// \param[in] size    : Icon size to get.
 ///
 /// \return Bitmap handle (HBITMAP) of the internal image or nullptr.

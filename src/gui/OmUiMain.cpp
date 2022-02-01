@@ -20,7 +20,7 @@
 #include "gui/OmUiMain.h"
 #include "gui/OmUiMainLib.h"
 #include "gui/OmUiMainNet.h"
-#include "gui/OmUiMainTst.h"
+#include "gui/OmUiMainTst.h" //< tab for test purposes
 #include "gui/OmUiPropCtx.h"
 #include "gui/OmUiPropLoc.h"
 #include "gui/OmUiPropMan.h"
@@ -44,8 +44,8 @@ OmUiMain::OmUiMain(HINSTANCE hins) : OmDialog(hins),
   _freeze_quit(false)
 {
   // create child tab dialogs
-  this->_addPage(L"Library", new OmUiMainLib(hins)); // Library Tab
-  this->_addPage(L"Network", new OmUiMainNet(hins)); // Network Tab
+  this->_addPage(L"Packages library", new OmUiMainLib(hins)); // Library Tab
+  this->_addPage(L"Network repositories", new OmUiMainNet(hins)); // Network Tab
   //this->_addPage(L"Test", new OmUiMainTst(hins)); // Test Tab, for development an debug purpose
 
   // add children dialogs
@@ -387,7 +387,8 @@ void OmUiMain::_onShow()
   #endif
 
   // show the first tab page
-  this->_pageDial[0]->show();
+  if(this->_pageDial.size())
+    this->_pageDial[0]->show();
 }
 
 ///

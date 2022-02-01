@@ -72,10 +72,11 @@ class OmRemote
     ///
     /// Parse the specified XML node as remote package definition.
     ///
-    /// \param[in]  url    : Repository file path URL.
-    /// \param[in]  xml    : XML repository <entry> node to parse.
+    /// \param[in]  base   : Repository base URL.
+    /// \param[in]  path   : Repository default download path URL.
+    /// \param[in]  entry  : XML repository <entry> node to parse.
     ///
-    bool parse(const wstring& url, OmXmlNode entry);
+    bool parse(const wstring& base, const wstring& path, OmXmlNode entry);
 
     /// \brief Get last error string.
     ///

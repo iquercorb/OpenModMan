@@ -53,7 +53,7 @@ bool OmRepository::init(const wstring& base, const wstring& name)
   wstring url = base + L"/" + name + L".xml";
 
   // check for valid url
-  if(!Om_isValidUrl(url)) {
+  if(!Om_isValidFileUrl(url)) {
     this->_error =  L"Invalid parameters: ";
     this->_error += L"\"" + url + L"\" is not a valid URL";
     this->log(1, L"Repository("+base+L"-"+name+L") Init", this->_error);
@@ -160,8 +160,6 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
   std::vector<OmXmlNode> xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
-  // compose download URL
-  wstring url = this->_base + L"/" + this->_downpath;
   wstring ident;
   bool unique;
   unsigned n = 0;
@@ -172,7 +170,7 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
 
     pRmt = new OmRemote(this->_location);
 
-    if(pRmt->parse(url, xml_rmt_ls[i])) {
+    if(pRmt->parse(this->_base, this->_downpath, xml_rmt_ls[i])) {
 
       unique = true;
 

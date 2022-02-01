@@ -1095,10 +1095,6 @@ void OmUiMainLib::_buildLvPkg()
 ///
 void OmUiMainLib::_rsizeLvPkg()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainLib::_rsizeLvPkg\n";
-  #endif
-
   LONG size[4];
 
   // Resize the Packages ListView column
@@ -1205,10 +1201,6 @@ void OmUiMainLib::_buildLvBat()
 ///
 void OmUiMainLib::_rsizeLvBat()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMainLib::_rsizeLvBat\n";
-  #endif
-
   LONG size[4];
 
   // Resize the Batches ListView columns
@@ -2172,7 +2164,7 @@ void OmUiMainLib::_onResize()
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-205, this->height()-114, 50, 14);
   // Package name/title
-  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-161, 12);
+  this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-10, 12);
   // Package snapshot
   this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
   // Package description

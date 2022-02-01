@@ -98,7 +98,7 @@ void OmUiAddRep::_onBcChk()
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
 
-  if(!Om_isValidUrl(url)) {
+  if(!Om_isValidFileUrl(url)) {
     wstring err = L"Supplied parameters cannot be used to "
                   L"create a valid HTTP address:\n\n";
     err += url;
@@ -169,7 +169,7 @@ bool OmUiAddRep::_onBcOk()
   wstring url = rep_base + L"/";
   url += rep_name + L".xml";
 
-  if(!Om_isValidUrl(url)) {
+  if(!Om_isValidFileUrl(url)) {
     wstring err = L"Supplied parameters cannot be used to "
                   L"create a valid HTTP address";
     Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
