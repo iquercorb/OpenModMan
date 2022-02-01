@@ -170,6 +170,8 @@
 			<Add directory="include/thirdparty/gif" />
 			<Add directory="include/thirdparty/zlib" />
 			<Add directory="src/thirdparty/zlib" />
+			<Add directory="include/thirdparty/md4c" />
+			<Add directory="include/thirdparty/cwb" />
 		</Compiler>
 		<ResourceCompiler>
 			<Add directory="include" />
@@ -183,8 +185,9 @@
 			<Add library="comdlg32" />
 			<Add library="ole32" />
 			<Add library="shell32" />
-			<Add library="uuid" />
 			<Add library="uxtheme" />
+			<Add library="uuid" />
+			<Add library="oleaut32" />
 		</Linker>
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />
@@ -254,11 +257,15 @@
 		<Unit filename="include/thirdparty/curl/system.h" />
 		<Unit filename="include/thirdparty/curl/typecheck-gcc.h" />
 		<Unit filename="include/thirdparty/curl/urlapi.h" />
+		<Unit filename="include/thirdparty/cwb/cwb.h" />
 		<Unit filename="include/thirdparty/gif/gif_hash.h" />
 		<Unit filename="include/thirdparty/gif/gif_lib.h" />
 		<Unit filename="include/thirdparty/gif/gif_lib_private.h" />
 		<Unit filename="include/thirdparty/jpeg/README" />
 		<Unit filename="include/thirdparty/jpeg/jpeglib.h" />
+		<Unit filename="include/thirdparty/md4c/entity.h" />
+		<Unit filename="include/thirdparty/md4c/md4c-html.h" />
+		<Unit filename="include/thirdparty/md4c/md4c.h" />
 		<Unit filename="include/thirdparty/miniz/miniz.h" />
 		<Unit filename="include/thirdparty/png/png.h" />
 		<Unit filename="include/thirdparty/png/pngconf.h" />
@@ -327,6 +334,9 @@
 		<Unit filename="src/gui/OmUiWizCtxBeg.cpp" />
 		<Unit filename="src/gui/OmUiWizCtxCfg.cpp" />
 		<Unit filename="src/gui/OmUiWizCtxLoc.cpp" />
+		<Unit filename="src/thirdparty/cwb/cwb.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/thirdparty/gif/dgif_lib.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -529,6 +539,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/thirdparty/jpeg/wrtarga.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/thirdparty/md4c/entity.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/thirdparty/md4c/md4c-html.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/thirdparty/md4c/md4c.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/thirdparty/miniz/miniz.c">

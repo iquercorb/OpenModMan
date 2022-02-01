@@ -102,6 +102,7 @@
 #define IDC_SC_NOTES                            40103
 #define IDC_SC_HEAD                             40104
 #define IDC_SC_ITEM                             40105
+#define IDC_SC_HTML                             40106
 #define IDC_SC_LBL01                            40110
 #define IDC_SC_LBL02                            40111
 #define IDC_SC_LBL03                            40112

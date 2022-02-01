@@ -2412,10 +2412,6 @@ bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    #ifdef DEBUG
-    std::cout << "DEBUG => OmUiMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
-    #endif
-
     // Prevent command/shorcut execution when main dialog is not active
     if(!this->_parent->active())
       return false;
