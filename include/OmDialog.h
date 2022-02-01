@@ -271,6 +271,15 @@ class OmDialog
     ///
     void setData(void* data);
 
+    /// \brief Set dialog style.
+    ///
+    /// Defines dialog window standard and extended style.
+    ///
+    /// \param[in] style    : Style to apply
+    /// \param[in] exstyle  : Extended style to apply
+    ///
+    void setStyle(long style, long exstyle);
+
     /// \brief Send message to dialog.
     ///
     /// Send the message to dialog, the message is transmitted recursively
@@ -623,7 +632,11 @@ class OmDialog
 
     void*               _data;      //< Dialog custom data
 
-    void                _setItemPos(unsigned, long, long, long, long);
+    void                _setItemPos(unsigned, long, long, long, long, bool pixel = false);
+
+    void                _getItemPos(unsigned, long*, bool pixel = false);
+
+    void                _getItemSize(unsigned, long*, bool pixel = false);
 
     void                _createTooltip(unsigned, const wstring&);
 

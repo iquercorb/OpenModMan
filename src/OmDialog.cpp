@@ -313,6 +313,18 @@ void OmDialog::setData(void* data)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDialog::setStyle(long style, long exstyle)
+{
+  if(this->_hwnd) {
+    SetWindowLongPtr(this->_hwnd, GWL_STYLE, style);
+    SetWindowLongPtr(this->_hwnd, GWL_EXSTYLE, exstyle);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmDialog::sendMessage(MSG* msg) const
 {
   if(this->_hwnd) {
@@ -413,11 +425,36 @@ HICON OmDialog::setBmIcon(unsigned id, HICON icon) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h)
+void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h, bool pixel)
 {
   long rect[4] = {x, y, w, h};
-  MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
+  if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
   SetWindowPos(GetDlgItem(this->_hwnd, id), 0, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_getItemPos(unsigned id, long* pos, bool pixel)
+{
+  long rect[4] = {};
+  GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
+  MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&rect), 1);
+  pos[0] = (pixel) ? rect[0] : MulDiv(rect[0], 4, this->_unit[0]); // left, unit x
+  pos[1] = (pixel) ? rect[1] : MulDiv(rect[1], 8, this->_unit[1]); // top, unit y
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_getItemSize(unsigned id, long* size, bool pixel)
+{
+  long rect[4] = {};
+  GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
+  size[0] = (pixel) ? rect[2] : MulDiv(rect[2] - rect[0], 4, this->_unit[0]); // right - left, unit x
+  size[1] = (pixel) ? rect[3] : MulDiv(rect[3] - rect[1], 8, this->_unit[1]); // bottom - top, unit y
 }
 
 
