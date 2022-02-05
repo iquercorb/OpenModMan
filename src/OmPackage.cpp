@@ -111,6 +111,7 @@ OmPackage::OmPackage() :
   _bckDir(),
   _bckItemLs(),
   _ovrLs(),
+  _category(),
   _desc(),
   _image(),
   _error()
@@ -139,6 +140,7 @@ OmPackage::OmPackage(OmLocation* pLoc) :
   _bckDir(),
   _bckItemLs(),
   _ovrLs(),
+  _category(),
   _desc(),
   _image(),
   _error()
