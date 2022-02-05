@@ -2185,54 +2185,472 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   return status;
 }
 
+/// \brief IDs for message box.
+///
+/// Custom IDs for message box dialog controls.
+///
+#define OM_MBOX_BTN0      200
+#define OM_MBOX_BTN1      201
+#define OM_MBOX_SC_RECT   300
+#define OM_MBOX_SC_ICON   301
+#define OM_MBOX_SC_HEAD   400
+#define OM_MBOX_SC_MESG   401
+#define OM_MBOX_SC_LIST   402
 
+/// \brief Fonts for custom message box.
 ///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+/// Custom fonts for message box dialog controls.
 ///
-void Om_dialogBoxErr(HWND hWnd, const wstring& header, const wstring& detail)
+static HFONT __Om_msgBox_FontB = nullptr;
+static HFONT __Om_msgBox_FontS = nullptr;
+
+/// \brief Dialog Procedure function for message box.
+///
+/// Custom Dialog Procedure function for custom message box.
+///
+static INT_PTR CALLBACK __Om_msgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  wstring message = header + L"\n\n"; message += detail;
-  MessageBoxW(hWnd, message.c_str(), OMM_APP_NAME, MB_OK|MB_ICONERROR);
+  if(uMsg == WM_SHOWWINDOW) {
+
+    HWND hItem;
+    wchar_t* str_buf;
+    int str_len;
+    long rect[4] = {0,0,0,0};
+    long X, Y, xalign, yalign = 25;
+    HWND hParent = GetParent(hWnd);
+    UINT uSwp;
+
+    // make sure icon is 32 pixels wide
+    hItem = GetDlgItem(hWnd, OM_MBOX_SC_ICON);
+    SetWindowPos(hItem, nullptr, 25, yalign, 32, 32, SWP_NOZORDER|SWP_NOACTIVATE);
+
+    // create header font
+    if(__Om_msgBox_FontB == nullptr)
+      __Om_msgBox_FontB = Om_createFont(20, 400, L"Ms Shell Dlg");
+
+    // create general font
+    if(__Om_msgBox_FontS == nullptr)
+      __Om_msgBox_FontS = Om_createFont(16, 400, L"Arial");
+
+    // create and setup HDC for DrawText
+    HDC hDc = GetDC(hWnd);
+    HGDIOBJ hOldFont = SelectObject(hDc, __Om_msgBox_FontS);
+
+    // Static Control - Header/Title
+    hItem = GetDlgItem(hWnd, OM_MBOX_SC_HEAD);
+    if(hItem) {
+      // set font for this control
+      SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_msgBox_FontB), true);
+      // move and resize control
+      SetWindowPos(hItem, nullptr, 70, yalign, 400, 20, SWP_NOZORDER|SWP_NOACTIVATE);
+      yalign += 30;
+    }
+
+    // Static Control - Main message
+    hItem = GetDlgItem(hWnd, OM_MBOX_SC_MESG);
+    if(hItem) {
+
+      // set font for this control
+      SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_msgBox_FontS), true);
+
+      // retrieve control inner text string
+      str_len = SendMessageW(hItem, WM_GETTEXTLENGTH, 0, 0);
+      str_buf = new wchar_t[str_len+1];
+      SendMessageW(hItem, WM_GETTEXT , str_len+1, reinterpret_cast<LPARAM>(str_buf));
+
+      // use DrawText to calculate proper control height
+      rect[2] = 400; //< initial width
+      DrawTextW(hDc, str_buf, -1, reinterpret_cast<LPRECT>(&rect), DT_WORDBREAK|DT_CALCRECT);
+      delete[] str_buf;
+
+      // move and resize control
+      SetWindowPos(hItem, nullptr, 70, yalign, 400, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      yalign += rect[3] + 10;
+    }
+
+    // Static Control - Item List
+    hItem = GetDlgItem(hWnd, OM_MBOX_SC_LIST);
+    if(hItem) {
+
+      // set font for this control
+      SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_msgBox_FontS), true);
+
+      // retrieve control inner text string
+      str_len = SendMessageW(hItem, WM_GETTEXTLENGTH, 0, 0);
+      str_buf = new wchar_t[str_len+1];
+      SendMessageW(hItem, WM_GETTEXT , str_len+1, reinterpret_cast<LPARAM>(str_buf));
+
+      // use DrawText to calculate proper control height
+      rect[2] = 370; //< initial width
+      DrawTextW(hDc, str_buf, -1, reinterpret_cast<LPRECT>(&rect), DT_CALCRECT);
+      delete[] str_buf;
+
+      // if list exceed size, we clamp and add a vertical scroll
+      if(rect[3] > 64) {
+        rect[3] = 64;
+        SetWindowLongPtr(hItem,GWL_STYLE,GetWindowLongPtr(hItem,GWL_STYLE)|WS_VSCROLL);
+      }
+
+      // move and resize control
+      SetWindowPos(hItem, nullptr, 80, yalign, 370, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      yalign += rect[3] + 10;
+    }
+
+    // we do not need the HDC anymore
+    SelectObject(hDc, hOldFont);
+    ReleaseDC(hWnd, hDc);
+
+    // resize white rect
+    hItem = GetDlgItem(hWnd, OM_MBOX_SC_RECT);
+    yalign += 20;
+    SetWindowPos(hItem, nullptr, 0, 0, 500, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
+
+    // button initial position
+    yalign += 11;
+    xalign = 394;
+
+    // if present, move the No/Cancel button to the left of dialog
+    hItem = GetDlgItem(hWnd, OM_MBOX_BTN0);
+    if(hItem) {
+      SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+      xalign -= 95; // shift position for the next button
+    }
+
+    // move the OK/Yes button button
+    hItem = GetDlgItem(hWnd, OM_MBOX_BTN1);
+    SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+
+    // finaly resize the dialog and center to parent client
+    yalign += 64;
+    uSwp = SWP_NOZORDER|SWP_NOACTIVATE;
+    if(hParent) {
+      // center to parent client
+      GetClientRect(hParent, reinterpret_cast<LPRECT>(&rect));
+      ClientToScreen(hParent, reinterpret_cast<LPPOINT>(&rect));
+      X = rect[0] + (rect[2]*0.5f) - 250;
+      Y = rect[1] + (rect[3]*0.5f) - (yalign * 0.5f);
+    } else {
+      // ignore position
+      uSwp |= SWP_NOMOVE;
+    }
+    SetWindowPos(hWnd, nullptr, X, Y, 500, yalign, uSwp);
+  }
+
+  if(uMsg == WM_CTLCOLORSTATIC) {
+    // set white background for static controls
+    SetBkMode(reinterpret_cast<HDC>(wParam),TRANSPARENT);
+    SetBkColor(reinterpret_cast<HDC>(wParam), 0x00FFFFFF);
+
+    if(reinterpret_cast<HWND>(lParam) == GetDlgItem(hWnd, OM_MBOX_SC_HEAD)) {
+      SetTextColor(reinterpret_cast<HDC>(wParam), 0x00993322);
+    }
+
+    return (INT_PTR)GetStockObject(WHITE_BRUSH);
+  }
+
+  if(uMsg == WM_COMMAND) {
+
+    switch(LOWORD(wParam))
+    {
+    case OM_MBOX_BTN1:
+      // exit dialog and return 1
+      EndDialog(hWnd, 1);
+      break;
+
+    case OM_MBOX_BTN0:
+      // exit dialog and return 0
+      EndDialog(hWnd, 0);
+      break;
+    }
+  }
+
+  if(uMsg == WM_CLOSE) {
+    // exit dialog and return 0
+    EndDialog(hWnd, 0);
+  }
+
+  return 0;
+}
+
+/// \brief Constant strings for message box.
+///
+/// Constant string for message box buttons and template.
+///
+static const wchar_t* __Om_msgBox_str_OK = L"OK";
+static const wchar_t* __Om_msgBox_str_YE = L"Yes";
+static const wchar_t* __Om_msgBox_str_CO = L"Continue";
+static const wchar_t* __Om_msgBox_str_NO = L"No";
+static const wchar_t* __Om_msgBox_str_CA = L"Cancel";
+static const wchar_t* __Om_msgBox_str_AB = L"Abort";
+static const wchar_t* __Om_msgBox_str_FNT = L"Ms Shell Dlg";
+
+/// \brief Message dialog box.
+///
+/// Create message dialog box with custom parameters. The function returns
+/// value depending clicked button by user.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Caption string
+/// \param[in] ico    : Message icon resource ID.
+/// \param[in] hdr    : Message header/title string.
+/// \param[in] msg    : Message body string.
+/// \param[in] lst    : Optional message list of element.
+/// \param[in] flags  : Parameters flags.
+///
+/// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
+///
+static INT_PTR __Om_msgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, const wchar_t* msg, const wchar_t* lst, unsigned flags)
+{
+  // configure buttons according params
+  const wchar_t* fnt = __Om_msgBox_str_FNT;
+  const wchar_t* bt1 = __Om_msgBox_str_OK;
+  const wchar_t* bt0 = nullptr;
+  if(flags & OM_MBOX_OC) { // OK - Cancel
+    bt0 = __Om_msgBox_str_CA;
+  } else if(flags & OM_MBOX_YN) { // Yes - No
+    bt1 = __Om_msgBox_str_YE; bt0 = __Om_msgBox_str_NO;
+  } else if(flags & OM_MBOX_CA) { // Continue - Abort
+    bt1 = __Om_msgBox_str_CO; bt0 = __Om_msgBox_str_AB;
+  }
+  bool has_bt0 = bt0 != nullptr;
+  bool has_hdr = hdr ? wcslen(hdr) : false;
+  bool has_msg = msg ? wcslen(msg) : false;
+  bool has_lst = lst ? wcslen(lst) : false;
+
+  // compute template size
+  size_t tplSize = sizeof(DLGTEMPLATE) + 10;
+  tplSize += (3 * sizeof(DLGITEMTEMPLATE)) + 32;
+  tplSize += sizeof(wchar_t) * wcslen(cpt);
+  tplSize += sizeof(wchar_t) * wcslen(fnt);
+  tplSize += sizeof(wchar_t) * wcslen(bt1);
+  if(has_bt0) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(bt0);
+  if(has_hdr) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(hdr);
+  if(has_msg) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(msg);
+  if(has_lst) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(lst);
+
+  DLGTEMPLATE* dlgt;
+  DLGITEMTEMPLATE* itmt;
+  uint16_t* pTpl;
+
+  // allocate memory for new template
+  dlgt = reinterpret_cast<DLGTEMPLATE*>(Om_alloc(tplSize));
+  if(!dlgt) return -1;
+
+  // main dialog template definition
+  dlgt->style = WS_POPUP|DS_MODALFRAME|WS_CAPTION|DS_SETFONT;
+  if(!hwnd) dlgt->style |= DS_CENTER;
+  dlgt->dwExtendedStyle = 0;
+  dlgt->cdit = 0; //< item count
+  dlgt->x = 0; dlgt->y = 0; dlgt->cx = 330; dlgt->cy = 150;
+  pTpl = reinterpret_cast<uint16_t*>(dlgt + 1);
+  *pTpl++ = 0; //< MENU
+  *pTpl++ = 0; //< Dialog Class
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *cpt++)); //< Caption string
+  *pTpl++ = 8; //< FONT size
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *fnt++)); //< Font name string
+
+  long xalign = 235; //< first or alone button X position
+
+  if(has_bt0) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Button Control for Cancel/No - Return 0
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_MBOX_BTN0;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0080; //< WC_BUTTON
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *bt0++)); //< Btn text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+    xalign -= 64; //< shift X position for second button
+  }
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Button Control for OK/YES - Return 1
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_MBOX_BTN1;
+  itmt->style = WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0080; //< WC_BUTTON
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *bt1++)); //< Btn text
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Static Control for white background
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_MBOX_SC_RECT;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_WHITERECT;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 0; itmt->y = 0; itmt->cx = 400; itmt->cy = 50;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+  *pTpl++ = 0; //< No text
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Static Control for icon
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_MBOX_SC_ICON;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_ICON;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 16; itmt->y = 12; itmt->cx = 25; itmt->cy = 24;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+  *pTpl++ = 0xFFFF; *pTpl++ = ico; //< Icon resource ID
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  if(has_hdr) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Static Control for title/header
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_MBOX_SC_HEAD;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 45; itmt->y = 12; itmt->cx = 267; itmt->cy = 14;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *hdr++));  //< Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+  }
+
+  if(has_msg) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Static Control main message
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_MBOX_SC_MESG;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 45; itmt->y = 30; itmt->cx = 220; itmt->cy = 0;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *msg++));  //< Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+  }
+
+  if(has_lst) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Edit Control for item list
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_MBOX_SC_LIST;
+    itmt->style = WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 45; itmt->y = 50; itmt->cx = 255; itmt->cy = 12;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0081; //< WC_EDIT
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *lst++)); //< Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+  }
+
+  INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_msgBox_dlgProc, (LPARAM)0);
+
+  Om_free(dlgt);
+
+  return result;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dialogBoxWarn(HWND hWnd, const wstring& header, const wstring& detail)
+int Om_msgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, const wchar_t* msg, const wchar_t* lst, unsigned flags)
 {
-  wstring message = header + L"\n\n"; message += detail;
-  MessageBoxW(hWnd, message.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+  return __Om_msgBox(hins, hwnd, cpt, ico, hdr, msg, lst, flags);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dialogBoxInfo(HWND hWnd, const wstring& header, const wstring& detail)
+void Om_msgBox_ok(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
 {
-  wstring message = header + L"\n\n"; message += detail;
-  MessageBoxW(hWnd, message.c_str(), OMM_APP_NAME, MB_OK|MB_ICONINFORMATION);
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), nullptr, OM_MBOX_OK);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dialogBoxQuerry(HWND hWnd, const wstring& header, const wstring& detail)
+void Om_msgBox_okl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
 {
-  wstring message = header + L"\n\n"; message += detail;
-  return (IDYES == MessageBoxW(hWnd, message.c_str(), OMM_APP_NAME, MB_YESNO|MB_ICONQUESTION));
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), lst.c_str(), OM_MBOX_OK);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dialogBoxQuerryWarn(HWND hWnd, const wstring& header, const wstring& detail)
+bool Om_msgBox_yn(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
 {
-  wstring message = header + L"\n\n"; message += detail;
-  return (IDYES == MessageBoxW(hWnd, message.c_str(), OMM_APP_NAME, MB_YESNO|MB_ICONWARNING));
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  return (0 != __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), nullptr, OM_MBOX_YN));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_msgBox_ynl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
+{
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  return (0 != __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), lst.c_str(), OM_MBOX_YN));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_msgBox_ca(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
+{
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  return (0 != __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), nullptr, OM_MBOX_CA));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_msgBox_cal(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
+{
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  return (0 != __Om_msgBox(hins, hwnd, cpt.c_str(), ico, hdr.c_str(), msg.c_str(), lst.c_str(), OM_MBOX_CA));
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_msgBox_err(const wstring& cpt, const wstring& hdr, const wstring& msg)
+{
+  __Om_msgBox(nullptr, nullptr, cpt.c_str(), 0x62, hdr.c_str(), msg.c_str(), nullptr, OM_MBOX_OK);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_msgBox_wrn(const wstring& cpt, const wstring& hdr, const wstring& msg)
+{
+  __Om_msgBox(nullptr, nullptr, cpt.c_str(), 0x54, hdr.c_str(), msg.c_str(), nullptr, OM_MBOX_OK);
 }
 
 

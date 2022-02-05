@@ -1318,60 +1318,143 @@ int Om_moveToTrash(const wstring& path);
 ///
 bool Om_checkAccess(const wstring& path, unsigned mask);
 
+/// \brief Message box parameters flags.
+///
+/// Buttons parameters flags for message box.
+///
+#define OM_MBOX_OK        0x0
+#define OM_MBOX_OC        0x1
+#define OM_MBOX_YN        0x2
+#define OM_MBOX_CA        0x4
+
+/// \brief Custom message box dialog.
+///
+/// Show message box dialog according given parameters, parameters with
+/// null value are ignored and not displayed.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+/// \param[in] lst    : Optional message item list.
+/// \param[in] flags  : Buttons flags.
+///
+/// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
+///
+int Om_msgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, const wchar_t* msg, const wchar_t* lst, unsigned flags);
+
+/// \brief OK message box.
+///
+/// Show a message box dialog with OK button.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+///
+void Om_msgBox_ok(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg);
+
+/// \brief OK message box with List.
+///
+/// Show a message box dialog with OK button and an item list.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+/// \param[in] lst    : Optional message item list.
+///
+void Om_msgBox_okl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst);
+
+/// \brief Yes/No message box.
+///
+/// Show a message box dialog with Yes and No button which return
+/// value corresponding to clicked button.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+///
+/// \return True if user clicked 'Yes' button, false otherwise.
+///
+bool Om_msgBox_yn(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg);
+
+/// \brief Yes/No message box with List.
+///
+/// Show a message box dialog with Yes and No button and an item list
+/// which return value corresponding to clicked button.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+///
+/// \return True if user clicked 'Yes' button, false otherwise.
+///
+bool Om_msgBox_ynl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst);
+
+/// \brief Continue/Abort message box.
+///
+/// Show a message box dialog with Continue and Abort button
+/// which return value corresponding to clicked button.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+///
+/// \return True if user clicked 'Continue' button, false otherwise.
+///
+bool Om_msgBox_ca(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg);
+
+/// \brief Continue/Abort message box with List.
+///
+/// Show a message box dialog with Continue and Abort button and an item list
+/// which return value corresponding to clicked button.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Window caption.
+/// \param[in] ico    : Optional icon resource ID.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
+///
+/// \return True if user clicked 'Continue' button, false otherwise.
+///
+bool Om_msgBox_cal(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst);
+
 /// \brief Error message box.
 ///
-/// Displays a standard Windows error message dialog box.
+/// Show basic error message box with standard stock icon.
 ///
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  header  : Formated message header/title (not the dialog title).
-/// \param[in]  detail  : Formated message details paragraph.
+/// \param[in] cpt    : Window caption.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
 ///
-void Om_dialogBoxErr(HWND hwnd, const wstring& header, const wstring& detail);
+void Om_msgBox_err(const wstring& cpt, const wstring& hdr, const wstring& msg);
 
 /// \brief Warning message box.
 ///
-/// Displays a standard Windows warning message dialog box.
+/// Show basic warning message box with standard stock icon.
 ///
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  header  : Formated message header/title (not the dialog title).
-/// \param[in]  detail  : Formated message details paragraph.
+/// \param[in] cpt    : Window caption.
+/// \param[in] hdr    : Optional message header.
+/// \param[in] msg    : Optional message body.
 ///
-void Om_dialogBoxWarn(HWND hwnd, const wstring& header, const wstring& detail);
-
-/// \brief Notice message box.
-///
-/// Displays a standard Windows notice message dialog box.
-///
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  header  : Formated message header/title (not the dialog title).
-/// \param[in]  detail  : Formated message details paragraph.
-///
-void Om_dialogBoxInfo(HWND hwnd, const wstring& header, const wstring& detail);
-
-/// \brief Question dialog box.
-///
-/// Displays a standard Windows question dialog box with YES/NO buttons.
-///
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  header  : Formated message header/title (not the dialog title).
-/// \param[in]  detail  : Formated message details paragraph.
-///
-/// \return True if user clicked on the YES button, false otherwise.
-///
-bool Om_dialogBoxQuerry(HWND hwnd, const wstring& header, const wstring& detail);
-
-/// \brief Question warning dialog box.
-///
-/// Displays a standard Windows question with warning dialog box with
-/// YES/NO buttons.
-///
-/// \param[in]  hwnd    : Parent window handle or nullptr to ignore.
-/// \param[in]  header  : Formated message header/title (not the dialog title).
-/// \param[in]  detail  : Formated message details paragraph.
-///
-/// \return True if user clicked on the YES button, false otherwise.
-///
-bool Om_dialogBoxQuerryWarn(HWND hwnd, const wstring& header, const wstring& detail);
+void Om_msgBox_wrn(const wstring& cpt, const wstring& hdr, const wstring& msg);
 
 /// \brief Select folder dialog box.
 ///
