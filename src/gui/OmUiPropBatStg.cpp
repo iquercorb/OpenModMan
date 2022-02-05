@@ -400,8 +400,8 @@ void OmUiPropBatStg::_onBcDnPkg()
 void OmUiPropBatStg::_onInit()
 {
   // Set icons for Up and Down buttons
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
@@ -558,12 +558,13 @@ void OmUiPropBatStg::_onRefresh()
   if(unavail) {
     // force notify change of the install list
     this->setChParam(BAT_PROP_STG_INSLS, true);
-    // notify user
-    wstring wrn = L"The Installation batch have reference to Packages "
-                  L"which are no longer available."
-                  L"\n\nDo you want to clean invalid references ?";
 
-    if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Package reference error", wrn)) {
+    // query user
+    if(Om_msgBox_yn(this->_hwnd, L"Installation Batch Properties - " OMM_APP_NAME, IDI_QRY,
+              L"Package reference error", L"The Installation Batch have "
+              "reference to Packages which are no longer available. Clean the "
+              "invalid references ?"))
+    {
       // Force to apply changes
       static_cast<OmDialogProp*>(this->_parent)->applyChanges();
     }
@@ -574,7 +575,7 @@ void OmUiPropBatStg::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropBatStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

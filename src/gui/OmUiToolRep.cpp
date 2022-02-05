@@ -143,10 +143,10 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolRep::~OmUiToolRep()
 {
-  HBITMAP hBm = this->setStImage(IDC_SB_PKG, nullptr);
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_SNAP, nullptr);
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   DeleteObject(hFt);
 }
 
@@ -187,8 +187,9 @@ bool OmUiToolRep::_repOpen(const wstring& path)
 {
   // Initialize new Repository definition XML scheme
   if(!this->_condig.open(path, OMM_CFG_SIGN_REP)) {
-    wstring err = L"The file \""+path+L"\" is not valid Repository file.";
-    Om_dialogBoxErr(this->_hwnd, L"Repository parse error", err);
+    Om_msgBox_okl(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Network Repository parse error", L"The specified file is "
+                 "not valid Network Repository definition:", path);
     return false;
   }
 
@@ -240,10 +241,10 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
   // if <remote> with same identity already exist, user have to choose
   if(!xml_rmt.empty()) {
 
-    wstring qry = L"Package with same identity already exists in Repository.\n\n\"";
-    qry += pkg.ident() + L"\"\n\nDo you want to replace the existing one ?";
-
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Duplicated entry", qry))
+    if(!Om_msgBox_yn(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_QRY,
+                L"Empty Package source folder", L"Package with identity \""
+                +pkg.ident()+L"\" already exists in current Repository, "
+                "do you want to replace the existing one ?"))
       return true; // cancel operation
 
     // check whether the current duplicate <remote> is the current selected one
@@ -349,23 +350,23 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
     this->msgItem(IDC_LB_PKG, LB_SETCURSEL, -1);
 
     // no package selected, disable and reset all related controls
-    this->setItemText(IDC_EC_OUT02, L"");
-    this->setItemText(IDC_EC_OUT03, L"");
-    this->setItemText(IDC_EC_OUT05, L"");
+    this->setItemText(IDC_EC_READ1, L"");
+    this->setItemText(IDC_EC_READ2, L"");
+    this->setItemText(IDC_EC_READ4, L"");
     this->setItemText(IDC_EC_INP03, L"");
     this->enableItem(IDC_EC_INP03, false);
     this->enableItem(IDC_BC_SAV01, false);
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
-    this->setItemText(IDC_EC_OUT04, L"");
+    this->setItemText(IDC_EC_READ3, L"");
     this->enableItem(IDC_BC_QRY, false);
     this->enableItem(IDC_BC_BRW08, false);
     this->enableItem(IDC_BC_DEL, false);
-    HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
     this->enableItem(IDC_BC_BRW09, false);
     this->enableItem(IDC_BC_SAV02, false);
-    this->setItemText(IDC_EC_TXT, L"");
-    this->enableItem(IDC_EC_TXT, false);
+    this->setItemText(IDC_EC_DESC, L"");
+    this->enableItem(IDC_EC_DESC, false);
 
     return true;
   }
@@ -392,9 +393,9 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   wstring tmp_str1, tmp_str2;
   HBITMAP hBm_new, hBm_old;
 
-  this->setItemText(IDC_EC_OUT02, this->_rmtCur.attrAsString(L"file"));
-  this->setItemText(IDC_EC_OUT03, this->_rmtCur.attrAsString(L"md5sum"));
-  this->setItemText(IDC_EC_OUT05, this->_rmtCur.attrAsString(L"category"));
+  this->setItemText(IDC_EC_READ1, this->_rmtCur.attrAsString(L"file"));
+  this->setItemText(IDC_EC_READ2, this->_rmtCur.attrAsString(L"md5sum"));
+  this->setItemText(IDC_EC_READ4, this->_rmtCur.attrAsString(L"category"));
 
   // allow custom URL CheckBox
   this->enableItem(IDC_BC_CKBX1, true);
@@ -432,14 +433,14 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
     }
 
     this->enableItem(IDC_BC_QRY, true);
-    this->enableItem(IDC_EC_OUT04, true);
-    this->setItemText(IDC_EC_OUT04, dpn_str);
+    this->enableItem(IDC_EC_READ3, true);
+    this->setItemText(IDC_EC_READ3, dpn_str);
 
   } else {
 
     this->enableItem(IDC_BC_QRY, false);
-    this->enableItem(IDC_EC_OUT04, false);
-    this->setItemText(IDC_EC_OUT04, L"");
+    this->enableItem(IDC_EC_READ3, false);
+    this->setItemText(IDC_EC_READ3, L"");
   }
 
   // enable Snapshot "Select..." Button
@@ -471,8 +472,8 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
         Om_free(rgb);
 
         // set image to dialog
-        hBm_old = this->setStImage(IDC_SB_PKG, hBm_new);
-        if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
+        hBm_old = this->setStImage(IDC_SB_SNAP, hBm_new);
+        if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
         this->enableItem(IDC_BC_DEL, true);
         this->setItemText(IDC_BC_OPEN1, L"Change...");
         has_snap = true;
@@ -487,15 +488,15 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
 
   // no snapshot, reset controls to default
   if(!has_snap) {
-    hBm_old = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-    if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm_old);
+    hBm_old = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+    if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
     this->enableItem(IDC_BC_DEL, false);
   }
 
   // allow user to edit a description
   this->enableItem(IDC_BC_BRW09, true);
   this->enableItem(IDC_BC_SAV02, false);
-  this->enableItem(IDC_EC_TXT, true);
+  this->enableItem(IDC_EC_DESC, true);
 
   // for default controls state
   bool has_desc = false;
@@ -518,7 +519,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
 
       if(txt) {
         // set text to item
-        this->setItemText(IDC_EC_TXT, Om_fromUtf8(reinterpret_cast<char*>(txt)));
+        this->setItemText(IDC_EC_DESC, Om_fromUtf8(reinterpret_cast<char*>(txt)));
         Om_free(txt);
         has_desc = true;
       }
@@ -530,7 +531,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   }
 
   if(!has_desc) {
-    this->setItemText(IDC_EC_TXT, L"");
+    this->setItemText(IDC_EC_DESC, L"");
   }
 
   return true;
@@ -791,8 +792,9 @@ bool OmUiToolRep::_onBcBrwPkg()
 
   // add package to repository
   if(!this->_rmtAdd(result)) {
-    wstring err = L"The file \""+result+L"\" is not valid Package file.";
-    Om_dialogBoxErr(this->_hwnd, L"Package parse error", err);
+    Om_msgBox_okl(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Package source parse error", L"Unable to parse "
+                 "the specified file or folder as Package:", result);
   }
 
   return true;
@@ -900,10 +902,9 @@ void OmUiToolRep::_onBcSavUrl()
 
     if(!Om_isValidUrlPath(url_str) && !Om_isValidUrl(url_str)) {
 
-      wstring msg = L"The path or URL \""+url_str+L"\" is not suitable or "
-                    "contains illegal characters.";
-
-      Om_dialogBoxWarn(this->_hwnd, L"Invalid URL path or address", msg);
+      Om_msgBox_okl(this->_hwnd, L" Repository Editor - " OMM_APP_NAME, IDI_ERR,
+                   L"Invalid Custom download path", L"The specified Custom "
+                   "download path contains illegal character.", url_str);
 
       // return now
       return;
@@ -951,16 +952,26 @@ void OmUiToolRep::_onBcChkDeps()
   int miss_cnt = this->_rmtGetDeps(miss_ls, ident);
 
   if(miss_cnt > 0) {
-    // Warning message
-    wstring wrn =   L"The package has dependencies which was not found in the repository:\n\n";
-    for(unsigned i = 0; i < miss_ls.size(); ++i) wrn += L"   " + miss_ls[i] + L"\n";
-    Om_dialogBoxWarn(this->_hwnd, L"Missing package dependencies", wrn);
 
+    // Compost list for warning message
+    wstring msg_ls;
+
+    for(unsigned i = 0; i < miss_ls.size(); ++i) {
+      msg_ls += miss_ls[i];
+      if(i < (miss_ls.size() - 1)) msg_ls += L"\r\n";
+    }
+
+    Om_msgBox_okl(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_WRN,
+                 L"Missing Package dependencies", L"The Package declare "
+                 "dependencies which are not in the current Network "
+                 "Repository definition.", msg_ls);
   } else {
 
     //Peaceful message
-    wstring msg =   L"All dependencies for this package was found in the repository.";
-    Om_dialogBoxInfo(this->_hwnd, L"Dependencies package satisfied", msg);
+    Om_msgBox_ok(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_NFO,
+                 L"Satisfied Package dependencies ", L"All the declared "
+                 "dependencies by Package are currently in Network "
+                 "Repository definition.");
   }
 }
 
@@ -1003,8 +1014,8 @@ bool OmUiToolRep::_onBcBrwSnap()
     // save snapshot data to <picture>
     if(__save_snapshot(xml_pic, image)) {
 
-      HBITMAP hBm = this->setStImage(IDC_SB_PKG, image.thumbnail());
-      if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+      HBITMAP hBm = this->setStImage(IDC_SB_SNAP, image.thumbnail());
+      if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
       // enable Snapshot "Delete" Button
       this->enableItem(IDC_BC_DEL, true);
@@ -1035,8 +1046,8 @@ void OmUiToolRep::_onBcDelSnap()
     this->_rmtCur.remChild(L"picture");
   }
 
-  HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
   // disable Snapshot "Delete" Button
   this->enableItem(IDC_BC_DEL, false);
@@ -1065,7 +1076,7 @@ void OmUiToolRep::_onBcBrwDesc()
 
   // set loaded text as description
   string text_str = Om_loadPlainText(result);
-  SetDlgItemTextA(this->_hwnd, IDC_EC_TXT, text_str.c_str());
+  SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text_str.c_str());
 
   // enable Description "Save" Button
   this->enableItem(IDC_BC_SAV02, true);
@@ -1083,7 +1094,7 @@ void OmUiToolRep::_onBcSavDesc()
 
   // get description string
   wstring desc_str;
-  this->getItemText(IDC_EC_TXT, desc_str);
+  this->getItemText(IDC_EC_DESC, desc_str);
 
   if(!desc_str.empty()) {
 
@@ -1136,11 +1147,20 @@ void OmUiToolRep::_onBcSave()
   if(item_str.back() != L'/')
     item_str.push_back(L'/');
 
+  // check whether user entered an URL
+  if(!Om_isValidUrl(item_str)) {
+    Om_msgBox_okl(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Invalid Default download path", L"The Default download path "
+                 "cannot be an URL, please specify a valid URL path or let "
+                 "empty.", item_str);
+    return;
+  }
+
   // check whether path is valid
   if(!Om_isValidUrlPath(item_str)) {
-
-    wstring err = L"Download path \""+item_str+L"\" is not a valid URL path.";
-    Om_dialogBoxErr(this->_hwnd, L"Invalid download URL path", err);
+    Om_msgBox_okl(this->_hwnd, L"Repository Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Invalid Default download path", L"The specified Default "
+                 "download path contains illegal character.", item_str);
     return;
   }
 
@@ -1210,7 +1230,7 @@ void OmUiToolRep::_onBcClose()
 void OmUiToolRep::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Repository editor - " OMM_APP_NAME);
@@ -1235,7 +1255,7 @@ void OmUiToolRep::_onInit()
 
   this->_createTooltip(IDC_BC_BRW09,  L"Browse to open text file and use its content as description");
   this->_createTooltip(IDC_BC_SAV02,  L"Save description changes to Repository");
-  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
+  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Define a custom download path or URL to download file");
   this->_createTooltip(IDC_EC_INP03,  L"Custom download path, base or full URL to download file");
@@ -1243,15 +1263,15 @@ void OmUiToolRep::_onInit()
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
   // Set buttons icons
-  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_NEW));
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_OPN));
-  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDB_BTN_DIR));
-  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_NEW));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDI_BT_DIR));
+  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
@@ -1318,13 +1338,13 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_GB_GRP06, half_w+5, 0, half_w-10, 55);
   // Filename Label & EditText
   this->_setItemPos(IDC_SC_LBL06, half_w+10, 10, 54, 9);
-  this->_setItemPos(IDC_EC_OUT02, half_w+65, 10, half_w-75, 11);
+  this->_setItemPos(IDC_EC_READ1, half_w+65, 10, half_w-75, 11);
   // Md5sum Label & EditText
   this->_setItemPos(IDC_SC_LBL10, half_w+10, 25, 54, 9);
-  this->_setItemPos(IDC_EC_OUT03, half_w+65, 25, half_w-75, 11);
+  this->_setItemPos(IDC_EC_READ2, half_w+65, 25, half_w-75, 11);
   // Category Label & EditText
   this->_setItemPos(IDC_SC_LBL11, half_w+10, 40, 54, 9);
-  this->_setItemPos(IDC_EC_OUT05, half_w+65, 40, half_w-75, 11);
+  this->_setItemPos(IDC_EC_READ4, half_w+65, 40, half_w-75, 11);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
@@ -1333,7 +1353,7 @@ void OmUiToolRep::_onResize()
   // Dependencies Label
   this->_setItemPos(IDC_SC_LBL07, half_w+10, 65, 54, 9);
   // Dependencies EditText & Check Button
-  this->_setItemPos(IDC_EC_OUT04, half_w+65, 66, half_w-120, 30);
+  this->_setItemPos(IDC_EC_READ3, half_w+65, 66, half_w-120, 30);
   this->_setItemPos(IDC_BC_QRY, this->width()-50, 65, 40, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
@@ -1342,7 +1362,7 @@ void OmUiToolRep::_onResize()
   // Snapshot Label
   this->_setItemPos(IDC_SC_LBL08, half_w+10, 115, 54, 9);
   // Snapshot Static Bitmap
-  this->_setItemPos(IDC_SB_PKG, half_w+65, 115, 86, 79);
+  this->_setItemPos(IDC_SB_SNAP, half_w+65, 115, 86, 79);
   // Change.. & Delete Buttons
   this->_setItemPos(IDC_BC_BRW08, this->width()-50, 115, 40, 13);
   this->_setItemPos(IDC_BC_DEL, this->width()-50, 130, 40, 13);
@@ -1358,7 +1378,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_BC_BRW09, this->width()-95, 210, 40, 13);
   this->_setItemPos(IDC_BC_SAV02, this->width()-50, 210, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_TXT, half_w+10, 225, half_w-20, this->height()-300);
+  this->_setItemPos(IDC_EC_DESC, half_w+10, 225, half_w-20, this->height()-300);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // force controls to repaint
@@ -1385,7 +1405,7 @@ void OmUiToolRep::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     bool has_changed = false;
 
@@ -1479,7 +1499,7 @@ bool OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwDesc();
       break;
 
-    case IDC_EC_TXT: //< Description EditText
+    case IDC_EC_DESC: //< Description EditText
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE)
         this->enableItem(IDC_BC_SAV02, true); //< enable Description "Save" Button

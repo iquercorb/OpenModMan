@@ -117,8 +117,8 @@ void OmUiPropCtxStg::_onBcDelIcon()
 void OmUiPropCtxStg::_onInit()
 {
   // add icon to buttons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_OPN));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Context home folder path");
@@ -201,7 +201,7 @@ void OmUiPropCtxStg::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropCtxStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

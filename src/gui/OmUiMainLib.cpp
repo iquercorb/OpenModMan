@@ -54,51 +54,45 @@
 ///
 #define UWM_BATEXE_DONE       (WM_APP+4)
 
-/// \brief Add package list for warning messages
+/// \brief Create Packages name list string.
 ///
-/// Add packages list for warning messages with a fixed limit to prevent
-/// overly long messages.
+/// Create Package name list string with proper CRLF from
+/// the given Package object array.
 ///
-/// \param[in]  msg       Dialog box message string to add list.
-/// \param[in]  pkgs_ls   List of package pointers to iterate to.
-/// \param[in]  max       Maximum count of package to display.
+/// \param[out] lst_str   String to receive name list.
+/// \param[in]  pkgs_ls   Package object list to create name list from.
 ///
-inline static void __msg_package_list(wstring& msg, const vector<OmPackage*>& pkgs_ls, size_t max)
+inline static void __msg_package_list(wstring& lst_str, const vector<OmPackage*>& pkgs_ls)
 {
-  size_t i = 0;
+  size_t size = pkgs_ls.size();
+  size_t stop = pkgs_ls.size() - 1;
 
-  for( ; i < pkgs_ls.size() && i < max; ++i) {
-    msg += L"\n " + pkgs_ls[i]->ident();
-  }
+  lst_str.clear();
 
-  if(pkgs_ls.size() > i) {
-    msg += L"\n ...\n and ";
-    msg += std::to_wstring(pkgs_ls.size() - i);
-    msg += L" other package(s)";
+  for(size_t i = 0; i < size; ++i) {
+    lst_str += pkgs_ls[i]->ident();
+    if(i < stop) lst_str += L"\r\n";
   }
 }
 
-/// \brief Add package list for warning messages
+/// \brief Create Packages name list string.
 ///
-/// Add packages list for warning messages with a fixed limit to prevent
-/// overly long messages.
+/// Create Package name list string with proper CRLF from
+/// the given string array.
 ///
-/// \param[in]  msg       Dialog box message string to add list.
-/// \param[in]  pkgs_ls   List of package's identity string to iterate to.
-/// \param[in]  max       Maximum count of package to display.
+/// \param[out] lst_str   String to receive name list.
+/// \param[in]  ident_ls  Package object list to create name list from.
 ///
-inline static void __msg_package_list(wstring& msg, const vector<wstring>& ident_ls, size_t max)
+inline static void __msg_package_list(wstring& lst_str, const vector<wstring>& ident_ls)
 {
-  size_t i = 0;
+  size_t size = ident_ls.size();
+  size_t stop = ident_ls.size() - 1;
 
-  for( ; i < ident_ls.size() && i < max; ++i) {
-    msg += L"\n ...\n and " + ident_ls[i];
-  }
+  lst_str.clear();
 
-  if(ident_ls.size() > i) {
-    msg += L"\n\n and ";
-    msg += std::to_wstring(ident_ls.size() - i);
-    msg += L" other package(s)";
+  for(size_t i = 0; i < size; ++i) {
+    lst_str += ident_ls[i];
+    if(i < stop) lst_str += L"\r\n";
   }
 }
 
@@ -139,7 +133,7 @@ OmUiMainLib::~OmUiMainLib()
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
@@ -399,9 +393,12 @@ void OmUiMainLib::pkgTrsh()
   lvI.stateMask = LVIS_SELECTED;
   this->msgItem(IDC_LV_PKG, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  msg = L"Move the selected packages to recycle bin ?";
-  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete packages", msg))
+  if(!Om_msgBox_yn(this->_hwnd, L"Delete Packages - " OMM_APP_NAME, IDI_PKG_DEL,
+               L"Delete selected Packages",
+               L"Move the selected packages to recycle bin ?"))
+  {
     return;
+  }
 
   // freeze dialog so user cannot interact
   static_cast<OmUiMain*>(this->root())->freeze(true);
@@ -415,10 +412,11 @@ void OmUiMainLib::pkgTrsh()
     if(pPkg->hasSrc()) {
       Om_moveToTrash(pPkg->srcPath());
     } else {
-      msg =   L"The package \""+pPkg->ident()+L"\" ";
-      msg +=  L"does not have source data. To remove it from list "
-              L"restores its backup by uninstalling it.";
-      Om_dialogBoxWarn(this->_hwnd, L"No package source", msg);
+
+      Om_msgBox_ok(this->_hwnd, L"Delete Packages - " OMM_APP_NAME, IDI_PKG_WRN,
+                    L"Package source does not exists",
+                    L"Source file or folder of Package \""+pPkg->ident()+
+                    L"\" does not exists in Library folder.");
     }
   }
 
@@ -527,7 +525,7 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
-  wstring msg;
+  wstring msg_lst;
 
   vector<OmPackage*> inst_ls; //< final install list
   vector<OmPackage*> over_ls; //< overlapping list
@@ -539,35 +537,41 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
   // warn user for missing dependencies
   if(!silent && miss_ls.size() && pLoc->warnMissDeps()) {
-    msg = L"One or more selected packages have missing dependencies, "
-          L"The following packages are required but not available:\n";
-    __msg_package_list(msg, miss_ls, 5);
-    msg +=  L"\n\nDo you want to proceed installation anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+    __msg_package_list(msg_lst, miss_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Missing Packages dependencies", L"One or more selected packages "
+                  "have missing dependencies, the following packages are "
+                  "required but not available:", msg_lst))
+    {
       return;
+    }
   }
 
   // warn for additional installation
   if(!silent && dpcs_ls.size() && pLoc->warnExtraInst()) {
-    msg = L"One or more selected packages have dependencies, "
-          L"the following packages will also be installed:\n";
-    __msg_package_list(msg, dpcs_ls, 5);
-    msg +=  L"\n\nContinue installation ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+    __msg_package_list(msg_lst, dpcs_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_PKG_ADD,
+                  L"Packages dependencies", L"One or more selected packages "
+                  "have dependencies, the following packages will also be "
+                  "installed:", msg_lst))
+    {
       return;
+    }
   }
 
   // if there is overlapping, ask user if he really want to continue installation
   if(!silent && over_ls.size() && pLoc->warnOverlaps()) {
-    msg = L"One or more selected packages overlaps and will overwrites "
-          L"files previously installed by the following package(s):\n";
-    __msg_package_list(msg, over_ls, 5);
-    msg +=  L"\n\nDo you want to continue installation anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+    __msg_package_list(msg_lst, over_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_PKG_OWR,
+                  L"Packages overlaps", L"One or more selected packages "
+                  "overlaps and will overwrites files previously installed "
+                  "by the following package(s):", msg_lst))
+    {
       return;
+    }
   }
 
   // this is to update list view item's icon individually
@@ -600,12 +604,11 @@ void OmUiMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
     pLoc->pkgFindOverlaps(ovlp_ls, pPkg);
 
     // install package
-    //if(!pPkg->install(pLoc->bckZipLevel(), this->getItem(IDC_PB_PKG), &this->_thread_abort)) {
     if(!pPkg->install(pLoc->bckZipLevel(), &this->_pkgProgressCb, this)) {
-      msg = L"The package \"" + pPkg->name() + L"\" ";
-      msg += L"has not been installed because the following error occurred:\n\n";
-      msg += pPkg->lastError();
-      Om_dialogBoxErr(this->_hwnd, L"Package install failed", msg);
+      Om_msgBox_okl(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_PKG_ERR,
+                    L"Package installation error", L"Installation of \""+
+                    pPkg->name()+L"\" failed because of the following error:",
+                    pPkg->lastError());
     }
 
     // update package icon in ListView
@@ -644,7 +647,7 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
-  wstring msg;
+  wstring msg_lst;
 
   vector<OmPackage*> over_ls; // extra overlapped uninstall list
   vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
@@ -655,24 +658,31 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
   // check and warn for extra uninstall due to overlaps
   if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
-    msg = L"One or more selected packages are overlapped by others later "
-          L"installed, the following packages must also be uninstalled:\n";
-    __msg_package_list(msg, over_ls, 5);
-    msg += L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+    __msg_package_list(msg_lst, over_ls);
+
+    if(!Om_msgBox_cal(this->_hwnd, L"Uninstall Packages - " OMM_APP_NAME, IDI_PKG_OWR,
+                  L"Packages overlaps", L"One or more selected packages "
+                  "are overlapped by others later installed, the "
+                  "following packages must also be uninstalled:", msg_lst))
+    {
       return;
+    }
+
   }
 
   // check and warn for extra uninstall due to dependencies
   if(!silent && dpnd_ls.size() && pLoc->warnExtraUnin()) {
-    msg = L"One or more selected packages are required as dependency "
-          L"by others, the following packages will also be uninstalled:\n";
-    __msg_package_list(msg, dpnd_ls, 5);
-    msg += L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+    __msg_package_list(msg_lst, dpnd_ls);
+
+    if(!Om_msgBox_cal(this->_hwnd, L"Uninstall Packages - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Packages dependencies", L"One or more selected packages "
+                  "are required as dependency by others, the "
+                  "following packages will also be uninstalled:", msg_lst))
+    {
       return;
+    }
   }
 
   // this is to update list view item's icon individually
@@ -707,10 +717,10 @@ void OmUiMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
     // uninstall package (restore backup)
     if(!pPkg->uninst(&this->_pkgProgressCb, this)) {
-      msg =  L"The backup of \"" + pPkg->name() + L"\" ";
-      msg += L"has not been properly restored because the following error occurred:\n\n";
-      msg += pPkg->lastError();
-      Om_dialogBoxErr(this->_hwnd, L"Package uninstall failed", msg);
+      Om_msgBox_okl(this->_hwnd, L"Uninstall Packages - " OMM_APP_NAME, IDI_PKG_ERR,
+                    L"Package uninstallation error", L"Backup restoration of \""+
+                    pPkg->name()+L"\" failed or may be incomplete because of "
+                    "the following error:", pPkg->lastError());
     }
 
     if(pPkg->hasBck()) { //< this mean something went wrong
@@ -748,8 +758,7 @@ void OmUiMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
-  wstring msg;
-
+  wstring msg_lst;
 
   vector<OmPackage*> over_ls; // extra overlapped uninstall list
   vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
@@ -761,35 +770,45 @@ void OmUiMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
   // check and warn for extra uninstall due to dependencies
   if(!silent && dpcs_ls.size() && pLoc->warnExtraUnin()) {
-    msg = L"This will uninstall selected packages including all "
-          L"dependencies, the following packages will also be uninstalled:\n";
-    __msg_package_list(msg, dpcs_ls, 5);
-    msg += L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerry(this->_hwnd, L"Uninstall tree", msg))
+    __msg_package_list(msg_lst, dpcs_ls);
+
+    if(!Om_msgBox_cal(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Uninstall Package with dependencies", L"This will uninstall "
+                  "selected packages including all dependencies, the "
+                  "following packages will also be uninstalled:", msg_lst))
+    {
       return;
+    }
   }
 
   // check and warn for extra uninstall due to overlaps
   if(!silent && over_ls.size() && pLoc->warnExtraUnin()) {
-    msg = L"One or more selected packages are overlapped by others later "
-          L"installed, the following packages must also be uninstalled:\n";
-    __msg_package_list(msg, over_ls, 5);
-    msg += L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages overlaps", msg))
+    __msg_package_list(msg_lst, over_ls);
+
+    if(!Om_msgBox_cal(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_PKG_OWR,
+                  L"Packages overlaps", L"One or more selected packages "
+                  "are overlapped by others later installed, the "
+                  "following packages must also be uninstalled:", msg_lst))
+    {
       return;
+    }
+
   }
 
   // check and warn for extra uninstall due to dependencies
   if(!silent && dpnd_ls.size() && pLoc->warnExtraUnin()) {
-    msg = L"One or more selected packages are required as dependency "
-          L"by others, the following packages will also be uninstalled:\n";
-    __msg_package_list(msg, dpnd_ls, 5);
-    msg += L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+    __msg_package_list(msg_lst, dpnd_ls);
+
+    if(!Om_msgBox_cal(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Packages dependencies", L"One or more selected packages "
+                  "are required as dependency by others, the "
+                  "following packages will also be uninstalled:", msg_lst))
+    {
       return;
+    }
   }
 
   // this is to update list view item's icon individually
@@ -824,10 +843,10 @@ void OmUiMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
 
     // uninstall package (restore backup)
     if(!pPkg->uninst(&this->_pkgProgressCb, this)) {
-      msg =  L"The backup of \"" + pPkg->name() + L"\" ";
-      msg += L"has not been properly restored because the following error occurred:\n\n";
-      msg += pPkg->lastError();
-      Om_dialogBoxErr(this->_hwnd, L"Package uninstall failed", msg);
+      Om_msgBox_okl(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_PKG_ERR,
+                    L"Package uninstallation error", L"Backup restoration of \""+
+                    pPkg->name()+L"\" failed or may be incomplete because of "
+                    "the following error:", pPkg->lastError());
     }
 
     if(pPkg->hasBck()) { //< this mean something went wrong
@@ -913,12 +932,12 @@ void OmUiMainLib::_buildCbLoc()
     // no selection
     this->msgItem(IDC_CB_LOC, CB_SETCURSEL, -1);
 
-    // ask user to create at least one Location in the Context
-    wstring qry = L"The Context have not any configured "
-                  L"Location, this does not make much sense."
-                  L"\n\nDo you want to add a Location now ?";
-
-    if(Om_dialogBoxQuerry(this->_hwnd, L"Context empty", qry)) {
+    // ask user to create at least one Target Location in the Software Context
+    if(!Om_msgBox_yn(this->_hwnd, L"Packages Library - " OMM_APP_NAME, IDI_QRY,
+                  L"Empty Software Context", L"The selected Software Context is "
+                  "empty and have no Target Location configured. Do you want "
+                  "to add a Target Location now ?"))
+    {
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
       pUiAddLoc->open(true);
@@ -1224,26 +1243,29 @@ void OmUiMainLib::_pkgInst_init()
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->dstDir()+L"\"\n\n";
-    msg +=  L"Either the Destination folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package install aborted (Destination access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Destination folder access error", L"The Destination folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->dstDir());
     return;
   }
   // checks whether we have a valid Library folder
   if(!pLoc->libDirAccess(false)) { //< check only for read
-    wstring msg = L"\""+pLoc->libDir()+L"\"\n\n";
-    msg +=  L"Either the Library folder does not exist or it have read access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package install aborted (Library access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Library folder access error", L"The Library folder "
+                  "cannot be accessed because it do not exist or have read "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->libDir());
     return;
   }
   // checks whether we have a valid Backup folder
   if(!pLoc->bckDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->bckDir()+L"\"\n\n";
-    msg +=  L"Either the Backup folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package install aborted (Backup access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Install Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Backup folder access error", L"The Backup folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->bckDir());
     return;
   }
 
@@ -1336,18 +1358,20 @@ void OmUiMainLib::_pkgUnin_init()
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->dstDir()+L"\"\n\n";
-    msg +=  L"Either the Destination folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package install aborted (Destination access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Uninstall Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Destination folder access error", L"The Destination folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->dstDir());
     return;
   }
   // checks whether we have a valid Backup folder
   if(!pLoc->bckDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->bckDir()+L"\"\n\n";
-    msg +=  L"Either the Backup folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package install aborted (Backup access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Uninstall Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Backup folder access error", L"The Backup folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->bckDir());
     return;
   }
 
@@ -1450,18 +1474,20 @@ void OmUiMainLib::_pkgClns_init()
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->dstDir()+L"\"\n\n";
-    msg +=  L"Either the Destination folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package clean aborted (Destination access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_ERR,
+                  L"Destination folder access error", L"The Destination folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->dstDir());
     return;
   }
   // checks whether we have a valid Backup folder
   if(!pLoc->bckDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->bckDir()+L"\"\n\n";
-    msg +=  L"Either the Backup folder does not exist or it have read or write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package clean aborted (Backup access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Uninstall Tree - " OMM_APP_NAME, IDI_ERR,
+                  L"Backup folder access error", L"The Backup folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->bckDir());
     return;
   }
 
@@ -1619,8 +1645,8 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
   if(lv_sel >= 0) {
 
     // hide package details
-    self->showItem(IDC_SB_PKG, false);
-    self->showItem(IDC_EC_TXT, false);
+    self->showItem(IDC_SB_SNAP, false);
+    self->showItem(IDC_EC_DESC, false);
     self->showItem(IDC_SC_TITLE, false);
 
     // structure for ListView update
@@ -1716,8 +1742,8 @@ DWORD WINAPI OmUiMainLib::_batExe_fth(void* arg)
     }
 
     // restore package details
-    self->showItem(IDC_SB_PKG, true);
-    self->showItem(IDC_EC_TXT, true);
+    self->showItem(IDC_SB_SNAP, true);
+    self->showItem(IDC_EC_DESC, true);
     self->showItem(IDC_SC_TITLE, true);
   }
 
@@ -1864,8 +1890,8 @@ void OmUiMainLib::_onLvPkgSel()
   if(!lv_nsl) {
 
     // hide all package bottom infos
-    this->showItem(IDC_SB_PKG, false);
-    this->showItem(IDC_EC_TXT, false);
+    this->showItem(IDC_SB_SNAP, false);
+    this->showItem(IDC_EC_DESC, false);
     this->showItem(IDC_SC_TITLE, false);
 
     // disable install, uninstall abort and progress bar
@@ -1904,21 +1930,21 @@ void OmUiMainLib::_onLvPkgSel()
     pUiMain->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
-    this->showItem(IDC_EC_TXT, false);
+    this->showItem(IDC_EC_DESC, false);
     this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
-    this->showItem(IDC_SB_PKG, false);
+    this->showItem(IDC_SB_SNAP, false);
 
   } else {
 
     // show package title and thumbnail
     this->showItem(IDC_SC_TITLE, true);
-    this->showItem(IDC_SB_PKG, true);
+    this->showItem(IDC_SB_SNAP, true);
 
     // enable the "Edit > Package > .. " menu-item
     pUiMain->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
 
     // show package description
-    this->showItem(IDC_EC_TXT, true);
+    this->showItem(IDC_EC_DESC, true);
 
     OmPackage* pPkg;
 
@@ -1931,9 +1957,9 @@ void OmUiMainLib::_onLvPkgSel()
       this->setItemText(IDC_SC_TITLE, pPkg->name() + L" " + pPkg->version().asString());
 
       if(pPkg->desc().size()) {
-        this->setItemText(IDC_EC_TXT, pPkg->desc());
+        this->setItemText(IDC_EC_DESC, pPkg->desc());
       } else {
-        this->setItemText(IDC_EC_TXT, L"<no description available>");
+        this->setItemText(IDC_EC_DESC, L"<no description available>");
       }
 
       HBITMAP hBm;
@@ -1941,15 +1967,15 @@ void OmUiMainLib::_onLvPkgSel()
       if(pPkg->image().thumbnail()) {
         hBm = pPkg->image().thumbnail();
       } else {
-        hBm = Om_getResImage(this->_hins, IDB_PKG_THN);
+        hBm = Om_getResImage(this->_hins, IDB_BLANK);
       }
 
       // Update the selected picture
-      hBm = this->setStImage(IDC_SB_PKG, hBm);
-      if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+      hBm = this->setStImage(IDC_SB_SNAP, hBm);
+      if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
       // force thumbnail static control to update its position
-      this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
+      this->_setItemPos(IDC_SB_SNAP, 5, this->height()-83, 86, 79);
     }
   }
 }
@@ -2041,13 +2067,13 @@ void OmUiMainLib::_onInit()
   HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // Set batches New and Delete buttons icons
-  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDB_BTN_MOD));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
   // set default package thumbnail
-  this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active location");
@@ -2106,8 +2132,8 @@ void OmUiMainLib::_onInit()
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_TXT, false);
-  this->showItem(IDC_SB_PKG, false);
+  this->showItem(IDC_EC_DESC, false);
+  this->showItem(IDC_SB_SNAP, false);
 }
 
 
@@ -2166,9 +2192,9 @@ void OmUiMainLib::_onResize()
   // Package name/title
   this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-10, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
+  this->_setItemPos(IDC_SB_SNAP, 5, this->height()-83, 86, 79);
   // Package description
-  this->_setItemPos(IDC_EC_TXT, 95, this->height()-83, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_DESC, 95, this->height()-83, this->width()-101, 78);
 
   // Vertical separator
   this->_setItemPos(IDC_SC_SEPAR, this->width()-150, 5, 1, this->height()-105);
@@ -2244,24 +2270,27 @@ void OmUiMainLib::_onRefresh()
   // Display error dialog AFTER ListView refreshed its content
   if(pCtx->locCur()) {
     if(!dst_access) {
-      wstring msg = L"\""+pCtx->locCur()->dstDir()+L"\"\n\n";
-      msg +=  L"Either the folder does not exist or it have read or write access restrictions. "
-              L"Please check target location settings and folder permissions.";
-      Om_dialogBoxWarn(this->_hwnd, L"Destination folder access error", msg);
+      Om_msgBox_okl(this->_hwnd, L"Packages Library -" OMM_APP_NAME, IDI_WRN,
+                    L"Destination folder access error", L"The Destination folder "
+                    "cannot be accessed because it do not exist or have read/write "
+                    "access restrictions. Please check Target Location's settings "
+                    "and folder permissions.", pCtx->locCur()->dstDir());
     }
 
     if(!bck_access) {
-      wstring msg = L"\""+pCtx->locCur()->bckDir()+L"\"\n\n";
-      msg +=  L"Either the folder does not exist or it have read or write access restrictions. "
-              L"Please check target location settings and folder permissions.";
-      Om_dialogBoxWarn(this->_hwnd, L"Backup folder access error", msg);
+      Om_msgBox_okl(this->_hwnd, L"Packages Library - " OMM_APP_NAME, IDI_WRN,
+                    L"Backup folder access error", L"The Backup folder "
+                    "cannot be accessed because it do not exist or have read/write "
+                    "access restrictions. Please check Target Location's settings "
+                    "and folder permissions.", pCtx->locCur()->bckDir());
     }
 
     if(!lib_access) {
-      wstring msg = L"\""+pCtx->locCur()->libDir()+L"\"\n\n";
-      msg +=  L"Either the folder does not exist or it have read access restrictions. "
-              L"Please check target location settings and folder permissions.";
-      Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", msg);
+      Om_msgBox_okl(this->_hwnd, L"Packages Library - " OMM_APP_NAME, IDI_WRN,
+                    L"Library folder access error", L"The Library folder "
+                    "cannot be accessed because it do not exist or have read "
+                    "access restrictions. Please check Target Location's settings "
+                    "and folder permissions.", pCtx->locCur()->libDir());
     }
   }
 }
@@ -2287,7 +2316,7 @@ void OmUiMainLib::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_PKGINST_DONE is a custom message sent from Package Install
   // thread function, to notify the thread ended is job.

@@ -185,15 +185,21 @@ void OmUiPropCtxBat::_onBcDelBat()
     int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel, 0);
 
     // warns the user before committing the irreparable
-    wstring qry = L"Delete the Installation Batch \"" + pCtx->batGet(bat_id)->title();
-    qry += L"\" ?";
-
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Installation Batch", qry)) {
+    if(!Om_msgBox_ynl(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_QRY,
+              L"Delete Installation Batch", L"Delete the Installation Batch ?",
+              pCtx->batGet(bat_id)->title()))
+    {
       return;
     }
 
     if(!pCtx->batRem(bat_id)) {
-      Om_dialogBoxQuerryWarn(this->_hwnd, L"Batch deletion error", pCtx->lastError());
+
+      // warns the user before committing the irreparable
+      Om_msgBox_okl(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_ERR,
+                L"Installation Batch delete error", L"Installation Batch deletion "
+                "process failed because of the following error:",
+                pCtx->lastError());
+
       return;
     }
 
@@ -233,11 +239,11 @@ void OmUiPropCtxBat::_onCkBoxQuiet()
 ///
 void OmUiPropCtxBat::_onInit()
 {
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDB_BTN_MOD));
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // Define controls tool-tips
   this->_createTooltip(IDC_LB_BAT,    L"Installation batches list");
@@ -317,7 +323,7 @@ void OmUiPropCtxBat::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropCtxBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

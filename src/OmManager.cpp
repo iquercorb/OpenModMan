@@ -81,7 +81,7 @@ bool OmManager::init(const char* arg)
     result = Om_dirCreate(this->_home);
     if(result != 0) {
       this->_error = Om_errCreate(L"Application home folder", this->_home, result);
-      Om_dialogBoxErr(nullptr, L"Initialization error", this->_error);
+      Om_msgBox_err(L"Initialization - " OMM_APP_NAME, L"Manager initialization failed", this->_error);
       return false;
     }
   }
@@ -107,9 +107,9 @@ bool OmManager::init(const char* arg)
 
     if(!_config.init(conf_path, OMM_CFG_SIGN_APP)) {
       // this is not a fatal error, but this will surely be a problem...
-      wstring msg = Om_errInit(L"Configuration file",conf_path,this->_config.lastErrorStr());
+      wstring msg = Om_errInit(L"Configuration file", conf_path, this->_config.lastErrorStr());
       this->log(1, L"Manager() Init", msg);
-      Om_dialogBoxWarn(nullptr, L"Initialization error", msg);
+      Om_msgBox_wrn(L"Initialization - " OMM_APP_NAME, L"Manager initialization error", msg);
     }
 
     // default icons size

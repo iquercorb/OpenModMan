@@ -38,7 +38,7 @@ OmUiAddRep::~OmUiAddRep()
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_STATE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_OUT01, WM_GETFONT));
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_RESUL, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
 
@@ -68,14 +68,14 @@ void OmUiAddRep::_testLog(const wstring& log)
 
   entry = hour + log;
 
-  unsigned s = this->msgItem(IDC_EC_OUT01, WM_GETTEXTLENGTH, 0, 0);
+  unsigned s = this->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH, 0, 0);
 
-  this->msgItem(IDC_EC_OUT01, EM_SETSEL, s, s);
-  this->msgItem(IDC_EC_OUT01, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
-  this->msgItem(IDC_EC_OUT01, WM_VSCROLL, SB_BOTTOM, 0);
-  this->msgItem(IDC_EC_OUT01, WM_VSCROLL, SB_BOTTOM, 0);
+  this->msgItem(IDC_EC_RESUL, EM_SETSEL, s, s);
+  this->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
+  this->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_BOTTOM, 0);
+  this->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_BOTTOM, 0);
 
-  RedrawWindow(this->getItem(IDC_EC_OUT01), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+  RedrawWindow(this->getItem(IDC_EC_RESUL), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
 }
 
 
@@ -86,7 +86,7 @@ void OmUiAddRep::_onBcChk()
 {
   OmSocket sock;
 
-  this->setItemText(IDC_EC_OUT01, L"");
+  this->setItemText(IDC_EC_RESUL, L"");
   this->setItemText(IDC_SC_STATE, L"Pending...");
 
   wstring rep_base;
@@ -99,10 +99,10 @@ void OmUiAddRep::_onBcChk()
   url += rep_name + L".xml";
 
   if(!Om_isValidFileUrl(url)) {
-    wstring err = L"Supplied parameters cannot be used to "
-                  L"create a valid HTTP address:\n\n";
-    err += url;
-    Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
+    Om_msgBox_okl(this->_hwnd, L"Add Network Repository - " OMM_APP_NAME, IDI_ERR,
+                  L"Invalid Network Repository parameters", L"The specified "
+                  "Network Repository base address and name combination make "
+                  "no valid file access URL:", url);
   }
 
   this->_testResult = -1;
@@ -143,21 +143,21 @@ bool OmUiAddRep::_onBcOk()
 
   if(this->_testResult == 0) {
 
-    wstring wrn = L"You did not tested the Repository, "
-                  L"it may be invalid or unavailable."
-                  L"\n\nDo you want to continue anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Repository not tested", wrn))
-      return false;
+    if(!Om_msgBox_yn(this->_hwnd, L"Add Network Repository - " OMM_APP_NAME, IDI_ERR,
+                  L"Network Repository not tested", L"You did not tested the "
+                  "Repository, it may be invalid or unavailable. "
+                  "Do you want to add it anyway ?"))
+       return false;
+
 
   } else if(this->_testResult == -1) {
 
-    wstring wrn = L"The last Repository test failed, it "
-                  L"appear to be invalid or unavailable."
-                  L"\n\nDo you want to continue anyway ?";
-
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Repository appear invalid", wrn))
-      return false;
+    if(!Om_msgBox_yn(this->_hwnd, L"Add Network Repository - " OMM_APP_NAME, IDI_ERR,
+                  L"Network Repository not tested", L"The last Repository test "
+                  "failed, it appear to be invalid or unavailable. "
+                  "Do you want to add it anyway ?"))
+       return false;
   }
 
   wstring rep_base;
@@ -170,15 +170,22 @@ bool OmUiAddRep::_onBcOk()
   url += rep_name + L".xml";
 
   if(!Om_isValidFileUrl(url)) {
-    wstring err = L"Supplied parameters cannot be used to "
-                  L"create a valid HTTP address";
-    Om_dialogBoxErr(this->_hwnd, L"Invalid parameters", err);
+
+    Om_msgBox_okl(this->_hwnd, L"Add Network Repository - " OMM_APP_NAME, IDI_ERR,
+                  L"Invalid Network Repository parameters", L"The specified "
+                  "Network Repository base address and name combination make "
+                  "no valid file access URL:", url);
+
     return false;
   }
 
   // add new repository in Context
   if(!this->_pLoc->repAdd(rep_base, rep_name)) {
-    Om_dialogBoxErr(this->_hwnd, L"Repository creation failed", this->_pLoc->lastError());
+
+    Om_msgBox_okl(this->_hwnd, L"Add Network Repository - " OMM_APP_NAME, IDI_ERR,
+                 L"Add Network Repository error", L"Network Repository "
+                 "cannot be added because of the following error:",
+                 this->_pLoc->lastError());
   }
 
   this->quit();
@@ -196,21 +203,21 @@ bool OmUiAddRep::_onBcOk()
 void OmUiAddRep::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   HFONT hFt;
   // set specific fonts
   hFt = Om_createFont(12, 800, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(12, 400, L"Consolas");
-  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository base URL, the root HTTP address");
   this->_createTooltip(IDC_EC_INP02,  L"Repository name, the repository identifier");
   this->_createTooltip(IDC_BC_QRY,    L"Query the Repository to check its availability");
   this->_createTooltip(IDC_SC_STATE,  L"Repository query test result");
-  this->_createTooltip(IDC_EC_OUT01,  L"Repository query test logs");
+  this->_createTooltip(IDC_EC_RESUL,  L"Repository query test logs");
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"http://");
@@ -249,7 +256,7 @@ void OmUiAddRep::_onResize()
   this->_setItemPos(IDC_SC_STATE, 65, 73, this->width()-20, 12);
 
   // Repository Test content
-  this->_setItemPos(IDC_EC_OUT01, 10, 90, this->width()-20, this->height()-130);
+  this->_setItemPos(IDC_EC_RESUL, 10, 90, this->width()-20, this->height()-130);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -262,7 +269,7 @@ void OmUiAddRep::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

@@ -183,7 +183,11 @@ void OmUiMain::ctxOpen(const wstring& path)
     this->refresh();
 
   } else {
-    Om_dialogBoxErr(this->_hwnd, L"Unable to load Context", pMgr->lastError());
+
+    Om_msgBox_okl(this->_hwnd, L"Open Software Context - " OMM_APP_NAME, IDI_ERR,
+                 L"Software Context open error", L"Software Context "
+                 "loading failed because of the following error:",
+                 pMgr->lastError());
   }
 }
 
@@ -401,7 +405,7 @@ void OmUiMain::_onInit()
   #endif
 
   // set window icon
-  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
 
   // Defines fonts for Context ComboBox
   HFONT hFt = Om_createFont(21, 200, L"Ms Shell Dlg");
@@ -582,7 +586,7 @@ void OmUiMain::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // The WM_COPYDATA is received if another instance was run
   // with arguments, in this case it pass the argument string

@@ -32,7 +32,7 @@ OmUiHelpAbt::OmUiHelpAbt(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiHelpAbt::~OmUiHelpAbt()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_OUT01, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_RESUL, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
 
@@ -52,7 +52,7 @@ long OmUiHelpAbt::id() const
 void OmUiHelpAbt::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   wstring about = OMM_APP_NAME;
   about.append(L" - version ");
@@ -75,11 +75,11 @@ void OmUiHelpAbt::_onInit()
   this->setItemText(IDC_LM_LNK02, repo_url);
 
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   string txt;
   if(Om_loadPlainText(txt, L"CREDITS.TXT")) {
-    SetDlgItemText(this->_hwnd, IDC_EC_OUT01, txt.c_str());
+    SetDlgItemText(this->_hwnd, IDC_EC_RESUL, txt.c_str());
   }
 }
 
@@ -99,7 +99,7 @@ void OmUiHelpAbt::_onResize()
   this->_setItemPos(IDC_SC_LBL02, half_width - 100, 50, 60, 9);
   this->_setItemPos(IDC_LM_LNK02, half_width - 35, 50, 200, 9);
 
-  this->_setItemPos(IDC_EC_OUT01, 5, 65, this->width()-10, this->height()-100);
+  this->_setItemPos(IDC_EC_RESUL, 5, 65, this->width()-10, this->height()-100);
 
   // force buttons to redraw
   InvalidateRect(this->getItem(IDC_SC_INTRO), nullptr, true);
@@ -114,7 +114,7 @@ void OmUiHelpAbt::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_NOTIFY) {
 

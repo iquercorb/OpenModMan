@@ -45,10 +45,10 @@ OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiToolPkg::~OmUiToolPkg()
 {
-  HBITMAP hBm = this->setStImage(IDC_SB_PKG, nullptr);
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_SNAP, nullptr);
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   DeleteObject(hFt);
 }
 
@@ -123,7 +123,7 @@ void OmUiToolPkg::_freeze(bool freeze)
   }
   if(this->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
     this->enableItem(IDC_BC_BRW05, enable);
-    this->enableItem(IDC_EC_TXT, enable);
+    this->enableItem(IDC_EC_DESC, enable);
   }
   this->enableItem(IDC_BC_SAVE, enable);
   this->enableItem(IDC_BC_CLOSE, enable);
@@ -147,7 +147,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_EC_INP04, false);
   this->enableItem(IDC_CB_EXT, false);
   this->enableItem(IDC_CB_LVL, false);
-  this->setItemText(IDC_EC_OUT02, L"");
+  this->setItemText(IDC_EC_READ1, L"");
 
   // destination folder disabled
   this->enableItem(IDC_EC_INP06, false);
@@ -177,16 +177,16 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CKBX2, false);
   this->enableItem(IDC_BC_BRW04, false);
-  hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+  hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
   this->setItemText(IDC_EC_INP08, L"");
 
   // Description initial states
   this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CKBX3, false);
   this->enableItem(IDC_BC_BRW05, false);
-  this->enableItem(IDC_EC_TXT, false);
-  this->setItemText(IDC_EC_TXT, L"");
+  this->enableItem(IDC_EC_DESC, false);
+  this->setItemText(IDC_EC_DESC, L"");
 
   // check whether source path is empty to
   // reset to initial state
@@ -261,16 +261,16 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   if(this->_package.image().thumbnail()) {
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
-    hBm = this->setStImage(IDC_SB_PKG, this->_package.image().thumbnail());
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+    hBm = this->setStImage(IDC_SB_SNAP, this->_package.image().thumbnail());
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
   }
 
   // check for package description
   if(this->_package.desc().size()) {
     this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW05, true);
-    this->enableItem(IDC_EC_TXT, true);
-    this->setItemText(IDC_EC_TXT, this->_package.desc());
+    this->enableItem(IDC_EC_DESC, true);
+    this->setItemText(IDC_EC_DESC, this->_package.desc());
   }
 
   wstring item_str;
@@ -281,7 +281,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     item_str.append(this->_package.srcItemGet(i).path);
     if(i < n - 1) item_str.append(L"\r\n");
   }
-  this->setItemText(IDC_EC_OUT02, item_str);
+  this->setItemText(IDC_EC_READ1, item_str);
 
   // update name and version
   this->setItemText(IDC_EC_INP03, this->_package.name());
@@ -354,7 +354,7 @@ void OmUiToolPkg::_save_stop()
 
     // get destination filename
     wstring item_str;
-    this->getItemText(IDC_EC_OUT01, item_str);
+    this->getItemText(IDC_EC_RESUL, item_str);
 
     // a reassuring message
     Om_dialogSaveSucces(this->_hwnd, L"Package");
@@ -428,7 +428,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 
   // get package description text
   if(self->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
-    self->getItemText(IDC_EC_TXT, item_str);
+    self->getItemText(IDC_EC_DESC, item_str);
     self->_package.setDesc(item_str);
   } else {
     self->_package.setDesc(L"");
@@ -440,7 +440,7 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   // get destination path & filename
   wstring out_path, out_file;
   self->getItemText(IDC_EC_INP06, out_path);
-  self->getItemText(IDC_EC_OUT01, out_file);
+  self->getItemText(IDC_EC_RESUL, out_file);
 
   self->_save_abort = false;
   self->enableItem(IDC_BC_ABORT, true);
@@ -557,22 +557,27 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
   if(Om_isDirEmpty(result)) {
 
     // show warning dialog box
-    wstring wrn = L"The selected source folder is empty, the resulting "
-                  L"package will have no content to install."
-                  L"\n\nDo you want to continue anyway ?";
-
-    if(!Om_dialogBoxQuerry(this->_hwnd, L"Empty source folder", wrn)) {
+    if(!Om_msgBox_yn(this->_hwnd, L"Package Editor - " OMM_APP_NAME, IDI_QRY,
+                L"Empty Package source folder", L"The selected source folder is "
+                "empty, the resulting package will have no content to install."
+                "Do you want to continue anyway ?"))
+    {
       this->setItemText(IDC_EC_INP01, L"");
       this->_parseSrc(L"");
       return false;
     }
+
   }
+
+
 
   // Try to parse the folder (as package source)
   if(!this->_parseSrc(result)) {
     // this cannot happen at this stage... but...
-    wstring err = L"The folder \""+result+L"\" is not suitable for Package source.";
-    Om_dialogBoxErr(this->_hwnd, L"Error parsing Package source folder", err);
+    Om_msgBox_okl(this->_hwnd, L"Package Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Package source parse error", L"Unable to parse "
+                 "the specified folder as Package:", result);
+
     this->setItemText(IDC_EC_INP01, L"");
   }
 
@@ -632,8 +637,10 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
 
   // parse this package source
   if(!this->_parseSrc(result)) {
-    wstring err = L"The file \""+result+L"\" is not valid Package file.";
-    Om_dialogBoxErr(this->_hwnd, L"Error parsing Package source file", err);
+    Om_msgBox_okl(this->_hwnd, L"Package Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Package source parse error", L"Unable to parse "
+                 "the specified file as Package:", result);
+
     this->setItemText(IDC_EC_INP02, L"");
   }
 
@@ -672,12 +679,12 @@ void OmUiToolPkg::_onNameChange()
     name_str += ext_str;
 
     // set final filename
-    this->setItemText(IDC_EC_OUT01, name_str);
+    this->setItemText(IDC_EC_RESUL, name_str);
 
   } else {
 
     // reset output
-    this->setItemText(IDC_EC_OUT01, L"");
+    this->setItemText(IDC_EC_RESUL, L"");
   }
 }
 
@@ -809,8 +816,8 @@ void OmUiToolPkg::_onCkBoxSnap()
 
     this->enableItem(IDC_BC_BRW04, false);
 
-    HBITMAP hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
     this->setItemText(IDC_EC_INP08, L"");
   }
@@ -842,8 +849,8 @@ bool OmUiToolPkg::_onBcBrwSnap()
   if(image.open(result, OMM_PKG_THMB_SIZE)) {
 
     // set thumbnail
-    hBm = this->setStImage(IDC_SB_PKG, image.thumbnail());
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+    hBm = this->setStImage(IDC_SB_SNAP, image.thumbnail());
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
     // set EditText content to image path
     this->setItemText(IDC_EC_INP08, result);
@@ -851,8 +858,8 @@ bool OmUiToolPkg::_onBcBrwSnap()
   } else {
 
     // remove any thumbnail
-    hBm = this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+    hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
     // reset hidden EditText content
     this->setItemText(IDC_EC_INP08, L"");
@@ -870,7 +877,7 @@ void OmUiToolPkg::_onCkBoxDesc()
   bool bm_chk = this->msgItem(IDC_BC_CKBX3, BM_GETCHECK);
 
   this->enableItem(IDC_BC_BRW05, bm_chk);
-  this->enableItem(IDC_EC_TXT, bm_chk);
+  this->enableItem(IDC_EC_DESC, bm_chk);
 }
 
 
@@ -897,7 +904,7 @@ bool OmUiToolPkg::_onBcBrwDesc()
 
   // load as plain text and send to contro
   string text_str = Om_loadPlainText(result);
-  SetDlgItemTextA(this->_hwnd, IDC_EC_TXT, text_str.c_str());
+  SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text_str.c_str());
 
   return true;
 }
@@ -913,9 +920,9 @@ void OmUiToolPkg::_onBcSave()
   // verify package has parsed source
   if(!this->_package.srcValid()) {
     // show error dialog box
-    msg = L"Current package source is empty or invalid, "
-          L"please select a valid source.";
-    Om_dialogBoxErr(this->_hwnd, L"Invalid package source", msg);
+    Om_msgBox_ok(this->_hwnd, L"Package Editor - " OMM_APP_NAME, IDI_ERR,
+                 L"Invalid Package source", L"Invalid or empty Package source. "
+                 "Please select a file or folder as Package source.");
     return;
   }
 
@@ -923,7 +930,7 @@ void OmUiToolPkg::_onBcSave()
   wstring out_name, out_dir;
 
   this->getItemText(IDC_EC_INP06, out_dir);
-  this->getItemText(IDC_EC_OUT01, out_name);
+  this->getItemText(IDC_EC_RESUL, out_name);
 
   if(!Om_dialogValidName(this->_hwnd, L"Package filename", out_name))
     return;
@@ -955,7 +962,7 @@ void OmUiToolPkg::_onBcSave()
 void OmUiToolPkg::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Package editor - " OMM_APP_NAME);
@@ -991,18 +998,18 @@ void OmUiToolPkg::_onInit()
 
   this->_createTooltip(IDC_BC_CKBX3,  L"Define a description for this Package");
   this->_createTooltip(IDC_BC_BRW05,  L"Browse to open text file and use its content as description");
-  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
+  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_PKG, Om_getResImage(this->_hins, IDB_PKG_THN));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDB_BTN_NEW));
-  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDB_BTN_OPN));
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ENT));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_NEW));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ENT));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);
@@ -1079,13 +1086,13 @@ void OmUiToolPkg::_onResize()
   // File extension ComboBox
   this->_setItemPos(IDC_CB_EXT, half_w-40, 88, 30, 13);
   // Output filname EditText
-  this->_setItemPos(IDC_EC_OUT01, 10, 104, half_w-20, 13);
+  this->_setItemPos(IDC_EC_RESUL, 10, 104, half_w-20, 13);
   // Zip compression Label & ComboBox
   this->_setItemPos(IDC_SC_LBL04, 10, 125, 120, 9);
   this->_setItemPos(IDC_CB_LVL, 10, 137, half_w-20, 13);
   // Package content Label & output EditText
   this->_setItemPos(IDC_SC_LBL07, 10, 158, 150, 13);
-  this->_setItemPos(IDC_EC_OUT02, 10, 170, half_w-20, this->height()-258);
+  this->_setItemPos(IDC_EC_READ1, 10, 170, half_w-20, this->height()-258);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // Destination Label
@@ -1130,7 +1137,7 @@ void OmUiToolPkg::_onResize()
   // Include snapshot CheckBox
   this->_setItemPos(IDC_BC_CKBX2, half_w+10, 145, 70, 9);
   // Snapshot Bitmap & Select... Button
-  this->_setItemPos(IDC_SB_PKG, this->width()-160, 146, 86, 79);
+  this->_setItemPos(IDC_SB_SNAP, this->width()-160, 146, 86, 79);
   this->_setItemPos(IDC_BC_BRW04, this->width()-50, 145, 40, 13);
   // Snapshot hidden EditText
   this->_setItemPos(IDC_EC_INP08, half_w+10, 160, 120, 13); // hidden
@@ -1144,7 +1151,7 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_BC_CKBX3, half_w+10, 240, 100, 9);
   this->_setItemPos(IDC_BC_BRW05, this->width()-50, 240, 40, 13);
   // Description EditText
-  this->_setItemPos(IDC_EC_TXT, half_w+10, 255, half_w-20, this->height()-290);
+  this->_setItemPos(IDC_EC_DESC, half_w+10, 255, half_w-20, this->height()-290);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // ----- Separator
@@ -1189,7 +1196,7 @@ void OmUiToolPkg::_onClose()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_PKGSAVE_DONE is a custom message sent from Package Save
   // thread function, to notify the thread ended is job.
@@ -1304,7 +1311,7 @@ bool OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       has_changed = this->_onBcBrwDesc();
       break;
 
-    case IDC_EC_TXT: //< Description EditText
+    case IDC_EC_DESC: //< Description EditText
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE) {
         this->enableItem(IDC_BC_SAVE, true); //< enable "Save" Button

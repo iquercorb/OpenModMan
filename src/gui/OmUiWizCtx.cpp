@@ -112,10 +112,16 @@ void OmUiWizCtx::_onWizFinish()
     OmContext* pCtx = pMgr->ctxGet(pMgr->ctxCount()-1);
     // create new Location in Context
     if(!pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
-      Om_dialogBoxErr(this->_hwnd, L"Location creation failed", pCtx->lastError());
+      Om_msgBox_okl(this->_hwnd, L"Software Context Wizard - " OMM_APP_NAME, IDI_ERR,
+                    L"Target Location creation error", L"Target Location "
+                    "creation failed because of the following error:",
+                    pCtx->lastError());
     }
   } else {
-    Om_dialogBoxErr(this->_hwnd, L"Context creation failed", pMgr->lastError());
+    Om_msgBox_okl(this->_hwnd, L"Software Context Wizard - " OMM_APP_NAME, IDI_ERR,
+                  L"Software Context creation error", L"Software Context "
+                  "creation failed because of the following error:",
+                  pMgr->lastError());
   }
 
   // Unselect current context, this will force to select last one at next refresh
@@ -132,5 +138,5 @@ void OmUiWizCtx::_onWizFinish()
 void OmUiWizCtx::_onWizInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
 }

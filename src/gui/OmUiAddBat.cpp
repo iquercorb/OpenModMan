@@ -457,7 +457,12 @@ bool OmUiAddBat::_onBcOk()
 
   // try to create a new batch
   if(!this->_pCtx->batAdd(bat_name, loc_uuid, loc_hash_list)) {
-    Om_dialogBoxErr(this->_hwnd,  L"Batch creation failed", this->_pCtx->lastError());
+
+    Om_msgBox_okl(this->_hwnd, L"New Installation Batch - " OMM_APP_NAME, IDI_ERR,
+                  L"Installation Batch creation error", L"Installation Batch "
+                  "creation failed because of the following error:",
+                  this->_pCtx->lastError());
+
     return false;
   }
 
@@ -474,11 +479,11 @@ bool OmUiAddBat::_onBcOk()
 void OmUiAddBat::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // Set icons for Up and Down buttons
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
@@ -574,7 +579,7 @@ void OmUiAddBat::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiAddBat::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

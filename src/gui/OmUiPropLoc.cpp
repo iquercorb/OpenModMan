@@ -321,7 +321,10 @@ bool OmUiPropLoc::applyChanges()
     static_cast<OmUiMain*>(this->root())->safemode(true);
 
     if(!this->_pLoc->renameHome(loc_name)) {
-      Om_dialogBoxErr(this->_hwnd, L"Location rename failed", this->_pLoc->lastError());
+      Om_msgBox_okl(this->_hwnd, L"Target Location properties - " OMM_APP_NAME, IDI_WRN,
+                   L"Target Location home rename error", L"Target Location "
+                   "title changed but home folder and definition file rename "
+                   "failed because of the following error:", this->_pLoc->lastError());
     }
 
     // Back to main dialog window to normal state
@@ -391,9 +394,10 @@ void OmUiPropLoc::_movBck_stop()
 
   if(exitCode == 1)  {
     // an error occurred during backup purge
-    wstring msg = L"Errors occurred during backups data transfer, "
-                  L"read debug log for more details.";
-    Om_dialogBoxErr(this->_hwnd, L"Change backup folder error", msg);
+    Om_msgBox_ok(this->_hwnd, L"Target Location properties - " OMM_APP_NAME, IDI_WRN,
+                 L"Target Location backup transfer error", L"Target Location "
+                 "backup data transfer encountered error(s), some backup data may "
+                 "had not properly moved. Please read debug log for details.");
   }
 
   OmUiPropLocStg* pUiPropLocStg = static_cast<OmUiPropLocStg*>(this->childById(IDD_PROP_LOC_STG));
@@ -459,14 +463,14 @@ bool OmUiPropLoc::_movBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_
 void OmUiPropLoc::_onPropInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropLoc::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_MOVEBACKUP_DONE is a custom message sent from backup transfer thread
   // function, to notify the progress dialog ended is job.

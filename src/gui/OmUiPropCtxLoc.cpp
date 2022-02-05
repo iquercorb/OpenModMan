@@ -141,16 +141,18 @@ void OmUiPropCtxLoc::_delLoc_stop()
 
     // backup data purged, now delete Location
     if(!pCtx->locRem(this->_delLoc_id)) {
-      msg = L"Errors occurred during Target location deletion process, "
-            L"read debug log for more details.";
-      Om_dialogBoxWarn(this->_hwnd, L"Target location deletion error", msg);
+      Om_msgBox_ok(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_WRN,
+                L"Target Location remove error", L"Target Location "
+                "remove process encountered error(s), some file may "
+                "had not properly deleted. Please read debug log for details.");
     }
 
   } else {
     // an error occurred during backup purge
-    msg = L"Target location deletion aborted because errors occurred during "
-          L"backup purge process, read debug log for more details.";
-    Om_dialogBoxErr(this->_hwnd, L"Target location backup purge error", msg);
+    Om_msgBox_ok(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_WRN,
+                L"Target Location backup purge error", L"Target Location "
+                "backup purge process encountered error(s), some backup data may "
+                "had not properly restored. Please read debug log for details.");
   }
 
   // select the first location in list
@@ -221,16 +223,16 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
 
     OmLocation* pLoc = pCtx->locGet(loc_id);
 
-    this->setItemText(IDC_EC_OUT01, pLoc->dstDir());
-    this->setItemText(IDC_EC_OUT02, pLoc->libDir());
-    this->setItemText(IDC_EC_OUT03, pLoc->bckDir());
+    this->setItemText(IDC_EC_READ2, pLoc->dstDir());
+    this->setItemText(IDC_EC_READ3, pLoc->libDir());
+    this->setItemText(IDC_EC_READ4, pLoc->bckDir());
 
     this->enableItem(IDC_SC_LBL02, true);
-    this->enableItem(IDC_EC_OUT01, true);
+    this->enableItem(IDC_EC_READ2, true);
     this->enableItem(IDC_SC_LBL03, true);
-    this->enableItem(IDC_EC_OUT02, true);
+    this->enableItem(IDC_EC_READ3, true);
     this->enableItem(IDC_SC_LBL04, true);
-    this->enableItem(IDC_EC_OUT03, true);
+    this->enableItem(IDC_EC_READ4, true);
 
     this->enableItem(IDC_BC_DEL, true);
     this->enableItem(IDC_BC_EDI, true);
@@ -239,16 +241,16 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
     int lb_max = this->msgItem(IDC_LB_LOC, LB_GETCOUNT) - 1;
     this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
   } else {
-    this->setItemText(IDC_EC_OUT01, L"<no selection>");
-    this->setItemText(IDC_EC_OUT02, L"<no selection>");
-    this->setItemText(IDC_EC_OUT03, L"<no selection>");
+    this->setItemText(IDC_EC_READ2, L"<no selection>");
+    this->setItemText(IDC_EC_READ3, L"<no selection>");
+    this->setItemText(IDC_EC_READ4, L"<no selection>");
 
     this->enableItem(IDC_SC_LBL02, false);
-    this->enableItem(IDC_EC_OUT01, false);
+    this->enableItem(IDC_EC_READ2, false);
     this->enableItem(IDC_SC_LBL03, false);
-    this->enableItem(IDC_EC_OUT02, false);
+    this->enableItem(IDC_EC_READ3, false);
     this->enableItem(IDC_SC_LBL04, false);
-    this->enableItem(IDC_EC_OUT03, false);
+    this->enableItem(IDC_EC_READ4, false);
 
     this->enableItem(IDC_BC_DEL, false);
     this->enableItem(IDC_BC_EDI, false);
@@ -339,21 +341,22 @@ void OmUiPropCtxLoc::_onBcDelLoc()
   OmLocation* pLoc = pCtx->locGet(loc_id);
 
   // warns the user before committing the irreparable
-  wstring msg;
-  msg =   L"The operation will permanently delete "
-          L"the Target location and its associated data.";
-  msg +=  L"\n\nDelete the Location \"" + pLoc->title() + L"\" ?";
-
-  if(!Om_dialogBoxQuerry(this->_hwnd, L"Target location deletion", msg))
+  if(!Om_msgBox_ca(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_QRY,
+            L"Delete Target Location", L"The operation will permanently delete "
+            "the Target location \""+pLoc->title()+L"\" and its associated data."))
+  {
     return;
+  }
 
   if(pLoc->bckHasData()) {
-    msg =   L"The Target location currently have installed packages, the "
-            L"deletion process will uninstall them and restore all backup data.";
-    msg +=  L"\n\nContinue ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Target location deletion", msg))
+    if(!Om_msgBox_ca(this->_hwnd, L"Software Context properties - " OMM_APP_NAME, IDI_QRY,
+              L"Remaining backup data", L"The Target location currently have "
+              "installed packages, the deletion process will uninstall them "
+              "and restore all backup data."))
+    {
       return;
+    }
   }
 
   // here we go for Location delete
@@ -402,11 +405,11 @@ void OmUiPropCtxLoc::_onBcAddLoc()
 void OmUiPropCtxLoc::_onInit()
 {
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDB_BTN_MOD));
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDB_BTN_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDB_BTN_DN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOC,  L"Target locations list");
@@ -439,13 +442,13 @@ void OmUiPropCtxLoc::_onResize()
   this->_setItemPos(IDC_BC_ADD, this->width()-108, 57, 50, 14);
   // Location Destination Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, 50, 75, 110, 9);
-  this->_setItemPos(IDC_EC_OUT01, 115, 75, this->width()-155, 13);
+  this->_setItemPos(IDC_EC_READ2, 115, 75, this->width()-155, 13);
   // Location Library Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 50, 87, 110, 9);
-  this->_setItemPos(IDC_EC_OUT02, 115, 87, this->width()-155, 13);
+  this->_setItemPos(IDC_EC_READ3, 115, 87, this->width()-155, 13);
   // Location Backup Label & EditControl
   this->_setItemPos(IDC_SC_LBL04, 50, 99, 110, 9);
-  this->_setItemPos(IDC_EC_OUT03, 115, 99, this->width()-155, 13);
+  this->_setItemPos(IDC_EC_READ4, 115, 99, this->width()-155, 13);
 }
 
 
@@ -465,16 +468,16 @@ void OmUiPropCtxLoc::_onRefresh()
   }
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_OUT01, L"<no selection>");
-  this->setItemText(IDC_EC_OUT02, L"<no selection>");
-  this->setItemText(IDC_EC_OUT03, L"<no selection>");
+  this->setItemText(IDC_EC_READ2, L"<no selection>");
+  this->setItemText(IDC_EC_READ3, L"<no selection>");
+  this->setItemText(IDC_EC_READ4, L"<no selection>");
 
   this->enableItem(IDC_SC_LBL02, false);
-  this->enableItem(IDC_EC_OUT01, false);
+  this->enableItem(IDC_EC_READ2, false);
   this->enableItem(IDC_SC_LBL03, false);
-  this->enableItem(IDC_EC_OUT02, false);
+  this->enableItem(IDC_EC_READ3, false);
   this->enableItem(IDC_SC_LBL04, false);
-  this->enableItem(IDC_EC_OUT03, false);
+  this->enableItem(IDC_EC_READ4, false);
 
   this->enableItem(IDC_BC_DEL,  false);
   this->enableItem(IDC_BC_EDI, false);
@@ -487,7 +490,7 @@ void OmUiPropCtxLoc::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_BACKPURGE_DONE is a custom message sent from Location backups purge thread
   // function, to notify the progress dialog ended is job.

@@ -203,7 +203,11 @@ bool OmUiAddLoc::_onBcOk()
 
   // create new Location in Context
   if(!this->_pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
-    Om_dialogBoxErr(this->_hwnd, L"Target location creation failed", this->_pCtx->lastError());
+
+    Om_msgBox_okl(this->_hwnd, L"New Target Location - " OMM_APP_NAME, IDI_ERR,
+                  L"Target Location creation error", L"Target Location "
+                  "creation failed because of the following error:",
+                  this->_pCtx->lastError());
   }
 
   // refresh all tree from the main dialog
@@ -219,7 +223,7 @@ bool OmUiAddLoc::_onBcOk()
 void OmUiAddLoc::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Target location name, to identify it and create folder");
@@ -283,7 +287,7 @@ void OmUiAddLoc::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

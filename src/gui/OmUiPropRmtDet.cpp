@@ -35,7 +35,7 @@ OmUiPropRmtDet::OmUiPropRmtDet(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiPropRmtDet::~OmUiPropRmtDet()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
 
@@ -56,19 +56,20 @@ void OmUiPropRmtDet::_onInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14,400,L"Consolas");
-  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
+  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), 1);
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_OUT01,  L"Package identity, the raw filename without extension");
-  this->_createTooltip(IDC_EC_OUT02,  L"Package core (or master) name, raw filename without version");
-  this->_createTooltip(IDC_EC_OUT03,  L"Package version number");
-  this->_createTooltip(IDC_EC_OUT04,  L"Package filename hash value, an unique file/folder identifer");
-  this->_createTooltip(IDC_EC_OUT05,  L"Package download URLs");
-  this->_createTooltip(IDC_EC_OUT06,  L"Package file size");
-  this->_createTooltip(IDC_EC_OUT08,  L"List of package that this one supersedes as newer version");
-  this->_createTooltip(IDC_EC_OUT09,  L"List of package dependencies");
-  this->_createTooltip(IDC_SB_PKG,    L"Package snapshot image");
-  this->_createTooltip(IDC_EC_TXT,    L"Package description text");
+  this->_createTooltip(IDC_EC_READ1,  L"Package identity, the raw filename without extension");
+  this->_createTooltip(IDC_EC_READ2,  L"Package core (or master) name, raw filename without version");
+  this->_createTooltip(IDC_EC_READ3,  L"Package version number");
+  this->_createTooltip(IDC_EC_READ4,  L"Package filename hash value, an unique file/folder identifer");
+  this->_createTooltip(IDC_EC_READ5,  L"Package download URLs");
+  this->_createTooltip(IDC_EC_READ6,  L"Package file size");
+  this->_createTooltip(IDC_EC_READ7,  L"Package file MD5 checksum");
+  this->_createTooltip(IDC_EC_READ8,  L"List of package that this one supersedes as newer version");
+  this->_createTooltip(IDC_EC_READ9,  L"List of package dependencies");
+  this->_createTooltip(IDC_SB_SNAP,    L"Package snapshot image");
+  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
 
   OmRemote* pRmt = static_cast<OmUiPropRmt*>(this->_parent)->rmtCur();
   if(pRmt == nullptr) return;
@@ -76,65 +77,67 @@ void OmUiPropRmtDet::_onInit()
   wstring item_str;
 
   // Ident
-  this->setItemText(IDC_EC_OUT01, pRmt->ident());
+  this->setItemText(IDC_EC_READ1, pRmt->ident());
   // Core
-  this->setItemText(IDC_EC_OUT02, pRmt->core());
+  this->setItemText(IDC_EC_READ2, pRmt->core());
   // Parsed Version
-  this->setItemText(IDC_EC_OUT03, pRmt->version().asString());
+  this->setItemText(IDC_EC_READ3, pRmt->version().asString());
   // Computed Hash
-  this->setItemText(IDC_EC_OUT04, Om_toHexString(pRmt->hash()));
+  this->setItemText(IDC_EC_READ4, Om_toHexString(pRmt->hash()));
 
   // Urls
-  this->enableItem(IDC_EC_OUT05, true);
+  this->enableItem(IDC_EC_READ5, true);
   item_str.clear();
-  for(size_t i = 0; i < pRmt->urlCount(); ++i)
-    item_str += pRmt->urlGet(i) + L"\n";
-  this->setItemText(IDC_EC_OUT05, item_str);
+  for(unsigned i = 0; i < pRmt->urlCount(); ++i) {
+    item_str += pRmt->urlGet(i);
+    if(i < (pRmt->urlCount() - 1)) item_str += L"\r\n";
+  }
+  this->setItemText(IDC_EC_READ5, item_str);
 
   // Size
   item_str = Om_formatSizeSysStr(pRmt->bytes(), true);
-  this->setItemText(IDC_EC_OUT06, item_str);
+  this->setItemText(IDC_EC_READ6, item_str);
 
   // Checksum
-  this->setItemText(IDC_EC_OUT07, pRmt->checksum());
+  this->setItemText(IDC_EC_READ7, pRmt->checksum());
 
   // Supersedes
-  this->enableItem(IDC_EC_OUT08, true);
+  this->enableItem(IDC_EC_READ8, true);
   if(pRmt->supCount()) {
     item_str.clear();
-    for(size_t i = 0; i < pRmt->supCount(); ++i)
-      item_str += pRmt->supGet(i)->ident() + L"\n";
-    this->setItemText(IDC_EC_OUT08, item_str);
+    for(unsigned i = 0; i < pRmt->supCount(); ++i) {
+      item_str += pRmt->supGet(i)->ident();
+      if(i < (pRmt->supCount() - 1)) item_str += L"\r\n";
+    }
+    this->setItemText(IDC_EC_READ8, item_str);
   } else {
-    this->setItemText(IDC_EC_OUT08, L"None");
+    this->setItemText(IDC_EC_READ8, L"None");
   }
 
   // Dependencies
-  this->enableItem(IDC_EC_OUT09, true);
+  this->enableItem(IDC_EC_READ9, true);
   if(pRmt->depCount()) {
     item_str.clear();
     for(unsigned i = 0; i < pRmt->depCount(); ++i) {
       item_str += pRmt->depGet(i);
-      if(i < (pRmt->depCount() - 1)) {
-        item_str += L"; ";
-      }
+      if(i < (pRmt->depCount() - 1)) item_str += L"\r\n";
     }
-    this->setItemText(IDC_EC_OUT09, item_str);
+    this->setItemText(IDC_EC_READ9, item_str);
   } else {
-    this->setItemText(IDC_EC_OUT09, L"None");
+    this->setItemText(IDC_EC_READ9, L"None");
   }
 
   // Snapshot image
   if(pRmt->image().thumbnail()) {
-    this->setStImage(IDC_SB_PKG, pRmt->image().thumbnail());
+    this->setStImage(IDC_SB_SNAP, pRmt->image().thumbnail());
   }
 
   // Package description
-  this->enableItem(IDC_EC_TXT, true);
+  this->enableItem(IDC_EC_DESC, true);
   if(pRmt->desc().size()) {
-    this->setItemText(IDC_EC_TXT, pRmt->desc());
+    this->setItemText(IDC_EC_DESC, pRmt->desc());
   } else {
-    this->setItemText(IDC_EC_TXT, L"");
+    this->setItemText(IDC_EC_DESC, L"");
   }
 }
 
@@ -146,54 +149,54 @@ void OmUiPropRmtDet::_onResize()
 {
   // Identity Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 5, 64, 9);
-  this->_setItemPos(IDC_EC_OUT01, 70, 5, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_READ1, 70, 5, this->width()-90, 13);
   // Core Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, 5, 20, 64, 9);
-  this->_setItemPos(IDC_EC_OUT02, 70, 20, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_READ2, 70, 20, this->width()-90, 13);
   // Version Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 5, 35, 64, 9);
-  this->_setItemPos(IDC_EC_OUT03, 70, 35, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_READ3, 70, 35, this->width()-90, 13);
   // Hash Label & EditControl
   this->_setItemPos(IDC_SC_LBL04, 5, 50, 64, 9);
-  this->_setItemPos(IDC_EC_OUT04, 70, 50, this->width()-90, 13);
+  this->_setItemPos(IDC_EC_READ4, 70, 50, this->width()-90, 13);
 
   // separator
   this->_setItemPos(IDC_SC_SEP01, 5, 66, this->width()-25, 1);
 
   // Dowload URLs Label & EditControl
   this->_setItemPos(IDC_SC_LBL05, 5, 75, 64, 9);
-  this->_setItemPos(IDC_EC_OUT05, 70, 75, this->width()-90, 26);
+  this->_setItemPos(IDC_EC_READ5, 70, 75, this->width()-90, 13);
   // Size Label & EditControl
-  this->_setItemPos(IDC_SC_LBL06, 5, 100, 64, 9);
-  this->_setItemPos(IDC_EC_OUT06, 70, 100, this->width()-90, 13);
-  // Checksum Label & EditControl
-  //this->_setItemPos(IDC_SC_LBL07, 5, 125, 64, 9);
-  //this->_setItemPos(IDC_EC_OUT07, 70, 125, this->width()-90, 13);
+  this->_setItemPos(IDC_SC_LBL06, 5, 90, 64, 9);
+  this->_setItemPos(IDC_EC_READ6, 70, 90, this->width()-90, 13);
+  // Md5sum Label & EditControl
+  this->_setItemPos(IDC_SC_LBL07, 5, 105, 64, 9);
+  this->_setItemPos(IDC_EC_READ7, 70, 105, this->width()-90, 13);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP02, 5, 116, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP02, 5, 120, this->width()-25, 1);
 
   // Supersedes Label & EditControl
   this->_setItemPos(IDC_SC_LBL08, 5, 125, 64, 9);
-  this->_setItemPos(IDC_EC_OUT08, 70, 125, this->width()-90, 26);
+  this->_setItemPos(IDC_EC_READ8, 70, 125, this->width()-90, 26);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP03, 5, 151, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP03, 5, 155, this->width()-25, 1);
 
   // Dependencies Label & EditControl
   this->_setItemPos(IDC_SC_LBL09, 5, 160, 64, 9);
-  this->_setItemPos(IDC_EC_OUT09, 70, 160, this->width()-90, 26);
+  this->_setItemPos(IDC_EC_READ9, 70, 160, this->width()-90, 26);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP04, 5, 185, this->width()-25, 1);
+  this->_setItemPos(IDC_SC_SEP04, 5, 190, this->width()-25, 1);
 
   // Package Source Snapshot Label
   this->_setItemPos(IDC_SC_LBL10, 5, 195, 64, 9);
   // Package Source Snapshot Image
-  this->_setItemPos(IDC_SB_PKG, 70, 195, 85, 78);
+  this->_setItemPos(IDC_SB_SNAP, 70, 195, 85, 78);
 
   // Package Source Description Label
-  this->_setItemPos(IDC_SC_LBL11, 5, 280, 64, 9);
+  this->_setItemPos(IDC_SC_LBL11, 5, 278, 64, 9);
   // Package Source Description EditControl
-  this->_setItemPos(IDC_EC_TXT, 70, 280, this->width()-90, this->height()-285);
+  this->_setItemPos(IDC_EC_DESC, 70, 278, this->width()-90, this->height()-285);
 }

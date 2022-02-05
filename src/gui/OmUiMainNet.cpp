@@ -38,78 +38,69 @@
 ///
 #define UWM_DOWNLOADS_DONE    (WM_APP+2)
 
-/// \brief Add package list for warning messages
+
+/// \brief Create Packages name list string.
 ///
-/// Add packages list for warning messages with a fixed limit to prevent
-/// overly long messages.
+/// Create Package name list string with proper CRLF from
+/// the given Package object array.
 ///
-/// \param[in]  msg       Dialog box message string to add list.
-/// \param[in]  pkgs_ls   List of package pointers to iterate to.
-/// \param[in]  max       Maximum count of package to display.
+/// \param[out] lst_str   String to receive name list.
+/// \param[in]  pkgs_ls   Package object list to create name list from.
 ///
-inline static void __msg_package_list(wstring& msg, const vector<OmPackage*>& pkgs_ls, size_t max)
+inline static void __msg_package_list(wstring& lst_str, const vector<OmPackage*>& pkgs_ls)
 {
-  size_t i = 0;
+  size_t size = pkgs_ls.size();
+  size_t stop = pkgs_ls.size() - 1;
 
-  for( ; i < pkgs_ls.size() && i < max; ++i) {
-    msg += L"\n " + pkgs_ls[i]->ident();
-  }
+  lst_str.clear();
 
-  if(pkgs_ls.size() > i) {
-    msg += L"\n ...\n and ";
-    msg += std::to_wstring(pkgs_ls.size() - i);
-    msg += L" other package(s)";
+  for(size_t i = 0; i < size; ++i) {
+    lst_str += pkgs_ls[i]->ident();
+    if(i < stop) lst_str += L"\r\n";
   }
 }
 
-/// \brief Add package list for warning messages
+/// \brief Create Remotes name list string.
 ///
-/// Add packages list for warning messages with a fixed limit to prevent
-/// overly long messages.
+/// Create Remotes name list string with proper CRLF from
+/// the given Remotes object array.
 ///
-/// \param[in]  msg       Dialog box message string to add list.
-/// \param[in]  pkgs_ls   List of remote object pointers to iterate to.
-/// \param[in]  max       Maximum count of package to display.
+/// \param[out] lst_str   String to receive name list.
+/// \param[in]  rmts_ls   Remotes object list to create name list from.
 ///
-inline static void __msg_package_list(wstring& msg, const vector<OmRemote*>& rmts_ls, size_t max)
+inline static void __msg_package_list(wstring& lst_str, const vector<OmRemote*>& rmts_ls)
 {
-  size_t i = 0;
+  size_t size = rmts_ls.size();
+  size_t stop = rmts_ls.size() - 1;
 
-  for( ; i < rmts_ls.size() && i < max; ++i) {
-    msg += L"\n " + rmts_ls[i]->ident();
-  }
+  lst_str.clear();
 
-  if(rmts_ls.size() > i) {
-    msg += L"\n ...\n and ";
-    msg += std::to_wstring(rmts_ls.size() - i);
-    msg += L" other package(s)";
+  for(size_t i = 0; i < size; ++i) {
+    lst_str += rmts_ls[i]->ident();
+    if(i < stop) lst_str += L"\r\n";
   }
 }
 
-/// \brief Add package list for warning messages
+/// \brief Create Packages name list string.
 ///
-/// Add packages list for warning messages with a fixed limit to prevent
-/// overly long messages.
+/// Create Package name list string with proper CRLF from
+/// the given string array.
 ///
-/// \param[in]  msg       Dialog box message string to add list.
-/// \param[in]  pkgs_ls   List of package's identity string to iterate to.
-/// \param[in]  max       Maximum count of package to display.
+/// \param[out] lst_str   String to receive name list.
+/// \param[in]  ident_ls  Package object list to create name list from.
 ///
-inline static void __msg_package_list(wstring& msg, const vector<wstring>& ident_ls, size_t max)
+inline static void __msg_package_list(wstring& lst_str, const vector<wstring>& ident_ls)
 {
-  size_t i = 0;
+  size_t size = ident_ls.size();
+  size_t stop = ident_ls.size() - 1;
 
-  for( ; i < ident_ls.size() && i < max; ++i) {
-    msg += L"\n " + ident_ls[i];
-  }
+  lst_str.clear();
 
-  if(ident_ls.size() > i) {
-    msg += L"\n ...\n and ";
-    msg += std::to_wstring(ident_ls.size() - i);
-    msg += L" other package(s)";
+  for(size_t i = 0; i < size; ++i) {
+    lst_str += ident_ls[i];
+    if(i < stop) lst_str += L"\r\n";
   }
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -147,7 +138,7 @@ OmUiMainNet::~OmUiMainNet()
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_TXT, WM_GETFONT));
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
@@ -303,14 +294,15 @@ void OmUiMainNet::rmtDown(bool upgrade)
     return;
 
   // string for dialog messages
-  wstring msg;
+  wstring msg_lst;
 
   // checks whether we have a valid Library folder
   if(!pLoc->libDirAccess(true)) { //< check for read and write
-    msg = L"\""+pLoc->libDir()+L"\"\n\n";
-    msg +=  L"Either the Library folder does not exist or it have write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package download aborted (Library access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_ERR,
+                  L"Library folder access error", L"The Library folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions", pLoc->libDir());
     return;
   }
 
@@ -327,36 +319,43 @@ void OmUiMainNet::rmtDown(bool upgrade)
 
   // warn user for missing dependencies
   if(miss_ls.size() && pLoc->warnMissDnld()) {
-    msg = L"One or more selected packages have missing dependencies, "
-          L"The following packages are required but not available:\n";
-    __msg_package_list(msg, miss_ls, 5);
-    msg +=  L"\n\nDo you want to proceed download anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+    __msg_package_list(msg_lst, miss_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Missing Packages dependencies", L"One or more selected packages "
+                  "have missing dependencies, the following packages are "
+                  "required but not available:", msg_lst))
+    {
       return;
+    }
+
   }
 
   // warn user for superseded packages required as dependency
   if(upgrade && olds_ls.size()) {
-    msg = L"One or more selected packages will supersedes old versions "
-          L"required as dependency by other, upgrading the following "
-          L"packages will break some dependencies:\n";
-    __msg_package_list(msg, olds_ls, 5);
-    msg +=  L"\n\nDo you want to proceed upgrade anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Upgrade breaks dependencies", msg))
+    __msg_package_list(msg_lst, olds_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Upgrade breaks dependencies", L"One or more selected packages "
+                  "will supersedes old versions required as dependency by other, "
+                  "upgrading the following packages will break some dependencies:", msg_lst))
+    {
       return;
+    }
+
   }
 
   // warn for additional installation
   if(deps_ls.size() && pLoc->warnExtraDnld()) {
-    msg = L"One or more selected packages have dependencies, "
-          L"the following packages will also be downloaded:\n";
-    __msg_package_list(msg, deps_ls, 5);
-    msg +=  L"\n\nDo you want to continue ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Packages dependencies", msg))
+    __msg_package_list(msg_lst, deps_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_PKG_ADD,
+                  L"Packages dependencies", L"One or more selected packages "
+                  "have dependencies, the following packages will also "
+                  "be downloaded:", msg_lst))
+    {
       return;
+    }
   }
 
   // freeze dialog so user cannot interact
@@ -393,9 +392,10 @@ void OmUiMainNet::rmtDown(bool upgrade)
 
     } else {
 
-      msg = L"The package \"" + pRmt->ident() + L"\" ";
-      msg += L"cannot be downloaded:\n\n" + pRmt->lastError();
-      Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
+      Om_msgBox_okl(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_PKG_ERR,
+                  L"Package download error", L"The download of Package \""
+                  +pRmt->ident()+L"\" failed because of the following error:",
+                  pRmt->lastError());
     }
   }
 }
@@ -417,14 +417,15 @@ void OmUiMainNet::rmtFixd(bool upgrade)
   if(!pLoc) return;
 
   // string for dialog messages
-  wstring msg;
+  wstring msg_lst;
 
   // checks whether we have a valid Library folder
   if(!pLoc->libDirAccess(true)) { //< check for read and write
-    wstring msg = L"\""+pLoc->libDir()+L"\"\n\n";
-    msg +=  L"Either the Library folder does not exist or it have write access restrictions. "
-            L"Please check target location settings and folder permissions.";
-    Om_dialogBoxErr(this->_hwnd, L"Package download aborted (Library access error)", msg);
+    Om_msgBox_okl(this->_hwnd, L"Fix dependencies - " OMM_APP_NAME, IDI_ERR,
+                  L"Library folder access error", L"The Library folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions", pLoc->libDir());
     return;
   }
 
@@ -459,24 +460,29 @@ void OmUiMainNet::rmtFixd(bool upgrade)
 
   // warn user for missing dependencies
   if(miss_ls.size() && pLoc->warnMissDnld()) {
-    msg = L"The selected package have unavailable missing dependencies, "
-          L"The following packages are required but not available:\n";
-    __msg_package_list(msg, miss_ls, 5);
-    msg +=  L"\n\nDo you want to proceed download anyway ?";
 
-    if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Dependencies missing", msg))
+    __msg_package_list(msg_lst, miss_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Fix dependencies - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Missing Package dependencies", L"One or more selected packages "
+                  "have missing dependencies, the following packages are "
+                  "required but not available:", msg_lst))
+    {
       return;
+    }
+
   }
 
   // ask user for download X packages
   if(deps_ls.size() && pLoc->warnExtraDnld()) {
-    msg =   L"The selected package have "+to_wstring(deps_ls.size())+L" missing ";
-    msg +=  L"dependencies, the following packages will be downloaded:\n";
-    __msg_package_list(msg, deps_ls, 5);
-    msg +=  L"\n\nDownload missing dependencies ?";
 
-    if(!Om_dialogBoxQuerry(this->_hwnd, L"Fix dependencies", msg))
+    __msg_package_list(msg_lst, deps_ls);
+    if(!Om_msgBox_cal(this->_hwnd, L"Fix dependencies - " OMM_APP_NAME, IDI_PKG_WRN,
+                  L"Fix Package dependencies", L"The selected package have "
+                  +to_wstring(deps_ls.size())+L" missing dependencies, "
+                  "the following packages will be downloaded:", msg_lst))
+    {
       return;
+    }
   }
 
   // freeze dialog so user cannot interact
@@ -511,10 +517,10 @@ void OmUiMainNet::rmtFixd(bool upgrade)
 
     } else {
 
-      msg = L"The package \"" + pRmt->ident() + L"\" ";
-      msg += L"cannot be downloaded:\n\n" + pRmt->lastError();
-      Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
-
+      Om_msgBox_okl(this->_hwnd, L"Fix dependencies - " OMM_APP_NAME, IDI_PKG_ERR,
+                  L"Package download error", L"The download of Package \""
+                  +pRmt->ident()+L"\" failed because of the following error:",
+                  pRmt->lastError());
     }
   }
 
@@ -713,7 +719,7 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   self->_thread_abort = false;
 
   // change button image from refresh to stop
-  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDB_BTN_NOT));
+  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDI_BT_NOT));
 
   OmRepository* pRep;
   LVITEMW lvItem;
@@ -755,7 +761,7 @@ DWORD WINAPI OmUiMainNet::_repQry_fth(void* ptr)
   }
 
   // change button image from stop to refresh
-  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDB_BTN_REF));
+  self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDI_BT_REF));
 
   // send message to notify process ended
   self->postMessage(UWM_REPQUERY_DONE);
@@ -918,9 +924,11 @@ void OmUiMainNet::_rmtDnl_finish(uint64_t hash)
 
   // if an error occurred, display error dialog
   if(pRmt->isState(RMT_STATE_ERR)) {
-    wstring msg = L"The package \"" + pRmt->ident() + L"\" ";
-    msg += L"download has encountered an error:\n\n" + pRmt->lastError();
-    Om_dialogBoxWarn(this->_hwnd, L"Package download failed", msg);
+
+      Om_msgBox_okl(this->_hwnd, L"Download Packages - " OMM_APP_NAME, IDI_PKG_ERR,
+                  L"Package download error", L"The download of Package \""
+                  +pRmt->ident()+L"\" failed because of the following error:",
+                  pRmt->lastError());
   }
 
   // decrement download count
@@ -1010,12 +1018,12 @@ void OmUiMainNet::_buildCbLoc()
     // no selection
     this->msgItem(IDC_CB_LOC, CB_SETCURSEL, -1);
 
-    // ask user to create at least one Location in the Context
-    wstring qry = L"The Context have not any configured "
-                  L"Location, this does not make much sense."
-                  L"\n\nDo you want to add a Location now ?";
-
-    if(Om_dialogBoxQuerry(this->_hwnd, L"Context empty", qry)) {
+    // ask user to create at least one Target Location in the Software Context
+    if(!Om_msgBox_yn(this->_hwnd, L"Network Repositories - " OMM_APP_NAME, IDI_QRY,
+                  L"Empty Software Context", L"The selected Software Context is "
+                  "empty and have no Target Location configured. Do you want "
+                  "to add a Target Location now ?"))
+    {
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->siblingById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
       pUiAddLoc->open(true);
@@ -1387,11 +1395,11 @@ void OmUiMainNet::_onLvRmtHit()
   if(pRmt->isState(RMT_STATE_UPG)) {
 
     // ask user for upgrade
-    wstring msg = L"The selected remote package supersedes one or more "
-                  L"local packages.\n\n"
-                  L"Do you want to keep older package versions ?";
-
-    if(Om_dialogBoxQuerry(this->_hwnd, L"Package upgrade", msg)) {
+    if(!Om_msgBox_yn(this->_hwnd, L"Download Package - " OMM_APP_NAME, IDI_QRY,
+                  L"Package upgrade", L"The selected remote Package supersedes "
+                  "one or more local Packages. Do you want to keep older "
+                  "Package versions ?"))
+    {
       // simply download the package
       this->rmtDown(false);
     } else {
@@ -1433,8 +1441,8 @@ void OmUiMainNet::_onLvRmtSel()
   if(!lv_nsl) {
 
     // hide all package bottom infos
-    this->showItem(IDC_SB_PKG, false);
-    this->showItem(IDC_EC_TXT, false);
+    this->showItem(IDC_SB_SNAP, false);
+    this->showItem(IDC_EC_DESC, false);
     this->showItem(IDC_SC_TITLE, false);
 
     // disable all action buttons
@@ -1473,21 +1481,21 @@ void OmUiMainNet::_onLvRmtSel()
     pUiMain->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
-    this->showItem(IDC_EC_TXT, false);
+    this->showItem(IDC_EC_DESC, false);
     this->setItemText(IDC_SC_TITLE, L"<Multiple selection>");
-    this->showItem(IDC_SB_PKG, false);
+    this->showItem(IDC_SB_SNAP, false);
 
   } else {
 
     // show package title and thumbnail
     this->showItem(IDC_SC_TITLE, true);
-    this->showItem(IDC_SB_PKG, true);
+    this->showItem(IDC_SB_SNAP, true);
 
     // enable the "Edit > Remote > .. " menu-item
     pUiMain->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
 
     // show package description
-    this->showItem(IDC_EC_TXT, true);
+    this->showItem(IDC_EC_DESC, true);
 
     OmRemote* pRmt;
 
@@ -1525,9 +1533,9 @@ void OmUiMainNet::_onLvRmtSel()
       this->setItemText(IDC_SC_TITLE, pRmt->name() + L" " + pRmt->version().asString());
 
       if(pRmt->desc().size()) {
-        this->setItemText(IDC_EC_TXT, pRmt->desc());
+        this->setItemText(IDC_EC_DESC, pRmt->desc());
       } else {
-        this->setItemText(IDC_EC_TXT, L"<no description available>");
+        this->setItemText(IDC_EC_DESC, L"<no description available>");
       }
 
       HBITMAP hBm;
@@ -1535,15 +1543,15 @@ void OmUiMainNet::_onLvRmtSel()
       if(pRmt->image().thumbnail()) {
         hBm = pRmt->image().thumbnail();
       } else {
-        hBm = Om_getResImage(this->_hins, IDB_PKG_THN);
+        hBm = Om_getResImage(this->_hins, IDB_BLANK);
       }
 
       // Update the selected picture
-      hBm = this->setStImage(IDC_SB_PKG, hBm);
-      if(hBm && hBm != Om_getResImage(this->_hins, IDB_PKG_THN)) DeleteObject(hBm);
+      hBm = this->setStImage(IDC_SB_SNAP, hBm);
+      if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
       // force thumbnail static control to update its position
-      this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
+      this->_setItemPos(IDC_SB_SNAP, 5, this->height()-83, 86, 79);
     }
   }
 }
@@ -1610,10 +1618,9 @@ void OmUiMainNet::_onBcDelRep()
   OmRepository* pRep = pLoc->repGet(lb_sel);
 
   // warns the user before committing the irreparable
-  wstring qry = L"Are your sure you want to delete the Repository \"";
-  qry += pRep->base()+L" - "+pRep->name()+L"\" ?";
-
-  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Repository", qry))
+  if(!Om_msgBox_ynl(this->_hwnd, L"Remove Repository - " OMM_APP_NAME, IDI_QRY,
+                L"Remove Network Repository", L"Remove Network Repository from list ?",
+                pRep->base()+L" - "+pRep->name()))
     return;
 
   pLoc->repRem(lb_sel);
@@ -1666,12 +1673,12 @@ void OmUiMainNet::_onInit()
   HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_TXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
-  this->setBmIcon(IDC_BC_STOP, Om_getResIcon(this->_hins, IDB_BTN_NOT));
-  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
-  this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDB_BTN_REF));
+  this->setBmIcon(IDC_BC_STOP, Om_getResIcon(this->_hins, IDI_BT_NOT));
+  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDI_BT_REF));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active Location");
@@ -1757,8 +1764,8 @@ void OmUiMainNet::_onInit()
 
   // hide package details
   this->showItem(IDC_SC_TITLE, false);
-  this->showItem(IDC_EC_TXT, false);
-  this->showItem(IDC_SB_PKG, false);
+  this->showItem(IDC_EC_DESC, false);
+  this->showItem(IDC_SB_SNAP, false);
 }
 
 
@@ -1834,9 +1841,9 @@ void OmUiMainNet::_onResize()
   // Package name/title
   this->_setItemPos(IDC_SC_TITLE, 5, this->height()-97, this->width()-10, 12);
   // Package snapshot
-  this->_setItemPos(IDC_SB_PKG, 5, this->height()-83, 86, 79);
+  this->_setItemPos(IDC_SB_SNAP, 5, this->height()-83, 86, 79);
   // Package description
-  this->_setItemPos(IDC_EC_TXT, 95, this->height()-83, this->width()-101, 78);
+  this->_setItemPos(IDC_EC_DESC, 95, this->height()-83, this->width()-101, 78);
 
   InvalidateRect(this->_hwnd, nullptr, true);
 }
@@ -1895,10 +1902,11 @@ void OmUiMainNet::_onRefresh()
   // Display error dialog AFTER ListView refreshed its content
   if(pCtx->locCur()) {
     if(!lib_access) {
-      wstring msg = L"\""+pCtx->locCur()->libDir()+L"\"\n\n";
-      msg +=  L"Either the folder does not exist or it have write access restrictions. "
-              L"Please check target location settings and folder permissions.";
-      Om_dialogBoxWarn(this->_hwnd, L"Library folder access error", msg);
+      Om_msgBox_okl(this->_hwnd, L"Network Repositories - " OMM_APP_NAME, IDI_WRN,
+                    L"Library folder access error", L"The Library folder "
+                    "cannot be accessed because it do not exist or have read "
+                    "access restrictions. Please check Target Location's settings "
+                    "and folder permissions.", pCtx->locCur()->libDir());
     }
   }
 }
@@ -1924,7 +1932,7 @@ void OmUiMainNet::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_REPQUERY_DONE is a custom message sent from Repositories query
   // thread function, to notify the thread ended is job.

@@ -105,12 +105,11 @@ void OmUiPropLocNet::_onBcDelRepo()
   if(lb_sel >= 0) {
 
     // warns the user before committing the irreparable
-    wstring qry = L"Are your sure you want to delete the Repository \"";
-    qry += pLoc->repGet(lb_sel)->base() + L" - " + pLoc->repGet(lb_sel)->name();
-    qry += L"\" ?";
-
-    if(Om_dialogBoxQuerryWarn(this->_hwnd, L"Delete Repository", qry)) {
-      pLoc->repRem(lb_sel);
+    if(!Om_msgBox_ynl(this->_hwnd, L"Target Location properties - " OMM_APP_NAME, IDI_QRY,
+                L"Remove Network Repository", L"Remove Network Repository from list ?",
+                pLoc->repGet(lb_sel)->base()+L" - "+pLoc->repGet(lb_sel)->name()))
+    {
+      return;
     }
 
     // refresh list and buttons
@@ -192,8 +191,8 @@ void OmUiPropLocNet::_onBcRadUpg()
 void OmUiPropLocNet::_onInit()
 {
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDB_BTN_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_REM));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // define controls tool-tips
   this->_createTooltip(IDC_LB_LOC,    L"Location network Repositories list");
@@ -294,7 +293,7 @@ void OmUiPropLocNet::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropLocNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

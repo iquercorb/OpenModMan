@@ -16,7 +16,6 @@
 */
 
 #include "gui/res/resource.h"
-#include "OmManager.h"
 #include "gui/OmUiProgress.h"
 
 
@@ -35,7 +34,7 @@ OmUiProgress::OmUiProgress(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiProgress::~OmUiProgress()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_TITLE, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_HEAD, WM_GETFONT));
   DeleteObject(hFt);
 }
 
@@ -139,9 +138,10 @@ void OmUiProgress::_onBcAbort()
 ///
 void OmUiProgress::_onInit()
 {
-  // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  // set dialog title icon
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
+  // set header text font
   HFONT hFt = Om_createFont(16, 600, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_HEAD, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
@@ -160,17 +160,23 @@ void OmUiProgress::_onResize()
 {
   int half_h = static_cast<int>(this->height() * 0.5f);
 
+  // Header text label
   this->_setItemPos(IDC_SC_HEAD, 5, 5, this->width()-20, 12);
+  // Detail or item text label
   this->_setItemPos(IDC_SC_ITEM, 5, half_h-15, this->width()-10, 9);
+  // Progress bar
   this->_setItemPos(IDC_PB_COM, 5, half_h, this->width()-10, 11);
+  // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->width()-55, this->height()-20, 50, 14);
+
+  InvalidateRect(this->_hwnd, nullptr, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

@@ -89,14 +89,13 @@ void OmUiPropLocBck::_onCkBoxZip()
 void OmUiPropLocBck::_onBcDelBck()
 {
   // warns the user before committing the irreparable
-  wstring wrn = L"This will permanently delete all existing "
-                L"backup data without restoring them (which should "
-                "never be done except in emergency situation)."
-
-                L"\n\nDiscard all backup data for this Location ?";
-
-  if(!Om_dialogBoxQuerryWarn(this->_hwnd, L"Discard backup data", wrn))
+  if(!Om_msgBox_ca(this->_hwnd, L"Target Location properties - " OMM_APP_NAME, IDI_QRY,
+            L"Discard Target Location backup data", L"This will permanently "
+            "delete all existing backup data without restoring them (which "
+            "should never be done except in emergency situation)."))
+  {
     return;
+  }
 
   // Launch backup discard process
   this->_delBck_init();
@@ -143,9 +142,10 @@ void OmUiPropLocBck::_delBck_stop()
   static_cast<OmUiMain*>(this->root())->safemode(false);
 
   if(exitCode == 1) {
-    wstring msg = L"Errors occurred during backup discard process, "
-                  L"read debug log for more details.";
-    Om_dialogBoxWarn(this->_hwnd, L"Backup discard error", msg);
+    Om_msgBox_ok(this->_hwnd, L"Target Location properties - " OMM_APP_NAME, IDI_PKG_ERR,
+              L"Backup data discard error", L"The Backup data discarding "
+              "process encountered error(s), some backup data may "
+              "had not properly deleted. Please read debug log for details.");
   }
 }
 
@@ -204,7 +204,7 @@ void OmUiPropLocBck::_onInit()
   this->_createTooltip(IDC_BC_DEL,    L"Delete all backup data without restoring it (emergency use only)");
 
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDB_BTN_WRN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_WRN));
 
   // add items to Zip Level ComboBox
   this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
@@ -273,7 +273,7 @@ void OmUiPropLocBck::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropLocBck::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // UWM_BACKDISCARD_DONE is a custom message sent from Location backups discard thread
   // function, to notify the progress dialog ended is job.

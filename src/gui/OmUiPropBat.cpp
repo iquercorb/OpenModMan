@@ -108,9 +108,9 @@ bool OmUiPropBat::applyChanges()
     // Check whether name already exists
     for(unsigned i = 0; i < pCtx->batCount(); ++i) {
       if(pCtx->batGet(i)->title() == bat_name) {
-        wstring err = L"Installation Batch with the same name "
-                      L"already exists. Please choose another name.";
-        Om_dialogBoxErr(this->_hwnd, L"Name already exists",err);
+        Om_msgBox_ok(this->_hwnd, L"Installation Batch Properties - " OMM_APP_NAME, IDI_ERR,
+                     L"Installation Batch name exists", L"Installation Batch "
+                     "with the same name already exists, please choose another one.");
         return false;
       }
     }
@@ -120,7 +120,10 @@ bool OmUiPropBat::applyChanges()
   // Step 2, save changes
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
     if(!this->_pBat->rename(bat_name)) { //< rename Batch filename
-      Om_dialogBoxErr(this->_hwnd, L"Installation Batch rename failed", this->_pBat->lastError());
+      Om_msgBox_okl(this->_hwnd, L"Installation Batch Properties - " OMM_APP_NAME, IDI_WRN,
+                   L"Installation Batch rename error", L"Installation Batch "
+                   "file rename failed because of the following error:",
+                   this->_pBat->lastError());
     }
     this->_pBat->setTitle(bat_name); //< change Batch title
     // Reset parameter as unmodified
@@ -178,5 +181,5 @@ bool OmUiPropBat::applyChanges()
 void OmUiPropBat::_onPropInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins, IDB_APP_ICON, 2), Om_getResIcon(this->_hins, IDB_APP_ICON, 1));
+  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
 }

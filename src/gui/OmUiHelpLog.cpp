@@ -33,7 +33,7 @@ OmUiHelpLog::OmUiHelpLog(HINSTANCE hins) : OmDialog(hins)
 ///
 OmUiHelpLog::~OmUiHelpLog()
 {
-  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_OUT01, WM_GETFONT));
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_RESUL, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
@@ -56,16 +56,16 @@ long OmUiHelpLog::id() const
 void OmUiHelpLog::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDB_APP_ICON,2),Om_getResIcon(this->_hins,IDB_APP_ICON,1));
+  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Debug log - " OMM_APP_NAME);
 
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
-  this->msgItem(IDC_EC_OUT01, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  pMgr->setLogOutput(this->getItem(IDC_EC_OUT01));
+  pMgr->setLogOutput(this->getItem(IDC_EC_RESUL));
 }
 
 
@@ -74,7 +74,7 @@ void OmUiHelpLog::_onInit()
 ///
 void OmUiHelpLog::_onResize()
 {
-  this->_setItemPos(IDC_EC_OUT01, 5, 5, this->width()-10, this->height()-40);
+  this->_setItemPos(IDC_EC_RESUL, 5, 5, this->width()-10, this->height()-40);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
@@ -86,7 +86,7 @@ void OmUiHelpLog::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiHelpLog::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiHelpLog::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
     switch(LOWORD(wParam))
