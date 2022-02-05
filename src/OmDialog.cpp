@@ -429,7 +429,7 @@ void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h, bool pix
 {
   long rect[4] = {x, y, w, h};
   if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
-  SetWindowPos(GetDlgItem(this->_hwnd, id), 0, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+  SetWindowPos(GetDlgItem(this->_hwnd, id), nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
 }
 
 
@@ -550,7 +550,7 @@ void OmDialog::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialog::_onMsg(UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialog::_onMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
   return false;
 }

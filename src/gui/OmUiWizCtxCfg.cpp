@@ -200,7 +200,7 @@ void OmUiWizCtxCfg::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiWizCtxCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

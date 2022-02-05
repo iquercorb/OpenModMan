@@ -71,7 +71,7 @@ class OmDialogWiz : public OmDialog
 
     void                _onResize();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     virtual void        _onWizInit();
 
@@ -83,7 +83,7 @@ class OmDialogWiz : public OmDialog
 
     virtual void        _onWizFinish();
 
-    virtual bool        _onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR     _onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMDIALOGWIZ_H

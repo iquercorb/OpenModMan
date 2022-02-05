@@ -25,7 +25,7 @@
 ///
 class OmUiProgress : public OmDialog
 {
-  public:
+  public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     /// \brief Constructor.
     ///
@@ -142,15 +142,13 @@ class OmUiProgress : public OmDialog
 
     bool                _abort;
 
-    HFONT               _hFtDesc;
-
     void                _onBcAbort();
 
     void                _onInit();
 
     void                _onResize();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROGRESS_H

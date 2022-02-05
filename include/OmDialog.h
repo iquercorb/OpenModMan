@@ -612,7 +612,7 @@ class OmDialog
     /// Virtual function to be defined by derived class, called when
     /// dialog receive a message.
     ///
-    virtual bool _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
   protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

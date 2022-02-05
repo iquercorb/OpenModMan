@@ -87,7 +87,7 @@ class OmUiPropLocLib : public OmDialog
 
     void                _onResize();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPLOCLIB_H

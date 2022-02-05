@@ -83,7 +83,7 @@ class OmDialogProp : public OmDialog
 
     void                _onQuit();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     virtual void        _onPropInit();
 
@@ -93,7 +93,7 @@ class OmDialogProp : public OmDialog
 
     virtual void        _onPropQuit();
 
-    virtual bool        _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR     _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMDIALOGPROP_H

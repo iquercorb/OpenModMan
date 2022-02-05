@@ -180,7 +180,7 @@ void OmDialogProp::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_NOTIFY) {
 
@@ -278,7 +278,7 @@ void OmDialogProp::_onPropQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialogProp::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialogProp::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   return false;
 }

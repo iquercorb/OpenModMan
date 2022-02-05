@@ -124,7 +124,7 @@ class OmUiPropBatStg : public OmDialog
 
     void                _onRefresh();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPBATSTG_H

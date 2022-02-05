@@ -130,7 +130,7 @@ void OmUiPropLocLib::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLocLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropLocLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

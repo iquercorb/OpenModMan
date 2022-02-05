@@ -214,7 +214,7 @@ void OmUiPropManGle::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

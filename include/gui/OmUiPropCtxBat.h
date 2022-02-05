@@ -101,7 +101,7 @@ class OmUiPropCtxBat : public OmDialog
 
     void                _onQuit();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPCTXBAT_H

@@ -232,7 +232,7 @@ void OmUiPropLocStg::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 

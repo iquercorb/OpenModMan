@@ -105,7 +105,7 @@ class OmUiPropLoc : public OmDialogProp
 
     void                _onPropInit();
 
-    bool                _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPLOC_H

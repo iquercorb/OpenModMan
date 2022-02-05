@@ -25,7 +25,7 @@
 OmDialogWiz::OmDialogWiz(HINSTANCE hins) : OmDialog(hins),
   _pageDial(),
   _currPage(0),
-  _hBmSplash(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_WIZ_SPLASH),IMAGE_BITMAP,0,0,0)))
+  _hBmSplash(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_WIZARD),IMAGE_BITMAP,0,0,0)))
 {
 
 }
@@ -149,7 +149,7 @@ void OmDialogWiz::_onResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialogWiz::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialogWiz::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
@@ -257,7 +257,7 @@ void OmDialogWiz::_onWizFinish()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmDialogWiz::_onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialogWiz::_onWizMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   return false;
 }

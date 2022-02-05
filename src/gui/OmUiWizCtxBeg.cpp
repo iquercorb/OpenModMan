@@ -98,7 +98,7 @@ void OmUiWizCtxBeg::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiWizCtxBeg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiWizCtxBeg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   return false;
 }

@@ -19,15 +19,19 @@
 #include "gui/OmUiMainTst.h"
 #include "gui/OmUiMain.h"
 
-#include <richedit.h>
+//#include "thirdparty/cwb/cwb.h"
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiMainTst::OmUiMainTst(HINSTANCE hins) : OmDialog(hins)
+OmUiMainTst::OmUiMainTst(HINSTANCE hins) : OmDialog(hins),
+_hdivHwnd(nullptr),
+_hdivHovr(false),
+_hdivCur{100,0},
+_hdivOld{0,0}
 {
-  // This is needed for RichEdit control to work properly
-  LoadLibrary("Msftedit.dll");
+
 }
 
 
@@ -48,35 +52,46 @@ long OmUiMainTst::id() const
   return IDD_MAIN_TST;
 }
 
-static DWORD WINAPI __es_stream_in(DWORD_PTR ptr, LPBYTE buf, LONG  wbytes, LONG * rbytes)
-{
-  DWORD rb;
-  ReadFile(reinterpret_cast<HANDLE>(ptr), buf, wbytes, &rb, nullptr);
-  *rbytes = rb;
-
-  if(rb == 0) {
-    CloseHandle(reinterpret_cast<HANDLE>(ptr));
-  }
-
-  return 0;
-}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiMainTst::_onInit()
 {
-  HANDLE hFile = CreateFileW( L"rtf.rtf", GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  //SetWindowLongPtr(this->_hwnd, GWL_STYLE, WS_CHILD|WS_BORDER); //3d argument=style
+  SetWindowLongPtr(this->_hwnd, GWL_EXSTYLE, WS_EX_STATICEDGE); //3d argument=style
 
-  if(hFile == INVALID_HANDLE_VALUE)
-    return;
 
-  EDITSTREAM es = {};
-  es.dwCookie = reinterpret_cast<DWORD_PTR>(hFile);
-  es.pfnCallback = &__es_stream_in;
+  this->enableItem(IDC_SC_SEPAR, false);
+  // set white background to fit tab background
+  EnableThemeDialogTexture(this->getItem(IDC_SC_SEPAR), ETDT_ENABLETAB);
 
-  this->msgItem(IDC_EC_RTF, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
+  // Defines fonts for package description, title, and log output
+  HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
+  this->msgItem(IDC_SC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+
+  //WebBrowserCreate(0, WS_CHILD, this->_hwnd, reinterpret_cast<HMENU>(IDC_SC_HTML), this->_hins);
+  //WebBrowserAttach(this->getItem(IDC_SC_HTML), nullptr);
+
+  this->enableItem(IDC_SC_HTML, false);
+
+  wstring html =
+    L"<html><head>"
+    "<style>"
+    "  body {text-align:center; border:0; overflow:auto; font-family:helvetica;}"
+    "  h1 {font-size: 1em;}"
+    "</style>"
+    "</head><body oncontextmenu=\"return false;\">"
+    "<h1>This is a test</h1>"
+    "</body></html>";
+
+  //WebBrowserDocumentClose(this->getItem(IDC_SC_HTML));
+  //WebBrowserDocumentWrite(this->getItem(IDC_SC_HTML), html.c_str());
+
+  // splitter handle
+  this->_hdivHwnd = this->getItem(IDC_SC_SEPAR);
+  // initial splitter position
+  this->_hdivCur[1] = this->height() - this->_hdivCur[0];
 }
 
 ///
@@ -100,7 +115,12 @@ void OmUiMainTst::_onHide()
 ///
 void OmUiMainTst::_onResize()
 {
-  this->_setItemPos(IDC_EC_RTF, 5, 20, this->width()-10, this->height()-30);
+  // Horizontal separator
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->_hdivCur[1], this->width()-10, 1);
+  // Title
+  this->_setItemPos(IDC_SC_TITLE, 5, this->_hdivCur[1] + 2, this->width()-161, 12);
+  // HTML Frame
+  this->_setItemPos(IDC_SC_HTML, 5, this->_hdivCur[1] + 17, this->width()-10, 78);
 }
 
 ///
@@ -122,8 +142,74 @@ void OmUiMainTst::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMainTst::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiMainTst::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  if(uMsg == WM_LBUTTONDOWN) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMainTst::_onMsg : WM_LBUTTONDOWN\n";
+    #endif
+
+    if(this->_hdivHovr) {
+
+      this->_hdivOld[0] = this->_hdivCur[0];
+      this->_hdivOld[1] = HIWORD(lParam);
+
+      SetCapture(this->_hwnd);
+    }
+
+  }
+
+  if(uMsg == WM_LBUTTONUP) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMainTst::_onMsg : WM_LBUTTONUP\n";
+    #endif
+
+    if(GetCapture() == this->_hwnd) {
+      ReleaseCapture();
+    }
+  }
+
+  if(uMsg == WM_MOUSEMOVE) {
+
+    long y = HIWORD(lParam);
+
+    if(GetCapture() == this->_hwnd) {
+
+      this->_hdivCur[0] = this->_hdivOld[0] + MulDiv(this->_hdivOld[1] - y, 8, this->unitY());
+
+      if(this->_hdivCur[0] < 100) this->_hdivCur[0] = 100;
+      if(this->_hdivCur[0] > this->height()-100) this->_hdivCur[0] = this->height() - 100;
+
+      // splitter position
+      this->_hdivCur[1] = this->height() - this->_hdivCur[0];
+
+      this->_onResize();
+
+    } else {
+
+      long pos[4];
+
+      GetWindowRect(this->_hdivHwnd, reinterpret_cast<LPRECT>(&pos));
+      MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&pos), 1);
+
+      this->_hdivHovr = (y > (pos[1] - 5) && y < (pos[1] + 5));
+    }
+
+    return true;
+  }
+
+  if(uMsg == WM_SETCURSOR) {
+
+    if(this->_hdivHovr) {
+
+      SetCursor(LoadCursor(0,IDC_SIZENS));
+
+      return true;
+    }
+  }
+
   if(uMsg == WM_COMMAND) {
 
   }

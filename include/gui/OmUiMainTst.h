@@ -52,6 +52,14 @@ class OmUiMainTst : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    HWND                _hdivHwnd;
+
+    bool                _hdivHovr;
+
+    long                _hdivCur[2];
+
+    long                _hdivOld[2];
+
     void                _onInit();
 
     void                _onShow();
@@ -64,7 +72,7 @@ class OmUiMainTst : public OmDialog
 
     void                _onQuit();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIMAINTST_H

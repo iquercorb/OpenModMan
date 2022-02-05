@@ -132,7 +132,7 @@ class OmUiToolPkg : public OmDialog
 
     void                _onClose();
 
-    bool                _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUITOOLPKG_H
