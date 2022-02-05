@@ -68,6 +68,7 @@ Open Mod Mananager currently implements the following key features:
  - New MD5 (md5sum) as default alogirthm for repository files checksum.
  - New Category field for Packages.
  - New custom path or URL mechanism for repository files download.
+ - New improved message boxes and icons.
 
 
 0.9.8 (04-01-2022)
