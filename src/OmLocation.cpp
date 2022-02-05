@@ -32,10 +32,10 @@
 static bool __pkg_sort_name_fn(const OmPackage* a, const OmPackage* b)
 {
   // test against the shorter string
-  size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
+  size_t l = a->ident().size() < b->ident().size() ? b->ident().size() : a->ident().size();
 
-  const wchar_t* a_srt = a->name().c_str();
-  const wchar_t* b_str = b->name().c_str();
+  const wchar_t* a_srt = a->ident().c_str();
+  const wchar_t* b_str = b->ident().c_str();
 
   // test for ASCII value greater than the other
   for(unsigned i = 0; i < l; ++i) {
@@ -49,8 +49,9 @@ static bool __pkg_sort_name_fn(const OmPackage* a, const OmPackage* b)
   }
 
   // strings are equals in tester portion, sort by string size
-  if(a->name().size() < b->name().size())
-    return true;
+  if(a->ident().size() != b->ident().size())
+    if(a->ident().size() < b->ident().size())
+      return true;
 
   // strings are strictly equals, we sort by "IsZip" status
   if(a->isZip() && !b->isZip())
@@ -72,10 +73,10 @@ static bool __pkg_sort_name_fn(const OmPackage* a, const OmPackage* b)
 static bool __rmt_sort_name_fn(const OmRemote* a, const OmRemote* b)
 {
   // test against the shorter string
-  size_t l = a->name().size() > b->name().size() ? b->name().size() : a->name().size();
+  size_t l = a->ident().size() < b->ident().size() ? b->ident().size() : a->ident().size();
 
-  const wchar_t* a_srt = a->name().c_str();
-  const wchar_t* b_str = b->name().c_str();
+  const wchar_t* a_srt = a->ident().c_str();
+  const wchar_t* b_str = b->ident().c_str();
 
   // test for ASCII value greater than the other
   for(unsigned i = 0; i < l; ++i) {
@@ -89,8 +90,9 @@ static bool __rmt_sort_name_fn(const OmRemote* a, const OmRemote* b)
   }
 
   // strings are equals in tester portion, sort by string size
-  if(a->name().size() < b->name().size())
-    return true;
+  if(a->ident().size() != b->ident().size())
+    if(a->ident().size() < b->ident().size())
+      return true;
 
   return false;
 }
@@ -109,7 +111,7 @@ static bool __rmt_sort_name_fn(const OmRemote* a, const OmRemote* b)
 static bool __pkg_sort_catg_fn(const OmPackage* a, const OmPackage* b)
 {
   // test against the shorter string
-  size_t l = a->category().size() > b->category().size() ? b->category().size() : a->category().size();
+  size_t l = a->category().size() < b->category().size() ? b->category().size() : a->category().size();
 
   const wchar_t* a_srt = a->category().c_str();
   const wchar_t* b_str = b->category().c_str();
@@ -126,8 +128,9 @@ static bool __pkg_sort_catg_fn(const OmPackage* a, const OmPackage* b)
   }
 
   // strings are equals in tester portion, sort by string size
-  if(a->category().size() < b->category().size())
-    return true;
+  if(a->category().size() != b->category().size())
+    if(a->category().size() < b->category().size())
+      return true;
 
   // strings are strictly equals, we sort by name
   return __pkg_sort_name_fn(a, b);
@@ -147,7 +150,7 @@ static bool __pkg_sort_catg_fn(const OmPackage* a, const OmPackage* b)
 static bool __rmt_sort_catg_fn(const OmRemote* a, const OmRemote* b)
 {
   // test against the shorter string
-  size_t l = a->category().size() > b->category().size() ? b->category().size() : a->category().size();
+  size_t l = a->category().size() < b->category().size() ? b->category().size() : a->category().size();
 
   const wchar_t* a_srt = a->category().c_str();
   const wchar_t* b_str = b->category().c_str();
@@ -1662,7 +1665,7 @@ bool OmLocation::libRefresh()
           break;
         }
       }
-      // non Backup found for this Source, adding new Source
+      // no Backup found for this Source, adding new Source
       if(!has_bck) {
         pPkg = new OmPackage(this);
         if(pPkg->srcParse(path_ls[i])) {
