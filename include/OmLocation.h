@@ -14,17 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMLOCATION_H
 #define OMLOCATION_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+
 #include "OmConfig.h"
 #include "OmPackage.h"
 #include "OmRepository.h"
 
 class OmContext;
-
 
 /// \brief List sorting types
 ///

@@ -18,7 +18,7 @@
 #ifndef OMCONFIG_H
 #define OMCONFIG_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
 #include "OmXmlDoc.h"
 
 /// \brief Configuration file interface.

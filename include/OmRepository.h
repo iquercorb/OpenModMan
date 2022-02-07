@@ -14,11 +14,11 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMREPOSITORY_H
 #define OMREPOSITORY_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+
 #include "OmConfig.h"
 #include "OmRemote.h"
 

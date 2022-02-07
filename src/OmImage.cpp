@@ -14,7 +14,12 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include "Util/OmUtilImg.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmImage.h"
+
 
 #define OMM_IMAGE_ERR_OPEN    -1
 #define OMM_IMAGE_ERR_READ    -2
@@ -22,16 +27,11 @@
 #define OMM_IMAGE_ERR_TYPE    -4
 #define OMM_IMAGE_ERR_THMB    -5
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmImage::OmImage() :
-  _data(nullptr),
-  _data_size(0),
-  _data_type(0),
-  _thumbnail(nullptr),
-  _valid(false),
+  _data(nullptr), _data_size(0), _data_type(0), _thumbnail(nullptr), _valid(false),
   _ercode(0)
 {
 

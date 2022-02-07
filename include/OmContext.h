@@ -18,7 +18,9 @@
 #ifndef OMCONTEXT_H
 #define OMCONTEXT_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+#include "OmBaseWin.h"
+
 #include "OmConfig.h"
 #include "OmLocation.h"
 #include "OmBatch.h"

@@ -14,8 +14,9 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "3rdP/pugixml/pugixml.hpp"
 
-#include "thirdparty/pugixml/pugixml.hpp"
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmXmlDoc.h"
 
 

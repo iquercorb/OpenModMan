@@ -14,9 +14,19 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <algorithm>            //< std::sort
+
+#include "OmBaseApp.h"
 
 #include "OmManager.h"
 #include "OmLocation.h"
+
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilHsh.h"
+#include "Util/OmUtilErr.h"
+#include "Util/OmUtilStr.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmContext.h"
 
 
@@ -58,19 +68,8 @@ static bool __bat_sort_index_fn(const OmBatch* a, const OmBatch* b)
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmContext::OmContext(OmManager* pMgr) :
-  _manager(pMgr),
-  _config(),
-  _path(),
-  _uuid(),
-  _title(),
-  _home(),
-  _icon(nullptr),
-  _locLs(),
-  _locCur(-1),
-  _batLst(),
-  _batQuietMode(true),
-  _valid(false),
-  _error()
+  _manager(pMgr), _config(), _path(), _uuid(), _title(), _home(), _icon(nullptr),
+  _locLs(), _locCur(-1), _batLst(), _batQuietMode(true), _valid(false), _error()
 {
 
 }
@@ -95,7 +94,7 @@ bool OmContext::open(const wstring& path)
   this->close();
 
   // try to open and parse the XML file
-  if(!this->_config.open(path, OMM_CFG_SIGN_CTX)) {
+  if(!this->_config.open(path, OMM_XMAGIC_CTX)) {
     this->_error = Om_errParse(L"Definition file", path, this->_config.lastErrorStr());
     this->log(0, L"Context(<anonymous>) Open", this->_error);
     return false;
@@ -452,7 +451,7 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
 
   // initialize new definition file
   OmConfig loc_def;
-  if(!loc_def.init(loc_def_path, OMM_CFG_SIGN_LOC)) {
+  if(!loc_def.init(loc_def_path, OMM_XMAGIC_LOC)) {
     this->_error = Om_errInit(L"Definition file", loc_def_path, loc_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
     return false;
@@ -653,7 +652,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
 
   // initialize new definition file
   OmConfig bat_def;
-  if(!bat_def.init(bat_def_path, OMM_CFG_SIGN_BAT)) {
+  if(!bat_def.init(bat_def_path, OMM_XMAGIC_BAT)) {
     this->_error = Om_errInit(L"Definition file", bat_def_path, bat_def.lastErrorStr());
     this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
     return false;

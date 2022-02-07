@@ -14,8 +14,10 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <Windows.h>
+
 #include "OmManager.h"
-#include "gui/OmUiMain.h"
+#include "Ui/OmUiMgr.h"
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -53,12 +55,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
   // Create new Mutex for single instance check
   hMutex = CreateMutexW(nullptr, true, L"OpenModMan.Mutex");
 
-  InitCommonControls();
-
-  curl_global_init(CURL_GLOBAL_ALL);
-
   OmManager manager;
-  OmUiMain dialog(hInst);
+  OmUiMgr dialog(hInst);
 
   if(manager.init(lpCmdLine)) {
 

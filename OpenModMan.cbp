@@ -29,6 +29,7 @@
 					<Add option="-DDEBUG" />
 					<Add directory="include/gui" />
 					<Add directory="include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
@@ -50,6 +51,7 @@
 					<Add option="-m64" />
 					<Add directory="include/gui" />
 					<Add directory="include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -72,6 +74,7 @@
 					<Add option="-DDEBUG" />
 					<Add directory="include/gui" />
 					<Add directory="include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
@@ -93,6 +96,7 @@
 					<Add option="-m32" />
 					<Add directory="include/gui" />
 					<Add directory="include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -115,6 +119,7 @@
 					<Add option="-m64" />
 					<Add directory="include/gui" />
 					<Add directory="include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="include/gui/res" />
@@ -143,6 +148,7 @@
 					<Add directory="include/gui" />
 					<Add directory="include" />
 					<Add directory="/usr/i686-w64-mingw32/include" />
+					<Add directory="include/Ui" />
 				</Compiler>
 				<ResourceCompiler>
 					<Add directory="include/gui/res" />
@@ -161,17 +167,17 @@
 		<Compiler>
 			<Add option="-DCURL_STATICLIB" />
 			<Add directory="include" />
-			<Add directory="include/thirdparty" />
-			<Add directory="include/thirdparty/miniz" />
-			<Add directory="include/thirdparty/pugixml" />
-			<Add directory="include/thirdparty/xxhash" />
-			<Add directory="include/thirdparty/jpeg" />
-			<Add directory="include/thirdparty/png" />
-			<Add directory="include/thirdparty/gif" />
-			<Add directory="include/thirdparty/zlib" />
-			<Add directory="src/thirdparty/zlib" />
-			<Add directory="include/thirdparty/md4c" />
-			<Add directory="include/thirdparty/cwb" />
+			<Add directory="include/3rdP" />
+			<Add directory="include/3rdP/miniz" />
+			<Add directory="include/3rdP/pugixml" />
+			<Add directory="include/3rdP/xxhash" />
+			<Add directory="include/3rdP/jpeg" />
+			<Add directory="include/3rdP/png" />
+			<Add directory="include/3rdP/gif" />
+			<Add directory="include/3rdP/zlib" />
+			<Add directory="src/3rdP/zlib" />
+			<Add directory="include/3rdP/md4c" />
+			<Add directory="include/3rdP/cwb" />
 		</Compiler>
 		<ResourceCompiler>
 			<Add directory="include" />
@@ -192,6 +198,42 @@
 		<Unit filename="CREDITS.TXT" />
 		<Unit filename="LICENSE.TXT" />
 		<Unit filename="README.md" />
+		<Unit filename="include/3rdP/curl/curl.h" />
+		<Unit filename="include/3rdP/curl/curlver.h" />
+		<Unit filename="include/3rdP/curl/easy.h" />
+		<Unit filename="include/3rdP/curl/mprintf.h" />
+		<Unit filename="include/3rdP/curl/multi.h" />
+		<Unit filename="include/3rdP/curl/options.h" />
+		<Unit filename="include/3rdP/curl/stdcheaders.h" />
+		<Unit filename="include/3rdP/curl/system.h" />
+		<Unit filename="include/3rdP/curl/typecheck-gcc.h" />
+		<Unit filename="include/3rdP/curl/urlapi.h" />
+		<Unit filename="include/3rdP/cwb/cwb.h" />
+		<Unit filename="include/3rdP/gif/gif_hash.h" />
+		<Unit filename="include/3rdP/gif/gif_lib.h" />
+		<Unit filename="include/3rdP/gif/gif_lib_private.h" />
+		<Unit filename="include/3rdP/jpeg/README" />
+		<Unit filename="include/3rdP/jpeg/jpeglib.h" />
+		<Unit filename="include/3rdP/md4c/entity.h" />
+		<Unit filename="include/3rdP/md4c/md4c-html.h" />
+		<Unit filename="include/3rdP/md4c/md4c.h" />
+		<Unit filename="include/3rdP/miniz/miniz.h" />
+		<Unit filename="include/3rdP/png/png.h" />
+		<Unit filename="include/3rdP/png/pngconf.h" />
+		<Unit filename="include/3rdP/png/pngdebug.h" />
+		<Unit filename="include/3rdP/png/pnginfo.h" />
+		<Unit filename="include/3rdP/png/pnglibconf.h" />
+		<Unit filename="include/3rdP/png/pngpriv.h" />
+		<Unit filename="include/3rdP/png/pngstruct.h" />
+		<Unit filename="include/3rdP/pugixml/pugiconfig.hpp" />
+		<Unit filename="include/3rdP/pugixml/pugixml.hpp" />
+		<Unit filename="include/3rdP/xxhash/xxh3.h" />
+		<Unit filename="include/3rdP/xxhash/xxhash.h" />
+		<Unit filename="include/3rdP/zlib/zlib.h" />
+		<Unit filename="include/OmBase.h" />
+		<Unit filename="include/OmBaseApp.h" />
+		<Unit filename="include/OmBaseUi.h" />
+		<Unit filename="include/OmBaseWin.h" />
 		<Unit filename="include/OmBatch.h" />
 		<Unit filename="include/OmConfig.h" />
 		<Unit filename="include/OmContext.h" />
@@ -209,80 +251,353 @@
 		<Unit filename="include/OmVersion.h" />
 		<Unit filename="include/OmXmlDoc.h" />
 		<Unit filename="include/OmZipFile.h" />
-		<Unit filename="include/gui/OmUiAddBat.h" />
-		<Unit filename="include/gui/OmUiAddLoc.h" />
-		<Unit filename="include/gui/OmUiAddRep.h" />
-		<Unit filename="include/gui/OmUiHelpAbt.h" />
-		<Unit filename="include/gui/OmUiHelpLog.h" />
-		<Unit filename="include/gui/OmUiMain.h" />
-		<Unit filename="include/gui/OmUiMainLib.h" />
-		<Unit filename="include/gui/OmUiMainNet.h" />
-		<Unit filename="include/gui/OmUiMainTst.h" />
-		<Unit filename="include/gui/OmUiProgress.h" />
-		<Unit filename="include/gui/OmUiPropBat.h" />
-		<Unit filename="include/gui/OmUiPropBatStg.h" />
-		<Unit filename="include/gui/OmUiPropCtx.h" />
-		<Unit filename="include/gui/OmUiPropCtxBat.h" />
-		<Unit filename="include/gui/OmUiPropCtxLoc.h" />
-		<Unit filename="include/gui/OmUiPropCtxStg.h" />
-		<Unit filename="include/gui/OmUiPropLoc.h" />
-		<Unit filename="include/gui/OmUiPropLocBck.h" />
-		<Unit filename="include/gui/OmUiPropLocLib.h" />
-		<Unit filename="include/gui/OmUiPropLocNet.h" />
-		<Unit filename="include/gui/OmUiPropLocStg.h" />
-		<Unit filename="include/gui/OmUiPropMan.h" />
-		<Unit filename="include/gui/OmUiPropManGle.h" />
-		<Unit filename="include/gui/OmUiPropPkg.h" />
-		<Unit filename="include/gui/OmUiPropPkgBck.h" />
-		<Unit filename="include/gui/OmUiPropPkgSrc.h" />
-		<Unit filename="include/gui/OmUiPropRmt.h" />
-		<Unit filename="include/gui/OmUiPropRmtDet.h" />
-		<Unit filename="include/gui/OmUiToolPkg.h" />
-		<Unit filename="include/gui/OmUiToolRep.h" />
-		<Unit filename="include/gui/OmUiWizCtx.h" />
-		<Unit filename="include/gui/OmUiWizCtxBeg.h" />
-		<Unit filename="include/gui/OmUiWizCtxCfg.h" />
-		<Unit filename="include/gui/OmUiWizCtxLoc.h" />
-		<Unit filename="include/gui/res/resource.h" />
-		<Unit filename="include/gui/res/resources.rc">
+		<Unit filename="include/Ui/OmUiAddBat.h" />
+		<Unit filename="include/Ui/OmUiAddLoc.h" />
+		<Unit filename="include/Ui/OmUiAddRep.h" />
+		<Unit filename="include/Ui/OmUiHelpAbt.h" />
+		<Unit filename="include/Ui/OmUiHelpLog.h" />
+		<Unit filename="include/Ui/OmUiMgr.h" />
+		<Unit filename="include/Ui/OmUiMgrFoot.h" />
+		<Unit filename="include/Ui/OmUiMgrMain.h" />
+		<Unit filename="include/Ui/OmUiMgrMainLib.h" />
+		<Unit filename="include/Ui/OmUiMgrMainNet.h" />
+		<Unit filename="include/Ui/OmUiMgrMainTst.h" />
+		<Unit filename="include/Ui/OmUiProgress.h" />
+		<Unit filename="include/Ui/OmUiPropBat.h" />
+		<Unit filename="include/Ui/OmUiPropBatStg.h" />
+		<Unit filename="include/Ui/OmUiPropCtx.h" />
+		<Unit filename="include/Ui/OmUiPropCtxBat.h" />
+		<Unit filename="include/Ui/OmUiPropCtxLoc.h" />
+		<Unit filename="include/Ui/OmUiPropCtxStg.h" />
+		<Unit filename="include/Ui/OmUiPropLoc.h" />
+		<Unit filename="include/Ui/OmUiPropLocBck.h" />
+		<Unit filename="include/Ui/OmUiPropLocLib.h" />
+		<Unit filename="include/Ui/OmUiPropLocNet.h" />
+		<Unit filename="include/Ui/OmUiPropLocStg.h" />
+		<Unit filename="include/Ui/OmUiPropMan.h" />
+		<Unit filename="include/Ui/OmUiPropManGle.h" />
+		<Unit filename="include/Ui/OmUiPropPkg.h" />
+		<Unit filename="include/Ui/OmUiPropPkgBck.h" />
+		<Unit filename="include/Ui/OmUiPropPkgSrc.h" />
+		<Unit filename="include/Ui/OmUiPropRmt.h" />
+		<Unit filename="include/Ui/OmUiPropRmtDet.h" />
+		<Unit filename="include/Ui/OmUiToolPkg.h" />
+		<Unit filename="include/Ui/OmUiToolRep.h" />
+		<Unit filename="include/Ui/OmUiWizCtx.h" />
+		<Unit filename="include/Ui/OmUiWizCtxBeg.h" />
+		<Unit filename="include/Ui/OmUiWizCtxCfg.h" />
+		<Unit filename="include/Ui/OmUiWizCtxLoc.h" />
+		<Unit filename="include/Util/OmUtilB64.h" />
+		<Unit filename="include/Util/OmUtilDlg.h" />
+		<Unit filename="include/Util/OmUtilErr.h" />
+		<Unit filename="include/Util/OmUtilFs.h" />
+		<Unit filename="include/Util/OmUtilHsh.h" />
+		<Unit filename="include/Util/OmUtilImg.h" />
+		<Unit filename="include/Util/OmUtilPkg.h" />
+		<Unit filename="include/Util/OmUtilStr.h" />
+		<Unit filename="include/Util/OmUtilSys.h" />
+		<Unit filename="include/Util/OmUtilWin.h" />
+		<Unit filename="include/Util/OmUtilZip.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="res/resource.h" />
+		<Unit filename="res/resources.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
-		<Unit filename="include/thirdparty/curl/curl.h" />
-		<Unit filename="include/thirdparty/curl/curlver.h" />
-		<Unit filename="include/thirdparty/curl/easy.h" />
-		<Unit filename="include/thirdparty/curl/mprintf.h" />
-		<Unit filename="include/thirdparty/curl/multi.h" />
-		<Unit filename="include/thirdparty/curl/options.h" />
-		<Unit filename="include/thirdparty/curl/stdcheaders.h" />
-		<Unit filename="include/thirdparty/curl/system.h" />
-		<Unit filename="include/thirdparty/curl/typecheck-gcc.h" />
-		<Unit filename="include/thirdparty/curl/urlapi.h" />
-		<Unit filename="include/thirdparty/cwb/cwb.h" />
-		<Unit filename="include/thirdparty/gif/gif_hash.h" />
-		<Unit filename="include/thirdparty/gif/gif_lib.h" />
-		<Unit filename="include/thirdparty/gif/gif_lib_private.h" />
-		<Unit filename="include/thirdparty/jpeg/README" />
-		<Unit filename="include/thirdparty/jpeg/jpeglib.h" />
-		<Unit filename="include/thirdparty/md4c/entity.h" />
-		<Unit filename="include/thirdparty/md4c/md4c-html.h" />
-		<Unit filename="include/thirdparty/md4c/md4c.h" />
-		<Unit filename="include/thirdparty/miniz/miniz.h" />
-		<Unit filename="include/thirdparty/png/png.h" />
-		<Unit filename="include/thirdparty/png/pngconf.h" />
-		<Unit filename="include/thirdparty/png/pngdebug.h" />
-		<Unit filename="include/thirdparty/png/pnginfo.h" />
-		<Unit filename="include/thirdparty/png/pnglibconf.h" />
-		<Unit filename="include/thirdparty/png/pngpriv.h" />
-		<Unit filename="include/thirdparty/png/pngstruct.h" />
-		<Unit filename="include/thirdparty/pugixml/pugiconfig.hpp" />
-		<Unit filename="include/thirdparty/pugixml/pugixml.hpp" />
-		<Unit filename="include/thirdparty/xxhash/xxh3.h" />
-		<Unit filename="include/thirdparty/xxhash/xxhash.h" />
-		<Unit filename="include/thirdparty/zlib/zlib.h" />
-		<Unit filename="main.cpp" />
 		<Unit filename="setup/OpenModMan.nsh" />
 		<Unit filename="setup/setup-x64.nsi" />
 		<Unit filename="setup/setup-x86.nsi" />
+		<Unit filename="src/3rdP/cwb/cwb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/dgif_lib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/egif_lib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/gif_err.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/gif_font.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/gif_hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/gifalloc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/openbsd-reallocarray.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/qprintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/gif/quantize.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jaricom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcapimin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcapistd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcarith.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jccoefct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jccolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcdctmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jchuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcinit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcmainct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcmarker.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcmaster.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcomapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcparam.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcprepct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jcsample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jctrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdapimin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdapistd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdarith.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdatadst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdatasrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdcoefct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdcolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jddctmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdhuff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdinput.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdmainct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdmarker.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdmaster.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdmerge.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdpostct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdsample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jdtrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jerror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jfdctflt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jfdctfst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jfdctint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jidctflt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jidctfst.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jidctint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jmemmgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jmemnobs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jquant1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jquant2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/jutils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdbmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdcolmap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdgif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdppm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdrle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdswitch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/rdtarga.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/transupp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/wrbmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/wrgif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/wrppm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/wrrle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/jpeg/wrtarga.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/md4c/entity.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/md4c/md4c-html.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/md4c/md4c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/miniz/miniz.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/png.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngerror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngget.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngmem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngpread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngrio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngrtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngrutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngtrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngwio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngwrite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngwtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/png/pngwutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/pugixml/pugixml.cpp" />
+		<Unit filename="src/3rdP/xxhash/xxhash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/adler32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/crc32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/deflate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/inffast.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/inflate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/inftrees.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/trees.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/3rdP/zlib/zutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/OmBatch.cpp" />
 		<Unit filename="src/OmConfig.cpp" />
 		<Unit filename="src/OmContext.cpp" />
@@ -300,332 +615,53 @@
 		<Unit filename="src/OmVersion.cpp" />
 		<Unit filename="src/OmXmlDoc.cpp" />
 		<Unit filename="src/OmZipFile.cpp" />
-		<Unit filename="src/gui/OmUiAddBat.cpp" />
-		<Unit filename="src/gui/OmUiAddLoc.cpp" />
-		<Unit filename="src/gui/OmUiAddRep.cpp" />
-		<Unit filename="src/gui/OmUiHelpAbt.cpp" />
-		<Unit filename="src/gui/OmUiHelpLog.cpp" />
-		<Unit filename="src/gui/OmUiMain.cpp" />
-		<Unit filename="src/gui/OmUiMainLib.cpp" />
-		<Unit filename="src/gui/OmUiMainNet.cpp" />
-		<Unit filename="src/gui/OmUiMainTst.cpp" />
-		<Unit filename="src/gui/OmUiProgress.cpp" />
-		<Unit filename="src/gui/OmUiPropBat.cpp" />
-		<Unit filename="src/gui/OmUiPropBatStg.cpp" />
-		<Unit filename="src/gui/OmUiPropCtx.cpp" />
-		<Unit filename="src/gui/OmUiPropCtxBat.cpp" />
-		<Unit filename="src/gui/OmUiPropCtxLoc.cpp" />
-		<Unit filename="src/gui/OmUiPropCtxStg.cpp" />
-		<Unit filename="src/gui/OmUiPropLoc.cpp" />
-		<Unit filename="src/gui/OmUiPropLocBck.cpp" />
-		<Unit filename="src/gui/OmUiPropLocLib.cpp" />
-		<Unit filename="src/gui/OmUiPropLocNet.cpp" />
-		<Unit filename="src/gui/OmUiPropLocStg.cpp" />
-		<Unit filename="src/gui/OmUiPropMan.cpp" />
-		<Unit filename="src/gui/OmUiPropManGle.cpp" />
-		<Unit filename="src/gui/OmUiPropPkg.cpp" />
-		<Unit filename="src/gui/OmUiPropPkgBck.cpp" />
-		<Unit filename="src/gui/OmUiPropPkgSrc.cpp" />
-		<Unit filename="src/gui/OmUiPropRmt.cpp" />
-		<Unit filename="src/gui/OmUiPropRmtDet.cpp" />
-		<Unit filename="src/gui/OmUiToolPkg.cpp" />
-		<Unit filename="src/gui/OmUiToolRep.cpp" />
-		<Unit filename="src/gui/OmUiWizCtx.cpp" />
-		<Unit filename="src/gui/OmUiWizCtxBeg.cpp" />
-		<Unit filename="src/gui/OmUiWizCtxCfg.cpp" />
-		<Unit filename="src/gui/OmUiWizCtxLoc.cpp" />
-		<Unit filename="src/thirdparty/cwb/cwb.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/dgif_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/egif_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/gif_err.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/gif_font.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/gif_hash.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/gifalloc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/openbsd-reallocarray.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/qprintf.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/gif/quantize.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jaricom.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcapimin.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcapistd.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcarith.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jccoefct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jccolor.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcdctmgr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jchuff.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcinit.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcmainct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcmarker.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcmaster.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcomapi.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcparam.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcprepct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jcsample.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jctrans.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdapimin.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdapistd.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdarith.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdatadst.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdatasrc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdcoefct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdcolor.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jddctmgr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdhuff.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdinput.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdmainct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdmarker.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdmaster.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdmerge.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdpostct.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdsample.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jdtrans.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jerror.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jfdctflt.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jfdctfst.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jfdctint.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jidctflt.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jidctfst.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jidctint.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jmemmgr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jmemnobs.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jquant1.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jquant2.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/jutils.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdbmp.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdcolmap.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdgif.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdppm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdrle.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdswitch.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/rdtarga.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/transupp.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/wrbmp.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/wrgif.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/wrppm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/wrrle.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/jpeg/wrtarga.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/md4c/entity.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/md4c/md4c-html.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/md4c/md4c.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/miniz/miniz.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/png.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngerror.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngget.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngmem.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngpread.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngread.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngrio.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngrtran.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngrutil.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngset.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngtrans.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngwio.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngwrite.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngwtran.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/png/pngwutil.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/pugixml/pugixml.cpp" />
-		<Unit filename="src/thirdparty/xxhash/xxhash.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/adler32.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/crc32.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/deflate.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/inffast.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/inflate.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/inftrees.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/trees.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/thirdparty/zlib/zutil.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="src/Ui/OmUiAddBat.cpp" />
+		<Unit filename="src/Ui/OmUiAddLoc.cpp" />
+		<Unit filename="src/Ui/OmUiAddRep.cpp" />
+		<Unit filename="src/Ui/OmUiHelpAbt.cpp" />
+		<Unit filename="src/Ui/OmUiHelpLog.cpp" />
+		<Unit filename="src/Ui/OmUiMgr.cpp" />
+		<Unit filename="src/Ui/OmUiMgrFoot.cpp" />
+		<Unit filename="src/Ui/OmUiMgrMain.cpp" />
+		<Unit filename="src/Ui/OmUiMgrMainLib.cpp" />
+		<Unit filename="src/Ui/OmUiMgrMainNet.cpp" />
+		<Unit filename="src/Ui/OmUiMgrMainTst.cpp" />
+		<Unit filename="src/Ui/OmUiProgress.cpp" />
+		<Unit filename="src/Ui/OmUiPropBat.cpp" />
+		<Unit filename="src/Ui/OmUiPropBatStg.cpp" />
+		<Unit filename="src/Ui/OmUiPropCtx.cpp" />
+		<Unit filename="src/Ui/OmUiPropCtxBat.cpp" />
+		<Unit filename="src/Ui/OmUiPropCtxLoc.cpp" />
+		<Unit filename="src/Ui/OmUiPropCtxStg.cpp" />
+		<Unit filename="src/Ui/OmUiPropLoc.cpp" />
+		<Unit filename="src/Ui/OmUiPropLocBck.cpp" />
+		<Unit filename="src/Ui/OmUiPropLocLib.cpp" />
+		<Unit filename="src/Ui/OmUiPropLocNet.cpp" />
+		<Unit filename="src/Ui/OmUiPropLocStg.cpp" />
+		<Unit filename="src/Ui/OmUiPropMan.cpp" />
+		<Unit filename="src/Ui/OmUiPropManGle.cpp" />
+		<Unit filename="src/Ui/OmUiPropPkg.cpp" />
+		<Unit filename="src/Ui/OmUiPropPkgBck.cpp" />
+		<Unit filename="src/Ui/OmUiPropPkgSrc.cpp" />
+		<Unit filename="src/Ui/OmUiPropRmt.cpp" />
+		<Unit filename="src/Ui/OmUiPropRmtDet.cpp" />
+		<Unit filename="src/Ui/OmUiToolPkg.cpp" />
+		<Unit filename="src/Ui/OmUiToolRep.cpp" />
+		<Unit filename="src/Ui/OmUiWizCtx.cpp" />
+		<Unit filename="src/Ui/OmUiWizCtxBeg.cpp" />
+		<Unit filename="src/Ui/OmUiWizCtxCfg.cpp" />
+		<Unit filename="src/Ui/OmUiWizCtxLoc.cpp" />
+		<Unit filename="src/Util/OmUtilB64.cpp" />
+		<Unit filename="src/Util/OmUtilDlg.cpp" />
+		<Unit filename="src/Util/OmUtilErr.cpp" />
+		<Unit filename="src/Util/OmUtilFs.cpp" />
+		<Unit filename="src/Util/OmUtilHsh.cpp" />
+		<Unit filename="src/Util/OmUtilImg.cpp" />
+		<Unit filename="src/Util/OmUtilPkg.cpp" />
+		<Unit filename="src/Util/OmUtilStr.cpp" />
+		<Unit filename="src/Util/OmUtilSys.cpp" />
+		<Unit filename="src/Util/OmUtilWin.cpp" />
+		<Unit filename="src/Util/OmUtilZip.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

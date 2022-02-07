@@ -14,8 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBaseApp.h"
 
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilWin.h"
+#include "Util/OmUtilHsh.h"
+
+#include "OmManager.h"
 #include "OmContext.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmBatch.h"
 
 
@@ -23,15 +31,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmBatch::OmBatch() :
-  _context(nullptr),
-  _config(),
-  _path(),
-  _uuid(),
-  _title(),
-  _index(0),
-  _locUuid(),
-  _insHash(),
-  _error()
+  _context(nullptr), _config(), _path(), _uuid(), _title(), _index(0),
+  _locUuid(), _insHash(), _error()
 {
 
 }
@@ -41,15 +42,8 @@ OmBatch::OmBatch() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmBatch::OmBatch(OmContext* pCtx) :
-  _context(pCtx),
-  _config(),
-  _path(),
-  _uuid(),
-  _title(),
-  _index(0),
-  _locUuid(),
-  _insHash(),
-  _error()
+  _context(pCtx), _config(), _path(), _uuid(), _title(), _index(0),
+  _locUuid(), _insHash(), _error()
 {
 
 }
@@ -73,7 +67,7 @@ bool OmBatch::open(const wstring& path)
   this->close();
 
   // try to open and parse the XML file
-  if(!this->_config.open(path, OMM_CFG_SIGN_BAT)) {
+  if(!this->_config.open(path, OMM_XMAGIC_BAT)) {
     this->_error = L"Error loading Batch definition: ";
     this->_error += this->_config.lastErrorStr();
     this->log(0, wstring(L"Batch(")+path+L") Open", this->_error);

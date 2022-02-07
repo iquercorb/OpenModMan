@@ -14,29 +14,44 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmSocket.h"
+#include "Util/OmUtilStr.h"
 
 #include <curl/curl.h>
-#include <ctime>
+
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+#include "OmSocket.h"
+
+
+/// \brief Initialized libCURL flag
+///
+/// Flag to tell whether libCURL must be initialized
+///
+static bool __curl_initialized = false;
+
+
+/// \brief Initialize libCURL
+///
+/// Function to initialize libCURL once
+///
+static inline void __curl_init()
+{
+  if(!__curl_initialized) {
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    // we need to initialize only once per process
+    __curl_initialized = true;
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmSocket::OmSocket() :
-  _hcurl(nullptr),
-  _buff_fill(0),
-  _buff_size(0),
-  _buff_data(nullptr),
-  _out_file(nullptr),
-  _user_download(nullptr),
-  _user_ptr(nullptr),
-  _downloading(false),
-  _rate_byte(0),
-  _rate_time(0.0),
-  _progress_bps(0.0),
-  _progress_tot(0),
-  _progress_now(0),
-  _ercode(0),
+  _hcurl(nullptr),_buff_fill(0),_buff_size(0),_buff_data(nullptr),_out_file(nullptr),
+  _user_download(nullptr),_user_ptr(nullptr),_downloading(false),_rate_byte(0),
+  _rate_time(0.0),_progress_bps(0.0),_progress_tot(0),_progress_now(0),_ercode(0),
   _tpcode(0)
 {
 
@@ -57,6 +72,8 @@ OmSocket::~OmSocket()
 bool OmSocket::httpGet(const wstring& url, string& data)
 {
   this->clear();
+
+  __curl_init(); //< initialize LibCURL (done only once)
 
   this->_hcurl = curl_easy_init();
 
@@ -115,6 +132,8 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr)
 {
   this->clear();
+
+  __curl_init(); //< initialize LibCURL (done only once)
 
   this->_hcurl = curl_easy_init();
 

@@ -14,11 +14,11 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMDIALOG_H
 #define OMDIALOG_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+#include "OmBaseWin.h"
 
 class OmManager;
 
@@ -72,16 +72,6 @@ class OmDialog
     ///
     HWND hwnd() const {
       return _hwnd;
-    }
-
-    /// \brief Get client rect.
-    ///
-    /// Returns dialog window client area rect.
-    ///
-    /// \return Window client area rect.
-    ///
-    const RECT& rect() const {
-      return _rect;
     }
 
     /// \brief Get parent.
@@ -152,6 +142,16 @@ class OmDialog
     ///
     HMENU menu() const {
       return _menu;
+    }
+
+    /// \brief Defer resize handle.
+    ///
+    /// Returns handle dialog defer resize structure.
+    ///
+    /// \return Dialog defer resize handle.
+    ///
+    HDWP hdwp() const {
+      return _hdwp;
     }
 
     /// \brief Open window.
@@ -312,24 +312,84 @@ class OmDialog
     ///
     void loopMessage() const;
 
+    /// \brief Dialog window X position.
+    ///
+    /// Returns dialog window X position in pixels.
+    ///
+    /// \return Window X position in pixels.
+    ///
+    long x() const {
+      return this->_recw[0];
+    }
+
+    /// \brief Dialog window Y position.
+    ///
+    /// Returns dialog window Y position in pixels.
+    ///
+    /// \return Window X position in pixels.
+    ///
+    long y() const {
+      return this->_recw[1];
+    }
+
     /// \brief Dialog window width.
     ///
-    /// Returns dialog window width in base unit.
+    /// Returns dialog window width in pixels.
     ///
-    /// \return Window width in base unit.
+    /// \return Window width in pixels.
     ///
-    int width() const {
+    long width() const {
       return this->_size[0];
     }
 
     /// \brief Dialog window height.
     ///
-    /// Returns dialog window height in base unit.
+    /// Returns dialog window height in pixels.
+    ///
+    /// \return Window height in pixels.
+    ///
+    long height() const {
+      return this->_size[1];
+    }
+
+    /// \brief Dialog client unit width.
+    ///
+    /// Returns dialog client width in base unit.
+    ///
+    /// \return Window width in base unit.
+    ///
+    int cliUnitX() const {
+      return this->_usize[0];
+    }
+
+    /// \brief Dialog client unit height.
+    ///
+    /// Returns dialog client height in base unit.
     ///
     /// \return Window height in base unit.
     ///
-    int height() const {
-      return this->_size[1];
+    int cliUnitY() const {
+      return this->_usize[1];
+    }
+
+    /// \brief Dialog client width.
+    ///
+    /// Returns dialog client width in pixels.
+    ///
+    /// \return Client area width in pixels.
+    ///
+    long cliWidth() const {
+      return this->_recc[2];
+    }
+
+    /// \brief Dialog client height.
+    ///
+    /// Returns dialog client height in pixels.
+    ///
+    /// \return Client area height in pixels.
+    ///
+    long cliHeight() const {
+      return this->_recc[3];
     }
 
     /// \brief Dialog horizontal base unit.
@@ -338,8 +398,8 @@ class OmDialog
     ///
     /// \return Dialog horizontal base unit.
     ///
-    int unitX() const {
-      return this->_unit[0];
+    int ubaseX() const {
+      return this->_ubase[0];
     }
 
     /// \brief Dialog vertical base unit.
@@ -348,8 +408,8 @@ class OmDialog
     ///
     /// \return Dialog vertical base unit.
     ///
-    int unitY() const {
-      return this->_unit[1];
+    int ubaseY() const {
+      return this->_ubase[1];
     }
 
     /// \brief Set dialog caption
@@ -628,11 +688,11 @@ class OmDialog
 
     HMENU               _menu;      //< Menu if exists or set
 
-    RECT                _rect;      //< Dialog window geometry
-
     void*               _data;      //< Dialog custom data
 
     void                _setItemPos(unsigned, long, long, long, long, bool pixel = false);
+
+    void                _setChildPos(HWND, long, long, long, long, bool pixel = false);
 
     void                _getItemPos(unsigned, long*, bool pixel = false);
 
@@ -646,13 +706,21 @@ class OmDialog
 
     bool                _modal;     //< Dialog was created as modal
 
-    int                 _unit[2];   //< Dialog window base unit
+    long                _recw[4];   //< Dialog window rect
+
+    long                _recc[4];   //< Dialog client rect
+
+    int                 _ubase[2];  //< Dialog window base unit
 
     long                _limit[2];  //< Dialog window size limits
 
-    long                _size[2];   //< Dialog window size in base unit
+    long                _size[2];   //< Dialog window size in pixel
+
+    long                _usize[2];  //< Dialog window size in base unit
 
     bool                _active;    //< Dialog window tracked ACTIVE state
+
+    HDWP                _hdwp;      //< Defer window pos handle
 
     static INT_PTR CALLBACK  _wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

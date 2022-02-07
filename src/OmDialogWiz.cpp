@@ -14,8 +14,11 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBase.h"
 
-#include "gui/res/resource.h"
+#include "OmBaseUi.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDialogWiz.h"
 
 
@@ -23,8 +26,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialogWiz::OmDialogWiz(HINSTANCE hins) : OmDialog(hins),
-  _pageDial(),
-  _currPage(0),
+  _pageDial(), _currPage(0),
   _hBmSplash(static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(IDB_WIZARD),IMAGE_BITMAP,0,0,0)))
 {
 
@@ -112,11 +114,11 @@ void OmDialogWiz::_onResize()
   SetWindowPos(this->getItem(IDC_SB_IMAGE), 0, 0, 0, 110, 310, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
   // ---- separator
-  this->_setItemPos(IDC_SC_SEPAR, 5, this->height()-25, this->width()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 5, this->cliUnitY()-25, this->cliUnitX()-10, 1);
   // Back, Next and Cancel buttons
-  this->_setItemPos(IDC_BC_BACK, this->width()-161, this->height()-19, 50, 14);
-  this->_setItemPos(IDC_BC_NEXT, this->width()-110, this->height()-19, 50, 14);
-  this->_setItemPos(IDC_BC_CANCEL, this->width()-54, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_BACK, this->cliUnitX()-161, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_NEXT, this->cliUnitX()-110, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
 
   // force buttons to redraw to prevent artifacts
   InvalidateRect(this->getItem(IDC_BC_BACK), nullptr, true);
@@ -130,19 +132,22 @@ void OmDialogWiz::_onResize()
     // convert into base unit and adjust to keep inside the TabControl
     pos[0] = 80;
     pos[1] = 0;
-    pos[2] = this->width() - 80;
-    pos[3] = this->height() - 26;
+    pos[2] = this->cliUnitX() - 80;
+    pos[3] = this->cliUnitY() - 26;
 
     // Map in pixels
     MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
 
     // apply this for all dialogs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-      SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      this->_setChildPos(this->_pageDial[i]->hwnd(), pos[0], pos[1], pos[2], pos[3], true);
     }
   }
 
   this->_onWizResize();
+
+  // redraw the window
+  RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
 }
 
 

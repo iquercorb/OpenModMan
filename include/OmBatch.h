@@ -18,7 +18,7 @@
 #ifndef OMBATCH_H
 #define OMBATCH_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
 #include "OmConfig.h"
 
 class OmContext;

@@ -17,7 +17,7 @@
 #ifndef OMSOCKET_H
 #define OMSOCKET_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
 
 /// \brief Network socket object
 ///

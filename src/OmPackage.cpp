@@ -14,17 +14,26 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBaseApp.h"
 
-#include "thirdparty/miniz/miniz.h"
 #include "OmZipFile.h"
 #include "OmXmlDoc.h"
 #include "OmManager.h"
 #include "OmContext.h"
 #include "OmLocation.h"
-#include "OmPackage.h"
-#include "OmImage.h"
-#include <time.h>
 
+#include "OmImage.h"
+
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilStr.h"
+#include "Util/OmUtilHsh.h"
+#include "Util/OmUtilErr.h"
+#include "Util/OmUtilPkg.h"
+
+#include "3rdP/miniz/miniz.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+#include "OmPackage.h"
 
 #define PKG_BACKUP_DIR    L"root"
 #define PKG_BACKUP_DEF    L"backup"
@@ -95,26 +104,9 @@ static void __get_folder_src_items(vector<OmPkgItem>* ls, const wstring& orig, c
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmPackage::OmPackage() :
-  _location(nullptr),
-  _type(0),
-  _ident(),
-  _hash(0),
-  _core(),
-  _version(),
-  _name(),
-  _src(),
-  _srcDir(),
-  _srcTime(0),
-  _srcItemLs(),
-  _depLs(),
-  _bck(),
-  _bckDir(),
-  _bckItemLs(),
-  _ovrLs(),
-  _category(),
-  _desc(),
-  _image(),
-  _error()
+  _location(nullptr), _type(0), _ident(), _hash(0), _core(), _version(), _name(),
+  _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(), _bckDir(),
+  _bckItemLs(), _ovrLs(), _category(), _desc(), _image(), _error()
 {
 
 }
@@ -124,26 +116,9 @@ OmPackage::OmPackage() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmPackage::OmPackage(OmLocation* pLoc) :
-  _location(pLoc),
-  _type(0),
-  _ident(),
-  _hash(0),
-  _core(),
-  _version(),
-  _name(),
-  _src(),
-  _srcDir(),
-  _srcTime(0),
-  _srcItemLs(),
-  _depLs(),
-  _bck(),
-  _bckDir(),
-  _bckItemLs(),
-  _ovrLs(),
-  _category(),
-  _desc(),
-  _image(),
-  _error()
+  _location(pLoc), _type(0), _ident(), _hash(0), _core(), _version(),
+  _name(), _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(),
+  _bckDir(), _bckItemLs(), _ovrLs(), _category(), _desc(), _image(), _error()
 {
 
 }
@@ -163,6 +138,15 @@ OmPackage::~OmPackage()
   this->_ovrLs.clear();
   this->_depLs.clear();
   this->_image.clear();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::isBckOf(const wstring& path)
+{
+  return (Om_getXXHash3(Om_getFilePart(path)) == _hash);
 }
 
 
@@ -220,7 +204,7 @@ bool OmPackage::srcParse(const wstring& path)
               return false;
             }
             str_buf[s] = 0;
-            if(src_def.parse(Om_fromUtf8(str_buf), OMM_CFG_SIGN_PKG)) {
+            if(src_def.parse(Om_fromUtf8(str_buf), OMM_XMAGIC_PKG)) {
               has_def = true;
               delete [] str_buf;
               break;
@@ -305,7 +289,7 @@ bool OmPackage::srcParse(const wstring& path)
             if(img_data) {
               if(src_zip.extract(zcrd_index, img_data, s)) {
                 // finally load picture data
-                if(!this->_image.open(img_data, s, OMM_PKG_THMB_SIZE)) {
+                if(!this->_image.open(img_data, s, OMM_THUMB_SIZE)) {
                   this->_error = L"Snapshot file \""+pic_name+L"\"";
                   this->_error += L"cannot be loaded: "+_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
@@ -391,7 +375,7 @@ bool OmPackage::srcParse(const wstring& path)
             uint8_t* img_data = new(std::nothrow) uint8_t[s];
             if(img_data) {
               if(src_zip.extract(i, img_data, s)) {
-                if(!this->_image.open(img_data, s, OMM_PKG_THMB_SIZE)) {
+                if(!this->_image.open(img_data, s, OMM_THUMB_SIZE)) {
                   this->_error = L"Image file \""+zcd_entry+L"\"";
                   this->_error += L"cannot be loaded: "+this->_image.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
@@ -508,7 +492,7 @@ bool OmPackage::bckParse(const wstring& path)
             return false;
           }
           str_buf[s] = 0;
-          if(bck_def.parse(Om_fromUtf8(str_buf), OMM_CFG_SIGN_BCK)) {
+          if(bck_def.parse(Om_fromUtf8(str_buf), OMM_XMAGIC_BCK)) {
             has_def = true;
             delete [] str_buf;
             break;
@@ -552,7 +536,7 @@ bool OmPackage::bckParse(const wstring& path)
 
     for(size_t i = 0; i < ls.size(); ++i) {
       if(Om_extensionMatches(ls[i], OMM_BCK_DEF_FILE_EXT)) {
-        if(bck_def.open(ls[i], OMM_CFG_SIGN_BCK)) {
+        if(bck_def.open(ls[i], OMM_XMAGIC_BCK)) {
           has_def = true;
           break;
         } else {
@@ -979,7 +963,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   }
 */
   // create package identity according destination path
-  wstring pkg_ext = Om_getExtensionPart(out_path);
+  wstring pkg_ext = Om_getFileExtPart(out_path);
   wstring pkg_ident = Om_getNamePart(out_path);
 
   OmZipFile src_zip;
@@ -1015,7 +999,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   }
 
   OmConfig pkg_def;
-  pkg_def.init(OMM_CFG_SIGN_PKG);
+  pkg_def.init(OMM_XMAGIC_PKG);
 
   OmXmlNode  def_xml = pkg_def.xml();
 
@@ -1444,9 +1428,9 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
 
   OmConfig bck_def;
   if(is_zip) {
-    bck_def.init(OMM_CFG_SIGN_BCK);
+    bck_def.init(OMM_XMAGIC_BCK);
   } else {
-    bck_def.init(this->_bck + L"\\" + back_def_name, OMM_CFG_SIGN_BCK);
+    bck_def.init(this->_bck + L"\\" + back_def_name, OMM_XMAGIC_BCK);
   }
 
   OmXmlNode  def_xml = bck_def.xml();

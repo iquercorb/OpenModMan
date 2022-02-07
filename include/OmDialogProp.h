@@ -17,6 +17,9 @@
 #ifndef OMDIALOGPROP_H
 #define OMDIALOGPROP_H
 
+#include "OmBase.h"
+#include "OmBaseWin.h"
+
 #include "OmDialog.h"
 
 /// \brief Property Dialog window.

@@ -14,11 +14,10 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMXMLDOC_H
 #define OMXMLDOC_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
 
 /// \brief Xml node interface.
 ///

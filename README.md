@@ -70,7 +70,6 @@ Open Mod Mananager currently implements the following key features:
  - New custom path or URL mechanism for repository files download.
  - New improved message boxes and icons.
 
-
 0.9.8 (04-01-2022)
  - Add support and automatic follow of HTTP redirect responses.
  - Fix Network ListView columns click wrongly pops up contextual menu.

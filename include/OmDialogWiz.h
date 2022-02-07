@@ -17,6 +17,9 @@
 #ifndef OMDIALOGWIZ_H
 #define OMDIALOGWIZ_H
 
+#include "OmBase.h"
+#include "OmBaseWin.h"
+
 #include "OmDialog.h"
 
 /// \brief Wizard Dialog window.

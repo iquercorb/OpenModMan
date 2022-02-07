@@ -15,8 +15,8 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmConfig.h"
-#include <sstream>
 
 #define OMM_CONFIG_PENDING     0
 #define OMM_CONFIG_VALID       1
@@ -27,10 +27,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmConfig::OmConfig() :
-  _status(OMM_CONFIG_PENDING),
-  _file(),
-  _xmlDoc(),
-  _cfgRoot()
+  _status(OMM_CONFIG_PENDING), _file(), _xmlDoc(), _cfgRoot()
 {
 
 }

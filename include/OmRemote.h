@@ -17,7 +17,9 @@
 #ifndef OMREMOTE_H
 #define OMREMOTE_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+#include "OmBaseWin.h"
+
 #include "OmXmlDoc.h"
 #include "OmVersion.h"
 #include "OmImage.h"

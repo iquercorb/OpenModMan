@@ -14,19 +14,19 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBaseWin.h"
+#include <UxTheme.h>        //< ETDT_ENABLETAB
 
-#include "gui/res/resource.h"
+#include "OmBaseUi.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDialogProp.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialogProp::OmDialogProp(HINSTANCE hins) : OmDialog(hins),
-  _pageName(),
-  _pageDial(),
-  _hTab(nullptr),
-  _hBcOk(nullptr),
-  _hBcApply(nullptr),
+  _pageName(), _pageDial(), _hTab(nullptr), _hBcOk(nullptr), _hBcApply(nullptr),
   _hBcCancel(nullptr)
 {
 
@@ -125,7 +125,7 @@ void OmDialogProp::_onResize()
   HWND hTab = FindWindowEx(this->_hwnd, nullptr, WC_TABCONTROL, nullptr);
 
   // TabControl
-  this->_setItemPos(IDC_TC_PROP, 4, 5, this->width()-8, this->height()-28);
+  this->_setItemPos(IDC_TC_PROP, 4, 5, this->cliUnitX()-8, this->cliUnitY()-28);
 
   if(this->_pageDial.size() && this->_hTab) {
 
@@ -136,10 +136,10 @@ void OmDialogProp::_onResize()
     MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&pos), 2);
 
     // convert into base unit and adjust to keep inside the TabControl
-    pos[0] = MulDiv(pos[0], 4, this->unitX()) + 3;
-    pos[1] = MulDiv(pos[1], 8, this->unitY()) + 14;
-    pos[2] = MulDiv(pos[2], 4, this->unitX()) - 3;
-    pos[3] = MulDiv(pos[3], 8, this->unitY()) - 3;
+    pos[0] = MulDiv(pos[0], 4, this->ubaseX()) + 3;
+    pos[1] = MulDiv(pos[1], 8, this->ubaseY()) + 14;
+    pos[2] = MulDiv(pos[2], 4, this->ubaseX()) - 3;
+    pos[3] = MulDiv(pos[3], 8, this->ubaseY()) - 3;
 
     // Map again in pixels
     MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
@@ -148,23 +148,21 @@ void OmDialogProp::_onResize()
 
     // apply this for all dialogs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
-      SetWindowPos(this->_pageDial[i]->hwnd(), 0, pos[0], pos[1], pos[2], pos[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      this->_setChildPos(this->_pageDial[i]->hwnd(), pos[0], pos[1], pos[2], pos[3], true);
     }
   }
 
   // OK Button
-  this->_setItemPos(IDC_BC_OK, this->width()-161, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_OK, this->cliUnitX()-161, this->cliUnitY()-19, 50, 14);
   // Cancel Button
-  this->_setItemPos(IDC_BC_CANCEL, this->width()-108, this->height()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->cliUnitX()-108, this->cliUnitY()-19, 50, 14);
   // Apply Button
-  this->_setItemPos(IDC_BC_APPLY, this->width()-54, this->height()-19, 50, 14);
-
-  // force buttons to redraw to prevent artifacts
-  InvalidateRect(this->_hBcOk, nullptr, true);
-  InvalidateRect(this->_hBcCancel, nullptr, true);
-  InvalidateRect(this->_hBcApply, nullptr, true);
+  this->_setItemPos(IDC_BC_APPLY, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
 
   this->_onPropResize();
+
+  // redraw the window
+  RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
 }
 
 

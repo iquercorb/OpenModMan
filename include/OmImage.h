@@ -17,7 +17,8 @@
 #ifndef OMIMAGE_H
 #define OMIMAGE_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+#include "OmBaseWin.h"
 
 /// \brief Image file interface.
 ///

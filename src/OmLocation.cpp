@@ -14,10 +14,21 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <algorithm>            //< std::find
+
+#include "OmBaseApp.h"
+
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilHsh.h"
+#include "Util/OmUtilErr.h"
+#include "Util/OmUtilStr.h"
 
 #include "OmManager.h"
 #include "OmContext.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmLocation.h"
+
 
 /// \brief Package name comparison callback
 ///
@@ -863,32 +874,12 @@ static size_t __rmt_get_old_required(vector<OmPackage*>& out_ls, const vector<Om
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmLocation::OmLocation(OmContext* pCtx) :
-  _context(pCtx),
-  _config(),
-  _uuid(),
-  _title(),
-  _index(0),
-  _home(),
-  _path(),
-  _dstDir(),
-  _libDir(),
-  _libDirCust(false),
-  _libDevMode(true),
-  _bckDir(),
-  _bckDirCust(false),
-  _pkgLs(),
-  _bckZipLevel(0),
-  _pkgSorting(LS_SORT_NAME),
-  _upgdRename(false),
-  _rmtSorting(LS_SORT_NAME),
-  _warnOverlaps(true),
-  _warnExtraInst(true),
-  _warnMissDeps(true),
-  _warnExtraUnin(true),
-  _warnExtraDnld(true),
-  _warnMissDnld(true),
-  _valid(false),
-  _error()
+  _context(pCtx), _config(), _uuid(), _title(), _index(0), _home(), _path(),
+  _dstDir(), _libDir(), _libDirCust(false), _libDevMode(true), _bckDir(),
+  _bckDirCust(false), _pkgLs(), _bckZipLevel(0), _pkgSorting(LS_SORT_NAME),
+  _upgdRename(false), _rmtSorting(LS_SORT_NAME), _warnOverlaps(true),
+  _warnExtraInst(true), _warnMissDeps(true), _warnExtraUnin(true),
+  _warnExtraDnld(true), _warnMissDnld(true), _valid(false), _error()
 {
 
 }
@@ -1085,7 +1076,7 @@ bool OmLocation::open(const wstring& path)
   this->close();
 
   // try to open and parse the XML file
-  if(!this->_config.open(path, OMM_CFG_SIGN_LOC)) {
+  if(!this->_config.open(path, OMM_XMAGIC_LOC)) {
     this->_error = Om_errParse(L"Definition file", Om_getFilePart(path), this->_config.lastErrorStr());
     this->log(0, L"Location(<anonymous>) Open", this->_error);
     return false;
@@ -1947,7 +1938,9 @@ bool OmLocation::renameHome(const wstring& name)
   wstring new_home = old_home.substr(0, old_home.find_last_of(L"\\") + 1);
   new_home += name;
 
-  std::wcout << new_home << L"\n";
+  #ifdef DEBUG
+  std::wcout << "DEBUG => OmLocation::renameHome : " << new_home << L"\n";
+  #endif
 
   // Rename Location home folder
   result = Om_fileMove(old_home, new_home);

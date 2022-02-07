@@ -14,25 +14,53 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBaseWin.h"
+#include <ShlObj.h>
 
+#ifdef DEBUG
+#include "Util/OmUtilWin.h"
+#endif
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDialog.h"
+
+
+/// \brief Initialized WinAPI Common Controls flag
+///
+/// Flag to tell whether WinAPI Common Controls must be initialized
+///
+static bool __cce_initialized = false;
+
+/// \brief Initialize common controls
+///
+/// Function to initialize WinAPI Common Controls once
+///
+static inline void __cce_init()
+{
+  if(!__cce_initialized) {
+
+    INITCOMMONCONTROLSEX icce;
+
+    icce.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icce.dwICC = ICC_BAR_CLASSES|ICC_HOTKEY_CLASS|ICC_LINK_CLASS|
+    ICC_LISTVIEW_CLASSES|ICC_NATIVEFNTCTL_CLASS|ICC_PROGRESS_CLASS|
+    ICC_STANDARD_CLASSES|ICC_TAB_CLASSES;
+
+    InitCommonControlsEx(&icce);
+
+    // we need to initialize only once per process
+    __cce_initialized = true;
+  }
+}
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialog::OmDialog(HINSTANCE hins) :
-  _hins(hins),
-  _hwnd(nullptr),
-  _parent(nullptr),
-  _child(),
-  _accel(nullptr),
-  _menu(nullptr),
-  _rect(),
-  _data(nullptr),
-  _init(true),
-  _modal(false),
-  _active(false)
+  _hins(hins), _hwnd(nullptr), _parent(nullptr), _child(), _accel(nullptr),
+  _menu(nullptr), _data(nullptr), _init(true), _modal(false), _recw{}, _recc{},
+  _ubase{}, _limit{}, _size{}, _usize{}, _hdwp(nullptr), _active(false)
 {
 
 }
@@ -99,6 +127,8 @@ OmDialog* OmDialog::root()
 ///
 void OmDialog::open(bool show)
 {
+  __cce_init(); //< initialize WinAPI Common Controls (done only once)
+
   if(!this->id())
     return;
 
@@ -124,6 +154,12 @@ void OmDialog::open(bool show)
     this->_menu = GetMenu(this->_hwnd);
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
+
+  } else {
+    #ifdef DEBUG
+    int err = GetLastError();
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
+    #endif
   }
 }
 
@@ -133,6 +169,8 @@ void OmDialog::open(bool show)
 ///
 void OmDialog::modeless(bool show)
 {
+  __cce_init(); //< initialize WinAPI Common Controls (done only once)
+
   if(!this->id())
     return;
 
@@ -153,6 +191,12 @@ void OmDialog::modeless(bool show)
     this->_menu = GetMenu(this->_hwnd);
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
+
+  } else {
+    #ifdef DEBUG
+    int err = GetLastError();
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
+    #endif
   }
 }
 
@@ -429,7 +473,20 @@ void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h, bool pix
 {
   long rect[4] = {x, y, w, h};
   if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
-  SetWindowPos(GetDlgItem(this->_hwnd, id), nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+  SetWindowPos(GetDlgItem(this->_hwnd, id), nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+  //DeferWindowPos(this->_hdwp, GetDlgItem(this->_hwnd, id), nullptr,rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_setChildPos(HWND hwnd, long x, long y, long w, long h, bool pixel)
+{
+  long rect[4] = {x, y, w, h};
+  if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
+  SetWindowPos(hwnd, nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+  //DeferWindowPos(this->_hdwp, hwnd, nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
 }
 
 
@@ -441,8 +498,8 @@ void OmDialog::_getItemPos(unsigned id, long* pos, bool pixel)
   long rect[4] = {};
   GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
   MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&rect), 1);
-  pos[0] = (pixel) ? rect[0] : MulDiv(rect[0], 4, this->_unit[0]); // left, unit x
-  pos[1] = (pixel) ? rect[1] : MulDiv(rect[1], 8, this->_unit[1]); // top, unit y
+  pos[0] = (pixel) ? rect[0] : MulDiv(rect[0], 4, this->_ubase[0]); // left, unit x
+  pos[1] = (pixel) ? rect[1] : MulDiv(rect[1], 8, this->_ubase[1]); // top, unit y
 }
 
 
@@ -453,8 +510,8 @@ void OmDialog::_getItemSize(unsigned id, long* size, bool pixel)
 {
   long rect[4] = {};
   GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
-  size[0] = (pixel) ? rect[2] : MulDiv(rect[2] - rect[0], 4, this->_unit[0]); // right - left, unit x
-  size[1] = (pixel) ? rect[3] : MulDiv(rect[3] - rect[1], 8, this->_unit[1]); // bottom - top, unit y
+  size[0] = (pixel) ? rect[2] : MulDiv(rect[2] - rect[0], 4, this->_ubase[0]); // right - left, unit x
+  size[1] = (pixel) ? rect[3] : MulDiv(rect[3] - rect[1], 8, this->_ubase[1]); // bottom - top, unit y
 }
 
 
@@ -572,7 +629,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
   if(dialog) {
 
-    LONG size[4] = {0, 0, 4, 8};
+    LONG temp[4] = {0, 0, 4, 8};
 
     switch(msg)
     {
@@ -590,14 +647,28 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_INITDIALOG:
       dialog->_init = true;
-      return true; // case WM_INITDIALOG:
+      return 1; // case WM_INITDIALOG:
 
     case WM_SHOWWINDOW:
       if(wParam) { // SHOW
+
         // Get the initial window size and store it as min size
-        GetWindowRect(hwnd, &dialog->_rect);
-        dialog->_limit[0] = dialog->_rect.right - dialog->_rect.left;
-        dialog->_limit[1] = dialog->_rect.bottom - dialog->_rect.top;
+        GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recw));
+        dialog->_size[0] = dialog->_recw[2] - dialog->_recw[0];
+        dialog->_size[1] = dialog->_recw[3] - dialog->_recw[1];
+        dialog->_limit[0] = dialog->_size[0];
+        dialog->_limit[1] = dialog->_size[1];
+
+        // Calculate the dialog base unit
+        MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&temp));
+        dialog->_ubase[0] = temp[2];
+        dialog->_ubase[1] = temp[3];
+
+        // Update dialog client rect
+        GetClientRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recc));
+        // calculate dialog client size in base unit
+        dialog->_usize[0] = MulDiv(dialog->_recc[2], 4, dialog->_ubase[0]);
+        dialog->_usize[1] = MulDiv(dialog->_recc[3], 8, dialog->_ubase[1]);
 
         // if this is the first show after WM_INITDIALOG
         if(dialog->_init) {
@@ -608,68 +679,69 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
         // call user function
         dialog->_onShow();
 
-        // Initialize proper client rect and call resize function to force
-        // controls alignments
-        GetClientRect(hwnd, &dialog->_rect);
-        // Calculate the dialog base unit
-        MapDialogRect(dialog->_hwnd, reinterpret_cast<LPRECT>(&size));
-        dialog->_unit[0] = size[2];
-        dialog->_unit[1] = size[3];
-        // calculate dialog size in base unit
-        dialog->_size[0] = MulDiv(dialog->_rect.right, 4, dialog->_unit[0]);
-        dialog->_size[1] = MulDiv(dialog->_rect.bottom, 8, dialog->_unit[1]);
-
         // call user function
         dialog->_onResize();
+
       } else {
         // call user function
         dialog->_onHide();
       }
-      return false; // case WM_SHOWWINDOW:
+      return 0; // case WM_SHOWWINDOW
 
     case WM_WINDOWPOSCHANGED:
-      return false; // case WM_WINDOWPOSCHANGED:
+      return 0; // case WM_WINDOWPOSCHANGED
 
     case WM_MOVE:
-      return false; // case WM_MOVE:
+      return 0; // case WM_MOVE
 
     case WM_SIZE:
-      GetClientRect(hwnd, &dialog->_rect);
-      // Calculate the dialog base unit
-      MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&size));
-      dialog->_unit[0] = size[2];
-      dialog->_unit[1] = size[3];
+      // Update dialog window rect
+      GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recw));
+      dialog->_size[0] = dialog->_recw[2] - dialog->_recw[0];
+      dialog->_size[1] = dialog->_recw[3] - dialog->_recw[1];
+      // Update dialog client rect
+      GetClientRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recc));
       // calculate dialog size in base unit
-      dialog->_size[0] = MulDiv(dialog->_rect.right, 4, dialog->_unit[0]);
-      dialog->_size[1] = MulDiv(dialog->_rect.bottom, 8, dialog->_unit[1]);
+      dialog->_usize[0] = MulDiv(dialog->_recc[2], 4, dialog->_ubase[0]);
+      dialog->_usize[1] = MulDiv(dialog->_recc[3], 8, dialog->_ubase[1]);
 
       // call user function
       dialog->_onResize();
-      return false; // case WM_SIZE WM_MOVE WM_WINDOWPOSCHANGED
+
+      return 0; // case WM_SIZE
 
     case WM_GETMINMAXINFO:
       // Set minimum window size as initial window size
       reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.x = dialog->_limit[0];
       reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.y = dialog->_limit[1];
-      return false; // case WM_GETMINMAXINFO:
+      return 0; // case WM_GETMINMAXINFO:
 
     case 736: // WM_DPICHANGED
+    case WM_FONTCHANGE:
       #ifdef DEBUG
-        std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_DPICHANGED\n";
+        std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_DPICHANGED or WM_FONTCHANGE\n";
       #endif
-      return false; // case WM_DPICHANGED:
+      // I think this will never happen...
+      MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&temp));
+      dialog->_ubase[0] = temp[2];
+      dialog->_ubase[1] = temp[3];
+
+      // call user function
+      dialog->_onResize();
+
+      return 0; // case WM_DPICHANGED WM_FONTCHANGE
 
     case WM_CLOSE:
       dialog->_onClose();
-      return false; // case WM_CLOSE:
+      return 0; // case WM_CLOSE
 
     case WM_DESTROY:
-      return false;
+      return 0;
 
     }
 
     return dialog->_onMsg(msg, wParam, lParam);
   }
 
-  return false;
+  return 0;
 }

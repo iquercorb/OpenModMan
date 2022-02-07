@@ -15,16 +15,15 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmVersion.h"
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmVersion::OmVersion() :
-  _str(),
-  _maj(0),
-  _min(0),
-  _rev(0)
+  _str(), _maj(0), _min(0), _rev(0)
 {
 
 }
@@ -34,10 +33,7 @@ OmVersion::OmVersion() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmVersion::OmVersion(const wstring& vstr) :
-  _str(),
-  _maj(0),
-  _min(0),
-  _rev(0)
+  _str(), _maj(0), _min(0), _rev(0)
 {
   wchar_t num[32];
 

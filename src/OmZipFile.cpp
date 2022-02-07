@@ -14,9 +14,13 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "Util/OmUtilStr.h"
 
-#include "thirdparty/miniz/miniz.h"
+#include "3rdP/miniz/miniz.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmZipFile.h"
+
 
 /// \brief Zip status
 ///
@@ -40,8 +44,7 @@ static unsigned __mzlvl[] = { 0,    //< MZ_NO_COMPRESSION
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmZipFile::OmZipFile() :
-  _data(new mz_zip_archive()),
-  _stat(0)
+  _data(new mz_zip_archive()), _stat(0)
 {
 
 }

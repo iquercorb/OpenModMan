@@ -14,17 +14,16 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMMANAGER_H
 #define OMMANAGER_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+
 #include "OmConfig.h"
 #include "OmContext.h"
 
 // maximum count of recent file path to store
 #define OM_MANAGER_MAX_RECENT     10
-
 
 /// \brief Main manager application object.
 ///
@@ -145,11 +144,27 @@ class OmManager
 
     /// \brief Load configuration window RECT.
     ///
-    /// Retrieve the specified window RECT from configuration file.
+    /// Retrieve the stored window RECT from configuration file.
     ///
-    /// \param[in]  rect    : RECT reference to get saved data.
+    /// \param[out]  rect   : RECT reference to get saved data.
     ///
     void loadWindowRect(RECT& rect);
+
+    /// \brief Save configuration window foot height.
+    ///
+    /// Stores the specified window foot frame height to configuration file.
+    ///
+    /// \param[in]  height  : Foot height to save.
+    ///
+    void saveWindowFoot(int height);
+
+    /// \brief Load configuration window foot height.
+    ///
+    /// Retrieve the stored window foot frame height to configuration file.
+    ///
+    /// \param[out]  height : Foot height to save.
+    ///
+    void loadWindowFoot(int* height);
 
     /// \brief Save configuration recent file.
     ///

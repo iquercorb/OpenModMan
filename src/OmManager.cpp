@@ -14,33 +14,35 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <ctime>
 
-#include "OmManager.h"
+#include "OmBaseWin.h"
+#include <ShlObj.h>
+
+#include "OmBaseApp.h"
+
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilStr.h"
+#include "Util/OmUtilHsh.h"
+#include "Util/OmUtilDlg.h"
+#include "Util/OmUtilErr.h"
+#include "Util/OmUtilSys.h"
+
 #include "OmDialog.h"
 #include "OmPackage.h"
-#include <time.h>
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+#include "OmManager.h"
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmManager::OmManager() :
-  _home(),
-  _config(),
-  _ctxLs(),
-  _ctxCur(-1),
-  _iconsSize(16),
-  _folderPackages(true),
-  _warnEnabled(true),
-  _warnOverlaps(false),
-  _warnExtraInstall(true),
-  _warnMissingDepend(true),
-  _warnExtraUninst(true),
-  _quietBatches(true),
-  _error(),
-  _log(),
-  _logHwnd(nullptr),
-  _logFile(nullptr)
+  _home(), _config(), _ctxLs(), _ctxCur(-1), _iconsSize(16), _folderPackages(true),
+  _warnEnabled(true), _warnOverlaps(false), _warnExtraInstall(true),
+  _warnMissingDepend(true), _warnExtraUninst(true), _quietBatches(true),
+  _error(), _log(), _logHwnd(nullptr), _logFile(nullptr)
 {
 
 }
@@ -81,7 +83,7 @@ bool OmManager::init(const char* arg)
     result = Om_dirCreate(this->_home);
     if(result != 0) {
       this->_error = Om_errCreate(L"Application home folder", this->_home, result);
-      Om_msgBox_err(L"Initialization - " OMM_APP_NAME, L"Manager initialization failed", this->_error);
+      Om_dlgBox_err(L"Initialization", L"Manager initialization failed", this->_error);
       return false;
     }
   }
@@ -99,17 +101,17 @@ bool OmManager::init(const char* arg)
   this->log(2, L"Manager() Init", L"Start");
 
   // Load existing configuration or create a new one
-  if(!this->_config.open(this->_home + L"\\config.xml", OMM_CFG_SIGN_APP)) {
+  if(!this->_config.open(this->_home + L"\\config.xml", OMM_XMAGIC_APP)) {
 
     this->log(2, L"Manager() Init", L"Create new configuration file");
 
     wstring conf_path = this->_home + L"\\config.xml";
 
-    if(!_config.init(conf_path, OMM_CFG_SIGN_APP)) {
+    if(!_config.init(conf_path, OMM_XMAGIC_APP)) {
       // this is not a fatal error, but this will surely be a problem...
       wstring msg = Om_errInit(L"Configuration file", conf_path, this->_config.lastErrorStr());
       this->log(1, L"Manager() Init", msg);
-      Om_msgBox_wrn(L"Initialization - " OMM_APP_NAME, L"Manager initialization error", msg);
+      Om_dlgBox_wrn(L"Initialization", L"Manager initialization error", msg);
     }
 
     // default icons size
@@ -215,6 +217,43 @@ void OmManager::loadWindowRect(RECT& rect)
       rect.top = window.attrAsInt(L"top");
       rect.right = window.attrAsInt(L"right");
       rect.bottom = window.attrAsInt(L"bottom");
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmManager::saveWindowFoot(int h)
+{
+  if(this->_config.valid()) {
+
+    OmXmlNode window;
+    if(this->_config.xml().hasChild(L"window")) {
+      window = this->_config.xml().child(L"window");
+    } else {
+      window = this->_config.xml().addChild(L"window");
+    }
+
+    window.setAttr(L"foot", h);
+
+    this->_config.save();
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmManager::loadWindowFoot(int* h)
+{
+  if(this->_config.valid()) {
+
+    if(this->_config.xml().hasChild(L"window")) {
+
+      OmXmlNode window = this->_config.xml().child(L"window");
+
+      *h = window.attrAsInt(L"foot");
     }
   }
 }
@@ -459,7 +498,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
 
   // initialize an empty Context definition file
   OmConfig ctx_def;
-  if(!ctx_def.init(ctx_def_path, OMM_CFG_SIGN_CTX)) {
+  if(!ctx_def.init(ctx_def_path, OMM_XMAGIC_CTX)) {
     this->_error =  Om_errInit(L"Definition file",ctx_def_path,ctx_def.lastErrorStr());
     this->log(0, L"Manager() Create Context", this->_error);
     return false;
@@ -621,8 +660,11 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
     RedrawWindow(static_cast<HWND>(this->_logHwnd), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
   }
 
+
+  #ifdef DEBUG
   // output to standard output
   std::wcout << entry;
+  #endif
 
   // write to log file
   if(this->_logFile) {

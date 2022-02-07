@@ -14,7 +14,13 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmRemote.h"
+#include <algorithm>            //< std::find
+
+#include "OmBaseApp.h"
+
+#include "OmBaseWin.h"
+#include <ProcessThreadsApi.h>
+
 #include "OmManager.h"
 #include "OmContext.h"
 #include "OmLocation.h"
@@ -22,33 +28,26 @@
 #include "OmImage.h"
 #include "OmSocket.h"
 
+#include "Util/OmUtilFs.h"
+#include "Util/OmUtilStr.h"
+#include "Util/OmUtilHsh.h"
+#include "Util/OmUtilB64.h"
+#include "Util/OmUtilPkg.h"
+#include "Util/OmUtilZip.h"
+#include "Util/OmUtilErr.h"
+
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+#include "OmRemote.h"
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRemote::OmRemote() :
-  _location(nullptr),
-  _url(),
-  _file(),
-  _bytes(0),
-  _checksum(),
-  _usemd5(false),
-  _state(0),
-  _ident(),
-  _hash(0),
-  _core(),
-  _version(),
-  _name(),
-  _depLs(),
-  _desc(),
-  _image(),
-  _error(),
-  _downl_file(),
-  _downl_path(),
-  _downl_temp(),
-  _downl_spsd(false),
-  _downl_user_download(nullptr),
-  _downl_user_ptr(nullptr),
-  _downl_hth(nullptr),
+  _location(nullptr),_url(),_file(),_bytes(0),_checksum(),_usemd5(false),
+  _state(0),_ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),
+  _image(),_error(),_downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),
+  _downl_user_download(nullptr),_downl_user_ptr(nullptr),_downl_hth(nullptr),
   _downl_percent(0)
 {
 
@@ -59,30 +58,10 @@ OmRemote::OmRemote() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRemote::OmRemote(OmLocation* pLoc) :
-  _location(pLoc),
-  _url(),
-  _file(),
-  _bytes(0),
-  _checksum(),
-  _usemd5(false),
-  _state(0),
-  _ident(),
-  _hash(0),
-  _core(),
-  _version(),
-  _name(),
-  _depLs(),
-  _desc(),
-  _image(),
-  _error(),
-  _downl_file(),
-  _downl_path(),
-  _downl_temp(),
-  _downl_spsd(false),
-  _downl_user_download(nullptr),
-  _downl_user_ptr(nullptr),
-  _downl_hth(nullptr),
-  _downl_percent(0)
+  _location(pLoc),_url(),_file(),_bytes(0),_checksum(),_usemd5(false),_state(0),
+  _ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),_image(),_error(),
+  _downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),_downl_user_download(nullptr),
+  _downl_user_ptr(nullptr),_downl_hth(nullptr),_downl_percent(0)
 {
 
 }
@@ -218,7 +197,7 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
 
     // load Jpeg image
     if(jpg) {
-      if(!this->_image.open(jpg, jpg_size, OMM_PKG_THMB_SIZE)) {
+      if(!this->_image.open(jpg, jpg_size, OMM_THUMB_SIZE)) {
         this->_image.clear();
       }
     }
@@ -259,7 +238,7 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
 bool OmRemote::urlAdd(const wstring& url)
 {
   if(Om_isValidFileUrl(url)) {
-    if(find(this->_url.begin(), this->_url.end(), url) == this->_url.end())
+    if(std::find(this->_url.begin(), this->_url.end(), url) == this->_url.end())
       this->_url.push_back(url);
   }
   return false;

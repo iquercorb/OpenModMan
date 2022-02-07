@@ -14,11 +14,11 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMPACKAGE_H
 #define OMPACKAGE_H
 
-#include "OmGlobal.h"
+#include "OmBase.h"
+
 #include "OmVersion.h"
 #include "OmImage.h"
 
@@ -310,9 +310,7 @@ class OmPackage
     /// \return True if this Package has the Backup side of the specified Source
     /// file, false otherwise.
     ///
-    bool isBckOf(const wstring& path) {
-      return (Om_getXXHash3(Om_getFilePart(path)) == _hash);
-    }
+    bool isBckOf(const wstring& path);
 
     /// \brief Parse Source file or folder.
     ///

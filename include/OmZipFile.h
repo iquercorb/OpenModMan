@@ -14,12 +14,10 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef OMZIPFILE_H
 #define OMZIPFILE_H
 
-#include "OmGlobal.h"
-
+#include "OmBase.h"
 
 /// \brief Zip file interface.
 ///
