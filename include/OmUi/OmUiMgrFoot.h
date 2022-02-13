@@ -109,7 +109,7 @@ class OmUiMgrFoot : public OmDialog
 
     void                _addTab(const wstring& name, OmDialog* dialog);
 
-    OmDialog*           _getTab(unsigned id);
+    OmDialog*           _getTab(int id);
 
     void                _onInit();
 

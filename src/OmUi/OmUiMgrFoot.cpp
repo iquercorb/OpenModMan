@@ -20,19 +20,10 @@
 
 #include "OmBaseWin.h"
   #include <UxTheme.h>
-  #include <RichEdit.h>
-
-#include "OmBaseApp.h"
-
-#include "OmManager.h"
 
 #include "OmUiMgr.h"
 #include "OmUiMgrFootDsc.h"
 
-#include "OmUtilWin.h"
-#include "OmUtilStr.h"
-
-#include "md4c-rtf/md4c-rtf.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgrFoot.h"
@@ -159,13 +150,15 @@ void OmUiMgrFoot::_addTab(const wstring& title, OmDialog* dialog)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmDialog* OmUiMgrFoot::_getTab(unsigned id)
+OmDialog* OmUiMgrFoot::_getTab(int id)
 {
   // passes the message to child tab dialog
   for(size_t i = 0; i < this->_tabDial.size(); ++i) {
     if(this->_tabDial[i]->id() == id)
       return this->_tabDial[i];
   }
+
+  return nullptr;
 }
 
 

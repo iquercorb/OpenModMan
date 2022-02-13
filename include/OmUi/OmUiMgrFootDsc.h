@@ -21,6 +21,8 @@
 
 class OmPackage;
 class OmRemote;
+class OmVersion;
+class OmImage;
 
 /// \brief Main window - Description Tab child
 ///

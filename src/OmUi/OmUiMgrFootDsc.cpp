@@ -22,14 +22,12 @@
   #include <UxTheme.h>
   #include <RichEdit.h>
 
-#include "OmBaseApp.h"
-
-#include "OmManager.h"
+#include "OmPackage.h"
+#include "OmRemote.h"
 
 #include "OmUiMgr.h"
 
 #include "OmUtilWin.h"
-#include "OmUtilStr.h"
 
 #include "md4c-rtf/md4c-rtf.h"
 

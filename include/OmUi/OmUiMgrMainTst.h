@@ -26,7 +26,7 @@
 ///
 class OmUiMgrMainTst : public OmDialog
 {
-  public:
+  public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     /// \brief Constructor.
     ///

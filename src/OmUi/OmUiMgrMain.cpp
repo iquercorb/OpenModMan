@@ -21,8 +21,6 @@
 #include "OmBaseWin.h"
   #include <UxTheme.h>
 
-#include "OmBaseApp.h"
-
 #include "OmManager.h"
 
 #include "OmUiMgr.h"
