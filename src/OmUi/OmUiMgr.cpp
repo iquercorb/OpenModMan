@@ -411,6 +411,7 @@ void OmUiMgr::_onInit()
   // initialize frames to the proper size and position
   h = -1;
   pMgr->loadWindowFoot(&h);
+  if(h < 195) h = 195;
   // we emulate frame resize by user
   this->_divIsCapt = true;
   this->_divMove[2] = h;
@@ -642,7 +643,7 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // calculate new foot height according new cursor position
       long h = this->_divMove[1] + this->_divMove[0] - p;
       // clamp to reasonable values
-      if(h < 170) h = 170;
+      if(h < 195) h = 195;
       if(h > this->cliHeight()-200) h = this->cliHeight()-200;
       // move the splitter / resize frames
       if(h != this->_pUiMgrFoot->height()) {

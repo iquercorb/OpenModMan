@@ -1908,7 +1908,7 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
 
     // show nothing in footer frame
-    this->_pUiMgr->pUiMgrFoot()->viewReset();
+    this->_pUiMgr->pUiMgrFoot()->clearPreview();
 
     // return now
     return;
@@ -1960,12 +1960,12 @@ void OmUiMgrMainLib::_onLvPkgSel()
       pPkg = pLoc->pkgGet(lv_sel);
 
       // show packages info in footer frame
-      this->_pUiMgr->pUiMgrFoot()->viewPackage(pPkg->name(), pPkg->version(), pPkg->image(), pPkg->desc());
+      this->_pUiMgr->pUiMgrFoot()->setPreview(pPkg);
 
     } else {
 
       // reset footer frame
-      this->_pUiMgr->pUiMgrFoot()->viewReset();
+      this->_pUiMgr->pUiMgrFoot()->clearPreview();
     }
 
 

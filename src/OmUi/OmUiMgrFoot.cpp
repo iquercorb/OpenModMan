@@ -27,6 +27,7 @@
 #include "OmManager.h"
 
 #include "OmUiMgr.h"
+#include "OmUiMgrFootDsc.h"
 
 #include "OmUtilWin.h"
 #include "OmUtilStr.h"
@@ -40,11 +41,10 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
-  _pUiMgr(nullptr),
-  _rtfData(nullptr), _rtfSize(0), _rtfRead(0), _rtfWrit(0),
-  _rawDesc(false)
+  _pUiMgr(nullptr)
 {
-
+  // create child tab dialogs
+  this->_addTab(L"Package Description", new OmUiMgrFootDsc(hins)); // Description Tab
 }
 
 ///
@@ -52,14 +52,7 @@ OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMgrFoot::~OmUiMgrFoot()
 {
-  if(this->_rtfData)
-    Om_free(this->_rtfData);
 
-  HFONT hFt;
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_NAME, WM_GETFONT));
-  if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
-  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -80,6 +73,23 @@ void OmUiMgrFoot::freeze(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrFoot::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+
+  // disable Tab Control
+  this->enableItem(IDC_TC_MAIN, !enable);
+
+  // passes the message to child tab dialog
+  for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+    if(this->_tabDial[i]->visible()) {
+      // TODO: update this if tab child dialog are added
+      switch(this->_tabDial[i]->id())
+      {
+      case IDD_MGR_FOOT_DSC:
+        static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->freeze(enable);
+        break;
+      }
+      break;
+    }
+  }
 }
 
 
@@ -91,142 +101,71 @@ void OmUiMgrFoot::safemode(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrFoot::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
-}
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMgrFoot::viewPackage(const wstring& name, const OmVersion& vers, const OmImage& snap, const wstring& desc)
-{
-  this->showItem(IDC_SC_NAME, true);
-  this->setItemText(IDC_SC_NAME, name + L" " + vers.asString());
-
-  if(desc.size()) {
-
-    //this->showItem(IDC_FT_DESC, true);
-
-    // flags for MD4C parser
-    unsigned md4c_flags = MD_FLAG_UNDERLINE|MD_FLAG_TABLES|
-                          MD_FLAG_PERMISSIVEAUTOLINKS;
-
-    // reset RTF buffers parameters
-    this->_rtfWrit = 0; //< bytes written by MD parser
-    this->_rtfRead = 0; //< bytes read by Rich Edit stream
-
-    // parse MD and render to RTF
-    md_rtf(desc.c_str(), desc.size(), this->_md2Rtf_cb, this, md4c_flags, 0, 11, 300);
-
-    // send RTF data to Rich Edit
-    EDITSTREAM es = {0};
-    es.pfnCallback = this->_rtf2re_cb;
-    es.dwCookie    = reinterpret_cast<DWORD_PTR>(this);
-
-    this->msgItem(IDC_FT_DESC, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
-
-    // reset scroll position once done
-    long pt[2] = {};
-    this->msgItem(IDC_FT_DESC, EM_SETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&pt));
-
-    // set raw description to edit control
-    this->setItemText(IDC_EC_DESC, desc);
-
-    // show raw description or RTF depending current option
-    this->showItem(IDC_FT_DESC, !this->_rawDesc); //< Rich Edit (MD parsed)
-    this->showItem(IDC_EC_DESC, this->_rawDesc); //< raw (plain text)
-
-  } else {
-    this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
-    this->showItem(IDC_EC_DESC, false); //< raw (plain text)
-  }
-
-  this->showItem(IDC_SB_SNAP, true);
-
-  HBITMAP hBm;
-
-  if(snap.thumbnail()) {
-    hBm = snap.thumbnail();
-  } else {
-    hBm = Om_getResImage(this->_hins, IDB_BLANK);
-  }
-
-  // Update the selected picture
-  hBm = this->setStImage(IDC_SB_SNAP, hBm);
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMgrFoot::viewReset()
-{
-  this->showItem(IDC_SC_NAME, false);
-  this->showItem(IDC_SB_SNAP, false);
-  this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
-  this->showItem(IDC_EC_DESC, false); //< raw (plain text)
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMgrFoot::_md2Rtf_cb(const uint8_t* data, unsigned size, void* ptr)
-{
-  OmUiMgrFoot* self = reinterpret_cast<OmUiMgrFoot*>(ptr);
-
-  // allocate new buffer if required
-  if(self->_rtfWrit + size > self->_rtfSize) {
-
-    self->_rtfSize *= 2;
-    self->_rtfData = reinterpret_cast<uint8_t*>(Om_realloc(self->_rtfData, self->_rtfSize));
-
-    if(!self->_rtfData) {
-      // that is a bad alloc error...
-      return;
+  // passes the message to child tab dialog
+  for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+    if(this->_tabDial[i]->visible()) {
+      // TODO: update this if tab child dialog are added
+      switch(this->_tabDial[i]->id())
+      {
+      case IDD_MGR_FOOT_DSC:
+        static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->safemode(enable);
+        break;
+      }
+      break;
     }
-
-    #ifdef DEBUG
-    std::cout << "OmUiMgrFoot::_md2Rtf_cb realloc="<< self->_rtfSize <<" bytes\n";
-    #endif
   }
-
-  // contact new data
-  memcpy(self->_rtfData + self->_rtfWrit, data, size);
-
-  // increment bytes written
-  self->_rtfWrit += size;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD CALLBACK OmUiMgrFoot::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb, LONG* prb)
+void OmUiMgrFoot::setPreview(OmPackage* pPkg)
 {
-  OmUiMgrFoot* self = reinterpret_cast<OmUiMgrFoot*>(ptr);
+  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pPkg);
+}
 
-  if(self->_rtfRead < self->_rtfWrit) {
-    if((self->_rtfRead + rb) <= self->_rtfWrit) {
 
-      memcpy(lpBuff, self->_rtfData + self->_rtfRead, rb);
-      self->_rtfRead += rb;
-      *prb = rb;
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFoot::setPreview(OmRemote* pRmt)
+{
+  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pRmt);
+}
 
-    } else {
 
-      *prb = self->_rtfWrit - self->_rtfRead;
-      memcpy(lpBuff, self->_rtfData + self->_rtfRead, *prb);
-      self->_rtfRead = self->_rtfWrit;
-    }
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFoot::clearPreview()
+{
+  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->clearPreview();
+}
 
-  } else {
-    *prb = 0;
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFoot::_addTab(const wstring& title, OmDialog* dialog)
+{
+  this->addChild(dialog);
+  this->_tabDial.push_back(dialog);
+  this->_tabName.push_back(title);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmDialog* OmUiMgrFoot::_getTab(unsigned id)
+{
+  // passes the message to child tab dialog
+  for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+    if(this->_tabDial[i]->id() == id)
+      return this->_tabDial[i];
   }
-
-  #ifdef DEBUG
-  std::cout << "OmUiMgrFoot::_rtf2re_cb rb="<< *prb <<"\n";
-  #endif
-
-  return 0;
 }
 
 
@@ -242,28 +181,25 @@ void OmUiMgrFoot::_onInit()
   // retrieve main dialog
   this->_pUiMgr = static_cast<OmUiMgr*>(this->root());
 
-  // set white background to fit tab background
-  EnableThemeDialogTexture(this->_hwnd, ETDT_ENABLETAB);
+  // initialize TabControl with pages dialogs
+  if(this->_tabDial.size() && this->_hwnd) {
 
-  // Defines fonts for package description, title, and log output
-  HFONT hFt = Om_createFont(21, 400, L"Ms Dlg Font");
-  this->msgItem(IDC_SC_NAME, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
-  hFt = Om_createFont(16, 400, L"Consolas");
-  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+    TCITEMW tcPage;
+    tcPage.mask = TCIF_TEXT;
 
-  this->showItem(IDC_SC_NAME, false);
-  this->showItem(IDC_SB_SNAP, false);
-  this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
-  this->showItem(IDC_EC_DESC, false); //< raw (plain text)
+    for(size_t i = 0; i < this->_tabDial.size(); ++i) {
 
-  // set event mask for Rich Edit control to receive CFE_LINK notifications
-  this->msgItem(IDC_FT_DESC, EM_SETEVENTMASK, 0, ENM_LINK);
-  this->msgItem(IDC_FT_DESC, EM_AUTOURLDETECT,  AURL_ENABLEURL|AURL_ENABLEEAURLS|
-                                                AURL_ENABLEEMAILADDR, 0);
+      tcPage.pszText = (LPWSTR)this->_tabName[i].c_str();
+      this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&tcPage));
 
-  // Allocate new buffer for RTF data
-  this->_rtfSize = 4096;
-  this->_rtfData = reinterpret_cast<uint8_t*>(Om_alloc(4096));
+      this->_tabDial[i]->modeless(false);
+      // set white background to fit tab background
+      EnableThemeDialogTexture(this->_tabDial[i]->hwnd(), ETDT_ENABLETAB);
+    }
+  }
+
+  // refresh all elements
+  this->_onRefresh();
 }
 
 ///
@@ -274,6 +210,10 @@ void OmUiMgrFoot::_onShow()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrFoot::_onShow\n";
   #endif
+
+  // show the first tab page
+  if(this->_tabDial.size())
+    this->_tabDial[0]->show();
 }
 
 ///
@@ -281,13 +221,17 @@ void OmUiMgrFoot::_onShow()
 ///
 void OmUiMgrFoot::_onResize()
 {
-  // Package name/title
-  this->_setItemPos(IDC_SC_NAME, 4, 4, this->cliUnitX()-58, 14);
-  // Package snapshot
-  this->_setItemPos(IDC_SB_SNAP, 4, 18, 84, 84);
-  // Package description, (RTF then Raw)
-  this->_setItemPos(IDC_FT_DESC, 92, 18, this->cliUnitX()-92, this->cliUnitY()-18);
-  this->_setItemPos(IDC_EC_DESC, 92, 18, this->cliUnitX()-92, this->cliUnitY()-18);
+  // Main Tab Control
+  this->_setItemPos(IDC_TC_MAIN, -1, -1, this->width()+2, this->height()+2, true);
+
+  // Resize page dialogs according IDC_TC_MAIN
+  if(this->_tabDial.size()) {
+
+    // apply this for all dialogs
+    for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+      this->_setChildPos(this->_tabDial[i]->hwnd(), 2, 24, this->cliWidth()-5, this->cliHeight()-27, true);
+    }
+  }
 }
 
 
@@ -299,6 +243,9 @@ void OmUiMgrFoot::_onRefresh()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrFoot::_onRefresh\n";
   #endif
+
+  //OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  //OmContext* pCtx = pMgr->ctxCur();
 }
 
 
@@ -336,44 +283,49 @@ INT_PTR OmUiMgrFoot::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     long p[2] = {LOWORD(lParam), HIWORD(lParam)};
     // convert coordinate to relative to parent's client
     ClientToScreen(this->_hwnd, reinterpret_cast<POINT*>(&p));
-    ScreenToClient(this->_parent->hwnd(), reinterpret_cast<POINT*>(&p));
+    ScreenToClient(this->_pUiMgr->hwnd(), reinterpret_cast<POINT*>(&p));
     // send message to parent
-    SendMessage(this->_parent->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
+    SendMessage(this->_pUiMgr->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
+  }
+
+  // UWM_MAIN_ABORT_REQUEST is a custom message sent from Main (parent) Dialog
+  // to notify its child tab dialogs they must abort all running threaded jobs
+  if(uMsg == UWM_MAIN_ABORT_REQUEST) {
+    // send message to all dialog to request abort all their jobs
+    for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+      this->_tabDial[i]->postMessage(UWM_MAIN_ABORT_REQUEST);
+    }
+    return false;
   }
 
   if(uMsg == WM_NOTIFY) {
-
-    if(LOWORD(wParam) == IDC_FT_DESC) { //< Rich Edit (MD parsed)
-
-      if(reinterpret_cast<NMHDR*>(lParam)->code == EN_LINK) {
-
-        ENLINK* el = reinterpret_cast<ENLINK*>(lParam);
-
-        if(el->msg == WM_LBUTTONUP) {
-
-          wchar_t url_buf[256];
-
-          TEXTRANGEW txr;
-          txr.chrg.cpMin = el->chrg.cpMin;
-          txr.chrg.cpMax = el->chrg.cpMax;
-          txr.lpstrText = url_buf;
-
-          this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&txr));
-
-          #ifdef DEBUG
-          std::wcout << L"DEBUG => OmUiMgrFoot::_onMsg WM_NOTIFY-EN_LINK: " << url_buf << "\n";
-          #endif
+    // handle TabControl page selection change
+    if(this->_tabDial.size()) {
+      // check for notify from the specified TabControl
+      if(LOWORD(wParam) == IDC_TC_MAIN) {
+        // check for a "selection changed" notify
+        if(((LPNMHDR)lParam)->code == TCN_SELCHANGE) {
+          // get TabControl current selection
+          int tc_sel = this->msgItem(IDC_TC_MAIN, TCM_GETCURSEL);
+          // change page dialog visibility according selection
+          if(tc_sel >= 0) {
+            for(int i = 0; i < static_cast<int>(this->_tabDial.size()); ++i) {
+              if(i == tc_sel) {
+                this->_tabDial[i]->show();
+              } else {
+                this->_tabDial[i]->hide();
+              }
+            }
+          }
         }
       }
     }
   }
 
   if(uMsg == WM_COMMAND) {
-
     #ifdef DEBUG
     //std::cout << "DEBUG => OmUiMgrFoot::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
-
   }
 
   return false;

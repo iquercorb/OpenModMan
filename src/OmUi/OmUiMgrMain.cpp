@@ -41,8 +41,8 @@ OmUiMgrMain::OmUiMgrMain(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr), _tabName(), _tabDial()
 {
   // create child tab dialogs
-  this->_addTab(L"Packages library", new OmUiMgrMainLib(hins)); // Library Tab
-  this->_addTab(L"Network repositories", new OmUiMgrMainNet(hins)); // Network Tab
+  this->_addTab(L"Packages Library", new OmUiMgrMainLib(hins)); // Library Tab
+  this->_addTab(L"Network Repositories", new OmUiMgrMainNet(hins)); // Network Tab
   this->_addTab(L"Work In Progress", new OmUiMgrMainTst(hins)); // Test Tab, for development an debug purpose
 
   // set the accelerator table for the dialog
@@ -139,20 +139,6 @@ void OmUiMgrMain::_addTab(const wstring& title, OmDialog* dialog)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrMain::_onShow()
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrMain::_onShow\n";
-  #endif
-
-  // show the first tab page
-  if(this->_tabDial.size())
-    this->_tabDial[0]->show();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiMgrMain::_onInit()
 {
   #ifdef DEBUG
@@ -181,6 +167,21 @@ void OmUiMgrMain::_onInit()
 
   // refresh all elements
   this->_onRefresh();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrMain::_onShow()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMgrMain::_onShow\n";
+  #endif
+
+  // show the first tab page
+  if(this->_tabDial.size())
+    this->_tabDial[0]->show();
 }
 
 
@@ -227,7 +228,7 @@ void OmUiMgrMain::_onQuit()
   #endif
 
   // Exist dialog thread
-  PostQuitMessage(0);
+  //PostQuitMessage(0);
 }
 
 
@@ -254,9 +255,9 @@ INT_PTR OmUiMgrMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     long p[2] = {LOWORD(lParam), HIWORD(lParam)};
     // convert coordinate to relative to parent's client
     ClientToScreen(this->_hwnd, reinterpret_cast<POINT*>(&p));
-    ScreenToClient(this->_parent->hwnd(), reinterpret_cast<POINT*>(&p));
+    ScreenToClient(this->_pUiMgr->hwnd(), reinterpret_cast<POINT*>(&p));
     // send message to parent
-    SendMessage(this->_parent->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
+    SendMessage(this->_pUiMgr->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
   }
 
   // UWM_MAIN_ABORT_REQUEST is a custom message sent from Main (parent) Dialog

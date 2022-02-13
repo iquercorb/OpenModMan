@@ -14,19 +14,20 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIMGRFOOT_H
-#define OMUIMGRFOOT_H
+#ifndef OMUIMGRFOOTDSC_H
+#define OMUIMGRFOOTDSC_H
 
 #include "OmDialog.h"
 
-class OmUiMgr;
+class OmPackage;
+class OmRemote;
 
-/// \brief Window Secondary (bottom) Frame.
+/// \brief Main window - Description Tab child
 ///
-/// OmDialog class derived for the main window bottom frame which contain
-/// package snapshot and description view.
+/// OmDialog class derived for Package Description tab child dialog window of
+/// the Main Window Foot frame.
 ///
-class OmUiMgrFoot : public OmDialog
+class OmUiMgrFootDsc : public OmDialog
 {
   public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -36,13 +37,13 @@ class OmUiMgrFoot : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiMgrFoot(HINSTANCE hins);
+    OmUiMgrFootDsc(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiMgrFoot();
+    ~OmUiMgrFootDsc();
 
     /// \brief Get resource id.
     ///
@@ -103,13 +104,25 @@ class OmUiMgrFoot : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    vector<wstring>     _tabName;
+    OmPackage*          _pPkg;
 
-    vector<OmDialog*>   _tabDial;
+    OmRemote*           _pRmt;
 
-    void                _addTab(const wstring& name, OmDialog* dialog);
+    uint8_t*            _rtfData;
 
-    OmDialog*           _getTab(unsigned id);
+    size_t              _rtfSize;
+
+    size_t              _rtfRead;
+
+    size_t              _rtfWrit;
+
+    static void         _md2Rtf_cb(const uint8_t*, unsigned, void*);
+
+    static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
+
+    bool                _rawDesc;
+
+    void                _showPreview(const wstring&, const OmVersion&, const OmImage&, const wstring&);
 
     void                _onInit();
 
@@ -124,4 +137,4 @@ class OmUiMgrFoot : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIMGRFOOT_H
+#endif // OMUIMGRFOOTDSC_H
