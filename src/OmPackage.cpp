@@ -24,13 +24,13 @@
 
 #include "OmImage.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilStr.h"
-#include "Util/OmUtilHsh.h"
-#include "Util/OmUtilErr.h"
-#include "Util/OmUtilPkg.h"
+#include "OmUtilFs.h"
+#include "OmUtilStr.h"
+#include "OmUtilHsh.h"
+#include "OmUtilErr.h"
+#include "OmUtilPkg.h"
 
-#include "3rdP/miniz/miniz.h"
+#include "miniz/miniz.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmPackage.h"
@@ -204,7 +204,7 @@ bool OmPackage::srcParse(const wstring& path)
               return false;
             }
             str_buf[s] = 0;
-            if(src_def.parse(Om_fromUtf8(str_buf), OMM_XMAGIC_PKG)) {
+            if(src_def.parse(Om_toUTF16(str_buf), OMM_XMAGIC_PKG)) {
               has_def = true;
               delete [] str_buf;
               break;
@@ -355,7 +355,7 @@ bool OmPackage::srcParse(const wstring& path)
             if(str_buf) {
               if(src_zip.extract(i, str_buf, s)) {
                 str_buf[s] = 0; //< add terminal null
-                this->_desc = Om_fromUtf8(str_buf);
+                this->_desc = Om_toUTF16(str_buf);
               } else {
                 this->_error = Om_errZipInfl(L"Readme file", zcd_entry, src_zip.lastErrorStr());
                 this->log(0, L"Package("+this->_ident+L") Parse Source", this->_error);
@@ -492,7 +492,7 @@ bool OmPackage::bckParse(const wstring& path)
             return false;
           }
           str_buf[s] = 0;
-          if(bck_def.parse(Om_fromUtf8(str_buf), OMM_XMAGIC_BCK)) {
+          if(bck_def.parse(Om_toUTF16(str_buf), OMM_XMAGIC_BCK)) {
             has_def = true;
             delete [] str_buf;
             break;
@@ -1148,7 +1148,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   string pkg_readme;
 
   if(!this->_desc.empty()) {
-    Om_toAnsiCp(pkg_readme, this->_desc);
+    Om_toANSI(&pkg_readme, this->_desc);
     pkg_readme += "\r\n"
     "\r\n"
     "-- END OF DESCRIPTION ---------------------------------------------------------"
@@ -1157,13 +1157,13 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   }
 
   pkg_readme += "Open Mod Manager Package file for \"";
-  pkg_readme += Om_toUtf8(pkg_ident); pkg_readme += "\" Mod.\r\n"
+  pkg_readme += Om_toUTF8(pkg_ident); pkg_readme += "\" Mod.\r\n"
   "\r\n"
   "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
   "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
   "If you want to install this Mod manually, you will find the Mod files into\r\n"
   "the following folder : \r\n"
-  "\r\n  \""; pkg_readme += Om_toUtf8(pkg_ident);
+  "\r\n  \""; pkg_readme += Om_toUTF8(pkg_ident);
   pkg_readme += "\"\r\n"
   "\r\n"
   "Its content is respecting the destination folder tree and includes files to\r\n"
@@ -1171,7 +1171,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   "\r\n";
   for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
     pkg_readme += "   ";
-    pkg_readme += Om_toUtf8(this->_srcItemLs[i].path);
+    pkg_readme += Om_toUTF8(this->_srcItemLs[i].path);
     pkg_readme += "\r\n";
   }
   pkg_readme += "\r\n"
@@ -1181,7 +1181,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   "\r\n"
   "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
   "visit :\r\n"
-  "\r\n   "; pkg_readme += Om_toUtf8(OMM_APP_URL);
+  "\r\n   "; pkg_readme += Om_toUTF8(OMM_APP_URL);
 
   // add the REAMDE.TXT file in zip archive
   if(!pkg_zip.append(pkg_readme.c_str(), pkg_readme.size(), L"README.TXT", zipLvl)) {

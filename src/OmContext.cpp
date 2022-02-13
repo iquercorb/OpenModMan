@@ -21,10 +21,10 @@
 #include "OmManager.h"
 #include "OmLocation.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilHsh.h"
-#include "Util/OmUtilErr.h"
-#include "Util/OmUtilStr.h"
+#include "OmUtilFs.h"
+#include "OmUtilHsh.h"
+#include "OmUtilErr.h"
+#include "OmUtilStr.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmContext.h"

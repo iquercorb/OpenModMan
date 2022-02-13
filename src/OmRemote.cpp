@@ -28,13 +28,13 @@
 #include "OmImage.h"
 #include "OmSocket.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilStr.h"
-#include "Util/OmUtilHsh.h"
-#include "Util/OmUtilB64.h"
-#include "Util/OmUtilPkg.h"
-#include "Util/OmUtilZip.h"
-#include "Util/OmUtilErr.h"
+#include "OmUtilFs.h"
+#include "OmUtilStr.h"
+#include "OmUtilHsh.h"
+#include "OmUtilB64.h"
+#include "OmUtilPkg.h"
+#include "OmUtilZip.h"
+#include "OmUtilErr.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmRemote.h"
@@ -220,7 +220,7 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
         uint8_t* txt = Om_zInflate(zip, zip_size, txt_size);
         Om_free(zip);
 
-        if(txt) this->_desc = Om_fromUtf8(reinterpret_cast<char*>(txt));
+        if(txt) this->_desc = Om_toUTF16(reinterpret_cast<char*>(txt));
       }
     } else {
       this->_error = L"Definition error : 'bytes' attribute missing for <description>.";

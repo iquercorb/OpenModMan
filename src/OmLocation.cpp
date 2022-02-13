@@ -18,10 +18,10 @@
 
 #include "OmBaseApp.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilHsh.h"
-#include "Util/OmUtilErr.h"
-#include "Util/OmUtilStr.h"
+#include "OmUtilFs.h"
+#include "OmUtilHsh.h"
+#include "OmUtilErr.h"
+#include "OmUtilStr.h"
 
 #include "OmManager.h"
 #include "OmContext.h"

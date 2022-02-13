@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "Util/OmUtilStr.h"
+#include "OmUtilStr.h"
 
 #include <curl/curl.h>
 
@@ -77,7 +77,7 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 
   this->_hcurl = curl_easy_init();
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_URL, Om_toUtf8(url).c_str());
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_URL, Om_toUTF8(url).c_str());
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_HTTPGET, 1L);
 
@@ -137,7 +137,7 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
 
   this->_hcurl = curl_easy_init();
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_URL, Om_toUtf8(url).c_str());
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_URL, Om_toUTF8(url).c_str());
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_HTTPGET, 1L);
 

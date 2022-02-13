@@ -14,9 +14,9 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "Util/OmUtilStr.h"
+#include "OmUtilStr.h"
 
-#include "3rdP/miniz/miniz.h"
+#include "miniz/miniz.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmZipFile.h"
@@ -67,7 +67,7 @@ bool OmZipFile::init(const wstring& path)
 {
   string ansi_path;
 
-  Om_toAnsiCp(ansi_path, path);
+  Om_toANSI(&ansi_path, path);
 
   if(!mz_zip_writer_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
     return false;
@@ -86,7 +86,7 @@ bool OmZipFile::load(const wstring& path)
 {
   string ansi_path;
 
-  Om_toAnsiCp(ansi_path, path);
+  Om_toANSI(&ansi_path, path);
 
   if(!mz_zip_reader_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
     return false;
@@ -108,8 +108,8 @@ bool OmZipFile::append(const wstring& src, const wstring& dst, unsigned lvl)
     string zcdr_dst;
     string ansi_src;
 
-    Om_toZipCDR(zcdr_dst, dst);
-    Om_toAnsiCp(ansi_src, src);
+    Om_toZipCDR(&zcdr_dst, dst);
+    Om_toANSI(&ansi_src, src);
 
     if(mz_zip_writer_add_file(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), ansi_src.c_str(), nullptr, 0, __mzlvl[lvl])) {
       return true;
@@ -130,7 +130,7 @@ bool OmZipFile::append(const void* data, size_t size, const wstring& dst, unsign
 
     string zcdr_dst;
 
-    Om_toZipCDR(zcdr_dst, dst);
+    Om_toZipCDR(&zcdr_dst, dst);
 
     if(!mz_zip_writer_add_mem(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), data, size, __mzlvl[lvl])) {
       return false;
@@ -167,7 +167,7 @@ wstring OmZipFile::index(unsigned i) const
   if(_stat & ZIP_READER) {
     mz_zip_archive_file_stat zf; // zip file stat struct
     if(mz_zip_reader_file_stat(static_cast<mz_zip_archive*>(_data), i, &zf)) {
-      Om_fromZipCDR(ret, zf.m_filename);
+      Om_fromZipCDR(&ret, zf.m_filename);
     }
   }
 
@@ -183,7 +183,7 @@ void OmZipFile::index(wstring& path, unsigned i) const
   if(_stat & ZIP_READER) {
     mz_zip_archive_file_stat zf; // zip file stat struct
     if(mz_zip_reader_file_stat(static_cast<mz_zip_archive*>(_data), i, &zf)) {
-      Om_fromZipCDR(path, zf.m_filename);
+      Om_fromZipCDR(&path, zf.m_filename);
     }
   }
 }
@@ -210,7 +210,7 @@ int OmZipFile::locate(const wstring& src) const
 
     string zcdr_src;
 
-    Om_toZipCDR(zcdr_src, src);
+    Om_toZipCDR(&zcdr_src, src);
 
     return mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
 
@@ -229,8 +229,8 @@ bool OmZipFile::extract(const wstring& src, const wstring& dst) const
     string zcdr_src;
     string ansi_dst;
 
-    Om_toZipCDR(zcdr_src, src);
-    Om_toAnsiCp(ansi_dst, dst);
+    Om_toZipCDR(&zcdr_src, src);
+    Om_toANSI(&ansi_dst, dst);
 
     int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
@@ -253,7 +253,7 @@ bool OmZipFile::extract(unsigned i, const wstring& dst) const
 
     string ansi_dst;
 
-    Om_toAnsiCp(ansi_dst, dst);
+    Om_toANSI(&ansi_dst, dst);
 
     if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst.c_str(), 0)) {
       return true;
@@ -273,7 +273,7 @@ bool OmZipFile::extract(const wstring& src, void* buffer, size_t size) const
 
     string zcdr_src;
 
-    Om_toZipCDR(zcdr_src, src);
+    Om_toZipCDR(&zcdr_src, src);
 
     int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
@@ -324,7 +324,7 @@ size_t OmZipFile::size(const wstring& src) const
 
     string zcdr_src;
 
-    Om_toZipCDR(zcdr_src, src);
+    Om_toZipCDR(&zcdr_src, src);
 
     int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {

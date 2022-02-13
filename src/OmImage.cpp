@@ -15,7 +15,7 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Util/OmUtilImg.h"
+#include "OmUtilImg.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmImage.h"

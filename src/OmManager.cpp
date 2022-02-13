@@ -21,12 +21,12 @@
 
 #include "OmBaseApp.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilStr.h"
-#include "Util/OmUtilHsh.h"
-#include "Util/OmUtilDlg.h"
-#include "Util/OmUtilErr.h"
-#include "Util/OmUtilSys.h"
+#include "OmUtilFs.h"
+#include "OmUtilStr.h"
+#include "OmUtilHsh.h"
+#include "OmUtilDlg.h"
+#include "OmUtilErr.h"
+#include "OmUtilSys.h"
 
 #include "OmDialog.h"
 #include "OmPackage.h"
@@ -141,7 +141,7 @@ bool OmManager::init(const char* arg)
 
     // convert to wstring
     wstring path;
-    Om_fromAnsiCp(path, arg);
+    Om_fromAnsiCp(&path, arg);
 
     // check for quotes and removes them
     if(path.back() == L'"' && path.front() == L'"') {
@@ -670,7 +670,7 @@ void OmManager::log(unsigned level, const wstring& head, const wstring& detail)
   if(this->_logFile) {
     DWORD wb;
     string data;
-    Om_toUtf8(data, entry);
+    Om_toUTF8(&data, entry);
     WriteFile(static_cast<HANDLE>(this->_logFile), data.c_str(), data.size(), &wb, nullptr);
   }
 

@@ -16,9 +16,9 @@
 */
 #include "OmBaseApp.h"
 
-#include "Util/OmUtilFs.h"
-#include "Util/OmUtilWin.h"
-#include "Util/OmUtilHsh.h"
+#include "OmUtilFs.h"
+#include "OmUtilWin.h"
+#include "OmUtilHsh.h"
 
 #include "OmManager.h"
 #include "OmContext.h"

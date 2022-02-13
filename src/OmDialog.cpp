@@ -18,7 +18,7 @@
 #include <ShlObj.h>
 
 #ifdef DEBUG
-#include "Util/OmUtilWin.h"
+#include "OmUtilWin.h"
 #endif
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -48,6 +48,8 @@ static inline void __cce_init()
 
     InitCommonControlsEx(&icce);
 
+    LoadLibrary(TEXT("Msftedit.dll"));
+
     // we need to initialize only once per process
     __cce_initialized = true;
   }
@@ -60,7 +62,7 @@ static inline void __cce_init()
 OmDialog::OmDialog(HINSTANCE hins) :
   _hins(hins), _hwnd(nullptr), _parent(nullptr), _child(), _accel(nullptr),
   _menu(nullptr), _data(nullptr), _init(true), _modal(false), _recw{}, _recc{},
-  _ubase{}, _limit{}, _size{}, _usize{}, _hdwp(nullptr), _active(false)
+  _ubase{}, _limit{}, _size{}, _usize{}, _active(false), _hdwp(nullptr)
 {
 
 }
@@ -158,7 +160,7 @@ void OmDialog::open(bool show)
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
+    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -195,7 +197,7 @@ void OmDialog::modeless(bool show)
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
+    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }

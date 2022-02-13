@@ -5,11 +5,11 @@
 #define IDR_MENU                                600
 #define IDR_ACCEL                               601
 #define IDD_MGR                                 700
-#define IDD_MGR_MAIN                             701
-#define IDD_MGR_FOOT                             702
-#define IDD_MGR_MAIN_LIB                         704
-#define IDD_MGR_MAIN_NET                         705
-#define IDD_MGR_MAIN_TST                         706
+#define IDD_MGR_MAIN                            701
+#define IDD_MGR_FOOT                            702
+#define IDD_MGR_MAIN_LIB                        704
+#define IDD_MGR_MAIN_NET                        705
+#define IDD_MGR_MAIN_TST                        706
 #define IDD_ADD_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_ADD_BAT                             712
@@ -108,7 +108,7 @@
 #define IDB_BAT_16                              980
 #define IDB_BAT_24                              981
 #define IDB_BAT_32                              982
-#define IDC_SC_TITLE                            40100
+#define IDC_SC_NAME                             40100
 #define IDC_SC_INTRO                            40101
 #define IDC_SC_STATE                            40102
 #define IDC_SC_NOTES                            40103
@@ -236,7 +236,7 @@
 #define IDC_PB_COM                              40502
 #define IDC_SB_ICON                             40600
 #define IDC_SB_IMAGE                            40601
-#define IDC_SB_SNAP                              40602
+#define IDC_SB_SNAP                             40602
 #define IDC_BC_CKBX1                            40700
 #define IDC_BC_CKBX2                            40701
 #define IDC_BC_CKBX3                            40702
@@ -257,6 +257,7 @@
 #define IDC_GB_GRP08                            40737
 #define IDC_GB_GRP09                            40738
 #define IDC_GB_GRP10                            40739
+#define IDC_FT_DESC                             40770
 #define IDM_BASE_ID                             40800
 #define IDM_FILE_NEW_CTX                        40800
 #define IDM_FILE_OPEN                           40810

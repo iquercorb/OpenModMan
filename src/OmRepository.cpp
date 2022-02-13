@@ -19,8 +19,8 @@
 #include "OmLocation.h"
 #include "OmSocket.h"
 
-#include "Util/OmUtilStr.h"
-#include "Util/OmUtilErr.h"
+#include "OmUtilStr.h"
+#include "OmUtilErr.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmRepository.h"
@@ -94,7 +94,7 @@ bool OmRepository::query()
   this->log(2, L"Repository("+this->_base+L"-"+this->_name+L") Query", to_wstring(data.size())+L" bytes received.");
 
   // try to parse received data as repository
-  if(!this->_config.parse(Om_fromUtf8(data.c_str()), OMM_XMAGIC_REP)) {
+  if(!this->_config.parse(Om_toUTF16(data), OMM_XMAGIC_REP)) {
     this->_error = Om_errParse(L"Repository definition", this->_url, this->_config.lastErrorStr());
     this->log(0, L"Repository("+this->_base+L"-"+this->_name+L") Query", this->_error);
     this->clear();

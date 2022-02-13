@@ -17,7 +17,8 @@
 #include <Windows.h>
 
 #include "OmManager.h"
-#include "Ui/OmUiMgr.h"
+#include "OmUiMgr.h"
+#include "OmUtilHsh.h"
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
