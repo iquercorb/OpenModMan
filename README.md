@@ -64,11 +64,13 @@ Open Mod Mananager currently implements the following key features:
  - Fix command shortcuts still working when main dialog is not active.
  - Fix scrolling for Overlap and Dependencies in Package Properties Dialog.
  - Fix missing dialogs for package download errors.
+ - Fix bad encoding of loaded/saved description text in Package Editor.
  - New Uninstall tree - uninstall with dependencies - feature.
  - New MD5 (md5sum) as default alogirthm for repository files checksum.
  - New Category field for Packages.
  - New custom path or URL mechanism for repository files download.
  - New improved message boxes and icons.
+ - New package descriptions parsed as Markdown.
 
 0.9.8 (04-01-2022)
  - Add support and automatic follow of HTTP redirect responses.
