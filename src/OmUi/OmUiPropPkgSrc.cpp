@@ -87,7 +87,7 @@ void OmUiPropPkgSrc::_onInit()
   // Parsed Version
   this->setItemText(IDC_EC_READ3, pPkg->version().asString());
   // Filename hash
-  this->setItemText(IDC_EC_READ4, Om_toHexString(pPkg->hash()));
+  this->setItemText(IDC_EC_READ4, Om_uint64ToStr(pPkg->hash()));
 
   if(pPkg->hasSrc()) {
 

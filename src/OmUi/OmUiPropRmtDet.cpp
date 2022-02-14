@@ -93,7 +93,7 @@ void OmUiPropRmtDet::_onInit()
   // Parsed Version
   this->setItemText(IDC_EC_READ3, pRmt->version().asString());
   // Computed Hash
-  this->setItemText(IDC_EC_READ4, Om_toHexString(pRmt->hash()));
+  this->setItemText(IDC_EC_READ4, Om_uint64ToStr(pRmt->hash()));
 
   // Urls
   this->enableItem(IDC_EC_READ5, true);

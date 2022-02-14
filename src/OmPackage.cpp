@@ -574,7 +574,7 @@ bool OmPackage::bckParse(const wstring& path)
     return false;
   }
   if(def_xml.hasChild(L"hash")) {
-    this->_hash = Om_toUint64(def_xml.child(L"hash").content());
+    this->_hash = Om_strToUint64(def_xml.child(L"hash").content());
   } else {
     this->_error = L"Invalid definition : <hash> node missing.";
     this->log(0, L"Package("+Om_getFilePart(this->_bck)+L") Parse Backup", this->_error);
@@ -624,7 +624,7 @@ bool OmPackage::bckParse(const wstring& path)
     unsigned hash_count = xml_ovlap.childCount(L"hash");
     for(unsigned i = 0; i < hash_count; ++i) {
       xml_item = xml_ovlap.child(L"hash", i);
-      this->_ovrLs.push_back(Om_toUint64(xml_item.content()));
+      this->_ovrLs.push_back(Om_strToUint64(xml_item.content()));
     }
   }
 
@@ -1436,7 +1436,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   OmXmlNode  def_xml = bck_def.xml();
 
   def_xml.addChild(L"ident").setContent(this->_ident);
-  def_xml.addChild(L"hash").setContent(Om_toHexString(this->_hash));
+  def_xml.addChild(L"hash").setContent(Om_uint64ToStr(this->_hash));
 
   // define backup root directory
   def_xml.addChild(L"backup").setContent(this->_bckDir);
@@ -1593,7 +1593,7 @@ bool OmPackage::_backup(int zipLvl, Om_progressCb progress_cb, void* user_ptr)
   if(ovlap_list.size()) {
     OmXmlNode xml_ovlap = def_xml.addChild(L"overlap");
     for(size_t i = 0; i < ovlap_list.size(); ++i) {
-      xml_ovlap.addChild(L"hash").setContent(Om_toHexString(ovlap_list[i]));
+      xml_ovlap.addChild(L"hash").setContent(Om_uint64ToStr(ovlap_list[i]));
     }
   }
 

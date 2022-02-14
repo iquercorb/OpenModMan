@@ -19,9 +19,65 @@
 
 #include "OmBase.h"
 
-/// \brief Compute Hash.
+/// \brief Get hexadecimal string representation.
 ///
-/// Calculates and returns 64 bits unsigned integer hash (xxHash) of the given
+/// Create hexadecimal string representation of the given bytes sequence in
+/// big-endian way.
+///
+/// \param[in]  dest    : Pointer to string that receive result.
+/// \param[in]  data    : Data to create representation.
+/// \param[in]  size    : Size of data in bytes.
+///
+void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size);
+
+/// \brief Get hexadecimal string representation.
+///
+/// Create hexadecimal string representation of the given bytes sequence in
+/// little-endian way.
+///
+/// \param[in]  dest    : Pointer to string that receive result.
+/// \param[in]  data    : Data to create representation.
+/// \param[in]  size    : Size of data in bytes.
+///
+void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size);
+
+/// \brief Get string representation of a 64 bits integer.
+///
+/// Returns the hexadecimal representation of the given 64 bits unsigned
+/// integer value as a wide string.
+///
+/// \param[in]  num     : 64 bits unsigned integer.
+///
+/// \return Hexadecimal string representation of 64 bits integer
+///
+wstring Om_uint64ToStr(uint64_t num);
+
+/// \brief Get string representation of a 64 bits integer.
+///
+/// Set the specified wind string to the hexadecimal representation of the
+/// given 64 bits unsigned integer value.
+///
+/// \param[out] str     : Pointer to string that receive result.
+/// \param[in]  num     : 64 bits unsigned integer.
+///
+void Om_uint64ToStr(wstring* str, uint64_t num);
+
+/// \brief Get 64 bits integer from string.
+///
+/// Returns the 64 bits unsigned integer value of the given hexadecimal number
+/// string representation.
+///
+/// \param[in]  str     : Hexadecimal string represented number.
+///
+/// \return Converted 64 bits integer value.
+///
+inline uint64_t Om_strToUint64(const wstring& str) {
+  return wcstoull(str.data(), nullptr, 16);
+}
+
+/// \brief Compute XXH3 Hash.
+///
+/// Calculates and returns 64 bits unsigned integer hash (XXH3) of the given
 /// data chunk.
 ///
 /// \param[in]  data    : Data to compute Hash.
@@ -31,9 +87,9 @@
 ///
 uint64_t Om_getXXHash3(const void* data, size_t size);
 
-/// \brief Compute Hash.
+/// \brief Compute XXHash3 Hash.
 ///
-/// Calculates and returns 64 bits unsigned integer hash (xxHash) of the given
+/// Calculates and returns 64 bits unsigned integer hash (XXHash3) of the given
 /// wide string.
 ///
 /// \param[in]  str    : Wide string to compute Hash.
@@ -42,7 +98,19 @@ uint64_t Om_getXXHash3(const void* data, size_t size);
 ///
 uint64_t Om_getXXHash3(const wstring& str);
 
-/// \brief Get file checksum.
+/// \brief Compute XXHash3 digest from file.
+///
+/// Calculates and returns 64 bits unsigned integer digest (XXHash3) of the
+/// given file.
+///
+/// \param[in]  xxh   : Pointer to uint64_t that receive XXHash3 value;
+/// \param[in]  path  : Path to file to compute XXHash3 digest.
+///
+/// \return True if operation succeed, false if open file error.
+///
+bool Om_getXXHdigest(uint64_t* xxh, const wstring& path);
+
+/// \brief Get file XXHash3 checksum.
 ///
 /// Calculates and returns the 16 characters hash string of the
 /// given data.
@@ -53,27 +121,38 @@ uint64_t Om_getXXHash3(const wstring& str);
 ///
 wstring Om_getXXHsum(const wstring& path);
 
-/// \brief Get file checksum.
+/// \brief Get file XXHash3 checksum.
 ///
 /// Calculates the 16 characters hash string of the given data.
 ///
-/// \param[in]  hex     : String to set as checksum string.
+/// \param[in]  pstr    : String to set as checksum string.
 /// \param[in]  path    : Path to file to generate checksum.
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_getXXHsum(wstring& hex, const wstring& path);
+bool Om_getXXHsum(wstring* pstr, const wstring& path);
 
-/// \brief Compare file checksum.
+/// \brief Compare file XXHash3 checksum.
 ///
 /// Calculates the 16 characters hash string of the given data.
 ///
 /// \param[in]  path    : Path to file to generate checksum.
-/// \param[in]  hex     : Checksum hexadecimal string to compare.
+/// \param[in]  str     : Checksum hexadecimal string to compare.
 ///
 /// \return true if checksum matches, false otherwise
 ///
-bool Om_cmpXXHsum(const wstring& path, const wstring& hex);
+bool Om_cmpXXHsum(const wstring& path, const wstring& str);
+
+/// \brief Get file MD5 digest.
+///
+/// Compute the MD5 digest of the given file.
+///
+/// \param[in]  md5     : Pointer to 16 bytes buffer that receive MD5 digest.
+/// \param[in]  path    : Path to file to generate checksum.
+///
+/// \return True if operation succeed, false if open file error.
+///
+bool Om_getMD5digest(uint8_t* md5, const wstring& path);
 
 /// \brief Get file MD5 checksum.
 ///
@@ -82,7 +161,7 @@ bool Om_cmpXXHsum(const wstring& path, const wstring& hex);
 ///
 /// \param[in]  path    : Path to file to generate checksum.
 ///
-/// \return 32 hexadecimal characters hash string.
+/// \return MD5 checksum string.
 ///
 wstring Om_getMD5sum(const wstring& path);
 
@@ -90,23 +169,23 @@ wstring Om_getMD5sum(const wstring& path);
 ///
 /// Calculates the 32 characters MD5 digest string of the given data.
 ///
-/// \param[in]  hex     : String to set as MD5 checksum string.
+/// \param[in]  pstr    : Pointer to string that receive MD5 checksum string.
 /// \param[in]  path    : Path to file to generate checksum.
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_getMD5sum(wstring& hex, const wstring& path);
+bool Om_getMD5sum(wstring* pstr, const wstring& path);
 
 /// \brief Compare file MD5 checksum.
 ///
 /// Calculates the 32 characters MD5 digest string of the given data.
 ///
 /// \param[in]  path    : Path to file to generate checksum.
-/// \param[in]  hex     : Checksum hexadecimal string to compare.
+/// \param[in]  str     : Checksum hexadecimal string to compare.
 ///
 /// \return true if checksum matches, false otherwise
 ///
-bool Om_cmpMD5sum(const wstring& path, const wstring& hex);
+bool Om_cmpMD5sum(const wstring& path, const wstring& str);
 
 /// \brief Calculate CRC64 value.
 ///
@@ -130,48 +209,6 @@ uint64_t Om_getCRC64(const void* data, size_t size);
 /// \return Resulting CRC64 unsigned integer.
 ///
 uint64_t Om_getCRC64(const wstring& str);
-
-/// \brief Get string representation of a 64 bits integer.
-///
-/// Returns the hexadecimal representation of the given 64 bits unsigned
-/// integer value as a wide string.
-///
-/// \param[in]  num     : 64 bits unsigned integer.
-///
-/// \return Hexadecimal string representation of 64 bits integer
-///
-inline wstring Om_toHexString(uint64_t num) {
-  wchar_t num_buf[17];
-  swprintf(num_buf, 17, L"%016llx", num);
-  return wstring(num_buf);
-}
-
-/// \brief Get string representation of a 64 bits integer.
-///
-/// Set the specified wind string to the hexadecimal representation of the
-/// given 64 bits unsigned integer value.
-///
-/// \param[out] str     : String to get result.
-/// \param[in]  num     : 64 bits unsigned integer.
-///
-inline void Om_toHexString(wstring& str, uint64_t num) {
-  wchar_t num_buf[17];
-  swprintf(num_buf, 17, L"%016llx", num);
-  str = num_buf;
-}
-
-/// \brief Get 64 bits integer from string.
-///
-/// Returns the 64 bits unsigned integer value of the given hexadecimal number
-/// string representation.
-///
-/// \param[in]  str     : Hexadecimal string represented number.
-///
-/// \return Converted 64 bits integer value.
-///
-inline uint64_t Om_toUint64(const wstring& str) {
-  return wcstoull(str.c_str(), nullptr, 16);
-}
 
 /// \brief Generate random bytes.
 ///

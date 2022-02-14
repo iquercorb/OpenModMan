@@ -690,9 +690,9 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
         // check whether package with this hash exists
         if(pLoc->pkgFind(loc_hash_list[l][i])) {
           xml_ins = xml_loc.addChild(L"install");
-          xml_ins.setAttr(L"hash", Om_toHexString(loc_hash_list[l][i]));
+          xml_ins.setAttr(L"hash", Om_uint64ToStr(loc_hash_list[l][i]));
         } else {
-          this->_error = L"Package with hash "+Om_toHexString(loc_hash_list[l][i]);
+          this->_error = L"Package with hash "+Om_uint64ToStr(loc_hash_list[l][i]);
           this->_error += L" was not found in Location.";
           this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
         }

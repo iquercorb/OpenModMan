@@ -110,7 +110,7 @@ bool OmBatch::open(const wstring& path)
     xml_loc_list[l].children(xml_ins_list, L"install");
 
     for(size_t i = 0; i < xml_ins_list.size(); ++i) {
-      hash_list.push_back(Om_toUint64(xml_ins_list[i].attrAsString(L"hash")));
+      hash_list.push_back(Om_strToUint64(xml_ins_list[i].attrAsString(L"hash")));
     }
 
     this->_insHash.push_back(hash_list);
@@ -298,7 +298,7 @@ void OmBatch::insSetList(const wstring& uuid, const vector<uint64_t>& hash_list)
     OmXmlNode xml_ins;
     for(size_t h = 0; h < hash_list.size(); ++h) {
       xml_ins = xml_loc.addChild(L"install");
-      xml_ins.setAttr(L"hash", Om_toHexString(hash_list[h]));
+      xml_ins.setAttr(L"hash", Om_uint64ToStr(hash_list[h]));
     }
 
     // Write definition file

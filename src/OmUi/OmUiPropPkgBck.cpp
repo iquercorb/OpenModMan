@@ -107,7 +107,7 @@ void OmUiPropPkgBck::_onInit()
 
         olap_hsh = pPkg->ovrGet(i);
         olap_pkg = pLoc->pkgFind(olap_hsh);
-        olap_str += olap_pkg != nullptr ? olap_pkg->ident() : Om_toHexString(olap_hsh);
+        olap_str += olap_pkg != nullptr ? olap_pkg->ident() : Om_uint64ToStr(olap_hsh);
 
         if(i < (n - 1)) {
           olap_str += L"\r\n";

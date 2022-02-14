@@ -20,6 +20,12 @@
 
 #include "OmBaseWin.h"        //< WinAPI
 
+#include "xxhash/xxh3.h"
+#include "md5/md5.h"
+
+static mt19937                             __rnd_generator(time(0));
+static uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
+
 /// \brief Swap bytes
 ///
 /// Swap bytes order in 32 bits value, to convert endianes.
@@ -34,6 +40,107 @@ inline static uint32_t __bytes_swap(uint32_t num)
           ((num <<  8) & 0xff0000) |
           ((num >>  8) & 0xff00) |
           ((num << 24) & 0xff000000);
+}
+
+
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
+static const wchar_t __hex_digit[] = L"0123456789abcdef";
+
+/// \brief Little-endian bytes to hexadecimal
+///
+/// Translate the given data buffers to its hexadecimal
+/// string representation in little-endian way.
+///
+/// \param[out] hex   : String to be set as hexadecimal representation.
+/// \param[in]  data  : Data to translate.
+/// \param[in]  size  : Data size in bytes.
+///
+static inline void __bytes_to_hex_be(wstring* dest, const uint8_t* data, size_t size)
+{
+  dest->clear();
+  uint8_t c;
+  size_t i = size;
+  while(i--) {
+    c = data[i];
+    dest->push_back(__hex_digit[(c >> 4) & 0x0F]);
+    dest->push_back(__hex_digit[(c)      & 0x0F]);
+  }
+}
+
+/// \brief big-endian bytes to hexadecimal
+///
+/// Translate the given data buffers to its hexadecimal
+/// string representation in big-endian way.
+///
+/// \param[out] dest  : String to be set as hexadecimal representation.
+/// \param[in]  data  : Data to translate.
+/// \param[in]  size  : Data size in bytes.
+///
+static inline void __bytes_to_hex_le(wstring* dest, const uint8_t* data, size_t size)
+{
+  dest->clear();
+  uint8_t c;
+  for(size_t i = 0; i < size; ++i) {
+    c = data[i];
+    dest->push_back(__hex_digit[(c >> 4) & 0x0F]);
+    dest->push_back(__hex_digit[(c)      & 0x0F]);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size)
+{
+  __bytes_to_hex_be(dest, data, size);
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size)
+{
+  __bytes_to_hex_le(dest, data, size);
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring Om_uint64ToStr(uint64_t num)
+{
+  wstring dest;
+  uint8_t c, b = 64;
+  while(b) {
+    b -= 8;
+    c = (uint8_t)((num >> b) & 0xFF);
+    dest.push_back(__hex_digit[(c >> 4) & 0x0F]);
+    dest.push_back(__hex_digit[(c)      & 0x0F]);
+  }
+  return dest;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_uint64ToStr(wstring* dest, uint64_t num)
+{
+  dest->clear();
+  uint8_t c, b = 64;
+  while(b) {
+    b -= 8;
+    c = (uint8_t)((num >> b) & 0xFF);
+    dest->push_back(__hex_digit[(c >> 4) & 0x0F]);
+    dest->push_back(__hex_digit[(c)      & 0x0F]);
+  }
 }
 
 ///
@@ -207,7 +314,6 @@ uint64_t Om_getCRC64(const void* data, size_t size)
   return __CRC64(0, (unsigned char*)data, size);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -216,55 +322,45 @@ uint64_t Om_getCRC64(const wstring& str)
   return __CRC64(0, (unsigned char*)str.c_str(), str.size()*sizeof(wchar_t));
 }
 
-
-/// \brief Hexadecimal digits
+/// \brief Generate file XXHash3 digest (checksum)
 ///
-/// Static translation string to convert integer value to hexadecimal digit.
+/// Generate file digest (checksum) string using XXHash3 64 bits digest
+/// algorithm
 ///
-static const wchar_t __hex_digit[] = L"0123456789abcdef";
-
-/// \brief Little-endian bytes to hexadecimal
+/// \param[out] xxh   : Pointer to uint64_t that receive hash value.
+/// \param[in]  path  : Path to file to generate digest from.
 ///
-/// Translate the given data buffers to its hexadecimal
-/// string representation in little-endian way.
+/// \return True if operation succeed, false if file open error.
 ///
-/// \param[out] hex   : String to be set as hexadecimal representation.
-/// \param[in]  data  : Data to translate.
-/// \param[in]  data  : Data size in bytes.
-///
-static inline void __bytes_to_hex_be(wstring& hex, const uint8_t* data, size_t size)
+static inline bool __XXHash3_file_digest(uint64_t* xxh, const wstring& path)
 {
-  hex.clear();
-  uint8_t c;
-  size_t i = size;
-  while(i--) {
-    c = data[i];
-    hex.push_back(__hex_digit[(c >> 4) & 0x0F]);
-    hex.push_back(__hex_digit[(c)      & 0x0F]);
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return false;
+
+  DWORD rb;
+  uint8_t data[4097];
+
+  XXH3_state_t xxhst;
+  XXH3_64bits_reset(&xxhst);
+
+  while(ReadFile(hFile, data, 4096, &rb, nullptr)) {
+
+    if(rb == 0)
+      break;
+
+    XXH3_64bits_update(&xxhst, data, rb);
   }
+
+  CloseHandle(hFile);
+
+  *xxh = XXH3_64bits_digest(&xxhst);
+
+  return true;
 }
 
-/// \brief big-endian bytes to hexadecimal
-///
-/// Translate the given data buffers to its hexadecimal
-/// string representation in big-endian way.
-///
-/// \param[out] hex   : String to be set as hexadecimal representation.
-/// \param[in]  data  : Data to translate.
-/// \param[in]  data  : Data size in bytes.
-///
-static inline void __bytes_to_hex_le(wstring& hex, const uint8_t* data, size_t size)
-{
-  hex.clear();
-  uint8_t c;
-  for(size_t i = 0; i < size; ++i) {
-    c = data[i];
-    hex.push_back(__hex_digit[(c >> 4) & 0x0F]);
-    hex.push_back(__hex_digit[(c)      & 0x0F]);
-  }
-}
-
-#include "xxhash/xxh3.h"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -280,40 +376,16 @@ uint64_t Om_getXXHash3(const void* data, size_t size)
 ///
 uint64_t Om_getXXHash3(const wstring& str)
 {
-  return static_cast<uint64_t>(XXH3_64bits((unsigned char*)str.c_str(), str.size()*sizeof(wchar_t))); // XXH64_hash_t
+  return static_cast<uint64_t>(XXH3_64bits((unsigned char*)str.data(), str.size()*sizeof(wchar_t))); // XXH64_hash_t
 }
 
 
-/// \brief Generate checksum
 ///
-/// Generate checksum string using XXHash3 64 bits algorithm
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-/// \param[out] str   : String to be set as checksum.
-/// \param[in]  data  : Data to create checksum from.
-/// \param[in]  size  : Data size in bytes.
-///
-static inline void __XXHash3_gen_checksum(wstring& str, const void* data, size_t size)
+bool Om_getXXHdigest(uint64_t* xxh, const wstring& path)
 {
-  wchar_t buff[17];
-  uint64_t sum = static_cast<uint64_t>(XXH3_64bits(data, size));
-  swprintf(buff, 17, L"%016llx", sum);
-  str = buff;
-}
-
-
-/// \brief Compare checksum
-///
-/// Compare checksum string using XXHash3 64 bits algorithm
-///
-/// \param[out] hex   : Checksum hexadecimal representation string to be compared.
-/// \param[in]  data  : Data to create checksum to compare.
-/// \param[in]  size  : Data size in bytes.
-///
-static inline bool __XXHash3_cmp_checksum(const wstring& hex, const void* data, size_t size)
-{
-  uint64_t hash1 = wcstoull(hex.c_str(), nullptr, 16);
-  uint64_t hahs2 = static_cast<uint64_t>(XXH3_64bits(data, size));
-  return (hash1 == hahs2);
+  return __XXHash3_file_digest(xxh, path);
 }
 
 
@@ -322,259 +394,29 @@ static inline bool __XXHash3_cmp_checksum(const wstring& hex, const void* data, 
 ///
 wstring Om_getXXHsum(const wstring& path)
 {
-  wstring hex;
+  uint64_t xxh;
 
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  __XXHash3_file_digest(&xxh, path);
 
-  if(hFile == INVALID_HANDLE_VALUE)
-    return hex;
+  wstring str;
 
-  size_t size = GetFileSize(hFile, nullptr);
+  __bytes_to_hex_be(&str, reinterpret_cast<const uint8_t*>(&xxh), 8);
 
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return hex;
-
-  DWORD rb;
-  ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  __XXHash3_gen_checksum(hex, data, size);
-
-  Om_free(data);
-
-  return hex;
+  return str;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getXXHsum(wstring& hex, const wstring& path)
+bool Om_getXXHsum(wstring* pstr, const wstring& path)
 {
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  uint64_t xxh;
 
-  if(hFile == INVALID_HANDLE_VALUE)
+  if(!__XXHash3_file_digest(&xxh, path))
     return false;
 
-  size_t size = GetFileSize(hFile, nullptr);
-
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return false;
-
-  DWORD rb;
-  bool result = ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  __XXHash3_gen_checksum(hex, data, size);
-
-  Om_free(data);
-
-  return result;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_cmpXXHsum(const wstring& path, const wstring& hex)
-{
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
-
-  if(hFile == INVALID_HANDLE_VALUE)
-    return false;
-
-  size_t size = GetFileSize(hFile, nullptr);
-
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return false;
-
-  DWORD rb;
-  ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  bool result = __XXHash3_cmp_checksum(hex, data, size);
-
-  Om_free(data);
-
-  return result;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  MD5 implementation   -  -  -  -  -  -  -  -  -
-///
-union __MD5_wb {
-  uint32_t  w;
-  uint8_t   b[4];
-};
-
-typedef uint32_t (*__MD5_fn)(uint32_t a[]);
-
-static uint32_t __MD5_f0(uint32_t abcd[]) {
-  return (abcd[1] & abcd[2]) | (~abcd[1] & abcd[3]); }
-static uint32_t __MD5_f1(uint32_t abcd[]) {
-  return (abcd[3] & abcd[1]) | (~abcd[3] & abcd[2]); }
-static uint32_t __MD5_f2(uint32_t abcd[]) {
-  return  abcd[1] ^ abcd[2] ^ abcd[3]; }
-static uint32_t __MD5_f3(uint32_t abcd[]) {
-  return abcd[2] ^ (abcd[1] |~ abcd[3]);}
-
-uint32_t* __MD5_calcKs(uint32_t* k)
-{
-  double s, pwr;
-  int32_t i;
-
-  pwr = pow(2, 32);
-
-  for(i = 0; i < 64; i++) {
-    s = fabs(sin(1+i));
-    k[i] = (uint32_t)(s * pwr );
-  }
-
-  return k;
-}
-
-// MD5 - ROtate v Left by amt bits
-uint32_t __MD5_rol(uint32_t v, int16_t amt)
-{
-  uint32_t  msk1 = (1<<amt) -1;
-  return ((v>>(32-amt)) & msk1) | ((v<<amt) & ~msk1);
-}
-
-void __MD5_compute(uint32_t* md5, const uint8_t* data, size_t size)
-{
-  static uint32_t h0[4] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476 };
-  static __MD5_fn ff[] = { &__MD5_f0, &__MD5_f1, &__MD5_f2, &__MD5_f3 };
-  static int16_t M[] = { 1, 5, 3, 7 };
-  static int16_t O[] = { 0, 1, 5, 0 };
-  static int16_t rot0[] = { 7,12,17,22};
-  static int16_t rot1[] = { 5, 9,14,20};
-  static int16_t rot2[] = { 4,11,16,23};
-  static int16_t rot3[] = { 6,10,15,21};
-  static int16_t* rots[] = {rot0, rot1, rot2, rot3 };
-  static uint32_t kspace[64];
-  static uint32_t* k;
-
-  //static uint32_t h[4];
-  uint32_t abcd[4];
-  __MD5_fn fctn;
-  int16_t m, o, g;
-  uint32_t f;
-  int16_t* rotn;
-
-  union {
-    uint32_t w[16];
-    int8_t   b[64];
-  } mm;
-
-  int32_t os = 0;
-  int32_t grp, grps, q, p;
-  uint8_t* msg2;
-
-  if(k == nullptr) k = __MD5_calcKs(kspace);
-
-  for(q = 0; q < 4; q++)
-    md5[q] = h0[q];   // initialize
-
-  grps  = 1 + (size+8)/64;
-  msg2 = static_cast<uint8_t*>(malloc(64*grps));
-  memcpy(msg2, data, size);
-  msg2[size] = (uint8_t)0x80;
-  q = size + 1;
-  while(q < 64 * grps) {
-      msg2[q] = 0; q++;
-  }
-
-  __MD5_wb u;
-  u.w = 8 * size;
-  q -= 8;
-  memcpy(msg2+q, &u.w, 4);
-
-  for(grp = 0; grp < grps; grp++) {
-
-    memcpy(mm.b, msg2+os, 64);
-
-    for(q = 0;q < 4; q++) abcd[q] = md5[q];
-
-    for(p = 0; p<4; p++) {
-
-      fctn = ff[p];
-      rotn = rots[p];
-      m = M[p]; o= O[p];
-      for(q = 0; q < 16; q++) {
-        g = (m*q + o) % 16;
-        f = abcd[1] + __MD5_rol( abcd[0]+ fctn(abcd) + k[q+16*p] + mm.w[g], rotn[q%4]);
-
-        abcd[0] = abcd[3];
-        abcd[3] = abcd[2];
-        abcd[2] = abcd[1];
-        abcd[1] = f;
-      }
-    }
-
-    for(p = 0; p < 4; p++)
-        md5[p] += abcd[p];
-
-    os += 64;
-  }
-
-  if(msg2) free(msg2);
-}
-
-
-/// \brief Generate MD5 checksum
-///
-/// Generate checksum string using MD5 algorithm
-///
-/// \param[out] str   : String to be set as checksum.
-/// \param[in]  data  : Data to create checksum from.
-/// \param[in]  size  : Data size in bytes.
-///
-static inline void __MD5_gen_checksum(wstring& str, const void* data, size_t size)
-{
-  uint32_t md5[4];
-
-  __MD5_compute(md5, static_cast<const uint8_t*>(data), size);
-
-  str.clear();
-
-  wchar_t buff[16];
-
-  for(unsigned i = 0; i < 4; ++i) {
-    // we print swapped bytes, it seem to be the common display byte order
-    swprintf(buff, 16, L"%08lx", __bytes_swap(md5[i]));
-    str += buff;
-  }
-}
-
-
-/// \brief Compare MD5 checksum
-///
-/// Compare checksum string using MD5 algorithm
-///
-/// \param[out] hex   : MD5 hexadecimal representation string to be compared.
-/// \param[in]  data  : Data to create MD5 checksum to compare.
-/// \param[in]  size  : Data size in bytes.
-///
-static inline bool __MD5_cmp_checksum(const wstring& hex, const void* data, size_t size)
-{
-  uint32_t md5[4];
-
-  __MD5_compute(md5, static_cast<const uint8_t*>(data), size);
-
-  wchar_t buff[9] = {};
-
-  for(unsigned i = 0; i < 4; ++i) {
-    wcsncpy(buff, hex.c_str() + (i * 8), 8);
-    // swap bytes of result to get proper bytes order
-    if(md5[i] != __bytes_swap(wcstoul(buff, nullptr, 16)))
-      return false;
-  }
+  __bytes_to_hex_be(pstr, reinterpret_cast<const uint8_t*>(&xxh), 8);
 
   return true;
 }
@@ -583,58 +425,93 @@ static inline bool __MD5_cmp_checksum(const wstring& hex, const void* data, size
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_cmpXXHsum(const wstring& path, const wstring& str)
+{
+  uint64_t xxh_l, xxh_r;
+
+  __XXHash3_file_digest(&xxh_l, path);
+
+  xxh_r = wcstoull(str.data(), nullptr, 16);
+
+  return (xxh_l == xxh_r);
+}
+
+
+/// \brief Generate file MD5 digest (checksum)
+///
+/// Generate file digest (checksum) using MD5 digest algorithm
+///
+/// \param[out] md5   : 16 bytes buffer that receive digest result.
+/// \param[in]  path  : Path to file to generate digest from.
+///
+/// \return True if operation succeed, false if file open error.
+///
+static inline bool __MD5_file_digest(uint8_t* md5, const wstring& path)
+{
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE)
+    return false;
+
+  DWORD rb;
+  uint8_t data[4097];
+
+  MD5_CTX md5ct;
+  MD5_Init(&md5ct);
+
+  while(ReadFile(hFile, data, 4096, &rb, nullptr)) {
+
+    if(rb == 0)
+      break;
+
+    MD5_Update(&md5ct, data, rb);
+  }
+
+  CloseHandle(hFile);
+
+  MD5_Final(md5, &md5ct);
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_getMD5digest(uint8_t* md5, const wstring& path)
+{
+  return __MD5_file_digest(md5, path);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 wstring Om_getMD5sum(const wstring& path)
 {
-  wstring hex;
+  wstring str;
 
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  uint8_t md5[16] = {};
 
-  if(hFile == INVALID_HANDLE_VALUE)
-    return hex;
+  __MD5_file_digest(md5, path);
 
-  size_t size = GetFileSize(hFile, nullptr);
+  __bytes_to_hex_le(&str, md5, 16);
 
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return hex;
-
-  DWORD rb;
-  ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  __MD5_gen_checksum(hex, data, size);
-
-  Om_free(data);
-
-  return hex;
+  return str;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getMD5sum(wstring& hex, const wstring& path)
+bool Om_getMD5sum(wstring* pstr, const wstring& path)
 {
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  uint8_t md5[16] = {};
 
-  if(hFile == INVALID_HANDLE_VALUE)
-    return false;
+  bool result = __MD5_file_digest(md5, path);
 
-  size_t size = GetFileSize(hFile, nullptr);
-
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return false;
-
-  DWORD rb;
-  bool result = ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  __MD5_gen_checksum(hex, data, size);
-
-  Om_free(data);
+  __bytes_to_hex_le(pstr, md5, 16);
 
   return result;
 }
@@ -643,33 +520,21 @@ bool Om_getMD5sum(wstring& hex, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_cmpMD5sum(const wstring& path, const wstring& hex)
+bool Om_cmpMD5sum(const wstring& path, const wstring& str)
 {
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+  uint8_t md5[16] = {};
 
-  if(hFile == INVALID_HANDLE_VALUE)
-    return false;
+  bool result = __MD5_file_digest(md5, path);
 
-  size_t size = GetFileSize(hFile, nullptr);
+  wstring ctrl;
 
-  uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(size));
-  if(!data) return false;
+  __bytes_to_hex_le(&ctrl, md5, 16);
 
-  DWORD rb;
-  ReadFile(hFile, data, size, &rb, nullptr);
-
-  CloseHandle(hFile);
-
-  bool result = __MD5_cmp_checksum(hex, data, size);
-
-  Om_free(data);
-
-  return result;
+  return (str == ctrl);
 }
 
-static mt19937                             __rnd_generator(time(0));
-static uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
+
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

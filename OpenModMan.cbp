@@ -186,8 +186,8 @@
 			<Add directory="3rdparty/zlib" />
 			<Add directory="3rdparty/md4c" />
 			<Add directory="plugins" />
-			<Add directory="plugins/cwb" />
 			<Add directory="plugins/md4c-rtf" />
+			<Add directory="plugins/md5" />
 		</Compiler>
 		<ResourceCompiler>
 			<Add directory="include" />
@@ -672,6 +672,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="plugins/md4c-rtf/md4c-rtf.h" />
+		<Unit filename="plugins/md5/md5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="plugins/md5/md5.h" />
 		<Unit filename="res/resource.h" />
 		<Unit filename="res/resources.rc">
 			<Option compilerVar="WINDRES" />
