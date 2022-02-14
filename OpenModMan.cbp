@@ -620,6 +620,7 @@
 		<Unit filename="include/OmUi/OmUiMgr.h" />
 		<Unit filename="include/OmUi/OmUiMgrFoot.h" />
 		<Unit filename="include/OmUi/OmUiMgrFootDsc.h" />
+		<Unit filename="include/OmUi/OmUiMgrFootSrc.h" />
 		<Unit filename="include/OmUi/OmUiMgrMain.h" />
 		<Unit filename="include/OmUi/OmUiMgrMainLib.h" />
 		<Unit filename="include/OmUi/OmUiMgrMainNet.h" />
@@ -705,6 +706,7 @@
 		<Unit filename="src/OmUi/OmUiMgr.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrFoot.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrFootDsc.cpp" />
+		<Unit filename="src/OmUi/OmUiMgrFootSrc.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMain.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMainLib.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMainNet.cpp" />
