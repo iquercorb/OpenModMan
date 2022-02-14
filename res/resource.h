@@ -11,6 +11,7 @@
 #define IDD_MGR_MAIN_NET                        705
 #define IDD_MGR_MAIN_TST                        706
 #define IDD_MGR_FOOT_DSC                        707
+#define IDD_MGR_FOOT_SRC                        708
 #define IDD_ADD_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_ADD_BAT                             712

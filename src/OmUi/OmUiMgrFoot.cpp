@@ -23,6 +23,7 @@
 
 #include "OmUiMgr.h"
 #include "OmUiMgrFootDsc.h"
+#include "OmUiMgrFootSrc.h"
 
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -35,7 +36,8 @@ OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr)
 {
   // create child tab dialogs
-  this->_addTab(L"Package Description", new OmUiMgrFootDsc(hins)); // Description Tab
+  this->_addTab(L"Package Description", new OmUiMgrFootDsc(hins));
+  this->_addTab(L"Package Files", new OmUiMgrFootSrc(hins));
 }
 
 ///
@@ -77,6 +79,9 @@ void OmUiMgrFoot::freeze(bool enable)
       case IDD_MGR_FOOT_DSC:
         static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->freeze(enable);
         break;
+      case IDD_MGR_FOOT_SRC:
+        static_cast<OmUiMgrFootSrc*>(this->_tabDial[i])->freeze(enable);
+        break;
       }
       break;
     }
@@ -102,6 +107,9 @@ void OmUiMgrFoot::safemode(bool enable)
       case IDD_MGR_FOOT_DSC:
         static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->safemode(enable);
         break;
+      case IDD_MGR_FOOT_SRC:
+        static_cast<OmUiMgrFootSrc*>(this->_tabDial[i])->safemode(enable);
+        break;
       }
       break;
     }
@@ -112,27 +120,30 @@ void OmUiMgrFoot::safemode(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFoot::setPreview(OmPackage* pPkg)
+void OmUiMgrFoot::selectItem(OmPackage* pPkg)
 {
   static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pPkg);
+  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->setDetails(pPkg);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFoot::setPreview(OmRemote* pRmt)
+void OmUiMgrFoot::selectItem(OmRemote* pRmt)
 {
   static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pRmt);
+  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->setDetails(pRmt);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFoot::clearPreview()
+void OmUiMgrFoot::clearItem()
 {
   static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->clearPreview();
+  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->clearDetails();
 }
 
 
@@ -185,9 +196,12 @@ void OmUiMgrFoot::_onInit()
       tcPage.pszText = (LPWSTR)this->_tabName[i].c_str();
       this->msgItem(IDC_TC_MAIN, TCM_INSERTITEMW, i, reinterpret_cast<LPARAM>(&tcPage));
 
-      this->_tabDial[i]->modeless(false);
+      // show dialog to force init
+      this->_tabDial[i]->modeless(true);
       // set white background to fit tab background
       EnableThemeDialogTexture(this->_tabDial[i]->hwnd(), ETDT_ENABLETAB);
+      // hide dialog
+      this->_tabDial[i]->hide();
     }
   }
 

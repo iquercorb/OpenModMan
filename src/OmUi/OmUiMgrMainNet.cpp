@@ -1467,7 +1467,7 @@ void OmUiMgrMainNet::_onLvRmtSel()
     this->_pUiMgr->setPopupItem(1, 6, MF_GRAYED);
 
     // show nothing in footer frame
-    this->_pUiMgr->pUiMgrFoot()->clearPreview();
+    this->_pUiMgr->pUiMgrFoot()->clearItem();
 
     // return now
     return;
@@ -1519,7 +1519,7 @@ void OmUiMgrMainNet::_onLvRmtSel()
       pRmt = pLoc->rmtGet(lv_sel);
 
       // show packages info in footer frame
-      this->_pUiMgr->pUiMgrFoot()->setPreview(pRmt);
+      this->_pUiMgr->pUiMgrFoot()->selectItem(pRmt);
 
       // get remote package states
       bool can_dnld = pRmt->isState(RMT_STATE_NEW) && !pRmt->isState(RMT_STATE_DNL);
@@ -1549,7 +1549,7 @@ void OmUiMgrMainNet::_onLvRmtSel()
     } else {
 
       // reset footer frame
-      this->_pUiMgr->pUiMgrFoot()->clearPreview();
+      this->_pUiMgr->pUiMgrFoot()->clearItem();
     }
   }
 }

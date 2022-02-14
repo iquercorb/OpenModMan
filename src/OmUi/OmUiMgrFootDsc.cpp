@@ -96,11 +96,8 @@ void OmUiMgrFootDsc::safemode(bool enable)
 ///
 void OmUiMgrFootDsc::setPreview(OmPackage* pPkg)
 {
-  this->_pPkg = pPkg;
-  this->_pRmt = nullptr;
-
-  if(this->_pPkg) {
-    this->_showPreview(this->_pPkg->name(), this->_pPkg->version(), this->_pPkg->image(), this->_pPkg->desc());
+  if(pPkg) {
+    this->_showPreview(pPkg->name(), pPkg->version(), pPkg->image(), pPkg->desc());
   }
 }
 
@@ -110,11 +107,8 @@ void OmUiMgrFootDsc::setPreview(OmPackage* pPkg)
 ///
 void OmUiMgrFootDsc::setPreview(OmRemote* pRmt)
 {
-  this->_pRmt = pRmt;
-  this->_pPkg = nullptr;
-
-  if(this->_pRmt) {
-    this->_showPreview(this->_pRmt->name(), this->_pRmt->version(), this->_pRmt->image(), this->_pRmt->desc());
+  if(pRmt) {
+    this->_showPreview(pRmt->name(), pRmt->version(), pRmt->image(), pRmt->desc());
   }
 }
 

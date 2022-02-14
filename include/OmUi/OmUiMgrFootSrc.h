@@ -14,22 +14,20 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIMGRFOOTDSC_H
-#define OMUIMGRFOOTDSC_H
+#ifndef OMUIMGRFOOTSRC_H
+#define OMUIMGRFOOTSRC_H
 
 #include "OmDialog.h"
 
 class OmPackage;
 class OmRemote;
-class OmVersion;
-class OmImage;
 
 /// \brief Main window - Description Tab child
 ///
 /// OmDialog class derived for Package Description tab child dialog window of
 /// the Main Window Foot frame.
 ///
-class OmUiMgrFootDsc : public OmDialog
+class OmUiMgrFootSrc : public OmDialog
 {
   public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -39,13 +37,13 @@ class OmUiMgrFootDsc : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiMgrFootDsc(HINSTANCE hins);
+    OmUiMgrFootSrc(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiMgrFootDsc();
+    ~OmUiMgrFootSrc();
 
     /// \brief Get resource id.
     ///
@@ -80,47 +78,15 @@ class OmUiMgrFootDsc : public OmDialog
     ///
     void safemode(bool enable);
 
-    /// \brief Set package preview
-    ///
-    /// Defines package preview informations to show
-    ///
-    /// \param[in]  pPkg    : Pointer to package to view.
-    ///
-    void setPreview(OmPackage* pPkg);
+    void setDetails(OmPackage* pPkg);
 
-    /// \brief Set package preview
-    ///
-    /// Defines package preview informations to show
-    ///
-    /// \param[in]  pRmt    : Pointer to remote package to view.
-    ///
-    void setPreview(OmRemote* pRmt);
+    void setDetails(OmRemote* pRmt);
 
-    /// \brief Clear package preview
-    ///
-    /// Clears package preview informations and hide controls
-    ///
-    void clearPreview();
+    void clearDetails();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMgr*            _pUiMgr;
-
-    uint8_t*            _rtfData;
-
-    size_t              _rtfSize;
-
-    size_t              _rtfRead;
-
-    size_t              _rtfWrit;
-
-    static void         _md2Rtf_cb(const uint8_t*, unsigned, void*);
-
-    static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
-
-    bool                _rawDesc;
-
-    void                _showPreview(const wstring&, const OmVersion&, const OmImage&, const wstring&);
 
     void                _onInit();
 
@@ -135,4 +101,4 @@ class OmUiMgrFootDsc : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIMGRFOOTDSC_H
+#endif // OMUIMGRFOOTSRC_H

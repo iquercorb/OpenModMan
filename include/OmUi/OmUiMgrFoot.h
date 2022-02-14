@@ -77,27 +77,27 @@ class OmUiMgrFoot : public OmDialog
     ///
     void safemode(bool enable);
 
-    /// \brief Set package preview
+    /// \brief Set selected item
     ///
-    /// Defines package preview informations to show
+    /// Defines Package as selected item
     ///
-    /// \param[in]  pPkg    : Pointer to package to view.
+    /// \param[in]  pPkg    : Pointer to package.
     ///
-    void setPreview(OmPackage* pPkg);
+    void selectItem(OmPackage* pPkg);
 
-    /// \brief Set package preview
+    /// \brief Set selected item
     ///
-    /// Defines package preview informations to show
+    /// Defines Remote Package as selected item
     ///
-    /// \param[in]  pRmt    : Pointer to remote package to view.
+    /// \param[in]  pRmt    : Pointer to Remote Package.
     ///
-    void setPreview(OmRemote* pRmt);
+    void selectItem(OmRemote* pRmt);
 
-    /// \brief Clear package preview
+    /// \brief Clear selected item
     ///
-    /// Clears package preview informations and hide controls
+    /// Clears current selected item for all child tabs
     ///
-    void clearPreview();
+    void clearItem();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

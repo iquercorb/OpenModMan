@@ -648,6 +648,9 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       break; // case WM_ACTIVATE:
 
     case WM_INITDIALOG:
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_INITDIALOG\n";
+      #endif
       dialog->_init = true;
       return 1; // case WM_INITDIALOG:
 
@@ -741,6 +744,10 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       return 0;
 
     }
+
+    #ifdef DEBUG
+    //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : "<< msg <<"\n";
+    #endif
 
     return dialog->_onMsg(msg, wParam, lParam);
   }
