@@ -367,7 +367,7 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const wstring& path)
 ///
 uint64_t Om_getXXHash3(const void* data, size_t size)
 {
-  return static_cast<uint64_t>(XXH3_64bits(data, size)); // XXH64_hash_t
+  return XXH3_64bits(data, size);
 }
 
 
@@ -376,7 +376,7 @@ uint64_t Om_getXXHash3(const void* data, size_t size)
 ///
 uint64_t Om_getXXHash3(const wstring& str)
 {
-  return static_cast<uint64_t>(XXH3_64bits((unsigned char*)str.data(), str.size()*sizeof(wchar_t))); // XXH64_hash_t
+  return XXH3_64bits(str.data(), str.size() * sizeof(wchar_t));
 }
 
 
@@ -396,11 +396,11 @@ wstring Om_getXXHsum(const wstring& path)
 {
   uint64_t xxh;
 
-  __XXHash3_file_digest(&xxh, path);
-
   wstring str;
 
-  __bytes_to_hex_be(&str, reinterpret_cast<const uint8_t*>(&xxh), 8);
+  if(__XXHash3_file_digest(&xxh, path)) {
+    __bytes_to_hex_be(&str, reinterpret_cast<const uint8_t*>(&xxh), 8);
+  }
 
   return str;
 }
@@ -429,7 +429,8 @@ bool Om_cmpXXHsum(const wstring& path, const wstring& str)
 {
   uint64_t xxh_l, xxh_r;
 
-  __XXHash3_file_digest(&xxh_l, path);
+  if(!__XXHash3_file_digest(&xxh_l, path))
+    return false;
 
   xxh_r = wcstoull(str.data(), nullptr, 16);
 
@@ -490,13 +491,13 @@ bool Om_getMD5digest(uint8_t* md5, const wstring& path)
 ///
 wstring Om_getMD5sum(const wstring& path)
 {
-  wstring str;
-
   uint8_t md5[16] = {};
 
-  __MD5_file_digest(md5, path);
+  wstring str;
 
-  __bytes_to_hex_le(&str, md5, 16);
+  if(__MD5_file_digest(md5, path)) {
+    __bytes_to_hex_le(&str, md5, 16);
+  }
 
   return str;
 }
@@ -509,11 +510,12 @@ bool Om_getMD5sum(wstring* pstr, const wstring& path)
 {
   uint8_t md5[16] = {};
 
-  bool result = __MD5_file_digest(md5, path);
+  if(!__MD5_file_digest(md5, path))
+    return false;
 
   __bytes_to_hex_le(pstr, md5, 16);
 
-  return result;
+  return true;
 }
 
 
@@ -524,7 +526,8 @@ bool Om_cmpMD5sum(const wstring& path, const wstring& str)
 {
   uint8_t md5[16] = {};
 
-  bool result = __MD5_file_digest(md5, path);
+  if(!__MD5_file_digest(md5, path))
+    return false;
 
   wstring ctrl;
 

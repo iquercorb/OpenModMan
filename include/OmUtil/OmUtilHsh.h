@@ -128,7 +128,7 @@ wstring Om_getXXHsum(const wstring& path);
 /// \param[in]  pstr    : String to set as checksum string.
 /// \param[in]  path    : Path to file to generate checksum.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return True if operation succeed, false if open file error.
 ///
 bool Om_getXXHsum(wstring* pstr, const wstring& path);
 
@@ -172,7 +172,7 @@ wstring Om_getMD5sum(const wstring& path);
 /// \param[in]  pstr    : Pointer to string that receive MD5 checksum string.
 /// \param[in]  path    : Path to file to generate checksum.
 ///
-/// \return True if operation succeed, false otherwise
+/// \return True if operation succeed, false if open file error.
 ///
 bool Om_getMD5sum(wstring* pstr, const wstring& path);
 
