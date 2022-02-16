@@ -10,7 +10,7 @@ Open Mod Manager also use third-party softwares as part of his implementation:
 
 * * *
 
-pugixml parser - version 1.10
+pugixml parser - version 1.12.1
 
 Copyright (c) 2006-2019 Arseny Kapoulkine
 

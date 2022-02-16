@@ -66,6 +66,7 @@ Open Mod Mananager currently implements the following key features:
  - Fix missing dialogs for package download errors.
  - Fix bad encoding of loaded/saved description text in Package Editor.
  - Update embedded XXhash algorithm to the 0.8.1 version.
+ - Update embedded Pugixml library to the 1.12.1 version.
  - New Uninstall tree - uninstall with dependencies - feature.
  - New MD5 (md5sum) alogirthm support for repository files checksum.
  - New Category field for Packages.
