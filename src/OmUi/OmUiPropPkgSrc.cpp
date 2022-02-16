@@ -70,7 +70,7 @@ void OmUiPropPkgSrc::_onInit()
   this->_createTooltip(IDC_EC_READ1,  L"Package identity, the raw filename without extension");
   this->_createTooltip(IDC_EC_READ2,  L"Package core (or master) name, raw filename without version");
   this->_createTooltip(IDC_EC_READ3,  L"Package version number");
-  this->_createTooltip(IDC_EC_READ4,  L"Package filename hash value, an unique file/folder identifer");
+  this->_createTooltip(IDC_EC_READ4,  L"Package modification category as defined by creator");
   this->_createTooltip(IDC_EC_READ5,  L"Package source type, either zip archive or subfolder (developer mode)");
   this->_createTooltip(IDC_EC_READ6,  L"Package source location path");
   this->_createTooltip(IDC_EC_READ7,  L"List of package dependencies");
@@ -86,8 +86,12 @@ void OmUiPropPkgSrc::_onInit()
   this->setItemText(IDC_EC_READ2, pPkg->core());
   // Parsed Version
   this->setItemText(IDC_EC_READ3, pPkg->version().asString());
-  // Filename hash
-  this->setItemText(IDC_EC_READ4, Om_uint64ToStr(pPkg->hash()));
+  // Package Category
+  if(pPkg->category().size()) {
+    this->setItemText(IDC_EC_READ4, pPkg->category());
+  } else {
+    this->setItemText(IDC_EC_READ4, L"<undefined>");
+  }
 
   if(pPkg->hasSrc()) {
 

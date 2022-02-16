@@ -78,8 +78,8 @@ void OmUiPropRmtDet::_onInit()
   this->_createTooltip(IDC_EC_READ7,  L"Package file MD5 checksum");
   this->_createTooltip(IDC_EC_READ8,  L"List of package that this one supersedes as newer version");
   this->_createTooltip(IDC_EC_READ9,  L"List of package dependencies");
-  this->_createTooltip(IDC_SB_SNAP,    L"Package snapshot image");
-  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
+  this->_createTooltip(IDC_SB_SNAP,   L"Package snapshot image");
+  this->_createTooltip(IDC_EC_DESC,   L"Package description text");
 
   OmRemote* pRmt = static_cast<OmUiPropRmt*>(this->_parent)->rmtCur();
   if(pRmt == nullptr) return;
@@ -92,8 +92,12 @@ void OmUiPropRmtDet::_onInit()
   this->setItemText(IDC_EC_READ2, pRmt->core());
   // Parsed Version
   this->setItemText(IDC_EC_READ3, pRmt->version().asString());
-  // Computed Hash
-  this->setItemText(IDC_EC_READ4, Om_uint64ToStr(pRmt->hash()));
+  // Package Category
+  if(pRmt->category().size()) {
+    this->setItemText(IDC_EC_READ4, pRmt->category());
+  } else {
+    this->setItemText(IDC_EC_READ4, L"<undefined>");
+  }
 
   // Urls
   this->enableItem(IDC_EC_READ5, true);
