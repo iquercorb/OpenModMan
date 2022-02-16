@@ -67,13 +67,22 @@ void Om_uint64ToStr(wstring* str, uint64_t num);
 /// Returns the 64 bits unsigned integer value of the given hexadecimal number
 /// string representation.
 ///
-/// \param[in]  str     : Hexadecimal string represented number.
+/// \param[in]  str     : Hexadecimal number string to parse.
 ///
 /// \return Converted 64 bits integer value.
 ///
-inline uint64_t Om_strToUint64(const wstring& str) {
-  return wcstoull(str.data(), nullptr, 16);
-}
+uint64_t Om_strToUint64(const wstring& str);
+
+/// \brief Get 64 bits integer from string.
+///
+/// Returns the 64 bits unsigned integer value of the given
+/// hexadecimal number string representation.
+///
+/// \param[in]  str     : Hexadecimal number string to parse.
+///
+/// \return Converted 64 bits integer value.
+///
+uint64_t Om_strToUint64(const wchar_t* str);
 
 /// \brief Compute XXH3 Hash.
 ///

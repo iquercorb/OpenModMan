@@ -26,6 +26,9 @@
 static mt19937                             __rnd_generator(time(0));
 static uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
 
+#define READ_BUF_SIZE 4096
+static uint8_t __read_buf[READ_BUF_SIZE];
+
 /// \brief Swap bytes
 ///
 /// Swap bytes order in 32 bits value, to convert endianes.
@@ -90,6 +93,42 @@ static inline void __bytes_to_hex_le(wstring* dest, const uint8_t* data, size_t 
   }
 }
 
+/// \brief big-endian hexadecimal to uint64
+///
+/// Translate the given hexadecimal number string to 64 bits
+/// unsigned integer value.
+///
+/// \param[in] str  : Hexadecimal number null-terminated string to be parsed.
+///
+/// \return 64 bits unsigned integer value
+///
+static inline uint64_t __hex_to_uint64(const wchar_t* str)
+{
+  uint64_t u64 = 0;
+
+  unsigned char c;
+
+  while(*str != '\0') {
+
+    c = *str++;
+
+    if(c >= '0' && c <= '9') {
+      c -= '0';
+    } else if(c >= 'a' && c <= 'z') {
+      c -= ('a' - 10);
+    } else if(c >= 'A' && c <= 'Z') {
+      c -= ('A' - 10);
+    } else {
+      break;
+    }
+
+    u64 *= 16;
+    u64 += c;
+  }
+
+  return u64;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -100,7 +139,6 @@ void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size)
 }
 
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -109,6 +147,21 @@ void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size)
   __bytes_to_hex_le(dest, data, size);
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint64_t Om_strToUint64(const wstring& str) {
+  return __hex_to_uint64(str.data());
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint64_t Om_strToUint64(const wchar_t* str) {
+  return __hex_to_uint64(str);
+}
 
 
 ///
@@ -341,17 +394,16 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const wstring& path)
     return false;
 
   DWORD rb;
-  uint8_t data[4097];
 
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  while(ReadFile(hFile, data, 4096, &rb, nullptr)) {
+  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
-    XXH3_64bits_update(&xxhst, data, rb);
+    XXH3_64bits_update(&xxhst, __read_buf, rb);
   }
 
   CloseHandle(hFile);
@@ -432,7 +484,7 @@ bool Om_cmpXXHsum(const wstring& path, const wstring& str)
   if(!__XXHash3_file_digest(&xxh_l, path))
     return false;
 
-  xxh_r = wcstoull(str.data(), nullptr, 16);
+  xxh_r = __hex_to_uint64(str.data());
 
   return (xxh_l == xxh_r);
 }
@@ -456,17 +508,16 @@ static inline bool __MD5_file_digest(uint8_t* md5, const wstring& path)
     return false;
 
   DWORD rb;
-  uint8_t data[4097];
 
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  while(ReadFile(hFile, data, 4096, &rb, nullptr)) {
+  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
-    MD5_Update(&md5ct, data, rb);
+    MD5_Update(&md5ct, __read_buf, rb);
   }
 
   CloseHandle(hFile);
