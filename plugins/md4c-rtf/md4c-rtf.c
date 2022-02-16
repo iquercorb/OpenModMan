@@ -256,7 +256,6 @@ render_unicode(MD_RTF* r, unsigned u)
   MD_RTF_CHAR str_ucp[16];
   RENDER_VERBATIM(r, "\\u");
   RENDER_VERBATIM(r, ultostr(u, str_ucp, 10));
-  printf("render_unicode : \\u%u\n", u);
 }
 
 
@@ -266,7 +265,6 @@ render_cp1252(MD_RTF* r, unsigned u)
   MD_RTF_CHAR str_acp[16];
   RENDER_VERBATIM(r, "\\'");
   RENDER_VERBATIM(r, ultostr(u, str_acp, 16));
-  printf("render_cp1252 : \\'%x\n", u);
 }
 
 static unsigned
