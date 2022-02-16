@@ -40,6 +40,16 @@ enum OmRmtState : unsigned {
   RMT_STATE_ERR = 0x20,    ///< Remote package download error
 };
 
+/// \brief Remote package checksum type
+///
+/// Remote package checksum hash type enumerator.
+///
+enum OmRmtHash : unsigned {
+  RMT_CHECKSUM_NUL = 0,
+  RMT_CHECKSUM_XXH = 1,
+  RMT_CHECKSUM_MD5 = 2
+};
+
 /// \brief Abstract remote package.
 ///
 /// This class provide an abstracted interface for a remote package.
@@ -149,7 +159,17 @@ class OmRemote
     /// \return File checksum string.
     ///
     const wstring& checksum() const {
-      return _checksum;
+      return _csum;
+    }
+
+    /// \brief Get file checksum type.
+    ///
+    /// Returns algorithm used to compute remote package file checksum.
+    ///
+    /// \return Checksum hash algorithm.
+    ///
+    OmRmtHash checksumType() const {
+      return _csumType;
     }
 
     /// \brief Get state.
@@ -406,9 +426,9 @@ class OmRemote
 
     size_t              _bytes;
 
-    wstring             _checksum;
+    wstring             _csum;
 
-    bool                _usemd5;
+    OmRmtHash           _csumType;
 
     unsigned            _state;
 

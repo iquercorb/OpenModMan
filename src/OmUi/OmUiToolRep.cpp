@@ -282,7 +282,7 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.remChild(L"description");
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
-    xml_rmt.setAttr(L"md5sum",Om_getMD5sum(path));
+    xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
     xml_rmt.setAttr(L"category", pkg.category());
 
   } else {
@@ -295,7 +295,7 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.setAttr(L"ident", pkg.ident());
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
     xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
-    xml_rmt.setAttr(L"md5sum", Om_getMD5sum(path));
+    xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
     xml_rmt.setAttr(L"category", pkg.category());
 
     // Add package to ListBox
@@ -415,7 +415,23 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   HBITMAP hBm_new, hBm_old;
 
   this->setItemText(IDC_EC_READ1, this->_rmtCur.attrAsString(L"file"));
-  this->setItemText(IDC_EC_READ2, this->_rmtCur.attrAsString(L"md5sum"));
+
+  if(this->_rmtCur.hasAttr(L"checksum")) { //< legacy, deprecated
+
+    this->setItemText(IDC_EC_READ2, this->_rmtCur.attrAsString(L"checksum"));
+    this->setItemText(IDC_SC_LBL10, L"Checksum (xxh) :");
+
+  } else if(this->_rmtCur.hasAttr(L"xxhsum")) {
+
+    this->setItemText(IDC_EC_READ2, this->_rmtCur.attrAsString(L"xxhsum"));
+    this->setItemText(IDC_SC_LBL10, L"Checksum (xxh) :");
+
+  } else if(this->_rmtCur.hasAttr(L"md5sum")) {
+
+    this->setItemText(IDC_EC_READ2, this->_rmtCur.attrAsString(L"md5sum"));
+    this->setItemText(IDC_SC_LBL10, L"Checksum (md5) :");
+  }
+
   this->setItemText(IDC_EC_READ4, this->_rmtCur.attrAsString(L"category"));
 
   // allow custom URL CheckBox
@@ -1360,7 +1376,7 @@ void OmUiToolRep::_onResize()
   // Filename Label & EditText
   this->_setItemPos(IDC_SC_LBL06, half_w+10, 10, 54, 9);
   this->_setItemPos(IDC_EC_READ1, half_w+65, 10, half_w-75, 11);
-  // Md5sum Label & EditText
+  // Checksum Label & EditText
   this->_setItemPos(IDC_SC_LBL10, half_w+10, 25, 54, 9);
   this->_setItemPos(IDC_EC_READ2, half_w+65, 25, half_w-75, 11);
   // Category Label & EditText

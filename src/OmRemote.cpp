@@ -44,7 +44,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRemote::OmRemote() :
-  _location(nullptr),_url(),_file(),_bytes(0),_checksum(),_usemd5(false),
+  _location(nullptr),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),
   _state(0),_ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),
   _image(),_error(),_downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),
   _downl_user_download(nullptr),_downl_user_ptr(nullptr),_downl_hth(nullptr),
@@ -58,7 +58,7 @@ OmRemote::OmRemote() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRemote::OmRemote(OmLocation* pLoc) :
-  _location(pLoc),_url(),_file(),_bytes(0),_checksum(),_usemd5(false),_state(0),
+  _location(pLoc),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),_state(0),
   _ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),_image(),_error(),
   _downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),_downl_user_download(nullptr),
   _downl_user_ptr(nullptr),_downl_hth(nullptr),_downl_percent(0)
@@ -117,12 +117,21 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
   // get file informations
   this->_file = entry.attrAsString(L"file");
   this->_bytes = entry.attrAsInt(L"bytes");
-  if(entry.hasAttr(L"checksum")) {
-    this->_usemd5 = false;
-    this->_checksum = entry.attrAsString(L"checksum");
-  } else {
-    this->_usemd5 = true;
-    this->_checksum = entry.attrAsString(L"md5sum");
+
+  if(entry.hasAttr(L"checksum")) { //< legacy, deprecated
+
+    this->_csumType = RMT_CHECKSUM_XXH;
+    this->_csum = entry.attrAsString(L"checksum");
+
+  } else if(entry.hasAttr(L"xxhsum")) {
+
+    this->_csumType = RMT_CHECKSUM_XXH;
+    this->_csum = entry.attrAsString(L"xxhsum");
+
+  } else if(entry.hasAttr(L"md5sum")) {
+
+    this->_csumType = RMT_CHECKSUM_MD5;
+    this->_csum = entry.attrAsString(L"md5sum");
   }
 
   // get packages informations
@@ -348,10 +357,23 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   fclose(self->_downl_file);
 
   if(exitCode == 0) {
+
     // compare checksum
-    bool mach = (self->_usemd5) ? Om_cmpMD5sum(self->_downl_temp, self->_checksum) :
-                                  Om_cmpXXHsum(self->_downl_temp, self->_checksum);
-    if(mach) {
+    bool match;
+
+    switch(self->_csumType)
+    {
+    case RMT_CHECKSUM_XXH:
+      match = Om_cmpXXHsum(self->_downl_temp, self->_csum);
+      break;
+    case RMT_CHECKSUM_MD5:
+      match = Om_cmpMD5sum(self->_downl_temp, self->_csum);
+      break;
+    default: //< TODO: improve handle of this exception
+      match = false;
+    }
+
+    if(match) {
       int result = Om_fileMove(self->_downl_temp, self->_downl_path);
       if(result == 0) {
         self->_state &= ~RMT_STATE_NEW; //< now in library

@@ -109,6 +109,19 @@ void OmUiPropRmtDet::_onInit()
   this->setItemText(IDC_EC_READ6, item_str);
 
   // Checksum
+  switch(pRmt->checksumType())
+  {
+  case RMT_CHECKSUM_XXH:
+    this->setItemText(IDC_SC_LBL07, L"Checksum (xxh) :");
+    break;
+  case RMT_CHECKSUM_MD5:
+    this->setItemText(IDC_SC_LBL07, L"Checksum (md5) :");
+    break;
+  default:
+    this->setItemText(IDC_SC_LBL07, L"Checksum :");
+    break;
+  }
+
   this->setItemText(IDC_EC_READ7, pRmt->checksum());
 
   // Supersedes
