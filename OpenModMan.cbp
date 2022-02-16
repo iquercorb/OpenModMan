@@ -604,7 +604,6 @@
 		<Unit filename="include/OmDialog.h" />
 		<Unit filename="include/OmDialogProp.h" />
 		<Unit filename="include/OmDialogWiz.h" />
-		<Unit filename="include/OmGlobal.h" />
 		<Unit filename="include/OmImage.h" />
 		<Unit filename="include/OmLocation.h" />
 		<Unit filename="include/OmManager.h" />
@@ -627,6 +626,7 @@
 		<Unit filename="include/OmUi/OmUiMgrMainTst.h" />
 		<Unit filename="include/OmUi/OmUiProgress.h" />
 		<Unit filename="include/OmUi/OmUiPropBat.h" />
+		<Unit filename="include/OmUi/OmUiPropBatLst.h" />
 		<Unit filename="include/OmUi/OmUiPropBatStg.h" />
 		<Unit filename="include/OmUi/OmUiPropCtx.h" />
 		<Unit filename="include/OmUi/OmUiPropCtxBat.h" />
@@ -690,7 +690,6 @@
 		<Unit filename="src/OmDialog.cpp" />
 		<Unit filename="src/OmDialogProp.cpp" />
 		<Unit filename="src/OmDialogWiz.cpp" />
-		<Unit filename="src/OmGlobal.cpp" />
 		<Unit filename="src/OmImage.cpp" />
 		<Unit filename="src/OmLocation.cpp" />
 		<Unit filename="src/OmManager.cpp" />
@@ -713,6 +712,7 @@
 		<Unit filename="src/OmUi/OmUiMgrMainTst.cpp" />
 		<Unit filename="src/OmUi/OmUiProgress.cpp" />
 		<Unit filename="src/OmUi/OmUiPropBat.cpp" />
+		<Unit filename="src/OmUi/OmUiPropBatLst.cpp" />
 		<Unit filename="src/OmUi/OmUiPropBatStg.cpp" />
 		<Unit filename="src/OmUi/OmUiPropCtx.cpp" />
 		<Unit filename="src/OmUi/OmUiPropCtxBat.cpp" />

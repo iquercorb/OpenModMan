@@ -2,399 +2,24 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="64-bit Debug" />
-	<File name="include\OmRepository.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiMgrFoot.cpp" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="705" topLine="0" />
+			<Cursor1 position="1333" topLine="10" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiAddBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropPkgSrc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="17928" topLine="548" />
+			<Cursor1 position="3051" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropLocLib.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="14040" topLine="182" />
+			<Cursor1 position="901" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="include\OmManager.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="res\resources.rc" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4408" topLine="136" />
-		</Cursor>
-	</File>
-	<File name="setup\setup-x86.nsi" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6508" topLine="48" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiMgrMainLib.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="64217" topLine="2091" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilZip.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1753" topLine="6" />
-		</Cursor>
-	</File>
-	<File name="plugins\md4c-rtf\md4c-rtf.c" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="5935" topLine="159" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilDlg.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="812" topLine="4" />
-		</Cursor>
-	</File>
-	<File name="include\OmBaseWin.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="767" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropLocBck.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4127" topLine="252" />
-		</Cursor>
-	</File>
-	<File name="include\OmSocket.h" open="0" top="0" tabpos="20" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="768" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmContext.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2206" topLine="42" />
-		</Cursor>
-	</File>
-	<File name="include\OmConfig.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="751" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiHelpAbt.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2934" topLine="88" />
-		</Cursor>
-	</File>
-	<File name="src\OmConfig.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1116" topLine="12" />
-		</Cursor>
-	</File>
-	<File name="3rdparty\jpeg\jdapimin.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3152" topLine="68" />
-		</Cursor>
-	</File>
-	<File name="3rdparty\jpeg\jmemnobs.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="710" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="main.cpp" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2252" topLine="15" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="707" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="res\resource.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6225" topLine="102" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilDlg.cpp" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6556" topLine="151" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilZip.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="841" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmGlobal.cpp" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="732" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="include\OmVersion.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="705" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropLocNet.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3997" topLine="134" />
-		</Cursor>
-	</File>
-	<File name="setup\setup-x64.nsi" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4978" topLine="138" />
-		</Cursor>
-	</File>
-	<File name="src\OmSocket.cpp" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4307" topLine="102" />
-		</Cursor>
-	</File>
-	<File name="src\OmPackage.cpp" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="38144" topLine="1101" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilWin.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="827" topLine="6" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiWizCtx.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4158" topLine="86" />
-		</Cursor>
-	</File>
-	<File name="include\OmContext.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="753" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmManager.cpp" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="17848" topLine="635" />
-		</Cursor>
-	</File>
-	<File name="include\OmXmlDoc.h" open="0" top="0" tabpos="20" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2185" topLine="47" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropPkgSrc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6495" topLine="158" />
-		</Cursor>
-	</File>
-	<File name="include\OmDialog.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4819" topLine="57" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropLocStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6143" topLine="177" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiMgr.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="20017" topLine="657" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilB64.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="796" topLine="3" />
-		</Cursor>
-	</File>
-	<File name="include\Ui\OmUiMgrMainTst.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2075" topLine="41" />
-		</Cursor>
-	</File>
-	<File name="include\OmDialogWiz.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="755" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="899" topLine="153" />
-		</Cursor>
-	</File>
-	<File name="include\OmLocation.h" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="868" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiMgrMain.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1004" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmRepository.cpp" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2717" topLine="71" />
-		</Cursor>
-	</File>
-	<File name="include\OmBase.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="801" topLine="59" />
-		</Cursor>
-	</File>
-	<File name="src\OmZipFile.cpp" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2006" topLine="58" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiAddLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="8726" topLine="256" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilSys.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1403" topLine="1" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilStr.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4822" topLine="109" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilB64.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="785" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilFs.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="22050" topLine="645" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiToolRep.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="16036" topLine="511" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilImg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="58286" topLine="852" />
-		</Cursor>
-	</File>
-	<File name="3rdparty\jpeg\jdmaster.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="12151" topLine="287" />
-		</Cursor>
-	</File>
-	<File name="LICENSE.TXT" open="0" top="0" tabpos="28" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="33093" topLine="577" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiMgrFoot.cpp" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4104" topLine="110" />
-		</Cursor>
-	</File>
-	<File name="include\Ui\OmUiMgr.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4945" topLine="167" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropMan.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="957" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="include\OmDialogProp.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="802" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmDialogProp.cpp" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4698" topLine="133" />
-		</Cursor>
-	</File>
-	<File name="setup\OpenModMan.nsh" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1360" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilHsh.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4491" topLine="65" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiWizCtxBeg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="924" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="include\OmBaseUi.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="830" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmDialogWiz.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4283" topLine="113" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropPkgBck.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="5961" topLine="152" />
-		</Cursor>
-	</File>
-	<File name="CREDITS.TXT" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="804" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiMgrMainNet.cpp" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="54915" topLine="168" />
-		</Cursor>
-	</File>
-	<File name="include\OmImage.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="747" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiHelpLog.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2683" topLine="53" />
-		</Cursor>
-	</File>
-	<File name="include\Ui\OmUiMgrMain.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2959" topLine="64" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilWin.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="814" topLine="54" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilStr.cpp" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="10129" topLine="287" />
-		</Cursor>
-	</File>
-	<File name="src\Util\OmUtilHsh.cpp" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="12493" topLine="264" />
-		</Cursor>
-	</File>
-	<File name="include\OmBatch.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="768" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\OmRemote.cpp" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="6646" topLine="194" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="989" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiProgress.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4531" topLine="145" />
+			<Cursor1 position="38232" topLine="693" />
 		</Cursor>
 	</File>
 	<File name="include\OmBaseApp.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -402,64 +27,114 @@
 			<Cursor1 position="1991" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\OmXmlDoc.cpp" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropLocStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2454" topLine="87" />
+			<Cursor1 position="927" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropCtxStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmRepository.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4665" topLine="0" />
+			<Cursor1 position="705" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="3rdparty\jpeg\jdapistd.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="plugins\md4c-rtf\md4c-rtf.c" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1457" topLine="5" />
+			<Cursor1 position="5935" topLine="159" />
 		</Cursor>
 	</File>
-	<File name="include\Ui\OmUiMgrMainLib.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmUtil\OmUtilHsh.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6383" topLine="141" />
+			<Cursor1 position="2665" topLine="58" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiWizCtxCfg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="3rdparty\jpeg\jdapimin.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4997" topLine="0" />
+			<Cursor1 position="3152" topLine="68" />
 		</Cursor>
 	</File>
-	<File name="3rdparty\pugixml\pugixml.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiToolPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="687" topLine="1800" />
+			<Cursor1 position="852" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="3rdparty\md4c\md4c-html.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmDialogWiz.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3981" topLine="97" />
+			<Cursor1 position="4283" topLine="113" />
 		</Cursor>
 	</File>
-	<File name="include\OmPackage.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmRepository.cpp" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="25044" topLine="805" />
+			<Cursor1 position="817" topLine="71" />
 		</Cursor>
 	</File>
 	<File name="src\OmImage.cpp" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1199" topLine="18" />
+			<Cursor1 position="719" topLine="15" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiMgrMainTst.cpp" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmBase.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5630" topLine="213" />
+			<Cursor1 position="801" topLine="59" />
 		</Cursor>
 	</File>
-	<File name="src\OmBatch.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropLocNet.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2605" topLine="66" />
+			<Cursor1 position="755" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropCtx.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmBaseUi.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6100" topLine="6" />
+			<Cursor1 position="830" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmRemote.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1633" topLine="36" />
+		</Cursor>
+	</File>
+	<File name="include\OmDialogProp.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="802" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmVersion.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="705" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropRmtDet.cpp" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3968" topLine="100" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="959" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropCtx.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1240" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmManager.cpp" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="929" topLine="635" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiMgrMain.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="803" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="CREDITS.TXT" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="804" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmUi\OmUiMgrFoot.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2954" topLine="70" />
 		</Cursor>
 	</File>
 	<File name="3rdparty\jpeg\jmemname.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -467,44 +142,14 @@
 			<Cursor1 position="4636" topLine="106" />
 		</Cursor>
 	</File>
-	<File name="src\Util\OmUtilSys.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiToolRep.cpp" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="785" topLine="8" />
+			<Cursor1 position="12986" topLine="404" />
 		</Cursor>
 	</File>
-	<File name="include\Util\OmUtilPkg.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUtil\OmUtilErr.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="767" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropRmt.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="859" topLine="11" />
-		</Cursor>
-	</File>
-	<File name="include\Util\OmUtilFs.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="11173" topLine="320" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiToolPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="20423" topLine="692" />
-		</Cursor>
-	</File>
-	<File name="include\OmGlobal.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="749" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropLocLib.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3953" topLine="109" />
-		</Cursor>
-	</File>
-	<File name="README.md" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3383" topLine="51" />
+			<Cursor1 position="799" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="src\OmVersion.cpp" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -512,39 +157,34 @@
 			<Cursor1 position="1171" topLine="15" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropCtxLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiMgrMainLib.cpp" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4803" topLine="0" />
+			<Cursor1 position="58853" topLine="1931" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiAddRep.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropMan.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3543" topLine="109" />
+			<Cursor1 position="930" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="3rdparty\jpeg\jmemdos.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropCtxLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2750" topLine="43" />
+			<Cursor1 position="1077" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="include\Ui\OmUiMgrMainNet.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmContext.cpp" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5392" topLine="159" />
+			<Cursor1 position="707" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiWizCtxLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiPropCtxStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="8620" topLine="0" />
+			<Cursor1 position="975" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="res\resources.rc" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmLocation.h" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="26645" topLine="498" />
-		</Cursor>
-	</File>
-	<File name="src\Ui\OmUiPropRmtDet.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="7089" topLine="173" />
+			<Cursor1 position="868" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="3rdparty\jpeg\jdinput.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -552,14 +192,339 @@
 			<Cursor1 position="1697" topLine="22" />
 		</Cursor>
 	</File>
+	<File name="3rdparty\jpeg\jmemmgr.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="37777" topLine="981" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilImg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="52178" topLine="1599" />
+		</Cursor>
+	</File>
+	<File name="src\OmBatch.cpp" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3402" topLine="138" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropRmt.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="904" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiMgrFootDsc.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5054" topLine="299" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropLocBck.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1000" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmManager.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4408" topLine="136" />
+		</Cursor>
+	</File>
+	<File name="include\OmPackage.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1283" topLine="784" />
+		</Cursor>
+	</File>
+	<File name="include\OmImage.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="747" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\jpeg\jdmaster.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12151" topLine="287" />
+		</Cursor>
+	</File>
+	<File name="include\OmXmlDoc.h" open="0" top="0" tabpos="20" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2185" topLine="47" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiWizCtxCfg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="950" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmConfig.cpp" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1116" topLine="12" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiProgress.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="920" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiMgrMainTst.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1401" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmDialog.cpp" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="731" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropManGle.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="926" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="LICENSE.TXT" open="0" top="0" tabpos="28" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="33093" topLine="577" />
+		</Cursor>
+	</File>
+	<File name="include\OmBaseWin.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="880" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\xxhash\xxh3.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="64131" topLine="216" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiWizCtxLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="950" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilB64.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="943" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilStr.cpp" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4832" topLine="974" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilDlg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6546" topLine="142" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropPkgBck.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3298" topLine="27" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiAddLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="945" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmPackage.cpp" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="23340" topLine="589" />
+		</Cursor>
+	</File>
+	<File name="setup\OpenModMan.nsh" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1360" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmDialog.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="20795" topLine="683" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\jpeg\jmemdos.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2750" topLine="43" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\xxhash\xxhash.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="4" />
+		</Cursor>
+	</File>
+	<File name="plugins\md5\md5.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6704" topLine="204" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\jpeg\jmemnobs.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="710" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="755" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiWizCtxBeg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="900" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropLoc.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1138" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiMgrFootSrc.cpp" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4154" topLine="133" />
+		</Cursor>
+	</File>
+	<File name="setup\setup-x86.nsi" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6508" topLine="48" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiAddRep.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="751" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmUi\OmUiMgrFootDsc.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3607" topLine="100" />
+		</Cursor>
+	</File>
+	<File name="include\OmDialogWiz.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="755" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmUi\OmUiMgrFootSrc.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2977" topLine="78" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\md4c\md4c-html.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3981" topLine="97" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilHsh.cpp" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="17067" topLine="469" />
+		</Cursor>
+	</File>
+	<File name="src\OmZipFile.cpp" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="717" topLine="58" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilSys.cpp" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="10" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropCtxBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1050" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiHelpAbt.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="997" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmSocket.cpp" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="717" topLine="102" />
+		</Cursor>
+	</File>
+	<File name="src\OmRemote.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10344" topLine="352" />
+		</Cursor>
+	</File>
+	<File name="include\OmConfig.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="751" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropBatStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1050" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\OmContext.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="753" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\xxhash\xxhash.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="59" topLine="194" />
+		</Cursor>
+	</File>
+	<File name="plugins\md5\md5.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1971" topLine="18" />
+		</Cursor>
+	</File>
 	<File name="3rdparty\miniz\miniz.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="224" topLine="3920" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropCtxBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiWizCtx.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="801" topLine="0" />
+			<Cursor1 position="1055" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiMgr.cpp" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="19246" topLine="628" />
+		</Cursor>
+	</File>
+	<File name="src\OmDialogProp.cpp" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4698" topLine="133" />
+		</Cursor>
+	</File>
+	<File name="src\OmLocation.cpp" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="863" topLine="1909" />
+		</Cursor>
+	</File>
+	<File name="include\OmUi\OmUiMgrMain.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2071" topLine="64" />
+		</Cursor>
+	</File>
+	<File name="src\OmUi\OmUiPropBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="980" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="README.md" open="1" top="1" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3488" topLine="51" />
+		</Cursor>
+	</File>
+	<File name="include\OmSocket.h" open="0" top="0" tabpos="20" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="768" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\gif\dgif_lib.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12411" topLine="363" />
+		</Cursor>
+	</File>
+	<File name="3rdparty\pugixml\pugixml.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="687" topLine="1800" />
+		</Cursor>
+	</File>
+	<File name="res\resource.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8278" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="include\OmZipFile.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -567,49 +532,54 @@
 			<Cursor1 position="770" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropManGle.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmUi\OmUiMgrMainTst.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5016" topLine="133" />
+			<Cursor1 position="1728" topLine="23" />
 		</Cursor>
 	</File>
-	<File name="src\OmDialog.cpp" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUtil\OmUtilFs.cpp" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1596" topLine="21" />
+			<Cursor1 position="1702" topLine="538" />
 		</Cursor>
 	</File>
-	<File name="include\OmRemote.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="setup\setup-x64.nsi" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="902" topLine="4" />
+			<Cursor1 position="4978" topLine="138" />
 		</Cursor>
 	</File>
-	<File name="src\OmLocation.cpp" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiAddBat.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="57351" topLine="1909" />
+			<Cursor1 position="967" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\Ui\OmUiPropBatStg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiHelpLog.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="15187" topLine="436" />
+			<Cursor1 position="899" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="3rdparty\jpeg\jmemmgr.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmUi\OmUiMgrMainNet.cpp" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="37777" topLine="981" />
+			<Cursor1 position="46374" topLine="1515" />
 		</Cursor>
 	</File>
-	<File name="include\Ui\OmUiMgrFoot.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="include\OmBatch.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3039" topLine="77" />
+			<Cursor1 position="3759" topLine="131" />
 		</Cursor>
 	</File>
-	<File name="include\Util\OmUtilImg.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="3rdparty\jpeg\jdapistd.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="769" topLine="9" />
+			<Cursor1 position="1457" topLine="5" />
 		</Cursor>
 	</File>
-	<File name="src\Util\OmUtilErr.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\OmXmlDoc.cpp" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="819" topLine="0" />
+			<Cursor1 position="2454" topLine="87" />
+		</Cursor>
+	</File>
+	<File name="src\OmUtil\OmUtilPkg.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="847" topLine="0" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
