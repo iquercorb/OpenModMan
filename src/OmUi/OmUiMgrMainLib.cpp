@@ -15,6 +15,7 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "OmBase.h"
+  #include <algorithm>    // std::find
 
 #include "OmBaseUi.h"
 
@@ -1664,71 +1665,53 @@ DWORD WINAPI OmUiMgrMainLib::_batExe_fth(void* arg)
     // retrieve the batch object from current selection
     OmBatch* pBat = pCtx->batGet(lvItem.lParam);
 
-    // Automatic fix Batch / Context Location inconsistency
-    for(size_t l = 0; l < pCtx->locCount(); ++l) //< Add missing Location
-      if(!pBat->hasLoc(pCtx->locGet(l)->uuid()))
-        pBat->locAdd(pCtx->locGet(l)->uuid());
-
-    // Remove unavailable location
-    vector<wstring> uuid_ls;
-    for(size_t l = 0; l < pBat->locCount(); ++l)
-      if(pCtx->locFind(pBat->locGetUuid(l)) < 0)
-        uuid_ls.push_back(pBat->locGetUuid(l));
-
-    for(size_t i = 0; i < uuid_ls.size(); ++i)
-      pBat->locRem(uuid_ls[i]);
-
-    unsigned n;
-    OmLocation* pLoc;
-
-    // create an install and an uninstall list
-    vector<OmPackage*> inst_ls, unin_ls;
+    // batch, install and uninstall list
+    vector<OmPackage*> bat_ls, ins_ls, uni_ls;
 
     OmPackage* pPkg;
+    OmLocation* pLoc;
 
-    for(unsigned l = 0; l < pBat->locCount(); l++) {
+    for(size_t l = 0; l < pCtx->locCount(); ++l) {
 
-      // Select the Location found by UUID
-      self->locSel(pCtx->locFind(pBat->locGetUuid(l)));
+      // retrieve batch install list for Target Location
+      bat_ls.clear();
+      pBat->instGetList(pCtx->locGet(l), bat_ls);
 
+      // Select the Location
+      self->locSel(l);
       pLoc = pCtx->locCur();
 
-      if(!pLoc) {
-        // TODO: warn here because Location no longer exists
-        continue;
-      }
-
       // create the install list, to keep package order from batch we
-      // fill the install list according the batch hash list
-      n = pBat->insCount(l);
-      for(unsigned i = 0; i < n; ++i) {
-        if((pPkg = pLoc->pkgFind(pBat->insGet(l, i))) != nullptr) {
-          if(pPkg->hasSrc() && !pPkg->hasBck())
-            inst_ls.push_back(pPkg);
-        } else {
-          // TODO: handle no longer available package
-        }
+      // fill the install list according the batch list
+      ins_ls.clear();
+      for(size_t i = 0; i < bat_ls.size(); ++i) {
+        if(bat_ls[i]->hasSrc() && !bat_ls[i]->hasBck())
+          ins_ls.push_back(bat_ls[i]);
       }
 
-      // create the uninstall list, here we do not care order
-      n = pLoc->pkgCount();
-      for(unsigned i = 0; i < n; ++i) {
-        pPkg = pLoc->pkgGet(i);
-        if(!pBat->hasIns(l, pPkg->hash())) {
+      if(!pBat->installOnly()) {
+
+        // create the uninstall list, here we do not care order
+        uni_ls.clear();
+        for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
+          pPkg = pLoc->pkgGet(i);
           if(pPkg->hasBck()) {
-            unin_ls.push_back(pPkg);
+            if(std::find(bat_ls.begin(), bat_ls.end(), pPkg) == bat_ls.end()) {
+              uni_ls.push_back(pPkg);
+            }
           }
         }
-      }
 
-      // first, uninstall packages which must be uninstalled
-      if(unin_ls.size()) {
-        // uninstall packages
-        self->_pkgUninLs(unin_ls, pCtx->batQuietMode());
+        // first, uninstall packages which must be uninstalled
+        if(uni_ls.size()) {
+          // uninstall packages
+          self->_pkgUninLs(uni_ls, pCtx->batQuietMode());
+        }
+
       }
 
       // then, install packages which must be installed
-      if(inst_ls.size()) {
+      if(ins_ls.size()) {
 
         // batch execution require packages to be installed in the order
         // the user chosen, however, the package install process itself may
@@ -1736,12 +1719,11 @@ DWORD WINAPI OmUiMgrMainLib::_batExe_fth(void* arg)
         //
         // To ensure both exigences are respect, we launch one install
         // process per batch install package
-        vector<OmPackage*> inst;
-        for(size_t i = 0; i < inst_ls.size(); ++i) {
-          // clear and replace package index in vector
-          inst.clear(); inst.push_back(inst_ls[i]);
+        vector<OmPackage*> ins_pkg(1);
+        for(size_t i = 0; i < ins_ls.size(); ++i) {
+          ins_pkg[0] = ins_ls[i]; //< replace package pointer in vector
           // Launch install process
-          self->_pkgInstLs(inst, pCtx->batQuietMode());
+          self->_pkgInstLs(ins_pkg, pCtx->batQuietMode());
         }
       }
     }
