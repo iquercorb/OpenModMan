@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIMGRFOOTSRC_H
-#define OMUIMGRFOOTSRC_H
+#ifndef OMUIMGRFOOTDET_H
+#define OMUIMGRFOOTDET_H
 
 #include "OmDialog.h"
 
@@ -27,7 +27,7 @@ class OmRemote;
 /// OmDialog class derived for Package Description tab child dialog window of
 /// the Main Window Foot frame.
 ///
-class OmUiMgrFootSrc : public OmDialog
+class OmUiMgrFootDet : public OmDialog
 {
   public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -37,13 +37,13 @@ class OmUiMgrFootSrc : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiMgrFootSrc(HINSTANCE hins);
+    OmUiMgrFootDet(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiMgrFootSrc();
+    ~OmUiMgrFootDet();
 
     /// \brief Get resource id.
     ///
@@ -88,6 +88,30 @@ class OmUiMgrFootSrc : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
+    uint8_t*            _rtfBuff;
+
+    size_t              _rtfSize;
+
+    size_t              _rtfRead;
+
+    size_t              _rtfWrit;
+
+    static void         _md2rtf_cb(const uint8_t*, unsigned, void*);
+
+    static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
+
+    wchar_t*            _txtBuff;
+
+    size_t              _txtSize;
+
+    size_t              _txtWrit;
+
+    void                _txtCat(const wchar_t* text, size_t len);
+
+    void                _txtCat(const wstring& text);
+
+    void                _renderText(bool show, bool raw = false);
+
     void                _onInit();
 
     void                _onShow();
@@ -101,4 +125,4 @@ class OmUiMgrFootSrc : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIMGRFOOTSRC_H
+#endif // OMUIMGRFOOTDET_H

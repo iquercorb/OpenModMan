@@ -22,8 +22,8 @@
   #include <UxTheme.h>
 
 #include "OmUiMgr.h"
-#include "OmUiMgrFootDsc.h"
-#include "OmUiMgrFootSrc.h"
+#include "OmUiMgrFootOvw.h"
+#include "OmUiMgrFootDet.h"
 
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -36,8 +36,8 @@ OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr)
 {
   // create child tab dialogs
-  this->_addTab(L"Package Description", new OmUiMgrFootDsc(hins));
-  this->_addTab(L"Package Files", new OmUiMgrFootSrc(hins));
+  this->_addTab(L"Package Overview", new OmUiMgrFootOvw(hins));
+  this->_addTab(L"Package Details", new OmUiMgrFootDet(hins));
 }
 
 ///
@@ -76,11 +76,11 @@ void OmUiMgrFoot::freeze(bool enable)
       // TODO: update this if tab child dialog are added
       switch(this->_tabDial[i]->id())
       {
-      case IDD_MGR_FOOT_DSC:
-        static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->freeze(enable);
+      case IDD_MGR_FOOT_OVW:
+        static_cast<OmUiMgrFootOvw*>(this->_tabDial[i])->freeze(enable);
         break;
-      case IDD_MGR_FOOT_SRC:
-        static_cast<OmUiMgrFootSrc*>(this->_tabDial[i])->freeze(enable);
+      case IDD_MGR_FOOT_DET:
+        static_cast<OmUiMgrFootDet*>(this->_tabDial[i])->freeze(enable);
         break;
       }
       break;
@@ -104,11 +104,11 @@ void OmUiMgrFoot::safemode(bool enable)
       // TODO: update this if tab child dialog are added
       switch(this->_tabDial[i]->id())
       {
-      case IDD_MGR_FOOT_DSC:
-        static_cast<OmUiMgrFootDsc*>(this->_tabDial[i])->safemode(enable);
+      case IDD_MGR_FOOT_OVW:
+        static_cast<OmUiMgrFootOvw*>(this->_tabDial[i])->safemode(enable);
         break;
-      case IDD_MGR_FOOT_SRC:
-        static_cast<OmUiMgrFootSrc*>(this->_tabDial[i])->safemode(enable);
+      case IDD_MGR_FOOT_DET:
+        static_cast<OmUiMgrFootDet*>(this->_tabDial[i])->safemode(enable);
         break;
       }
       break;
@@ -122,8 +122,8 @@ void OmUiMgrFoot::safemode(bool enable)
 ///
 void OmUiMgrFoot::selectItem(OmPackage* pPkg)
 {
-  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pPkg);
-  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->setDetails(pPkg);
+  static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->setPreview(pPkg);
+  static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->setDetails(pPkg);
 }
 
 
@@ -132,8 +132,8 @@ void OmUiMgrFoot::selectItem(OmPackage* pPkg)
 ///
 void OmUiMgrFoot::selectItem(OmRemote* pRmt)
 {
-  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->setPreview(pRmt);
-  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->setDetails(pRmt);
+  static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->setPreview(pRmt);
+  static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->setDetails(pRmt);
 }
 
 
@@ -142,8 +142,8 @@ void OmUiMgrFoot::selectItem(OmRemote* pRmt)
 ///
 void OmUiMgrFoot::clearItem()
 {
-  static_cast<OmUiMgrFootDsc*>(this->_getTab(IDD_MGR_FOOT_DSC))->clearPreview();
-  static_cast<OmUiMgrFootSrc*>(this->_getTab(IDD_MGR_FOOT_SRC))->clearDetails();
+  static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->clearPreview();
+  static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->clearDetails();
 }
 
 

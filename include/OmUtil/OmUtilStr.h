@@ -511,4 +511,26 @@ wstring Om_formatSizeSysStr(size_t bytes, bool kbytes = true);
 ///
 bool Om_strIsVersion(const wstring& str);
 
+/// \brief Escape string for Markdown
+///
+/// Escapes Markdown specific character the given source string to
+/// the specified destination.
+///
+/// \param[in] dst       : Destination string that receive escaped text.
+/// \param[in] str       : Source string to escape.
+///
+void Om_escapeMarkdown(wstring* dst, const wstring& src);
+
+/// \brief Escape string for Markdown
+///
+/// Escapes Markdown specific character the given source string to
+/// the specified destination.
+///
+/// \param[in] buf       : Destination buffer that receive escaped text.
+/// \param[in] str       : Source string to escape.
+///
+/// \return Length of escaped string
+///
+size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src);
+
 #endif // OMUTILSTR_H_INCLUDED

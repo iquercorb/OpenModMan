@@ -1011,3 +1011,42 @@ bool Om_strIsVersion(const wstring& str)
 
   return (j > 0 || n > 0);
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_escapeMarkdown(wstring* dst, const wstring& src)
+{
+  const wchar_t* s = src.data();
+
+  dst->reserve(dst->size() + src.size() * 2);
+
+  while(*s != '\0') {
+    if(wcschr(L"*_#`", *s)) {
+      dst->push_back('\\');
+    }
+    dst->push_back(*s++);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src)
+{
+  size_t n = 0;
+  const wchar_t* s = src.data();
+
+  while(*s != '\0') {
+    if(wcschr(L"*_#`", *s)) {
+      *buf++ = '\\'; n++;
+    }
+    *buf++ = *s++; n++;
+  }
+
+  *buf++ = '\0';
+
+  return n;
+}

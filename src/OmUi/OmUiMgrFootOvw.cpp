@@ -32,14 +32,20 @@
 #include "md4c-rtf/md4c-rtf.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-#include "OmUiMgrFootDsc.h"
+#include "OmUiMgrFootOvw.h"
+
+/// \brief MD4C parser options
+///
+/// Global options flag set for MD4C parser
+///
+#define MD4C_OPTIONS  MD_FLAG_UNDERLINE|MD_FLAG_TABLES|MD_FLAG_PERMISSIVEAUTOLINKS
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiMgrFootDsc::OmUiMgrFootDsc(HINSTANCE hins) : OmDialog(hins),
+OmUiMgrFootOvw::OmUiMgrFootOvw(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr),
-  _rtfData(nullptr), _rtfSize(0), _rtfRead(0), _rtfWrit(0),
+  _rtfBuff(nullptr), _rtfSize(0), _rtfRead(0), _rtfWrit(0),
   _rawDesc(false)
 {
 
@@ -48,14 +54,12 @@ OmUiMgrFootDsc::OmUiMgrFootDsc(HINSTANCE hins) : OmDialog(hins),
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiMgrFootDsc::~OmUiMgrFootDsc()
+OmUiMgrFootOvw::~OmUiMgrFootOvw()
 {
-  if(this->_rtfData)
-    Om_free(this->_rtfData);
+  if(this->_rtfBuff)
+    Om_free(this->_rtfBuff);
 
   HFONT hFt;
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_NAME, WM_GETFONT));
-  if(hFt) DeleteObject(hFt);
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
 }
@@ -63,19 +67,19 @@ OmUiMgrFootDsc::~OmUiMgrFootDsc()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiMgrFootDsc::id() const
+long OmUiMgrFootOvw::id() const
 {
-  return IDD_MGR_FOOT_DSC;
+  return IDD_MGR_FOOT_OVW;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::freeze(bool enable)
+void OmUiMgrFootOvw::freeze(bool enable)
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
 }
 
@@ -83,10 +87,10 @@ void OmUiMgrFootDsc::freeze(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::safemode(bool enable)
+void OmUiMgrFootOvw::safemode(bool enable)
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
 }
 
@@ -94,10 +98,10 @@ void OmUiMgrFootDsc::safemode(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::setPreview(OmPackage* pPkg)
+void OmUiMgrFootOvw::setPreview(OmPackage* pPkg)
 {
   if(pPkg) {
-    this->_showPreview(pPkg->name(), pPkg->version(), pPkg->image(), pPkg->desc());
+    this->_showPreview(pPkg->image(), pPkg->desc());
   }
 }
 
@@ -105,10 +109,10 @@ void OmUiMgrFootDsc::setPreview(OmPackage* pPkg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::setPreview(OmRemote* pRmt)
+void OmUiMgrFootOvw::setPreview(OmRemote* pRmt)
 {
   if(pRmt) {
-    this->_showPreview(pRmt->name(), pRmt->version(), pRmt->image(), pRmt->desc());
+    this->_showPreview(pRmt->image(), pRmt->desc());
   }
 }
 
@@ -116,9 +120,8 @@ void OmUiMgrFootDsc::setPreview(OmRemote* pRmt)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::clearPreview()
+void OmUiMgrFootOvw::clearPreview()
 {
-  this->showItem(IDC_SC_NAME, false);
   this->showItem(IDC_SB_SNAP, false);
   this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
   this->showItem(IDC_EC_DESC, false); //< raw (plain text)
@@ -128,28 +131,28 @@ void OmUiMgrFootDsc::clearPreview()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_md2Rtf_cb(const uint8_t* data, unsigned size, void* ptr)
+void OmUiMgrFootOvw::_md2rtf_cb(const uint8_t* data, unsigned size, void* ptr)
 {
-  OmUiMgrFootDsc* self = reinterpret_cast<OmUiMgrFootDsc*>(ptr);
+  OmUiMgrFootOvw* self = reinterpret_cast<OmUiMgrFootOvw*>(ptr);
 
   // allocate new buffer if required
   if(self->_rtfWrit + size > self->_rtfSize) {
 
     self->_rtfSize *= 2;
-    self->_rtfData = reinterpret_cast<uint8_t*>(Om_realloc(self->_rtfData, self->_rtfSize));
+    self->_rtfBuff = reinterpret_cast<uint8_t*>(Om_realloc(self->_rtfBuff, self->_rtfSize));
 
-    if(!self->_rtfData) {
+    if(!self->_rtfBuff) {
       // that is a bad alloc error...
       return;
     }
 
     #ifdef DEBUG
-    std::cout << "OmUiMgrFootDsc::_md2Rtf_cb realloc="<< self->_rtfSize <<" bytes\n";
+    std::cout << "OmUiMgrFootOvw::_md2rtf_cb realloc="<< self->_rtfSize <<" bytes\n";
     #endif
   }
 
   // contact new data
-  memcpy(self->_rtfData + self->_rtfWrit, data, size);
+  memcpy(self->_rtfBuff + self->_rtfWrit, data, size);
 
   // increment bytes written
   self->_rtfWrit += size;
@@ -159,21 +162,21 @@ void OmUiMgrFootDsc::_md2Rtf_cb(const uint8_t* data, unsigned size, void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD CALLBACK OmUiMgrFootDsc::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb, LONG* prb)
+DWORD CALLBACK OmUiMgrFootOvw::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb, LONG* prb)
 {
-  OmUiMgrFootDsc* self = reinterpret_cast<OmUiMgrFootDsc*>(ptr);
+  OmUiMgrFootOvw* self = reinterpret_cast<OmUiMgrFootOvw*>(ptr);
 
   if(self->_rtfRead < self->_rtfWrit) {
     if((self->_rtfRead + rb) <= self->_rtfWrit) {
 
-      memcpy(lpBuff, self->_rtfData + self->_rtfRead, rb);
+      memcpy(lpBuff, self->_rtfBuff + self->_rtfRead, rb);
       self->_rtfRead += rb;
       *prb = rb;
 
     } else {
 
       *prb = self->_rtfWrit - self->_rtfRead;
-      memcpy(lpBuff, self->_rtfData + self->_rtfRead, *prb);
+      memcpy(lpBuff, self->_rtfBuff + self->_rtfRead, *prb);
       self->_rtfRead = self->_rtfWrit;
     }
 
@@ -182,7 +185,7 @@ DWORD CALLBACK OmUiMgrFootDsc::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb,
   }
 
   #ifdef DEBUG
-  std::cout << "OmUiMgrFootDsc::_rtf2re_cb rb="<< *prb <<"\n";
+  std::cout << "OmUiMgrFootOvw::_rtf2re_cb rb="<< *prb <<"\n";
   #endif
 
   return 0;
@@ -192,26 +195,26 @@ DWORD CALLBACK OmUiMgrFootDsc::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb,
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_showPreview(const wstring& name, const OmVersion& vers, const OmImage& snap, const wstring& desc)
+void OmUiMgrFootOvw::_renderText(const wstring& text, bool show, bool raw)
 {
-  this->showItem(IDC_SC_NAME, true);
-  this->setItemText(IDC_SC_NAME, name + L" " + vers.asString());
+  if(raw) {
 
-  if(desc.size()) {
+    // set raw description to edit control
+    this->setItemText(IDC_EC_DESC, text);
+    if(show) this->showItem(IDC_EC_DESC, true);
+    this->showItem(IDC_FT_DESC, false);
 
-    // flags for MD4C parser
-    unsigned md4c_flags = MD_FLAG_UNDERLINE|MD_FLAG_TABLES|
-                          MD_FLAG_PERMISSIVEAUTOLINKS;
+  } else {
 
     // reset RTF buffers parameters
     this->_rtfWrit = 0; //< bytes written by MD parser
     this->_rtfRead = 0; //< bytes read by Rich Edit stream
 
     // parse MD and render to RTF
-    md_rtf(desc.c_str(), desc.size(), this->_md2Rtf_cb, this, md4c_flags, 0, 11, 300);
+    md_rtf(text.c_str(), text.size(), this->_md2rtf_cb, this, MD4C_OPTIONS, 0, 11, 300);
 
     // send RTF data to Rich Edit
-    EDITSTREAM es = {0};
+    EDITSTREAM es = {};
     es.pfnCallback = this->_rtf2re_cb;
     es.dwCookie    = reinterpret_cast<DWORD_PTR>(this);
 
@@ -221,17 +224,19 @@ void OmUiMgrFootDsc::_showPreview(const wstring& name, const OmVersion& vers, co
     long pt[2] = {};
     this->msgItem(IDC_FT_DESC, EM_SETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&pt));
 
-    // set raw description to edit control
-    this->setItemText(IDC_EC_DESC, desc);
-
-    // show raw description or RTF depending current option
-    this->showItem(IDC_FT_DESC, !this->_rawDesc); //< Rich Edit (MD parsed)
-    this->showItem(IDC_EC_DESC, this->_rawDesc); //< raw (plain text)
-
-  } else {
-    this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
-    this->showItem(IDC_EC_DESC, false); //< raw (plain text)
+    if(show) this->showItem(IDC_FT_DESC, true);
+    this->showItem(IDC_EC_DESC, false);
   }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFootOvw::_showPreview(const OmImage& snap, const wstring& desc)
+{
+  if(desc.size())
+    this->_renderText(desc, true, this->_rawDesc);
 
   this->showItem(IDC_SB_SNAP, true);
 
@@ -248,13 +253,14 @@ void OmUiMgrFootDsc::_showPreview(const wstring& name, const OmVersion& vers, co
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_onInit()
+void OmUiMgrFootOvw::_onInit()
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::_onInit\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::_onInit\n";
   #endif
 
   // retrieve main dialog
@@ -281,41 +287,41 @@ void OmUiMgrFootDsc::_onInit()
 
   // Allocate new buffer for RTF data
   this->_rtfSize = 4096;
-  this->_rtfData = reinterpret_cast<uint8_t*>(Om_alloc(4096));
+  this->_rtfBuff = reinterpret_cast<uint8_t*>(Om_alloc(4096));
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_onShow()
+void OmUiMgrFootOvw::_onShow()
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::_onShow\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::_onShow\n";
   #endif
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_onResize()
+void OmUiMgrFootOvw::_onResize()
 {
   // Package name/title
-  this->_setItemPos(IDC_SC_NAME, 4, 2, this->cliUnitX()-58, 14);
+  //this->_setItemPos(IDC_SC_NAME, 4, 2, this->cliUnitX()-58, 14);
   // Package snapshot
-  this->_setItemPos(IDC_SB_SNAP, 4, 18, 84, 84);
+  this->_setItemPos(IDC_SB_SNAP, 4, 2, 84, 84);
   // Package description, (RTF then Raw)
-  this->_setItemPos(IDC_FT_DESC, 96, 18, this->cliUnitX()-96, this->cliUnitY()-18);
-  this->_setItemPos(IDC_EC_DESC, 96, 18, this->cliUnitX()-96, this->cliUnitY()-18);
+  this->_setItemPos(IDC_FT_DESC, 96, 2, this->cliUnitX()-98, this->cliUnitY()-4);
+  this->_setItemPos(IDC_EC_DESC, 96, 2, this->cliUnitX()-98, this->cliUnitY()-4);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_onRefresh()
+void OmUiMgrFootOvw::_onRefresh()
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::_onRefresh\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::_onRefresh\n";
   #endif
 }
 
@@ -323,10 +329,10 @@ void OmUiMgrFootDsc::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDsc::_onQuit()
+void OmUiMgrFootOvw::_onQuit()
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgrFootDsc::_onQuit\n";
+  std::cout << "DEBUG => OmUiMgrFootOvw::_onQuit\n";
   #endif
 }
 
@@ -334,7 +340,7 @@ void OmUiMgrFootDsc::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiMgrFootDsc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiMgrFootOvw::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_NOTIFY) {
 
@@ -356,7 +362,7 @@ INT_PTR OmUiMgrFootDsc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&txr));
 
           #ifdef DEBUG
-          std::wcout << L"DEBUG => OmUiMgrFootDsc::_onMsg WM_NOTIFY-EN_LINK: " << url_buf << "\n";
+          std::wcout << L"DEBUG => OmUiMgrFootOvw::_onMsg WM_NOTIFY-EN_LINK: " << url_buf << "\n";
           #endif
         }
       }
@@ -364,11 +370,9 @@ INT_PTR OmUiMgrFootDsc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   }
 
   if(uMsg == WM_COMMAND) {
-
     #ifdef DEBUG
-    //std::cout << "DEBUG => OmUiMgrFootDsc::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    //std::cout << "DEBUG => OmUiMgrFootOvw::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
-
   }
 
   return false;

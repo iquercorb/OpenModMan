@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIMGRFOOTDSC_H
-#define OMUIMGRFOOTDSC_H
+#ifndef OMUIMGRFOOTOVW_H
+#define OMUIMGRFOOTOVW_H
 
 #include "OmDialog.h"
 
@@ -29,7 +29,7 @@ class OmImage;
 /// OmDialog class derived for Package Description tab child dialog window of
 /// the Main Window Foot frame.
 ///
-class OmUiMgrFootDsc : public OmDialog
+class OmUiMgrFootOvw : public OmDialog
 {
   public: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -39,13 +39,13 @@ class OmUiMgrFootDsc : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiMgrFootDsc(HINSTANCE hins);
+    OmUiMgrFootOvw(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiMgrFootDsc();
+    ~OmUiMgrFootOvw();
 
     /// \brief Get resource id.
     ///
@@ -106,7 +106,7 @@ class OmUiMgrFootDsc : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    uint8_t*            _rtfData;
+    uint8_t*            _rtfBuff;
 
     size_t              _rtfSize;
 
@@ -114,13 +114,15 @@ class OmUiMgrFootDsc : public OmDialog
 
     size_t              _rtfWrit;
 
-    static void         _md2Rtf_cb(const uint8_t*, unsigned, void*);
+    static void         _md2rtf_cb(const uint8_t*, unsigned, void*);
 
     static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
 
+    void                _renderText(const wstring& text, bool show, bool raw = false);
+
     bool                _rawDesc;
 
-    void                _showPreview(const wstring&, const OmVersion&, const OmImage&, const wstring&);
+    void                _showPreview(const OmImage&, const wstring&);
 
     void                _onInit();
 
@@ -135,4 +137,4 @@ class OmUiMgrFootDsc : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIMGRFOOTDSC_H
+#endif // OMUIMGRFOOTOVW_H
