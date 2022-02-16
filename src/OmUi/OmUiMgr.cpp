@@ -50,6 +50,9 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgr.h"
 
+#define FOOT_MIN_HEIGHT 170
+#define MAIN_MIN_HEIGHT 200
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -411,7 +414,7 @@ void OmUiMgr::_onInit()
   // initialize frames to the proper size and position
   h = -1;
   pMgr->loadWindowFoot(&h);
-  if(h < 195) h = 195;
+  if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
   // we emulate frame resize by user
   this->_divIsCapt = true;
   this->_divMove[2] = h;
@@ -454,7 +457,7 @@ void OmUiMgr::_onResize()
   h = (this->_divIsCapt) ? this->_divMove[2] : this->_pUiMgrFoot->height();
 
   // clamp foot frame height to prevent covering entire screen on resize
-  if(h > this->cliHeight() - 200) h = this->cliHeight() - 200;
+  if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
 
   // foot frame top position, relative to client
   y = this->cliHeight() - h;
@@ -643,8 +646,8 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // calculate new foot height according new cursor position
       long h = this->_divMove[1] + this->_divMove[0] - p;
       // clamp to reasonable values
-      if(h < 195) h = 195;
-      if(h > this->cliHeight()-200) h = this->cliHeight()-200;
+      if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
+      if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
       // move the splitter / resize frames
       if(h != this->_pUiMgrFoot->height()) {
         this->_divMove[2] = h;
