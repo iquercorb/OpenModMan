@@ -17,8 +17,8 @@
 #ifndef OMBASEWIN_H_INCLUDED
 #define OMBASEWIN_H_INCLUDED
 
-#define NTDDI_VERSION   0x6000000  //< NTDDI_VISTA
 #define WINVER          0x0000600  //< _WIN32_WINNT_VISTA
+#define NTDDI_VERSION   0x6000000  //< NTDDI_VISTA
 
 #include <Windows.h>
 

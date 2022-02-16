@@ -14,11 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include <Windows.h>
-
 #include "OmManager.h"
 #include "OmUiMgr.h"
-#include "OmUtilHsh.h"
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
