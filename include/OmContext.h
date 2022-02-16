@@ -186,7 +186,7 @@ class OmContext
     ///
     OmLocation* locGet(const wstring& uuid);
 
-    /// \brief Find Location index.
+    /// \brief Get Location index.
     ///
     /// Returns the index of the Location that matches the specified UUID.
     ///
@@ -194,7 +194,7 @@ class OmContext
     ///
     /// \return Location index or -1 if not found.
     ///
-    int locFind(const wstring& uuid);
+    int locIndex(const wstring& uuid);
 
     /// \brief Sort Location list.
     ///
@@ -299,12 +299,10 @@ class OmContext
     /// Creates a new Batch within the Context.
     ///
     /// \param[in]  title         : Title of new Batch to be created.
-    /// \param[in]  loc_uuid      : Location UUID list.
-    /// \param[in]  loc_hash_list : Per Location install package hash lists.
     ///
-    /// \return True if operation succeed, false otherwise.
+    /// \return Newly created batch object
     ///
-    bool batAdd(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list);
+    OmBatch* batAdd(const wstring& title);
 
     /// \brief Delete Batch.
     ///

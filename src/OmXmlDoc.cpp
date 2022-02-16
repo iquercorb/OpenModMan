@@ -303,6 +303,27 @@ bool OmXmlNode::hasChild(const wstring& name) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmXmlNode::hasChild(const wstring& name, const wstring& attr, const wstring& value) const
+{
+  pugi::xml_attribute xml_attr;
+
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+    if(!wcscmp(name.c_str(), child.name())) {
+      xml_attr = child.attribute(attr.c_str());
+      if(!xml_attr.empty()) {
+        if(!wcscmp(value.c_str(), xml_attr.as_string()))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 unsigned OmXmlNode::childCount(const wstring& name) const
 {
   unsigned n = 0;
@@ -330,6 +351,32 @@ OmXmlNode OmXmlNode::child(const wstring& name, unsigned i) const
         return result;
       }
       ++n;
+    }
+  }
+
+  return result;
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmXmlNode OmXmlNode::child(const wstring& name, const wstring& attr, const wstring& value)
+{
+  OmXmlNode result;
+
+  pugi::xml_attribute xml_attr;
+
+  for(pugi::xml_node child = static_cast<pugi::xml_document*>(_data)->first_child(); child; child = child.next_sibling()) {
+    if(!wcscmp(name.c_str(), child.name())) {
+      xml_attr = child.attribute(attr.c_str());
+      if(!xml_attr.empty()) {
+        if(!wcscmp(value.c_str(), xml_attr.as_string())) {
+          *static_cast<pugi::xml_node*>(result._data) = child;
+          return result;
+        }
+      }
     }
   }
 

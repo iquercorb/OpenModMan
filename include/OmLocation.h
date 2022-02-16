@@ -272,7 +272,6 @@ class OmLocation
     ///
     void setWarnExtraUnin(bool enable);
 
-
     /// \brief Open Location.
     ///
     /// Load Location from specified file.
@@ -502,6 +501,21 @@ class OmLocation
       return nullptr;
     }
 
+    /// \brief Find package by identity.
+    ///
+    /// Find package by its identity.
+    ///
+    /// \param[in] ident : Package identity to search.
+    ///
+    /// \return Package or nullptr if not found.
+    ///
+    OmPackage* pkgFind(const wstring& ident) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->ident() == ident) return _pkgLs[i];
+      }
+      return nullptr;
+    }
+
     /// \brief Get package index.
     ///
     /// Returns package index in list.
@@ -528,6 +542,21 @@ class OmLocation
     int pkgIndex(uint64_t hash) const{
       for(size_t i = 0; i < _pkgLs.size(); ++i) {
         if(_pkgLs[i]->hash() == hash) return i;
+      }
+      return -1;
+    }
+
+    /// \brief Find package index by identity.
+    ///
+    /// Find package index in list by its identity.
+    ///
+    /// \param[in] ident     : Package identity to search.
+    ///
+    /// \return Package index or -1 if not found.
+    ///
+    int pkgIndex(const wstring& ident) const{
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->ident() == ident) return i;
       }
       return -1;
     }

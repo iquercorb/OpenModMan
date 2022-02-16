@@ -215,6 +215,19 @@ class OmXmlNode
     ///
     bool hasChild(const wstring& name) const;
 
+    /// \brief Checks whether has child by attribute value.
+    ///
+    /// Checks whether this node has has at least one child with specified
+    /// tag name and attribute value.
+    ///
+    /// \param[in]  name  : Child tag name to check.
+    /// \param[in]  attr  : Child  Attribute name to check.
+    /// \param[in]  value : Child  Attribute value to check.
+    ///
+    /// \return True if found, false otherwise.
+    ///
+    bool hasChild(const wstring& name, const wstring& attr, const wstring& value) const;
+
     /// \brief Get total children count.
     ///
     /// Returns count of all direct children nodes of this instance.
@@ -252,6 +265,19 @@ class OmXmlNode
     /// \return Child at specified index.
     ///
     OmXmlNode child(const wstring& name, unsigned i = 0) const;
+
+    /// \brief Get child by tag name and attribute value.
+    ///
+    /// Returns the first node child with specified tag
+    /// name and attribute value.
+    ///
+    /// \param[in]  name  : Child tag name.
+    /// \param[in]  attr  : Child attribute name.
+    /// \param[in]  value : Child attribute value.
+    ///
+    /// \return The first child that matches.
+    ///
+    OmXmlNode child(const wstring& name, const wstring& attr, const wstring& value);
 
     /// \brief Get children list.
     ///

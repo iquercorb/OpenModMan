@@ -14,6 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBase.h"
+
 #include "OmBaseApp.h"
 
 #include "OmUtilFs.h"
@@ -22,6 +24,8 @@
 
 #include "OmManager.h"
 #include "OmContext.h"
+#include "OmLocation.h"
+#include "OmPackage.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmBatch.h"
@@ -32,7 +36,7 @@
 ///
 OmBatch::OmBatch() :
   _context(nullptr), _config(), _path(), _uuid(), _title(), _index(0),
-  _locUuid(), _insHash(), _error()
+  _instOnly(false), _error()
 {
 
 }
@@ -43,7 +47,7 @@ OmBatch::OmBatch() :
 ///
 OmBatch::OmBatch(OmContext* pCtx) :
   _context(pCtx), _config(), _path(), _uuid(), _title(), _index(0),
-  _locUuid(), _insHash(), _error()
+  _instOnly(false), _error()
 {
 
 }
@@ -93,72 +97,54 @@ bool OmBatch::open(const wstring& path)
   this->_title = this->_config.xml().child(L"title").content();
   this->_index = this->_config.xml().child(L"title").attrAsInt(L"index");
 
+  // check for <options>
+  if(this->_config.xml().hasChild(L"options")) {
+    this->_instOnly = this->_config.xml().child(L"options").attrAsInt(L"installonly");
+  }
+
   this->log(2, L"Batch("+this->_title+L") Open", L"Definition parsed.");
 
-  // get <location> entries
-  vector<OmXmlNode> xml_loc_list;
-  this->_config.xml().children(xml_loc_list, L"location");
-
-  for(size_t l = 0; l < xml_loc_list.size(); ++l) {
-
-    this->_locUuid.push_back(xml_loc_list[l].attrAsString(L"uuid"));
-
-    vector<uint64_t>  hash_list;
-
-    // retrieve all <install> entries in <location>
-    vector<OmXmlNode> xml_ins_list;
-    xml_loc_list[l].children(xml_ins_list, L"install");
-
-    for(size_t i = 0; i < xml_ins_list.size(); ++i) {
-      hash_list.push_back(Om_strToUint64(xml_ins_list[i].attrAsString(L"hash")));
-    }
-
-    this->_insHash.push_back(hash_list);
-  }
+  // Launch repair
+  this->repair();
 
   return true;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmBatch::hasLoc(const wstring& uuid)
+bool OmBatch::init(const wstring& path, const wstring& title, unsigned index)
 {
-  for(size_t i = 0; i < this->_locUuid.size(); ++i) {
-    if(this->_locUuid[i] == uuid)
-      return true;
+  // clear the instance
+  this->close();
+
+  // try to open and parse the XML file
+  if(!this->_config.init(path, OMM_XMAGIC_BAT)) {
+    this->_error = L"Error initializing Batch definition: ";
+    this->_error += this->_config.lastErrorStr();
+    this->log(0, wstring(L"Batch(")+path+L") Open", this->_error);
+    return false;
   }
 
-  return false;
+  // store file path
+  this->_path = path;
+
+  // Set batch values
+  this->_uuid = Om_genUUID();
+  this->_title = title;
+  this->_index = index;
+
+  // set uuid, title and index
+  this->_config.xml().addChild(L"uuid").setContent(this->_uuid);
+  OmXmlNode xml_title = this->_config.xml().addChild(L"title");
+  xml_title.setContent(this->_title);
+  xml_title.setAttr(L"index", static_cast<int>(this->_index));
+
+  // create the <options> node
+  this->_config.xml().addChild(L"options").setAttr(L"installonly", 0);
+
+  return true;
 }
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-int OmBatch::locGetIndex(const wstring& uuid)
-{
-  for(size_t i = 0; i < this->_locUuid.size(); ++i) {
-    if(this->_locUuid[i] == uuid)
-      return i;
-  }
-
-  return -1;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmBatch::hasIns(unsigned l, uint64_t hash)
-{
-  for(size_t i = 0; i < this->_insHash[l].size(); ++i) {
-    if(this->_insHash[l][i] == hash) return true;
-  }
-  return false;
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -201,31 +187,22 @@ void OmBatch::setIndex(unsigned index)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::locAdd(const wstring& uuid)
+void OmBatch::setInstallOnly(bool enable)
 {
   if(this->_config.valid()) {
 
-    // Check whether <location> entry with uuid already exists
-    vector<OmXmlNode> xml_loc_list;
-    this->_config.xml().children(xml_loc_list, L"location");
+    this->_instOnly = enable;
 
-    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
-      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
-        return;
-      }
+    OmXmlNode xml_options;
+    if(this->_config.xml().hasChild(L"options")) {
+      xml_options = this->_config.xml().child(L"options");
+    } else {
+      xml_options = this->_config.xml().addChild(L"options");
     }
 
-    // create new <location> entry in definition
-    OmXmlNode xml_loc = this->_config.xml().addChild(L"location");
-    xml_loc.setAttr(L"uuid", uuid);
+    xml_options.setAttr(L"installonly", static_cast<int>(enable));
 
-    // Write definition file
-    if(this->_path.size())
-      this->_config.save();
-
-    // Echoes changes to local data
-    this->_locUuid.push_back(uuid);
-    this->_insHash.resize(this->_insHash.size()+1);
+    this->_config.save();
   }
 }
 
@@ -233,32 +210,105 @@ void OmBatch::locAdd(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::locRem(const wstring& uuid)
+size_t OmBatch::locCount()
 {
   if(this->_config.valid()) {
+    return this->_config.xml().childCount(L"location");
+  }
 
-    vector<OmXmlNode> xml_loc_list;
-    this->_config.xml().children(xml_loc_list, L"location");
+  return 0;
+}
 
-    // search and remove <location> entry with specified uuid
-    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
-      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
-        this->_config.xml().remChild(xml_loc_list[i]); break;
-      }
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+wstring OmBatch::locUuid(unsigned i)
+{
+  wstring uuid;
+
+  if(this->_config.valid()) {
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", i);
+    uuid =  xml_loc.attrAsString(L"uuid");
+  }
+
+  return uuid;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmBatch::locDiscard(const wstring& uuid)
+{
+  bool result = false;
+
+  if(this->_config.valid()) {
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", uuid);
+
+    // if no <location> with uuid was found, create it
+    if(!xml_loc.empty()) {
+      this->_config.xml().remChild(xml_loc);
+      result = true;
     }
 
     // Write definition file
     if(this->_path.size())
       this->_config.save();
+  }
 
-    // Echoes changes to local data
-    for(size_t i = 0; i < this->_locUuid.size(); ++i) {
-      if(uuid == this->_locUuid[i]) {
-        this->_insHash.erase(this->_insHash.begin()+i);
-        this->_locUuid.erase(this->_locUuid.begin()+i);
-        break;
-      }
+  return result;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmBatch::instClear(const OmLocation* pLoc)
+{
+  if(this->_config.valid()) {
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
+
+    // if no <location> with uuid was found, create it
+    if(!xml_loc.empty()) {
+      this->_config.xml().remChild(xml_loc);
     }
+
+    // Write definition file
+    if(this->_path.size())
+      this->_config.save();
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmBatch::instAdd(const OmLocation* pLoc, const OmPackage* pPkg)
+{
+  if(this->_config.valid()) {
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
+
+    // if no <location> with uuid was found, create it
+    if(xml_loc.empty()) {
+      xml_loc = this->_config.xml().addChild(L"location");
+      xml_loc.setAttr(L"uuid", pLoc->uuid());
+    }
+
+    // add <install> entry if not already exists
+    if(!xml_loc.hasChild(L"install", L"ident", pPkg->ident())) {
+       OmXmlNode xml_ins = xml_loc.addChild(L"install");
+       xml_ins.setAttr(L"ident", pPkg->ident());
+    }
+
+    // Write definition file
+    if(this->_path.size())
+      this->_config.save();
   }
 }
 
@@ -266,61 +316,182 @@ void OmBatch::locRem(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmBatch::insSetList(const wstring& uuid, const vector<uint64_t>& hash_list)
+size_t OmBatch::instSize(const OmLocation* pLoc)
 {
   if(this->_config.valid()) {
 
-    vector<OmXmlNode> xml_loc_list;
-    this->_config.xml().children(xml_loc_list, L"location");
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
 
-    OmXmlNode xml_loc;
+    // if found, return count of <install> child nodes.
+    if(!xml_loc.empty())
+      return xml_loc.childCount(L"install");
+  }
 
-    // search <location> entry with specified uuid
-    for(size_t i = 0; i < xml_loc_list.size(); ++i) {
-      if(uuid == xml_loc_list[i].attrAsString(L"uuid")) {
-        xml_loc = xml_loc_list[i];
-        break;
+  return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmPackage* OmBatch::instGet(const OmLocation* pLoc, unsigned i)
+{
+  if(this->_config.valid()) {
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
+
+    // if found, return count of <install> child nodes.
+    if(!xml_loc.empty()) {
+      OmXmlNode xml_ins = xml_loc.child(L"install", i);
+      return pLoc->pkgFind(xml_ins.attrAsString(L"ident"));
+    }
+  }
+
+  return nullptr;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmBatch::instGetList(const OmLocation* pLoc, vector<OmPackage*>& pkg_ls)
+{
+  if(this->_config.valid()) {
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
+
+    // if found, return count of <install> child nodes.
+    if(!xml_loc.empty()) {
+
+      vector<OmXmlNode> xml_ins_ls;
+      xml_loc.children(xml_ins_ls, L"install");
+
+      vector<OmXmlNode> xml_dsc_ls; //< discard list
+
+      OmPackage* pPkg;
+      for(size_t i = 0; i < xml_ins_ls.size(); ++i) {
+        pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsString(L"ident"));
+        if(pPkg) pkg_ls.push_back(pPkg);
       }
+
+      return pkg_ls.size();
     }
+  }
 
-    // ensure we found Location
-    if(xml_loc.empty())
-      return;
+  return 0;
+}
 
-    // remove all current <install>
-    vector<OmXmlNode> xml_ins_list;
-    xml_loc.children(xml_ins_list, L"install");
 
-    for(size_t i = 0; i < xml_ins_list.size(); ++i)
-      xml_loc.remChild(xml_ins_list[i]);
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmBatch::repair()
+{
+  if(!this->_context) {
+    this->log(1, L"Batch("+this->_title+L") Repair", L"No Context bound, aborting.");
+    return false;
+  }
 
-    // add <install> children with "hash" attributes
-    OmXmlNode xml_ins;
-    for(size_t h = 0; h < hash_list.size(); ++h) {
-      xml_ins = xml_loc.addChild(L"install");
-      xml_ins.setAttr(L"hash", Om_uint64ToStr(hash_list[h]));
+  if(!this->_config.valid()) {
+    this->log(1, L"Batch("+this->_title+L") Repair", L"Definition not initialized, aborting.");
+    return false;
+  }
+
+  // usefull strings for job
+  wstring uuid, ident;
+
+  // list for nods to discard
+  vector<OmXmlNode> xml_dis_ls;
+  // <location> not list
+  vector<OmXmlNode> xml_loc_ls;
+
+  // remove Target Location broken references
+  this->_config.xml().children(xml_loc_ls, L"location");
+
+  // build the discard list
+  for(size_t i = 0; i < xml_loc_ls.size(); ++i) {
+    uuid = xml_loc_ls[i].attrAsString(L"uuid");
+    if(!this->_context->locGet(uuid)) {
+      xml_dis_ls.push_back(xml_loc_ls[i]);
+      this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Target Location reference: "+uuid);
     }
+  }
 
-    // Write definition file
-    if(this->_path.size())
-      this->_config.save();
+  if(xml_dis_ls.size()) {
+    for(size_t i = 0; i < xml_dis_ls.size(); ++i) {
+      this->_config.xml().remChild(xml_dis_ls[i]);
+    }
+  }
 
-    // Echoes changes to local data
-    for(size_t i = 0; i < this->_locUuid.size(); ++i) {
-      if(uuid == this->_locUuid[i]) {
+  // clear and load new Target Location list
+  xml_loc_ls.clear();
+  this->_config.xml().children(xml_loc_ls, L"location");
 
-        // empty the list
-        this->_insHash[i].clear();
+  OmLocation* pLoc;
+  OmPackage* pPkg;
 
-        // add hash list
-        for(size_t h = 0; h < hash_list.size(); ++h) {
-          this->_insHash[i].push_back(hash_list[h]);
+  vector<OmXmlNode> xml_ins_ls;
+
+  // remove Package broken references
+  for(size_t i = 0; i < xml_loc_ls.size(); ++i) {
+
+    // get Target Location
+    pLoc = this->_context->locGet(xml_loc_ls[i].attrAsString(L"uuid"));
+
+    // get install list for this location
+    xml_ins_ls.clear();
+    xml_loc_ls[i].children(xml_ins_ls, L"install");
+
+    // clear the discard list
+    xml_dis_ls.clear();
+
+    // build the discard list or repair reference
+    for(size_t j = 0; j < xml_ins_ls.size(); ++j) {
+
+      if(xml_ins_ls[j].hasAttr(L"ident")) {
+
+        ident = xml_ins_ls[j].attrAsString(L"ident");
+        if(!pLoc->pkgFind(ident)) {
+          xml_dis_ls.push_back(xml_ins_ls[j]);
+          this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Package reference: "+ident);
         }
 
-        break;
+      } else {
+
+        // here we check for old Installation Batch definition where package
+        // references were stored by hash value, this is now deprecated and we
+        // try to convert this on the fly
+        if(xml_ins_ls[j].hasAttr(L"hash")) {
+          uint64_t hash = Om_strToUint64(xml_ins_ls[j].attrAsString(L"hash"));
+          pPkg = pLoc->pkgFind(hash);
+          if(pPkg) {
+            xml_ins_ls[j].setAttr(L"ident", pPkg->ident());
+            xml_ins_ls[j].remAttr(L"hash");
+            this->log(2, L"Batch("+this->_title+L") Repair", L"Repair Package reference: "+pPkg->ident());
+          } else {
+            xml_dis_ls.push_back(xml_ins_ls[j]);
+            this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Package reference: "+Om_uint64ToStr(hash));
+          }
+        }
+      }
+    }
+
+    // remove nodes
+    if(xml_dis_ls.size()) {
+      for(size_t j = 0; j < xml_dis_ls.size(); ++j) {
+        xml_loc_ls[i].remChild(xml_dis_ls[j]);
       }
     }
   }
+
+  // Write definition file
+  if(this->_path.size())
+    this->_config.save();
+
+  return true;
 }
 
 
@@ -366,8 +537,6 @@ void OmBatch::close()
   this->_config.close();
   this->_path.clear();
   this->_title.clear();
-  this->_locUuid.clear();
-  this->_insHash.clear();
 }
 
 

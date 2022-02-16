@@ -14,19 +14,18 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPBATSTG_H
-#define OMUIPROPBATSTG_H
+#ifndef OMUIPROPBATLST_H
+#define OMUIPROPBATLST_H
 
 #include "OmDialog.h"
 
-#define BAT_PROP_STG_TITLE  0
-#define BAT_PROP_STG_IONLY  1
+#define BAT_PROP_STG_INSLS  2
 
-/// \brief Batch Properties / Setting tab child
+/// \brief Batch Properties / Install List tab child
 ///
-/// OmDialog class derived for Batch Properties / Settings tab child dialog window
+/// OmDialog class derived for Batch Properties / Install List tab child dialog window
 ///
-class OmUiPropBatStg : public OmDialog
+class OmUiPropBatLst : public OmDialog
 {
   public:
 
@@ -36,13 +35,13 @@ class OmUiPropBatStg : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiPropBatStg(HINSTANCE hins);
+    OmUiPropBatLst(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiPropBatStg();
+    ~OmUiPropBatLst();
 
     /// \brief Get resource id.
     ///
@@ -75,11 +74,48 @@ class OmUiPropBatStg : public OmDialog
     ///
     void setChParam(unsigned i, bool en);
 
+    /// \brief Get Included list size.
+    ///
+    /// Get count of item in the Included List at index.
+    ///
+    /// \param[in]  l   : List index, corresponding to Location combo box.
+    ///
+    unsigned incCount(unsigned l) const {
+      return this->_included[l].size();
+    }
+
+    /// \brief Get Included list size.
+    ///
+    /// Get count of item in the Included List at index.
+    ///
+    /// \param[in]  l   : List index, corresponding to Location combo box.
+    /// \param[in]  v   : Value index to get in list.
+    ///
+    int incGet(unsigned l, unsigned v) const {
+      return this->_included[l][v];
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     bool                _chParam[8];
 
-    void                _onCkBoxIonly();
+    vector<vector<int>> _excluded;
+
+    vector<vector<int>> _included;
+
+    void                _buildLbs();
+
+    void                _includePkg();
+
+    void                _excludePkg();
+
+    void                _onLbExclsSel();
+
+    void                _onLbInclsSel();
+
+    void                _onBcUpPkg();
+
+    void                _onBcDnPkg();
 
     void                _onInit();
 
@@ -90,4 +126,4 @@ class OmUiPropBatStg : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROPBATSTG_H
+#endif // OMUIPROPBATLST_H

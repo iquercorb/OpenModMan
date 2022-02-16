@@ -14,6 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
+#include "OmBase.h"
 #include <algorithm>            //< std::sort
 
 #include "OmBaseApp.h"
@@ -198,7 +199,7 @@ bool OmContext::open(const wstring& path)
     for(size_t i = 0; i < omb_ls.size(); ++i) {
 
       this->log(2, L"Context("+this->_title+L") Open",
-                L"Linking Batch \""+Om_getFilePart(omb_ls[i])+L"\"");
+                L"Bind Batch \""+Om_getFilePart(omb_ls[i])+L"\"");
 
       OmBatch* pBat = new OmBatch(this);
 
@@ -389,7 +390,7 @@ bool OmContext::locSel(const wstring& uuid)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmContext::locFind(const wstring& uuid)
+int OmContext::locIndex(const wstring& uuid)
 {
   for(size_t i = 0; i < this->_locLs.size(); ++i) {
     if(uuid == this->_locLs[i]->uuid()) {
@@ -637,6 +638,30 @@ void OmContext::batSort()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmBatch* OmContext::batAdd(const wstring& title)
+{
+  // compose path using title and context home
+  wstring path = this->_home + L"\\";
+  path += title; path += L"."; path += OMM_BAT_DEF_FILE_EXT;
+
+  // Create new batch object
+  OmBatch* pBat = new OmBatch(this);
+  pBat->init(path, title, this->_batLst.size());
+  this->_batLst.push_back(pBat);
+
+  this->log(2, L"Context("+this->_title+L") Create Batch", L"Batch \""+title+L"\" created.");
+
+  // sort Batches by index
+  this->batSort();
+
+  return pBat;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+/*
 bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
 {
   // check whether we have same count of Location and hash list
@@ -720,7 +745,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
 
   return true;
 }
-
+*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

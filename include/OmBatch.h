@@ -22,6 +22,8 @@
 #include "OmConfig.h"
 
 class OmContext;
+class OmLocation;
+class OmPackage;
 
 /// \brief Batch object.
 ///
@@ -51,15 +53,29 @@ class OmBatch
     ///
     ~OmBatch();
 
-    /// \brief Get last error string.
+    /// \brief Parse Batch definition file.
     ///
-    /// Returns last error message string.
+    /// Analyses the supplied file to check whether this is a valid
+    /// Batch definition, and if yes, parse its content.
     ///
-    /// \return Last error message string.
+    /// \param[in]  path    : Path to definition file to parse.
     ///
-    const wstring& lastError() const {
-      return _error;
-    }
+    /// \return True if supplied file is a valid Batch and operation succeed,
+    /// false otherwise.
+    ///
+    bool open(const wstring& path);
+
+    /// \brief Initialize Batch definition file.
+    ///
+    /// Create new Batch definition file at given path.
+    ///
+    /// \param[in]  path    : Path to definition file to create.
+    /// \param[in]  title   : Installation Batch title.
+    /// \param[in]  index   : Initial list index to set.
+    ///
+    /// \return True if operation succeed, false otherwise
+    ///
+    bool init(const wstring& path, const wstring& title, unsigned index = 0);
 
     /// \brief Get Batch uuid.
     ///
@@ -101,97 +117,14 @@ class OmBatch
       return _path;
     }
 
-    /// \brief Parse Batch definition file.
+    /// \brief Get Install-Only option.
     ///
-    /// Analyses the supplied file to check whether this is a valid
-    /// Batch definition, and if yes, parse its content.
+    /// Returns the Install-Only option for this instance
     ///
-    /// \param[in]  path    : Path to definition file to parse.
+    /// \return Install-Only option value.
     ///
-    /// \return True if supplied file is a valid Batch and operation succeed,
-    /// false otherwise.
-    ///
-    bool open(const wstring& path);
-
-    /// \brief Check whether has Location.
-    ///
-    /// Check whether batch has the the specified Location.
-    ///
-    /// \param[in]  uuid    : Location UUID to search.
-    ///
-    /// \return True if the Location was found, false otherwise.
-    ///
-    bool hasLoc(const wstring& uuid);
-
-    /// \brief Get Batch Location index by UUID.
-    ///
-    /// Retrieve the Batch location index from Location UUID.
-    ///
-    /// \param[in]  uuid    : Location UUID to search.
-    ///
-    /// \return Location index or -1 if UUID was not found.
-    ///
-    int locGetIndex(const wstring& uuid);
-
-    /// \brief Get Location count.
-    ///
-    /// Returns the count of Location defined in batch.
-    ///
-    /// \return Count of Location.
-    ///
-    size_t locCount() {
-      return this->_locUuid.size();
-    }
-
-    /// \brief Get Location UUID.
-    ///
-    /// Returns the Location UUID at the given index.
-    ///
-    /// \param[in]  l    : Location index.
-    ///
-    /// \return Location UUID string.
-    ///
-    wstring locGetUuid(unsigned l) {
-      return this->_locUuid[l];
-    }
-
-    /// \brief Get Install entry count.
-    ///
-    /// Returns the batch install entry count for the
-    /// specified Location.
-    ///
-    /// \param[in]  l    : Location index.
-    ///
-    /// \return Package hash as 64 bits unsigned integer
-    ///
-    size_t insCount(unsigned l) {
-      return this->_insHash[l].size();
-    }
-
-    /// \brief Check whether has install hash.
-    ///
-    /// Checks whether Location has an install entry with
-    /// the specified package hash.
-    ///
-    /// \param[in]  l    : Location index.
-    /// \param[in]  hash : Package hash to search.
-    ///
-    /// \return True if package hash was found, false otherwise.
-    ///
-    bool hasIns(unsigned l, uint64_t hash);
-
-    /// \brief Get Install entry hash.
-    ///
-    /// Returns the batch install entry package hash for the
-    /// specified Location.
-    ///
-    /// \param[in]  l    : Location index.
-    /// \param[in]  i    : Install entry index.
-    ///
-    /// \return Package hash as 64 bits unsigned integer
-    ///
-    uint64_t insGet(unsigned l, unsigned i) {
-      return this->_insHash[l][i];
+    bool installOnly() {
+      return _instOnly;
     }
 
     /// \brief Set Batch title.
@@ -210,40 +143,115 @@ class OmBatch
     ///
     void setIndex(unsigned index);
 
-    /// \brief Add Location entry.
+    /// \brief Set Install-Only option.
     ///
-    /// Add the specified Location entry.
+    /// Defines the Install-Only option for this instance
     ///
-    /// \param[in]  uuid        : Location UUID.
+    /// \param[in]  enable  : Value to set.
     ///
-    void locAdd(const wstring& uuid);
+    void setInstallOnly(bool enable);
 
-    /// \brief Remove Location from Batch.
+    /// \brief Get Target Location count
     ///
-    /// Remove an existing Location entry from Batch.
+    /// Returns count of referenced Target Location in this instance.
     ///
-    /// \param[in]  uuid   : Location UUID.
+    /// \return Count of referenced Target Location
     ///
-    void locRem(const wstring& uuid);
+    size_t locCount();
 
-    /// \brief Add package install entry.
+    /// \brief Get Target Location uuid
     ///
-    /// Add the specified package installation entry.
+    /// Returns referenced Target Location UUID at specified index.
     ///
-    /// \param[in]  uuid        : Location UUID.
-    /// \param[in]  hash_list   : List of install package hash.
+    /// \param[in]  i    : Target Location index.
     ///
-    void insSetList(const wstring& uuid, const vector<uint64_t>& hash_list);
+    /// \return Target Location's UUID.
+    ///
+    wstring locUuid(unsigned i);
 
-    /// \brief Get Context.
+    /// \brief Discard Target Location
     ///
-    /// Returns Batch related Context
+    /// Removes reference and install list of the  Target Location
+    /// with the specified UUID.
     ///
-    /// \return Pointer to Batch related Context.
+    /// \param[in]  uuid : Target Location UUID.
     ///
-    OmContext* ownerCtx() const {
-      return _context;
-    }
+    /// \return True if operation succeed, false if reference not found.
+    ///
+    bool locDiscard(const wstring& uuid);
+
+    /// \brief Clear install list.
+    ///
+    /// Clear the install list of the specified Target Location, if Target
+    /// Location has no reference in the current Batch this operation has
+    /// no effect.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location.
+    ///
+    void instClear(const OmLocation* pLoc);
+
+    /// \brief Add package to install list.
+    ///
+    /// Add the given Package references to the installation list of the
+    /// specified Target Location.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location object.
+    /// \param[in]  pPkg    : Pointer to Package object to reference.
+    ///
+    void instAdd(const OmLocation* pLoc, const OmPackage* pPkg);
+
+    /// \brief Discard install list package
+    ///
+    /// Removes the specified Package reference from the install list of the.
+    /// specified Target Location.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location object.
+    /// \param[in]  pPkg    : Pointer to Package object to reference.
+    ///
+    void instDiscard(const OmLocation* pLoc, const OmPackage* pPkg);
+
+    /// \brief Get install list size.
+    ///
+    /// Returns size of the install list for the specified Target Location.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location object.
+    ///
+    /// \return Size of install list or 0 if Target Location not found.
+    ///
+    size_t instSize(const OmLocation* pLoc);
+
+    /// \brief Get install list package
+    ///
+    /// Returns the found package, in the given Target Location, corresponding
+    /// to the referenced item in the install list.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location object.
+    /// \param[in]  i       : Index of reference in install list.
+    ///
+    /// \return Pointer to Package object or nullptr if not found.
+    ///
+    OmPackage* instGet(const OmLocation* pLoc, unsigned i);
+
+    /// \brief Get install list
+    ///
+    /// Returns the list of packages, in the given Target Location,
+    /// corresponding to referenced install list items.
+    ///
+    /// \param[in]  pLoc    : Pointer to Target Location object.
+    /// \param[in]  pkg_ls  : Array that receive list of Package objects.
+    ///
+    /// \return Count of found item.
+    ///
+    size_t instGetList(const OmLocation* pLoc, vector<OmPackage*>& pkg_ls);
+
+    /// \brief Repair config.
+    ///
+    /// Verify then remove or repair invalid or broken references according
+    /// current bound context.
+    ///
+    /// \return True if operation succeed, false if bound context missing.
+    ///
+    bool repair();
 
     /// \brief Rename Batch definition file.
     ///
@@ -259,11 +267,31 @@ class OmBatch
     ///
     void close();
 
+    /// \brief Get last error string.
+    ///
+    /// Returns last error message string.
+    ///
+    /// \return Last error message string.
+    ///
+    const wstring& lastError() const {
+      return _error;
+    }
+
     /// \brief Add log.
     ///
     /// Add entry to log file.
     ///
     void log(unsigned level, const wstring& head, const wstring& detail);
+
+    /// \brief Get Context.
+    ///
+    /// Returns Batch related Context
+    ///
+    /// \return Pointer to Batch related Context.
+    ///
+    OmContext* pCtx() const {
+      return _context;
+    }
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -279,9 +307,7 @@ class OmBatch
 
     unsigned            _index;
 
-    vector<wstring>     _locUuid;
-
-    vector<vector<uint64_t>>  _insHash;
+    bool                _instOnly;
 
     wstring             _error;
 };

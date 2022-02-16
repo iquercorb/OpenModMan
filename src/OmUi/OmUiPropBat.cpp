@@ -21,6 +21,7 @@
 #include "OmManager.h"
 
 #include "OmUiPropBatStg.h"
+#include "OmUiPropBatLst.h"
 
 #include "OmUtilDlg.h"
 #include "OmUtilWin.h"   //< Om_getResIcon, etc.
@@ -36,6 +37,7 @@ OmUiPropBat::OmUiPropBat(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Settings", new OmUiPropBatStg(hins));
+  this->_addPage(L"Installation Lists", new OmUiPropBatLst(hins));
 }
 
 
@@ -67,6 +69,7 @@ bool OmUiPropBat::checkChanges()
     return false;
 
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
+  OmUiPropBatLst* pUiPropBatLst  = static_cast<OmUiPropBatLst*>(this->childById(IDD_PROP_BAT_LST));
 
   bool changed = false;
 
@@ -81,7 +84,17 @@ bool OmUiPropBat::checkChanges()
     }
   }
 
-  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_IONLY)) {  //< parameter for Batch title
+    int bm_chk = pUiPropBatStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
+    if(bm_chk != this->_pBat->installOnly()) {
+      changed = true;
+    } else {
+      pUiPropBatStg->setChParam(BAT_PROP_STG_IONLY, false);
+    }
+  }
+
+
+  if(pUiPropBatLst->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
     changed = true;
   }
 
@@ -100,9 +113,10 @@ bool OmUiPropBat::applyChanges()
   if(!this->_pBat)
     return false;
 
-  OmContext* pCtx = this->_pBat->ownerCtx();
+  OmContext* pCtx = this->_pBat->pCtx();
 
   OmUiPropBatStg* pUiPropBatStg  = static_cast<OmUiPropBatStg*>(this->childById(IDD_PROP_BAT_STG));
+  OmUiPropBatLst* pUiPropBatLst  = static_cast<OmUiPropBatLst*>(this->childById(IDD_PROP_BAT_LST));
 
   wstring bat_name;
 
@@ -137,10 +151,16 @@ bool OmUiPropBat::applyChanges()
     pUiPropBatStg->setChParam(BAT_PROP_STG_TITLE, false);
   }
 
-  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
+  if(pUiPropBatStg->hasChParam(BAT_PROP_STG_IONLY)) {  //< parameter for Batch title
+    int bm_chk = pUiPropBatStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
+    this->_pBat->setInstallOnly(bm_chk); //< change option value
+    // Reset parameter as unmodified
+    pUiPropBatStg->setChParam(BAT_PROP_STG_IONLY, false);
+  }
+
+  if(pUiPropBatLst->hasChParam(BAT_PROP_STG_INSLS)) {  //< parameter for Batch install list
 
     // build the per-Location hash lists
-    vector<uint64_t> hash_ls;
     OmLocation* pLoc;
     OmPackage* pPkg;
 
@@ -148,28 +168,21 @@ bool OmUiPropBat::applyChanges()
 
       pLoc = pCtx->locGet(k);
 
-      // reset list
-      hash_ls.clear();
+      // clear previous install list
+      this->_pBat->instClear(pLoc);
 
-      for(size_t i = 0; i < pUiPropBatStg->incCount(k); ++i) {
+      for(size_t i = 0; i < pUiPropBatLst->incCount(k); ++i) {
 
-        // retrieve package from stored index
-        pPkg = pLoc->pkgGet(pUiPropBatStg->incGet(k, i));
+        // get package from stored index
+        pPkg = pLoc->pkgGet(pUiPropBatLst->incGet(k, i));
 
-        // add <install> entry with package hash
-        hash_ls.push_back(pPkg->hash());
+        // add Package to install list
+        this->_pBat->instAdd(pLoc, pPkg);
       }
-
-      // add new location in batch if required
-      if(!this->_pBat->hasLoc(pLoc->uuid()))
-         this->_pBat->locAdd(pLoc->uuid());
-
-      // set new Install list
-      this->_pBat->insSetList(pLoc->uuid(), hash_ls);
     }
 
     // Reset parameter as unmodified
-    pUiPropBatStg->setChParam(BAT_PROP_STG_INSLS, false);
+    pUiPropBatLst->setChParam(BAT_PROP_STG_INSLS, false);
   }
 
   // disable Apply button
