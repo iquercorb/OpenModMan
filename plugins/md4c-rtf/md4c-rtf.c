@@ -62,7 +62,7 @@ Converts an long unsigned integer value to a null-terminated string
 using the specified base and stores the result in the array given
 by str parameter. */
 static char*
-ultostr(long unsigned value, char *str, int base)
+ultostr(long unsigned value, char *str, int base, char trail)
 {
   char buf[32];
   char *pb = buf;
@@ -76,9 +76,11 @@ ultostr(long unsigned value, char *str, int base)
   }
 
   /* copy buffer to destination in reverse order */
-
   while(pb > buf)
     *ps++ = *--pb;
+
+  /* add the optional trailing char */
+  if(trail) *ps++ = trail;
 
   *ps++ = '\0';
 
@@ -255,7 +257,7 @@ render_unicode(MD_RTF* r, unsigned u)
 {
   MD_RTF_CHAR str_ucp[16];
   RENDER_VERBATIM(r, "\\u");
-  RENDER_VERBATIM(r, ultostr(u, str_ucp, 10));
+  RENDER_VERBATIM(r, ultostr(u, str_ucp, 10, ' ')); //< add space after number
 }
 
 
@@ -264,7 +266,7 @@ render_cp1252(MD_RTF* r, unsigned u)
 {
   MD_RTF_CHAR str_acp[16];
   RENDER_VERBATIM(r, "\\'");
-  RENDER_VERBATIM(r, ultostr(u, str_acp, 16));
+  RENDER_VERBATIM(r, ultostr(u, str_acp, 16, ' ')); //< add space after number
 }
 
 static unsigned
@@ -500,7 +502,7 @@ render_list_start(MD_RTF* r)
 
     /* we need to the start number added to item count because
     this can be a list restart after the end of nested list */
-    ultostr(r->list[d].count + r->list[d].start, str_num, 10);
+    ultostr(r->list[d].count + r->list[d].start, str_num, 10, 0);
 
     RENDER_VERBATIM(r, str_num);
     RENDER_VERBATIM(r, r->list[d].cw_tx); /* bullet character */
@@ -537,7 +539,7 @@ render_list_item(MD_RTF* r)
   RENDER_VERBATIM(r, "{\\pntext\\f0 ");
 
   if(r->list[d].type == MD_RTF_LIST_TYPE_OL) { /* OL */
-    ultostr(r->list[d].count + r->list[d].start, str_num, 10);
+    ultostr(r->list[d].count + r->list[d].start, str_num, 10, 0);
     RENDER_VERBATIM(r, str_num);
   }
 
@@ -890,10 +892,10 @@ render_enter_block_tr(MD_RTF* r)
     /* if we render a table head, we add a background to cells */
     if(r->tabl_head) {
       RENDER_VERBATIM(r, "\\clcbpat5\\cellx");
-      ultostr(cw * (i + 1), str_num, 10);
+      ultostr(cw * (i + 1), str_num, 10, 0);
     } else {
       RENDER_VERBATIM(r, "\\cellx");
-      ultostr(cw * (i + 1), str_num, 10);
+      ultostr(cw * (i + 1), str_num, 10, 0);
     }
 
     RENDER_VERBATIM(r, str_num);
