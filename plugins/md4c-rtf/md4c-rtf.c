@@ -151,7 +151,7 @@ typedef struct MD_RTF_tag {
   unsigned    code_lf;
   /* RTF control words with prebuilt values */
   MD_RTF_CHAR cw_fs[2][8];
-  MD_RTF_CHAR cw_hf[6][16];
+  MD_RTF_CHAR cw_hf[6][24];
   MD_RTF_CHAR cw_sa[3][16];
   MD_RTF_CHAR cw_li[8][16];
   MD_RTF_CHAR cw_tr[2][32];
@@ -1210,12 +1210,12 @@ int md_rtf(const MD_CHAR* input, MD_SIZE input_size,
   sprintf(render.cw_fs[1], "\\fs%u", (unsigned)(0.9f*render.font_base) );
 
   /* titles styles per level with font size and space-after values */
-  sprintf(render.cw_hf[0], "\\fs%u\\sa%u\\b ", (unsigned)(2.2f*render.font_base), 2*render.font_base);
-  sprintf(render.cw_hf[1], "\\fs%u\\sa%u\\b ", (unsigned)(1.7f*render.font_base), 2*render.font_base);
-  sprintf(render.cw_hf[2], "\\fs%u\\sa%u\\b ", (unsigned)(1.4f*render.font_base), 2*render.font_base);
-  sprintf(render.cw_hf[3], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.2f*render.font_base), 2*render.font_base);
-  sprintf(render.cw_hf[4], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.1f*render.font_base), 2*render.font_base);
-  sprintf(render.cw_hf[5], "\\fs%u\\sa%u\\b\\i ", (unsigned)(render.font_base), 2*render.font_base);
+  sprintf(render.cw_hf[0], "\\fs%u\\sa%u\\b ", (unsigned)(2.2f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[1], "\\fs%u\\sa%u\\b ", (unsigned)(1.7f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[2], "\\fs%u\\sa%u\\b ", (unsigned)(1.4f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[3], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.2f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[4], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.1f*render.font_base), 5*render.font_base);
+  sprintf(render.cw_hf[5], "\\fs%u\\sa%u\\b\\i ", (unsigned)(render.font_base), 5*render.font_base);
 
   /* space-after values */
   sprintf(render.cw_sa[0], "\\sa%u ", 2*render.font_base);
