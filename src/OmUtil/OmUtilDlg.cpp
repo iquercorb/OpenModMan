@@ -393,9 +393,9 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     // Edit Control for item list
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
     itmt->id = OMM_DLGBOX_SC_LIST;
-    itmt->style = WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY;
+    itmt->style = WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL;
     itmt->dwExtendedStyle = WS_EX_LEFT;
-    itmt->x = 45; itmt->y = 50; itmt->cx = 255; itmt->cy = 12;
+    itmt->x = 45; itmt->y = 50; itmt->cx = 255; itmt->cy = 0;
     pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
     *pTpl++ = 0xFFFF; *pTpl++ = 0x0081; //< WC_EDIT
     while((*reinterpret_cast<wchar_t*>(pTpl++) = *lst++)); //< Item text
