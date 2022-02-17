@@ -918,20 +918,10 @@ bool OmUiToolPkg::_onBcBrwDesc()
   if(!Om_isFile(result))
     return false;
 
-  // load as plain text and send to contro
-  /*
-  string text_str = Om_loadPlainText(result);
-  SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text_str.c_str());
-  */
-
   wstring text_wcs;
   Om_loadToUTF16(&text_wcs, result);
 
   SetDlgItemTextW(this->_hwnd, IDC_EC_DESC, text_wcs.c_str());
-
-  #ifdef DEBUG
-  std::wcout << text_wcs;
-  #endif // DEBUG
 
   return true;
 }

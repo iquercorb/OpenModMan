@@ -594,7 +594,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
 
   if(!status) {
     #ifdef DEBUG
-    wcout << L"__checkAccess(";
+    wcout << L"DEBUG => Om_checkAccess(";
     if(mask & FILE_LIST_DIRECTORY) wcout << L"FILE_LIST_DIRECTORY | ";
     if(mask & FILE_TRAVERSE) wcout << L"FILE_TRAVERSE | ";
     if(mask & FILE_ADD_FILE) wcout << L"FILE_ADD_FILE | ";

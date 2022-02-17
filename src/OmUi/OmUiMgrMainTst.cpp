@@ -38,14 +38,14 @@ DWORD CALLBACK EditStreamCallback(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, PL
   if(ReadFile(hFile, lpBuff, cb, (DWORD *)pcb, NULL)) {
 
     #ifdef DEBUG
-    std::cout << "EditStreamCallback:: ReadFile OK\n";
+    std::cout << "DEBUG => EditStreamCallback:: ReadFile OK\n";
     #endif
 
     return 0;
   }
 
   #ifdef DEBUG
-  std::cout << "EditStreamCallback:: ReadFile failed\n";
+  std::cout << "DEBUG => EditStreamCallback:: ReadFile failed\n";
   #endif
 
   return -1;
@@ -68,7 +68,7 @@ BOOL FillRichEditFromFile(HWND hwnd, LPCTSTR pszFile)
     if(SendMessage(hwnd, EM_STREAMIN, SF_RTF, (LPARAM)&es) && es.dwError == 0) {
 
       #ifdef DEBUG
-      std::cout << "FillRichEditFromFile:: Success\n";
+      std::cout << "DEBUG => FillRichEditFromFile:: Success\n";
       #endif
 
       fSuccess = TRUE;
@@ -79,7 +79,7 @@ BOOL FillRichEditFromFile(HWND hwnd, LPCTSTR pszFile)
   } else {
 
     #ifdef DEBUG
-    std::cout << "FillRichEditFromFile:: CreateFile failed\n";
+    std::cout << "DEBUG => FillRichEditFromFile:: CreateFile failed\n";
     #endif
   }
 
@@ -125,7 +125,7 @@ long OmUiMgrMainTst::id() const
 void OmUiMgrMainTst::_onInit()
 {
   #ifdef DEBUG
-  std::cout << "OmUiMgrMainTst::_onInit\n";
+  std::cout << "DEBUG => OmUiMgrMainTst::_onInit\n";
   #endif
 
   // retrieve main dialog
@@ -176,7 +176,7 @@ void OmUiMgrMainTst::_onInit()
 void OmUiMgrMainTst::_onShow()
 {
   #ifdef DEBUG
-  std::cout << "OmUiMgrMainTst::_onShow\n";
+  std::cout << "DEBUG => OmUiMgrMainTst::_onShow\n";
   #endif
 
   FillRichEditFromFile(this->getItem(IDC_FT_DESC), "hello.rtf");
@@ -188,7 +188,7 @@ void OmUiMgrMainTst::_onShow()
 void OmUiMgrMainTst::_onHide()
 {
   #ifdef DEBUG
-  std::cout << "OmUiMgrMainTst::_onHide\n";
+  std::cout << "DEBUG => OmUiMgrMainTst::_onHide\n";
   #endif
 }
 
