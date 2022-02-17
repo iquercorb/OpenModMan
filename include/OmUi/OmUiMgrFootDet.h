@@ -90,6 +90,8 @@ class OmUiMgrFootDet : public OmDialog
 
     void                _renderText(const wstring& text, bool show, bool raw = false);
 
+    void                _onReLink(LPARAM lParam);
+
     void                _onInit();
 
     void                _onShow();

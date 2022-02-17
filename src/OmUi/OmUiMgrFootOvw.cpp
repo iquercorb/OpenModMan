@@ -28,6 +28,7 @@
 #include "OmUiMgr.h"
 
 #include "OmUtilWin.h"
+#include "OmUtilDlg.h"
 
 #include "md4c-rtf/md4c-rtf.h"
 
@@ -246,6 +247,30 @@ void OmUiMgrFootOvw::_renderText(const wstring& text, bool show, bool raw)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMgrFootOvw::_onReLink(LPARAM lParam)
+{
+  wchar_t url[512];
+
+  ENLINK* el = reinterpret_cast<ENLINK*>(lParam);
+
+  TEXTRANGEW trw;
+  trw.chrg.cpMin = el->chrg.cpMin;
+  trw.chrg.cpMax = el->chrg.cpMax;
+  trw.lpstrText = url;
+
+  this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&trw));
+
+  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_QRY, L"Open link",
+                   L"Do you want to open this link in browser ?", url)) {
+
+      ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMgrFootOvw::_onInit()
 {
   #ifdef DEBUG
@@ -333,22 +358,8 @@ INT_PTR OmUiMgrFootOvw::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if(reinterpret_cast<NMHDR*>(lParam)->code == EN_LINK) {
 
-        ENLINK* el = reinterpret_cast<ENLINK*>(lParam);
-
-        if(el->msg == WM_LBUTTONUP) {
-
-          wchar_t url_buf[256];
-
-          TEXTRANGEW txr;
-          txr.chrg.cpMin = el->chrg.cpMin;
-          txr.chrg.cpMax = el->chrg.cpMax;
-          txr.lpstrText = url_buf;
-
-          this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&txr));
-
-          #ifdef DEBUG
-          std::wcout << L"DEBUG => OmUiMgrFootOvw::_onMsg WM_NOTIFY-EN_LINK: " << url_buf << "\n";
-          #endif
+        if(reinterpret_cast<ENLINK*>(lParam)->msg == WM_LBUTTONUP) {
+          this->_onReLink(lParam);
         }
       }
     }

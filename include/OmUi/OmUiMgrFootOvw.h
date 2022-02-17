@@ -112,6 +112,8 @@ class OmUiMgrFootOvw : public OmDialog
 
     bool                _rawDesc;
 
+    void                _onReLink(LPARAM lParam);
+
     void                _onInit();
 
     void                _onShow();

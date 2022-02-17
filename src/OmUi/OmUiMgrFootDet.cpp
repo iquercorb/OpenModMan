@@ -29,6 +29,7 @@
 
 #include "OmUtilWin.h"
 #include "OmUtilStr.h"
+#include "OmUtilDlg.h"
 
 #include "md4c-rtf/md4c-rtf.h"
 
@@ -299,6 +300,29 @@ void OmUiMgrFootDet::_renderText(const wstring& text, bool show, bool raw)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMgrFootDet::_onReLink(LPARAM lParam)
+{
+  wchar_t url[512];
+
+  ENLINK* el = reinterpret_cast<ENLINK*>(lParam);
+
+  TEXTRANGEW trw;
+  trw.chrg.cpMin = el->chrg.cpMin;
+  trw.chrg.cpMax = el->chrg.cpMax;
+  trw.lpstrText = url;
+
+  this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&trw));
+
+  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_QRY, L"Open link",
+                   L"Do you want to open this link in browser ?", url)) {
+
+      ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMgrFootDet::_onInit()
 {
   #ifdef DEBUG
@@ -377,6 +401,18 @@ void OmUiMgrFootDet::_onQuit()
 ///
 INT_PTR OmUiMgrFootDet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  if(uMsg == WM_NOTIFY) {
+
+    if(LOWORD(wParam) == IDC_FT_DESC) { //< Rich Edit (MD parsed)
+
+      if(reinterpret_cast<NMHDR*>(lParam)->code == EN_LINK) {
+
+        if(reinterpret_cast<ENLINK*>(lParam)->msg == WM_LBUTTONUP) {
+          this->_onReLink(lParam);
+        }
+      }
+    }
+  }
 
   if(uMsg == WM_COMMAND) {
     #ifdef DEBUG
