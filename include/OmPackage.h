@@ -666,13 +666,21 @@ class OmPackage
 
     /// \brief Set description.
     ///
-    /// Sets Package description ((README) content.
+    /// Sets Package description content.
     ///
     /// \param[in]  text    : Description string to set.
     ///
     void setDesc(const wstring& text) {
       _desc = text;
     }
+
+    /// \brief Load description.
+    ///
+    /// Loads the specified text file to set as description.
+    ///
+    /// \param[in]  path    : Text file path to load.
+    ///
+    void loadDesc(const wstring& path);
 
     /// \brief Get image.
     ///
@@ -690,15 +698,25 @@ class OmPackage
     /// this Package.
     ///
     /// \param[in]  path  : Path to image file to load.
-    /// \param[in]  size  : Image thumbnail size.
+    /// \param[in]  width : Image thumbnail size.
     ///
-    void loadImage(const wstring& path, unsigned size);
+    void loadImage(const wstring& path, unsigned width);
 
     /// \brief Clear image.
     ///
     /// Clear image data from this Package.
     ///
     void clearImage();
+
+    /// \brief Load overview data.
+    ///
+    /// Try to find and load description file and thumbnail image
+    /// corresponding to package identity or core name in the
+    /// specified folder.
+    ///
+    /// \param[in]  path  : Path where to search for overview files.
+    ///
+    bool loadOverview(const wstring& path);
 
     /// \brief Get owner Location.
     ///
@@ -836,7 +854,11 @@ class OmPackage
 
     wstring             _desc;
 
+    time_t              _descTime;
+
     OmImage             _image;
+
+    time_t              _imageTime;
 
     wstring             _error;
 };

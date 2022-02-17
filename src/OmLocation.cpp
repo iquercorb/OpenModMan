@@ -1579,6 +1579,12 @@ bool OmLocation::libRefresh()
           --p;
         }
       }
+
+      // update overview data in case description text or image file changed
+      if(!this->_pkgLs[p]->isType(PKG_TYPE_ZIP)) {
+        if(this->_pkgLs[p]->loadOverview(this->_libDir))
+          changed = true;
+      }
     }
 
     uint64_t pkg_hash;

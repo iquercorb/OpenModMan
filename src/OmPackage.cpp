@@ -106,7 +106,8 @@ static void __get_folder_src_items(vector<OmPkgItem>* ls, const wstring& orig, c
 OmPackage::OmPackage() :
   _location(nullptr), _type(0), _ident(), _hash(0), _core(), _version(), _name(),
   _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(), _bckDir(),
-  _bckItemLs(), _ovrLs(), _category(), _desc(), _image(), _error()
+  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _image(), _imageTime(0),
+  _error()
 {
 
 }
@@ -116,9 +117,10 @@ OmPackage::OmPackage() :
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmPackage::OmPackage(OmLocation* pLoc) :
-  _location(pLoc), _type(0), _ident(), _hash(0), _core(), _version(),
-  _name(), _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(),
-  _bckDir(), _bckItemLs(), _ovrLs(), _category(), _desc(), _image(), _error()
+  _location(pLoc), _type(0), _ident(), _hash(0), _core(), _version(), _name(),
+  _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(), _bckDir(),
+  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _image(), _imageTime(0),
+  _error()
 {
 
 }
@@ -430,6 +432,12 @@ bool OmPackage::srcParse(const wstring& path)
     this->_version.parse(vers);
   }
 
+  // if this is development folder we try to find description text and thumnail
+  // image next the folder within the Library
+  if(!this->isType(PKG_TYPE_ZIP)) {
+    this->loadOverview(Om_getDirPart(this->_src));
+  }
+
   // store source last write time
   this->_srcTime = Om_itemTime(this->_src);
 
@@ -648,6 +656,10 @@ void OmPackage::srcClear()
   this->_srcDir.clear();
   this->_srcTime = 0;
   this->_srcItemLs.clear();
+  this->_desc.clear();
+  this->_descTime = 0;
+  this->_image.clear();
+  this->_imageTime = 0;
 }
 
 
@@ -914,14 +926,22 @@ bool OmPackage::ovrTest(const vector<OmPkgItem>& footprint) const
   return false;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmPackage::loadDesc(const wstring& path)
+{
+  this->_desc.clear();
+  Om_loadToUTF16(&this->_desc, path);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::loadImage(const wstring& path, unsigned size)
+void OmPackage::loadImage(const wstring& path, unsigned width)
 {
   this->_image.clear();
-  this->_image.open(path, size);
+  this->_image.open(path, width);
 }
 
 
@@ -931,6 +951,78 @@ void OmPackage::loadImage(const wstring& path, unsigned size)
 void OmPackage::clearImage()
 {
   this->_image.clear();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmPackage::loadOverview(const wstring& path)
+{
+  // supported image extensions
+  const wchar_t* imt_ext[] = {L".bmp", L".gif", L".png", L".jpg"};
+
+  // build bas file path prototypes to search
+  time_t new_time;
+  wstring full_path;
+  wstring test_path[2];
+
+  Om_concatPaths(test_path[0], path, this->_ident);
+  Om_concatPaths(test_path[1], path, this->_core);
+
+  bool changed = false;
+  bool found = false;
+  // try text file with same identity, then core name
+  for(unsigned i = 0; i < 2; ++i) {
+    if(Om_isFile(full_path = test_path[i] + L".txt")) {
+      found = true; break;
+    }
+  }
+
+  if(found) {
+    new_time = Om_itemTime(full_path);
+    if(new_time != this->_descTime) {
+      this->loadDesc(full_path);
+      this->_descTime = new_time;
+      changed = true;
+      #ifdef DEBUG
+      std::wcout << L"DEBUG => OmPackage("<<this->_ident<<L")::loadOverview - Description loaded\n";
+      #endif
+    }
+  } else {
+    this->_descTime = 0;
+    this->_desc.clear();
+  }
+
+  // try image file with same identity, then core name
+  unsigned i = 4;
+  while(i--) {
+    if(Om_isFile(full_path = test_path[0] + imt_ext[i])) {
+      found = true; break;
+    }
+    if(Om_isFile(full_path = test_path[1] + imt_ext[i])) {
+      found = true; break;
+    }
+  }
+
+  if(found) {
+    new_time = Om_itemTime(full_path);
+    if(new_time != this->_imageTime) {
+      this->loadImage(full_path, OMM_THUMB_SIZE);
+      this->_imageTime = new_time;
+      changed = true;
+      #ifdef DEBUG
+      std::wcout << L"DEBUG => OmPackage("<<this->_ident<<L")::loadOverview - Image loaded\n";
+      #endif
+    }
+  } else {
+    this->_imageTime = 0;
+    this->clearImage();
+  }
+
+
+
+  return changed;
 }
 
 
