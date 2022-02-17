@@ -88,29 +88,7 @@ class OmUiMgrFootDet : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    uint8_t*            _rtfBuff;
-
-    size_t              _rtfSize;
-
-    size_t              _rtfRead;
-
-    size_t              _rtfWrit;
-
-    static void         _md2rtf_cb(const uint8_t*, unsigned, void*);
-
-    static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
-
-    wchar_t*            _txtBuff;
-
-    size_t              _txtSize;
-
-    size_t              _txtWrit;
-
-    void                _txtCat(const wchar_t* text, size_t len);
-
-    void                _txtCat(const wstring& text);
-
-    void                _renderText(bool show, bool raw = false);
+    void                _renderText(const wstring& text, bool show, bool raw = false);
 
     void                _onInit();
 

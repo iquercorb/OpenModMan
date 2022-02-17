@@ -38,15 +38,72 @@
 ///
 /// Global options flag set for MD4C parser
 ///
-#define MD4C_OPTIONS  MD_FLAG_UNDERLINE|MD_FLAG_TABLES|MD_FLAG_PERMISSIVEAUTOLINKS
+#define MD4C_OPTIONS  MD_FLAG_UNDERLINE|MD_FLAG_TABLES|MD_FLAG_PERMISSIVEAUTOLINKS|MD_FLAG_NOHTML
+
+/// \brief Callback for Markdown to RTF parser
+///
+/// Callback for MD4C RTF parser/renderer used to receive and store
+/// rendered RTF data
+///
+/// \param[in]  data  : Pointer to RTF data.
+/// \param[in]  size  : Size of RTF data.
+/// \param[in]  ptr   : Pointer to user data.
+///
+static void __md2rtf_cb(const uint8_t* data, unsigned size, void* ptr)
+{
+  // get pointer to string
+  string* str = reinterpret_cast<string*>(ptr);
+
+  // contact new data to string
+  str->append(reinterpret_cast<const char*>(data), size);
+}
+
+/// \brief Callback for Rich Edit stream
+///
+/// Callback Rich Edit input stream, used to send RTF data to
+/// Rich Edit control.
+///
+/// \param[in]  ptr       : Pointer to user data.
+/// \param[in]  buff      : Destination buffer where to write RTF data.
+/// \param[in]  size      : Destination buffer size.
+/// \param[out] writ      : Count of bytes actually written to buffer.
+///
+static DWORD CALLBACK __rtf2re_cb(DWORD_PTR ptr, LPBYTE buff, LONG size, LONG* writ)
+{
+  string* str = reinterpret_cast<string*>(ptr);
+
+  LONG str_size = static_cast<LONG>(str->size());
+
+  if(str_size) {
+
+    if(size <= str_size) {
+
+      memcpy(buff, str->data(), size);
+      str->erase(0, size);
+      *writ = size;
+
+    } else {
+
+      *writ = str_size;
+      memcpy(buff, str->data(), str_size);
+      str->clear();
+
+    }
+
+  } else {
+
+    *writ = 0;
+  }
+
+  return 0;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMgrFootOvw::OmUiMgrFootOvw(HINSTANCE hins) : OmDialog(hins),
-  _pUiMgr(nullptr),
-  _rtfBuff(nullptr), _rtfSize(0), _rtfRead(0), _rtfWrit(0),
-  _rawDesc(false)
+  _pUiMgr(nullptr), _rawDesc(false)
 {
 
 }
@@ -56,9 +113,6 @@ OmUiMgrFootOvw::OmUiMgrFootOvw(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMgrFootOvw::~OmUiMgrFootOvw()
 {
-  if(this->_rtfBuff)
-    Om_free(this->_rtfBuff);
-
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
@@ -131,108 +185,6 @@ void OmUiMgrFootOvw::clearPreview()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootOvw::_md2rtf_cb(const uint8_t* data, unsigned size, void* ptr)
-{
-  OmUiMgrFootOvw* self = reinterpret_cast<OmUiMgrFootOvw*>(ptr);
-
-  // allocate new buffer if required
-  if(self->_rtfWrit + size > self->_rtfSize) {
-
-    self->_rtfSize *= 2;
-    self->_rtfBuff = reinterpret_cast<uint8_t*>(Om_realloc(self->_rtfBuff, self->_rtfSize));
-
-    if(!self->_rtfBuff) {
-      // that is a bad alloc error...
-      return;
-    }
-
-    #ifdef DEBUG
-    std::cout << "OmUiMgrFootOvw::_md2rtf_cb realloc="<< self->_rtfSize <<" bytes\n";
-    #endif
-  }
-
-  // contact new data
-  memcpy(self->_rtfBuff + self->_rtfWrit, data, size);
-
-  // increment bytes written
-  self->_rtfWrit += size;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-DWORD CALLBACK OmUiMgrFootOvw::_rtf2re_cb(DWORD_PTR ptr, LPBYTE lpBuff, LONG rb, LONG* prb)
-{
-  OmUiMgrFootOvw* self = reinterpret_cast<OmUiMgrFootOvw*>(ptr);
-
-  if(self->_rtfRead < self->_rtfWrit) {
-    if((self->_rtfRead + rb) <= self->_rtfWrit) {
-
-      memcpy(lpBuff, self->_rtfBuff + self->_rtfRead, rb);
-      self->_rtfRead += rb;
-      *prb = rb;
-
-    } else {
-
-      *prb = self->_rtfWrit - self->_rtfRead;
-      memcpy(lpBuff, self->_rtfBuff + self->_rtfRead, *prb);
-      self->_rtfRead = self->_rtfWrit;
-    }
-
-  } else {
-    *prb = 0;
-  }
-
-  #ifdef DEBUG
-  std::cout << "OmUiMgrFootOvw::_rtf2re_cb rb="<< *prb <<"\n";
-  #endif
-
-  return 0;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMgrFootOvw::_renderText(const wstring& text, bool show, bool raw)
-{
-  if(raw) {
-
-    // set raw description to edit control
-    this->setItemText(IDC_EC_DESC, text);
-    if(show) this->showItem(IDC_EC_DESC, true);
-    this->showItem(IDC_FT_DESC, false);
-
-  } else {
-
-    // reset RTF buffers parameters
-    this->_rtfWrit = 0; //< bytes written by MD parser
-    this->_rtfRead = 0; //< bytes read by Rich Edit stream
-
-    // parse MD and render to RTF
-    md_rtf(text.c_str(), text.size(), this->_md2rtf_cb, this, MD4C_OPTIONS, 0, 11, 300);
-
-    // send RTF data to Rich Edit
-    EDITSTREAM es = {};
-    es.pfnCallback = this->_rtf2re_cb;
-    es.dwCookie    = reinterpret_cast<DWORD_PTR>(this);
-
-    this->msgItem(IDC_FT_DESC, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
-
-    // reset scroll position once done
-    long pt[2] = {};
-    this->msgItem(IDC_FT_DESC, EM_SETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&pt));
-
-    if(show) this->showItem(IDC_FT_DESC, true);
-    this->showItem(IDC_EC_DESC, false);
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiMgrFootOvw::_showPreview(const OmImage& snap, const wstring& desc)
 {
   if(desc.size())
@@ -251,6 +203,43 @@ void OmUiMgrFootOvw::_showPreview(const OmImage& snap, const wstring& desc)
   // Update the selected picture
   hBm = this->setStImage(IDC_SB_SNAP, hBm);
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFootOvw::_renderText(const wstring& text, bool show, bool raw)
+{
+  if(raw) {
+
+    // set raw description to edit control
+    this->setItemText(IDC_EC_DESC, text);
+    if(show) this->showItem(IDC_EC_DESC, true);
+    this->showItem(IDC_FT_DESC, false);
+
+  } else {
+
+    // string as RTF data buffer
+    string rtf_data;
+
+    // parse MD and render to RTF
+    md_rtf(text.data(), text.size(), __md2rtf_cb, &rtf_data, MD4C_OPTIONS, 0, 11, 300);
+
+    // send RTF data to Rich Edit
+    EDITSTREAM es = {};
+    es.pfnCallback = __rtf2re_cb;
+    es.dwCookie    = reinterpret_cast<DWORD_PTR>(&rtf_data);
+
+    this->msgItem(IDC_FT_DESC, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
+
+    // reset scroll position once done
+    long pt[2] = {};
+    this->msgItem(IDC_FT_DESC, EM_SETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&pt));
+
+    if(show) this->showItem(IDC_FT_DESC, true);
+    this->showItem(IDC_EC_DESC, false);
+  }
 }
 
 
@@ -284,10 +273,6 @@ void OmUiMgrFootOvw::_onInit()
   this->msgItem(IDC_FT_DESC, EM_SETEVENTMASK, 0, ENM_LINK);
   this->msgItem(IDC_FT_DESC, EM_AUTOURLDETECT,  AURL_ENABLEURL|AURL_ENABLEEAURLS|
                                                 AURL_ENABLEEMAILADDR, 0);
-
-  // Allocate new buffer for RTF data
-  this->_rtfSize = 4096;
-  this->_rtfBuff = reinterpret_cast<uint8_t*>(Om_alloc(4096));
 }
 
 ///

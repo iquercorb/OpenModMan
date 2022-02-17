@@ -1018,16 +1018,24 @@ bool Om_strIsVersion(const wstring& str)
 ///
 void Om_escapeMarkdown(wstring* dst, const wstring& src)
 {
+  // the following implementation is twice faster than
+  // usual ways using STL functions and methods.
+
+  size_t size = dst->size();
+  dst->resize(size + (src.size() * 2));
+
+  wchar_t* back = &(*dst)[size];
+  wchar_t* d = const_cast<wchar_t*>(back);
   const wchar_t* s = src.data();
 
-  dst->reserve(dst->size() + src.size() * 2);
-
-  while(*s != '\0') {
+  while(*s != L'\0') {
     if(wcschr(L"*_#`", *s)) {
-      dst->push_back('\\');
+      *d++ = L'\\';
     }
-    dst->push_back(*s++);
+    *d++ = *s++;
   }
+
+  dst->resize(size + (d - back));
 }
 
 
@@ -1039,7 +1047,7 @@ size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src)
   size_t n = 0;
   const wchar_t* s = src.data();
 
-  while(*s != '\0') {
+  while(*s != L'\0') {
     if(wcschr(L"*_#`", *s)) {
       *buf++ = '\\'; n++;
     }

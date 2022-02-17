@@ -106,23 +106,11 @@ class OmUiMgrFootOvw : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    uint8_t*            _rtfBuff;
-
-    size_t              _rtfSize;
-
-    size_t              _rtfRead;
-
-    size_t              _rtfWrit;
-
-    static void         _md2rtf_cb(const uint8_t*, unsigned, void*);
-
-    static DWORD CALLBACK _rtf2re_cb(DWORD_PTR, LPBYTE, LONG, PLONG);
+    void                _showPreview(const OmImage&, const wstring&);
 
     void                _renderText(const wstring& text, bool show, bool raw = false);
 
     bool                _rawDesc;
-
-    void                _showPreview(const OmImage&, const wstring&);
 
     void                _onInit();
 

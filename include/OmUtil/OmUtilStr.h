@@ -513,10 +513,10 @@ bool Om_strIsVersion(const wstring& str);
 
 /// \brief Escape string for Markdown
 ///
-/// Escapes Markdown specific character the given source string to
-/// the specified destination.
+/// Escapes Markdown specific character the given source string then
+/// append it to the specified destination.
 ///
-/// \param[in] dst       : Destination string that receive escaped text.
+/// \param[in] dst       : Destination string to append escaped text.
 /// \param[in] str       : Source string to escape.
 ///
 void Om_escapeMarkdown(wstring* dst, const wstring& src);
