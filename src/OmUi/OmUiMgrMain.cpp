@@ -41,7 +41,7 @@ OmUiMgrMain::OmUiMgrMain(HINSTANCE hins) : OmDialog(hins),
   // create child tab dialogs
   this->_addTab(L"Packages Library", new OmUiMgrMainLib(hins)); // Library Tab
   this->_addTab(L"Network Repositories", new OmUiMgrMainNet(hins)); // Network Tab
-  this->_addTab(L"Work In Progress", new OmUiMgrMainTst(hins)); // Test Tab, for development an debug purpose
+  //this->_addTab(L"Work In Progress", new OmUiMgrMainTst(hins)); // Test Tab, for development an debug purpose
 
   // set the accelerator table for the dialog
   this->setAccel(IDR_ACCEL);
