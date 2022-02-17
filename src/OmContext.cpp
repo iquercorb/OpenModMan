@@ -154,66 +154,69 @@ bool OmContext::open(const wstring& path)
   }
 
   // load Locations for this Context
-  vector<wstring> loc_home_ls;
-  Om_lsDir(&loc_home_ls, this->_home, false);
+  vector<wstring> file_ls;
+  vector<wstring> subdir_ls;
+  Om_lsDir(&subdir_ls, this->_home, false);
 
-  if(loc_home_ls.size()) {
+  if(subdir_ls.size()) {
 
     OmConfig cfg;
-    vector<wstring> oml_ls;
 
-    for(size_t i = 0; i < loc_home_ls.size(); ++i) {
+    for(size_t i = 0; i < subdir_ls.size(); ++i) {
 
-      // get list of files with proper extension
-      oml_ls.clear();
-      Om_lsFileFiltered(&oml_ls, this->_home+L"\\"+loc_home_ls[i], L"*." OMM_LOC_DEF_FILE_EXT, true);
+      // check for presence of Target Location definition file
+      file_ls.clear();
+      Om_lsFileFiltered(&file_ls, this->_home+L"\\"+subdir_ls[i], L"*." OMM_LOC_DEF_FILE_EXT, true);
 
       // we parse the fist definition file found in directory
-      if(oml_ls.size()) {
+      if(file_ls.size()) {
 
         this->log(2, L"Context("+this->_title+L") Open",
-                  L"Linking Location \""+Om_getFilePart(oml_ls[0])+L"\"");
+                  L"Linking Location \""+Om_getFilePart(file_ls[0])+L"\"");
 
         // we use the first file we found
         OmLocation* pLoc = new OmLocation(this);
 
-        if(pLoc->open(oml_ls[0])) {
+        if(pLoc->open(file_ls[0])) {
           this->_locLs.push_back(pLoc);
         } else {
           delete pLoc;
         }
       }
     }
-
-    // sort Locations by index
-    if(this->_locLs.size() > 1)
-      sort(this->_locLs.begin(), this->_locLs.end(), __loc_sort_index_fn);
   }
 
-  // Load batches for this Context
-  vector<wstring> omb_ls;
-  Om_lsFileFiltered(&omb_ls, this->_home, L"*." OMM_BAT_DEF_FILE_EXT, true);
+  // Search for Installation Batches within Context home and subfolders
+  file_ls.clear();
+  Om_lsFileFiltered(&file_ls, this->_home, L"*." OMM_BAT_DEF_FILE_EXT, true);
+  for(size_t i = 0; i < subdir_ls.size(); ++i) {
+    Om_lsFileFiltered(&file_ls, this->_home+L"\\"+subdir_ls[i], L"*." OMM_BAT_DEF_FILE_EXT, true);
+  }
 
-  if(omb_ls.size()) {
+  if(file_ls.size()) {
 
-    for(size_t i = 0; i < omb_ls.size(); ++i) {
+    for(size_t i = 0; i < file_ls.size(); ++i) {
 
       this->log(2, L"Context("+this->_title+L") Open",
-                L"Bind Batch \""+Om_getFilePart(omb_ls[i])+L"\"");
+                L"Bind Batch \""+Om_getFilePart(file_ls[i])+L"\"");
 
       OmBatch* pBat = new OmBatch(this);
 
-      if(pBat->open(omb_ls[i])) {
+      if(pBat->open(file_ls[i])) {
         this->_batLst.push_back(pBat);
       } else {
         delete pBat;
       }
     }
-
-    // sort Batches by index
-    if(this->_batLst.size() > 1)
-      sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
   }
+
+  // sort Locations by index
+  if(this->_locLs.size() > 1)
+    sort(this->_locLs.begin(), this->_locLs.end(), __loc_sort_index_fn);
+
+  // sort Batches by index
+  if(this->_batLst.size() > 1)
+    sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
 
   // the first location in list become the default active one
   if(this->_locLs.size()) {
