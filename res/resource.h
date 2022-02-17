@@ -110,6 +110,8 @@
 #define IDB_BAT_16                              980
 #define IDB_BAT_24                              981
 #define IDB_BAT_32                              982
+#define IDB_SNAP_DIR                            990
+#define IDB_SNAP_PKG                            991
 #define IDC_SC_NAME                             40100
 #define IDC_SC_INTRO                            40101
 #define IDC_SC_STATE                            40102

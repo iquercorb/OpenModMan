@@ -28,6 +28,7 @@
 #include "OmUiMgr.h"
 
 #include "OmUtilWin.h"
+#include "OmUtilStr.h"
 #include "OmUtilDlg.h"
 
 #include "md4c-rtf/md4c-rtf.h"
@@ -156,7 +157,7 @@ void OmUiMgrFootOvw::safemode(bool enable)
 void OmUiMgrFootOvw::setPreview(OmPackage* pPkg)
 {
   if(pPkg) {
-    this->_showPreview(pPkg->image(), pPkg->desc());
+    this->_showPreview(pPkg->name(), pPkg->version(), pPkg->image(), pPkg->desc(), !pPkg->isZip());
   }
 }
 
@@ -167,7 +168,7 @@ void OmUiMgrFootOvw::setPreview(OmPackage* pPkg)
 void OmUiMgrFootOvw::setPreview(OmRemote* pRmt)
 {
   if(pRmt) {
-    this->_showPreview(pRmt->image(), pRmt->desc());
+    this->_showPreview(pRmt->name(), pRmt->version(), pRmt->image(), pRmt->desc(), false);
   }
 }
 
@@ -186,10 +187,38 @@ void OmUiMgrFootOvw::clearPreview()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootOvw::_showPreview(const OmImage& snap, const wstring& desc)
+void OmUiMgrFootOvw::_showPreview(const wstring& name, const OmVersion& vers, const OmImage& snap, const wstring& desc, bool dir)
 {
-  if(desc.size())
+  if(desc.size()) {
+
     this->_renderText(desc, true, this->_rawDesc);
+
+  } else {
+
+    wstring text;
+
+    text.append(L"## ", 3);
+    Om_escapeMarkdown(&text, name);
+    if(!vers.isNull()) {
+      text.append(L" - Version ", 11);
+      Om_escapeMarkdown(&text, vers.asString());
+    }
+
+    if(dir) {
+      text.append(L"\r\nTo associate a description to this *Development Folder*, "
+                  "place a text file of the same name (with or without version) "
+                  "beside it. You also can set a thumbnail image the same way "
+                  "with an image file.  \r\n\r\n"
+                  "If you do not want to see *Development Folders*, uncheck "
+                  "the *Developer mode* option in the *Library Options* tab of "
+                  "Target Location properties.");
+
+    } else {
+      text.append(L"\r\nThis Package does not embeds any description text.");
+    }
+
+    this->_renderText(text, true, this->_rawDesc);
+  }
 
   this->showItem(IDC_SB_SNAP, true);
 
@@ -198,7 +227,7 @@ void OmUiMgrFootOvw::_showPreview(const OmImage& snap, const wstring& desc)
   if(snap.thumbnail()) {
     hBm = snap.thumbnail();
   } else {
-    hBm = Om_getResImage(this->_hins, IDB_BLANK);
+    hBm = Om_getResImage(this->_hins, dir ? IDB_SNAP_DIR : IDB_SNAP_PKG);
   }
 
   // Update the selected picture

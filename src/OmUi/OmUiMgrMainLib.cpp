@@ -2102,8 +2102,7 @@ void OmUiMgrMainLib::_onInit()
 
   // we now add columns into Batches list-view control
   lvCol.mask = LVCF_WIDTH;
-  lvCol.fmt = LVCFMT_LEFT;
-  lvCol.cx = 440;
+  lvCol.cx = 80;
   lvCol.iSubItem = 0;
   this->msgItem(IDC_LV_BAT, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
 

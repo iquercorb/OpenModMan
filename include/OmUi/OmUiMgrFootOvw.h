@@ -106,7 +106,7 @@ class OmUiMgrFootOvw : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    void                _showPreview(const OmImage&, const wstring&);
+    void                _showPreview(const wstring&, const OmVersion&, const OmImage&, const wstring&, bool);
 
     void                _renderText(const wstring& text, bool show, bool raw = false);
 
