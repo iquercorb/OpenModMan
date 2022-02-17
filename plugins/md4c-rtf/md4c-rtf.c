@@ -232,7 +232,7 @@ render_url_escaped(MD_RTF* r, const MD_RTF_CHAR* data, MD_SIZE size)
       switch(data[off])
       {
       case '&':
-        RENDER_VERBATIM(r, "&amp;");
+        render_verbatim(r, "&amp;", 5);
         break;
       default:
         hex[0] = '%';
@@ -256,7 +256,7 @@ static inline void
 render_unicode(MD_RTF* r, unsigned u)
 {
   MD_RTF_CHAR str_ucp[16];
-  RENDER_VERBATIM(r, "\\u");
+  render_verbatim(r, "\\u", 2);
   RENDER_VERBATIM(r, ultostr(u, str_ucp, 10, ' ')); //< add space after number
 }
 
@@ -265,8 +265,8 @@ static inline void
 render_cp1252(MD_RTF* r, unsigned u)
 {
   MD_RTF_CHAR str_acp[16];
-  RENDER_VERBATIM(r, "\\'");
-  RENDER_VERBATIM(r, ultostr(u, str_acp, 16, ' ')); //< add space after number
+  render_verbatim(r, "\\'", 2);
+  RENDER_VERBATIM(r, ultostr(u, str_acp, 16, 0)); //< add space after number
 }
 
 static unsigned
@@ -359,10 +359,10 @@ render_rtf_escaped(MD_RTF* r, const MD_RTF_CHAR* data, MD_SIZE size)
       } else {
         // escape RTF reserved characters
         switch(data[off]) {
-          case '\\': RENDER_VERBATIM(r, "\\\\"); break;
-          case '{' : RENDER_VERBATIM(r, "\\{"); break;
-          case '}' : RENDER_VERBATIM(r, "\\}"); break;
-          case '\n': RENDER_VERBATIM(r, "\\line1"); break;
+          case '\\': render_verbatim(r, "\\\\", 2); break;
+          case '{' : render_verbatim(r, "\\{", 2); break;
+          case '}' : render_verbatim(r, "\\}", 2); break;
+          case '\n': render_verbatim(r, "\\line1", 6); break;
         }
         off++;
       }
@@ -396,7 +396,7 @@ render_text_code(MD_RTF* r, const MD_RTF_CHAR* data, MD_SIZE size)
 
   /* previous input was LF, we now render the line feed */
   if(r->code_lf) {
-    RENDER_VERBATIM(r, "\\line1");
+    render_verbatim(r, "\\line1", 6);
     r->code_lf = 0;
   }
 
@@ -457,8 +457,8 @@ render_font_norm(MD_RTF* r)
   /* change font style with the normal font (#0 : Calibri)
   with its dedicated size, little smaller than the normal */
 
-  RENDER_VERBATIM(r, "\\f0");
-  RENDER_VERBATIM(r, r->cw_fs[0]);
+  render_verbatim(r, "\\f0", 3);
+  render_verbatim(r, r->cw_fs[0], 5);
 }
 
 static void
@@ -467,8 +467,8 @@ render_font_mono(MD_RTF* r)
   /* change paragraph style to monospace font (#1 :. Courrier New )
   with its dedicated size, little smaller than the normal */
 
-  RENDER_VERBATIM(r, "\\f1");
-  RENDER_VERBATIM(r, r->cw_fs[1]);
+  render_verbatim(r, "\\f1", 3);
+  render_verbatim(r, r->cw_fs[1], 5);
 }
 
 static inline void
@@ -479,12 +479,12 @@ render_end_block(MD_RTF* r)
   changed or disabled. */
 
   /* reset to normal font font but without space after */
-  RENDER_VERBATIM(r, "\\pard\\f0");
-  RENDER_VERBATIM(r, r->cw_fs[0]);
+  render_verbatim(r, "\\pard\\f0", 8);
+  render_verbatim(r, r->cw_fs[0], 5);
 
   /* end paragraph, notice that CRLF is here
   only for readability of source data */
-  RENDER_VERBATIM(r, "\\par\r\n");
+  render_verbatim(r, "\\par\r\n", 6);
 }
 
 static inline void
@@ -494,9 +494,9 @@ render_list_start(MD_RTF* r)
 
   unsigned d = r->list_depth;
 
-  RENDER_VERBATIM(r, "\\pard"); /* reset paragraph */
-  RENDER_VERBATIM(r, r->cw_fs[0]);  /* normal font size */
-  RENDER_VERBATIM(r, "{\\pntext\\f0 ");  /* normal font size */
+  render_verbatim(r, "\\pard", 5); /* reset paragraph */
+  render_verbatim(r, r->cw_fs[0], 5);  /* normal font size */
+  render_verbatim(r, "{\\pntext\\f0 ", 12);  /* normal font size */
 
   if(r->list[d].type == MD_RTF_LIST_TYPE_OL) {  /* OL */
 
@@ -505,17 +505,17 @@ render_list_start(MD_RTF* r)
     ultostr(r->list[d].count + r->list[d].start, str_num, 10, 0);
 
     RENDER_VERBATIM(r, str_num);
-    RENDER_VERBATIM(r, r->list[d].cw_tx); /* bullet character */
-    RENDER_VERBATIM(r, "\\tab}{\\*\\pn\\pnlvlbody\\pnf0\\pnstart");
+    render_verbatim(r, r->list[d].cw_tx, 1); /* delimiter character */
+    render_verbatim(r, "\\tab}{\\*\\pn\\pnlvlbody\\pnf0\\pnstart", 34);
     RENDER_VERBATIM(r, str_num);
-    RENDER_VERBATIM(r, "\\pndec{\\pntxta");
+    render_verbatim(r, "\\pndec{\\pntxta", 14);
   } else {                                      /* UL */
-    RENDER_VERBATIM(r, r->list[d].cw_tx); /* bullet character */
-    RENDER_VERBATIM(r, "\\tab}{\\*\\pn\\pnlvlblt\\pnf0{\\pntxtb");
+    render_verbatim(r, r->list[d].cw_tx, 7); /* bullet character */
+    render_verbatim(r, "\\tab}{\\*\\pn\\pnlvlblt\\pnf0{\\pntxtb", 33);
   }
 
-  RENDER_VERBATIM(r, r->list[d].cw_tx); /* bullet character */
-  RENDER_VERBATIM(r, "}}");
+  RENDER_VERBATIM(r, r->list[d].cw_tx); /* either delimiter or bullet char */
+  render_verbatim(r, "}}", 2);
   RENDER_VERBATIM(r, r->list[d].cw_li); /* \liN */
   RENDER_VERBATIM(r, r->list[d].cw_sa); /* \saN */
 
@@ -536,15 +536,17 @@ render_list_item(MD_RTF* r)
   unsigned d = r->list_depth;
 
   /* reset paragraph */
-  RENDER_VERBATIM(r, "{\\pntext\\f0 ");
+  render_verbatim(r, "{\\pntext\\f0 ", 12);
 
   if(r->list[d].type == MD_RTF_LIST_TYPE_OL) { /* OL */
     ultostr(r->list[d].count + r->list[d].start, str_num, 10, 0);
     RENDER_VERBATIM(r, str_num);
+    render_verbatim(r, r->list[d].cw_tx, 1); /* delimiter char */
+  } else {
+    render_verbatim(r, r->list[d].cw_tx, 7); /* bullet char */
   }
 
-  RENDER_VERBATIM(r, r->list[d].cw_tx); /* either delimiter or bullet char */
-  RENDER_VERBATIM(r, "\\tab}");
+  render_verbatim(r, "\\tab}", 5);
 }
 
 static void
@@ -603,14 +605,14 @@ render_enter_block_hr(MD_RTF* r)
   visible. Other border are also visible but defined with the same color as
   background, this way Rich Edit 4.1 don't display them in light gray. */
 
-  RENDER_VERBATIM(r, "\\pard\\f0\\fs0\\trowd\\trrh0\\trautofit1"
-                      "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"
+  render_verbatim(r, "\\pard\\f0\\fs0\\trowd\\trrh0\\trautofit1" //< 35 bytes
+                      "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2" //< 29 bytes
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf3"
                       "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
-                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2"); /* invisible border */
+                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 151); /* invisible border */
 
   RENDER_VERBATIM(r, r->cw_cx[1]); // \cellxN
-  RENDER_VERBATIM(r, "\\cell\\row");
+  render_verbatim(r, "\\cell\\row", 9);
 
   /* create proper space after paragraph */
   render_end_block(r);
@@ -626,9 +628,9 @@ static void
 render_leave_block_h(MD_RTF* r, const MD_BLOCK_H_DETAIL* h)
 {
   if(h->level > 3) {
-    RENDER_VERBATIM(r, "\\b0\\i0 \\par\r\n");
+    render_verbatim(r, "\\b0\\i0 \\par\r\n", 13);
   } else {
-    RENDER_VERBATIM(r, "\\b0 \\par\r\n");
+    render_verbatim(r, "\\b0 \\par\r\n", 10);
   }
 }
 
@@ -636,18 +638,18 @@ static void
 render_enter_block_quote(MD_RTF* r)
 {
   /* reset paragraph to normal font style */
-  RENDER_VERBATIM(r, "\\pard\\f0");
-  RENDER_VERBATIM(r, r->cw_fs[0]);
+  render_verbatim(r, "\\pard\\f0", 8);
+  render_verbatim(r, r->cw_fs[0], 5);
 
   /* start table row with proper parameters */
-  RENDER_VERBATIM(r, "\\trowd");
+  render_verbatim(r, "\\trowd", 6);
   RENDER_VERBATIM(r, r->cw_tr[0]);
 
   /* quote is enclosed in a table with only the left border visible */
-  RENDER_VERBATIM(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
+  render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
                       "\\clbrdrl\\brdrs\\brdrw50\\brdrcf3"
-                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2"); /* invisible border */
+                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 117); /* invisible border */
 
   /* set cell width, unfortunately basic RTF viewer does not handle
   autofit so we must define static cell size according defined page width */
@@ -660,7 +662,7 @@ render_enter_block_quote(MD_RTF* r)
 static void
 render_leave_block_quote(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "\\intbl\\cell\\row");
+  render_verbatim(r, "\\intbl\\cell\\row", 15);
 
   /* create proper space after paragraph */
   render_end_block(r);
@@ -673,18 +675,18 @@ static void
 render_enter_block_code(MD_RTF* r)
 {
   /* reset paragraph to monospace font style */
-  RENDER_VERBATIM(r, "\\pard\\f1");
-  RENDER_VERBATIM(r, r->cw_fs[1]);
+  render_verbatim(r, "\\pard\\f1", 8);
+  render_verbatim(r, r->cw_fs[1], 5);
   /* start table row with proper parameters */
-  RENDER_VERBATIM(r, "\\trowd");
+  render_verbatim(r, "\\trowd", 6);
   RENDER_VERBATIM(r, r->cw_tr[0]);
 
-  /* code is enclosed in an invisible table */
-  RENDER_VERBATIM(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
+  /* code is enclosed in gray block */
+  render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"
+                      "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
                       "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clcbpat5");  /* background color */
+                      "\\clcbpat5", 125);  /* background color */
 
   /* set cell width, unfortunately basic RTF viewer does not handle
   autofit so we must define static cell size according defined page width */
@@ -694,7 +696,7 @@ render_enter_block_code(MD_RTF* r)
 static void
 render_leave_block_code(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "\\cell\\row");
+  render_verbatim(r, "\\cell\\row", 9);
 
   /* create proper space after paragraph */
   render_end_block(r);
@@ -707,7 +709,7 @@ render_enter_block_ul(MD_RTF* r, const MD_BLOCK_UL_DETAIL* ul)
   unsigned d = ++r->list_depth;
 
   /* nested list, we close the previous paragraph */
-  if(d > 0) RENDER_VERBATIM(r, "\\par");
+  if(d > 0) render_verbatim(r, "\\par", 4);
 
   /* do we need more than 8 levels of nested list ? */
   if(d > 7) return;
@@ -750,7 +752,7 @@ render_enter_block_ol(MD_RTF* r, const MD_BLOCK_OL_DETAIL* ol)
   unsigned d = ++r->list_depth;
 
   /* nested list, we close the previous paragraph */
-  if(d > 0) RENDER_VERBATIM(r, "\\par");
+  if(d > 0) render_verbatim(r, "\\par", 4);
 
   /* do we need more than 8 levels of nested list ? */
   if(d > 7) return;
@@ -826,7 +828,7 @@ render_leave_block_li(MD_RTF* r)
   if(r->list_stop) {
 
     /* end paragraph, line feed */
-    RENDER_VERBATIM(r, "\\par");
+    render_verbatim(r, "\\par", 4);
 
     /* do not end another one before a new LI block opening */
     r->list_stop = 0;
@@ -840,8 +842,8 @@ render_enter_block_table(MD_RTF* r, const MD_BLOCK_TABLE_DETAIL* tb)
   r->tabl_cols = tb->col_count;
 
   /* start new table with smaller font and horizontal align to center */
-  RENDER_VERBATIM(r, "\\pard\\f0");
-  RENDER_VERBATIM(r, r->cw_fs[1]);
+  render_verbatim(r, "\\pard\\f0", 8);
+  render_verbatim(r, r->cw_fs[1], 5);
 }
 
 static inline void
@@ -873,7 +875,7 @@ render_enter_block_tr(MD_RTF* r)
   MD_RTF_CHAR str_num[16];
 
   /* create new raw with proper parameters */
-  RENDER_VERBATIM(r, "\\trowd");
+  render_verbatim(r, "\\trowd", 6);
   RENDER_VERBATIM(r, r->cw_tr[1]);
 
   /* 9000 seem to be the average width of an RTF document */
@@ -883,18 +885,18 @@ render_enter_block_tr(MD_RTF* r)
   /* we must first declare cells with their respecting properties */
   for(unsigned i = 0; i < r->tabl_cols; ++i) {
 
-    RENDER_VERBATIM(r,  "\\clvertalc" /* vertical-align center */
-                        "\\clbrdrt\\brdrs\\brdrw20\\brdrcf3"
+    render_verbatim(r,  "\\clvertalc" /* vertical-align center */
+                        "\\clbrdrt\\brdrs\\brdrw20\\brdrcf3" //< 30 bytes
                         "\\clbrdrb\\brdrs\\brdrw20\\brdrcf3"
                         "\\clbrdrl\\brdrs\\brdrw20\\brdrcf3"
-                        "\\clbrdrr\\brdrs\\brdrw20\\brdrcf3");
+                        "\\clbrdrr\\brdrs\\brdrw20\\brdrcf3", 130);
 
     /* if we render a table head, we add a background to cells */
     if(r->tabl_head) {
-      RENDER_VERBATIM(r, "\\clcbpat5\\cellx");
+      render_verbatim(r, "\\clcbpat5\\cellx", 15);
       ultostr(cw * (i + 1), str_num, 10, 0);
     } else {
-      RENDER_VERBATIM(r, "\\cellx");
+      render_verbatim(r, "\\cellx", 6);
       ultostr(cw * (i + 1), str_num, 10, 0);
     }
 
@@ -906,23 +908,23 @@ static inline void
 render_leave_block_tr(MD_RTF* r)
 {
   /* close the row */
-  RENDER_VERBATIM(r, "\\row\r\n");
+  render_verbatim(r, "\\row\r\n", 6);
 }
 
 static void
 render_enter_block_td(MD_RTF* r, const MD_BLOCK_TD_DETAIL* td)
 {
   switch(td->align) {
-    case MD_ALIGN_CENTER: RENDER_VERBATIM(r, "\\qc "); break;
-    case MD_ALIGN_RIGHT: RENDER_VERBATIM(r, "\\qr "); break;
-    default: RENDER_VERBATIM(r, "\\ql "); break;
+    case MD_ALIGN_CENTER: render_verbatim(r, "\\qc ", 4); break;
+    case MD_ALIGN_RIGHT: render_verbatim(r, "\\qr ", 4); break;
+    default: render_verbatim(r, "\\ql ", 4); break;
   }
 }
 
 static inline void
 render_leave_block_td(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "\\intbl\\cell ");
+  render_verbatim(r, "\\intbl\\cell ", 12);
 }
 
 static void
@@ -930,16 +932,16 @@ render_enter_block_th(MD_RTF* r, const MD_BLOCK_TD_DETAIL* td)
 {
   /* same as td but with bold text */
   switch(td->align) {
-    case MD_ALIGN_CENTER: RENDER_VERBATIM(r, "\\qc\\b "); break;
-    case MD_ALIGN_RIGHT: RENDER_VERBATIM(r, "\\qr\\b "); break;
-    default: RENDER_VERBATIM(r, "\\ql\\b "); break;
+    case MD_ALIGN_CENTER: render_verbatim(r, "\\qc\\b ", 6); break;
+    case MD_ALIGN_RIGHT: render_verbatim(r, "\\qr\\b ", 6); break;
+    default: render_verbatim(r, "\\ql\\b ", 6); break;
   }
 }
 
 static inline void
 render_leave_block_th(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "\\b0\\intbl\\cell ");
+  render_verbatim(r, "\\b0\\intbl\\cell ", 15);
 }
 
 static inline void
@@ -958,25 +960,25 @@ render_leave_block_p(MD_RTF* r)
 {
   /* end paragraph except if we are inside quote block */
   if(!r->quote_block)
-    RENDER_VERBATIM(r, "\\par\r\n");
+    render_verbatim(r, "\\par\r\n", 6);
 }
 
 static void
 render_enter_span_url(MD_RTF* r, const MD_SPAN_A_DETAIL* a)
 {
-  RENDER_VERBATIM(r, "\\cf4\\ul {\\field{\\*\\fldinst HYPERLINK \"");
+  render_verbatim(r, "\\cf4\\ul {\\field{\\*\\fldinst HYPERLINK \"", 38);
   #ifdef MD4C_USE_UTF16
   render_wchar(r, a->href.text, a->href.size, render_url_escaped);
   #else
   render_url_escaped(r, a->href.text, a->href.size);
   #endif
-  RENDER_VERBATIM(r, "\"}{\\fldrslt ");
+  render_verbatim(r, "\"}{\\fldrslt ", 12);
 }
 
 static inline void
 render_leave_span_url(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "}}\\ul0 \\cf0 ");
+  render_verbatim(r, "}}\\ul0 \\cf0 ", 12);
 }
 
 static inline void
@@ -1059,10 +1061,10 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
   MD_RTF* r = (MD_RTF*) userdata;
 
   switch(type) {
-      case MD_SPAN_EM:                RENDER_VERBATIM(r, "\\i "); break;
-      case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "\\b "); break;
-      case MD_SPAN_U:                 RENDER_VERBATIM(r, "\\ul "); break;
-      case MD_SPAN_DEL:               RENDER_VERBATIM(r, "\\strike "); break;
+      case MD_SPAN_EM:                render_verbatim(r, "\\i ", 3); break;
+      case MD_SPAN_STRONG:            render_verbatim(r, "\\b ", 3); break;
+      case MD_SPAN_U:                 render_verbatim(r, "\\ul ", 4); break;
+      case MD_SPAN_DEL:               render_verbatim(r, "\\strike ", 8); break;
       case MD_SPAN_A:                 render_enter_span_url(r, (MD_SPAN_A_DETAIL*) detail); break;
       case MD_SPAN_CODE:              render_enter_span_code(r); break;
       //case MD_SPAN_IMG:               render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
@@ -1080,10 +1082,10 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
   MD_RTF* r = (MD_RTF*) userdata;
 
   switch(type) {
-      case MD_SPAN_EM:                RENDER_VERBATIM(r, "\\i0 "); break;
-      case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "\\b0 "); break;
-      case MD_SPAN_U:                 RENDER_VERBATIM(r, "\\ul0 "); break;
-      case MD_SPAN_DEL:               RENDER_VERBATIM(r, "\\strike0 "); break;
+      case MD_SPAN_EM:                render_verbatim(r, "\\i0 ", 4); break;
+      case MD_SPAN_STRONG:            render_verbatim(r, "\\b0 ", 4); break;
+      case MD_SPAN_U:                 render_verbatim(r, "\\ul0 ", 5); break;
+      case MD_SPAN_DEL:               render_verbatim(r, "\\strike0 ", 9); break;
       case MD_SPAN_A:                 render_leave_span_url(r); break;
       case MD_SPAN_CODE:              render_leave_span_code(r); break;
       //case MD_SPAN_IMG:               /*noop, handled above*/ break;
@@ -1102,9 +1104,9 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
   MD_RTF* r = (MD_RTF*) userdata;
 
   switch(type) {
-      case MD_TEXT_NULLCHAR:  RENDER_VERBATIM(r, "\0"); break;
-      case MD_TEXT_BR:        RENDER_VERBATIM(r, "\\line1"); break;
-      case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, " "); break;
+      case MD_TEXT_NULLCHAR:  render_verbatim(r, "\0", 1); break;
+      case MD_TEXT_BR:        render_verbatim(r, "\\line1", 6); break;
+      case MD_TEXT_SOFTBR:    render_verbatim(r, " ", 1); break;
       case MD_TEXT_CODE:      render_wchar(r, text, size, render_text_code); break;
       case MD_TEXT_HTML:      render_wchar(r, text, size, render_rtf_escaped); break;
       case MD_TEXT_ENTITY:    render_wchar(r, text, size, render_entity); break;
@@ -1118,9 +1120,9 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
 {
   MD_RTF* r = (MD_RTF*) userdata;
   switch(type) {
-      case MD_TEXT_NULLCHAR:  RENDER_VERBATIM(r, "\0"); break;
-      case MD_TEXT_BR:        RENDER_VERBATIM(r, "\\line1"); break;
-      case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, " "); break;
+      case MD_TEXT_NULLCHAR:  render_verbatim(r, "\0", 1); break;
+      case MD_TEXT_BR:        render_verbatim(r, "\\line1", 6); break;
+      case MD_TEXT_SOFTBR:    render_verbatim(r, " ", 1); break;
       case MD_TEXT_CODE:      render_text_code(r, text, size); break;
       case MD_TEXT_HTML:      render_rtf_escaped(r, text, size); break;
       case MD_TEXT_ENTITY:    render_entity(r, text, size); break;
