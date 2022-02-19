@@ -35,7 +35,7 @@
 #include "OmUiAddLoc.h"
 #include "OmUiPropCtx.h"
 #include "OmUiPropLoc.h"
-#include "OmUiPropMan.h"
+#include "OmUiPropMgr.h"
 #include "OmUiPropBat.h"
 #include "OmUiHelpLog.h"
 #include "OmUiHelpAbt.h"
@@ -69,7 +69,7 @@ OmUiMgr::OmUiMgr(HINSTANCE hins) : OmDialog(hins),
   this->addChild(this->_pUiMgrFoot);
 
   // add children dialogs
-  this->addChild(new OmUiPropMan(hins));    //< Dialog for Manager Options
+  this->addChild(new OmUiPropMgr(hins));    //< Dialog for Manager Options
   this->addChild(new OmUiPropCtx(hins));    //< Dialog for Context Properties
   this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location Properties
   this->addChild(new OmUiPropBat(hins));    //< Dialog for Batch Properties
@@ -817,7 +817,7 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_EDIT_OPTIONS:
-      this->childById(IDD_PROP_MAN)->open();
+      this->childById(IDD_PROP_MGR)->open();
       break;
 
 
