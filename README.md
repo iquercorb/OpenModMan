@@ -2,7 +2,7 @@
 
 Open source and generic Mod ("Modifications") manager.
 
-## Version: 0.9.8 (beta)
+## Version: 0.9.9 (beta)
 
 ## Presentation
 
@@ -60,12 +60,13 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
-0.9.9 (not released yet)
+0.9.9 (19-02-2022)
  - Fix command shortcuts still working when main dialog is not active.
  - Fix scrolling for Overlap and Dependencies in Package Properties Dialog.
  - Fix missing dialogs for package download errors.
- - Fix bad encoding of loaded/saved description text in Package Editor.
- - Fix network repository description never saved locally.
+ - Fix Package Editor bad encoding of loaded/saved description text.
+ - Fix Package Editor not detected file extension when open an existing package.
+ - Fix Network Repository description never saved locally.
  - Update embedded XXhash algorithm to the 0.8.1 version.
  - Update embedded Pugixml library to the 1.12.1 version.
  - New Uninstall tree - uninstall with dependencies - feature.

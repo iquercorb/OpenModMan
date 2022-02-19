@@ -1,11 +1,11 @@
 ; MUI Settings
 !define MUI_ABORTWARNING
-!define MUI_ICON          "..\include\gui\res\bitmap\inst_icon.ico"
-!define MUI_UNICON        "..\include\gui\res\bitmap\unin_icon.ico"
+!define MUI_ICON          "..\res\images\inst_icon.ico"
+!define MUI_UNICON        "..\res\images\unin_icon.ico"
 
 !define AAP_MAJ           "0"
 !define AAP_MIN           "9"
-!define AAP_REV           "8"
+!define AAP_REV           "9"
 
 !define APP_NAME          "Open Mod Manager"
 !define APP_SHORT_NAME    "OpenModMan"
@@ -25,11 +25,13 @@
 !define SSL_32_DLL        "..\dll\32-bit\libssl-1_1.dll"
 !define CRYPTO_32_DLL     "..\dll\32-bit\libcrypto-1_1.dll"
 
-!define OMM_ICO           "..\include\gui\res\bitmap\omm_icon.ico"
-!define OMB_ICO           "..\include\gui\res\bitmap\omb_icon.ico"
-!define OMX_ICO           "..\include\gui\res\bitmap\omx_icon.ico"
-!define OZP_ICO           "..\include\gui\res\bitmap\ozp_icon.ico"
-!define OZB_ICO           "..\include\gui\res\bitmap\ozb_icon.ico"
+!define OMM_ICO           "..\res\images\omm_icon.ico"
+!define OMB_ICO           "..\res\images\omb_icon.ico"
+!define OMX_ICO           "..\res\images\omx_icon.ico"
+!define OZP_ICO           "..\res\images\ozp_icon.ico"
+!define OZB_ICO           "..\res\images\ozb_icon.ico"
+
+!define SETUP_SPLASH      "..\res\images\setup_splash.bmp"
 
 ; Build Unicode installer
 Unicode True
