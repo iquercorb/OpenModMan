@@ -78,17 +78,33 @@ class OmUiMgrFootDet : public OmDialog
     ///
     void safemode(bool enable);
 
+    /// \brief Display package details
+    ///
+    /// Displays details of the specified package.
+    ///
+    /// \param[in]  pPkg  : Pointer to Package object
+    ///
     void setDetails(OmPackage* pPkg);
 
+    /// \brief Display package details
+    ///
+    /// Displays details of the specified remote package.
+    ///
+    /// \param[in]  pPkg  : Pointer to remote Package object
+    ///
     void setDetails(OmRemote* pRmt);
 
+    /// \brief Clear details view
+    ///
+    /// Clears the detail view
+    ///
     void clearDetails();
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMgr*            _pUiMgr;
 
-    void                _renderText(const wstring& text, bool show, bool raw = false);
+    void                _renderText(const wstring& text, bool show);
 
     void                _onReLink(LPARAM lParam);
 

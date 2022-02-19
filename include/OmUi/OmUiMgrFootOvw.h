@@ -108,9 +108,7 @@ class OmUiMgrFootOvw : public OmDialog
 
     void                _showPreview(const wstring&, const OmVersion&, const OmImage&, const wstring&, bool);
 
-    void                _renderText(const wstring& text, bool show, bool raw = false);
-
-    bool                _rawDesc;
+    void                _renderText(const wstring& text, bool show);
 
     void                _onReLink(LPARAM lParam);
 

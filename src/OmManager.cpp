@@ -41,7 +41,7 @@
 OmManager::OmManager() :
   _home(), _config(), _ctxLs(), _ctxCur(-1), _iconsSize(16), _folderPackages(true),
   _warnEnabled(true), _warnOverlaps(false), _warnExtraInstall(true),
-  _warnMissingDepend(true), _warnExtraUninst(true), _quietBatches(true),
+  _warnMissingDepend(true), _warnExtraUninst(true), _quietBatches(true), _noMarkdown(false),
   _error(), _log(), _logHwnd(nullptr), _logFile(nullptr)
 {
 
@@ -121,6 +121,11 @@ bool OmManager::init(const char* arg)
   // load saved parameters
   if(this->_config.xml().hasChild(L"icon_size")) {
     this->_iconsSize = this->_config.xml().child(L"icon_size").attrAsInt(L"pixels");
+  }
+
+  // load saved no-markdown option
+  if(this->_config.xml().hasChild(L"no_markdown")) {
+    this->_noMarkdown = this->_config.xml().child(L"no_markdown").attrAsInt(L"enable");
   }
 
   // load startup Context files if any
@@ -461,6 +466,26 @@ void OmManager::setIconsSize(unsigned size)
       this->_config.xml().child(L"icon_size").setAttr(L"pixels", (int)this->_iconsSize);
     } else {
       this->_config.xml().addChild(L"icon_size").setAttr(L"pixels", (int)this->_iconsSize);
+    }
+
+    this->_config.save();
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmManager::setNoMarkdown(bool enable)
+{
+  this->_noMarkdown = enable;
+
+  if(this->_config.valid()) {
+
+    if(this->_config.xml().hasChild(L"no_markdown")) {
+      this->_config.xml().child(L"no_markdown").setAttr(L"enable", (int)this->_noMarkdown);
+    } else {
+      this->_config.xml().addChild(L"no_markdown").setAttr(L"enable", (int)this->_noMarkdown);
     }
 
     this->_config.save();

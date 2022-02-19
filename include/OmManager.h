@@ -241,6 +241,24 @@ class OmManager
     ///
     void setIconsSize(unsigned size);
 
+    /// \brief Get no-markdown option.
+    ///
+    /// Returns no-markdown option value.
+    ///
+    /// \return True if enabled, false otherwise.
+    ///
+    bool noMarkdown() const {
+      return _noMarkdown;
+    }
+
+    /// \brief Set no-markdown option.
+    ///
+    /// Define and save no-markdown option value.
+    ///
+    /// \param[in]  enable  : Boolean value to set.
+    ///
+    void setNoMarkdown(bool enable);
+
     /// \brief Create new Context.
     ///
     /// Create a new Context configuration in the specified path.
@@ -307,6 +325,8 @@ class OmManager
     bool                _warnExtraUninst;
 
     bool                _quietBatches;
+
+    bool                _noMarkdown;
 
 
     wstring             _error;

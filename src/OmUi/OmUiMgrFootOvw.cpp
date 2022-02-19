@@ -22,6 +22,7 @@
   #include <UxTheme.h>
   #include <RichEdit.h>
 
+#include "OmManager.h"
 #include "OmPackage.h"
 #include "OmRemote.h"
 
@@ -105,7 +106,7 @@ static DWORD CALLBACK __rtf2re_cb(DWORD_PTR ptr, LPBYTE buff, LONG size, LONG* w
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMgrFootOvw::OmUiMgrFootOvw(HINSTANCE hins) : OmDialog(hins),
-  _pUiMgr(nullptr), _rawDesc(false)
+  _pUiMgr(nullptr)
 {
 
 }
@@ -191,7 +192,7 @@ void OmUiMgrFootOvw::_showPreview(const wstring& name, const OmVersion& vers, co
 {
   if(desc.size()) {
 
-    this->_renderText(desc, true, this->_rawDesc);
+    this->_renderText(desc, true);
 
   } else {
 
@@ -205,19 +206,13 @@ void OmUiMgrFootOvw::_showPreview(const wstring& name, const OmVersion& vers, co
     }
 
     if(dir) {
-      text.append(L"\r\nTo associate a description to this *Development Folder*, "
-                  "place a text file of the same name (with or without version) "
-                  "beside it. You also can set a thumbnail image the same way "
-                  "with an image file.  \r\n\r\n"
-                  "If you do not want to see *Development Folders*, uncheck "
-                  "the *Developer mode* option in the *Library Options* tab of "
-                  "Target Location properties.");
+      text.append(L"\r\nThis development Package does not have associated description text.");
 
     } else {
-      text.append(L"\r\nThis Package does not embeds any description text.");
+      text.append(L"\r\nThis Package does not embeds description text.");
     }
 
-    this->_renderText(text, true, this->_rawDesc);
+    this->_renderText(text, true);
   }
 
   this->showItem(IDC_SB_SNAP, true);
@@ -239,9 +234,11 @@ void OmUiMgrFootOvw::_showPreview(const wstring& name, const OmVersion& vers, co
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootOvw::_renderText(const wstring& text, bool show, bool raw)
+void OmUiMgrFootOvw::_renderText(const wstring& text, bool show)
 {
-  if(raw) {
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  if(pMgr->noMarkdown()) {
 
     // set raw description to edit control
     this->setItemText(IDC_EC_DESC, text);

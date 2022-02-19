@@ -22,6 +22,7 @@
   #include <UxTheme.h>
   #include <RichEdit.h>
 
+#include "OmManager.h"
 #include "OmPackage.h"
 #include "OmRemote.h"
 
@@ -155,45 +156,74 @@ void OmUiMgrFootDet::setDetails(OmPackage* pPkg)
 {
   if(pPkg) {
 
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+    bool raw = pMgr->noMarkdown();
+
     wstring text;
 
     text.append(L"### ", 4);
-    Om_escapeMarkdown(&text, pPkg->name());
-    text.append(L"\r\n* Identity : **", 17); Om_escapeMarkdown(&text, pPkg->ident()); text.append(L"**", 2);
-    text.append(L"\r\n* Core name : **", 18); Om_escapeMarkdown(&text, pPkg->core()); text.append(L"**", 2);
-    text.append(L"\r\n* Version : **", 16); Om_escapeMarkdown(&text, pPkg->version().asString()); text.append(L"**", 2);
+    if(raw) text.append(pPkg->name()); else Om_escapeMarkdown(&text, pPkg->name());
+    text.append(L"\r\n", 2);
+
+    text.append(L"\r\n  - Identity : ", 17);
+    if(raw) text.append(pPkg->ident()); else Om_escapeMarkdown(&text, pPkg->ident());
+
+    text.append(L"\r\n  - Core name : ", 18);
+    if(raw) text.append(pPkg->core()); else Om_escapeMarkdown(&text, pPkg->core());
+
+    text.append(L"\r\n  - Version : ", 16);
+    text.append(pPkg->version().asString());
+
     if(pPkg->category().size()) {
-      text.append(L"\r\n* Category : **", 17); Om_escapeMarkdown(&text, pPkg->category()); text.append(L"**", 2);
+      text.append(L"\r\n  - Category : ", 17);
+      text.append(pPkg->category());
     } else {
-      text.append(L"\r\n* Category : **<undefined>**", 30);
+      text.append(L"\r\n  - Category : <undefined>", 28);
     }
 
-    text.append(L"\r\n#### Source", 13);
+    text.append(L"\r\n\r\n#### Source\r\n", 17);
+
     if(pPkg->isZip()) {
-      text.append(L"\r\n* Type : **Zip file**", 23);
+      text.append(L"\r\n  - Type : Zip file", 21);
     } else {
-      text.append(L"\r\n* Type : **Folder**", 21);
+      text.append(L"\r\n  - Type : Folder", 19);
     }
-    text.append(L"\r\n* Location : **", 17); Om_escapeMarkdown(&text, pPkg->srcPath()); text.append(L"**", 2);
 
-    text.append(L"\r\n#### Dependencies", 19);
+    text.append(L"\r\n  - Location : ", 17);
+    if(raw) text.append(pPkg->srcPath()); else Om_escapeMarkdown(&text, pPkg->srcPath());
+
+    text.append(L"\r\n\r\n#### Dependencies\r\n", 23);
+
     if(pPkg->depCount()) {
-      for(size_t i = 0; i < pPkg->depCount(); ++i) {
-        text.append(L"\r\n* ", 4); Om_escapeMarkdown(&text, pPkg->depGet(i));
+      if(raw) {
+        for(size_t i = 0; i < pPkg->depCount(); ++i) {
+          text.append(L"\r\n  - ", 6); text.append(pPkg->depGet(i));
+        }
+      } else {
+        for(size_t i = 0; i < pPkg->depCount(); ++i) {
+          text.append(L"\r\n  - ", 6); Om_escapeMarkdown(&text, pPkg->depGet(i));
+        }
       }
     } else {
-      text.append(L"\r\n* <none>", 10);
+      text.append(L"\r\n  - <none>", 12);
     }
 
-    text.append(L"\r\n#### Installation files", 25);
+    text.append(L"\r\n\r\n#### Installation files\r\n", 29);
+
     for(size_t i = 0; i < pPkg->srcItemCount(); ++i) {
-      if(pPkg->srcItemGet(i).type == PKGITEM_TYPE_F) {
-        text.append(L"\r\n* ", 4);
-        Om_escapeMarkdown(&text, pPkg->srcItemGet(i).path);
+      if(raw) {
+        if(pPkg->srcItemGet(i).type == PKGITEM_TYPE_F) {
+          text.append(L"\r\n  - ", 6); text.append(pPkg->srcItemGet(i).path);
+        }
+      } else {
+        if(pPkg->srcItemGet(i).type == PKGITEM_TYPE_F) {
+          text.append(L"\r\n  - ", 6); Om_escapeMarkdown(&text, pPkg->srcItemGet(i).path);
+        }
       }
     }
 
-    this->_renderText(text, true, false);
+    this->_renderText(text, true);
   }
 }
 
@@ -205,49 +235,81 @@ void OmUiMgrFootDet::setDetails(OmRemote* pRmt)
 {
   if(pRmt) {
 
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+    bool raw = pMgr->noMarkdown();
+
     wstring text;
 
     text.append(L"### ", 4);
-    Om_escapeMarkdown(&text, pRmt->name());
-    text.append(L"\r\n* Identity : **", 17); Om_escapeMarkdown(&text, pRmt->ident()); text.append(L"**", 2);
-    text.append(L"\r\n* Core name : **", 18); Om_escapeMarkdown(&text, pRmt->core()); text.append(L"**", 2);
-    text.append(L"\r\n* Version : **", 16); Om_escapeMarkdown(&text, pRmt->version().asString()); text.append(L"**", 2);
+    if(raw) text.append(pRmt->name()); else Om_escapeMarkdown(&text, pRmt->name());
+    text.append(L"\r\n", 2);
+
+    text.append(L"\r\n  - Identity : ", 17);
+    if(raw) text.append(pRmt->ident()); else Om_escapeMarkdown(&text, pRmt->ident());
+
+    text.append(L"\r\n  - Core name : ", 18);
+    if(raw) text.append(pRmt->core()); else Om_escapeMarkdown(&text, pRmt->core());
+
+    text.append(L"\r\n  - Version : ", 16);
+    text.append(pRmt->version().asString());
+
     if(pRmt->category().size()) {
-      text.append(L"\r\n* Category : **", 17); Om_escapeMarkdown(&text, pRmt->category()); text.append(L"**", 2);
+      text.append(L"\r\n  - Category : ", 17);
+      text.append(pRmt->category());
     } else {
-      text.append(L"\r\n* Category : **<undefined>**", 30);
+      text.append(L"\r\n  - Category : <undefined>", 28);
     }
 
-    text.append(L"\r\n#### Download", 15);
-    text.append(L"\r\n* URL : **", 12); Om_escapeMarkdown(&text, pRmt->urlGet(0)); text.append(L"**", 2);
+    text.append(L"\r\n\r\n#### Download\r\n", 19);
+
+    text.append(L"\r\n  - URL : ", 12);
+    text.append(pRmt->urlGet(0));
+
+    text.append(L"\r\n  - Size : ", 13);
     wstring kbytes = Om_formatSizeSysStr(pRmt->bytes(), true);
-    text.append(L"\r\n* Size : **", 13); Om_escapeMarkdown(&text, kbytes); text.append(L"**", 2);
+    text.append(kbytes);
+
     switch(pRmt->checksumType()) {
-      case RMT_CHECKSUM_MD5:  text.append(L"\r\n* checksum (md5) : **", 23); break;
-      case RMT_CHECKSUM_XXH:  text.append(L"\r\n* checksum (xxh) : **", 23); break;
-      default:                text.append(L"\r\n* checksum : **", 17); break;
+      case RMT_CHECKSUM_MD5:  text.append(L"\r\n  - checksum (md5) : ", 23); break;
+      case RMT_CHECKSUM_XXH:  text.append(L"\r\n  - checksum (xxh) : ", 23); break;
+      default:                text.append(L"\r\n  - checksum : ", 17); break;
     }
-    Om_escapeMarkdown(&text, pRmt->checksum()); text.append(L"**", 2);
+    text.append(pRmt->checksum());
 
-    text.append(L"\r\n#### Supersedes", 17);
+    text.append(L"\r\n\r\n#### Supersedes\r\n", 21);
+
     if(pRmt->supCount()) {
-      for(size_t i = 0; i < pRmt->supCount(); ++i) {
-        text.append(L"\r\n* ", 4); Om_escapeMarkdown(&text, pRmt->supGet(i)->ident());
+      if(raw) {
+        for(size_t i = 0; i < pRmt->supCount(); ++i) {
+          text.append(L"\r\n  - ", 6); text.append(pRmt->supGet(i)->ident());
+        }
+      } else {
+        for(size_t i = 0; i < pRmt->supCount(); ++i) {
+          text.append(L"\r\n  - ", 6); Om_escapeMarkdown(&text, pRmt->supGet(i)->ident());
+        }
       }
     } else {
-      text.append(L"\r\n* <none>", 10);
+      text.append(L"\r\n  - <none>", 12);
     }
 
-    text.append(L"\r\n#### Dependencies", 19);
+    text.append(L"\r\n\r\n#### Dependencies\r\n", 23);
+
     if(pRmt->depCount()) {
-      for(size_t i = 0; i < pRmt->depCount(); ++i) {
-        text.append(L"\r\n* ", 4); Om_escapeMarkdown(&text, pRmt->depGet(i));
+      if(raw) {
+        for(size_t i = 0; i < pRmt->depCount(); ++i) {
+          text.append(L"\r\n  - ", 6); text.append(pRmt->depGet(i));
+        }
+      } else {
+        for(size_t i = 0; i < pRmt->depCount(); ++i) {
+          text.append(L"\r\n  - ", 6); Om_escapeMarkdown(&text, pRmt->depGet(i));
+        }
       }
     } else {
-      text.append(L"\r\n* <none>", 10);
+      text.append(L"\r\n  - <none>", 12);
     }
 
-    this->_renderText(text, true, false);
+    this->_renderText(text, true);
   }
 }
 
@@ -263,9 +325,11 @@ void OmUiMgrFootDet::clearDetails()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrFootDet::_renderText(const wstring& text, bool show, bool raw)
+void OmUiMgrFootDet::_renderText(const wstring& text, bool show)
 {
-  if(raw) {
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  if(pMgr->noMarkdown()) {
 
     // set raw description to edit control
     this->setItemText(IDC_EC_DESC, text);
