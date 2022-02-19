@@ -134,6 +134,16 @@ class OmXmlNode
     ///
     double attrAsDouble(const wstring& attr) const;
 
+    /// \brief Get attribute as 64 bits unsigned integer.
+    ///
+    /// Returns the specified node attribute data as 64 bits unsigned integer number.
+    ///
+    /// \param[in]  attr  : Attribute name to get data from.
+    ///
+    /// \return Attribute data as 64 bits unsigned integer number.
+    ///
+    uint64_t attrAsUint64(const wstring& attr, int base) const;
+
     /// \brief Set node name.
     ///
     /// Set the node tag name.
@@ -185,6 +195,15 @@ class OmXmlNode
     /// \param[in]  value : Attribute value to set.
     ///
     void setAttr(const wstring& attr, double value);
+
+    /// \brief Set node attribute.
+    ///
+    /// Set node attribute value, create attribute if doesn't exists.
+    ///
+    /// \param[in]  attr  : Attribute name.
+    /// \param[in]  value : Attribute value to set.
+    ///
+    void setAttr(const wstring& attr, uint64_t value);
 
     /// \brief Remove node attribute.
     ///

@@ -304,6 +304,7 @@ void OmBatch::instAdd(const OmLocation* pLoc, const OmPackage* pPkg)
     if(!xml_loc.hasChild(L"install", L"ident", pPkg->ident())) {
        OmXmlNode xml_ins = xml_loc.addChild(L"install");
        xml_ins.setAttr(L"ident", pPkg->ident());
+       xml_ins.setAttr(L"hash", pPkg->hash());
     }
 
     // Write definition file
@@ -344,8 +345,21 @@ OmPackage* OmBatch::instGet(const OmLocation* pLoc, unsigned i)
 
     // if found, return count of <install> child nodes.
     if(!xml_loc.empty()) {
+
       OmXmlNode xml_ins = xml_loc.child(L"install", i);
-      return pLoc->pkgFind(xml_ins.attrAsString(L"ident"));
+      OmPackage* pPkg;
+
+      // first try and rely on package hash value
+      if(xml_ins.hasAttr(L"hash")) {
+        if((pPkg = pLoc->pkgFind(xml_ins.attrAsUint64(L"hash", 16))))
+          return pPkg;
+      }
+
+      // then try with identity
+      if(xml_ins.hasAttr(L"ident")) {
+        if((pPkg = pLoc->pkgFind(xml_ins.attrAsString(L"ident"))))
+          return pPkg;
+      }
     }
   }
 
@@ -373,8 +387,21 @@ size_t OmBatch::instGetList(const OmLocation* pLoc, vector<OmPackage*>& pkg_ls)
 
       OmPackage* pPkg;
       for(size_t i = 0; i < xml_ins_ls.size(); ++i) {
-        pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsString(L"ident"));
-        if(pPkg) pkg_ls.push_back(pPkg);
+
+        // first try and rely on package hash value
+        if(xml_ins_ls[i].hasAttr(L"hash")) {
+          if((pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsUint64(L"hash", 16)))) {
+            pkg_ls.push_back(pPkg); continue;
+          }
+        }
+
+        // then try with identity
+        if(xml_ins_ls[i].hasAttr(L"ident")) {
+          if((pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsString(L"ident")))) {
+            pkg_ls.push_back(pPkg); continue;
+          }
+        }
+
       }
 
       return pkg_ls.size();
@@ -451,32 +478,46 @@ bool OmBatch::repair()
     // build the discard list or repair reference
     for(size_t j = 0; j < xml_ins_ls.size(); ++j) {
 
-      if(xml_ins_ls[j].hasAttr(L"ident")) {
+      pPkg = nullptr;
+
+      if(xml_ins_ls[j].hasAttr(L"hash")) {
+
+        uint64_t hash = xml_ins_ls[j].attrAsUint64(L"hash", 16);
+
+        if((pPkg = pLoc->pkgFind(hash))) {
+
+            // add missing ident reference
+            if(!xml_ins_ls[j].hasAttr(L"ident")) {
+              xml_ins_ls[j].setAttr(L"ident", pPkg->ident());
+              this->log(2, L"Batch("+this->_title+L") Repair", L"Repair Package reference: "+pPkg->ident());
+            }
+
+        } else {
+          xml_dis_ls.push_back(xml_ins_ls[j]);
+          this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Package reference: "+Om_uint64ToStr(hash));
+        }
+
+      } else if(xml_ins_ls[j].hasAttr(L"ident")) {
 
         ident = xml_ins_ls[j].attrAsString(L"ident");
-        if(!pLoc->pkgFind(ident)) {
+
+        if((pPkg = pLoc->pkgFind(ident))) {
+            // add missing hash reference
+            if(!xml_ins_ls[j].hasAttr(L"hash")) {
+              xml_ins_ls[j].setAttr(L"hash", pPkg->hash());
+              this->log(2, L"Batch("+this->_title+L") Repair", L"Repair Package reference: "+Om_uint64ToStr(pPkg->hash()));
+            }
+        } else {
           xml_dis_ls.push_back(xml_ins_ls[j]);
           this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Package reference: "+ident);
         }
 
       } else {
-
-        // here we check for old Installation Batch definition where package
-        // references were stored by hash value, this is now deprecated and we
-        // try to convert this on the fly
-        if(xml_ins_ls[j].hasAttr(L"hash")) {
-          uint64_t hash = Om_strToUint64(xml_ins_ls[j].attrAsString(L"hash"));
-          pPkg = pLoc->pkgFind(hash);
-          if(pPkg) {
-            xml_ins_ls[j].setAttr(L"ident", pPkg->ident());
-            xml_ins_ls[j].remAttr(L"hash");
-            this->log(2, L"Batch("+this->_title+L") Repair", L"Repair Package reference: "+pPkg->ident());
-          } else {
-            xml_dis_ls.push_back(xml_ins_ls[j]);
-            this->log(2, L"Batch("+this->_title+L") Repair", L"Discard Package reference: "+Om_uint64ToStr(hash));
-          }
-        }
+        // discard invalid entry
+        xml_dis_ls.push_back(xml_ins_ls[j]);
+        this->log(2, L"Batch("+this->_title+L") Repair", L"Discard invalid Package entry");
       }
+
     }
 
     // remove nodes

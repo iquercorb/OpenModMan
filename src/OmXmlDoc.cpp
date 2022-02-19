@@ -19,6 +19,11 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmXmlDoc.h"
 
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
+static const wchar_t __hex_digit[] = L"0123456789abcdef";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -145,6 +150,15 @@ double OmXmlNode::attrAsDouble(const wstring& attr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+uint64_t OmXmlNode::attrAsUint64(const wstring& attr, int base) const
+{
+  return wcstoull(static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).value(), nullptr, base);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmXmlNode::setName(const wstring& value)
 {
   static_cast<pugi::xml_node*>(_data)->set_name(value.c_str());
@@ -213,6 +227,33 @@ void OmXmlNode::setAttr(const wstring& attr, double value)
     attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
   attribute.set_value(value);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmXmlNode::setAttr(const wstring& attr, uint64_t value)
+{
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  if(attribute.empty()) {
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+  }
+
+  wchar_t buf[17];
+  wchar_t *p = buf;
+
+  uint8_t c, b = 64;
+  while(b) {
+    b -= 8;
+    c = (uint8_t)((value >> b) & 0xFF);
+    *p++ = __hex_digit[(c >> 4) & 0x0F];
+    *p++ = __hex_digit[(c)      & 0x0F];
+  }
+
+  *p = 0;
+
+  attribute.set_value(buf);
 }
 
 
