@@ -226,6 +226,16 @@ class OmDialog
       return _active;
     }
 
+    /// \brief Check minimized.
+    ///
+    /// Checks whether dialog window is currently minimized.
+    ///
+    /// \return True if dialog is currently minimized, false otherwise
+    ///
+    bool minimized() const {
+      return _minimized;
+    }
+
     /// \brief Refresh window.
     ///
     /// Refresh the dialog window.
@@ -719,6 +729,8 @@ class OmDialog
     long                _usize[2];  //< Dialog window size in base unit
 
     bool                _active;    //< Dialog window tracked ACTIVE state
+
+    bool                _minimized; //< Dialog window tracked MINIMIZED state
 
     HDWP                _hdwp;      //< Defer window pos handle
 

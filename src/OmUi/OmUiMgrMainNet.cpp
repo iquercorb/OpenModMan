@@ -1277,7 +1277,6 @@ void OmUiMgrMainNet::_buildLvRmt()
     lvItem.mask = LVIF_TEXT|LVIF_IMAGE;
     lvItem.iSubItem = 1;
     lvItem.iImage = pRmt->depCount() ? 3/*PKG_DPN*/ : 2/*PKG_ZIP*/;
-
     lvItem.pszText = const_cast<LPWSTR>(pRmt->name().c_str());
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
