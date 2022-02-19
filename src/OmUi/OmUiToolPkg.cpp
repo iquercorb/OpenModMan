@@ -305,7 +305,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   if(!this->_package.version().isNull())
     this->setItemText(IDC_EC_INP04, this->_package.version().asString());
 
-  // prefill destination path
+  // get current source path
   item_str.clear();
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     this->getItemText(IDC_EC_INP01, item_str);
@@ -313,11 +313,24 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     this->getItemText(IDC_EC_INP02, item_str);
   }
 
-  item_str = Om_getDirPart(item_str);
+  if(!item_str.empty()) {
 
-  if(Om_isDir(item_str))
-    this->setItemText(IDC_EC_INP06, item_str);
+    // preselect file extention
+    if(Om_extensionMatches(item_str, OMM_PKG_FILE_EXT)) {
+      this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 1);
+    } else {
+      this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0);
+    }
 
+    // refresh final filename
+    this->_onNameChange();
+
+    // prefill destination path
+    item_str = Om_getDirPart(item_str);
+
+    if(Om_isDir(item_str))
+      this->setItemText(IDC_EC_INP06, item_str);
+  }
 
   this->_unsaved = false; //< reset unsaved changes
 
@@ -689,7 +702,7 @@ void OmUiToolPkg::_onNameChange()
     }
 
     // get chosen file extension
-    int cb_sel = this->msgItem(IDC_CB_EXT, CB_GETCURSEL, 0, 0);
+    int cb_sel = this->msgItem(IDC_CB_EXT, CB_GETCURSEL, 0);
     wchar_t ext_str[6];
     this->msgItem(IDC_CB_EXT, CB_GETLBTEXT, cb_sel, reinterpret_cast<LPARAM>(ext_str));
     name_str += ext_str;
