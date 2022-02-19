@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg8"
    version="1.1"
    viewBox="0 0 67.733332 67.733335"
@@ -17,7 +9,15 @@
    inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\omk_icon256.png"
    inkscape:export-xdpi="96.000008"
    inkscape:export-ydpi="96.000008"
-   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)">
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2">
     <linearGradient
@@ -64,56 +64,14 @@
        r="208.24622"
        gradientTransform="matrix(-0.28090941,1.0693816,-3.9313027,-0.89360895,2415.906,203.39878)"
        gradientUnits="userSpaceOnUse" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-156.54209 : 151.08475 : 1"
-       inkscape:vp_y="0 : 651.0179 : 0"
-       inkscape:vp_z="289.2194 : 151.08475 : 1"
-       inkscape:persp3d-origin="11.02165 : 65.960196 : 1"
-       id="perspective882" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-189.65398 : 175.91164 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="495.06071 : 175.91164 : 1"
-       inkscape:persp3d-origin="67.73333 : 45.15555 : 1"
-       id="perspective831" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-156.54209 : 151.08475 : 1"
-       inkscape:vp_y="0 : 651.0179 : 0"
-       inkscape:vp_z="289.2194 : 151.08475 : 1"
-       inkscape:persp3d-origin="11.02165 : 65.960196 : 1"
-       id="perspective882-3" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-189.65398 : 175.91164 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="495.06071 : 175.91164 : 1"
-       inkscape:persp3d-origin="67.73333 : 45.15555 : 1"
-       id="perspective831-7" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-156.54209 : 151.08475 : 1"
-       inkscape:vp_y="0 : 651.0179 : 0"
-       inkscape:vp_z="289.2194 : 151.08475 : 1"
-       inkscape:persp3d-origin="11.02165 : 65.960196 : 1"
-       id="perspective882-0" />
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="-189.65398 : 175.91164 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="495.06071 : 175.91164 : 1"
-       inkscape:persp3d-origin="67.73333 : 45.15555 : 1"
-       id="perspective831-9" />
     <filter
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter2151"
-       x="-0.12362516"
-       width="1.2472503"
-       y="-0.15926489"
-       height="1.3185298">
+       x="-0.13342721"
+       width="1.2668544"
+       y="-0.16172063"
+       height="1.3234413">
       <feGaussianBlur
          inkscape:collect="always"
          stdDeviation="6.3096348"
@@ -128,8 +86,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.6110649"
-     inkscape:cx="43.358758"
-     inkscape:cy="30.262339"
+     inkscape:cx="43.449522"
+     inkscape:cy="129.41751"
      inkscape:document-units="mm"
      inkscape:current-layer="g861"
      showgrid="false"

@@ -5,7 +5,7 @@
    viewBox="0 0 67.733332 67.733335"
    height="256"
    width="256"
-   sodipodi:docname="omb_icon.svg"
+   sodipodi:docname="rouage.svg"
    inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\omb_icon16.png"
    inkscape:export-xdpi="6.0000005"
    inkscape:export-ydpi="6.0000005"
@@ -82,16 +82,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.80553245"
-     inkscape:cx="235.24813"
-     inkscape:cy="25.449006"
+     inkscape:zoom="0.80553244"
+     inkscape:cx="51.51872"
+     inkscape:cy="63.312162"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1527"
      inkscape:window-height="993"
-     inkscape:window-x="302"
-     inkscape:window-y="9"
+     inkscape:window-x="352"
+     inkscape:window-y="42"
      inkscape:window-maximized="0"
      inkscape:snap-smooth-nodes="true"
      units="px"
@@ -102,18 +102,7 @@
      inkscape:snap-others="false"
      inkscape:snap-bbox="true"
      inkscape:bbox-nodes="true"
-     inkscape:document-rotation="0"
-     showguides="true"
-     inkscape:guide-bbox="true">
-    <sodipodi:guide
-       position="107.73412,4.0125403"
-       orientation="0,-1"
-       id="guide4107" />
-    <sodipodi:guide
-       position="101.16497,63.134927"
-       orientation="0,-1"
-       id="guide4109" />
-  </sodipodi:namedview>
+     inkscape:document-rotation="0" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -126,18 +115,15 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="omb_icon"
+     inkscape:label="Calque 1"
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-229.26665)">
     <g
        id="g908"
        inkscape:label="Rouage"
-       transform="matrix(-0.86417741,-0.85142767,0.85142767,-0.86417741,-162.59093,499.68695)"
-       style="display:inline"
-       inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\g908.png"
-       inkscape:export-xdpi="96.000008"
-       inkscape:export-ydpi="96.000008">
+       transform="matrix(-0.74025753,-0.72933607,0.72933607,-0.74025753,-140.22794,458.69339)"
+       style="display:inline">
       <path
          inkscape:export-ydpi="96"
          inkscape:export-xdpi="96"
@@ -162,46 +148,6 @@
          inkscape:connector-curvature="0"
          inkscape:label="Bizau Exterieur"
          sodipodi:nodetypes="ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" />
-    </g>
-    <g
-       id="g861"
-       style="display:inline;opacity:0.99;fill:#e1b84f;fill-opacity:1;stroke:none;stroke-width:7.55906;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19.75;stroke-opacity:1;paint-order:normal"
-       transform="matrix(0.37536033,0,0,0.37536033,20.910379,183.09055)"
-       inkscape:label="Package">
-      <path
-         d="M 65.824283,196.28324 V 290.9042 L 121.27521,261.38523 V 196.24876 Z"
-         style="fill:#f2d286;fill-opacity:1;stroke:none;stroke-width:1.30204"
-         id="path886"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="ccccc"
-         inkscape:label="Face Droite" />
-      <path
-         d="m 10.274152,196.142 55.550131,0.14124 V 290.9042 L 10.274152,261.16502 Z"
-         style="fill:#ddb36a;fill-opacity:1;stroke:none;stroke-width:1.30204"
-         id="path888"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="ccccc"
-         inkscape:label="Face Gauche" />
-      <path
-         d="M 10.274152,196.142 65.824283,212.8676 121.27521,196.24876 65.650513,186.17097 Z"
-         style="fill:#f8eac6;fill-opacity:1;stroke:none;stroke-width:1.30204"
-         id="path884"
-         inkscape:connector-curvature="0"
-         inkscape:label="Face Dessus" />
-      <path
-         style="fill:#c8b890;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="m 33.91635,191.885 54.737137,14.14061 13.272853,-3.97793 -54.883702,-12.52619 z"
-         id="path894"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="ccccc"
-         inkscape:label="Bande Dessus" />
-      <path
-         style="fill:#bba877;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="m 88.653252,206.02561 v 39.71556 l 13.273138,-5.53766 v -38.15583 z"
-         id="path896"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="ccccc"
-         inkscape:label="Bande Face" />
     </g>
   </g>
 </svg>
