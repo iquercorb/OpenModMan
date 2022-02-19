@@ -65,6 +65,7 @@ Open Mod Mananager currently implements the following key features:
  - Fix scrolling for Overlap and Dependencies in Package Properties Dialog.
  - Fix missing dialogs for package download errors.
  - Fix bad encoding of loaded/saved description text in Package Editor.
+ - Fix network repository description never saved locally.
  - Update embedded XXhash algorithm to the 0.8.1 version.
  - Update embedded Pugixml library to the 1.12.1 version.
  - New Uninstall tree - uninstall with dependencies - feature.
@@ -72,8 +73,10 @@ Open Mod Mananager currently implements the following key features:
  - New Category field for Packages.
  - New custom path or URL mechanism for repository files download.
  - New improved message boxes and icons.
- - New package descriptions parsed as Markdown.
  - New Installation Batch "Install-Only" execution mode.
+ - New ability to associate description and thumbnail for dev/folder packages.
+ - New improved UI with resizable frames.
+ - New Markdown parsing support for package description.
 
 0.9.8 (04-01-2022)
  - Add support and automatic follow of HTTP redirect responses.
