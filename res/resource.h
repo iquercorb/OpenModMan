@@ -18,8 +18,8 @@
 #define IDD_ADD_REP                             713
 #define IDD_TOOL_PKG                            714
 #define IDD_TOOL_REP                            715
-#define IDD_PROP_MAN                            720
-#define IDD_PROP_MAN_GLE                        721
+#define IDD_PROP_MGR                            720
+#define IDD_PROP_MGR_GLE                        721
 #define IDD_PROP_CTX                            730
 #define IDD_PROP_CTX_LOC                        731
 #define IDD_PROP_CTX_STG                        732

@@ -208,6 +208,12 @@ IDR_MENU MENU
 //
 // Dialog resources
 //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                                MAIN WINDOW
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR DIALOG 0, 0, 505, 340
 CLASS "OpenModMan.Class"
@@ -220,7 +226,11 @@ FONT 8, "Ms Shell Dlg"
     ICON            "", IDC_SB_ICON, 5, 5, 19, 19, SS_ICON | SS_CENTERIMAGE, WS_EX_LEFT
     COMBOBOX        IDC_CB_CTX, 30, 8, 445, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                MAIN WINDOW
+//
+//                            TOP FRAME CHILD DIALOG
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_MAIN DIALOG 0, 25, 505, 210
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -229,7 +239,26 @@ FONT 8, "Ms Shell Dlg"
 {
   CONTROL         "", IDC_TC_MAIN, WC_TABCONTROL, WS_TABSTOP, 5, 36, 495, 290, WS_EX_LEFT
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                MAIN WINDOW
+//
+//                           FOOT FRAME CHILD DIALOG
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_MGR_FOOT DIALOG 0, 240, 505, 100
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+EXSTYLE WS_EX_STATICEDGE | WS_EX_CONTROLPARENT
+FONT 8, "Ms Shell Dlg"
+{
+    CONTROL         "", IDC_TC_MAIN, WC_TABCONTROL, WS_TABSTOP, 5, 36, 495, 290, WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                  TOP FRAME
+//
+//                             PACKAGES LIBRARY TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_MAIN_LIB DIALOG 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -243,23 +272,28 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, 0, 107, 161, 326, 12, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 435, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDVERT, 488, 5, 1, 270, WS_EX_LEFT
-    LTEXT           "Installation Batches : ", IDC_SC_LBL01, 490, 8, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
-    CONTROL         "", IDC_LV_BAT, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 5, 35, 148, 123, WS_EX_ACCEPTFILES
+    //LTEXT           "Installation Batches : ", IDC_SC_LBL01, 490, 8, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
+    CONTROL         "", IDC_LV_BAT, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL, 5, 35, 148, 123, WS_EX_ACCEPTFILES
     PUSHBUTTON      "Launch", IDC_BC_RUN, 490, 271, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "New...", IDC_BC_NEW, 549, 271, 45, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Modify", IDC_BC_EDI, 595, 271, 45, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                  TOP FRAME
+//
+//                           NETWORK REPOSITORIES TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_MAIN_NET DIALOG 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
     COMBOBOX        IDC_CB_LOC, 5, 5, 480, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Repositories : ", IDC_SC_LBL01, 5, 24, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
+    //LTEXT           "Repositories : ", IDC_SC_LBL01, 5, 24, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
     PUSHBUTTON      "Refresh", IDC_BC_QRY, 470, 20, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    CONTROL         "", IDC_LV_REP, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER, 5, 37, 460, 29, WS_EX_ACCEPTFILES
+    CONTROL         "", IDC_LV_REP, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL, 5, 37, 460, 29, WS_EX_ACCEPTFILES
     PUSHBUTTON      "Add...", IDC_BC_NEW, 470, 36, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Delete", IDC_BC_DEL, 470, 52, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 5, 70, 480, 1, WS_EX_LEFT
@@ -269,8 +303,13 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, WS_DISABLED, 108, 161, 314, 12, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 435, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                  TOP FRAME
+//
+//                                 TEST&DEV TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_MAIN_TST DIALOG 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -282,19 +321,13 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | WS_BORDER, 2, 12, 480, 240, WS_EX_LEFT
     //CONTROL         "", IDC_RE_RTF, RICHEDIT60_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL  | WS_BORDER, 2, 12, 480, 240, WS_EX_LEFT
 }
-
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_FOOT DIALOG 0, 240, 505, 100
-STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
-EXSTYLE WS_EX_STATICEDGE | WS_EX_CONTROLPARENT
-FONT 8, "Ms Shell Dlg"
-{
-    CONTROL         "", IDC_TC_MAIN, WC_TABCONTROL, WS_TABSTOP, 5, 36, 495, 290, WS_EX_LEFT
-}
-
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                 FOOT  FRAME
+//
+//                             PACKAGE OVERVIEW TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_FOOT_OVW DIALOG 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -305,8 +338,13 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 12, 480, 80, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 2, 12, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                 FOOT  FRAME
+//
+//                             PACKAGE DETAILS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_FOOT_DET DIALOG 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -317,7 +355,11 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_DESC, 2, 12, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
 
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                         NEW TARGET LOCATION DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_ADD_LOC DIALOG 0, 0, 300, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -340,32 +382,11 @@ FONT 8, "Ms Shell Dlg"
     DEFPUSHBUTTON   "OK", IDC_BC_OK, 157, 278, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 213, 278, 50, 14, 0, WS_EX_LEFT
 }
-
-/*
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_NEW_CTX DIALOG 0, 0, 300, 240
-STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
-EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Create new Context"
-FONT 8, "Ms Shell Dlg"
-{
-    CONTROL         "", IDC_SB_IMAGE, WC_STATIC, SS_BITMAP, 7, 7, 68, 189, WS_EX_STATICEDGE
-    LTEXT           "Please select the folder where you want the Context to be installed as well as its title.", IDC_SC_INTRO, 90, 15, 190, 17, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Context title:", IDC_SC_LBL01, 90, 40, 190, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP01, 90, 50, 190, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Folder to create Context in :", IDC_SC_LBL02, 90, 70, 190, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP02, 90, 80, 175, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    PUSHBUTTON      "...", IDC_BC_BRW02, 266, 80, 14, 13, 0, WS_EX_LEFT
-    LTEXT           "Context definition file name :", IDC_SC_LBL03, 90, 100, 190, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP03, 90, 110, 190, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Resulting Context path :", IDC_SC_LBL04, 90, 140, 190, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP04, 90, 150, 190, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 6, 335, 310, 1, WS_EX_LEFT
-    DEFPUSHBUTTON   "OK", IDC_BC_OK, 188, 219, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 243, 219, 50, 14, 0, WS_EX_LEFT
-}
-*/
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                       NEW INSTALLATION BATCH DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_ADD_BAT DIALOG 0, 0, 300, 260
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -391,8 +412,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "OK", IDC_BC_OK, 210, 320, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 265, 320, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                       NEW NETWORK REPOSITORY DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_ADD_REP DIALOG 0, 0, 300, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -413,13 +437,16 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "OK", IDC_BC_OK, 157, 278, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 213, 278, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                         MANAGER PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT DIALOG 0, 0, 320, 220
+IDD_PROP_MGR DIALOG 0, 0, 320, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Installation Batch properties"
+CAPTION "Manager options"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
@@ -427,36 +454,110 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                            MANAGER PROPERTIES
+//
+//                                GENERAL TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT_STG DIALOG 0, 0, 305, 175
+IDD_PROP_MGR_GLE DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Installation Batch name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP01, 70, 20, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    AUTOCHECKBOX    "Install Only (Do not uninstall not-selected packages)", IDC_BC_CKBX1, 10, 40, 150, 9, 0, WS_EX_LEFT
+    LTEXT           "List views icons size :", IDC_SC_LBL01, 50, 20, 100, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_ICS, 50, 30, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    AUTOCHECKBOX    "Disable Markdown (display descriptions as raw text)", IDC_BC_CKBX1, 50, 45, 100, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Open Contexts at startup :", IDC_BC_CKBX2, 50, 70, 100, 9, 0, WS_EX_LEFT
+    LISTBOX         IDC_LB_PATH, 50, 80, 205, 35, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      "Add...", IDC_BC_BRW01, 50, 127, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Remove", IDC_BC_REM, 102, 127, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                     SOFTWARE CONTEXT PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT_LST DIALOG 0, 0, 305, 175
+IDD_PROP_CTX DIALOG 0, 0, 320, 220
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
+EXSTYLE WS_EX_WINDOWEDGE
+CAPTION "Software Context properties"
+FONT 8, "Ms Shell Dlg"
+{
+    CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
+    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                     SOFTWARE CONTEXT PROPERTIES DIALOG
+//
+//                                SETTINGS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PROP_CTX_STG DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Per Target Location Installation-List :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        IDC_CB_LOC, 10, 65, 300, 12, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Not selected :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_EXC, 10, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
-    PUSHBUTTON      ">", IDC_BC_RIGH, 140, 180, 16, 15, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "<", IDC_BC_LEFT, 140, 195, 16, 15, WS_DISABLED, WS_EX_LEFT
-    LTEXT           "To be installed :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_INC, 160, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
-    PUSHBUTTON      "Up", IDC_BC_UP, 290, 180, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Dn", IDC_BC_DN, 290, 195, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    LTEXT           "Home folder :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP01, 70, 20, 205, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Indicative name :", IDC_SC_LBL03, 5, 50, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP03, 70, 50, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
+    LTEXT           "Associated application icon :", IDC_SC_LBL04, 5, 90, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP04, 170, 90, 50, 13, NOT WS_VISIBLE | NOT WS_TABSTOP | ES_AUTOHSCROLL, WS_EX_LEFT
+    ICON            "", IDC_SB_ICON, 70, 90, 30, 30, SS_ICON | SS_CENTERIMAGE, WS_EX_STATICEDGE
+    PUSHBUTTON      "Select...", IDC_BC_BRW01, 110, 90, 50, 14, BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Remove", IDC_BC_DEL, 110, 105, 50, 14, BS_BITMAP, WS_EX_LEFT
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                     SOFTWARE CONTEXT PROPERTIES DIALOG
+//
+//                            TARGET LOCATIONS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PROP_CTX_LOC DIALOG 0, 0, 305, 175
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "Ms Shell Dlg"
+{
+    LTEXT           "Target Locations :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_LOC, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    LTEXT           "Target Destination :", IDC_SC_LBL02, 71, 60, 40, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ2, 115, 60, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Library folder :", IDC_SC_LBL03, 71, 75, 40, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ3, 115, 75, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Backup folder :", IDC_SC_LBL04, 71, 90, 40, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ4, 115, 90, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                     SOFTWARE CONTEXT PROPERTIES DIALOG
+//
+//                         INSTALLATION BATCHES TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PROP_CTX_BAT DIALOG 0, 0, 305, 175
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "Ms Shell Dlg"
+{
+    LTEXT           "Installation Batches :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_BAT, 70, 70, 190, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
+    //LTEXT           "Execution options :", IDC_SC_LBL02, 5, 115, 64, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Batches execution in Quiet Mode (ignore warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                    TARGET LOCATION PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_LOC DIALOG 0, 0, 320, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -469,8 +570,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                       TARGET LOCATION PROPERTIES
+//
+//                               SETTINGS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_LOC_STG DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -488,8 +592,11 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_INP04, 70, 130, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW04, 261, 130, 16, 13, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                       TARGET LOCATION PROPERTIES
+//
+//                               LIBRARY TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_LOC_LIB DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -502,8 +609,11 @@ FONT 8, "Ms Shell Dlg"
     AUTOCHECKBOX    "Package installation dependencies missing", IDC_BC_CKBX4, 65, 62, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Additional uninstallations of overlapping or dependents", IDC_BC_CKBX5, 65, 82, 170, 9, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                       TARGET LOCATION PROPERTIES
+//
+//                             BACKUP DATA TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_LOC_BCK DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -515,8 +625,11 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Maintenance operations :", IDC_SC_LBL02, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Discard backup data", IDC_BC_DEL, 50, 90, 80, 15, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                       TARGET LOCATION PROPERTIES
+//
+//                        NETWORK REPOSITORIES TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_LOC_NET DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -537,13 +650,16 @@ FONT 8, "Ms Shell Dlg"
     AUTORADIOBUTTON "Move older versions to recycle bin", IDC_BC_RAD01, 5, 145, 64, 9, SS_LEFT, WS_EX_LEFT
     AUTORADIOBUTTON "Rename older versions with .old extension", IDC_BC_RAD02, 5, 165, 64, 9, SS_LEFT, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                    INSTALLATION BATCH PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_MAN DIALOG 0, 0, 320, 220
+IDD_PROP_BAT DIALOG 0, 0, 320, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Manager options"
+CAPTION "Installation Batch properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
@@ -551,90 +667,46 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                        INSTALLATION BATCH PROPERTIES
+//
+//                                SETTINGS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_MAN_GLE DIALOG 0, 0, 305, 175
+IDD_PROP_BAT_STG DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "List views icons size :", IDC_SC_LBL01, 50, 20, 100, 9, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        IDC_CB_ICS, 50, 30, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    AUTOCHECKBOX    "Open Contexts at startup :", IDC_BC_CKBX1, 50, 59, 100, 9, 0, WS_EX_LEFT
-    LISTBOX         IDC_LB_PATH, 50, 70, 205, 45, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY, WS_EX_LEFT
-    PUSHBUTTON      "Add...", IDC_BC_BRW01, 50, 117, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Remove", IDC_BC_REM, 102, 117, 50, 14, WS_DISABLED, WS_EX_LEFT
+    LTEXT           "Installation Batch name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP01, 70, 20, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
+    AUTOCHECKBOX    "Install Only (Do not uninstall not-selected packages)", IDC_BC_CKBX1, 10, 40, 150, 9, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                        INSTALLATION BATCH PROPERTIES
+//
+//                            INSTALLATION LISTS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX DIALOG 0, 0, 320, 220
-STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
-EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Software Context properties"
-FONT 8, "Ms Shell Dlg"
-{
-    CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
-}
-
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_STG DIALOG 0, 0, 305, 175
+IDD_PROP_BAT_LST DIALOG 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Home folder :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP01, 70, 20, 205, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Indicative name :", IDC_SC_LBL03, 5, 50, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP03, 70, 50, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Associated application icon :", IDC_SC_LBL04, 5, 90, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP04, 170, 90, 50, 13, NOT WS_VISIBLE | NOT WS_TABSTOP | ES_AUTOHSCROLL, WS_EX_LEFT
-    ICON            "", IDC_SB_ICON, 70, 90, 30, 30, SS_ICON | SS_CENTERIMAGE, WS_EX_STATICEDGE
-    PUSHBUTTON      "Select...", IDC_BC_BRW01, 110, 90, 50, 14, BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Remove", IDC_BC_DEL, 110, 105, 50, 14, BS_BITMAP, WS_EX_LEFT
+    LTEXT           "Per Target Location Installation-List :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_LOC, 10, 65, 300, 12, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Not selected :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_EXC, 10, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      ">", IDC_BC_RIGH, 140, 180, 16, 15, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "<", IDC_BC_LEFT, 140, 195, 16, 15, WS_DISABLED, WS_EX_LEFT
+    LTEXT           "To be installed :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_INC, 160, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      "Up", IDC_BC_UP, 290, 180, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Dn", IDC_BC_DN, 290, 195, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
 }
-
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_LOC DIALOG 0, 0, 305, 175
-STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
-FONT 8, "Ms Shell Dlg"
-{
-    LTEXT           "Target Locations :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_LOC, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
-    PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    LTEXT           "Target Destination :", IDC_SC_LBL02, 71, 60, 40, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ2, 115, 60, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Library folder :", IDC_SC_LBL03, 71, 75, 40, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ3, 115, 75, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Backup folder :", IDC_SC_LBL04, 71, 90, 40, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ4, 115, 90, 165, 13, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
-}
-
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_BAT DIALOG 0, 0, 305, 175
-STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
-FONT 8, "Ms Shell Dlg"
-{
-    LTEXT           "Installation Batches :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_BAT, 70, 70, 190, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
-    PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
-    //LTEXT           "Execution options :", IDC_SC_LBL02, 5, 115, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Batches execution in Quiet Mode (ignore warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                       PACKAGE PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_PKG DIALOG 0, 0, 320, 400
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -647,28 +719,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 382, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 382, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_BCK DIALOG 0, 0, 305, 360
-STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
-FONT 8, "Ms Shell Dlg"
-{
-    LTEXT           "Backup type :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ1, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Backup location :", IDC_SC_LBL02, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ2, 70, 30, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 55, 270, 1, WS_EX_LEFT
-    LTEXT           "Overlap :", IDC_SC_LBL03, 5, 70, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ3, 70, 70, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP02, WC_STATIC, SS_ETCHEDHORZ, 5, 105, 270, 1, WS_EX_LEFT
-    LTEXT           "Total size :", IDC_SC_LBL04, 5, 120, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ4, 70, 120, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Installed files :", IDC_SC_LBL05, 5, 140, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ5, 70, 140, 205, 171, WS_HSCROLL | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
-}
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                            PACKAGE PROPERTIES
+//
+//                                SOURCE TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_PKG_SRC DIALOG 0, 0, 305, 360
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -696,7 +751,34 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Description :", IDC_SC_LBL10, 5, 285, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 70, 285, 205, 65, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                            PACKAGE PROPERTIES
+//
+//                                BACKUP TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PROP_PKG_BCK DIALOG 0, 0, 305, 360
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "Ms Shell Dlg"
+{
+    LTEXT           "Backup type :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ1, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Backup location :", IDC_SC_LBL02, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ2, 70, 30, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 55, 270, 1, WS_EX_LEFT
+    LTEXT           "Overlap :", IDC_SC_LBL03, 5, 70, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ3, 70, 70, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
+    CONTROL         "-----------", IDC_SC_SEP02, WC_STATIC, SS_ETCHEDHORZ, 5, 105, 270, 1, WS_EX_LEFT
+    LTEXT           "Total size :", IDC_SC_LBL04, 5, 120, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ4, 70, 120, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Installed files :", IDC_SC_LBL05, 5, 140, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ5, 70, 140, 205, 171, WS_HSCROLL | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                     REMOTE PACKAGE PROPERTIES DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_RMT DIALOG 0, 0, 320, 400
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -709,8 +791,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 382, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 382, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                          REMOTE PACKAGE PROPERTIES
+//
+//                                DETAILS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROP_RMT_DET DIALOG 0, 0, 305, 360
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -743,8 +828,11 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Description :", IDC_SC_LBL11, 5, 285, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 70, 285, 205, 65, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                            PACKAGE EDITOR DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_TOOL_PKG DIALOG 0, 0, 485, 375
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -755,13 +843,10 @@ FONT 8, "Ms Shell Dlg"
     AUTORADIOBUTTON "Create from folder content :", IDC_BC_RAD01, 10, 10, 140, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 10, 20, 170, 13, ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     PUSHBUTTON      "Select...", IDC_BC_BRW01, 190, 20, 40, 13, 0, WS_EX_LEFT
-
     AUTORADIOBUTTON "Edit/Create from existing Package :", IDC_BC_RAD02, 10, 40, 140, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 10, 50, 170, 13, WS_DISABLED | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     PUSHBUTTON      "Open...", IDC_BC_BRW02, 190, 50, 40, 13, WS_DISABLED, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP01, 5, 65, 235, 150, 0, WS_EX_LEFT
-
     LTEXT           "Package filename :", IDC_SC_LBL01, 10, 75, 120, 9, SS_LEFT, WS_EX_LEFT
     LTEXT           "Name :", IDC_SC_LBL02, 10, 90, 23, 9, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 35, 88, 100, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
@@ -769,55 +854,45 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_INP04, 170, 88, 30, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     COMBOBOX        IDC_CB_EXT, 205, 88, 30, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     EDITTEXT        IDC_EC_RESUL, 10, 104, 225, 13, ES_READONLY | ES_AUTOHSCROLL, WS_EX_LEFT
-
     LTEXT           "Zip compression level :", IDC_SC_LBL04, 10, 125, 80, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_LVL, 10, 137, 225, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-
     LTEXT           "Package Content :", IDC_SC_LBL07, 10, 158, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ1, 10, 170, 220, 35, WS_HSCROLL | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
-
     LTEXT           "Destination folder :", IDC_SC_LBL05, 10, 215, 80, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP06, 10, 230, 205, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW03, 220, 230, 16, 13, WS_DISABLED, WS_EX_LEFT
-
     PUSHBUTTON      "Save", IDC_BC_SAVE, 5, 275, 50, 14, 0, WS_EX_LEFT
     CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, 0, 60, 276, 135, 12, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 200, 275, 40, 14, WS_DISABLED, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP02, 245, 0, 235, 60, 0, WS_EX_LEFT
-
     LTEXT           "Mod category :", IDC_SC_LBL08, 250, 10, 120, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_CAT, 250, 25, 225, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP09, 250, 40, 225, 14, WS_DISABLED | WS_TABSTOP | ES_AUTOHSCROLL, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP03, 245, 60, 235, 75, 0, WS_EX_LEFT
-
     AUTOCHECKBOX    "Has dependencies :", IDC_BC_CKBX1, 250, 70, 80, 9, WS_DISABLED, WS_EX_LEFT
     LTEXT           "Identity :", IDC_SC_LBL06, 250, 87, 35, 9, WS_DISABLED | SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP07, 285, 85, 170, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "+", IDC_BC_ADD, 460, 85, 16, 13, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     LISTBOX         IDC_LB_DPN, 250, 100, 205, 30, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "-", IDC_BC_DEL, 460, 100, 16, 13, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP04, 245, 135, 235, 95, 0, WS_EX_LEFT
-
     AUTOCHECKBOX    "Include snaphot :", IDC_BC_CKBX2, 250, 145, 70, 9, WS_DISABLED, WS_EX_LEFT
     CONTROL         "", IDC_SB_SNAP, WC_STATIC, WS_BORDER | SS_BITMAP | SS_CENTERIMAGE, 325, 146, 85, 78, WS_EX_LEFT
     PUSHBUTTON      "Select...", IDC_BC_BRW04, 435, 145, 40, 13, WS_DISABLED, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP08, 250, 160, 80, 14, NOT WS_VISIBLE | ES_AUTOHSCROLL, WS_EX_LEFT
     CTEXT           "Square image\n128 x 128 pixels", IDC_SC_NOTES, 255, 180, 60, 35, WS_DISABLED | SS_CENTER, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP05, 245, 230, 235, 115, 0, WS_EX_LEFT
-
     AUTOCHECKBOX    "Include description :", IDC_BC_CKBX3, 250, 240, 80, 9, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "load...", IDC_BC_BRW05, 435, 240, 40, 13, WS_DISABLED, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 250, 255, 225, 85, WS_VSCROLL | WS_DISABLED | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, WS_EX_LEFT
-
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 4, 295, 479, 1, WS_EX_LEFT
     PUSHBUTTON      "Close", IDC_BC_CLOSE, 430, 300, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                     NETWORK REPOSITORY EDITOR DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_TOOL_REP DIALOG 0, 0, 485, 360
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -827,24 +902,19 @@ FONT 8, "Ms Shell Dlg"
 {
     PUSHBUTTON      "Open...", IDC_BC_BRW01, 55, 10, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "New", IDC_BC_NEW, 10, 10, 50, 14, 0, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP01, 5, 30, 235, 45, 0, WS_EX_LEFT
-    LTEXT           "Title :", IDC_SC_LBL01, 10, 40, 70, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Description :", IDC_SC_LBL01, 10, 40, 70, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 10, 55, 220, 12, ES_AUTOHSCROLL, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP02, 5, 80, 235, 45, 0, WS_EX_LEFT
     LTEXT           "Default download path :", IDC_SC_LBL03, 10, 90, 70, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 10, 105, 220, 12, ES_AUTOHSCROLL, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP03, 5, 130, 235, 135, 0, WS_EX_LEFT
     LTEXT           "Package(s):", IDC_SC_LBL02, 10, 147, 120, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_BRW02, 125, 144, 40, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_BRW03, 165, 144, 40, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Remove", IDC_BC_REM, 214, 144, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     LISTBOX         IDC_LB_PKG, 10, 160, 220, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
-
     PUSHBUTTON      "Save as...", IDC_BC_SAVE, 10, 275, 50, 14, WS_DISABLED, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP06, 245, 0, 235, 55, 0, WS_EX_LEFT
     LTEXT           "Filename :", IDC_SC_LBL06, 250, 10, 70, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ1, 290, 10, 165, 11, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
@@ -852,32 +922,25 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_READ2, 290, 25, 165, 11, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     LTEXT           "Category :", IDC_SC_LBL11, 250, 40, 70, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ4, 290, 40, 165, 11, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP07, 245, 55, 235, 45, 0, WS_EX_LEFT
     LTEXT           "Dependencies :", IDC_SC_LBL07, 250, 65, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ3, 310, 65, 120, 27, NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
     PUSHBUTTON      "Check", IDC_BC_QRY, 435, 65, 40, 14, WS_DISABLED, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP08, 245, 100, 235, 95, 0, WS_EX_LEFT
     LTEXT           "Snapshot :", IDC_SC_LBL08, 250, 110, 64, 9, SS_LEFT, WS_EX_LEFT
     CONTROL         "", IDC_SB_SNAP, WC_STATIC, WS_BORDER | SS_BITMAP | SS_CENTERIMAGE, 325, 110, 85, 78, WS_EX_LEFT
     PUSHBUTTON      "Select...", IDC_BC_BRW08, 435, 110, 40, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Delete", IDC_BC_DEL, 435, 125, 40, 14, WS_DISABLED, WS_EX_LEFT
     CTEXT           "Square image\n128 x 128 pixels", IDC_SC_NOTES, 255, 140, 60, 35, WS_DISABLED | SS_CENTER, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP09, 245, 195, 235, 95, 0, WS_EX_LEFT
     LTEXT           "Description :", IDC_SC_LBL09, 250, 205, 64, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Load...", IDC_BC_BRW09, 395, 205, 40, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Save", IDC_BC_SAV02, 435, 205, 40, 14, WS_DISABLED, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 250, 220, 225, 60, WS_VSCROLL | WS_DISABLED | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN, WS_EX_LEFT
-
     GROUPBOX        "", IDC_GB_GRP10, 245, 290, 235, 40, 0, WS_EX_LEFT
-
     AUTOCHECKBOX    "Custom download path or URL :", IDC_BC_CKBX1, 250, 300, 50, 9, WS_DISABLED | SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 310, 300, 120, 12, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "Save", IDC_BC_SAV01, 435, 300, 40, 14, WS_DISABLED, WS_EX_LEFT
-
-
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 6, 335, 310, 1, WS_EX_LEFT
     PUSHBUTTON      "Close", IDC_BC_CLOSE, 267, 340, 50, 14, 0, WS_EX_LEFT
 }
@@ -897,7 +960,6 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 246, 222, 50, 14, 0, WS_EX_LEFT
 }
 
-
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_LOC_BEG DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -905,7 +967,6 @@ FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "Welcome to the Location creation wizard !\n\nThis wizard will guide you to create a new Location for the current Context.\n\nWhen you are ready to proceed, please click ""Next""...", IDC_SC_INTRO, 10, 5, 190, 60, SS_LEFT, WS_EX_LEFT
 }
-
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_LOC_CFG DIALOG 0, 0, 225, 200
@@ -926,7 +987,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "...", IDC_BC_BRW04, 190, 160, 16, 13, WS_DISABLED, WS_EX_LEFT
 }
 */
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                     SOTFWARE CONTEXT WIZARD DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_CTX DIALOG 0, 0, 300, 225
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -940,8 +1005,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Next >", IDC_BC_NEXT, 183, 222, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 246, 222, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                        SOTFWARE CONTEXT WIZARD
+//
+//                               START PAGE
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_CTX_BEG DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -951,8 +1019,11 @@ FONT 8, "Ms Shell Dlg"
                     "This wizard will guide you to create a new Software Context and its main Target Location.\n\n"
                     "When you are ready to proceed, please click ""Next""...", IDC_SC_INTRO, 10, 5, 190, 60, SS_LEFT, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                        SOTFWARE CONTEXT WIZARD
+//
+//                          MAIN PARAMETERS PAGE
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_CTX_CFG DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -967,8 +1038,11 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Resulting Software Context home :", IDC_SC_LBL03, 5, 150, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 5, 160, 200, 13, ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                        SOTFWARE CONTEXT WIZARD
+//
+//                     TARGET LOCATION PARAMETERS PAGE
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_WIZ_CTX_LOC DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
@@ -987,7 +1061,11 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_INP04, 5, 160, 182, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW04, 190, 160, 16, 13, WS_DISABLED, WS_EX_LEFT
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                                ABOUT DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_HELP_ABT DIALOG 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -1003,8 +1081,11 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 4, 295, 479, 1, WS_EX_LEFT
     DEFPUSHBUTTON   "Close", IDC_BC_CLOSE, 430, 300, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                              DEBUG LOGS DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_HELP_LOG DIALOG 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -1016,8 +1097,11 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 4, 295, 479, 1, WS_EX_LEFT
     DEFPUSHBUTTON   "Close", IDC_BC_CLOSE, 430, 300, 50, 14, 0, WS_EX_LEFT
 }
-
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                           CUSTOM PROGRESSION DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_PROGRESS DIALOG 0, 0, 320, 80
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
@@ -1029,22 +1113,6 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "|||||||||||", IDC_PB_COM, PROGRESS_CLASS, 0, 10, 45, 300, 11, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 250, 66, 60, 14, 0, WS_EX_LEFT
 }
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MSG DIALOG 0, 0, 300, 100
-STYLE DS_SHELLFONT | DS_CENTER | WS_SYSMENU
-CAPTION "Message"
-FONT 8, "Ms Shell Dlg"
-{
-    CONTROL         "___________", IDC_SC_WHITE, WC_STATIC, SS_WHITERECT, 0, 0, 300, 74, WS_EX_LEFT
-    ICON            "", IDC_SB_ICON, 10, 5, 19, 19, SS_ICON | SS_CENTERIMAGE, WS_EX_LEFT
-    LTEXT           "Message title", IDC_SC_HEAD, 40, 5, 250, 12, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Message string", IDC_SC_MESG, 40, 20, 250, 12, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_LISTE, 40, 40, 250, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
-    DEFPUSHBUTTON   "OK", IDC_BC_OK, 170, 80, 58, 15, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 235, 80, 58, 15, 0, WS_EX_LEFT
-}
-
 
 //
 // Accelerator resources
