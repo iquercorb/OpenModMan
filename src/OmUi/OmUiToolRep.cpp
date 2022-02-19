@@ -1185,7 +1185,7 @@ void OmUiToolRep::_onBcSave()
     item_str.push_back(L'/');
 
   // check whether user entered an URL
-  if(!Om_isValidUrl(item_str)) {
+  if(Om_isValidUrl(item_str)) {
     Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR,
                  L"Invalid Default download path", L"The Default download path "
                  "cannot be an URL, please specify a valid URL path or let "
