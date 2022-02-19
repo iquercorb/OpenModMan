@@ -206,7 +206,7 @@ void OmUiMgrFootOvw::_showPreview(const wstring& name, const OmVersion& vers, co
     }
 
     if(dir) {
-      text.append(L"\r\nThis development Package does not have associated description text.");
+      text.append(L"\r\nThis folder does not have associated description text.");
 
     } else {
       text.append(L"\r\nThis Package does not embeds description text.");

@@ -233,16 +233,16 @@ void OmUiPropLocBck::_onInit()
     switch(comp_levl)
     {
     case 1:
-      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 1, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 1);
       break;
     case 2:
-      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2);
       break;
     case 3:
-      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 3, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 3);
       break;
     default:
-      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 0, 0);
+      this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 0);
       break;
     }
 
