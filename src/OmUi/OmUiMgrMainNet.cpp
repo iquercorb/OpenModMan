@@ -151,12 +151,6 @@ OmUiMgrMainNet::~OmUiMgrMainNet()
   // stop Library folder changes monitoring
   if(this->_dirMon_hth) this->_dirMon_stop();
 
-  HFONT hFt;
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_NAME, WM_GETFONT));
-  if(hFt) DeleteObject(hFt);
-  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
-  if(hFt) DeleteObject(hFt);
-
   // Get the previous Image List to be destroyed (Small and Normal uses the same)
   HIMAGELIST hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_RMT, LVM_GETIMAGELIST, LVSIL_NORMAL));
   if(hImgLs) ImageList_Destroy(hImgLs);
@@ -1171,8 +1165,8 @@ void OmUiMgrMainNet::_rsizeLvRep()
 
   GetClientRect(this->getItem(IDC_LV_REP), reinterpret_cast<LPRECT>(&size));
   half_s = static_cast<float>(size[2]) * 0.5f;
-  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 1, half_s-25);
-  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 2, half_s-25);
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 1, (half_s - 100) - 25);
+  this->msgItem(IDC_LV_REP, LVM_SETCOLUMNWIDTH, 2, (half_s + 100) - 25);
 }
 
 
@@ -1453,11 +1447,6 @@ void OmUiMgrMainNet::_onLvRmtSel()
 
   if(!lv_nsl) {
 
-    // hide all package bottom infos
-    this->showItem(IDC_SB_SNAP, false);
-    this->showItem(IDC_EC_DESC, false);
-    this->showItem(IDC_SC_NAME, false);
-
     // disable all action buttons
     this->enableItem(IDC_BC_LOAD, false);
     this->enableItem(IDC_BC_UPGD, false);
@@ -1494,21 +1483,12 @@ void OmUiMgrMainNet::_onLvRmtSel()
     this->_pUiMgr->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
-    this->showItem(IDC_EC_DESC, false);
-    this->setItemText(IDC_SC_NAME, L"<Multiple selection>");
-    this->showItem(IDC_SB_SNAP, false);
+    this->_pUiMgr->pUiMgrFoot()->clearItem();
 
   } else {
 
-    // show package title and thumbnail
-    this->showItem(IDC_SC_NAME, true);
-    this->showItem(IDC_SB_SNAP, true);
-
     // enable the "Edit > Remote > .. " menu-item
     this->_pUiMgr->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
-
-    // show package description
-    this->showItem(IDC_EC_DESC, true);
 
     OmRemote* pRmt = nullptr;
 
@@ -1670,11 +1650,6 @@ void OmUiMgrMainNet::_onInit()
   // retrieve main dialog
   this->_pUiMgr = static_cast<OmUiMgr*>(this->root());
 
-  // Defines fonts for package description, title, and log output
-  HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
-  this->msgItem(IDC_SC_NAME, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
-  hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set batches New and Delete buttons icons
   this->setBmIcon(IDC_BC_STOP, Om_getResIcon(this->_hins, IDI_BT_NOT));
   this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
@@ -1701,22 +1676,25 @@ void OmUiMgrMainNet::_onInit()
   SetWindowTheme(this->getItem(IDC_LV_REP),L"Explorer",nullptr);
 
   // we now add columns into our list-view control
-  lvCol.mask = LVCF_WIDTH|LVCF_FMT;
+  lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
   //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
   // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
   // mysterious ways... So, don't try to fix this.
   lvCol.fmt = LVCFMT_RIGHT;
+  lvCol.pszText = const_cast<LPWSTR>(L"Status");
   lvCol.cx = 43;
   lvCol.iSubItem = 0;
   this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.fmt = LVCFMT_LEFT;
-  lvCol.cx = 300;
+  lvCol.pszText = const_cast<LPWSTR>(L"Repository");
+  lvCol.cx = 200;
   lvCol.iSubItem++;
   this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
   lvCol.fmt = LVCFMT_LEFT;
-  lvCol.cx = 300;
+  lvCol.pszText = const_cast<LPWSTR>(L"Description");
+  lvCol.cx = 400;
   lvCol.iSubItem++;
   this->msgItem(IDC_LV_REP, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
 
@@ -1727,6 +1705,9 @@ void OmUiMgrMainNet::_onInit()
 
   // we now add columns into our list-view control
   lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
+  //  "The alignment of the leftmost column is always LVCFMT_LEFT; it
+  // cannot be changed." says Mr Microsoft. Do not ask why, the Microsoft's
+  // mysterious ways... So, don't try to fix this.
   lvCol.pszText = const_cast<LPWSTR>(L"Status");
   lvCol.fmt = LVCFMT_RIGHT;
   lvCol.cx = 43;
@@ -1762,11 +1743,6 @@ void OmUiMgrMainNet::_onInit()
   lvCol.cx = 120;
   lvCol.iSubItem++;
   this->msgItem(IDC_LV_RMT, LVM_INSERTCOLUMNW, lvCol.iSubItem, reinterpret_cast<LPARAM>(&lvCol));
-
-  // hide package details
-  this->showItem(IDC_SC_NAME, false);
-  this->showItem(IDC_EC_DESC, false);
-  this->showItem(IDC_SB_SNAP, false);
 }
 
 
@@ -1809,9 +1785,9 @@ void OmUiMgrMainNet::_onResize()
   // Locations Combo-Box
   this->_setItemPos(IDC_CB_LOC, 2, 2, this->cliUnitX()-4, 12);
   // Repositories label
-  this->_setItemPos(IDC_SC_LBL01, 2, 20, 180, 12);
+  //this->_setItemPos(IDC_SC_LBL01, 2, 20, 180, 12);
   // Repositories ListBox
-  this->_setItemPos(IDC_LV_REP, 2, 34, this->cliUnitX()-22, 30);
+  this->_setItemPos(IDC_LV_REP, 2, 18, this->cliUnitX()-24, 46);
   this->_rsizeLvRep(); //< resize ListView columns adapted to client area
 
   // Repositories Apply, New.. and Delete buttons

@@ -54,14 +54,6 @@ class OmUiMgrMainTst : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
-    HWND                _hdivHwnd;
-
-    bool                _hdivHovr;
-
-    long                _hdivCur[2];
-
-    long                _hdivOld[2];
-
     void                _onInit();
 
     void                _onShow();

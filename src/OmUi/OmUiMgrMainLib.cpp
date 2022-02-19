@@ -36,6 +36,7 @@
 #include "OmUtilFs.h"
 #include "OmUtilDlg.h"
 #include "OmUtilWin.h"
+#include "OmUtilErr.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgrMainLib.h"
@@ -185,6 +186,7 @@ void OmUiMgrMainLib::freeze(bool enable)
   this->enableItem(IDC_SC_LBL01, !enable);
   this->enableItem(IDC_LB_BAT, !enable);
   this->enableItem(IDC_BC_NEW, !enable);
+  this->enableItem(IDC_BC_EDI, !enable);
   // Batch Launch & Delete Buttons
   if(enable) {
     this->enableItem(IDC_BC_DEL, false);
@@ -416,9 +418,15 @@ void OmUiMgrMainLib::pkgTrsh()
     pPkg = sel_ls[i];
 
     if(pPkg->hasSrc()) {
-      Om_moveToTrash(pPkg->srcPath());
+      int result = Om_moveToTrash(pPkg->srcPath());
+      if(result != 0) {
+        wstring err_str = Om_errShell(L"", pPkg->srcPath(), result);
+        Om_dlgBox_okl(this->_hwnd, L"Delete Packages", IDI_ERR,
+                      L"Package delete error",
+                      L"Package \""+pPkg->ident()+L"\" move to recycle bin "
+                      "failed because of the following error:", err_str);
+      }
     } else {
-
       Om_dlgBox_ok(this->_hwnd, L"Delete Packages", IDI_PKG_WRN,
                     L"Package source does not exists",
                     L"Source file or folder of Package \""+pPkg->ident()+
@@ -1650,11 +1658,6 @@ DWORD WINAPI OmUiMgrMainLib::_batExe_fth(void* arg)
 
   if(lv_sel >= 0) {
 
-    // hide package details
-    self->showItem(IDC_SB_SNAP, false);
-    self->showItem(IDC_EC_DESC, false);
-    self->showItem(IDC_SC_NAME, false);
-
     // structure for ListView update
     LVITEMW lvItem = {};
     lvItem.mask = LVIF_PARAM; //< we want item param
@@ -1727,11 +1730,6 @@ DWORD WINAPI OmUiMgrMainLib::_batExe_fth(void* arg)
         }
       }
     }
-
-    // restore package details
-    self->showItem(IDC_SB_SNAP, true);
-    self->showItem(IDC_EC_DESC, true);
-    self->showItem(IDC_SC_NAME, true);
   }
 
   // Select previously selected location
@@ -1876,11 +1874,6 @@ void OmUiMgrMainLib::_onLvPkgSel()
   // check count of selected item
   if(!lv_nsl) {
 
-    // hide all package bottom infos
-    this->showItem(IDC_SB_SNAP, false);
-    this->showItem(IDC_EC_DESC, false);
-    this->showItem(IDC_SC_NAME, false);
-
     // disable install, uninstall abort and progress bar
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
@@ -1917,40 +1910,25 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->_pUiMgr->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
-    this->showItem(IDC_EC_DESC, false);
-    this->setItemText(IDC_SC_NAME, L"<Multiple selection>");
-    this->showItem(IDC_SB_SNAP, false);
+    this->_pUiMgr->pUiMgrFoot()->clearItem();
 
   } else {
 
-    // show package title and thumbnail
-    this->showItem(IDC_SC_NAME, true);
-    this->showItem(IDC_SB_SNAP, true);
-
     // enable the "Edit > Package > .. " menu-item
     this->_pUiMgr->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
-
-    // show package description
-    this->showItem(IDC_EC_DESC, true);
 
     OmPackage* pPkg;
 
     // get the selected item id (only one, no need to iterate)
     int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
     if(lv_sel >= 0) {
-
       pPkg = pLoc->pkgGet(lv_sel);
-
       // show packages info in footer frame
       this->_pUiMgr->pUiMgrFoot()->selectItem(pPkg);
-
     } else {
-
       // reset footer frame
       this->_pUiMgr->pUiMgrFoot()->clearItem();
     }
-
-
   }
 }
 
@@ -2040,17 +2018,9 @@ void OmUiMgrMainLib::_onInit()
   // retrieve main dialog
   this->_pUiMgr = static_cast<OmUiMgr*>(this->root());
 
-  // Defines fonts for package description, title, and log output
-  HFONT hFt = Om_createFont(21, 400, L"Ms Shell Dlg");
-  this->msgItem(IDC_SC_NAME, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
-  hFt = Om_createFont(14, 700, L"Consolas");
-  this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
-
   // Set batches New and Delete buttons icons
   this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
   this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
-  // set default package thumbnail
-  this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_LOC,    L"Select active location");
@@ -2101,15 +2071,13 @@ void OmUiMgrMainLib::_onInit()
   SetWindowTheme(this->getItem(IDC_LV_BAT),L"Explorer",nullptr);
 
   // we now add columns into Batches list-view control
-  lvCol.mask = LVCF_WIDTH;
-  lvCol.cx = 80;
+  lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
+
+  lvCol.pszText = const_cast<LPWSTR>(L"Installation Batch");
+  lvCol.fmt = LVCFMT_LEFT;
+  lvCol.cx = 150;
   lvCol.iSubItem = 0;
   this->msgItem(IDC_LV_BAT, LVM_INSERTCOLUMNW, 0, reinterpret_cast<LPARAM>(&lvCol));
-
-  // hide package details
-  this->showItem(IDC_SC_NAME, false);
-  this->showItem(IDC_EC_DESC, false);
-  this->showItem(IDC_SB_SNAP, false);
 }
 
 
@@ -2168,13 +2136,13 @@ void OmUiMgrMainLib::_onResize()
   this->_setItemPos(IDC_SC_SEPAR, this->cliUnitX()-154, 2, 1, this->cliUnitY()-3);
 
   // Batches label
-  this->_setItemPos(IDC_SC_LBL01, this->cliUnitX()-150, 2, 140, 12);
+  //this->_setItemPos(IDC_SC_LBL01, this->cliUnitX()-149, 2, 140, 12);
   // Batches List-View
-  this->_setItemPos(IDC_LV_BAT, this->cliUnitX()-150, 18, 148, this->cliUnitY()-36);
+  this->_setItemPos(IDC_LV_BAT, this->cliUnitX()-149, 2, 148, this->cliUnitY()-20);
   // Batches Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_RUN, this->cliUnitX()-150, this->cliUnitY()-15, 48, 14);
-  this->_setItemPos(IDC_BC_NEW, this->cliUnitX()-100, this->cliUnitY()-15, 48, 14);
-  this->_setItemPos(IDC_BC_EDI, this->cliUnitX()-50, this->cliUnitY()-15, 48, 14);
+  this->_setItemPos(IDC_BC_RUN, this->cliUnitX()-149, this->cliUnitY()-15, 48, 14);
+  this->_setItemPos(IDC_BC_NEW, this->cliUnitX()-99, this->cliUnitY()-15, 48, 14);
+  this->_setItemPos(IDC_BC_EDI, this->cliUnitX()-49, this->cliUnitY()-15, 48, 14);
 }
 
 

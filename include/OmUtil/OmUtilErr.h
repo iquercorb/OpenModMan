@@ -90,6 +90,18 @@ wstring Om_errMove(const wstring& item, const wstring& path, int result);
 ///
 wstring Om_errCopy(const wstring& item, const wstring& path, int result);
 
+/// \brief Shell File operation error message.
+///
+/// Compose error string for Shell File operation error.
+///
+/// \param[in]  name    : Formated message item designation.
+/// \param[in]  path    : Formated message item path.
+/// \param[in]  result  : WinAPI standard result error code.
+///
+/// \return Formated error log message.
+///
+wstring Om_errShell(const wstring& item, const wstring& path, int result);
+
 /// \brief Read access error message.
 ///
 /// Compose error string for unable to read access.
@@ -206,5 +218,6 @@ wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& m
 /// \return Formated error log message.
 ///
 wstring Om_errExists(const wstring& item, const wstring& path);
+
 
 #endif // OMUTILERR_H_INCLUDED
