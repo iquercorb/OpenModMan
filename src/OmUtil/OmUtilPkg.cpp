@@ -44,7 +44,7 @@ bool Om_parsePkgIdent(wstring& name, wstring& core, wstring& vers, const wstring
   if(v_pos > 0 && v_pos != wstring::npos) {
     // verify the V letter is preceded by a common separator
     wchar_t wc = ident[v_pos - 1];
-    if(wc == L' ' || wc == L'_' || wc == L'-') {
+    if(wc == L' ' || wc == L'_' || wc == L'-' || wc == L'.') {
       // verify the V letter is followed by a number
       wc = ident[v_pos + 1];
       if(wc > 0x29 && wc < 0x40) { // 0123456789
