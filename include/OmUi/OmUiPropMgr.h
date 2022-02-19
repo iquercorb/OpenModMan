@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPMAN_H
-#define OMUIPROPMAN_H
+#ifndef OMUIPROPMGR_H
+#define OMUIPROPMGR_H
 
 #include "OmDialogProp.h"
 
@@ -23,7 +23,7 @@
 ///
 /// OmDialogProp class derived for Manager Options parent dialog window.
 ///
-class OmUiPropMan : public OmDialogProp
+class OmUiPropMgr : public OmDialogProp
 {
   public:
 
@@ -33,13 +33,13 @@ class OmUiPropMan : public OmDialogProp
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiPropMan(HINSTANCE hins);
+    OmUiPropMgr(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiPropMan();
+    ~OmUiPropMgr();
 
     /// \brief Get resource id.
     ///
@@ -67,4 +67,4 @@ class OmUiPropMan : public OmDialogProp
     void                _onPropInit();
 };
 
-#endif // OMUIPROPMAN_H
+#endif // OMUIPROPMGR_H

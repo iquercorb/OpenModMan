@@ -20,28 +20,28 @@
 
 #include "OmManager.h"
 
-#include "OmUiPropManGle.h"
+#include "OmUiPropMgrGle.h"
 
 #include "OmUtilWin.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-#include "OmUiPropMan.h"
+#include "OmUiPropMgr.h"
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropMan::OmUiPropMan(HINSTANCE hins) : OmDialogProp(hins)
+OmUiPropMgr::OmUiPropMgr(HINSTANCE hins) : OmDialogProp(hins)
 {
   // create tab dialogs
-  this->_addPage(L"General", new OmUiPropManGle(hins));
+  this->_addPage(L"General", new OmUiPropMgrGle(hins));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropMan::~OmUiPropMan()
+OmUiPropMgr::~OmUiPropMgr()
 {
   //dtor
 }
@@ -50,23 +50,23 @@ OmUiPropMan::~OmUiPropMan()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiPropMan::id() const
+long OmUiPropMgr::id() const
 {
-  return IDD_PROP_MAN;
+  return IDD_PROP_MGR;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropMan::checkChanges()
+bool OmUiPropMgr::checkChanges()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
+  OmUiPropMgrGle* pUiPropManGle  = static_cast<OmUiPropMgrGle*>(this->childById(IDD_PROP_MGR_GLE));
 
   bool changed = false;
 
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_ICON_SIZE)) {
 
     int cb_sel = pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL, 0, 0);
 
@@ -87,7 +87,12 @@ bool OmUiPropMan::checkChanges()
     }
   }
 
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_START_LIST)) {
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_NO_MDPARSE)) {
+    if(pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != pMgr->noMarkdown())
+      changed = true;
+  }
+
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_START_LIST)) {
     changed = true;
   }
 
@@ -101,13 +106,13 @@ bool OmUiPropMan::checkChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropMan::applyChanges()
+bool OmUiPropMgr::applyChanges()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MAN_GLE));
+  OmUiPropMgrGle* pUiPropManGle  = static_cast<OmUiPropMgrGle*>(this->childById(IDD_PROP_MGR_GLE));
 
   // Parameter: Icons size for packages List-View
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_ICON_SIZE)) {
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_ICON_SIZE)) {
 
     int cb_sel = pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL);
 
@@ -125,13 +130,22 @@ bool OmUiPropMan::applyChanges()
     }
 
     // Reset parameter as unmodified
-    pUiPropManGle->setChParam(MAN_PROP_GLE_ICON_SIZE, false);
+    pUiPropManGle->setChParam(MGR_PROP_GLE_ICON_SIZE, false);
+  }
+
+  // Parameter No markdown parsing
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_NO_MDPARSE)) {
+
+    pMgr->setNoMarkdown(pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropManGle->setChParam(MGR_PROP_GLE_NO_MDPARSE, false);
   }
 
   // Parameter: Open Context(s) at startup
-  if(pUiPropManGle->hasChParam(MAN_PROP_GLE_START_LIST)) {
+  if(pUiPropManGle->hasChParam(MGR_PROP_GLE_START_LIST)) {
 
-    bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
+    bool bm_chk = pUiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
 
     vector<wstring> path_ls;
 
@@ -148,7 +162,7 @@ bool OmUiPropMan::applyChanges()
     pMgr->saveStartContexts(bm_chk, path_ls);
 
     // Reset parameter as unmodified
-    pUiPropManGle->setChParam(MAN_PROP_GLE_START_LIST, false);
+    pUiPropManGle->setChParam(MGR_PROP_GLE_START_LIST, false);
   }
 
   // disable Apply button
@@ -164,7 +178,7 @@ bool OmUiPropMan::applyChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropMan::_onPropInit()
+void OmUiPropMgr::_onPropInit()
 {
   // set dialog icon
   this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));

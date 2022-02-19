@@ -24,13 +24,13 @@
 #include "OmUtilDlg.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-#include "OmUiPropManGle.h"
+#include "OmUiPropMgrGle.h"
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropManGle::OmUiPropManGle(HINSTANCE hins) : OmDialog(hins)
+OmUiPropMgrGle::OmUiPropMgrGle(HINSTANCE hins) : OmDialog(hins)
 {
   // modified parameters flags
   for(unsigned i = 0; i < 8; ++i)
@@ -41,7 +41,7 @@ OmUiPropManGle::OmUiPropManGle(HINSTANCE hins) : OmDialog(hins)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropManGle::~OmUiPropManGle()
+OmUiPropMgrGle::~OmUiPropMgrGle()
 {
 
 }
@@ -50,16 +50,16 @@ OmUiPropManGle::~OmUiPropManGle()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-long OmUiPropManGle::id() const
+long OmUiPropMgrGle::id() const
 {
-  return IDD_PROP_MAN_GLE;
+  return IDD_PROP_MGR_GLE;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::setChParam(unsigned i, bool en)
+void OmUiPropMgrGle::setChParam(unsigned i, bool en)
 {
   _chParam[i] = en;
   static_cast<OmDialogProp*>(this->_parent)->checkChanges();
@@ -69,22 +69,34 @@ void OmUiPropManGle::setChParam(unsigned i, bool en)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onCkBoxStr()
+void OmUiPropMgrGle::_onCkBoxRaw()
 {
   int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
-  this->enableItem(IDC_LB_PATH, bm_chk);
-  this->enableItem(IDC_BC_BRW01, bm_chk);
-
   // user modified parameter, notify it
-  this->setChParam(MAN_PROP_GLE_START_LIST, true);
+  this->setChParam(MGR_PROP_GLE_NO_MDPARSE, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onLbStrlsSel()
+void OmUiPropMgrGle::_onCkBoxStr()
+{
+  int bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
+
+  this->enableItem(IDC_LB_PATH, bm_chk);
+  this->enableItem(IDC_BC_BRW01, bm_chk);
+
+  // user modified parameter, notify it
+  this->setChParam(MGR_PROP_GLE_START_LIST, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropMgrGle::_onLbStrlsSel()
 {
   int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
@@ -95,7 +107,7 @@ void OmUiPropManGle::_onLbStrlsSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcBrwStr()
+void OmUiPropMgrGle::_onBcBrwStr()
 {
   wstring start, result;
 
@@ -108,21 +120,21 @@ void OmUiPropManGle::_onBcBrwStr()
   this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(result.c_str()));
 
   // user modified parameter, notify it
-  this->setChParam(MAN_PROP_GLE_START_LIST, true);
+  this->setChParam(MGR_PROP_GLE_START_LIST, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcRemStr()
+void OmUiPropMgrGle::_onBcRemStr()
 {
   int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
     this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
     // user modified parameter, notify it
-    this->setChParam(MAN_PROP_GLE_START_LIST, true);
+    this->setChParam(MGR_PROP_GLE_START_LIST, true);
   }
 }
 
@@ -130,12 +142,13 @@ void OmUiPropManGle::_onBcRemStr()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onInit()
+void OmUiPropMgrGle::_onInit()
 {
   // define controls tool-tips
   this->_createTooltip(IDC_CB_ICS,    L"Size of icons in packages lists");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Automatically open Context files at application startup");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Disables Markdown parsing and display descriptions as raw text");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Automatically opens Context files at application startup");
   this->_createTooltip(IDC_LB_PATH,   L"Context files to be opened at application startup");
   this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Context file to add");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
@@ -154,7 +167,7 @@ void OmUiPropManGle::_onInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onResize()
+void OmUiPropMgrGle::_onResize()
 {
   // Icon size Label & ComboBox
   this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
@@ -162,20 +175,23 @@ void OmUiPropManGle::_onResize()
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
 
+  // No Markdown checkbox
+  this->_setItemPos(IDC_BC_CKBX1, 50, 55, 200, 9);
+
   // Startup Contexts list CheckBox & ListBox
-  this->_setItemPos(IDC_BC_CKBX1, 50, 59, 100, 9);
-  this->_setItemPos(IDC_LB_PATH, 50, 70, this->cliUnitX()-100, this->cliUnitY()-130);
+  this->_setItemPos(IDC_BC_CKBX2, 50, 79, 100, 9);
+  this->_setItemPos(IDC_LB_PATH, 50, 90, this->cliUnitX()-100, this->cliUnitY()-130);
 
   // Startup Contexts list Add and Remove... buttons
-  this->_setItemPos(IDC_BC_BRW01, 50, this->cliUnitY()-58, 50, 14);
-  this->_setItemPos(IDC_BC_REM, 102, this->cliUnitY()-58, 50, 14);
+  this->_setItemPos(IDC_BC_BRW01, 50, this->cliUnitY()-38, 50, 14);
+  this->_setItemPos(IDC_BC_REM, 102, this->cliUnitY()-38, 50, 14);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onRefresh()
+void OmUiPropMgrGle::_onRefresh()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
@@ -191,12 +207,15 @@ void OmUiPropManGle::_onRefresh()
     break;
   }
 
+  // set No Markdown CheckBox
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pMgr->noMarkdown());
+
   bool auto_open;
   vector<wstring> path_ls;
-  pMgr->getStartContexts(&auto_open, path_ls);
 
   // set Load at Startup CheckBox
-  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, auto_open);
+  pMgr->getStartContexts(&auto_open, path_ls);
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, auto_open);
 
   // Enable or disable Browse button and ListBox
   this->enableItem(IDC_BC_BRW01, auto_open);
@@ -204,6 +223,7 @@ void OmUiPropManGle::_onRefresh()
 
   // Add paths to ListBox
   this->msgItem(IDC_LB_PATH, LB_RESETCONTENT);
+
 
   for(size_t i = 0; i < path_ls.size(); ++i) {
     this->msgItem(IDC_LB_PATH, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(path_ls[i].c_str()));
@@ -220,7 +240,7 @@ void OmUiPropManGle::_onRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropMgrGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if(uMsg == WM_COMMAND) {
 
@@ -229,10 +249,14 @@ INT_PTR OmUiPropManGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_CB_ICS: //< Combo-Box for icons size
       if(HIWORD(wParam) == CBN_SELCHANGE)
         // parameter modified, must be saved we parent dialog valid changes
-        this->setChParam(MAN_PROP_GLE_ICON_SIZE, true);
+        this->setChParam(MGR_PROP_GLE_ICON_SIZE, true);
       break;
 
-    case IDC_BC_CKBX1: //< Check-Box for Open Context(s) at startup
+    case IDC_BC_CKBX1: //< Check-Box for Display as raw text
+      this->_onCkBoxRaw();
+      break;
+
+    case IDC_BC_CKBX2: //< Check-Box for Open Context(s) at startup
       this->_onCkBoxStr();
       break;
 

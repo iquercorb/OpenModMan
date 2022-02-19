@@ -14,19 +14,20 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUIPROPMANGLE_H
-#define OMUIPROPMANGLE_H
+#ifndef OMUIPROPMGRGLE_H
+#define OMUIPROPMGRGLE_H
 
 #include "OmDialog.h"
 
-#define MAN_PROP_GLE_ICON_SIZE          0
-#define MAN_PROP_GLE_START_LIST         1
+#define MGR_PROP_GLE_ICON_SIZE          0
+#define MGR_PROP_GLE_NO_MDPARSE         1
+#define MGR_PROP_GLE_START_LIST         2
 
 /// \brief Manager Options / General tab child
 ///
 /// OmDialog class derived for Manager Options / General tab child dialog window
 ///
-class OmUiPropManGle : public OmDialog
+class OmUiPropMgrGle : public OmDialog
 {
   public:
 
@@ -36,13 +37,13 @@ class OmUiPropManGle : public OmDialog
     ///
     /// \param[in]  hins    : API Instance handle.
     ///
-    OmUiPropManGle(HINSTANCE hins);
+    OmUiPropMgrGle(HINSTANCE hins);
 
     /// \brief Destructor.
     ///
     /// Default destructor.
     ///
-    ~OmUiPropManGle();
+    ~OmUiPropMgrGle();
 
     /// \brief Get resource id.
     ///
@@ -79,6 +80,8 @@ class OmUiPropManGle : public OmDialog
 
     bool                _chParam[8];
 
+    void                _onCkBoxRaw();
+
     void                _onCkBoxStr();
 
     void                _onLbStrlsSel();
@@ -96,4 +99,4 @@ class OmUiPropManGle : public OmDialog
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // OMUIPROPMANGLE_H
+#endif // OMUIPROPMGRGLE_H
