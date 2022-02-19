@@ -435,6 +435,14 @@ void OmUiMgr::_onInit()
 ///
 void OmUiMgr::_onResize()
 {
+  // ignore resizing when in minimized state
+  if(this->minimized())
+    return;
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMgr::_onResize\n";
+  #endif
+
   long y, h, rc[4];
 
   if(!this->_divIsCapt) {
@@ -449,14 +457,14 @@ void OmUiMgr::_onResize()
     // store old foot frame rect for future redraw
     GetWindowRect(this->_pUiMgrFoot->hwnd(), reinterpret_cast<LPRECT>(&rc));
     MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&rc), 2);
-
   }
 
   // get foot frame height, if we are in frame resize process we get it
   // from the temporary value stored after WM_MOUSEMOVE message
   h = (this->_divIsCapt) ? this->_divMove[2] : this->_pUiMgrFoot->height();
 
-  // clamp foot frame height to prevent covering entire screen on resize
+  // Make sure frame height got correct value
+  if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
   if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
 
   // foot frame top position, relative to client

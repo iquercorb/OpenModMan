@@ -62,7 +62,8 @@ static inline void __cce_init()
 OmDialog::OmDialog(HINSTANCE hins) :
   _hins(hins), _hwnd(nullptr), _parent(nullptr), _child(), _accel(nullptr),
   _menu(nullptr), _data(nullptr), _init(true), _modal(false), _recw{}, _recc{},
-  _ubase{}, _limit{}, _size{}, _usize{}, _active(false), _hdwp(nullptr)
+  _ubase{}, _limit{}, _size{}, _usize{}, _active(false), _minimized(false),
+  _hdwp(nullptr)
 {
 
 }
@@ -694,7 +695,16 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       return 0; // case WM_SHOWWINDOW
 
     case WM_WINDOWPOSCHANGED:
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
+      #endif
       return 0; // case WM_WINDOWPOSCHANGED
+
+    case WM_WINDOWPOSCHANGING:
+      #ifdef DEBUG
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
+      #endif
+      return 0; // case WM_WINDOWPOSCHANGING
 
     case WM_MOVE:
       return 0; // case WM_MOVE
@@ -710,8 +720,19 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       dialog->_usize[0] = MulDiv(dialog->_recc[2], 4, dialog->_ubase[0]);
       dialog->_usize[1] = MulDiv(dialog->_recc[3], 8, dialog->_ubase[1]);
 
+      if(wParam == SIZE_MINIMIZED)
+        dialog->_minimized = true;
+
+      if(wParam == SIZE_RESTORED) {
+        if(dialog->_minimized)
+          dialog->_minimized = false;
+      }
+
       // call user function
       dialog->_onResize();
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_SIZE\n";
+      #endif
 
       return 0; // case WM_SIZE
 
