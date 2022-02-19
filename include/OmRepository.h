@@ -128,12 +128,22 @@ class OmRepository
 
     /// \brief Get title.
     ///
-    /// Returns repository indicative title.
+    /// Returns repository indicative title (description).
     ///
     /// \return Indicative title.
     ///
     const wstring& title() const {
       return _title;
+    }
+
+    /// \brief Set title.
+    ///
+    /// Set repository indicative title (description).
+    ///
+    /// \param[in]  title : Indicative title.
+    ///
+    void setTitle(const wstring& title) {
+      _title = title;
     }
 
     /// \brief Get download path.
