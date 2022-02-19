@@ -69,6 +69,14 @@ wstring Om_errCopy(const wstring& item, const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+wstring Om_errShell(const wstring& item, const wstring& path, int result)
+{
+  return item + L" \"" + path + L"\" shell error: " + Om_getErrorStr(result);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 wstring Om_errReadAccess(const wstring& item, const wstring& path)
 {
   return item + L" \"" + path + L"\" read access denied";

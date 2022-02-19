@@ -59,10 +59,36 @@ wstring Om_getErrorStr(int code) {
   case ERROR_INVALID_NAME: ret.append(L"INVALID_NAME"); break;
   case ERROR_DIR_NOT_EMPTY: ret.append(L"DIR_NOT_EMPTY"); break;
   case ERROR_ALREADY_EXISTS: ret.append(L"ALREADY_EXISTS"); break;
+  // PRE Win-32 error code that may be returned by SHFileOperation
+  case 0x71 /*DE_SAMEFILE*/: ret.append(L"SAME_FILE"); break;
+  case 0x72 /*DE_MANYSRC1DEST*/: ret.append(L"MANY_SRC_1_DEST"); break;
+  case 0x73 /*DE_DIFFDIR*/: ret.append(L"DIFF_DIR"); break;
+  case 0x74 /*DE_ROOTDIR*/: ret.append(L"ROOT_DIR"); break;
+  case 0x75 /*DE_OPCANCELLED*/: ret.append(L"OP_CANCELLED"); break;
+  case 0x76 /*DE_DESTSUBTREE*/: ret.append(L"DEST_SUBTREE"); break;
+  case 0x78 /*DE_ACCESSDENIEDSRC*/: ret.append(L"ACCESS_DENIED_SRC"); break;
+  case 0x79 /*DE_PATHTOODEEP*/: ret.append(L"PATH_TOO_DEEP"); break;
+  case 0x7A /*DE_MANYDEST*/: ret.append(L"MANY_DEST"); break;
+  case 0x7C /*DE_INVALIDFILES*/: ret.append(L"INVALID_FILES"); break;
+  case 0x7D /*DE_DESTSAMETREE*/: ret.append(L"DEST_SAME_TREE"); break;
+  case 0x7E /*DE_FLDDESTISFILE*/: ret.append(L"FLD_DEST_IS_FILE"); break;
+  case 0x80 /*DE_FILEDESTISFLD*/: ret.append(L"FILE_DEST_IS_FLD"); break;
+  case 0x81 /*DE_FILENAMETOOLONG*/: ret.append(L"FILENAME_TOO_LONG"); break;
+  case 0x82 /*DE_DEST_IS_CDROM*/: ret.append(L"DEST_IS_CDROM"); break;
+  case 0x83 /*DE_DEST_IS_DVD*/: ret.append(L"DEST_IS_DVD"); break;
+  case 0x84 /*DE_DEST_IS_CDRECORD*/: ret.append(L"DEST_IS_CDRECORD"); break;
+  case 0x85 /*DE_FILE_TOO_LARGE*/: ret.append(L"FILE_TOO_LARGE"); break;
+  case 0x86 /*DE_SRC_IS_CDROM*/: ret.append(L"SRC_IS_CDROM"); break;
+  case 0x87 /*DE_SRC_IS_DVD*/: ret.append(L"SRC_IS_DVD"); break;
+  case 0x88 /*DE_SRC_IS_CDRECORD*/: ret.append(L"SRC_IS_CDRECORD"); break;
+  //case 0xB7 /*DE_ERROR_MAX*/: ret.append(L"ERROR_MAX"); break; //< same as ALREADY_EXISTS
+  case 0x402 /* Unknown error */: ret.append(L"UNKNOW_ERROR"); break;
+  case 0x10000 /*ERRORONDEST*/: ret.append(L"ERROR_ON_DEST"); break;
   }
 
   return ret;
 }
+
 
 /// \brief Loaded shell large icons
 ///
