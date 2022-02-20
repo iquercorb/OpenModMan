@@ -56,16 +56,11 @@ bool Om_parsePkgIdent(wstring& name, wstring& core, wstring& vers, const wstring
   }
 
   if(has_version) {
-    // we extract the substring from the beginning to the version substring
-    core = ident.substr(0, v_pos);
+    // we extract the substring from the beginning to version delimiter
+    core = ident.substr(0, v_pos - 1);
   } else {
     vers.clear();
     core = ident;
-  }
-
-  // if the last character of core is an underscore or a space, we crop it
-  if(core.back() == L' ' || core.back() == L'_') {
-    core.pop_back();
   }
 
   // copy parsed core to display name
