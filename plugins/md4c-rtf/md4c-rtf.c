@@ -110,8 +110,10 @@ typedef struct MD_RTF_list {
   unsigned            type;
   unsigned            count;
   unsigned            start;
+  unsigned            loose;
   const MD_RTF_CHAR*  cw_tx;
   const MD_RTF_CHAR*  cw_li;
+  const MD_RTF_CHAR*  cw_sb;
   const MD_RTF_CHAR*  cw_sa;
 } MD_RTF_LIST;
 
@@ -139,20 +141,21 @@ typedef struct MD_RTF_tag {
   unsigned    font_base;
   /* list render process variables */
   MD_RTF_LIST list[8];
-  unsigned    list_depth;
-  unsigned    list_stop;
-  unsigned    list_reset;
+  int         list_dpth;
+  unsigned    list_rset;
+  unsigned    list_para;
   /* table render process variables */
   unsigned    tabl_cols;
   unsigned    tabl_head;
   /* do not end paragraph flag */
-  unsigned    quote_block;
+  unsigned    quot_blck;
   /* block code must render LF flag */
   unsigned    code_lf;
   /* RTF control words with prebuilt values */
   MD_RTF_CHAR cw_fs[2][8];
   MD_RTF_CHAR cw_hf[6][24];
-  MD_RTF_CHAR cw_sa[3][16];
+  MD_RTF_CHAR cw_sa[2][16];
+  MD_RTF_CHAR cw_sb[2][16];
   MD_RTF_CHAR cw_li[8][16];
   MD_RTF_CHAR cw_tr[2][32];
   MD_RTF_CHAR cw_fi[2][16];
@@ -484,15 +487,23 @@ render_end_block(MD_RTF* r)
 
   /* end paragraph, notice that CRLF is here
   only for readability of source data */
-  render_verbatim(r, "\\par\r\n", 6);
+  render_verbatim(r, "\\sb0\\sa0\\par\r\n", 14);
 }
 
 static inline void
 render_list_start(MD_RTF* r)
 {
+  #ifdef _DEBUG
+  printf("render_list_start\n");
+  #endif
+
   MD_RTF_CHAR str_num[16];
 
-  unsigned d = r->list_depth;
+  unsigned d = r->list_dpth;
+
+  /* if this is a reset after nested list we end the last item paragraph */
+  if(r->list_rset)
+    render_verbatim(r, "\\par", 4);
 
   render_verbatim(r, "\\pard", 5); /* reset paragraph */
   render_verbatim(r, r->cw_fs[0], 5);  /* normal font size */
@@ -517,6 +528,7 @@ render_list_start(MD_RTF* r)
   RENDER_VERBATIM(r, r->list[d].cw_tx); /* either delimiter or bullet char */
   render_verbatim(r, "}}", 2);
   RENDER_VERBATIM(r, r->list[d].cw_li); /* \liN */
+  RENDER_VERBATIM(r, r->list[d].cw_sb); /* \sbN */
   RENDER_VERBATIM(r, r->list[d].cw_sa); /* \saN */
 
   if(r->list[d].type == MD_RTF_LIST_TYPE_OL) {  /* OL */
@@ -525,7 +537,7 @@ render_list_start(MD_RTF* r)
     RENDER_VERBATIM(r, r->cw_fi[0]); /* \fiN */
   }
 
-  r->list_reset = 0;
+  r->list_rset = 0;
 }
 
 static inline void
@@ -533,10 +545,14 @@ render_list_item(MD_RTF* r)
 {
   MD_RTF_CHAR str_num[16];
 
-  unsigned d = r->list_depth;
+  unsigned d = r->list_dpth;
+
+  #ifdef _DEBUG
+  printf("render_list_item count=%u start=%u\n", r->list[d].count, r->list[d].start);
+  #endif
 
   /* reset paragraph */
-  render_verbatim(r, "{\\pntext\\f0 ", 12);
+  render_verbatim(r, "\\par{\\pntext\\f0 ", 16);
 
   if(r->list[d].type == MD_RTF_LIST_TYPE_OL) { /* OL */
     ultostr(r->list[d].count + r->list[d].start, str_num, 10, 0);
@@ -583,7 +599,9 @@ render_enter_block_doc(MD_RTF* r)
 
                         /* document initialization */
   RENDER_VERBATIM(r, "\\uc0\r\n\\pard");
-  RENDER_VERBATIM(r, r->cw_sa[2]); /* default space-after */
+
+  /* default space after and before */
+  render_verbatim(r, "\\sb0\\sa0", 8);
 }
 
 static void
@@ -656,7 +674,7 @@ render_enter_block_quote(MD_RTF* r)
   RENDER_VERBATIM(r, r->cw_cx[0]); // \cellxN
 
   /* prevent space-after and line feed at end of paragraph */
-  r->quote_block = 1;
+  r->quot_blck = 1;
 }
 
 static void
@@ -668,7 +686,7 @@ render_leave_block_quote(MD_RTF* r)
   render_end_block(r);
 
   /* we can now treat paragraphs normally */
-  r->quote_block = 0;
+  r->quot_blck = 0;
 }
 
 static void
@@ -684,9 +702,8 @@ render_enter_block_code(MD_RTF* r)
   /* code is enclosed in gray block */
   render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clcbpat5", 125);  /* background color */
+                      "\\clbrdrl\\brdrs\\brdrw50\\brdrcf3"
+                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 117);  /* invisible border */
 
   /* set cell width, unfortunately basic RTF viewer does not handle
   autofit so we must define static cell size according defined page width */
@@ -706,7 +723,12 @@ static void
 render_enter_block_ul(MD_RTF* r, const MD_BLOCK_UL_DETAIL* ul)
 {
   /* increment depth */
-  unsigned d = ++r->list_depth;
+  unsigned d = ++r->list_dpth;
+
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_enter_block_ul\n");
+  #endif
 
   /* nested list, we close the previous paragraph */
   if(d > 0) render_verbatim(r, "\\par", 4);
@@ -718,11 +740,14 @@ render_enter_block_ul(MD_RTF* r, const MD_BLOCK_UL_DETAIL* ul)
   r->list[d].type = MD_RTF_LIST_TYPE_UL;
   /* current item count */
   r->list[d].count = 0;
+  /* tight or lose list */
+  r->list[d].loose = !ul->is_tight;
   /* bullet character */
   r->list[d].cw_tx = g_cw_list_bullt[d % 2];
+  /* space-after \sbN to use */
+  r->list[d].cw_sb = ul->is_tight ? r->cw_sb[0] : r->cw_sb[1];
   /* space-after \saN to use */
-  r->list[d].cw_sa = ul->is_tight ? r->cw_sa[0]
-                                  : r->cw_sa[1];
+  r->list[d].cw_sa = ul->is_tight ? r->cw_sa[0] : r->cw_sa[1];
   /* left-indent \liN to use */
   r->list[d].cw_li = r->cw_li[d];
 
@@ -733,23 +758,38 @@ render_enter_block_ul(MD_RTF* r, const MD_BLOCK_UL_DETAIL* ul)
 static void
 render_leave_block_ul(MD_RTF* r)
 {
-  if(r->list_depth) {
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_leave_block_ul\n");
+  #endif
+
+  if(r->list_dpth) {
     /* nested list ended, we must setup block again */
-    r->list_reset = 1;
+    r->list_rset = 1;
   } else {
+    /* properly end the last item paragraph*/
+    render_verbatim(r, "\\par", 4);
     /* all ended, create proper space after paragraph */
     render_end_block(r);
+    /* properly reset parameters */
+    r->list_para = 0;
+    r->list_rset = 0;
   }
 
   /* decrement depth */
-  r->list_depth--;
+  r->list_dpth--;
 }
 
 static void
 render_enter_block_ol(MD_RTF* r, const MD_BLOCK_OL_DETAIL* ol)
 {
   /* increment depth */
-  unsigned d = ++r->list_depth;
+  unsigned d = ++r->list_dpth;
+
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_enter_block_ol\n");
+  #endif
 
   /* nested list, we close the previous paragraph */
   if(d > 0) render_verbatim(r, "\\par", 4);
@@ -763,12 +803,15 @@ render_enter_block_ol(MD_RTF* r, const MD_BLOCK_OL_DETAIL* ol)
   r->list[d].count = 0;
   /* item start number */
   r->list[d].start = ol->start;
+  /* tight or lose list */
+  r->list[d].loose = !ol->is_tight;
   /* delimiter character */
   r->list[d].cw_tx = (ol->mark_delimiter == ')')  ? g_cw_list_delim[1]
                                                   : g_cw_list_delim[0];
+  /* space-after \sbN to use */
+  r->list[d].cw_sb = ol->is_tight ? r->cw_sb[0] : r->cw_sb[1];
   /* space-after \saN to use */
-  r->list[d].cw_sa = ol->is_tight ? r->cw_sa[0]
-                                  : r->cw_sa[1];
+  r->list[d].cw_sa = ol->is_tight ? r->cw_sa[0] : r->cw_sa[1];
   /* left-indent \liN to use */
   r->list[d].cw_li = r->cw_li[d];
 
@@ -779,41 +822,66 @@ render_enter_block_ol(MD_RTF* r, const MD_BLOCK_OL_DETAIL* ol)
 static void
 render_leave_block_ol(MD_RTF* r)
 {
-  if(r->list_depth) {
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_leave_block_ol\n");
+  #endif
+
+  if(r->list_dpth) {
     /* nested list ended, we must setup block again */
-    r->list_reset = 1;
+    r->list_rset = 1;
   } else {
+    /* properly end the last item paragraph*/
+    render_verbatim(r, "\\par", 4);
     /* all ended, create proper space after paragraph */
     render_end_block(r);
+    /* properly reset parameters */
+    r->list_para = 0;
+    r->list_rset = 0;
   }
 
   /* decrement depth */
-  r->list_depth--;
+  r->list_dpth--;
 }
 
 static void
 render_enter_block_li(MD_RTF* r, const MD_BLOCK_LI_DETAIL* li)
 {
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_enter_block_li\n");
+  #endif
+
+  /* get depth */
+  unsigned d = r->list_dpth;
+
+  /* reset paragraph counter */
+  r->list_para = 0;
+
   /* if we just leave a nested list, we may need to start a new paragraph
   with proper parameters */
-  if(r->list_reset)
+  if(r->list_rset) {
     render_list_start(r);
+    return;
+  }
 
   /* if this is the fist item of list, proper data is already
   written during pn block start */
-  if(r->list[r->list_depth].count > 0)
+  if(r->list[d].count > 0)
     render_list_item(r);
 
   /* increment item count */
-  r->list[r->list_depth].count++;
-
-  /* item started must be stopped, see also render_leave_block_li() */
-  r->list_stop = 1;
+  r->list[d].count++;
 }
 
 static void
 render_leave_block_li(MD_RTF* r)
 {
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("render_leave_block_li\n");
+  #endif
+
   /* Unlike HTML, RTF do not work with opened blocks which must be closed but
   by ending a paragraph which automatically begins a new one, which produce
   a line feed.
@@ -822,17 +890,7 @@ render_leave_block_li(MD_RTF* r)
   would produce inconsistent line feeds. This is especially problematic with
   nested lists where we can have cascading LI blocks closures.
 
-  To avoid this problem, we allow only one paragraph end after one or more
-  LI blocks opening */
-
-  if(r->list_stop) {
-
-    /* end paragraph, line feed */
-    render_verbatim(r, "\\par", 4);
-
-    /* do not end another one before a new LI block opening */
-    r->list_stop = 0;
-  }
+  To avoid this problem, we only end paragraph when entering a new item */
 }
 
 static void
@@ -947,20 +1005,46 @@ render_leave_block_th(MD_RTF* r)
 static inline void
 render_enter_block_p(MD_RTF* r)
 {
+  #ifdef _DEBUG
+  printf("render_enter_block_p\n");
+  #endif
+
+  /* special case if we are inside a list item */
+  if(r->list_dpth >= 0) {
+
+    /* if we have more than one paragraph inside list item we add line feed
+    at paragraph start */
+    if(r->list_para) {
+      render_verbatim(r, "\\line1\r\n", 8);
+    } else {
+      /* enabled line feed for the next paragraph */
+      r->list_para = 1;
+    }
+
+    /* we do not need further parameters */
+    return;
+  }
+
   /* use normal font */
   render_font_norm(r);
 
-  /* set proper space-after except if we are inside quote block */
-  if(!r->quote_block)
-    RENDER_VERBATIM(r, r->cw_sa[2]);
+  /* default space after and before */
+  render_verbatim(r, "\\sb0\\sa0", 8);
 }
 
 static inline void
 render_leave_block_p(MD_RTF* r)
 {
-  /* end paragraph except if we are inside quote block */
-  if(!r->quote_block)
-    render_verbatim(r, "\\par\r\n", 6);
+  #ifdef _DEBUG
+  printf("render_leave_block_p\n");
+  #endif
+
+  /* special case if within block quote or item list we ignore paragraph end */
+  if(r->quot_blck || (r->list_dpth >= 0))
+    return;
+
+  /* standard end of paragraph */
+  render_verbatim(r, "\\line1\\par\r\n", 12);
 }
 
 static void
@@ -1103,6 +1187,20 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
 {
   MD_RTF* r = (MD_RTF*) userdata;
 
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("text_callback ");
+  switch(type) {
+    case MD_TEXT_NULLCHAR: printf("MD_TEXT_NULLCHAR\n"); break;
+    case MD_TEXT_BR:  printf("MD_TEXT_BR\n"); break;
+    case MD_TEXT_SOFTBR:  printf("MD_TEXT_SOFTBR\n"); break;
+    case MD_TEXT_CODE: printf("MD_TEXT_CODE\n"); break;
+    case MD_TEXT_HTML:  printf("MD_TEXT_HTML\n"); break;
+    case MD_TEXT_ENTITY: printf("MD_TEXT_ENTITY\n"); break;
+    default: printf("NORMAL\n"); break;
+  }
+  #endif
+
   switch(type) {
       case MD_TEXT_NULLCHAR:  render_verbatim(r, "\0", 1); break;
       case MD_TEXT_BR:        render_verbatim(r, "\\line1", 6); break;
@@ -1119,6 +1217,21 @@ static int
 text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdata)
 {
   MD_RTF* r = (MD_RTF*) userdata;
+
+  #ifdef _DEBUG
+  for(int i = 0; i < (r->list_dpth*2); ++i) putchar(' ');
+  printf("text_callback ");
+  switch(type) {
+    case MD_TEXT_NULLCHAR: printf("MD_TEXT_NULLCHAR\n"); break;
+    case MD_TEXT_BR:  printf("MD_TEXT_BR\n"); break;
+    case MD_TEXT_SOFTBR:  printf("MD_TEXT_SOFTBR\n"); break;
+    case MD_TEXT_CODE: printf("MD_TEXT_CODE\n"); break;
+    case MD_TEXT_HTML:  printf("MD_TEXT_HTML\n"); break;
+    case MD_TEXT_ENTITY: printf("MD_TEXT_ENTITY\n"); break;
+    default: printf("NORMAL\n"); break;
+  }
+  #endif
+
   switch(type) {
       case MD_TEXT_NULLCHAR:  render_verbatim(r, "\0", 1); break;
       case MD_TEXT_BR:        render_verbatim(r, "\\line1", 6); break;
@@ -1154,11 +1267,12 @@ int md_rtf(const MD_CHAR* input, MD_SIZE input_size,
   render.page_width = 56.689f * doc_width; /* mm to twip */
   render.page_height = 1.41428f * render.page_width; /* ISO 216 ratio */
   render.page_margin = 400; /* left and right margin */
-  render.list_depth = -1;
-  render.list_stop = 0;
-  render.list_reset = 0;
+  render.list_dpth = -1;
+ // render.list_stop = 0;
+  render.list_para = 0;
+  render.list_rset = 0;
   render.code_lf = 0;
-  render.quote_block = 0;
+  render.quot_blck = 0;
 
   MD_PARSER parser = {
       0,
@@ -1210,17 +1324,20 @@ int md_rtf(const MD_CHAR* input, MD_SIZE input_size,
   sprintf(render.cw_fs[1], "\\fs%u", (unsigned)(0.9f*render.font_base) );
 
   /* titles styles per level with font size and space-after values */
-  sprintf(render.cw_hf[0], "\\fs%u\\sa%u\\b ", (unsigned)(2.2f*render.font_base), 6*render.font_base);
-  sprintf(render.cw_hf[1], "\\fs%u\\sa%u\\b ", (unsigned)(1.7f*render.font_base), 6*render.font_base);
-  sprintf(render.cw_hf[2], "\\fs%u\\sa%u\\b ", (unsigned)(1.4f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[0], "\\fs%u\\sa%u\\b ", (unsigned)(2.2f*render.font_base), 8*render.font_base);
+  sprintf(render.cw_hf[1], "\\fs%u\\sa%u\\b ", (unsigned)(1.7f*render.font_base), 8*render.font_base);
+  sprintf(render.cw_hf[2], "\\fs%u\\sa%u\\b ", (unsigned)(1.4f*render.font_base), 8*render.font_base);
   sprintf(render.cw_hf[3], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.2f*render.font_base), 6*render.font_base);
-  sprintf(render.cw_hf[4], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.1f*render.font_base), 5*render.font_base);
-  sprintf(render.cw_hf[5], "\\fs%u\\sa%u\\b\\i ", (unsigned)(render.font_base), 5*render.font_base);
+  sprintf(render.cw_hf[4], "\\fs%u\\sa%u\\b\\i ", (unsigned)(1.1f*render.font_base), 6*render.font_base);
+  sprintf(render.cw_hf[5], "\\fs%u\\sa%u\\b\\i ", (unsigned)(render.font_base), 6*render.font_base);
+
+  /* space-before values */
+  sprintf(render.cw_sb[0], "\\sb%u ", 0*render.font_base);
+  sprintf(render.cw_sb[1], "\\sb%u ", 2*render.font_base);
 
   /* space-after values */
   sprintf(render.cw_sa[0], "\\sa%u ", 2*render.font_base);
-  sprintf(render.cw_sa[1], "\\sa%u ", 3*render.font_base);
-  sprintf(render.cw_sa[2], "\\sa%u ", 6*render.font_base);
+  sprintf(render.cw_sa[1], "\\sa%u ", 2*render.font_base);
 
   /* left-ident values , up to 8 level */
   sprintf(render.cw_li[0], "\\li%u",  20*render.font_base);
