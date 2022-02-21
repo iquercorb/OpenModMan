@@ -198,11 +198,17 @@ inline static size_t __multibyte_encode(UINT cp, string* pstr, const wchar_t* ws
 /// Translation table to convert Window-125 character to
 /// its unicode counterpart.
 ///
-static uint32_t __cp1252_unicode_map[] = {
+static const uint32_t __cp1252_unicode_map[] = {
   0x20AC, 0x0000, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
   0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x0000, 0x017D, 0x0000,
   0x0000, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
   0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x0000, 0x017E, 0x0178};
+
+/// \brief UTF-8 BOM sequence
+///
+/// Byte sequence to identify UTF-8 Byte Order Mark to be skipped
+///
+static const uint8_t __utf8_bom[] = {0xEF, 0xBB, 0xBF};
 
 /// \brief Encode data to UTF-16
 ///
@@ -231,6 +237,10 @@ static inline size_t __utf16_encode(wstring* pwcs, const uint8_t* data, size_t s
 
   size_t off = 0;
   size_t len = 0;
+
+  /* check for UTF-8 BOM to skip */
+  if(size > 2 && memcmp(data, __utf8_bom, 3) == 0)
+    off += 3;
 
   while(off < size) {
 

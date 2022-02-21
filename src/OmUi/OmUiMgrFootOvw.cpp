@@ -251,7 +251,7 @@ void OmUiMgrFootOvw::_renderText(const wstring& text, bool show)
     string rtf_data;
 
     // parse MD and render to RTF
-    md_rtf(text.data(), text.size(), __md2rtf_cb, &rtf_data, MD4C_OPTIONS, 0, 11, 300);
+    md_rtf(text.data(), text.size(), __md2rtf_cb, &rtf_data, MD4C_OPTIONS, MD_RTF_FLAG_SKIP_UTF8_BOM, 11, 300);
 
     // send RTF data to Rich Edit
     EDITSTREAM es = {};
