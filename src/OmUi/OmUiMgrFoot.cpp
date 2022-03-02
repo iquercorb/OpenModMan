@@ -24,7 +24,7 @@
 #include "OmUiMgr.h"
 #include "OmUiMgrFootOvw.h"
 #include "OmUiMgrFootDet.h"
-
+#include "OmUiMgrFootGal.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgrFoot.h"
@@ -36,8 +36,9 @@ OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr)
 {
   // create child tab dialogs
-  this->_addTab(L"Package Overview", new OmUiMgrFootOvw(hins));
-  this->_addTab(L"Package Details", new OmUiMgrFootDet(hins));
+  this->_addTab(L"Overview", new OmUiMgrFootOvw(hins));
+  //this->_addTab(L"Screenshots", new OmUiMgrFootGal(hins));
+  this->_addTab(L"Details", new OmUiMgrFootDet(hins));
 }
 
 ///
@@ -82,6 +83,9 @@ void OmUiMgrFoot::freeze(bool enable)
       case IDD_MGR_FOOT_DET:
         static_cast<OmUiMgrFootDet*>(this->_tabDial[i])->freeze(enable);
         break;
+      case IDD_MGR_FOOT_GAL:
+        static_cast<OmUiMgrFootGal*>(this->_tabDial[i])->freeze(enable);
+        break;
       }
       break;
     }
@@ -110,6 +114,9 @@ void OmUiMgrFoot::safemode(bool enable)
       case IDD_MGR_FOOT_DET:
         static_cast<OmUiMgrFootDet*>(this->_tabDial[i])->safemode(enable);
         break;
+      case IDD_MGR_FOOT_GAL:
+        static_cast<OmUiMgrFootGal*>(this->_tabDial[i])->safemode(enable);
+        break;
       }
       break;
     }
@@ -124,6 +131,7 @@ void OmUiMgrFoot::selectItem(OmPackage* pPkg)
 {
   static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->setPreview(pPkg);
   static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->setDetails(pPkg);
+  //static_cast<OmUiMgrFootGal*>(this->_getTab(IDD_MGR_FOOT_GAL))->setDetails(pPkg);
 }
 
 
@@ -134,6 +142,7 @@ void OmUiMgrFoot::selectItem(OmRemote* pRmt)
 {
   static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->setPreview(pRmt);
   static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->setDetails(pRmt);
+  //static_cast<OmUiMgrFootGal*>(this->_getTab(IDD_MGR_FOOT_GAL))->setDetails(pPkg);
 }
 
 
@@ -145,7 +154,6 @@ void OmUiMgrFoot::clearItem()
   static_cast<OmUiMgrFootOvw*>(this->_getTab(IDD_MGR_FOOT_OVW))->clearPreview();
   static_cast<OmUiMgrFootDet*>(this->_getTab(IDD_MGR_FOOT_DET))->clearDetails();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

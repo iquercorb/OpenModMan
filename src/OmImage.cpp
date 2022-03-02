@@ -14,8 +14,9 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "OmUtilImg.h"
+#include <ctime>
+#include <iostream>
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmImage.h"
@@ -31,8 +32,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmImage::OmImage() :
-  _data(nullptr), _data_size(0), _data_type(0), _thumbnail(nullptr), _valid(false),
-  _ercode(0)
+  _path(), _data(nullptr), _width(0), _height(0),
+  _hbmp(nullptr), _valid(false), _ercode(0)
 {
 
 }
@@ -50,7 +51,7 @@ OmImage::~OmImage()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmImage::open(const wstring& path, unsigned thumb)
+bool OmImage::load(const wstring& path)
 {
   // clear all previous data
   this->clear();
@@ -84,40 +85,31 @@ bool OmImage::open(const wstring& path, unsigned thumb)
   }
 
   // check for image type
-  int type = Om_imageType(data);
+  int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
     this->_ercode = OMM_IMAGE_ERR_TYPE;
     return false;
   }
 
-  // decode image data
-  unsigned w, h, c;
-  uint8_t* rgb = Om_loadImage(&w, &h, &c, data, size, false);
+  unsigned w, h;
 
-  if(!rgb) { //< image decoding error
+  // decode image data
+  this->_data = Om_imgLoadData(&w, &h, data, size, false);
+
+  if(!this->_data) {
     this->_ercode = OMM_IMAGE_ERR_LOAD;
     return false;
   }
 
-  // create thumbnail
-  if(thumb) {
-    uint8_t* thn = Om_thumbnailImage(thumb, rgb, w, h, c);
-    if(thn) {
-      this->_thumbnail = Om_hbitmapImage(thn, thumb, thumb, c);
-      Om_free(thn); //< free allocated RGB data
-    } else {
-      this->_ercode = OMM_IMAGE_ERR_THMB;
-      Om_free(rgb); //< free allocated RGB data
-      return false;
-    }
-  }
+  this->_width = w;
+  this->_height = h;
 
-  // free allocated image
-  Om_free(rgb);
+  this->_path = path;
 
-  this->_data = data;
-  this->_data_size = size;
-  this->_data_type = type;
+  // create HBITMAP from data
+  this->_hbmp = Om_imgEncodeHbmp(this->_data, w, h, 4);
+
+  // image is loaded and valid
   this->_valid = true;
 
   return true;
@@ -127,56 +119,156 @@ bool OmImage::open(const wstring& path, unsigned thumb)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmImage::open(uint8_t* data, size_t size, unsigned thumb)
+bool OmImage::load(uint8_t* data, size_t size)
 {
   // clear all previous data
   this->clear();
 
   // check for image type
-  int type = Om_imageType(data);
+  int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
     this->_ercode = OMM_IMAGE_ERR_TYPE;
     return false;
   }
 
-  // decode image data
-  unsigned w, h, c;
-  uint8_t* rgb = Om_loadImage(&w, &h, &c, data, size, false);
+  unsigned w, h;
 
-  if(type == -1) { //< image decoding error
+  this->_data = Om_imgLoadData(&w, &h, data, size, false);
+
+  if(!this->_data) {
     this->_ercode = OMM_IMAGE_ERR_LOAD;
     return false;
   }
 
-  // create thumbnail
-  if(thumb) {
-    uint8_t* thn = Om_thumbnailImage(thumb, rgb, w, h, c);
-    if(thn) {
-      this->_thumbnail = Om_hbitmapImage(thn, thumb, thumb, c);
-      Om_free(thn); //< free allocated RGB data
-    } else {
-      this->_ercode = OMM_IMAGE_ERR_THMB;
-      Om_free(rgb); //< free allocated RGB data
-      return false;
-    }
-  }
+  this->_width = w;
+  this->_height = h;
 
-  // free allocated image
-  Om_free(rgb);
+  // create HBITMAP from data
+  this->_hbmp = Om_imgEncodeHbmp(this->_data, w, h, 4);
 
-  // copy data locally
-  this->_data = new(std::nothrow) uint8_t[size];
-  if(!this->_data) return false;
-
-  memcpy(this->_data, data, size);
-
-  this->_data_size = size;
-  this->_data_type = type;
+  // image is loaded and valid
   this->_valid = true;
 
   return true;
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
+{
+  // clear all previous data
+  this->clear();
+
+  // open file for reading
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if(hFile == INVALID_HANDLE_VALUE) {
+    this->_ercode = OMM_IMAGE_ERR_OPEN;
+    return false;
+  }
+
+  size_t size = GetFileSize(hFile, nullptr);
+
+  // allocate buffer and read
+  uint8_t* data = new(std::nothrow) uint8_t[size];
+  if(!data) return false;
+
+  // read full data at once
+  DWORD rb;
+  bool result = ReadFile(hFile, data, size, &rb, nullptr);
+
+  // close file
+  CloseHandle(hFile);
+
+  if(!result) {
+    this->_ercode = OMM_IMAGE_ERR_READ;
+    delete [] data;
+    return false;
+  }
+
+  // check for image type
+  int type = Om_imgGetType(data);
+  if(type == 0) { //< unknown image format
+    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    return false;
+  }
+
+  unsigned w, h;
+  uint8_t* rgb = Om_imgLoadData(&w, &h, data, size, false);
+
+  if(!rgb) {
+    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    return false;
+  }
+
+  this->_data = Om_imgMakeThumb(span, mode, rgb, w, h);
+  Om_free(rgb);
+
+  if(!this->_data) {
+    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    return false;
+  }
+
+  this->_width = span;
+  this->_height = span;
+
+  this->_path = path;
+
+  // create HBITMAP from data
+  this->_hbmp = Om_imgEncodeHbmp(this->_data, span, span, 4);
+
+  // image is loaded and valid
+  this->_valid = true;
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMode mode)
+{
+  // clear all previous data
+  this->clear();
+
+  // check for image type
+  int type = Om_imgGetType(data);
+  if(type == 0) { //< unknown image format
+    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    return false;
+  }
+
+  unsigned w, h;
+  uint8_t* rgb = Om_imgLoadData(&w, &h, data, size, false);
+
+  if(!rgb) {
+    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    return false;
+  }
+
+  this->_data = Om_imgMakeThumb(span, mode, rgb, w, h);
+  Om_free(rgb);
+
+  if(!this->_data) {
+    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    return false;
+  }
+
+  this->_width = span;
+  this->_height = span;
+
+  // create HBITMAP from data
+  this->_hbmp = Om_imgEncodeHbmp(this->_data, span, span, 4);
+
+  // image is loaded and valid
+  this->_valid = true;
+
+  return true;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -186,13 +278,14 @@ void OmImage::clear()
   if(this->_data)
     delete [] this->_data;
 
-  if(this->_thumbnail)
-    DeleteObject(this->_thumbnail);
+  if(this->_hbmp)
+    DeleteObject(this->_hbmp);
 
+  this->_path.clear();
   this->_data = nullptr;
-  this->_data_size = 0;
-  this->_data_type = 0;
-  this->_thumbnail = nullptr;
+  this->_width = 0;
+  this->_height = 0;
+  this->_hbmp = nullptr;
 
   this->_valid = false;
 

@@ -12,6 +12,7 @@
 #define IDD_MGR_MAIN_TST                        706
 #define IDD_MGR_FOOT_OVW                        707
 #define IDD_MGR_FOOT_DET                        708
+#define IDD_MGR_FOOT_GAL                        709
 #define IDD_ADD_LOC                             710
 #define IDD_NEW_CTX                             711
 #define IDD_ADD_BAT                             712
@@ -235,6 +236,7 @@
 #define IDC_LV_PAT                              40456
 #define IDC_LV_LOC                              40457
 #define IDC_LV_DPN                              40458
+#define IDC_LV_IMG                              40459
 #define IDC_PB_PKG                              40500
 #define IDC_PB_REP                              40501
 #define IDC_PB_COM                              40502

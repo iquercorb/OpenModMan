@@ -316,10 +316,7 @@ STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "Testing control :", IDC_SC_LBL01, 2, 2, 200, 9, SS_LEFT, WS_EX_LEFT
-    //CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 5, 174, 480, 1, WS_EX_LEFT
-    //LTEXT           "Package Name", IDC_SC_NAME, 5, 177, 480, 12, SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
-    CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | WS_BORDER, 2, 12, 480, 240, WS_EX_LEFT
-    //CONTROL         "", IDC_RE_RTF, RICHEDIT60_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | ES_AUTOHSCROLL  | WS_BORDER, 2, 12, 480, 240, WS_EX_LEFT
+    CONTROL         "", IDC_LV_IMG, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_SHOWSELALWAYS | LVS_AUTOARRANGE | LVS_ICON, 5, 75, 480, 83, WS_EX_ACCEPTFILES
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                 MAIN WINDOW
@@ -335,8 +332,22 @@ FONT 8, "Ms Shell Dlg"
 {
     //LTEXT           "Package Name", IDC_SC_NAME, 5, 177, 480, 12, SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
     CONTROL         "", IDC_SB_SNAP, WC_STATIC, SS_BITMAP | SS_CENTERIMAGE, 5, 191, 86, 79, WS_EX_LEFT
-    CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 12, 480, 80, WS_EX_LEFT
-    EDITTEXT        IDC_EC_DESC, 2, 12, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
+    CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 2, 480, 80, WS_EX_LEFT
+    EDITTEXT        IDC_EC_DESC, 2, 2, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                                 MAIN WINDOW
+//
+//                                 FOOT  FRAME
+//
+//                           PACKAGE SCREENSHOTS TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_MGR_FOOT_GAL DIALOG 0, 0, 490, 274
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "Ms Shell Dlg"
+{
+    CONTROL         "", IDC_LV_IMG, WC_LISTVIEW, LVS_AUTOARRANGE | LVS_ICON, 2, 2, 480, 80, 0
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                 MAIN WINDOW
@@ -351,8 +362,8 @@ STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
     //LTEXT           "Package Name", IDC_SC_NAME, 5, 177, 480, 12, SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
-    CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 12, 480, 80, WS_EX_LEFT
-    EDITTEXT        IDC_EC_DESC, 2, 12, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
+    CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 2, 480, 80, WS_EX_LEFT
+    EDITTEXT        IDC_EC_DESC, 2, 2, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
 
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

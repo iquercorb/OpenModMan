@@ -300,8 +300,8 @@ class OmRemote
     ///
     /// \return Image object.
     ///
-    const OmImage& image() const {
-      return _image;
+    const OmImage& thumb() const {
+      return _thumb;
     }
 
     /// \brief Get dependencies count.
@@ -448,7 +448,7 @@ class OmRemote
 
     wstring             _desc;
 
-    OmImage             _image;
+    OmImage             _thumb;
 
     vector<OmPackage*>  _supLs;
 

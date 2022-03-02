@@ -31,76 +31,16 @@
 #include "OmUtilWin.h"
 #include "OmUtilStr.h"
 #include "OmUtilDlg.h"
-
-#include "md4c-rtf/md4c-rtf.h"
+#include "OmUtilRtf.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgrFootDet.h"
 
-/// \brief MD4C parser options
+/// \brief static MD2RTF Context
 ///
-/// Global options flag set for MD4C parser
+/// Static MD2RTF Context structure for Markdown to RTF parsing and render
 ///
-#define MD4C_OPTIONS  MD_FLAG_UNDERLINE|MD_FLAG_TABLES|MD_FLAG_PERMISSIVEAUTOLINKS|MD_FLAG_NOHTML
-
-/// \brief Callback for Markdown to RTF parser
-///
-/// Callback for MD4C RTF parser/renderer used to receive and store
-/// rendered RTF data
-///
-/// \param[in]  data  : Pointer to RTF data.
-/// \param[in]  size  : Size of RTF data.
-/// \param[in]  ptr   : Pointer to user data.
-///
-static void __md2rtf_cb(const uint8_t* data, unsigned size, void* ptr)
-{
-  // get pointer to string
-  string* str = reinterpret_cast<string*>(ptr);
-
-  // contact new data to string
-  str->append(reinterpret_cast<const char*>(data), size);
-}
-
-/// \brief Callback for Rich Edit stream
-///
-/// Callback Rich Edit input stream, used to send RTF data to
-/// Rich Edit control.
-///
-/// \param[in]  ptr       : Pointer to user data.
-/// \param[in]  buff      : Destination buffer where to write RTF data.
-/// \param[in]  size      : Destination buffer size.
-/// \param[out] writ      : Count of bytes actually written to buffer.
-///
-static DWORD CALLBACK __rtf2re_cb(DWORD_PTR ptr, LPBYTE buff, LONG size, LONG* writ)
-{
-  string* str = reinterpret_cast<string*>(ptr);
-
-  LONG str_size = static_cast<LONG>(str->size());
-
-  if(str_size) {
-
-    if(size <= str_size) {
-
-      memcpy(buff, str->data(), size);
-      str->erase(0, size);
-      *writ = size;
-
-    } else {
-
-      *writ = str_size;
-      memcpy(buff, str->data(), str_size);
-      str->clear();
-
-    }
-
-  } else {
-
-    *writ = 0;
-  }
-
-  return 0;
-}
-
+static OM_MD2RTF_CTX __md2rtf_ctx;
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -111,11 +51,17 @@ OmUiMgrFootDet::OmUiMgrFootDet(HINSTANCE hins) : OmDialog(hins),
 
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 OmUiMgrFootDet::~OmUiMgrFootDet()
 {
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
+
+  // Free Markdown render and RTF allocated data
+  Om_md2rtf_free(&__md2rtf_ctx);
 }
 
 ///
@@ -338,18 +284,14 @@ void OmUiMgrFootDet::_renderText(const wstring& text, bool show)
 
   } else {
 
-    // string as RTF data buffer
-    string rtf_data;
+    long rect[4];
+    GetClientRect(this->getItem(IDC_FT_DESC), reinterpret_cast<LPRECT>(&rect));
 
-    // parse MD and render to RTF
-    md_rtf(text.data(), text.size(), __md2rtf_cb, &rtf_data, MD4C_OPTIONS, MD_RTF_FLAG_SKIP_UTF8_BOM, 11, 300);
+    // Parse Markdown and render to RTF document
+    Om_md2rtf_render(&__md2rtf_ctx, text, 11, rect[2]);
 
-    // send RTF data to Rich Edit
-    EDITSTREAM es = {};
-    es.pfnCallback = __rtf2re_cb;
-    es.dwCookie    = reinterpret_cast<DWORD_PTR>(&rtf_data);
-
-    this->msgItem(IDC_FT_DESC, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
+    // Stream-In RTF data to Rich Edit Control
+    Om_md2rtf_stream(&__md2rtf_ctx, this->getItem(IDC_FT_DESC));
 
     // reset scroll position once done
     long pt[2] = {};
@@ -413,6 +355,9 @@ void OmUiMgrFootDet::_onInit()
   this->msgItem(IDC_FT_DESC, EM_SETEVENTMASK, 0, ENM_LINK);
   this->msgItem(IDC_FT_DESC, EM_AUTOURLDETECT,  AURL_ENABLEURL|AURL_ENABLEEAURLS|
                                                 AURL_ENABLEEMAILADDR, 0);
+
+  // Initialize Markdown To RTF Context
+  Om_md2rtf_init(&__md2rtf_ctx);
 }
 
 
@@ -435,6 +380,17 @@ void OmUiMgrFootDet::_onResize()
   // Package source files, (RTF then Raw)
   this->_setItemPos(IDC_FT_DESC, 4, 2, this->cliUnitX()-6, this->cliUnitY()-4);
   this->_setItemPos(IDC_EC_DESC, 4, 2, this->cliUnitX()-6, this->cliUnitY()-4);
+
+  // Adjust RTF document tables width to fit control new width
+  HWND hEdit = this->getItem(IDC_FT_DESC);
+  if(Om_md2rtf_autofit(&__md2rtf_ctx, hEdit)) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMgrFootDet::_onResize : RTF data changed.\n";
+    #endif
+    // we stream-in RTF data only if changes were made
+    Om_md2rtf_stream(&__md2rtf_ctx, hEdit);
+  }
 }
 
 

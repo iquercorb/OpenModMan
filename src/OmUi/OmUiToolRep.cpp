@@ -68,35 +68,30 @@
 static inline bool __save_snapshot(OmXmlNode& xml_pic, const OmImage& image)
 {
   // Load image data to raw RGB
-  unsigned w, h, c;
-  uint8_t* rgb = Om_loadImage(&w, &h, &c, image.data(), image.data_size());
+  if(image.valid()) {
 
-  if(rgb) {
-    // Get thumbnail version
-    uint8_t* thn = Om_thumbnailImage(128, rgb, w, h, c);
-    Om_free(rgb);
+    // Get RGBA thumbnail
+    uint8_t* rgb_data = Om_imgMakeThumb(128, OMM_SIZE_FILL, image.data(), image.width(), image.height());
 
-    if(thn) {
+    // Encode RGBA to JPEG
+    size_t jpg_size;
+    uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, rgb_data, 128, 128, 4, 7);
 
-      // Encode image to JPEG
-      size_t jpg_size;
-      uint8_t* jpg = Om_encodeJpg(&jpg_size, thn, 128, 128, c, 7);
-      Om_free(thn);
+    // format jpeg to base64 encoded data URI
+    wstring data_uri;
+    Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg_data, jpg_size);
 
-      if(jpg) {
+    // set node content to data URI string
+    xml_pic.setContent(data_uri);
 
-        // format jpeg to base64 encoded data URI
-        wstring data_uri;
-        Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg, jpg_size);
-        Om_free(jpg);
+    // free allocated data
+    Om_free(rgb_data);
+    Om_free(jpg_data);
 
-        // set node content to data URI string
-        xml_pic.setContent(data_uri);
+    return true;
 
-        return true;
-      }
-    }
   }
+
   return false;
 }
 
@@ -128,17 +123,16 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
     size_t zip_size;
     uint8_t* zip = Om_zDeflate(&zip_size, reinterpret_cast<const uint8_t*>(utf8.c_str()), txt_size, 9);
 
-    if(zip) {
-      // Encode to data URI Base64
-      wstring data_uri;
-      Om_encodeDataUri(data_uri, L"application/octet-stream", L"", zip, zip_size);
-      Om_free(zip);
+    // Encode to data URI Base64
+    wstring data_uri;
+    Om_encodeDataUri(data_uri, L"application/octet-stream", L"", zip, zip_size);
+    Om_free(zip);
 
-      // set node content to data URI string
-      xml_des.setContent(data_uri);
+    // set node content to data URI string
+    xml_des.setContent(data_uri);
 
-      return true;
-    }
+    return true;
+
   }
   return false;
 }
@@ -313,9 +307,9 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     }
   }
 
-  if(pkg.image().valid()) {
+  if(pkg.thumb().valid()) {
     xml_node = xml_rmt.addChild(L"picture");
-    __save_snapshot(xml_node, pkg.image());
+    __save_snapshot(xml_node, pkg.thumb());
   }
 
   if(!pkg.desc().empty()) {
@@ -497,24 +491,19 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
     // load Jpeg image
     if(jpg) {
 
-      // decode jpeg to rgb data
-      unsigned w, h, c;
-      uint8_t* rgb = Om_loadImage(&w, &h, &c, jpg, jpg_size);
-      Om_free(jpg);
-
-      if(rgb) {
-
-        // convert to HBITMAP
-        hBm_new = Om_hbitmapImage(rgb, w, h, c);
-        Om_free(rgb);
+      unsigned w, h;
+      uint8_t* rgba = Om_imgLoadData(&w, &h, jpg, jpg_size);
+      hBm_new = Om_imgEncodeHbmp(rgba, w, h, 4);
+      Om_free(rgba);
 
         // set image to dialog
-        hBm_old = this->setStImage(IDC_SB_SNAP, hBm_new);
-        if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
-        this->enableItem(IDC_BC_DEL, true);
-        this->setItemText(IDC_BC_OPEN1, L"Change...");
-        has_snap = true;
-      }
+      hBm_old = this->setStImage(IDC_SB_SNAP, hBm_new);
+      if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
+
+      this->enableItem(IDC_BC_DEL, true);
+      this->setItemText(IDC_BC_OPEN1, L"Change...");
+
+      has_snap = true;
     }
 
     if(!has_snap) {
@@ -1034,10 +1023,11 @@ bool OmUiToolRep::_onBcBrwSnap()
   if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, start))
     return false;
 
-  OmImage image;
+  OmImage thumb;
 
   // try to load image file
-  if(image.open(result, OMM_THUMB_SIZE)) {
+
+  if(thumb.loadThumbnail(result, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
 
     OmXmlNode xml_pic;
 
@@ -1049,9 +1039,9 @@ bool OmUiToolRep::_onBcBrwSnap()
     }
 
     // save snapshot data to <picture>
-    if(__save_snapshot(xml_pic, image)) {
+    if(__save_snapshot(xml_pic, thumb)) {
 
-      HBITMAP hBm = this->setStImage(IDC_SB_SNAP, image.thumbnail());
+      HBITMAP hBm = this->setStImage(IDC_SB_SNAP, thumb.hbmp());
       if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
       // enable Snapshot "Delete" Button

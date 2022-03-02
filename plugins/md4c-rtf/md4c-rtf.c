@@ -170,7 +170,7 @@ typedef struct MD_RTF_tag {
   MD_RTF_CHAR cw_sa[2][16];
   MD_RTF_CHAR cw_sb[2][16];
   MD_RTF_CHAR cw_li[8][16];
-  MD_RTF_CHAR cw_tr[2][32];
+  MD_RTF_CHAR cw_tr[2][72];
   MD_RTF_CHAR cw_fi[2][16];
   MD_RTF_CHAR cw_cx[2][16];
 } MD_RTF;
@@ -470,8 +470,7 @@ render_entity(MD_RTF* r, const MD_RTF_CHAR* text, MD_SIZE size)
 static void
 render_font_norm(MD_RTF* r)
 {
-  /* change font style with the normal font (#0 : Calibri)
-  with its dedicated size, little smaller than the normal */
+  /* change font style with the normal font (#0 : Calibri) */
 
   render_verbatim(r, "\\f0", 3);
   render_verbatim(r, r->cw_fs[0], 5);
@@ -589,7 +588,7 @@ render_enter_block_doc(MD_RTF* r)
                         /* font table */
                         "{\\fonttbl"
                           "{\\f0\\fswiss Calibri;}"
-                          "{\\f1\\fmodern Courier New;}"
+                          "{\\f1\\fmodern Consolas;}"
                           "{\\f2\\fnil Symbol;}"
                         "}"
                         /* color table */
@@ -598,7 +597,8 @@ render_enter_block_doc(MD_RTF* r)
                           "\\red255\\green255\\blue255;"  /* white */
                           "\\red180\\green180\\blue180;"  /* gray */
                           "\\red0\\green102\\blue204;"    /* blue */
-                          "\\red230\\green230\\blue230;"  /* silver */
+                          "\\red240\\green240\\blue240;"  /* silver */
+                          "\\red90\\green90\\blue90;"     /* dark gray */
                         "}"
                         /* additional informations */
                         "{\\*\\generator MD4C-RTF}\\viewkind5");
@@ -622,7 +622,7 @@ render_enter_block_doc(MD_RTF* r)
 static void
 render_leave_block_doc(MD_RTF* r)
 {
-  RENDER_VERBATIM(r, "}\0");
+  render_verbatim(r, "}\0", 2);
 }
 
 static void
@@ -638,11 +638,11 @@ render_enter_block_hr(MD_RTF* r)
   visible. Other border are also visible but defined with the same color as
   background, this way Rich Edit 4.1 don't display them in light gray. */
 
-  render_verbatim(r, "\\pard\\f0\\fs0\\trowd\\trrh-0\\trautofit1" //< 35 bytes
-                      "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2" //< 29 bytes
+  render_verbatim(r, "\\pard\\f0\\fs0\\trowd\\trrh-1\\trftsWidth2\\trwWidth5000\\trautofit1" /* 61 bytes */
+                      "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2" /* 29 bytes */
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf3"
-                      "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
-                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 152); /* invisible border */
+                      "\\clbrdrl\\brdrs\\brdrw1\\brdrcf2"
+                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 177);
 
   RENDER_VERBATIM(r, r->cw_cx[1]); // \cellxN
   render_verbatim(r, "\\cell\\row", 9);
@@ -675,18 +675,17 @@ render_enter_block_quote(MD_RTF* r)
   render_verbatim(r, r->cw_fs[0], 5);
 
   /* start table row with proper parameters */
-  render_verbatim(r, "\\trowd", 6);
+  render_verbatim(r, "\\cf6\\i\\trowd", 12);
   RENDER_VERBATIM(r, r->cw_tr[0]);
 
   /* quote is enclosed in a table with only the left border visible */
   render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
                       "\\clbrdrb\\brdrs\\brdrw1\\brdrcf2"   /* invisible border */
-                      "\\clbrdrl\\brdrs\\brdrw50\\brdrcf3"
+                      "\\clbrdrl\\brdrs\\brdrw70\\brdrcf3"
                       "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 117); /* invisible border */
 
-  /* set cell width, unfortunately basic RTF viewer does not handle
-  autofit so we must define static cell size according defined page width */
-  RENDER_VERBATIM(r, r->cw_cx[0]); // \cellxN
+  /* cell width fixed to 90% of page width */
+  RENDER_VERBATIM(r, r->cw_cx[0]); /* \cellxN */
 
   /* prevent space-after and line feed at end of paragraph */
   r->quot_blck = 1;
@@ -695,7 +694,7 @@ render_enter_block_quote(MD_RTF* r)
 static void
 render_leave_block_quote(MD_RTF* r)
 {
-  render_verbatim(r, "\\intbl\\cell\\row", 15);
+  render_verbatim(r, "\\intbl\\cell\\row\\i0\\cf1", 21);
 
   /* create proper space after paragraph */
   render_end_block(r);
@@ -710,19 +709,25 @@ render_enter_block_code(MD_RTF* r)
   /* reset paragraph to monospace font style */
   render_verbatim(r, "\\pard\\f1", 8);
   render_verbatim(r, r->cw_fs[1], 5);
+  /* add space before and space after to simulate padding*/
+  RENDER_VERBATIM(r, r->cw_sa[1]);
+  RENDER_VERBATIM(r, r->cw_sb[1]);
+
   /* start table row with proper parameters */
   render_verbatim(r, "\\trowd", 6);
   RENDER_VERBATIM(r, r->cw_tr[0]);
 
   /* code is enclosed in gray block */
-  render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clbrdrb\\brdrs\\brdrw1\\brdrcf2"  /* invisible border */
-                      "\\clbrdrl\\brdrs\\brdrw50\\brdrcf3"
-                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2", 117);  /* invisible border */
 
-  /* set cell width, unfortunately basic RTF viewer does not handle
-  autofit so we must define static cell size according defined page width */
-  RENDER_VERBATIM(r, r->cw_cx[0]); // \cellxN
+  render_verbatim(r,  "\\clbrdrt\\brdrs\\brdrw1\\brdrcf5"  /* invisible border */
+                      "\\clbrdrb\\brdrs\\brdrw1\\brdrcf5"  /* invisible border */
+                      "\\clbrdrl\\brdrs\\brdrw70\\brdrcf3"
+                      "\\clbrdrr\\brdrs\\brdrw1\\brdrcf2" /* invisible border */
+                      "\\clcbpat5", /*117*/ 126);
+
+
+  /* cell width fixed to 90% of page width */
+  RENDER_VERBATIM(r, r->cw_cx[0]); /* \cellxN */
 }
 
 static void
@@ -953,7 +958,7 @@ render_enter_block_tr(MD_RTF* r)
   RENDER_VERBATIM(r, r->cw_tr[1]);
 
   /* 9000 seem to be the average width of an RTF document */
-  float tw = r->page_width - (2*r->page_margin) - (0.1f*r->page_width);
+  float tw = 0.9f * r->page_width;
   unsigned cw = tw / r->tabl_cols;
 
   /* we must first declare cells with their respecting properties */
@@ -1093,6 +1098,9 @@ static inline void
 render_leave_span_code(MD_RTF* r)
 {
   render_font_norm(r);
+
+  /* parser eat space after code span, we add it */
+  render_verbatim(r, " ", 1);
 }
 
 
@@ -1282,7 +1290,7 @@ int md_rtf(const MD_CHAR* input, MD_SIZE input_size,
   render.userdata = userdata;
   render.flags = renderer_flags;
   render.font_base = 2 * font_size; /* point to half-point */
-  render.page_width = 56.689f * doc_width; /* mm to twip */
+  render.page_width = 56.689f * doc_width; /* pixels to twips */
   render.page_height = 1.41428f * render.page_width; /* ISO 216 ratio */
   render.page_margin = 400; /* left and right margin */
   render.list_dpth = -1;
@@ -1368,18 +1376,18 @@ int md_rtf(const MD_CHAR* input, MD_SIZE input_size,
   sprintf(render.cw_li[7], "\\li%u ", 160*render.font_base);
 
   /* tables basic parameter and left margin */
-  unsigned l = 12*render.font_base;
-  sprintf(render.cw_tr[0], "\\trautofit1\\trgaph%u\\trleft%u ", 6*render.font_base, l);
-  sprintf(render.cw_tr[1], "\\trgaph%u\\trrh%u\\trleft%u ", 3*render.font_base, 16*render.font_base, l);
+  unsigned g = 8*render.font_base;
+  if(g > 255) g = 255; //< \\tgrah value must be 0 to 255
+  sprintf(render.cw_tr[0], "\\trgaph%u\\trftsWidth2\\trwWidth4500\\trautofit1 ", g);
+  sprintf(render.cw_tr[1], "\\trgaph%u\\trrh%u\\trftsWidth2\\trwWidth4500\\trautofit1 ", 3*render.font_base, 16*render.font_base);
 
   /* frist-line indent values, used for bulleted and numbered lists */
   sprintf(render.cw_fi[0], "\\fi%i ", -10*render.font_base);
   sprintf(render.cw_fi[1], "\\fi%i ", -12*render.font_base);
 
   /* table cell width adjusted to given page width */
-  unsigned w = render.page_width - (2*render.page_margin) - (0.1f*render.page_width);
-  sprintf(render.cw_cx[0], "\\cellx%u ", w );
-  sprintf(render.cw_cx[1], "\\cellx%u ", render.page_width * 2 );
+  sprintf(render.cw_cx[0], "\\cellx%u ", (unsigned)(0.9f * render.page_width));
+  sprintf(render.cw_cx[1], "\\cellx%u ", render.page_width);
 
   int result = md_parse(input, input_size, &parser, (void*)&render);
 

@@ -45,7 +45,6 @@ inline static uint32_t __bytes_swap(uint32_t num)
           ((num << 24) & 0xff000000);
 }
 
-
 /// \brief Hexadecimal digits
 ///
 /// Static translation string to convert integer value to hexadecimal digit.

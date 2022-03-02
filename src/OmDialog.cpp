@@ -696,7 +696,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_WINDOWPOSCHANGED:
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGED
 

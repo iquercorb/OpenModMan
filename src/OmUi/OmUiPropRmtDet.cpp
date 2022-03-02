@@ -155,8 +155,8 @@ void OmUiPropRmtDet::_onInit()
   }
 
   // Snapshot image
-  if(pRmt->image().thumbnail()) {
-    this->setStImage(IDC_SB_SNAP, pRmt->image().thumbnail());
+  if(pRmt->thumb().valid()) {
+    this->setStImage(IDC_SB_SNAP, pRmt->thumb().hbmp());
   }
 
   // Package description

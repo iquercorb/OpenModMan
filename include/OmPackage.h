@@ -688,8 +688,8 @@ class OmPackage
     ///
     /// \return Package image object.
     ///
-    const OmImage& image() const {
-      return _image;
+    const OmImage& thumb() const {
+      return _thumb;
     }
 
     /// \brief Set image.
@@ -700,13 +700,13 @@ class OmPackage
     /// \param[in]  path  : Path to image file to load.
     /// \param[in]  width : Image thumbnail size.
     ///
-    void loadImage(const wstring& path, unsigned width);
+    void loadThumb(const wstring& path, unsigned width);
 
     /// \brief Clear image.
     ///
     /// Clear image data from this Package.
     ///
-    void clearImage();
+    void clearThumb();
 
     /// \brief Load overview data.
     ///
@@ -856,9 +856,9 @@ class OmPackage
 
     time_t              _descTime;
 
-    OmImage             _image;
+    OmImage             _thumb;
 
-    time_t              _imageTime;
+    time_t              _thumbTime;
 
     wstring             _error;
 };

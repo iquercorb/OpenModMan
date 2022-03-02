@@ -106,7 +106,7 @@ static void __get_folder_src_items(vector<OmPkgItem>* ls, const wstring& orig, c
 OmPackage::OmPackage() :
   _location(nullptr), _type(0), _ident(), _hash(0), _core(), _version(), _name(),
   _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(), _bckDir(),
-  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _image(), _imageTime(0),
+  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _thumb(), _thumbTime(0),
   _error()
 {
 
@@ -119,7 +119,7 @@ OmPackage::OmPackage() :
 OmPackage::OmPackage(OmLocation* pLoc) :
   _location(pLoc), _type(0), _ident(), _hash(0), _core(), _version(), _name(),
   _src(), _srcDir(), _srcTime(0), _srcItemLs(), _depLs(), _bck(), _bckDir(),
-  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _image(), _imageTime(0),
+  _bckItemLs(), _ovrLs(), _category(), _desc(), _descTime(0), _thumb(), _thumbTime(0),
   _error()
 {
 
@@ -139,7 +139,7 @@ OmPackage::~OmPackage()
   this->_bckItemLs.clear();
   this->_ovrLs.clear();
   this->_depLs.clear();
-  this->_image.clear();
+  this->_thumb.clear();
 }
 
 
@@ -291,9 +291,9 @@ bool OmPackage::srcParse(const wstring& path)
             if(img_data) {
               if(src_zip.extract(zcrd_index, img_data, s)) {
                 // finally load picture data
-                if(!this->_image.open(img_data, s, OMM_THUMB_SIZE)) {
+                if(!this->_thumb.loadThumbnail(img_data, s, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
                   this->_error = L"Snapshot file \""+pic_name+L"\"";
-                  this->_error += L"cannot be loaded: "+_image.lastErrorStr();
+                  this->_error += L"cannot be loaded: "+this->_thumb.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
@@ -377,9 +377,9 @@ bool OmPackage::srcParse(const wstring& path)
             uint8_t* img_data = new(std::nothrow) uint8_t[s];
             if(img_data) {
               if(src_zip.extract(i, img_data, s)) {
-                if(!this->_image.open(img_data, s, OMM_THUMB_SIZE)) {
+                if(!this->_thumb.loadThumbnail(img_data, s, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
                   this->_error = L"Image file \""+zcd_entry+L"\"";
-                  this->_error += L"cannot be loaded: "+this->_image.lastErrorStr();
+                  this->_error += L"cannot be loaded: "+this->_thumb.lastErrorStr();
                   this->log(1, L"Package("+this->_ident+L") Parse Source", this->_error);
                 }
               } else {
@@ -658,8 +658,8 @@ void OmPackage::srcClear()
   this->_srcItemLs.clear();
   this->_desc.clear();
   this->_descTime = 0;
-  this->_image.clear();
-  this->_imageTime = 0;
+  this->_thumb.clear();
+  this->_thumbTime = 0;
 }
 
 
@@ -938,19 +938,19 @@ void OmPackage::loadDesc(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::loadImage(const wstring& path, unsigned width)
+void OmPackage::loadThumb(const wstring& path, unsigned span)
 {
-  this->_image.clear();
-  this->_image.open(path, width);
+  // load image from file
+  this->_thumb.loadThumbnail(path, span, OMM_SIZE_FILL);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmPackage::clearImage()
+void OmPackage::clearThumb()
 {
-  this->_image.clear();
+  this->_thumb.clear();
 }
 
 
@@ -1007,17 +1007,17 @@ bool OmPackage::loadOverview(const wstring& path)
 
   if(found) {
     new_time = Om_itemTime(full_path);
-    if(new_time != this->_imageTime) {
-      this->loadImage(full_path, OMM_THUMB_SIZE);
-      this->_imageTime = new_time;
+    if(new_time != this->_thumbTime) {
+      this->loadThumb(full_path, OMM_THUMB_SIZE);
+      this->_thumbTime = new_time;
       changed = true;
       #ifdef DEBUG
       std::wcout << L"DEBUG => OmPackage("<<this->_ident<<L")::loadOverview - Image loaded\n";
       #endif
     }
   } else {
-    this->_imageTime = 0;
-    this->clearImage();
+    this->_thumbTime = 0;
+    this->clearThumb();
   }
 
 
@@ -1215,23 +1215,27 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   }
 
   // add image to archive and source definition
-  if(this->_image.valid()) {
-    // check image type to create file name
-    switch(this->_image.data_type())
-    {
-    case 1: zcd_entry = L"snapshot.bmp"; break;
-    case 2: zcd_entry = L"snapshot.jpg"; break;
-    case 3: zcd_entry = L"snapshot.png"; break;
-    case 4: zcd_entry = L"snapshot.gif"; break;
-    }
+  if(this->_thumb.valid()) {
+
+    zcd_entry = L"snapshot.png";
+
+    // convert thumbnail to PNG data
+    size_t png_size;
+    uint8_t* png_data = Om_imgEncodePng(&png_size, this->_thumb.data(), this->_thumb.width(), this->_thumb.height(), 4);
+
     // add image in zip archive
-    if(!pkg_zip.append(this->_image.data(), this->_image.data_size(), zcd_entry, zipLvl)) {
+    bool result = pkg_zip.append(png_data, png_size, zcd_entry, zipLvl);
+
+    Om_free(png_data);
+
+    if(!result) {
       this->_error = Om_errZipDefl(L"Snapshot file", zcd_entry, pkg_zip.lastErrorStr());
       this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
       pkg_zip.close();
       Om_fileDelete(pkg_tmp_path);
       return false;
     }
+
     // add section to source definition
     def_xml.addChild(L"picture").setContent(zcd_entry);
   }
@@ -1335,7 +1339,7 @@ void OmPackage::clear()
 {
   this->_type = 0;
   this->_hash = 0;
-  this->_image.clear();
+  this->_thumb.clear();
   this->_name.clear();
   this->_ident.clear();
   this->_src.clear();

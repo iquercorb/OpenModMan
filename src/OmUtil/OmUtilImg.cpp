@@ -18,6 +18,10 @@
 #include <algorithm>          //< std::sort
 #include <cmath>              //< modf, floor, etc.
 
+#ifdef DEBUG
+#include <ctime>
+#endif // DEBUG
+
 #include "OmBaseWin.h"        //< WinAPI
 
 #include "OmUtilImg.h"   //< OMM_IMAGE_TYPE_*
@@ -26,6 +30,773 @@
 #include "png/png.h"
 #include "gif/gif_lib.h"
 //#include "3rdP/gif/quantize.c"
+
+/// \brief Swap bytes
+///
+/// Swap bytes order in 32 bits value, to convert endianes.
+///
+/// \param[in]  num : input 32 value to swap bytes.
+///
+/// \return Swapped bytes version of the input value
+///
+inline static uint32_t __bytes_swap(uint32_t num)
+{
+  return  ((num >> 24) & 0xff) |
+          ((num <<  8) & 0xff0000) |
+          ((num >>  8) & 0xff00) |
+          ((num << 24) & 0xff000000);
+}
+
+/// \brief Swap Blue and Red component
+///
+/// Swaps Blue and Rend component of 24 bits pixel data
+///
+/// \param[in]  data  : 24 Bits pixel data buffer to swap
+/// \param[in]  size  : Size of data in bytes
+///
+inline static void __in_place_rb_swap_24(uint8_t* data, size_t size)
+{
+  for(size_t i = 0; i < size; i += 3)
+    data[i] ^= data[i+2] ^= data[i] ^= data[i+2];
+}
+
+/// \brief Swap Blue and Red component
+///
+/// Swaps Blue and Rend component of 32 bits pixel data
+///
+/// \param[in]  data  : 32 Bits pixel data buffer to swap
+/// \param[in]  size  : Size of data in bytes
+///
+inline static void __in_place_rb_swap_32(uint8_t* data, size_t size)
+{
+  for(size_t i = 0; i < size; i += 4)
+    data[i] ^= data[i+2] ^= data[i] ^= data[i+2];
+}
+
+/// \brief Convert RGB to RGBA
+///
+/// Convert source 24 bits RGB buffer to 32 bits RGBA
+///
+/// \param[in]  rgb   : RGB data buffer.
+/// \param[in]  n     : RGB Pixel count.
+/// \param[in]  a     : Alpha value to set.
+///
+/// \return New RGBA buffer
+///
+inline static uint8_t* __unpack_rgb_to_rgba(const uint8_t* rgb, size_t n, uint8_t a)
+{
+  uint8_t* rgba = reinterpret_cast<uint8_t*>(Om_alloc(n * 4));
+  if(!rgba) return nullptr;
+
+  uint8_t* dp = rgba;
+
+  for(size_t i = n; --i; dp += 4, rgb += 3) {
+    (*reinterpret_cast<uint32_t*>(dp)) = (*reinterpret_cast<const uint32_t*>(rgb));
+    dp[3] = a;
+  }
+
+  for(size_t i = 0; i < 3; ++i)
+    dp[i] = rgb[i];
+
+  dp[3] = a;
+
+  return rgba;
+}
+
+/// \brief In-place convert RGB to RGBA
+///
+/// In-place convert source RGB data to RGBA data assuming input
+/// buffer was allocated with enough space to hold RGBA data.
+///
+/// \param[in]  data  : RGB data buffer.
+/// \param[in]  n     : RGB Pixel count.
+/// \param[in]  a     : Alpha value to set.
+///
+/// \return New RGBA buffer
+///
+inline static void __inplace_rgb_to_rgba(uint8_t* data, size_t n, uint8_t a)
+{
+  uint8_t* dp = data + ((n * 4) - 4);
+  uint8_t* sp = data + ((n * 3) - 3);
+
+  for(size_t i = n; --i; sp -= 3, dp -= 4) {
+    (*reinterpret_cast<uint32_t*>(dp)) = (*reinterpret_cast<uint32_t*>(sp));
+    dp[3] = a;
+  }
+}
+
+
+/// \brief Set pixel color
+///
+/// Set color of one RGB pixel.
+///
+/// \param[in]  pixel : Pointer to RGB pixel.
+/// \param[in]  color : Color to set.
+///
+/// \return New RGBA buffer
+///
+inline void __set_pixel_24(uint8_t* pixel, uint32_t color)
+{
+  (*reinterpret_cast<uint32_t*>(pixel)) = color;
+}
+
+/// \brief Set pixel color
+///
+/// Set color of one RGBA pixel.
+///
+/// \param[in]  pixel : Pointer to RGBA pixel.
+/// \param[in]  color : Color to set.
+///
+/// \return New RGBA buffer
+///
+inline void __set_pixel_32(uint8_t* pixel, uint32_t color)
+{
+  (*reinterpret_cast<uint32_t*>(pixel)) = color;
+}
+
+/// \brief Set color for row of pixels
+///
+/// Set color of row of RGB pixels.
+///
+/// \param[in]  row   : Pointer to pixels row.
+/// \param[in]  width : Size of row in pixels.
+/// \param[in]  color : Color to set.
+///
+/// \return New RGBA buffer
+///
+inline void __set_row_24(uint8_t* row, size_t width, uint32_t color)
+{
+  for(size_t i = 0; i < width; ++i, row +=3)
+    (*reinterpret_cast<uint32_t*>(row)) = color;
+}
+
+/// \brief Set color for row of pixels
+///
+/// Set color of row of RGBA pixels.
+///
+/// \param[in]  row   : Pointer to pixels row.
+/// \param[in]  width : Size of row in pixels.
+/// \param[in]  color : Color to set.
+///
+/// \return New RGBA buffer
+///
+inline void __set_row_32(uint8_t* row, size_t width, uint32_t color)
+{
+  for(size_t i = 0; i < width; ++i, row +=4)
+    (*reinterpret_cast<uint32_t*>(row)) = color;
+}
+
+
+/// \brief Clamp number Macro.
+///
+/// Clamp number between min and mix values.
+///
+/// \param[in]  l : Minimum value
+/// \param[in]  n : value to clamp
+/// \param[in]  u : Maximum value
+///
+#define CLAMP(l, n, u) ((n) <= (l)) ? (l) : ((n) >= (u)) ? (u) : (n)
+#define MIN(n, u) ((n) >= (u)) ? (u) : (n)
+
+/// \brief Cubic interpolation Macro.
+///
+/// Cubic interpolation equation.
+///
+/// \param[in]  a : Start handle
+/// \param[in]  b : Start node
+/// \param[in]  c : End node
+/// \param[in]  d : End handle
+/// \param[in]  t : Interpolation phase
+///
+#define CUBIC_INTERP(a, b, c, d, t) \
+  (b) + 0.5f * (t) * ((c) - (a) + (t) * (2.0 * (a) - 5.0f * \
+  (b) + 4.0f * (c) - (d) + (t) * (3.0f * ((b) - (c)) + (d) - (a))))
+
+/// \brief Get bicubic interpolated pixel.
+///
+/// Compute the bicubic interpolated pixel sample at the specified
+/// coordinates of the given source image.
+///
+/// \param[in]  sample  : Array to receive interpolated pixel components.
+/// \param[in]  u       : Sample horizontal coordinate in image, from 0.0 to 1.0.
+/// \param[in]  v       : Sample vertical coordinate in image, from 0.0 to 1.0.
+/// \param[in]  src_pix : Input image RGB(A) data.
+/// \param[in]  src_w   : Input image width.
+/// \param[in]  src_h   : Input image height.
+///
+inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+{
+  float u_x, v_y;
+
+  float t_x = modf((u * src_w) - 0.5f, &u_x);
+  float t_y = modf((v * src_h) - 0.5f, &v_y);
+
+  int b_x = static_cast<int>(u_x) - 1;
+  int b_y = static_cast<int>(v_y) - 1;
+
+  const uint8_t* sp[4];
+
+  float r[4]; float g[4]; float b[4]; float a[4];
+
+  int x, y;
+
+  for(int j = 0; j < 4; ++j) {
+
+    y = CLAMP(0, b_y + j, max_h);
+
+    for(int i = 0; i < 4; ++i) {
+
+      x = CLAMP(0, b_x + i, max_w);
+
+      sp[i] = src_pix + ((y * row_bytes) + (x * 4));
+    }
+
+    r[j] = CUBIC_INTERP(sp[0][0], sp[1][0], sp[2][0], sp[3][0], t_x);
+    g[j] = CUBIC_INTERP(sp[0][1], sp[1][1], sp[2][1], sp[3][1], t_x);
+    b[j] = CUBIC_INTERP(sp[0][2], sp[1][2], sp[2][2], sp[3][2], t_x);
+    a[j] = CUBIC_INTERP(sp[0][3], sp[1][3], sp[2][3], sp[3][3], t_x);
+  }
+
+  float m[4];
+
+  m[0] = CUBIC_INTERP(r[0], r[1], r[2], r[3], t_y);
+  m[1] = CUBIC_INTERP(g[0], g[1], g[2], g[3], t_y);
+  m[2] = CUBIC_INTERP(b[0], b[1], b[2], b[3], t_y);
+  m[3] = CUBIC_INTERP(a[0], a[1], a[2], a[3], t_y);
+
+  for(unsigned i = 0; i < 4; ++i) {
+    sample[i] = static_cast<uint8_t>(CLAMP(0.0f, m[i], 255.0f));
+  }
+}
+
+/// \brief Get bicubic interpolated pixel.
+///
+/// Compute the bicubic interpolated pixel sample at the specified
+/// coordinates of the given source image.
+///
+/// \param[in]  sample    : Array to receive interpolated pixel components.
+/// \param[in]  u         : Sample horizontal coordinate in image, from 0.0 to 1.0.
+/// \param[in]  v         : Sample vertical coordinate in image, from 0.0 to 1.0.
+/// \param[in]  src_pix   : Input image RGB(A) data.
+/// \param[in]  src_w     : Input image width.
+/// \param[in]  src_h     : Input image height.
+///
+inline static void __get_sample_cub_24(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+{
+  float x, y;
+
+  float xf = modf((u * src_w) - 0.5f, &x);
+  float yf = modf((v * src_h) - 0.5f, &y);
+
+  int ix = static_cast<int>(x) - 1;
+  int iy = static_cast<int>(y) - 1;
+
+  const uint8_t* sp[4];
+
+  float r[4]; float g[4]; float b[4];
+
+  int x_b, y_b;
+
+  for(int j = 0; j < 4; ++j) {
+
+    y_b = CLAMP(0, iy + j, max_h);
+
+    for(int i = 0; i < 4; ++i) {
+
+      x_b = CLAMP(0, ix + i, max_w);
+
+      sp[i] = src_pix + ((y_b * row_bytes) + (x_b * 3));
+    }
+
+    r[j] = CUBIC_INTERP(sp[0][0], sp[1][0], sp[2][0], sp[3][0], xf);
+    g[j] = CUBIC_INTERP(sp[0][1], sp[1][1], sp[2][1], sp[3][1], xf);
+    b[j] = CUBIC_INTERP(sp[0][2], sp[1][2], sp[2][2], sp[3][2], xf);
+  }
+
+  float m[3];
+
+  m[0] = CUBIC_INTERP(r[0], r[1], r[2], r[3], yf);
+  m[1] = CUBIC_INTERP(g[0], g[1], g[2], g[3], yf);
+  m[2] = CUBIC_INTERP(b[0], b[1], b[2], b[3], yf);
+
+  for(unsigned i = 0; i < 3; ++i) {
+    sample[i] = static_cast<uint8_t>(CLAMP(0.0f, m[i], 255.0f));
+  }
+}
+
+/// \brief Get box sample pixel.
+///
+/// Get the box pixel sample at the specified coordinates of the given
+/// source image.
+///
+/// \param[in]  sample    : Array to receive interpolated pixel components.
+/// \param[in]  b_w       : Box width in pixels.
+/// \param[in]  b_h       : Box height in pixels.
+/// \param[in]  u         : Sample horizontal coordinate in image, from 0.0 to 1.0.
+/// \param[in]  v         : Sample vertical coordinate in image, from 0.0 to 1.0.
+/// \param[in]  src_pix   : Input image RGB(A) data.
+/// \param[in]  src_w     : Input image width.
+/// \param[in]  src_h     : Input image height.
+/// \param[in]  max_w     : Input image X index limit, should be src_w - 1.
+/// \param[in]  max_h     : Input image Y index limit, should be src_h - 1.
+/// \param[in]  row_bytes : size in bytes of an input image row
+///
+inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+{
+  float r = 0.0f;
+  float g = 0.0f;
+  float b = 0.0f;
+  float a = 0.0f;
+
+  const uint8_t *sp;
+
+  int x, y;
+
+  unsigned n = 0;
+
+  // box top-left corner position
+  int b_x = (u * src_w) - (0.5f * b_w);
+  int b_y = (v * src_h) - (0.5f * b_h);
+
+  for(int j = 0; j < b_h; ++j) {
+
+    y = b_y + j;
+    if(y < 0 || y > max_h) continue;
+
+    for(int i = 0; i < b_w; ++i) {
+
+      x = b_x + i;
+      if(x < 0 || x > max_w) continue;
+
+      sp = src_pix + ((y * row_bytes) + (x * 4));
+
+      r += sp[0];
+      g += sp[1];
+      b += sp[2];
+      a += sp[3];
+
+      n++;
+    }
+  }
+
+  // assign average pixel
+  sample[0] = r / n;
+  sample[1] = g / n;
+  sample[2] = b / n;
+  sample[3] = a / n;
+}
+
+/// \brief Get box sample pixel.
+///
+/// Get the box pixel sample at the specified coordinates of the given
+/// source image.
+///
+/// \param[in]  sample    : Array to receive interpolated pixel components.
+/// \param[in]  b_w       : Box width in pixels.
+/// \param[in]  b_h       : Box height in pixels.
+/// \param[in]  u         : Sample horizontal coordinate in image, from 0.0 to 1.0.
+/// \param[in]  v         : Sample vertical coordinate in image, from 0.0 to 1.0.
+/// \param[in]  src_pix   : Input image RGB(A) data.
+/// \param[in]  src_w     : Input image width.
+/// \param[in]  src_h     : Input image height.
+/// \param[in]  max_w     : Input image X index limit, should be src_w - 1.
+/// \param[in]  max_h     : Input image Y index limit, should be src_h - 1.
+/// \param[in]  row_bytes : size in bytes of an input image row
+///
+inline static void __get_sample_box_24(uint8_t* sample, int b_w, int b_h, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+{
+  float r = 0.0f;
+  float g = 0.0f;
+  float b = 0.0f;
+
+  const uint8_t *sp;
+
+  int x, y;
+
+  unsigned n = 0;
+
+  // box top-left corner position
+  int b_x = (u * src_w) - (0.5f * b_w);
+  int b_y = (v * src_h) - (0.5f * b_h);
+
+  for(int j = 0; j < b_h; ++j) {
+
+    y = b_y + j;
+    if(y < 0 || y > max_h) continue;
+
+    for(int i = 0; i < b_w; ++i) {
+
+      x = b_x + i;
+      if(x < 0 || x > max_w) continue;
+
+      sp = src_pix + ((y * row_bytes) + (x * 3));
+
+      r += sp[0];
+      g += sp[1];
+      b += sp[2];
+
+      n++;
+    }
+  }
+
+  // assign average pixel
+  sample[0] = r / n;
+  sample[1] = g / n;
+  sample[2] = b / n;
+}
+
+/// \brief Copy and resample using bicubic interpolation.
+///
+/// Copy and resamples the specified rectangle of source image to destination
+/// using bicubic interpolation.
+///
+/// This function should be preferred for upsampling operation, meaning when
+/// the destination resolution is greater than the specified source rectangle.
+///
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
+/// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
+/// \param[in]  rec_w     : Rectangle width
+/// \param[in]  rec_h     : Rectangle height.
+///
+inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
+{
+  // U and V shift corresponding to rectangle top-left corner
+  float s_u = static_cast<float>(rec_x) / src_w;
+  float s_v = static_cast<float>(rec_y) / src_h;
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = (1.0f / static_cast<float>(dst_w)) * (static_cast<float>(rec_w) / src_w);
+  float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
+
+  uint8_t* dp;
+  float u, v;
+
+  // some constants
+  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  // Loop for RGBA
+  for(unsigned y = 0; y < dst_h; ++y) {
+    dp = dst_pix + (dst_row_bytes * y);
+    v = s_v + (y * f_v);
+    for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
+      u = s_u + (x * f_u);
+      __get_sample_cub_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+    }
+  }
+}
+
+/// \brief Copy and resample using box filter.
+///
+/// Copy and resamples the specified rectangle of source image to destination
+/// using box filter.
+///
+/// This function should be preferred for downsampling operation, meaning when
+/// the destination resolution is lesser than the specified source rectangle.
+///
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
+/// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
+/// \param[in]  rec_w     : Rectangle width
+/// \param[in]  rec_h     : Rectangle height.
+///
+inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
+{
+  // compute box size
+  int b_w = floor(static_cast<float>(rec_w) / dst_w);
+  int b_h = floor(static_cast<float>(rec_h) / dst_h);
+
+  // U and V shift corresponding to rectangle top-left corner
+  float s_u = static_cast<float>(rec_x) / src_w;
+  float s_v = static_cast<float>(rec_y) / src_h;
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = (1.0f / static_cast<float>(dst_w)) * (static_cast<float>(rec_w) / src_w);
+  float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
+
+  // some constants
+  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  uint8_t* dp;
+  float u, v;
+
+  for(unsigned y = 0; y < dst_h; ++y) {
+    dp = dst_pix + (dst_row_bytes * y);
+    v = s_v + (y * f_v);
+    for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
+      u = s_u + (x * f_u);
+      __get_sample_box_32(dp, b_w, b_h, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+    }
+  }
+}
+
+/// \brief Copy and resample.
+///
+/// Copy and resamples the specified rectangle of source image to destination
+/// using best filtering method according source and destination resolutions.
+///
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  dst_f     : Destination color format.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
+/// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
+/// \param[in]  rec_w     : Rectangle width
+/// \param[in]  rec_h     : Rectangle height.
+///
+inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
+{
+  // resize image to fit desired size
+  if(rec_w != dst_w || rec_h != dst_h) {
+
+    if(dst_w > rec_w || dst_h > rec_h) {
+      // bicubic interpolation
+      __copy_resample_cub(dst_pix, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+    } else {
+      // average box filter
+      __copy_resample_box(dst_pix, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+    }
+
+  } else {
+
+    size_t row_bytes = (rec_w * 4); //< assuming RGBA data
+    size_t row_shift = (rec_x * 4); //< assuming RGBA data
+
+    const uint8_t* sp;
+    uint8_t* dp;
+
+    for(unsigned y = 0; y < dst_h; ++y) {
+      sp = src_pix + ((y + rec_y) * row_bytes) + row_shift;
+      dp = dst_pix + (y * row_bytes);
+      for(unsigned x = 0; x < dst_w; ++x, dp += 4, sp += 4) {
+        dp[0] = sp[0];
+        dp[1] = sp[1];
+        dp[2] = sp[2];
+        dp[3] = sp[3];
+      }
+    }
+
+  }
+}
+
+/// \brief Draw image in destination canvas
+///
+/// Draws the source image to fit into the given canvas keeping the source
+/// aspect ratio, resampling source image using bicubic interpolation.
+///
+/// This function should be preferred for upsampling operation, meaning when
+/// the destination resolution is greater than the specified source rectangle.
+///
+/// \param[out] cv_pix    : Canvas pixel buffer that receive result.
+/// \param[in]  cv_w      : Canvas width in pixel.
+/// \param[in]  cv_h      : Canvas height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  bck       : Background color
+///
+inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
+{
+  unsigned dst_x, dst_y, dst_w, dst_h;
+
+  float span = MIN(cv_w, cv_h);
+
+  float aspect;
+
+  if(src_w > src_h) {
+
+    aspect = (float)src_h / src_w;
+    dst_w = span;
+    dst_h = span * aspect;
+    dst_x = 0;
+    dst_y = (0.5f * span) - (0.5f * dst_h);
+
+  } else {
+
+    aspect = (float)src_w / src_h;
+    dst_w = span * aspect;
+    dst_h = span;
+    dst_x = (0.5f * span) - (0.5f * dst_w);
+    dst_y = 0;
+  }
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = 1.0f / static_cast<float>(dst_w - 1);
+  float f_v = 1.0f / static_cast<float>(dst_h - 1);
+
+  // U and V shift corresponding to destination top-left corner in canvas
+  float s_u = f_u * dst_x;
+  float s_v = f_v * dst_y;
+
+  // some constants
+  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  uint8_t* dp;
+  float u, v;
+
+  for(unsigned y = 0; y < cv_h; ++y) {
+    dp = cv_pix + (dst_row_bytes * y);
+    v = (y * f_v) - s_v;
+    if(v < 0.0 || v > 1.0) {
+      __set_row_32(dp, cv_w, bck);
+      continue;
+    }
+    for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
+      u = (x * f_u) - s_u;
+      if(u < 0.0 || u > 1.0) {
+        __set_pixel_32(dp, bck);
+      } else {
+        __get_sample_cub_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+      }
+    }
+  }
+
+}
+
+/// \brief Draw image in destination canvas
+///
+/// Draws the source image to fit into the given canvas keeping the source
+/// aspect ratio, resampling source image using box filter.
+///
+/// This function should be preferred for downsampling operation, meaning when
+/// the destination resolution is lesser than the specified source rectangle.
+///
+/// \param[out] cv_pix    : Canvas pixel buffer that receive result.
+/// \param[in]  cv_w      : Canvas width in pixel.
+/// \param[in]  cv_h      : Canvas height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  bck       : Background color
+///
+inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
+{
+  unsigned dst_x, dst_y, dst_w, dst_h;
+
+  float span = MIN(cv_w, cv_h);
+
+  float aspect;
+
+  if(src_w > src_h) {
+
+    aspect = (float)src_h / src_w;
+    dst_w = span;
+    dst_h = span * aspect;
+    dst_x = 0;
+    dst_y = (0.5f * span) - (0.5f * dst_h);
+
+  } else {
+
+    aspect = (float)src_w / src_h;
+    dst_w = span * aspect;
+    dst_h = span;
+    dst_x = (0.5f * span) - (0.5f * dst_w);
+    dst_y = 0;
+  }
+
+  // compute box size
+  int b_w = floor(static_cast<float>(src_w) / dst_w);
+  int b_h = floor(static_cast<float>(src_h) / dst_h);
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = 1.0f / static_cast<float>(dst_w - 1);
+  float f_v = 1.0f / static_cast<float>(dst_h - 1);
+
+  // U and V shift corresponding to destination top-left corner in canvas
+  float s_u = f_u * dst_x;
+  float s_v = f_v * dst_y;
+
+  // some constants
+  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  uint8_t* dp;
+  float u, v;
+
+  for(unsigned y = 0; y < cv_h; ++y) {
+    dp = cv_pix + (dst_row_bytes * y);
+    v = (y * f_v) - s_v;
+    if(v < 0.0f || v > 1.0f) {
+      __set_row_32(dp, cv_w, bck);
+      continue;
+    }
+    for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
+      u = (x * f_u) - s_u;
+      if(u < 0.0f || u > 1.0f) {
+        __set_pixel_32(dp, bck);
+      } else {
+        __get_sample_box_32(dp, b_w, b_h, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+      }
+    }
+  }
+}
+
+/// \brief Draw image in destination canvas.
+///
+/// Draws and resamples the specified rectangle of source image to destination
+/// using best filtering method according source and destination resolutions.
+///
+/// \param[out] cv_pix    : Canvas pixel buffer that receive result.
+/// \param[in]  cv_w      : Canvas width in pixel.
+/// \param[in]  cv_h      : Canvas height in pixel.
+/// \param[in]  dst_f     : Destination color format.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  bck       : Background color
+///
+inline static void __draw_canvas(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
+{
+  // resize image to fit desired size
+  if(src_w != cv_w || src_h != cv_h) {
+
+    if(cv_w > src_w || cv_h > src_h) {
+
+      // bicubic interpolation
+      __draw_canvas_cub(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, bck);
+
+    } else {
+
+      // average box filter
+      __draw_canvas_box(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, bck);
+
+    }
+
+  } else {
+
+    memcpy(cv_pix, src_pix, src_w * src_h * 4);
+
+  }
+}
 
 /* we make sure structures are packed to be properly aligned with
  read buffer */
@@ -79,13 +850,13 @@ static const unsigned char __sign_gif[] = "GIF89a";
 inline static unsigned __image_sign_matches(const uint8_t* buff)
 {
   // Test BMP signature
-  if(0 == memcmp(buff, __sign_bmp, 2)) return OMM_IMAGE_TYPE_BMP;
+  if(0 == memcmp(buff, __sign_bmp, 2)) return OMM_IMAGE_BMP;
   // Test JPG signature
-  if(0 == memcmp(buff, __sign_jpg, 3)) return OMM_IMAGE_TYPE_JPG;
+  if(0 == memcmp(buff, __sign_jpg, 3)) return OMM_IMAGE_JPG;
   // Test PNG signature
-  if(0 == memcmp(buff, __sign_png, 8)) return OMM_IMAGE_TYPE_PNG;
+  if(0 == memcmp(buff, __sign_png, 8)) return OMM_IMAGE_PNG;
   // Test GIF signature
-  if(0 == memcmp(buff, __sign_gif, 6)) return OMM_IMAGE_TYPE_GIF;
+  if(0 == memcmp(buff, __sign_gif, 6)) return OMM_IMAGE_GIF;
 
   return 0;
 }
@@ -484,19 +1255,21 @@ static int __gif_write_buff_fn(GifFileType* gif, const uint8_t* src, int len)
 ///
 /// Common function to decode GIF using the given GIF decoder structure.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  gif_dec : GIF decoder structure pointer.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  gif       : GIF decoder structure pointer.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded RGB image data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* gif_dec, bool flip_y)
+static uint8_t* __gif_decode_common(unsigned* w, unsigned* h, GifFileType* gif, bool flip_y)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // Retrieve GIF decoder struct
   int error;
-  GifFileType* gif = reinterpret_cast<GifFileType*>(gif_dec);
 
   // Load GIF content
   if(DGifSlurp(gif) == GIF_ERROR) {
@@ -508,8 +1281,8 @@ static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
   SavedImage* images = gif->SavedImages;
 
   // Get image informations
-  unsigned w = images[0].ImageDesc.Width;
-  unsigned h = images[0].ImageDesc.Height;
+  unsigned gif_w = images[0].ImageDesc.Width;
+  unsigned gif_h = images[0].ImageDesc.Height;
 
   // Pointer to color table
   ColorMapObject* table;
@@ -521,13 +1294,13 @@ static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
     table = gif->SColorMap;
   }
 
-  // define some useful sizes
-  size_t row_bytes = w * 3;
-  size_t tot_bytes = h * row_bytes;
+  // define some useful sizes, we output as RGBA
+  size_t row_bytes = gif_w * 4;
+  size_t tot_bytes = gif_h * row_bytes;
 
-  // allocate new buffer for RGB data
-  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
-  if(!rgb) {
+  // allocate new buffer
+  uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!pixels) {
     DGifCloseFile(gif, &error);
     return nullptr;
   }
@@ -539,15 +1312,26 @@ static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
   uint8_t* dp;
 
   // here we go to translate indexed color to RGB
-  for(unsigned y = 0; y < h; ++y) {
-
-    dp = (flip_y) ? rgb + (row_bytes * ((h -1) - y)) : rgb + (y * row_bytes);
-
-    for(unsigned x = 0; x < w; ++x) {
-      dp[0] = table->Colors[*sp].Red;
-      dp[1] = table->Colors[*sp].Green;
-      dp[2] = table->Colors[*sp].Blue;
-      dp += 3; sp++;
+  if(flip_y) {
+    size_t max_h = gif_h - 1;
+    for(unsigned y = 0; y < gif_h; ++y) {
+      dp = pixels + (row_bytes * (max_h - y));
+      for(unsigned x = 0; x < gif_w; ++x, ++sp, dp += 4) {
+        dp[0] = table->Colors[*sp].Red;
+        dp[1] = table->Colors[*sp].Green;
+        dp[2] = table->Colors[*sp].Blue;
+        dp[3] = 0xFF;
+      }
+    }
+  } else {
+    for(unsigned y = 0; y < gif_h; ++y) {
+      dp = pixels + (y * row_bytes);
+      for(unsigned x = 0; x < gif_w; ++x, ++sp, dp += 4) {
+        dp[0] = table->Colors[*sp].Red;
+        dp[1] = table->Colors[*sp].Green;
+        dp[2] = table->Colors[*sp].Blue;
+        dp[3] = 0xFF;
+      }
     }
   }
 
@@ -555,16 +1339,22 @@ static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
   DGifCloseFile(gif, &error);
 
   // assign output values
-  (*out_w) = w; (*out_h) = h; (*out_c) = 3;
+  (*w) = gif_w;
+  (*h) = gif_h;
 
-  return rgb;
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __gif_decode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return pixels;
 }
 
 /// \brief Encode GIF.
 ///
 /// Common function to encode GIF using the given GIF encoder structure.
 ///
-/// \param[in]  gif_enc : GIF encoder structure pointer.
+/// \param[in]  gif     : GIF encoder structure pointer.
 /// \param[in]  in_rgb  : Input image RGB(A) data to encode.
 /// \param[in]  in_w    : Input image width.
 /// \param[in]  in_h    : Input image height.
@@ -572,11 +1362,14 @@ static uint8_t* __gif_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static bool __gif_encode_common(GifFileType* gif, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // Retrieve GIF encoder struct
   int error;
-  GifFileType* gif = reinterpret_cast<GifFileType*>(gif_enc);
 
   // define useful sizes
   size_t mtx_bytes = in_w * in_h; //< image matrix size, one byte per pixel
@@ -638,6 +1431,11 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
   Om_free(imtx);
   Om_free(cmap);
 
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __gif_encode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
   return true;
 }
 
@@ -645,51 +1443,49 @@ static bool __gif_encode_common(void* gif_enc, const uint8_t* in_rgb, unsigned i
 ///
 /// Read GIF data from file pointer.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_file : Input file pointer to read data from.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  gif_file  : File pointer to read GIF data from.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded RGB image data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __gif_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __gif_read(unsigned* w, unsigned* h, FILE* gif_file, bool flip_y)
 {
   int error;
   GifFileType* gif;
 
   // make sure we start at beginning
-  fseek(in_file, 0, SEEK_SET);
+  fseek(gif_file, 0, SEEK_SET);
 
   // Define custom read function and load GIF header
-  gif = DGifOpen(in_file, __gif_read_file_fn, &error);
+  gif = DGifOpen(gif_file, __gif_read_file_fn, &error);
   if(gif == nullptr)
     return nullptr;
 
   // Decode GIF data
-  return __gif_decode_common(out_w, out_h, out_c, gif, flip_y);
+  return __gif_decode_common(w, h, gif, flip_y);
 }
 
 /// \brief Decode GIF data.
 ///
 /// Decode GIF data from buffer in memory.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_data : Input GIF data to decode.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  gif_data  : Buffer to GIF data to decode.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded RGB image data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __gif_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static uint8_t* __gif_decode(unsigned* w, unsigned* h, const uint8_t* gif_data, bool flip_y)
 {
   int error;
   GifFileType* gif;
 
   // custom read structure
   __gif_read_st read_st;
-  read_st.src_data = in_data;
+  read_st.src_data = gif_data;
   read_st.src_seek = 0;
 
   // Define custom read function and load GIF header
@@ -698,7 +1494,7 @@ static uint8_t* __gif_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, 
     return nullptr;
 
   // Decode GIF data
-  return __gif_decode_common(out_w, out_h, out_c, gif, flip_y);
+  return __gif_decode_common(w, h, gif, flip_y);
 }
 
 /// \brief Write GIF file.
@@ -741,6 +1537,10 @@ static bool __gif_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 static uint8_t* __gif_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   int error;
   GifFileType* gif;
 
@@ -762,240 +1562,358 @@ static uint8_t* __gif_encode(size_t* out_size, const uint8_t* in_rgb, unsigned i
   // assign output values
   (*out_size) = write_st.dst_size;
 
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __gif_encode : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
   return write_st.dst_data;
 }
 
-/// \brief Read BMP file.
+/// BMP Codec Context early delcaration
+typedef struct _BMP_CONTEXT BMP_CONTEXT;
+
+/// \brief BMP stream callback
 ///
-/// Read BMP data from file pointer.
+/// Generic BMP input or output stream callback function for
+/// encode and decode routines
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_file : Input file pointer to read data from.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[in]  ctx   : Pointer to BMP_CONTEXT structure.
+/// \param[in]  buf   : Pointer to buffer to read or write to.
+/// \param[in]  len   : Requested bytes to read or write.
 ///
-/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
+/// \return Count of read or written bytes.
 ///
-static uint8_t* __bmp_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+typedef size_t (*bmp_io_fn)(BMP_CONTEXT* ctx, void* buf, size_t len);
+
+/// \brief BMP seek callback
+///
+/// Generic BMP seek callback function for encode and decode routines
+///
+/// \param[in]  ctx   : Pointer to BMP_CONTEXT structure.
+/// \param[in]  off   : Offset to seek pointer to.
+///
+typedef void (*bmp_seek_fn)(BMP_CONTEXT* ctx, size_t off);
+
+/// \brief BMP Codec Context
+///
+/// BMP Context structure for encode and decode routines
+///
+struct _BMP_CONTEXT
 {
-  // make sure we start at begining
-  fseek(in_file, 0, SEEK_SET);
+  FILE* f_ptr;
 
-  // BMP headers structures
-  OMM_BITMAPHEADER bmp_head;
-  OMM_BITMAPINFOHEADER bmp_info;
-  // read base header
-  if(fread(&bmp_head, 1, 14, in_file) < 14)
-    return nullptr;
-  // check BM signature
-  if(0 != memcmp(bmp_head.signature, "BM", 2))
-    return nullptr;
-  // read info header
-  if(fread(&bmp_info, 1, 40, in_file) < 40)
-    return nullptr;
+  const void* i_ptr;
 
-  // we support only 24 or 32 bpp
-  if(bmp_info.bpp < 24)
-    return nullptr;
-  // get BMP image parameters
-  unsigned w = bmp_info.width;
-  unsigned h = bmp_info.height;
-  unsigned c = bmp_info.bpp / 8; // channel count
+  void* o_ptr;
 
-  // define some useful sizes
-  size_t row_bytes = w * c;
-  size_t tot_bytes = h * row_bytes;
+  size_t io_off;
 
-  // allocate new buffer to receive rgb data
-  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
-  if(!rgb) return nullptr;
+  void** out_dest;
 
-  // seek to bitmap data location and read
-  fseek(in_file, bmp_head.offbits, SEEK_SET);
+  size_t* out_size;
 
-  // BMP data is natively stored upside down
-  if(flip_y) {
-    // read all data at once from
-    if(fread(rgb, 1, tot_bytes, in_file) != tot_bytes) {
-      Om_free(rgb); return nullptr;
-    }
-  } else {
-    // read rows in reverse order
-    unsigned hmax = (h - 1);
-    for(unsigned y = 0; y < h; ++y) {
-      if(fread(rgb + (row_bytes * (hmax - y)), 1, row_bytes, in_file) != row_bytes) {
-        Om_free(rgb); return nullptr;
-      }
-    }
-  }
+  bmp_io_fn io_fn;
 
-  // finally swap components order BGR to RGB
-  for(unsigned i = 0; i < tot_bytes; i += c)
-    rgb[i  ] ^= rgb[i+2] ^= rgb[i  ] ^= rgb[i+2]; //< BGR => RGB
+  bmp_seek_fn seek_fn;
+};
 
-  // assign output values
-  (*out_w) = w; (*out_h) = h; (*out_c) = c;
-
-  return rgb;
+/// \brief File seek callback for BMP decode
+///
+/// Callback function definition for seek file pointer
+///
+static void __bmp_seek_file(BMP_CONTEXT* ctx, size_t off)
+{
+  fseek(ctx->f_ptr, off, SEEK_SET);
 }
 
-/// \brief Decode BMP data.
+/// \brief File seek callback for BMP decode
 ///
-/// Decode BMP data from buffer in memory.
+/// Callback function definition for seek file pointer
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_data : Input BMP data to decode.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
-///
-/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
-///
-static uint8_t* __bmp_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static void __bmp_seek_mem(BMP_CONTEXT* ctx, size_t off)
 {
-  // pointer to input data
-  const uint8_t* in_ptr = in_data;
+  ctx->io_off = off;
+}
+
+/// \brief File read callback for BMP decode
+///
+/// Callback function definition for read from file pointer
+///
+static size_t __bmp_read_file(BMP_CONTEXT* ctx, void* buf, size_t len)
+{
+  size_t rb = fread(buf, 1, len, ctx->f_ptr);
+  return rb;
+}
+
+/// \brief Memory read callback for BMP decode
+///
+/// Callback function definition for read from memory
+///
+static size_t __bmp_read_mem(BMP_CONTEXT* ctx, void* buf, size_t len)
+{
+  const uint8_t* sp = reinterpret_cast<const uint8_t*>(ctx->i_ptr);
+  memcpy(buf, sp + ctx->io_off, len);
+  ctx->io_off += len;
+  return len;
+}
+
+/// \brief File read callback for BMP decode
+///
+/// Callback function definition for read from file pointer
+///
+static size_t __bmp_write_file(BMP_CONTEXT* ctx, void* buf, size_t len)
+{
+  size_t wb = fwrite(buf, 1, len, ctx->f_ptr);
+  return wb;
+}
+
+/// \brief Memory read callback for BMP decode
+///
+/// Callback function definition for read from memory
+///
+static size_t __bmp_write_mem(BMP_CONTEXT* ctx, void* buf, size_t len)
+{
+  uint8_t* dp = reinterpret_cast<uint8_t*>(ctx->o_ptr);
+  memcpy(dp + ctx->io_off, buf, len);
+  ctx->io_off += len;
+  return len;
+}
+
+/// \brief Init BMP context.
+///
+/// Initialize BMP context for decode from file.
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+/// \param[out] file    : File pointer to read.
+///
+void __bmp_init_read_file(BMP_CONTEXT* ctx, FILE* file)
+{
+  ctx->f_ptr = file;
+  // reset pointer offset
+  ctx->io_off = 0;
+  // set callback functions
+  ctx->io_fn = __bmp_read_file;
+  ctx->seek_fn = __bmp_seek_file;
+
+  // avoid freeing bad pointer
+  ctx->o_ptr = nullptr;
+}
+
+/// \brief Init BMP context.
+///
+/// Initialize BMP context for decode from file.
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+/// \param[out] file    : File pointer to read.
+///
+void __bmp_init_read_mem(BMP_CONTEXT* ctx, const void* ptr)
+{
+  ctx->i_ptr = ptr;
+  // reset pointer offset
+  ctx->io_off = 0;
+  // set callback functions
+  ctx->io_fn = __bmp_read_mem;
+  ctx->seek_fn = __bmp_seek_mem;
+
+  // avoid freeing bad pointer
+  ctx->o_ptr = nullptr;
+}
+
+
+/// \brief Init BMP context.
+///
+/// Initialize BMP context for encode to file.
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+/// \param[out] file    : File pointer to read.
+///
+void __bmp_init_write_file(BMP_CONTEXT* ctx, FILE* file)
+{
+  ctx->f_ptr = file;
+  // set callback functions
+  ctx->io_fn = __bmp_write_file;
+  ctx->seek_fn = __bmp_seek_file;
+
+  // avoid freeing bad pointer
+  ctx->o_ptr = nullptr;
+}
+
+/// \brief Init BMP context.
+///
+/// Initialize BMP context for encode to memory.
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+/// \param[out] pdest   : Pointer to pointer that receive allocated data.
+/// \param[out] psize   : Pointer to size_t that receive allocated data size.
+///
+void __bmp_init_write_mem(BMP_CONTEXT* ctx, void** pdest, size_t* psize)
+{
+  // this is not a write to file
+  ctx->f_ptr = nullptr;
+
+  // store user pointers
+  ctx->out_dest = pdest;
+  ctx->out_size = psize;
+  *ctx->out_dest = nullptr;
+  *ctx->out_size = 0;
+
+  // null buffer to be allocated
+  ctx->o_ptr = nullptr;
+
+  // reset pointer offset
+  ctx->io_off = 0;
+
+  // set callback functions
+  ctx->io_fn = __bmp_write_mem;
+  ctx->seek_fn = __bmp_seek_mem;
+}
+
+/// \brief Init BMP context.
+///
+/// Allocate required memory for encode to memory
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+/// \param[out] size    : File pointer to read.
+///
+/// \return true if operation succeed, false otherwise
+///
+inline bool __bmp_alloc_write_mem(BMP_CONTEXT* ctx, size_t size)
+{
+  // we do not allocate memory for file
+  if(ctx->f_ptr != nullptr)
+    return true;
+
+  // this should never happen
+  if(ctx->o_ptr)
+    Om_free(ctx->o_ptr);
+
+  // allocate buffer
+  ctx->o_ptr = Om_alloc(size);
+  if(!ctx->o_ptr) return false;
+
+  // set values to user variables
+  *ctx->out_dest = ctx->o_ptr;
+  *ctx->out_size = size;
+
+  return true;
+}
+
+/// \brief Free BMP context allocated data.
+///
+/// Free any allocated buffer and reset data.
+///
+/// \param[out] ctx     : Pointer to BMP Codec Context structure.
+///
+///
+inline void __bmp_free(BMP_CONTEXT* ctx)
+{
+  // check for allocated write buffer
+  if(ctx->o_ptr) {
+    Om_free(ctx->o_ptr);
+    ctx->o_ptr = nullptr;
+    *ctx->out_dest = ctx->o_ptr;
+    *ctx->out_size = 0;
+  }
+}
+
+/// \brief Decode BMP.
+///
+/// Common function to decode BMP using the given BMP codec context structure.
+///
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  bmp_ctx   : Pointer to BMP Codec Context.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
+///
+/// \return Pointer to decoded RGBA image pixels or nullptr if failed.
+///
+static uint8_t* __bmp_decode_common(unsigned* w, unsigned* h, BMP_CONTEXT* bmp_ctx, bool flip_y)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  // read function
+  bmp_io_fn read_cb = bmp_ctx->io_fn;
+  bmp_seek_fn seek_cb = bmp_ctx->seek_fn;
+
+  if(!read_cb) return nullptr;
+  if(!seek_cb) return nullptr;
 
   // BMP headers structures
   OMM_BITMAPHEADER bmp_head;
   OMM_BITMAPINFOHEADER bmp_info;
   // get base header
-  memcpy(&bmp_head, in_ptr, 14); in_ptr += 14;
+  if(read_cb(bmp_ctx, &bmp_head, 14) != 14)
+    return nullptr;
   // check BM signature
   if(0 != memcmp(bmp_head.signature, "BM", 2))
     return nullptr;
   // get info header
-  memcpy(&bmp_info, in_ptr, 40); in_ptr += 40;
+  if(read_cb(bmp_ctx, &bmp_info, 40) != 40)
+    return nullptr;
 
   // we support only 24 or 32 bpp
   if(bmp_info.bpp < 24)
     return nullptr;
 
   // get BMP image parameters
-  unsigned w = bmp_info.width;
-  unsigned h = bmp_info.height;
-  unsigned c = bmp_info.bpp / 8; // channel count
+  unsigned bmp_w = bmp_info.width;
+  unsigned bmp_h = bmp_info.height;
+  unsigned bmp_c = bmp_info.bpp / 8; // channel count
 
   // define some useful sizes
-  size_t row_bytes = w * c;
-  size_t tot_bytes = h * row_bytes;
+  size_t row_bytes = bmp_w * bmp_c;
+  size_t tot_bytes = bmp_h * row_bytes;
 
-  // allocate new buffer to receive rgb data
-  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
-  if(!rgb) return nullptr;
+  // allocate new buffer, large enough to receive **RGBA** data
+  uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(bmp_w * bmp_h * 4));
+  if(!pixels) return nullptr;
 
   // seek to bitmap data location
-  in_ptr = in_data + bmp_head.offbits;
+  seek_cb(bmp_ctx, bmp_head.offbits);
 
   // BMP data is natively stored upside down
   if(flip_y) {
     // read all data at once from
-    memcpy(rgb, in_ptr, tot_bytes); in_ptr += tot_bytes;
+    if(read_cb(bmp_ctx, pixels, tot_bytes) < tot_bytes) {
+      Om_free(pixels); return nullptr;
+    }
   } else {
     // read rows in reverse order
-    unsigned hmax = (h - 1);
-    for(unsigned y = 0; y < h; ++y) {
-      memcpy(rgb + (row_bytes * (hmax - y)), in_ptr, row_bytes);
-      in_ptr += row_bytes;
+    unsigned max_h = (bmp_h - 1);
+    for(unsigned y = 0; y < bmp_h; ++y) {
+      if(read_cb(bmp_ctx, pixels + (row_bytes * (max_h - y)), row_bytes) < row_bytes) {
+        Om_free(pixels); return nullptr;
+      }
     }
   }
 
-  // finally swap components order BGR to RGB
-  for(unsigned i = 0; i < tot_bytes; i += c)
-    rgb[i  ] ^= rgb[i+2] ^= rgb[i  ] ^= rgb[i+2]; //< BGR => RGB
+  // in-place conversion BGR to BGRA
+  if(bmp_c == 3)
+    __inplace_rgb_to_rgba(pixels, bmp_w * bmp_h, 0xFF);
+
+  // finally swap components order BGRA to RGBA
+  __in_place_rb_swap_32(pixels, tot_bytes);
 
   // assign output values
-  (*out_w) = w; (*out_h) = h; (*out_c) = c;
+  (*w) = bmp_w;
+  (*h) = bmp_h;
 
-  return rgb;
-}
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __bmp_decode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 
-/// \brief Write BMP file.
-///
-/// Write BMP data to file pointer.
-///
-/// \param[out] out_file  : File pointer to write to.
-/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
-/// \param[in]  in_w      : Input image width.
-/// \param[in]  in_h      : Input image height.
-/// \param[in]  in_c      : Input image color component count, either 3 or 4.
-///
-/// \return True if operation succeed, false otherwise
-///
-static bool __bmp_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  // compute data sizes
-  size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
-  size_t row_bytes = in_w * in_c;                   //< row size in bytes
-  size_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
-  size_t tot_bytes = r4b_bytes * in_h;
-  size_t bmp_bytes = tot_bytes + hdr_bytes;
-
-  // BMP headers structure
-  OMM_BITMAPHEADER bmp_head = {};
-  bmp_head.signature[0] = 0x42;
-  bmp_head.signature[1] = 0x4D; // BM signature
-  bmp_head.offbits = 54; // file header + info header = 54 bytes
-  bmp_head.size = bmp_bytes;
-
-  OMM_BITMAPINFOHEADER bmp_info = {};
-  bmp_info.size = sizeof(OMM_BITMAPINFOHEADER);
-  bmp_info.width = in_w;
-  bmp_info.height = in_h;
-  bmp_info.planes = 1;
-  bmp_info.bpp = in_c * 8;
-  bmp_info.compression = 0;
-  bmp_info.sizeimage = tot_bytes;
-  bmp_info.xppm = bmp_info.yppm = 0x0ec4;
-
-  // make sure we start at begining
-  fseek(out_file, 0, SEEK_SET);
-
-  // write file header
-  if(fwrite(&bmp_head, 1, sizeof(OMM_BITMAPHEADER), out_file) != sizeof(OMM_BITMAPHEADER))
-    return false;
-  // write info header
-  if(fwrite(&bmp_info, 1, sizeof(OMM_BITMAPINFOHEADER), out_file) != sizeof(OMM_BITMAPINFOHEADER))
-    return false;
-
-  // allocate buffer for data translation
-  uint8_t* row = reinterpret_cast<uint8_t*>(Om_alloc(r4b_bytes));
-  if(!row) return false;
-
-  // useful values for translation
-  const uint8_t* sp;
-  uint8_t* dp;
-  unsigned hmax = (in_h - 1);
-
-  for(unsigned y = 0; y < in_h; ++y) {
-    sp = in_rgb + (row_bytes * (hmax - y)); // reverse row up to bottom
-    dp = row;
-    for(unsigned x = 0; x < in_w; ++x) {
-      // convert RGBA to BGRA
-      dp[0] = sp[2];
-      dp[1] = sp[1];
-      dp[2] = sp[0];
-      if(in_c == 4) dp[3] = sp[3];
-      sp += in_c;
-      dp += in_c;
-    }
-    // write row to file
-    if(fwrite(row, 1, r4b_bytes, out_file) != r4b_bytes) {
-      Om_free(row); return false;
-    }
-  }
-
-  Om_free(row);
-
-  return true;
+  return pixels;
 }
 
 /// \brief Encode BMP data.
 ///
 /// Encode BMP data to buffer in memory.
 ///
-/// \param[out] out_size  : Output BMP data size in bytes.
+/// \param[in]  bmp_ctx   : Pointer to BMP Codec Context.
 /// \param[in]  in_rgb    : Input image RGB(A) data to encode.
 /// \param[in]  in_w      : Input image width.
 /// \param[in]  in_h      : Input image height.
@@ -1003,8 +1921,16 @@ static bool __bmp_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-static uint8_t* __bmp_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static bool __bmp_encode_common(BMP_CONTEXT* bmp_ctx, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  // write function
+  bmp_io_fn write_cb = bmp_ctx->io_fn;
+  //bmp_seek_fn seek_cb = bmp_ctx->seek_fn;
+
   // compute data sizes
   size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
   size_t row_bytes = in_w * in_c;                   //< row size in bytes
@@ -1028,71 +1954,202 @@ static uint8_t* __bmp_encode(size_t* out_size, const uint8_t* in_rgb, unsigned i
   bmp_info.sizeimage = tot_bytes;
   bmp_info.xppm = bmp_info.yppm = 0x0ec4;
 
-  // allocate buffer for BMP data
-  uint8_t* bmp = reinterpret_cast<uint8_t*>(Om_alloc(bmp_bytes));
-  if(!bmp) return nullptr;
-
-  // keep pointer to buffer
-  uint8_t* bmp_ptr = bmp;
+  // checks whether we need to allocate buffer
+  if(!__bmp_alloc_write_mem(bmp_ctx, bmp_bytes)) {
+    return false;
+  }
 
   // write file header
-  memcpy(bmp_ptr, &bmp_head, sizeof(OMM_BITMAPHEADER));
-  bmp_ptr += sizeof(OMM_BITMAPHEADER);
+  if(write_cb(bmp_ctx, &bmp_head, sizeof(OMM_BITMAPHEADER)) != sizeof(OMM_BITMAPHEADER)) {
+    __bmp_free(bmp_ctx); return false;
+  }
+
   // write info header
-  memcpy(bmp_ptr, &bmp_info, sizeof(OMM_BITMAPINFOHEADER));
-  bmp_ptr += sizeof(OMM_BITMAPINFOHEADER);
+  if(write_cb(bmp_ctx, &bmp_info, sizeof(OMM_BITMAPINFOHEADER)) != sizeof(OMM_BITMAPINFOHEADER)) {
+    __bmp_free(bmp_ctx); return false;
+  }
 
   // allocate buffer for data translation
   uint8_t* row = reinterpret_cast<uint8_t*>(Om_alloc(r4b_bytes));
   if(!row) {
-    Om_free(bmp);
-    return nullptr;
+    __bmp_free(bmp_ctx); return false;
   }
+
+  // fill padding with zeros
+  if((r4b_bytes - row_bytes) > 0)
+    memset(row + row_bytes, 0, r4b_bytes - row_bytes);
 
   // useful values for translation
   const uint8_t* sp;
   uint8_t* dp;
   unsigned hmax = (in_h - 1);
 
-  for(unsigned y = 0; y < in_h; ++y) {
-    sp = in_rgb + (row_bytes * (hmax - y)); // reverse row up to bottom
-    dp = row;
-    for(unsigned x = 0; x < in_w; ++x) {
-      // convert RGBA to BGRA
-      dp[0] = sp[2];
-      dp[1] = sp[1];
-      dp[2] = sp[0];
-      if(in_c == 4) dp[3] = sp[3];
-      sp += in_c;
-      dp += in_c;
+  if(in_c == 4) {
+    for(unsigned y = 0; y < in_h; ++y) {
+      dp = row;
+      sp = in_rgb + (row_bytes * (hmax - y)); // reverse row up to bottom
+      for(unsigned x = 0; x < in_w; ++x, sp += 4, dp += 4) {
+        // convert RGBA to BGRA
+        dp[0] = sp[2]; dp[1] = sp[1]; dp[2] = sp[0]; dp[3] = sp[3];
+      }
+      // write row
+      if(write_cb(bmp_ctx, row, r4b_bytes) != r4b_bytes) {
+        __bmp_free(bmp_ctx); return false;
+      }
     }
-
-    // write row to buffer
-    memcpy(bmp_ptr, row, r4b_bytes);
-    bmp_ptr += r4b_bytes;
+  } else {
+    for(unsigned y = 0; y < in_h; ++y) {
+      dp = row;
+      sp = in_rgb + (row_bytes * (hmax - y)); // reverse row up to bottom
+      for(unsigned x = 0; x < in_w; ++x, sp += 3, dp += 3) {
+        // convert RGB to BGR
+        dp[0] = sp[2]; dp[1] = sp[1]; dp[2] = sp[0];
+      }
+      // write row
+      if(write_cb(bmp_ctx, row, r4b_bytes) != r4b_bytes) {
+        __bmp_free(bmp_ctx); return false;
+      }
+    }
   }
 
   Om_free(row);
 
-  (*out_size) = bmp_bytes;
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __bmp_encode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 
-  return bmp;
+  return true;
+}
+
+
+/// \brief Read BMP file.
+///
+/// Read BMP data from file pointer.
+///
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  bmp_file  : File pointer to read BMP data from.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
+///
+/// \return Pointer to decoded RGBA image piwels or nullptr if failed.
+///
+static uint8_t* __bmp_read(unsigned* w, unsigned* h, FILE* bmp_file, bool flip_y)
+{
+  // BMP Codec Context
+  BMP_CONTEXT bmp;
+
+  // make sure we start at begining
+  fseek(bmp_file, 0, SEEK_SET);
+
+  // Initialize BMP context for file read
+  __bmp_init_read_file(&bmp, bmp_file);
+
+  // decode BMP data
+  return __bmp_decode_common(w, h, &bmp, flip_y);
+}
+
+/// \brief Decode BMP data.
+///
+/// Decode BMP data from buffer in memory.
+///
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  bmp_data  : Buffer to BMP data to decode.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
+///
+/// \return Pointer to decoded RGBA piwels data or nullptr if failed.
+///
+static uint8_t* __bmp_decode(unsigned* w, unsigned* h,  const uint8_t* bmp_data, bool flip_y)
+{
+  // BMP Codec Context
+  BMP_CONTEXT bmp;
+
+  // Initialize BMP context for read from memory
+  __bmp_init_read_mem(&bmp, bmp_data);
+
+  // decode BMP data
+  return __bmp_decode_common(w, h, &bmp, flip_y);
+}
+
+
+/// \brief Write BMP file.
+///
+/// Write BMP data to file pointer.
+///
+/// \param[out] out_file  : File pointer to write to.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return True if operation succeed, false otherwise
+///
+static bool __bmp_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+{
+  // BMP Codec Context
+  BMP_CONTEXT bmp;
+
+  // make sure we start at begining
+  fseek(out_file, 0, SEEK_SET);
+
+  // Initialize BMP context for file read
+  __bmp_init_write_file(&bmp, out_file);
+
+  // decode BMP data
+  return __bmp_encode_common(&bmp, in_rgb, in_w, in_h, in_c);
+}
+
+/// \brief Encode BMP data.
+///
+/// Encode BMP data to buffer in memory.
+///
+/// \param[out] out_size  : Output BMP data size in bytes.
+/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
+/// \param[in]  in_w      : Input image width.
+/// \param[in]  in_h      : Input image height.
+/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+///
+/// \return Pointer to encoded BMP image data or nullptr if failed.
+///
+static uint8_t* __bmp_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+{
+  // BMP Codec Context
+  BMP_CONTEXT bmp;
+
+  // pointer to be allocated
+  uint8_t* bmp_data;
+  size_t bmp_size;
+
+  // Initialize BMP context for read from memory
+  __bmp_init_write_mem(&bmp, reinterpret_cast<void**>(&bmp_data), &bmp_size);
+
+  // decode BMP data
+  if(!__bmp_encode_common(&bmp, in_rgb, in_w, in_h, in_c))
+    return nullptr;
+
+  (*out_size) = bmp_size;
+
+  return bmp_data;
 }
 
 /// \brief Decode JPEG.
 ///
 /// Common function to decode JPEG using the given GIF decoder structure.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  jpg_dec : JPEG decoder structure pointer.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  jpg_dec   : JPEG decoder structure pointer.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded RGB image data or nullptr if failed.
+/// \return Pointer to decoded RGBA image pixels or nullptr if failed.
 ///
-static uint8_t* __jpg_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* jpg_dec, bool flip_y)
+static uint8_t* __jpg_decode_common(unsigned* w, unsigned* h, void* jpg_dec, bool flip_y)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   jpeg_decompress_struct* jpg = reinterpret_cast<jpeg_decompress_struct*>(jpg_dec);
 
   // read jpeg header
@@ -1103,31 +2160,30 @@ static uint8_t* __jpg_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
   jpeg_start_decompress(jpg);
 
   // get image parameters
-	unsigned w = jpg->output_width;
-	unsigned h = jpg->output_height;
-	unsigned c = jpg->output_components;
+	unsigned jpg_w = jpg->output_width;
+	unsigned jpg_h = jpg->output_height;
+	unsigned jpg_c = jpg->output_components;
 
 	// define sizes
-  size_t row_bytes = w * c;
-  size_t tot_bytes = row_bytes * h;
+  size_t row_bytes = jpg_w * jpg_c;
 
-  // allocate buffer to receive RGB data
-  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
-  if(!rgb) return nullptr;
+  // allocate buffer, large enough to store **RGBA** data
+  uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(jpg_w * jpg_h * 4));
+  if(!pixels) return nullptr;
 
-  // row list pointer for jpeg decoder
-  uint8_t* row_p[1];
+  // row pointer for jpeg decoder
+  uint8_t* dp;
 
   if(flip_y) {
-    unsigned hmax = h - 1;
+    unsigned max_h = jpg_h - 1;
     while(jpg->output_scanline < jpg->output_height) {
-      row_p[0] = rgb + ((hmax - jpg->output_scanline) * row_bytes);
-      jpeg_read_scanlines(jpg, row_p, 1); //< read one row (scanline)
+      dp = pixels + ((max_h - jpg->output_scanline) * row_bytes);
+      jpeg_read_scanlines(jpg, &dp, 1); //< read one row (scanline)
     }
   } else {
     while(jpg->output_scanline < jpg->output_height) {
-      row_p[0] = rgb + (jpg->output_scanline * row_bytes);
-      jpeg_read_scanlines(jpg, row_p, 1); //< read one row (scanline)
+      dp = pixels + (jpg->output_scanline * row_bytes);
+      jpeg_read_scanlines(jpg, &dp, 1); //< read one row (scanline)
     }
   }
 
@@ -1137,10 +2193,20 @@ static uint8_t* __jpg_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
   // cleanup decoder
 	jpeg_destroy_decompress(jpg);
 
-	// assign output values
-	(*out_w) = w; (*out_h) = h; (*out_c) = c;
+  // in-place conversion RGB to RGBA
+  if(jpg_c == 3)
+    __inplace_rgb_to_rgba(pixels, jpg_w * jpg_h, 0xFF);
 
-	return rgb;
+	// assign output values
+	(*w) = jpg_w;
+	(*h) = jpg_h;
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __jpg_decode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+	return pixels;
 }
 
 /// \brief Encode JEPG.
@@ -1158,6 +2224,10 @@ static uint8_t* __jpg_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   jpeg_compress_struct* jpg = reinterpret_cast<jpeg_compress_struct*>(jpg_enc);
 
   // clamp quality value
@@ -1228,6 +2298,11 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
   // destroy encoder
   jpeg_destroy_compress(jpg);
 
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __jpg_encode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
   return true;
 }
 
@@ -1235,15 +2310,14 @@ static bool __jpg_encode_common(void* jpg_enc, const uint8_t* in_rgb, unsigned i
 ///
 /// Read JPEG data from file pointer.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_file : Input file pointer to read data from.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  jpg_file  : File pointer to read JPEG data from.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded image RGB data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __jpg_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __jpg_read(unsigned* w, unsigned* h, FILE* jpg_file, bool flip_y)
 {
   // create base object for jpeg decoder
   jpeg_decompress_struct jpg;
@@ -1254,26 +2328,25 @@ static uint8_t* __jpg_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FI
   jpeg_create_decompress(&jpg);
 
   // make sure we start at beginning and setup jpeg IO
-  fseek(in_file, 0, SEEK_SET);
-  jpeg_stdio_src(&jpg, in_file);
+  fseek(jpg_file, 0, SEEK_SET);
+  jpeg_stdio_src(&jpg, jpg_file);
 
-  return __jpg_decode_common(out_w, out_h, out_c, &jpg, flip_y);
+  return __jpg_decode_common(w, h, &jpg, flip_y);
 }
 
 /// \brief Decode JPEG data.
 ///
 /// Decode JPEG data from buffer in memory.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_data : Input JPEG data to decode.
-/// \param[in]  in_size : Input JPEG data size in bytes.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  jpg_data  : Buffer to JPEG data to decode.
+/// \param[in]  jpg_size  : Size of JPEG data to decode.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded image RGB data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __jpg_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
+static uint8_t* __jpg_decode(unsigned* w, unsigned* h, const uint8_t* jpg_data, size_t jpg_size, bool flip_y)
 {
   // create base object for jpeg decoder
   jpeg_decompress_struct jpg;
@@ -1284,9 +2357,9 @@ static uint8_t* __jpg_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, 
   jpeg_create_decompress(&jpg);
 
   // set read data pointer
-  jpeg_mem_src(&jpg, in_data, in_size);
+  jpeg_mem_src(&jpg, jpg_data, jpg_size);
 
-  return __jpg_decode_common(out_w, out_h, out_c, &jpg, flip_y);
+  return __jpg_decode_common(w, h, &jpg, flip_y);
 }
 
 /// \brief Write JPEG file.
@@ -1334,6 +2407,7 @@ static bool __jpg_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 static uint8_t* __jpg_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
+
   // create base object for jpeg encoder
   jpeg_compress_struct jpg;
   jpeg_error_mgr jerr;
@@ -1361,66 +2435,69 @@ static uint8_t* __jpg_encode(size_t* out_size, const uint8_t* in_rgb, unsigned i
 ///
 /// Common function to decode PNG using the given PNG decoder structure.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  png_dec : PNG decoder structure pointer.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  png       : PNG decoder structure pointer.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded RGB(A) image data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __png_decode_common(unsigned* out_w, unsigned* out_h, unsigned* out_c, void* png_dec, bool flip_y)
+static uint8_t* __png_decode_common(unsigned* w, unsigned* h, png_structp png, bool flip_y)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // get decoder
-  png_structp png = reinterpret_cast<png_structp>(png_dec);
+  //png_structp png = reinterpret_cast<png_structp>(png_dec);
 
   // create PNG info structure
   png_infop png_info = png_create_info_struct(png);
 
   // get image properties
   png_read_info(png, png_info);
-  unsigned w = png_get_image_width(png, png_info);
-  unsigned h = png_get_image_height(png, png_info);
-  unsigned c = png_get_channels(png, png_info);
+  unsigned png_w = png_get_image_width(png, png_info);
+  unsigned png_h = png_get_image_height(png, png_info);
+  unsigned png_c = png_get_channels(png, png_info);
+
+  // we support only RGB or RGBA
+  if(png_c < 3)
+    return nullptr;
 
   // retrieve and define useful sizes
-  size_t row_bytes = png_get_rowbytes(png, png_info);
-  size_t tot_bytes = h * row_bytes;
+  size_t row_bytes = png_w * png_c;
 
-  // allocate pointer to receive RGB(A) data
-  uint8_t* rgb = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
-  if(!rgb) return nullptr;
-
-  // allocate list of pointers for output RGB(A) rows
-  uint8_t** rows_p = reinterpret_cast<uint8_t**>(Om_alloc(sizeof(void*)*h));
-  if(!rows_p) {
-    Om_free(rgb);
-    return nullptr;
-  }
+  // allocate buffer, large enough to store **RGBA** data
+  uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(png_w * png_h * 4));
+  if(!pixels) return nullptr;
 
   // define pointers to each row in output RGB(A) data
   if(flip_y) {
-    unsigned hmax = h - 1;
-    for(unsigned y = 0; y < h; ++y)
-      rows_p[y] = rgb + ((hmax - y) * row_bytes);
+    unsigned hmax = png_h - 1;
+    for(unsigned y = 0; y < png_h; ++y)
+      png_read_row(png, pixels + ((hmax - y) * row_bytes), nullptr);
   } else {
-    for(unsigned y = 0; y < h; ++y)
-      rows_p[y] = rgb + (y * row_bytes);
+    for(unsigned y = 0; y < png_h; ++y)
+      png_read_row(png, pixels + (y * row_bytes), nullptr);
   }
-
-  // read all rows at once
-  png_read_image(png, rows_p);
 
   // cleanup
   png_destroy_read_struct(&png, &png_info, nullptr);
 
-  // delete list of pointers
-  Om_free(rows_p);
+  // in-place conversion RGB to RGBA
+  if(png_c == 3)
+    __inplace_rgb_to_rgba(pixels, png_w * png_h, 0xFF);
 
   // assign output values
-  (*out_w) = w; (*out_h) = h; (*out_c) = c;
+  (*w) = png_w;
+  (*h) = png_h;
 
-  return rgb;
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __png_decode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return pixels;
 }
 
 /// \brief Encode PNG.
@@ -1436,10 +2513,14 @@ static uint8_t* __png_decode_common(unsigned* out_w, unsigned* out_h, unsigned* 
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static bool __png_encode_common(png_structp png, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // get encoder
-  png_structp png = reinterpret_cast<png_structp>(png_enc);
+  //png_structp png = reinterpret_cast<png_structp>(png_enc);
 
   // create PNG info structure
   png_infop png_info = png_create_info_struct(png);
@@ -1464,20 +2545,10 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   // define useful sizes
   size_t row_bytes = in_w * in_c;
 
-  // allocate list of pointers for input RGB(A) rows
-  const uint8_t** rows_p = reinterpret_cast<const uint8_t**>(Om_alloc(sizeof(void*)*in_h));
-  if(!rows_p) {
-    png_destroy_write_struct(&png, &png_info);
-    png_free_data(png, png_info, PNG_FREE_ALL, -1);
-    return false;
+  // write each row
+  for(unsigned y = 0; y < in_h; ++y) {
+    png_write_row(png, const_cast<uint8_t*>(in_rgb + (y * row_bytes)));
   }
-
-  // define pointers to each row in input RGB(A) data
-  for(unsigned y = 0; y < in_h; ++y)
-    rows_p[y] = in_rgb + (y * row_bytes);
-
-  // supply all data at once to encoder
-  png_write_image(png, const_cast<uint8_t**>(rows_p));
 
   // finalize write process
   png_write_end(png, nullptr);
@@ -1486,8 +2557,10 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
   png_destroy_write_struct(&png, &png_info);
   png_free_data(png, png_info, PNG_FREE_ALL, -1);
 
-  // delete list of pointers
-  Om_free(rows_p);
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __png_encode_common : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 
   return true;
 }
@@ -1496,25 +2569,24 @@ static bool __png_encode_common(void* png_enc, const uint8_t* in_rgb, unsigned i
 ///
 /// Read PNG data from file pointer.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_file : Input file pointer to read data from.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  png_file  : File pointer to read PNG data from.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
-/// \return Pointer to decoded image RGB(A) data or nullptr if failed.
+/// \return Pointer to decoded image RGBA pixels or nullptr if failed.
 ///
-static uint8_t* __png_read(unsigned* out_w, unsigned* out_h, unsigned* out_c, FILE* in_file, bool flip_y)
+static uint8_t* __png_read(unsigned* w, unsigned* h, FILE* png_file, bool flip_y)
 {
   // create PNG decoder structure
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
   // make sure we start at beginning and setup png IO
-  fseek(in_file, 0, SEEK_SET);
-  png_init_io(png, in_file);
+  fseek(png_file, 0, SEEK_SET);
+  png_init_io(png, png_file);
 
   // decode PNG data
-  return __png_decode_common(out_w, out_h, out_c, png, flip_y);
+  return __png_decode_common(w, h, png, flip_y);
 }
 
 /// \brief Custom PNG read struct
@@ -1545,29 +2617,29 @@ void __png_read_buff_fn(png_structp png, uint8_t* dst, size_t len)
 ///
 /// Decode PNG data from buffer in memory.
 ///
-/// \param[out] out_w   : Output image width
-/// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
-/// \param[in]  in_data : Input PNG data to decode.
-/// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
+/// \param[out] w         : Pointer that receive decoded image width.
+/// \param[out] h         : Pointer that receive decoded image height.
+/// \param[in]  png_data  : Buffer to read PNG data from.
+/// \param[in]  flip_y    : Load image for bottom-left origin usage (upside down)
 ///
 /// \return Pointer to decoded image RGB(A) data or nullptr if failed.
 ///
-static uint8_t* __png_decode(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, bool flip_y)
+static uint8_t* __png_decode(unsigned* w, unsigned* h, const uint8_t* png_data, bool flip_y)
 {
+
   // create PNG decoder structure
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
   // custom read structure
   __png_read_st read_st;
-  read_st.src_data = in_data;
+  read_st.src_data = png_data;
   read_st.src_seek = 0;
 
   // set custom read process
   png_set_read_fn(png, &read_st, __png_read_buff_fn);
 
   // decode PNG data
-  return __png_decode_common(out_w, out_h, out_c, png, flip_y);
+  return __png_decode_common(w, h, png, flip_y);
 }
 
 /// \brief Write PNG file.
@@ -1650,6 +2722,10 @@ void __png_flush_fn(png_structp png)
 ///
 static uint8_t* __png_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // create PNG encoder structure
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
@@ -1667,6 +2743,11 @@ static uint8_t* __png_encode(size_t* out_size, const uint8_t* in_rgb, unsigned i
 
   (*out_size) = write_st.dst_size;
 
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __png_encode : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
   return write_st.dst_data;
 }
 
@@ -1674,7 +2755,7 @@ static uint8_t* __png_encode(size_t* out_size, const uint8_t* in_rgb, unsigned i
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_imageType(uint8_t* data)
+int Om_imgGetType(uint8_t* data)
 {
   // identify image format
   return __image_sign_matches(data);
@@ -1684,7 +2765,7 @@ int Om_imageType(uint8_t* data)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_imageType(FILE* file)
+int Om_imgGetType(FILE* file)
 {
   // read first 8 bytes of the file
   uint8_t buff[8];
@@ -1699,22 +2780,26 @@ int Om_imageType(FILE* file)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y)
+uint8_t* Om_imgLoadFile(unsigned* w, unsigned* h, const wstring& path, bool flip_y)
 {
-  // initialize output values
-  (*out_w) = 0;
-  (*out_h) = 0;
-  (*out_c) = 0;
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
 
-  // Open file for writing
-  FILE* in_file;
-  if((in_file = _wfopen(in_path.c_str(), L"rb")) == nullptr)
+  // initialize output values
+  (*w) = 0;
+  (*h) = 0;
+  uint8_t* pix = nullptr;
+
+  // Open file for reading
+  FILE* fp;
+  if((fp = _wfopen(path.c_str(), L"rb")) == nullptr)
     return nullptr;
 
   // read first 8 bytes of the file
   uint8_t buff[8];
-  fseek(in_file, 0, SEEK_SET);
-  if(fread(buff, 1, 8, in_file) < 8)
+  fseek(fp, 0, SEEK_SET);
+  if(fread(buff, 1, 8, fp) < 8)
     return nullptr;
 
   // identify image format
@@ -1724,63 +2809,147 @@ uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const w
   if(type != 0) {
     switch(type)
     {
-    case OMM_IMAGE_TYPE_BMP:
-      return __bmp_read(out_w, out_h, out_c, in_file, flip_y);
-    case OMM_IMAGE_TYPE_JPG:
-      return __jpg_read(out_w, out_h, out_c, in_file, flip_y);
-    case OMM_IMAGE_TYPE_PNG:
-      return __png_read(out_w, out_h, out_c, in_file, flip_y);
-    case OMM_IMAGE_TYPE_GIF:
-      return __gif_read(out_w, out_h, out_c, in_file, flip_y);
+    case OMM_IMAGE_BMP:
+      pix = __bmp_read(w, h, fp, flip_y);
+      break;
+    case OMM_IMAGE_JPG:
+      pix = __jpg_read(w, h, fp, flip_y);
+      break;
+    case OMM_IMAGE_PNG:
+      pix = __png_read(w, h, fp, flip_y);
+      break;
+    case OMM_IMAGE_GIF:
+      pix = __gif_read(w, h, fp, flip_y);
+      break;
     }
   }
 
-  fclose(in_file);
+  fclose(fp);
 
-  return nullptr;
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgLoadFile : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return pix;
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y)
+uint8_t* Om_imgLoadData(unsigned* w, unsigned* h, const uint8_t* data, size_t size, bool flip_y)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // initialize output values
-  (*out_w) = 0;
-  (*out_h) = 0;
-  (*out_c) = 0;
+  (*w) = 0;
+  (*h) = 0;
+  uint8_t* pix = nullptr;
 
   // prevent idiot attempts
-  if(!in_data || !in_size)
+  if(!data || !size)
     return nullptr;
 
   // identify image format
-  int type = __image_sign_matches(in_data);
+  int type = __image_sign_matches(data);
 
   // load according image format
   if(type != 0) {
     switch(type)
     {
-    case OMM_IMAGE_TYPE_BMP:
-      return __bmp_decode(out_w, out_h, out_c, in_data, flip_y);
-    case OMM_IMAGE_TYPE_JPG:
-      return __jpg_decode(out_w, out_h, out_c, in_data, in_size, flip_y);
-    case OMM_IMAGE_TYPE_PNG:
-      return __png_decode(out_w, out_h, out_c, in_data, flip_y);
-    case OMM_IMAGE_TYPE_GIF:
-      return __gif_decode(out_w, out_h, out_c, in_data, flip_y);
+    case OMM_IMAGE_BMP:
+      pix = __bmp_decode(w, h, data, flip_y);
+      break;
+    case OMM_IMAGE_JPG:
+      pix = __jpg_decode(w, h, data, size, flip_y);
+      break;
+    case OMM_IMAGE_PNG:
+      pix = __png_decode(w, h, data, flip_y);
+      break;
+    case OMM_IMAGE_GIF:
+      pix = __gif_decode(w, h, data, flip_y);
+      break;
     }
   }
 
-  return nullptr;
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgLoadData : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return pix;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_imgLoadHBmp(unsigned *w, unsigned *h, HBITMAP hBmp)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  //HDC hDc = CreateCompatibleDC(nullptr);
+  HDC hDc = GetDC(nullptr);
+
+  BITMAPINFO bmInfo = {};
+  bmInfo.bmiHeader.biSize = sizeof(bmInfo.bmiHeader);
+
+  // Get the BITMAPINFO  structure from the bitmap
+  if(0 == GetDIBits(hDc, hBmp, 0, 0, nullptr, &bmInfo, DIB_RGB_COLORS)) {
+    return nullptr;
+  }
+
+  unsigned bmp_w = bmInfo.bmiHeader.biWidth;
+  unsigned bmp_h = bmInfo.bmiHeader.biHeight;
+  unsigned bmp_c = bmInfo.bmiHeader.biBitCount / 8;
+
+  size_t row_bytes = bmp_w * bmp_c;
+  size_t tot_bytes = row_bytes * bmp_h;
+
+  // allocate new buffer, large enough to hold RGBA data
+  uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(bmp_w * bmp_h * 4));
+  if(!pixels) return nullptr;
+
+  // we need to specify compression value or GetDIBits return garbage
+  bmInfo.bmiHeader.biCompression = BI_RGB;
+  // set negative height to get scanlines in proper order
+  bmInfo.bmiHeader.biHeight = -bmp_h;
+
+  // get bitmap data
+  if(0 == GetDIBits(hDc, hBmp, 0, bmp_h, pixels, &bmInfo, DIB_RGB_COLORS)) {
+    return nullptr;
+  }
+
+  // in-place conversion RGB to RGBA
+  if(bmp_c == 3)
+    __inplace_rgb_to_rgba(pixels, bmp_w * bmp_h, 0xFF);
+
+
+  // swap BGRA to RGBA
+  __in_place_rb_swap_32(pixels, tot_bytes);
+
+  ReleaseDC(nullptr, hDc);
+
+  *w = bmp_w;
+  *h = bmp_h;
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgLoadHBmp : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return pixels;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1804,7 +2973,7 @@ bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1828,7 +2997,7 @@ bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1852,7 +3021,7 @@ bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+bool Om_imgSaveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1876,7 +3045,7 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1889,7 +3058,7 @@ uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1902,7 +3071,7 @@ uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -1915,8 +3084,9 @@ uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_encodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_imgEncodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
+
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
     return nullptr;
@@ -1925,400 +3095,115 @@ uint8_t* Om_encodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 }
 
 
-/// \brief Compute cubic interpolation.
-///
-/// Compute cubic the interpolation of the specified values.
-///
-/// \param[in]  a : Start handle
-/// \param[in]  b : Start node
-/// \param[in]  c : End node
-/// \param[in]  d : End handle
-/// \param[in]  t : Interpolation phase
-///
-/// \return cubic interpolated value
-///
-static inline float __interp_cubic(float a, float b, float c, float d, float t)
-{
-  return b + 0.5f * t * (c - a + t * (2.0f * a - 5.0f * b + 4.0f * c - d + t * (3.0f * (b - c) + d - a)));
-}
-
-/// \brief Get BiCubic interpolated pixel.
-///
-/// Compute the BiCubic interpolated pixel at the specified coordinates.
-///
-/// \param[in]  out_pix : Array to receive interpolated pixel components.
-/// \param[in]  u       : Sample horizontal coordinate in image, from 0.0 to 1.0.
-/// \param[in]  v       : Sample vertical coordinate in image, from 0.0 to 1.0.
-/// \param[in]  in_rgb  : Input image RGB(A) data.
-/// \param[in]  in_w    : Input image width.
-/// \param[in]  in_h    : Input image height.
-/// \param[in]  in_c    : Input image color component count (bytes per pixel).
-///
-static inline void __image_sample_bicubic(uint8_t* out_pix, float u, float v, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  float x, y;
-
-  float xf = modf((u * in_w) - 0.5f, &x);
-  float yf = modf((v * in_h) - 0.5f, &y);
-
-  int ix = static_cast<int>(x) - 1;
-  int iy = static_cast<int>(y) - 1;
-
-  const uint8_t* sp[4];
-
-  float r[4]; float g[4]; float b[4]; float a[4];
-
-  int x_b, y_b;
-  int hmax = in_h - 1;
-  int wmax = in_w - 1;
-
-  for(int j = 0; j < 4; ++j) {
-    y_b = (std::max(0, std::min(iy + j, hmax)) * in_w) * in_c;
-    for(int i = 0; i < 4; ++i) {
-      x_b = std::max(0, std::min(ix + i, wmax)) * in_c;
-      sp[i] = in_rgb + (y_b + x_b);
-    }
-    r[j] = __interp_cubic(sp[0][0], sp[1][0], sp[2][0], sp[3][0], xf);
-    g[j] = __interp_cubic(sp[0][1], sp[1][1], sp[2][1], sp[3][1], xf);
-    b[j] = __interp_cubic(sp[0][2], sp[1][2], sp[2][2], sp[3][2], xf);
-    if(in_c == 4) a[j] = __interp_cubic(sp[0][3], sp[1][3], sp[2][3], sp[3][3], xf);
-  }
-
-  float m[4];
-  m[0] = __interp_cubic(r[0], r[1], r[2], r[3], yf);
-  m[1] = __interp_cubic(g[0], g[1], g[2], g[3], yf);
-  m[2] = __interp_cubic(b[0], b[1], b[2], b[3], yf);
-  if(in_c == 4) m[3] = __interp_cubic(a[0], a[1], a[2], a[3], yf);
-
-  for(unsigned i = 0; i < in_c; ++i) {
-    out_pix[i] = static_cast<uint8_t>(std::max(0.0f, std::min(m[i], 255.0f)));
-  }
-}
-
-/// \brief Get box interpolated pixel.
-///
-/// Compute the box interpolated pixel at the specified coordinates.
-///
-/// \param[in]  out_pix : Array to receive interpolated pixel components.
-/// \param[in]  box_w   : Box width in pixels.
-/// \param[in]  box_h   : Box height in pixels.
-/// \param[in]  u       : Sample horizontal coordinate in image, from 0.0 to 1.0.
-/// \param[in]  v       : Sample vertical coordinate in image, from 0.0 to 1.0.
-/// \param[in]  in_rgb  : Input image RGB(A) data.
-/// \param[in]  in_w    : Input image width.
-/// \param[in]  in_h    : Input image height.
-/// \param[in]  in_c    : Input image color component count (bytes per pixel).
-///
-static inline void __image_sample_box(uint8_t* out_pix, int box_w, int box_h, float u, float v, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  float r = 0.0f; float g = 0.0f; float b = 0.0f; float a = 0.0f;
-
-  const uint8_t *sp;
-
-  int x_b, y_b;
-  int wmax = (in_w - 1);
-  int hmax = (in_h - 1);
-
-  int x = u * wmax;
-  int y = v * hmax;
-
-  for(int j = 0; j < box_h; ++j) {
-    y_b = (std::max(0, std::min(y + j, hmax)) * in_w) * in_c;
-    for(int i = 0; i < box_w; ++i) {
-      x_b = std::max(0, std::min(x + i, wmax)) * in_c;
-      sp = in_rgb + (y_b + x_b);
-      r += sp[0]; g += sp[1]; b += sp[2];
-      if(in_c == 4) a += sp[3];
-    }
-  }
-
-  float f = box_h * box_w;
-
-  out_pix[0] = r / f; out_pix[1] = g / f; out_pix[2] = b / f;
-  if(in_c == 4) out_pix[3] = a / f;
-}
-
-/// \brief Box filter downsample image.
-///
-/// Reduce image resolution using box filtering.
-///
-/// \param[out] out_rgb : Output destination pointer.
-/// \param[in]  w       : target width.
-/// \param[in]  w       : target height.
-/// \param[in]  in_rgb  : Source image RGB(A) data.
-/// \param[in]  in_w    : Source image width.
-/// \param[in]  in_h    : source image height.
-/// \param[in]  in_c    : Source image component count (bytes per pixel)
-///
-static void __image_dsample(uint8_t* out_rgb, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  unsigned box_w = floor(static_cast<float>(in_w) / w);
-  unsigned box_h = floor(static_cast<float>(in_h) / h);
-
-  float inv_w = 1.0f / (static_cast<float>(w) - 1);
-  float inv_h = 1.0f / (static_cast<float>(h) - 1);
-
-  uint8_t smpl[4];
-
-  uint8_t* dp;
-  float u, v;
-
-  for(unsigned y = 0; y < h; ++y) {
-    dp = out_rgb + ((w * in_c) * y);
-    v = y * inv_h;
-    for(unsigned x = 0; x < w; ++x) {
-      u = x * inv_w;
-      __image_sample_box(smpl, box_w, box_h, u, v, in_rgb, in_w, in_h, in_c);
-      dp[0] = smpl[0]; dp[1] = smpl[1]; dp[2] = smpl[2];
-      if(in_c == 4) dp[3] = smpl[3];
-      dp += in_c;
-    }
-  }
-}
-
-/// \brief Bicubic filter upsample image
-///
-/// Increase image resolution using bicubic filtering.
-///
-/// \param[out] out_rgb : Output destination pointer.
-/// \param[in]  w       : target width.
-/// \param[in]  w       : target height.
-/// \param[in]  in_rgb  : Source image RGB(A) data.
-/// \param[in]  in_w    : Source image width.
-/// \param[in]  in_h    : source image height.
-/// \param[in]  in_c    : Source image component count (bytes per pixel)
-///
-static void __image_usample(uint8_t* out_rgb, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  float inv_w = 1.0f / (static_cast<float>(w) - 1);
-  float inv_h = 1.0f / (static_cast<float>(h) - 1);
-
-  uint8_t smpl[4];
-
-  uint8_t* dp;
-  float u, v;
-
-  for(unsigned y = 0; y < h; ++y) {
-    dp = out_rgb + ((w * in_c) * y);
-    v = y * inv_h;
-    for(unsigned x = 0; x < w; ++x) {
-      u = x * inv_w;
-      __image_sample_bicubic(smpl, u, v, in_rgb, in_w, in_h, in_c);
-      dp[0] = smpl[0]; dp[1] = smpl[1]; dp[2] = smpl[2];
-      if(in_c == 4) dp[3] = smpl[3];
-      dp += in_c;
-    }
-  }
-}
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned src_c)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // prevent idiot attempts
-  if(!w  || !h || !in_rgb || !in_w || !in_h || !in_c)
-    return nullptr;
-
-  // define useful sizes
-  size_t out_row_bytes = w * in_c;
-
-  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc(out_row_bytes * h));
-  if(!out_rgb) return nullptr;
-
-  // resize image to fit desired square
-  if(in_w != w || in_h != h) {
-
-    if(w > in_w || h > in_h) {
-      __image_usample(out_rgb, w, h, in_rgb, in_w, in_h, in_c);
-    } else {
-      __image_dsample(out_rgb, w, h, in_rgb, in_w, in_h, in_c);
-    }
-
-  } else {
-
-    memcpy(out_rgb, in_rgb, (in_w * in_c) * in_h);
-  }
-
-  return out_rgb;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  // prevent idiot attempts
-  if(!w  || !h || !in_rgb || !in_w || !in_h || !in_c)
-    return nullptr;
-
-  if((x + w) > in_w || (y + h) > in_h)
-    return nullptr;
-
-  // define useful sizes
-  size_t in_row_bytes = in_w * in_c;
-  size_t out_row_bytes = w * in_c;
-
-  // allocate new buffer for cropped data
-  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc(out_row_bytes * h));
-  if(!out_rgb) return nullptr;
-
-  // copy required RGB data
-  const uint8_t* sp;
-  uint8_t* dp;
-
-  unsigned x_shift = (x * in_c);
-
-  for(unsigned j = 0; j < h; ++j) {
-
-    dp = out_rgb + (out_row_bytes * j);
-    sp = in_rgb + ((in_row_bytes * (j + y)) + x_shift);
-
-    for(unsigned i = 0; i < w; ++i) {
-
-      dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2];
-      if(in_c == 4) dp[3] = sp[3];
-
-      dp += in_c; sp += in_c;
-    }
-  }
-
-  return out_rgb;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  // prevent idiot attempts
-  if(!size || !in_rgb || !in_w || !in_h || !in_c)
-    return nullptr;
-
-  // create locale copy of original data
-  uint8_t* out_rgb = reinterpret_cast<uint8_t*>(Om_alloc((in_w * in_c) * in_h));
-  if(!out_rgb) return nullptr;
-
-  memcpy(out_rgb, in_rgb, (in_w * in_c) * in_h);
-
-  // resize image to fit desired size
-  if(in_w != size || in_h != size) {
-
-    unsigned out_w, out_h;
-    // determine target size according image aspect ratio
-    float a = static_cast<float>(in_w) / in_h;
-    if(a > 1.0f) {
-      out_w = static_cast<float>(size) * a;
-      out_h = size;
-    } else {
-      out_w = size;
-      out_h = static_cast<float>(size) / a;
-    }
-
-    uint8_t* tmp_rgb = Om_resizeImage(out_w, out_h, out_rgb, in_w, in_h, in_c);
-    if(tmp_rgb == nullptr) {
-      return nullptr;
-    }
-
-    // swap buffers
-    Om_free(out_rgb);
-    out_rgb = tmp_rgb;
-
-    // update input width and height
-    in_h = out_h;
-    in_w = out_w;
-  }
-
-  // crop image to square
-  if(in_w != in_h) {
-
-    unsigned x, y;
-
-    if(in_w > in_h) {
-      x = (in_w * 0.5f) - (in_h * 0.5f);
-      y = 0;
-    } else {
-      x = 0;
-      y = (in_h * 0.5f) - (in_w * 0.5f);
-    }
-
-    uint8_t* tmp_rgb = Om_cropImage(x, y, size, size, out_rgb, in_w, in_h, in_c);
-    if(tmp_rgb == nullptr) {
-      return nullptr;
-    }
-
-    // swap buffers
-    Om_free(out_rgb);
-    out_rgb = tmp_rgb;
-  }
-
-  return out_rgb;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
-{
-  // prevent idiot attempts
-  if(!in_rgb || !in_w || !in_h || !in_c)
+  if(!src_pix || !src_w || !src_h || !src_c)
     return nullptr;
 
   // BITMAP with 24 bits pixels data seem to be always interpreted with
   // transparent alpha once supplied to STATIC control, so we always
   // convert to 32 bits pixels data.
 
+  // buffer size
+  size_t tot_bytes = src_w * src_h * 4;
+
   // allocate buffer for 32 bits BMP data
-  uint8_t* bmp = reinterpret_cast<uint8_t*>(Om_alloc((in_w * 4) * in_h));
-  if(!bmp) return nullptr;
+  uint8_t* temp = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
+  if(!temp) return nullptr;
 
-  if(in_c == 4) {
-
-    // compute data sizes
-    size_t tot_bytes = (in_w * in_c) * in_h;
-
+  if(src_c == 4) {
     //copy RGBA data to temp buffer
-    memcpy(bmp, in_rgb, tot_bytes);
-
-    // swap pixels components from RGBA to BGRA
-    for(unsigned i = 0; i < tot_bytes; i += 4)
-      bmp[i  ] ^= bmp[i+2] ^= bmp[i  ] ^= bmp[i+2]; //< RGB => BGR
-
+    memcpy(temp, src_pix, tot_bytes);
   } else {
-
-    // compute data sizes
-    size_t row3_bytes = in_w * 3;
-    size_t row4_bytes = in_w * 4;
-
-    // pointers for translation
-    const uint8_t* sp;
-    uint8_t* dp;
-
-    for(unsigned y = 0; y < in_h; ++y) {
-
-      sp = in_rgb + (row3_bytes * y);
-      dp = bmp + (row4_bytes * y);
-
-      for(unsigned x = 0; x < in_w; ++x) {
-
-        // convert RGBA to BGRA
-        dp[0] = sp[2];
-        dp[1] = sp[1];
-        dp[2] = sp[0];
-        dp[3] = 0xFF;
-        sp += 3;
-        dp += 4;
-      }
-    }
+    // Convert RGB to RGBA
+    temp = __unpack_rgb_to_rgba(src_pix, src_w * src_h, 0xff);
   }
 
-  HBITMAP hBmp = CreateBitmap(in_w, in_h, 1, 32, bmp);
+  // swap RGBA to BGRA
+  __in_place_rb_swap_32(temp, tot_bytes);
 
-  Om_free(bmp);
+  HBITMAP hBmp = CreateBitmap(src_w, src_h, 1, 32, temp);
+
+  Om_free(temp);
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgEncodeHbmp : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 
   return hBmp;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  // copy rectangle in source image to destination
+  __copy_resample(dst_buf, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgCopyResample : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix, unsigned src_w, unsigned src_h)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  // prevent idiot attempts
+  if(!span || !src_pix || !src_w || !src_h)
+    return nullptr;
+
+
+  // create output buffer
+  uint8_t* thumb = reinterpret_cast<uint8_t*>(Om_alloc(span * span * 4));
+  if(!thumb) return nullptr;
+
+  if((src_w == src_h) || (mode == OMM_SIZE_FIT)) {
+    __draw_canvas(thumb, span, span, src_pix, src_w, src_h, 0x0);
+  } else {
+    // calculate rectangle in source image to get the proper image portion to
+    // resize according the specified mode
+    unsigned rec_x, rec_y, rec_w, rec_h;
+    // we get a "zoom" rectangle in the source so the resulting thumbnail
+    // will fill the entire square
+    if(src_w > src_h) {
+      rec_x = (src_w * 0.5f) - (src_h * 0.5f);
+      rec_y = 0;
+      rec_w = rec_h = src_h;
+    } else {
+      rec_x = 0;
+      rec_y = (src_h * 0.5f) - (src_w * 0.5f);
+      rec_w = rec_h = src_w;
+    }
+    // copy rectangle in source image to destination
+    __copy_resample(thumb, span, span, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+  }
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => Om_imgMakeThumb : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+
+  return thumb;
 }

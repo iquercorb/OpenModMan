@@ -20,6 +20,8 @@
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
+#include "OmUtilImg.h"
+
 /// \brief Image file interface.
 ///
 /// Object to provide interface for an image file.
@@ -45,11 +47,10 @@ class OmImage
     /// Load image from file.
     ///
     /// \param[in]  path  : Image file path
-    /// \param[in]  thumb : Size of the thumbnail to generate or 0 to ignore.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool open(const wstring& path, unsigned thumb = 0);
+    bool load(const wstring& path);
 
     /// \brief Load image.
     ///
@@ -57,11 +58,37 @@ class OmImage
     ///
     /// \param[in]  data  : Image data to read.
     /// \param[in]  size  : Image data size in bytes.
-    /// \param[in]  thumb : Size of the thumbnail to generate or 0 to ignore.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool open(uint8_t* data, size_t size, unsigned thumb = 0);
+    bool load(uint8_t* data, size_t size);
+
+    /// \brief Load image to thumbnail.
+    ///
+    /// Load image from file then create and store its
+    /// thumbnail version.
+    ///
+    /// \param[in]  path  : Image file path
+    /// \param[in]  span  : Span of thumbnail canvas to create.
+    /// \param[in]  mode  : Thumbnail resize mode.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode);
+
+    /// \brief Load image to thumbnail.
+    ///
+    /// Load image from data in memory then create and store its
+    /// thumbnail version.
+    ///
+    /// \param[in]  data  : Image data to read.
+    /// \param[in]  size  : Image data size in bytes.
+    /// \param[in]  span  : Span of thumbnail canvas to create.
+    /// \param[in]  mode  : Thumbnail resize mode.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMode mode);
 
     /// \brief Check validity
     ///
@@ -73,53 +100,55 @@ class OmImage
       return _valid;
     }
 
-    /// \brief Get image raw data.
+    /// \brief Source image path.
     ///
-    /// Returns stored image raw data.
+    /// Get source image file path. If image was loaded from data in
+    /// memory this value is empty.
     ///
-    /// \return Pointer to raw data.
+    /// \return Pointer to pixel data.
+    ///
+    const wstring& path() const {
+      return _path;
+    }
+
+    /// \brief Image pixel data.
+    ///
+    /// Get pointer to stored image pixel data.
+    ///
+    /// \return Pointer to pixel data.
     ///
     const uint8_t* data() const {
       return _data;
     }
 
-    /// \brief Get image raw data size.
+    /// \brief Image width
     ///
-    /// Returns stored image raw data size in bytes.
+    /// Get stored image width in pixel.
     ///
-    /// \return Raw data size in bytes.
+    /// \return Image width in pixels
     ///
-    size_t data_size() const {
-      return _data_size;
+    unsigned width() const {
+      return _width;
     }
 
-    /// \brief Get raw data image type.
+    /// \brief Image height
     ///
-    /// Returns stored image raw data image format.
+    /// Get stored image height in pixel.
     ///
-    /// possibles values are the following:
-    /// \c 0 : unknown or invalid type.
-    /// \c OMM_IMAGE_TYPE_BMP (1) : BMP image.
-    /// \c OMM_IMAGE_TYPE_JPG (2) : JPEG image.
-    /// \c OMM_IMAGE_TYPE_PNG (3) : PNG image.
-    /// \c OMM_IMAGE_TYPE_GIF (4) : GIF image.
+    /// \return Image height in pixels
     ///
-    /// \return Raw data image type.
-    ///
-    unsigned data_type() const {
-      return _data_type;
+    unsigned height() const {
+      return _height;
     }
 
-    /// \brief Create thumbnail.
+    /// \brief Get thumbnail.
     ///
-    /// Convert this image to its square thumbnail of the specified size.
+    /// Get the previously generated thumbnail bitmap.
     ///
-    /// \param[in]  size   Thumbnail size.
+    /// \return Last generated thumbnail bitmap or null if none was generated.
     ///
-    /// \return true if operation succeed, false otherwise.
-    ///
-    HBITMAP thumbnail() const {
-      return _thumbnail;
+    HBITMAP hbmp() const {
+      return _hbmp;
     }
 
     /// \brief Clear instance.
@@ -138,13 +167,15 @@ class OmImage
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    uint8_t*            _data;        //< Image data
+    wstring             _path;        //< Source image path if exists
 
-    size_t              _data_size;   //< Image data size
+    uint8_t*            _data;        //< Image pixel data
 
-    unsigned            _data_type;   //< Image data type
+    unsigned            _width;       //< Image width
 
-    HBITMAP             _thumbnail;   //< Image thumbnail
+    unsigned            _height;      //< Image height
+
+    HBITMAP             _hbmp;        //< Corresponding HBITMAP
 
     bool                _valid;       //< Valid image
 

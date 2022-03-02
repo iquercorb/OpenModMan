@@ -71,6 +71,16 @@ void OmUiMgrMainTst::_onInit()
 
   // retrieve main dialog
   this->_pUiMgr = static_cast<OmUiMgr*>(this->root());
+
+  DWORD lvStyle;
+  LVCOLUMNW lvCol;
+  // Initialize Packages ListView control
+  lvStyle = LVS_EX_DOUBLEBUFFER|LVS_EX_HIDELABELS|LVS_EX_ONECLICKACTIVATE;
+  this->msgItem(IDC_LV_IMG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
+  // set explorer theme
+  SetWindowTheme(this->getItem(IDC_LV_IMG),L"Explorer",nullptr);
+
+  this->msgItem(IDC_LV_IMG, LVM_SETICONSPACING, 0, MAKELPARAM(135,135));
 }
 
 ///
@@ -81,6 +91,45 @@ void OmUiMgrMainTst::_onShow()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrMainTst::_onShow\n";
   #endif
+
+  OmImage image;
+  HBITMAP hBm;
+  /*
+  image.open(L"D:\\Atelier\\Code\\Cpp\\OpenModMan\\screenshot.png", 128);
+  HBITMAP hBm = image.thumbnail();
+*/
+  HIMAGELIST hImgLs;
+
+  // Get the previous Image List to be destroyed (Small and Normal uses the same)
+  hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_IMG, LVM_GETIMAGELIST, LVSIL_NORMAL));
+  if(hImgLs) ImageList_Destroy(hImgLs);
+
+  // Create ImageList and fill it with bitmaps
+  hImgLs = ImageList_Create(128, 128, ILC_COLOR32, 1, 0);
+  for(unsigned i = 0; i < 1; ++i)
+    ImageList_Add(hImgLs, hBm, nullptr);
+
+  // Set ImageList to ListView
+  this->msgItem(IDC_LV_IMG, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(hImgLs));
+  this->msgItem(IDC_LV_IMG, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(hImgLs));
+
+  // empty list view
+  this->msgItem(IDC_LV_IMG, LVM_DELETEALLITEMS);
+
+  LVITEMW lvItem;
+  lvItem.iSubItem = 0;
+  for(unsigned i = 0; i < 6; ++i) {
+
+    // the first column, package status, here we INSERT the new item
+    lvItem.iItem = i;
+    lvItem.mask = LVIF_IMAGE;
+    lvItem.iImage = 0;
+    lvItem.pszText = L"Toto";
+    lvItem.iItem = this->msgItem(IDC_LV_IMG, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+  }
+
+  // we enable the ListView
+  this->enableItem(IDC_LV_IMG, true);
 }
 
 ///
@@ -101,6 +150,9 @@ void OmUiMgrMainTst::_onResize()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrMainTst::_onResize\n";
   #endif
+
+  // Package List ListView
+  this->_setItemPos(IDC_LV_IMG, 2, 15, this->cliUnitX()-4, this->cliUnitY()-20);
 }
 
 ///

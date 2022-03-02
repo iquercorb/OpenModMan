@@ -120,8 +120,8 @@ void OmUiPropPkgSrc::_onInit()
     }
 
     // Snapshot image
-    if(pPkg->image().thumbnail()) {
-      this->setStImage(IDC_SB_SNAP, pPkg->image().thumbnail());
+    if(pPkg->thumb().valid()) {
+      this->setStImage(IDC_SB_SNAP, pPkg->thumb().hbmp());
     }
 
     // Package description

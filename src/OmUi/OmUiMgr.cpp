@@ -850,6 +850,14 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
   }
 
+  if(uMsg == WM_EXITSIZEMOVE) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMgr::_onMsg : WM_EXITSIZEMOVE\n";
+    #endif
+
+  }
+
   return false;
 }
 

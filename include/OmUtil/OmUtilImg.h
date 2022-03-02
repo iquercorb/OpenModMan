@@ -20,10 +20,17 @@
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
-#define OMM_IMAGE_TYPE_BMP        1
-#define OMM_IMAGE_TYPE_JPG        2
-#define OMM_IMAGE_TYPE_PNG        3
-#define OMM_IMAGE_TYPE_GIF        4
+enum OmImgType : unsigned {
+  OMM_IMAGE_BMP = 1,
+  OMM_IMAGE_JPG,
+  OMM_IMAGE_PNG,
+  OMM_IMAGE_GIF
+};
+
+enum OmSizeMode : unsigned {
+  OMM_SIZE_FIT = 0,
+  OMM_SIZE_FILL
+};
 
 /// \brief Get image type.
 ///
@@ -40,7 +47,7 @@
 ///
 /// \return Image type or 0 if unknown type.
 ///
-int Om_imageType(uint8_t* data);
+int Om_imgGetType(uint8_t* data);
 
 /// \brief Get image type.
 ///
@@ -57,7 +64,7 @@ int Om_imageType(uint8_t* data);
 ///
 /// \return Image type, 0 if unknown type or -1 if read error occurred.
 ///
-int Om_imageType(FILE* file);
+int Om_imgGetType(FILE* file);
 
 /// \brief Load image.
 ///
@@ -71,7 +78,7 @@ int Om_imageType(FILE* file);
 ///
 /// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const wstring& in_path, bool flip_y = false);
+uint8_t* Om_imgLoadFile(unsigned* out_w, unsigned* out_h, const wstring& in_path, bool flip_y = false);
 
 /// \brief Load image.
 ///
@@ -86,7 +93,20 @@ uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const w
 ///
 /// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const uint8_t* in_data, size_t in_size, bool flip_y = false);
+uint8_t* Om_imgLoadData(unsigned* out_w, unsigned* out_h, const uint8_t* in_data, size_t in_size, bool flip_y = false);
+
+/// \brief Load HBITMAP data.
+///
+/// Load HBITMAP data.
+///
+/// \param[out] out_w   : Output image width
+/// \param[out] out_h   : Output image height
+/// \param[out] out_c   : Output image color component count.
+/// \param[in]  in_hbmp : Input image data to decode.
+///
+/// \return Pointer to RGBA image data or nullptr if failed.
+///
+uint8_t* Om_imgLoadHBmp(unsigned* dst_w, unsigned* dst_h, HBITMAP in_hbmp);
 
 /// \brief Save image as BMP.
 ///
@@ -100,7 +120,7 @@ uint8_t* Om_loadImage(unsigned* out_w, unsigned* out_h, unsigned* out_c, const u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Save image as JPEG.
 ///
@@ -115,7 +135,7 @@ bool Om_saveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Save image as PNG.
 ///
@@ -130,7 +150,7 @@ bool Om_saveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
+bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
 
 /// \brief Save image as GIF.
 ///
@@ -144,7 +164,7 @@ bool Om_savePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_imgSaveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode BMP data.
 ///
@@ -158,7 +178,7 @@ bool Om_saveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, u
 ///
 /// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode JPEG data.
 ///
@@ -174,7 +194,7 @@ uint8_t* Om_encodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded JPG image data or nullptr if failed.
 ///
-uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Encode PNG data.
 ///
@@ -190,7 +210,7 @@ uint8_t* Om_encodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded PNG image data or nullptr if failed.
 ///
-uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 9);
+uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
 
 /// \brief Encode GIF data.
 ///
@@ -205,65 +225,55 @@ uint8_t* Om_encodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded GIF image data or nullptr if failed.
 ///
-uint8_t* Om_encodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_imgEncodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
-/// \brief Resize image.
+/// \brief Encode DDB data.
 ///
-/// Resize given image data to the specified width and heigth.
+/// Encode Device Dependant Bitmap (HBITMAP) version of the given image data.
 ///
-/// \param[out] w         : Desired image width.
-/// \param[out] h         : Desired image height.
-/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
-/// \param[in]  in_w      : Input image width.
-/// \param[in]  in_h      : Input image height.
-/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  src_pix    : Source image RGB or RGBA pixel data.
+/// \param[in]  src_w      : Source image width.
+/// \param[in]  src_h      : Source image height.
+/// \param[in]  src_c      : Source image color component count, either 3 or 4.
 ///
-/// \return New pointer to resized image data or null if error.
+/// \return New HBITMAP or null if error.
 ///
-uint8_t* Om_resizeImage(unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned src_c);
 
-/// \brief Crop image.
+/// \brief Copy and resample.
 ///
-/// Crop given image data according the specified rectangle coordinates.
+/// Copy and resamples the specified rectangle of source image to destination
+/// using best filtering method according source and destination resolutions.
 ///
-/// \param[out] x         : Crop rectangle top-left corner horizontal position in image.
-/// \param[out] y         : Crop rectangle top-left corner vertical position in image.
-/// \param[out] w         : Crop rectangle width.
-/// \param[out] h         : Crop rectangle height.
-/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
-/// \param[in]  in_w      : Input image width.
-/// \param[in]  in_h      : Input image height.
-/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// Destination buffer must be allocated
 ///
-/// \return New pointer to resized image data or null if error.
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
+/// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
+/// \param[in]  rec_w     : Rectangle width
+/// \param[in]  rec_h     : Rectangle height.
 ///
-uint8_t* Om_cropImage(unsigned x, unsigned y, unsigned w, unsigned h, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h);
 
 /// \brief Create image thumbnail.
 ///
 /// Create thumbnail version of the given image data.
 ///
-/// \param[out] size      : Thumbnail size.
-/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
-/// \param[in]  in_w      : Input image width.
-/// \param[in]  in_h      : Input image height.
-/// \param[in]  in_c      : Input image color component count, either 3 or 4.
+/// \param[in]  span    : Thumbnail target span.
+/// \param[in]  mode    : Thumbnail resize mode.
+/// \param[in]  src_pix : Source image RGB or RGBA pixel data.
+/// \param[in]  src_w   : Source image width.
+/// \param[in]  src_h   : Source image height.
+/// \param[in]  src_c   : Source image color component count, either 3 or 4.
 ///
 /// \return New pointer to resized image data or null if error.
 ///
-uint8_t* Om_thumbnailImage(unsigned size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
-
-/// \brief Create HBITMAP image.
-///
-/// Create HBITMAP version of the given image data.
-///
-/// \param[in]  in_rgb    : Input image RGB(A) data to encode.
-/// \param[in]  in_w      : Input image width.
-/// \param[in]  in_h      : Input image height.
-/// \param[in]  in_c      : Input image color component count, either 3 or 4.
-///
-/// \return New HBITMAP or null if error.
-///
-HBITMAP Om_hbitmapImage(const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix, unsigned src_w, unsigned src_h);
 
 #endif // OMUTILIMG_H_INCLUDED

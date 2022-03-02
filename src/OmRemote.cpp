@@ -46,7 +46,7 @@
 OmRemote::OmRemote() :
   _location(nullptr),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),
   _state(0),_ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),
-  _image(),_error(),_downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),
+  _thumb(),_error(),_downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),
   _downl_user_download(nullptr),_downl_user_ptr(nullptr),_downl_hth(nullptr),
   _downl_percent(0)
 {
@@ -59,7 +59,7 @@ OmRemote::OmRemote() :
 ///
 OmRemote::OmRemote(OmLocation* pLoc) :
   _location(pLoc),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),_state(0),
-  _ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),_image(),_error(),
+  _ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),_thumb(),_error(),
   _downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),_downl_user_download(nullptr),
   _downl_user_ptr(nullptr),_downl_hth(nullptr),_downl_percent(0)
 {
@@ -205,11 +205,8 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
     uint8_t* jpg = Om_decodeDataUri(&jpg_size, tmp_str1, tmp_str2, xml_node.content());
 
     // load Jpeg image
-    if(jpg) {
-      if(!this->_image.open(jpg, jpg_size, OMM_THUMB_SIZE)) {
-        this->_image.clear();
-      }
-    }
+    if(jpg)
+      this->_thumb.loadThumbnail(jpg, jpg_size, OMM_THUMB_SIZE, OMM_SIZE_FILL);
   }
 
   // check for entry description
@@ -301,7 +298,7 @@ void OmRemote::clear()
 {
   this->_hash = 0;
   this->_url.clear();
-  this->_image.clear();
+  this->_thumb.clear();
   this->_name.clear();
   this->_ident.clear();
   this->_depLs.clear();

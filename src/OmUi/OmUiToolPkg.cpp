@@ -274,10 +274,10 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   }
 
   // check for package snapshot
-  if(this->_package.image().thumbnail()) {
+  if(this->_package.thumb().valid()) {
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
-    hBm = this->setStImage(IDC_SB_SNAP, this->_package.image().thumbnail());
+    hBm = this->setStImage(IDC_SB_SNAP, this->_package.thumb().hbmp());
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
   }
 
@@ -449,10 +449,10 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   if(self->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     self->getItemText(IDC_EC_INP08, item_str);
     if(!item_str.empty()) {
-      self->_package.loadImage(item_str, OMM_THUMB_SIZE);
+      self->_package.loadThumb(item_str, OMM_THUMB_SIZE);
     }
   } else {
-    self->_package.clearImage();
+    self->_package.clearThumb();
   }
 
   // get package description text
@@ -871,14 +871,14 @@ bool OmUiToolPkg::_onBcBrwSnap()
   if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, Om_getDirPart(start)))
     return false;
 
-  OmImage image;
+  OmImage thumb;
   HBITMAP hBm;
 
   // Try to open image
-  if(image.open(result, OMM_THUMB_SIZE)) {
+  if(thumb.loadThumbnail(result, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
 
     // set thumbnail
-    hBm = this->setStImage(IDC_SB_SNAP, image.thumbnail());
+    hBm = this->setStImage(IDC_SB_SNAP, thumb.hbmp());
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
     // set EditText content to image path
