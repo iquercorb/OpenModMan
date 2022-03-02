@@ -581,7 +581,7 @@
 
 1643996065 d:\atelier\code\cpp\openmodman\include\gui\res\resource.h
 
-1645033286 source:d:\atelier\code\cpp\openmodman\main.cpp
+1646206405 source:d:\atelier\code\cpp\openmodman\main.cpp
 	"OmManager.h"
 	"OmUiMgr.h"
 
@@ -619,7 +619,7 @@
 
 1625168870 ory.h"
 
-1645118619 d:\atelier\code\cpp\openmodman\include\ompackage.h
+1646208753 d:\atelier\code\cpp\openmodman\include\ompackage.h
 	"OmBase.h"
 	"OmVersion.h"
 	"OmImage.h"
@@ -631,7 +631,7 @@
 1643805907 d:\atelier\code\cpp\openmodman\include\gui\omuimain.h
 	"OmDialog.h"
 
-1644267217 d:\atelier\code\cpp\openmodman\include\omdialog.h
+1645298104 d:\atelier\code\cpp\openmodman\include\omdialog.h
 	"OmBase.h"
 	"OmBaseWin.h"
 
@@ -1037,7 +1037,7 @@
 	"OmUtilStr.h"
 	"OmContext.h"
 
-1644871917 source:d:\atelier\code\cpp\openmodman\src\omdialog.cpp
+1645531165 source:d:\atelier\code\cpp\openmodman\src\omdialog.cpp
 	"OmBaseWin.h"
 	<ShlObj.h>
 	"OmUtilWin.h"
@@ -1173,7 +1173,7 @@
 1593016497 source:d:\atelier\code\cpp\openmodman\src\thirdparty\xxhash\xxhash.c
 	"xxhash.h"
 
-1645122570 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
+1646208906 source:d:\atelier\code\cpp\openmodman\src\ompackage.cpp
 	"OmBaseApp.h"
 	"OmZipFile.h"
 	"OmXmlDoc.h"
@@ -1815,13 +1815,16 @@
 	<windows.h>
 	<errno.h>
 
-1644769587 source:d:\atelier\code\cpp\openmodman\src\omimage.cpp
+1646209817 source:d:\atelier\code\cpp\openmodman\src\omimage.cpp
 	"OmUtilImg.h"
+	<ctime>
+	<iostream>
 	"OmImage.h"
 
-1644070365 d:\atelier\code\cpp\openmodman\include\omimage.h
+1646208147 d:\atelier\code\cpp\openmodman\include\omimage.h
 	"OmBase.h"
 	"OmBaseWin.h"
+	"OmUtilImg.h"
 
 1561357409 source:d:\atelier\code\cpp\openmodman\src\thirdparty\gif\dgif_lib.c
 	<stdlib.h>
@@ -2163,7 +2166,7 @@
 	<unistd.h>
 	<unixio.h>
 
-1644965741 source:d:\atelier\code\cpp\openmodman\src\omremote.cpp
+1646208906 source:d:\atelier\code\cpp\openmodman\src\omremote.cpp
 	<algorithm>
 	"OmBaseApp.h"
 	"OmBaseWin.h"
@@ -2183,7 +2186,7 @@
 	"OmUtilErr.h"
 	"OmRemote.h"
 
-1644964608 d:\atelier\code\cpp\openmodman\include\omremote.h
+1646208883 d:\atelier\code\cpp\openmodman\include\omremote.h
 	"OmBase.h"
 	"OmBaseWin.h"
 	"OmXmlDoc.h"
@@ -5037,13 +5040,13 @@
 	"OmBaseWin.h"
 	"xxhash/xxh3.h"
 
-1645275964 source:d:\atelier\code\cpp\openmodman\res\resources.rc
+1645751508 source:d:\atelier\code\cpp\openmodman\res\resources.rc
 	<Windows.h>
 	<CommCtrl.h>
 	<RichEdit.h>
 	"resource.h"
 
-1645260152 d:\atelier\code\cpp\openmodman\res\resource.h
+1645614543 d:\atelier\code\cpp\openmodman\res\resource.h
 
 1644153758 d:\atelier\code\cpp\openmodman\include\ui\omuimain.h
 	"OmDialog.h"
@@ -6982,7 +6985,7 @@
 	<mshtml.h>
 	<mshtmdid.h>
 
-1645121629 source:d:\atelier\code\cpp\openmodman\plugins\md4c-rtf\md4c-rtf.c
+1645552022 source:d:\atelier\code\cpp\openmodman\plugins\md4c-rtf\md4c-rtf.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -7313,10 +7316,10 @@
 1645278626 d:\atelier\code\cpp\openmodman\include\omutil\omutilerr.h
 	"OmBase.h"
 
-1645123494 d:\atelier\code\cpp\openmodman\include\omutil\omutilstr.h
+1645519735 d:\atelier\code\cpp\openmodman\include\omutil\omutilstr.h
 	"OmBase.h"
 
-1644087374 d:\atelier\code\cpp\openmodman\include\omutil\omutilimg.h
+1646167819 d:\atelier\code\cpp\openmodman\include\omutil\omutilimg.h
 	"OmBase.h"
 	"OmBaseWin.h"
 
@@ -7398,7 +7401,7 @@
 1643803399 d:\atelier\code\cpp\openmodman\include\omui\omuihelplog.h
 	"OmDialog.h"
 
-1645260152 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgr.cpp
+1645531307 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgr.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -7430,7 +7433,7 @@
 1644259735 d:\atelier\code\cpp\openmodman\include\omui\omuimgrmain.h
 	"OmDialog.h"
 
-1644869694 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfoot.h
+1645531313 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfoot.h
 	"OmDialog.h"
 
 1644259735 d:\atelier\code\cpp\openmodman\include\omui\omuimgrmainlib.h
@@ -7466,7 +7469,7 @@
 	"OmImage.h"
 	"OmConfig.h"
 
-1645039784 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfoot.cpp
+1646206365 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfoot.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -7474,9 +7477,10 @@
 	"OmUiMgr.h"
 	"OmUiMgrFootOvw.h"
 	"OmUiMgrFootDet.h"
+	"OmUiMgrFootGal.h"
 	"OmUiMgrFoot.h"
 
-1645057553 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmain.cpp
+1646206372 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmain.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -7512,7 +7516,7 @@
 1624808459 d:\atelier\code\cpp\openmodman\include\omui\omuiproppkg.h
 	"OmDialogProp.h"
 
-1645274363 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmainnet.cpp
+1645295903 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmainnet.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -7533,7 +7537,7 @@
 1624808459 d:\atelier\code\cpp\openmodman\include\omui\omuiproprmt.h
 	"OmDialogProp.h"
 
-1645272598 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmaintst.cpp
+1645799182 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmaintst.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -7757,7 +7761,7 @@
 	"OmUtilStr.h"
 	"OmUiPropPkgBck.h"
 
-1645044676 source:d:\atelier\code\cpp\openmodman\src\omui\omuiproppkgsrc.cpp
+1646209021 source:d:\atelier\code\cpp\openmodman\src\omui\omuiproppkgsrc.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmPackage.h"
@@ -7776,7 +7780,7 @@
 1624705848 d:\atelier\code\cpp\openmodman\include\omui\omuiproprmtdet.h
 	"OmDialog.h"
 
-1645054908 source:d:\atelier\code\cpp\openmodman\src\omui\omuiproprmtdet.cpp
+1646209054 source:d:\atelier\code\cpp\openmodman\src\omui\omuiproprmtdet.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmRemote.h"
@@ -7787,7 +7791,7 @@
 	"OmUtilStr.h"
 	"OmUiPropRmtDet.h"
 
-1645282627 source:d:\atelier\code\cpp\openmodman\src\omui\omuitoolpkg.cpp
+1646209237 source:d:\atelier\code\cpp\openmodman\src\omui\omuitoolpkg.cpp
 	"OmBase.h"
 	<algorithm>
 	"OmBaseWin.h"
@@ -7803,7 +7807,7 @@
 	"OmUtilWin.h"
 	"OmUiToolPkg.h"
 
-1644966187 source:d:\atelier\code\cpp\openmodman\src\omui\omuitoolrep.cpp
+1646209317 source:d:\atelier\code\cpp\openmodman\src\omui\omuitoolrep.cpp
 	"OmBase.h"
 	"OmBaseWin.h"
 	<ShlObj.h>
@@ -7893,7 +7897,7 @@
 	<ShlwApi.h>
 	<ShlObj.h>
 
-1644958539 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilhsh.cpp
+1646062956 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilhsh.cpp
 	"OmBase.h"
 	<random>
 	<ctime>
@@ -7901,22 +7905,23 @@
 	"xxhash/xxh3.h"
 	"md5/md5.h"
 
-1644769587 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilimg.cpp
+1646209626 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilimg.cpp
 	"OmBase.h"
 	<algorithm>
 	<cmath>
+	<ctime>
 	"OmBaseWin.h"
 	"OmUtilImg.h"
 	"jpeg/jpeglib.h"
 	"png/png.h"
 	"gif/gif_lib.h"
 
-1644769587 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilpkg.cpp
+1645315691 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilpkg.cpp
 	"OmBase.h"
 	<algorithm>
 	"OmUtilStr.h"
 
-1645123483 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilstr.cpp
+1645438869 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilstr.cpp
 	"OmBase.h"
 	<regex>
 	<algorithm>
@@ -7997,14 +8002,15 @@
 	"OmUtilWin.h"
 	"OmUiPropBatLst.h"
 
-1645264187 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfootovw.h
+1645531265 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfootovw.h
 	"OmDialog.h"
 
-1645264551 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfootdet.h
+1645531283 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfootdet.h
 	"OmDialog.h"
 
-1645280120 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfootovw.cpp
+1646208968 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfootovw.cpp
 	"OmBase.h"
+	<cstdlib>
 	"OmBaseUi.h"
 	"OmBaseWin.h"
 	<UxTheme.h>
@@ -8016,10 +8022,10 @@
 	"OmUtilWin.h"
 	"OmUtilStr.h"
 	"OmUtilDlg.h"
-	"md4c-rtf/md4c-rtf.h"
+	"OmUtilRtf.h"
 	"OmUiMgrFootOvw.h"
 
-1645267412 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfootdet.cpp
+1645546224 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfootdet.cpp
 	"OmBase.h"
 	"OmBaseUi.h"
 	"OmBaseWin.h"
@@ -8032,7 +8038,7 @@
 	"OmUtilWin.h"
 	"OmUtilStr.h"
 	"OmUtilDlg.h"
-	"md4c-rtf/md4c-rtf.h"
+	"OmUtilRtf.h"
 	"OmUiMgrFootDet.h"
 
 1645260091 d:\atelier\code\cpp\openmodman\include\omui\omuipropmgr.h
@@ -8056,4 +8062,29 @@
 	"OmDialogProp.h"
 	"OmUtilDlg.h"
 	"OmUiPropMgrGle.h"
+
+1645546562 d:\atelier\code\cpp\openmodman\include\omutil\omutilrtf.h
+	"OmBaseWin.h"
+
+1645546506 source:d:\atelier\code\cpp\openmodman\src\omutil\omutilrtf.cpp
+	"OmBase.h"
+	"OmUtilRtf.h"
+	"OmBaseWin.h"
+	<RichEdit.h>
+	"md4c-rtf/md4c-rtf.h"
+
+1645614524 d:\atelier\code\cpp\openmodman\include\omui\omuimgrfootgal.h
+	"OmDialog.h"
+
+1646208938 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrfootgal.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<RichEdit.h>
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUtilWin.h"
+	"OmUiMgrFootGal.h"
 

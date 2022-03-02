@@ -22,15 +22,9 @@
 				<Option type="1" />
 				<Option compiler="gcc_mingw-w64_x86_64" />
 				<Compiler>
-					<Add option="-pedantic" />
-					<Add option="-Wall" />
-					<Add option="-m64" />
 					<Add option="-g" />
+					<Add option="-m64" />
 					<Add option="-DDEBUG" />
-					<Add directory="include/gui" />
-					<Add directory="include" />
-					<Add directory="include/Ui" />
-					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
@@ -46,14 +40,8 @@
 				<Option compiler="gcc_mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-pedantic" />
-					<Add option="-Wall" />
-					<Add option="-Wextra" />
 					<Add option="-m64" />
-					<Add directory="include/gui" />
-					<Add directory="include" />
-					<Add directory="include/Ui" />
-					<Add directory="include/OmUi" />
+					<Add option="-Wextra" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -69,15 +57,9 @@
 				<Option type="1" />
 				<Option compiler="gcc_mingw-w64_i686" />
 				<Compiler>
-					<Add option="-pedantic" />
-					<Add option="-Wall" />
-					<Add option="-m32" />
 					<Add option="-g" />
+					<Add option="-m32" />
 					<Add option="-DDEBUG" />
-					<Add directory="include/gui" />
-					<Add directory="include" />
-					<Add directory="include/Ui" />
-					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
@@ -93,14 +75,8 @@
 				<Option compiler="gcc_mingw-w64_i686" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add option="-pedantic" />
-					<Add option="-Wall" />
-					<Add option="-Wextra" />
 					<Add option="-m32" />
-					<Add directory="include/gui" />
-					<Add directory="include" />
-					<Add directory="include/Ui" />
-					<Add directory="include/OmUi" />
+					<Add option="-Wextra" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -171,6 +147,8 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-pedantic" />
+			<Add option="-Wall" />
 			<Add option="-DCURL_STATICLIB" />
 			<Add option="-DMD4C_USE_UTF16" />
 			<Add directory="include" />
@@ -375,31 +353,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="3rdparty/jpeg/jinclude.h" />
-		<Unit filename="3rdparty/jpeg/jmemansi.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="3rdparty/jpeg/jmemdos.c">
-			<Option compilerVar="CC" />
-			<Option target="Linux 64-bit Release" />
-			<Option target="Linux 32-bit Release" />
-		</Unit>
-		<Unit filename="3rdparty/jpeg/jmemmac.c">
-			<Option compilerVar="CC" />
-			<Option target="Linux 64-bit Release" />
-			<Option target="Linux 32-bit Release" />
-		</Unit>
 		<Unit filename="3rdparty/jpeg/jmemmgr.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="3rdparty/jpeg/jmemname.c">
-			<Option compilerVar="CC" />
-			<Option target="Linux 64-bit Release" />
-			<Option target="Linux 32-bit Release" />
-		</Unit>
 		<Unit filename="3rdparty/jpeg/jmemnobs.c">
 			<Option compilerVar="CC" />
-			<Option target="Linux 64-bit Release" />
-			<Option target="Linux 32-bit Release" />
 		</Unit>
 		<Unit filename="3rdparty/jpeg/jmemsys.h" />
 		<Unit filename="3rdparty/jpeg/jmorecfg.h" />
@@ -619,6 +577,7 @@
 		<Unit filename="include/OmUi/OmUiMgr.h" />
 		<Unit filename="include/OmUi/OmUiMgrFoot.h" />
 		<Unit filename="include/OmUi/OmUiMgrFootDet.h" />
+		<Unit filename="include/OmUi/OmUiMgrFootGal.h" />
 		<Unit filename="include/OmUi/OmUiMgrFootOvw.h" />
 		<Unit filename="include/OmUi/OmUiMgrMain.h" />
 		<Unit filename="include/OmUi/OmUiMgrMainLib.h" />
@@ -657,6 +616,7 @@
 		<Unit filename="include/OmUtil/OmUtilHsh.h" />
 		<Unit filename="include/OmUtil/OmUtilImg.h" />
 		<Unit filename="include/OmUtil/OmUtilPkg.h" />
+		<Unit filename="include/OmUtil/OmUtilRtf.h" />
 		<Unit filename="include/OmUtil/OmUtilStr.h" />
 		<Unit filename="include/OmUtil/OmUtilSys.h" />
 		<Unit filename="include/OmUtil/OmUtilWin.h" />
@@ -705,6 +665,7 @@
 		<Unit filename="src/OmUi/OmUiMgr.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrFoot.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrFootDet.cpp" />
+		<Unit filename="src/OmUi/OmUiMgrFootGal.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrFootOvw.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMain.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMainLib.cpp" />
@@ -743,6 +704,7 @@
 		<Unit filename="src/OmUtil/OmUtilHsh.cpp" />
 		<Unit filename="src/OmUtil/OmUtilImg.cpp" />
 		<Unit filename="src/OmUtil/OmUtilPkg.cpp" />
+		<Unit filename="src/OmUtil/OmUtilRtf.cpp" />
 		<Unit filename="src/OmUtil/OmUtilStr.cpp" />
 		<Unit filename="src/OmUtil/OmUtilSys.cpp" />
 		<Unit filename="src/OmUtil/OmUtilWin.cpp" />
