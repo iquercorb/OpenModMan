@@ -1567,8 +1567,14 @@ bool OmLocation::libRefresh()
         }
       }
 
-      // this Source is no longer in Library folder
-      if(!in_list) {
+      if(in_list) {
+        // update overview data in case description text or image file changed
+        if(!this->_pkgLs[p]->isType(PKG_TYPE_ZIP)) {
+          if(this->_pkgLs[p]->loadOverview(this->_libDir))
+            changed = true;
+        }
+      } else {
+        // this Source is no longer in Library folder
         changed = true;
         // check whether this Package is installed (has backup)
         if(this->_pkgLs[p]->hasBck()) {
@@ -1579,15 +1585,10 @@ bool OmLocation::libRefresh()
         } else {
           // The Package has no Backup and Source is no longer available
           // this is a ghost, we have to remove it
-          this->_pkgLs.erase(this->_pkgLs.begin()+p);
-          --p;
+          pPkg = this->_pkgLs[p];
+          this->_pkgLs.erase(this->_pkgLs.begin()+p); --p;
+          delete pPkg;
         }
-      }
-
-      // update overview data in case description text or image file changed
-      if(!this->_pkgLs[p]->isType(PKG_TYPE_ZIP)) {
-        if(this->_pkgLs[p]->loadOverview(this->_libDir))
-          changed = true;
       }
     }
 
@@ -1694,6 +1695,7 @@ bool OmLocation::libRefresh()
 ///
 bool OmLocation::libClean()
 {
+  OmPackage* pPkg;
   bool changed = false;
 
   // search for ghost packages
@@ -1703,8 +1705,9 @@ bool OmLocation::libClean()
       // The Package has no Backup and Source is no longer available
       // this is a ghost, we have to remove it
       changed = true;
-      this->_pkgLs.erase(this->_pkgLs.begin()+p);
-      --p;
+      pPkg = this->_pkgLs[p];
+      this->_pkgLs.erase(this->_pkgLs.begin()+p); --p;
+      delete pPkg;
     }
   }
 
