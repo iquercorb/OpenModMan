@@ -731,7 +731,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       // call user function
       dialog->_onResize();
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_SIZE\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_SIZE\n";
       #endif
 
       return 0; // case WM_SIZE

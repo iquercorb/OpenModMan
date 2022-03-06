@@ -275,18 +275,19 @@ bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMod
 ///
 void OmImage::clear()
 {
-  if(this->_data)
-    delete [] this->_data;
+  if(this->_data) {
+    Om_free(this->_data);
+    this->_data = nullptr;
+  }
 
-  if(this->_hbmp)
+  if(this->_hbmp) {
     DeleteObject(this->_hbmp);
+    this->_hbmp = nullptr;
+  }
 
   this->_path.clear();
-  this->_data = nullptr;
   this->_width = 0;
   this->_height = 0;
-  this->_hbmp = nullptr;
-
   this->_valid = false;
 
   this->_ercode = 0;

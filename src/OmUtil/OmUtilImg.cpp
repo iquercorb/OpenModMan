@@ -125,21 +125,6 @@ inline static void __inplace_rgb_to_rgba(uint8_t* data, size_t n, uint8_t a)
   }
 }
 
-
-/// \brief Set pixel color
-///
-/// Set color of one RGB pixel.
-///
-/// \param[in]  pixel : Pointer to RGB pixel.
-/// \param[in]  color : Color to set.
-///
-/// \return New RGBA buffer
-///
-inline void __set_pixel_24(uint8_t* pixel, uint32_t color)
-{
-  (*reinterpret_cast<uint32_t*>(pixel)) = color;
-}
-
 /// \brief Set pixel color
 ///
 /// Set color of one RGBA pixel.
@@ -152,22 +137,6 @@ inline void __set_pixel_24(uint8_t* pixel, uint32_t color)
 inline void __set_pixel_32(uint8_t* pixel, uint32_t color)
 {
   (*reinterpret_cast<uint32_t*>(pixel)) = color;
-}
-
-/// \brief Set color for row of pixels
-///
-/// Set color of row of RGB pixels.
-///
-/// \param[in]  row   : Pointer to pixels row.
-/// \param[in]  width : Size of row in pixels.
-/// \param[in]  color : Color to set.
-///
-/// \return New RGBA buffer
-///
-inline void __set_row_24(uint8_t* row, size_t width, uint32_t color)
-{
-  for(size_t i = 0; i < width; ++i, row +=3)
-    (*reinterpret_cast<uint32_t*>(row)) = color;
 }
 
 /// \brief Set color for row of pixels
