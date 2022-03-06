@@ -324,13 +324,15 @@ INT_PTR OmUiMgrFoot::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           int tc_sel = this->msgItem(IDC_TC_MAIN, TCM_GETCURSEL);
           // change page dialog visibility according selection
           if(tc_sel >= 0) {
-            for(int i = 0; i < static_cast<int>(this->_tabDial.size()); ++i) {
-              if(i == tc_sel) {
-                this->_tabDial[i]->show();
-              } else {
-                this->_tabDial[i]->hide();
+            // hide all visible tables
+            for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+              if(this->_tabDial[i]->visible()) {
+                this->_tabDial[i]->hide(); break;
               }
             }
+            // show selected tab
+            if(!this->_tabDial[tc_sel]->visible())
+              this->_tabDial[tc_sel]->show();
           }
         }
       }

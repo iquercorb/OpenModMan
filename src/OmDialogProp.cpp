@@ -193,17 +193,19 @@ INT_PTR OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         if(pNmhdr->code == TCN_SELCHANGE) {
 
           // get TabControl current selection
-          int tab_sel = SendMessageW(this->_hTab, TCM_GETCURSEL, 0, 0);
+          int tc_sel = SendMessageW(this->_hTab, TCM_GETCURSEL, 0, 0);
 
           // change page dialog visibility according selection
-          if(tab_sel >= 0) {
-            for(int i = 0; i < static_cast<int>(this->_pageDial.size()); ++i) {
-              if(i == tab_sel) {
-                this->_pageDial[i]->show();
-              } else {
-                this->_pageDial[i]->hide();
+          if(tc_sel >= 0) {
+            // hide all visible tables
+            for(size_t i = 0; i < this->_pageDial.size(); ++i) {
+              if(this->_pageDial[i]->visible()) {
+                this->_pageDial[i]->hide(); break;
               }
             }
+            // show selected tab
+            if(!this->_pageDial[tc_sel]->visible())
+              this->_pageDial[tc_sel]->show();
           }
         }
       }
