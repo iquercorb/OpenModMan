@@ -43,6 +43,14 @@ void Om_md2rtf_init(OM_MD2RTF_CTX* ctx);
 ///
 void Om_md2rtf_free(OM_MD2RTF_CTX* ctx);
 
+/// \brief Clear MD2RTF Context
+///
+/// Reset and clear working data without destroying buffers.
+///
+/// \param[in]  ctx   : Pointer to OM_MD2RTF_CTX structure to free.
+///
+void Om_md2rtf_clear(OM_MD2RTF_CTX* ctx);
+
 /// \brief Render to RTF document
 ///
 /// Parse the given text as Markdown and render as RTF document using

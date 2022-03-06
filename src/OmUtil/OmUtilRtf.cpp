@@ -157,6 +157,20 @@ void Om_md2rtf_free(OM_MD2RTF_CTX* ctx)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void Om_md2rtf_clear(OM_MD2RTF_CTX* ctx)
+{
+  if(ctx->buf) {
+    ctx->buf[0] = '\0';
+  }
+  ctx->len = 0;
+  ctx->off = 0;
+  ctx->rem = 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void Om_md2rtf_render(OM_MD2RTF_CTX* ctx, const wstring& text, unsigned fs, unsigned w)
 {
   // convert width pixels to millimeters

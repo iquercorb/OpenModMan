@@ -126,6 +126,9 @@ void OmUiMgrFootOvw::clearPreview()
   this->showItem(IDC_SB_SNAP, false);
   this->showItem(IDC_FT_DESC, false); //< Rich Edit (MD parsed)
   this->showItem(IDC_EC_DESC, false); //< raw (plain text)
+
+  // Clear MD2RTF context, prevent working on invisible data
+  Om_md2rtf_clear(&__md2rtf_ctx);
 }
 
 ///
@@ -194,7 +197,6 @@ void OmUiMgrFootOvw::_renderText(const wstring& text, bool show)
     this->showItem(IDC_FT_DESC, false);
 
   } else {
-
 
     long rect[4];
     GetClientRect(this->getItem(IDC_FT_DESC), reinterpret_cast<LPRECT>(&rect));
@@ -302,7 +304,7 @@ void OmUiMgrFootOvw::_onResize()
   if(Om_md2rtf_autofit(&__md2rtf_ctx, hEdit)) {
 
     #ifdef DEBUG
-    std::cout << "DEBUG => OmUiMgrFootOvw::_onResize : RTF data changed.\n";
+    std::cout << "DEBUG => OmUiMgrFootOvw::_onResize : Om_md2rtf_stream\n";
     #endif
     // we stream-in RTF data only if changes were made
     Om_md2rtf_stream(&__md2rtf_ctx, hEdit);
