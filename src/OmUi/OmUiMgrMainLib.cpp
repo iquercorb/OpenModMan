@@ -2192,6 +2192,8 @@ void OmUiMgrMainLib::_onRefresh()
       } else {
         lib_access = false;
       }
+
+      pCtx->locCur()->libRefresh();
     }
   }
 
