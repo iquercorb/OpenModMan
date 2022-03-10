@@ -42,6 +42,7 @@
 #include "OmUiWizCtx.h"
 #include "OmUiToolPkg.h"
 #include "OmUiToolRep.h"
+#include "OmUiPictView.h"
 
 #include "OmUtilStr.h"
 #include "OmUtilDlg.h"
@@ -74,13 +75,14 @@ OmUiMgr::OmUiMgr(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiPropLoc(hins));    //< Dialog for Location Properties
   this->addChild(new OmUiPropBat(hins));    //< Dialog for Batch Properties
   this->addChild(new OmUiHelpLog(hins));    //< Dialog for Help Debug log
-  this->addChild(new OmUiHelpAbt(hins));  //< Dialog for Help About
+  this->addChild(new OmUiHelpAbt(hins));    //< Dialog for Help About
   this->addChild(new OmUiWizCtx(hins));     //< Dialog for New Context Wizard
-  this->addChild(new OmUiToolPkg(hins));     //< Dialog for New Package
+  this->addChild(new OmUiToolPkg(hins));    //< Dialog for New Package
   this->addChild(new OmUiAddBat(hins));     //< Dialog for New Batch
   this->addChild(new OmUiAddLoc(hins));     //< Dialog for Adding Location
   this->addChild(new OmUiAddRep(hins));     //< Dialog for Add Repository
-  this->addChild(new OmUiToolRep(hins));     //< Dialog for Repository Editor
+  this->addChild(new OmUiToolRep(hins));    //< Dialog for Repository Editor
+  this->addChild(new OmUiPictView(hins));   //< Dialog for Picture Viewer
 
   // set the accelerator table for the dialog
   this->setAccel(IDR_ACCEL);

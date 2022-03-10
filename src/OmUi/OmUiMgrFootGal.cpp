@@ -29,6 +29,8 @@
 
 #include "OmUtilWin.h"
 
+#include "OmUiPictView.h"
+
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMgrFootGal.h"
 
@@ -80,6 +82,23 @@ void OmUiMgrFootGal::safemode(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMgrFootGal::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrFootGal::_onLvImgHit()
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMgrFootGal::_onLvImgHit\n";
+  #endif
+
+  OmUiPictView* pUiPictView = static_cast<OmUiPictView*>(this->_pUiMgr->childById(IDD_PICT_VIEW));
+  if(pUiPictView->visible()) {
+    SetActiveWindow(pUiPictView->hwnd());
+  } else {
+    pUiPictView->modeless(true);
+  }
 }
 
 
@@ -201,6 +220,29 @@ void OmUiMgrFootGal::_onQuit()
 ///
 INT_PTR OmUiMgrFootGal::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  if(uMsg == WM_NOTIFY) {
+
+    if(LOWORD(wParam) == IDC_LV_IMG) {
+
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      case NM_DBLCLK:
+        //this->pkgTogg();
+        break;
+
+      case NM_RCLICK:
+        //this->_onLvPkgRclk();
+        break;
+
+      case LVN_ITEMCHANGED:
+        this->_onLvImgHit();
+        break;
+      }
+    }
+
+    return false;
+  }
+
   if(uMsg == WM_COMMAND) {
 
   }

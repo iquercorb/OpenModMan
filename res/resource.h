@@ -47,7 +47,7 @@
 #define IDD_HELP_LOG                            780
 #define IDD_HELP_ABT                            781
 #define IDD_PROGRESS                            790
-#define IDD_MSG                                 791
+#define IDD_PICT_VIEW                           791
 #define IDI_APP                                 800
 #define IDI_ERR                                 801
 #define IDI_WRN                                 802

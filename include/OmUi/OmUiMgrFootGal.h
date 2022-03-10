@@ -79,6 +79,8 @@ class OmUiMgrFootGal : public OmDialog
 
     OmUiMgr*            _pUiMgr;
 
+    void                _onLvImgHit();
+
     void                _onInit();
 
     void                _onShow();

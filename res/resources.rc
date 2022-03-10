@@ -1124,6 +1124,19 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "|||||||||||", IDC_PB_COM, PROGRESS_CLASS, 0, 10, 45, 300, 11, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 250, 66, 60, 14, 0, WS_EX_LEFT
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+//                             PICTURE VIEWER DIALOG
+//
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PICT_VIEW DIALOG 0, 0, 300, 300
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
+CAPTION "Image Viewer"
+FONT 8, "Ms Shell Dlg"
+{
+
+}
 
 //
 // Accelerator resources
