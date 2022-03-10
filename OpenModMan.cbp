@@ -25,6 +25,7 @@
 					<Add option="-g" />
 					<Add option="-m64" />
 					<Add option="-DDEBUG" />
+					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-m64" />
@@ -42,6 +43,7 @@
 					<Add option="-O3" />
 					<Add option="-m64" />
 					<Add option="-Wextra" />
+					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -60,6 +62,7 @@
 					<Add option="-g" />
 					<Add option="-m32" />
 					<Add option="-DDEBUG" />
+					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-m32" />
@@ -77,6 +80,7 @@
 					<Add option="-O3" />
 					<Add option="-m32" />
 					<Add option="-Wextra" />
+					<Add directory="include/OmUi" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -583,6 +587,7 @@
 		<Unit filename="include/OmUi/OmUiMgrMainLib.h" />
 		<Unit filename="include/OmUi/OmUiMgrMainNet.h" />
 		<Unit filename="include/OmUi/OmUiMgrMainTst.h" />
+		<Unit filename="include/OmUi/OmUiPictView.h" />
 		<Unit filename="include/OmUi/OmUiProgress.h" />
 		<Unit filename="include/OmUi/OmUiPropBat.h" />
 		<Unit filename="include/OmUi/OmUiPropBatLst.h" />
@@ -671,6 +676,7 @@
 		<Unit filename="src/OmUi/OmUiMgrMainLib.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMainNet.cpp" />
 		<Unit filename="src/OmUi/OmUiMgrMainTst.cpp" />
+		<Unit filename="src/OmUi/OmUiPictView.cpp" />
 		<Unit filename="src/OmUi/OmUiProgress.cpp" />
 		<Unit filename="src/OmUi/OmUiPropBat.cpp" />
 		<Unit filename="src/OmUi/OmUiPropBatLst.cpp" />
