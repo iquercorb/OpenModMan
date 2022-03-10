@@ -134,7 +134,7 @@ inline static void __inplace_rgb_to_rgba(uint8_t* data, size_t n, uint8_t a)
 ///
 /// \return New RGBA buffer
 ///
-inline void __set_pixel_32(uint8_t* pixel, uint32_t color)
+inline static void __set_pixel_32(uint8_t* pixel, uint32_t color)
 {
   (*reinterpret_cast<uint32_t*>(pixel)) = color;
 }
@@ -149,10 +149,25 @@ inline void __set_pixel_32(uint8_t* pixel, uint32_t color)
 ///
 /// \return New RGBA buffer
 ///
-inline void __set_row_32(uint8_t* row, size_t width, uint32_t color)
+inline static void __set_row_32(uint8_t* row, size_t width, uint32_t color)
 {
   for(size_t i = 0; i < width; ++i, row +=4)
     (*reinterpret_cast<uint32_t*>(row)) = color;
+}
+
+
+/// \brief Set pixel color
+///
+/// Set color of one RGBA pixel.
+///
+/// \param[in]  pixel : Pointer to RGBA pixel.
+/// \param[in]  color : Color to set.
+///
+/// \return New RGBA buffer
+///
+inline static void __cpy_pixel_32(uint8_t* dst, const uint8_t* src)
+{
+  (*reinterpret_cast<uint32_t*>(dst)) = (*reinterpret_cast<const uint32_t*>(src));
 }
 
 
@@ -164,8 +179,8 @@ inline void __set_row_32(uint8_t* row, size_t width, uint32_t color)
 /// \param[in]  n : value to clamp
 /// \param[in]  u : Maximum value
 ///
-#define CLAMP(l, n, u) ((n) <= (l)) ? (l) : ((n) >= (u)) ? (u) : (n)
-#define MIN(n, u) ((n) >= (u)) ? (u) : (n)
+#define CLAMP(l, n, u) (((n) <= (l)) ? (l) : ((n) >= (u)) ? (u) : (n))
+#define MIN(n, u) (((n) >= (u)) ? (u) : (n))
 
 /// \brief Cubic interpolation Macro.
 ///
@@ -177,9 +192,17 @@ inline void __set_row_32(uint8_t* row, size_t width, uint32_t color)
 /// \param[in]  d : End handle
 /// \param[in]  t : Interpolation phase
 ///
-#define CUBIC_INTERP(a, b, c, d, t) \
-  (b) + 0.5f * (t) * ((c) - (a) + (t) * (2.0 * (a) - 5.0f * \
-  (b) + 4.0f * (c) - (d) + (t) * (3.0f * ((b) - (c)) + (d) - (a))))
+#define CUBIC_INTERP(a, b, c, d, t) ((b) + 0.5f * (t) * ((c) - (a) + (t) * (2.0f * (a) - 5.0f * (b) + 4.0f * (c) - (d) + (t) * (3.0f * ((b) - (c)) + (d) - (a)))))
+
+/// \brief Linear interpolation Macro.
+///
+/// Linear interpolation equation.
+///
+/// \param[in]  a : Start
+/// \param[in]  b : End
+/// \param[in]  t : Interpolation phase
+///
+#define LERP(a, b, t) ((a) + (t) * ((b) - (a)))
 
 /// \brief Get bicubic interpolated pixel.
 ///
@@ -211,13 +234,13 @@ inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const 
 
   for(int j = 0; j < 4; ++j) {
 
-    y = CLAMP(0, b_y + j, max_h);
+    y = CLAMP(0, b_y + j, max_h) * row_bytes;
 
     for(int i = 0; i < 4; ++i) {
 
-      x = CLAMP(0, b_x + i, max_w);
+      x = CLAMP(0, b_x + i, max_w) * 4;
 
-      sp[i] = src_pix + ((y * row_bytes) + (x * 4));
+      sp[i] = src_pix + (y + x);
     }
 
     r[j] = CUBIC_INTERP(sp[0][0], sp[1][0], sp[2][0], sp[3][0], t_x);
@@ -233,65 +256,66 @@ inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const 
   m[2] = CUBIC_INTERP(b[0], b[1], b[2], b[3], t_y);
   m[3] = CUBIC_INTERP(a[0], a[1], a[2], a[3], t_y);
 
-  for(unsigned i = 0; i < 4; ++i) {
-    sample[i] = static_cast<uint8_t>(CLAMP(0.0f, m[i], 255.0f));
-  }
+  sample[0] = static_cast<uint8_t>(CLAMP(0.0f, m[0], 255.0f));
+  sample[1] = static_cast<uint8_t>(CLAMP(0.0f, m[1], 255.0f));
+  sample[2] = static_cast<uint8_t>(CLAMP(0.0f, m[2], 255.0f));
+  sample[3] = static_cast<uint8_t>(CLAMP(0.0f, m[3], 255.0f));
 }
 
-/// \brief Get bicubic interpolated pixel.
+/// \brief Get bilinear interpolated pixel.
 ///
-/// Compute the bicubic interpolated pixel sample at the specified
+/// Compute the bilinear interpolated pixel sample at the specified
 /// coordinates of the given source image.
 ///
-/// \param[in]  sample    : Array to receive interpolated pixel components.
-/// \param[in]  u         : Sample horizontal coordinate in image, from 0.0 to 1.0.
-/// \param[in]  v         : Sample vertical coordinate in image, from 0.0 to 1.0.
-/// \param[in]  src_pix   : Input image RGB(A) data.
-/// \param[in]  src_w     : Input image width.
-/// \param[in]  src_h     : Input image height.
+/// \param[in]  sample  : Array to receive interpolated pixel components.
+/// \param[in]  u       : Sample horizontal coordinate in image, from 0.0 to 1.0.
+/// \param[in]  v       : Sample vertical coordinate in image, from 0.0 to 1.0.
+/// \param[in]  src_pix : Input image RGB(A) data.
+/// \param[in]  src_w   : Input image width.
+/// \param[in]  src_h   : Input image height.
 ///
-inline static void __get_sample_cub_24(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
 {
-  float x, y;
+  float u_x, v_y;
 
-  float xf = modf((u * src_w) - 0.5f, &x);
-  float yf = modf((v * src_h) - 0.5f, &y);
+  float t_x = modf((u * src_w) - 0.5f, &u_x);
+  float t_y = modf((v * src_h) - 0.5f, &v_y);
 
-  int ix = static_cast<int>(x) - 1;
-  int iy = static_cast<int>(y) - 1;
+  int b_x = static_cast<int>(u_x) - 1;
+  int b_y = static_cast<int>(v_y) - 1;
 
-  const uint8_t* sp[4];
+  const uint8_t* sp[2];
 
-  float r[4]; float g[4]; float b[4];
+  float r[2];
+  float g[2];
+  float b[2];
+  float a[2];
 
-  int x_b, y_b;
+  int x, y;
 
-  for(int j = 0; j < 4; ++j) {
+  for(int j = 0; j < 2; ++j) {
 
-    y_b = CLAMP(0, iy + j, max_h);
+    y = CLAMP(0, b_y + j, max_h) * row_bytes;
 
-    for(int i = 0; i < 4; ++i) {
+    for(int i = 0; i < 2; ++i) {
 
-      x_b = CLAMP(0, ix + i, max_w);
+      x = CLAMP(0, b_x + i, max_w) * 4;
 
-      sp[i] = src_pix + ((y_b * row_bytes) + (x_b * 3));
+      sp[i] = src_pix + (y + x);
     }
 
-    r[j] = CUBIC_INTERP(sp[0][0], sp[1][0], sp[2][0], sp[3][0], xf);
-    g[j] = CUBIC_INTERP(sp[0][1], sp[1][1], sp[2][1], sp[3][1], xf);
-    b[j] = CUBIC_INTERP(sp[0][2], sp[1][2], sp[2][2], sp[3][2], xf);
+    r[j] = LERP(sp[0][0], sp[1][0], t_x);
+    g[j] = LERP(sp[0][1], sp[1][1], t_x);
+    b[j] = LERP(sp[0][2], sp[1][2], t_x);
+    a[j] = LERP(sp[0][3], sp[1][3], t_x);
   }
 
-  float m[3];
-
-  m[0] = CUBIC_INTERP(r[0], r[1], r[2], r[3], yf);
-  m[1] = CUBIC_INTERP(g[0], g[1], g[2], g[3], yf);
-  m[2] = CUBIC_INTERP(b[0], b[1], b[2], b[3], yf);
-
-  for(unsigned i = 0; i < 3; ++i) {
-    sample[i] = static_cast<uint8_t>(CLAMP(0.0f, m[i], 255.0f));
-  }
+  sample[0] = static_cast<uint8_t>(LERP(r[0], r[1], t_y));
+  sample[1] = static_cast<uint8_t>(LERP(g[0], g[1], t_y));
+  sample[2] = static_cast<uint8_t>(LERP(b[0], b[1], t_y));
+  sample[3] = static_cast<uint8_t>(LERP(a[0], a[1], t_y));
 }
+
 
 /// \brief Get box sample pixel.
 ///
@@ -321,7 +345,7 @@ inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float 
 
   int x, y;
 
-  unsigned n = 0;
+  float n = 0;
 
   // box top-left corner position
   int b_x = (u * src_w) - (0.5f * b_w);
@@ -332,19 +356,21 @@ inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float 
     y = b_y + j;
     if(y < 0 || y > max_h) continue;
 
+    y *= row_bytes;
+
     for(int i = 0; i < b_w; ++i) {
 
       x = b_x + i;
       if(x < 0 || x > max_w) continue;
 
-      sp = src_pix + ((y * row_bytes) + (x * 4));
+      sp = src_pix + (y + (x * 4));
 
       r += sp[0];
       g += sp[1];
       b += sp[2];
       a += sp[3];
 
-      n++;
+      n += 1.0f;
     }
   }
 
@@ -353,65 +379,6 @@ inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float 
   sample[1] = g / n;
   sample[2] = b / n;
   sample[3] = a / n;
-}
-
-/// \brief Get box sample pixel.
-///
-/// Get the box pixel sample at the specified coordinates of the given
-/// source image.
-///
-/// \param[in]  sample    : Array to receive interpolated pixel components.
-/// \param[in]  b_w       : Box width in pixels.
-/// \param[in]  b_h       : Box height in pixels.
-/// \param[in]  u         : Sample horizontal coordinate in image, from 0.0 to 1.0.
-/// \param[in]  v         : Sample vertical coordinate in image, from 0.0 to 1.0.
-/// \param[in]  src_pix   : Input image RGB(A) data.
-/// \param[in]  src_w     : Input image width.
-/// \param[in]  src_h     : Input image height.
-/// \param[in]  max_w     : Input image X index limit, should be src_w - 1.
-/// \param[in]  max_h     : Input image Y index limit, should be src_h - 1.
-/// \param[in]  row_bytes : size in bytes of an input image row
-///
-inline static void __get_sample_box_24(uint8_t* sample, int b_w, int b_h, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
-{
-  float r = 0.0f;
-  float g = 0.0f;
-  float b = 0.0f;
-
-  const uint8_t *sp;
-
-  int x, y;
-
-  unsigned n = 0;
-
-  // box top-left corner position
-  int b_x = (u * src_w) - (0.5f * b_w);
-  int b_y = (v * src_h) - (0.5f * b_h);
-
-  for(int j = 0; j < b_h; ++j) {
-
-    y = b_y + j;
-    if(y < 0 || y > max_h) continue;
-
-    for(int i = 0; i < b_w; ++i) {
-
-      x = b_x + i;
-      if(x < 0 || x > max_w) continue;
-
-      sp = src_pix + ((y * row_bytes) + (x * 3));
-
-      r += sp[0];
-      g += sp[1];
-      b += sp[2];
-
-      n++;
-    }
-  }
-
-  // assign average pixel
-  sample[0] = r / n;
-  sample[1] = g / n;
-  sample[2] = b / n;
 }
 
 /// \brief Copy and resample using bicubic interpolation.
@@ -436,6 +403,10 @@ inline static void __get_sample_box_24(uint8_t* sample, int b_w, int b_h, float 
 ///
 inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // U and V shift corresponding to rectangle top-left corner
   float s_u = static_cast<float>(rec_x) / src_w;
   float s_v = static_cast<float>(rec_y) / src_h;
@@ -462,6 +433,67 @@ inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigne
       __get_sample_cub_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
     }
   }
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __copy_resample_cub : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+}
+
+/// \brief Copy and resample using bilinear interpolation.
+///
+/// Copy and resamples the specified rectangle of source image to destination
+/// using bilinear interpolation.
+///
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
+/// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
+/// \param[in]  rec_w     : Rectangle width
+/// \param[in]  rec_h     : Rectangle height.
+///
+inline static void __copy_resample_lin(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  // U and V shift corresponding to rectangle top-left corner
+  float s_u = static_cast<float>(rec_x) / src_w;
+  float s_v = static_cast<float>(rec_y) / src_h;
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = (1.0f / static_cast<float>(dst_w)) * (static_cast<float>(rec_w) / src_w);
+  float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
+
+  uint8_t* dp;
+  float u, v;
+
+  // some constants
+  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  // Loop for RGBA
+  for(unsigned y = 0; y < dst_h; ++y) {
+    dp = dst_pix + (dst_row_bytes * y);
+    v = s_v + (y * f_v);
+    for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
+      u = s_u + (x * f_u);
+      __get_sample_lin_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+    }
+  }
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __copy_resample_lin : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 }
 
 /// \brief Copy and resample using box filter.
@@ -486,9 +518,13 @@ inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigne
 ///
 inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // compute box size
-  int b_w = floor(static_cast<float>(rec_w) / dst_w);
-  int b_h = floor(static_cast<float>(rec_h) / dst_h);
+  int b_w = ceil(static_cast<float>(rec_w) / dst_w);
+  int b_h = ceil(static_cast<float>(rec_h) / dst_h);
 
   // U and V shift corresponding to rectangle top-left corner
   float s_u = static_cast<float>(rec_x) / src_w;
@@ -515,6 +551,12 @@ inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigne
       __get_sample_box_32(dp, b_w, b_h, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
     }
   }
+
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __copy_resample_box : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 }
 
 /// \brief Copy and resample.
@@ -537,9 +579,12 @@ inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigne
 ///
 inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // resize image to fit desired size
   if(rec_w != dst_w || rec_h != dst_h) {
-
     if(dst_w > rec_w || dst_h > rec_h) {
       // bicubic interpolation
       __copy_resample_cub(dst_pix, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
@@ -567,6 +612,10 @@ inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned ds
       }
     }
 
+    #ifdef DEBUG
+    t = clock() - t;
+    std::cout << "DEBUG => __copy_resample : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+    #endif // DEBUG
   }
 }
 
@@ -589,26 +638,24 @@ inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned ds
 ///
 inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   unsigned dst_x, dst_y, dst_w, dst_h;
 
-  float span = MIN(cv_w, cv_h);
+  if((static_cast<float>(src_w) / src_h) > (static_cast<float>(cv_w) / cv_h)) {
 
-  float aspect;
-
-  if(src_w > src_h) {
-
-    aspect = (float)src_h / src_w;
-    dst_w = span;
-    dst_h = span * aspect;
+    dst_w = cv_w;
+    dst_h = cv_w * (static_cast<float>(src_h) / src_w);
     dst_x = 0;
-    dst_y = (0.5f * span) - (0.5f * dst_h);
+    dst_y = (0.5f * cv_h) - (0.5f * dst_h);
 
   } else {
 
-    aspect = (float)src_w / src_h;
-    dst_w = span * aspect;
-    dst_h = span;
-    dst_x = (0.5f * span) - (0.5f * dst_w);
+    dst_w = cv_h * (static_cast<float>(src_w) / src_h);
+    dst_h = cv_h;
+    dst_x = (0.5f * cv_w) - (0.5f * dst_w);
     dst_y = 0;
   }
 
@@ -646,7 +693,93 @@ inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv
     }
   }
 
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __draw_canvas_cub : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 }
+
+
+/// \brief Draw image in destination canvas
+///
+/// Draws the source image to fit into the given canvas keeping the source
+/// aspect ratio, resampling source image using bilinear interpolation.
+///
+/// This function should be preferred for upsampling operation, meaning when
+/// the destination resolution is greater than the specified source rectangle.
+///
+/// \param[out] cv_pix    : Canvas pixel buffer that receive result.
+/// \param[in]  cv_w      : Canvas width in pixel.
+/// \param[in]  cv_h      : Canvas height in pixel.
+/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  src_c     : Source component count (bytes per pixel)
+/// \param[in]  bck       : Background color
+///
+inline static void __draw_canvas_lin(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
+{
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
+  unsigned dst_x, dst_y, dst_w, dst_h;
+
+  if((static_cast<float>(src_w) / src_h) > (static_cast<float>(cv_w) / cv_h)) {
+
+    dst_w = cv_w;
+    dst_h = cv_w * (static_cast<float>(src_h) / src_w);
+    dst_x = 0;
+    dst_y = (0.5f * cv_h) - (0.5f * dst_h);
+
+  } else {
+
+    dst_w = cv_h * (static_cast<float>(src_w) / src_h);
+    dst_h = cv_h;
+    dst_x = (0.5f * cv_w) - (0.5f * dst_w);
+    dst_y = 0;
+  }
+
+  // U and V factor corresponding to rectangle width and height
+  float f_u = 1.0f / static_cast<float>(dst_w - 1);
+  float f_v = 1.0f / static_cast<float>(dst_h - 1);
+
+  // U and V shift corresponding to destination top-left corner in canvas
+  float s_u = f_u * dst_x;
+  float s_v = f_v * dst_y;
+
+  // some constants
+  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  int max_w = (src_w - 1);
+  int max_h = (src_h - 1);
+
+  uint8_t* dp;
+  float u, v;
+
+  for(unsigned y = 0; y < cv_h; ++y) {
+    dp = cv_pix + (dst_row_bytes * y);
+    v = (y * f_v) - s_v;
+    if(v < 0.0 || v > 1.0) {
+      __set_row_32(dp, cv_w, bck);
+      continue;
+    }
+    for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
+      u = (x * f_u) - s_u;
+      if(u < 0.0 || u > 1.0) {
+        __set_pixel_32(dp, bck);
+      } else {
+        __get_sample_lin_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
+      }
+    }
+  }
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __draw_canvas_lin : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
+}
+
 
 /// \brief Draw image in destination canvas
 ///
@@ -667,32 +800,30 @@ inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv
 ///
 inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   unsigned dst_x, dst_y, dst_w, dst_h;
 
-  float span = MIN(cv_w, cv_h);
+  if((static_cast<float>(src_w) / src_h) > (static_cast<float>(cv_w) / cv_h)) {
 
-  float aspect;
-
-  if(src_w > src_h) {
-
-    aspect = (float)src_h / src_w;
-    dst_w = span;
-    dst_h = span * aspect;
+    dst_w = cv_w;
+    dst_h = cv_w * (static_cast<float>(src_h) / src_w);
     dst_x = 0;
-    dst_y = (0.5f * span) - (0.5f * dst_h);
+    dst_y = (0.5f * cv_h) - (0.5f * dst_h);
 
   } else {
 
-    aspect = (float)src_w / src_h;
-    dst_w = span * aspect;
-    dst_h = span;
-    dst_x = (0.5f * span) - (0.5f * dst_w);
+    dst_w = cv_h * (static_cast<float>(src_w) / src_h);
+    dst_h = cv_h;
+    dst_x = (0.5f * cv_w) - (0.5f * dst_w);
     dst_y = 0;
   }
 
   // compute box size
-  int b_w = floor(static_cast<float>(src_w) / dst_w);
-  int b_h = floor(static_cast<float>(src_h) / dst_h);
+  int b_w = ceil(static_cast<float>(src_w) / dst_w);
+  int b_h = ceil(static_cast<float>(src_h) / dst_h);
 
   // U and V factor corresponding to rectangle width and height
   float f_u = 1.0f / static_cast<float>(dst_w - 1);
@@ -727,6 +858,11 @@ inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv
       }
     }
   }
+
+  #ifdef DEBUG
+  t = clock() - t;
+  std::cout << "DEBUG => __draw_canvas_box : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+  #endif // DEBUG
 }
 
 /// \brief Draw image in destination canvas.
@@ -745,25 +881,66 @@ inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv
 ///
 inline static void __draw_canvas(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
 {
+  #ifdef DEBUG
+  clock_t t = clock();
+  #endif // DEBUG
+
   // resize image to fit desired size
   if(src_w != cv_w || src_h != cv_h) {
 
-    if(cv_w > src_w || cv_h > src_h) {
+    bool mag;
 
+    // determins whether we need to downsample or upsample source image
+    if((static_cast<float>(src_w) / src_h) > (static_cast<float>(cv_w) / cv_h)) {
+      mag = cv_w > src_w;
+    } else {
+      mag = cv_h > src_h;
+    }
+
+    if(mag) {
+/*
       // bicubic interpolation
-      __draw_canvas_cub(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, bck);
+      __draw_canvas_cub(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, __bytes_swap(bck));
+
+      #ifdef DEBUG
+      t = clock() - t;
+      std::cout << "DEBUG => __draw_canvas_cub : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+      #endif // DEBUG
+      */
+      __draw_canvas_lin(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, __bytes_swap(bck));
+
+      #ifdef DEBUG
+      t = clock() - t;
+      std::cout << "DEBUG => __draw_canvas_lin : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+      #endif // DEBUG
 
     } else {
 
       // average box filter
-      __draw_canvas_box(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, bck);
+/*
+      __draw_canvas_box(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, __bytes_swap(bck));
 
+      #ifdef DEBUG
+      t = clock() - t;
+      std::cout << "DEBUG => __draw_canvas_box : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+      #endif // DEBUG
+*/
+      __draw_canvas_lin(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, __bytes_swap(bck));
+
+      #ifdef DEBUG
+      t = clock() - t;
+      std::cout << "DEBUG => __draw_canvas_lin : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+      #endif // DEBUG
     }
 
   } else {
 
     memcpy(cv_pix, src_pix, src_w * src_h * 4);
 
+    #ifdef DEBUG
+    t = clock() - t;
+    std::cout << "DEBUG => __draw_canvas cpy : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
+    #endif // DEBUG
   }
 }
 
@@ -3116,17 +3293,31 @@ HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h,
 ///
 void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h)
 {
-  #ifdef DEBUG
-  clock_t t = clock();
-  #endif // DEBUG
-
   // copy rectangle in source image to destination
-  __copy_resample(dst_buf, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+  __copy_resample_lin(dst_buf, dst_w, dst_h, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+}
 
-  #ifdef DEBUG
-  t = clock() - t;
-  std::cout << "DEBUG => Om_imgCopyResample : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
-  #endif // DEBUG
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_imgResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h)
+{
+  // copy rectangle in source image to destination
+  __copy_resample_lin(dst_buf, dst_w, dst_h, src_pix, src_w, src_h, 0, 0, src_w, src_h);
+  //__copy_resample_cub(dst_buf, dst_w, dst_h, src_pix, src_w, src_h, 0, 0, src_w, src_h);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_imgDrawCanvas(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck)
+{
+  // resize image to fit desired size
+  if(src_w == cv_w && src_h == cv_h) {
+    memcpy(cv_pix, src_pix, src_w * src_h * 4);
+  } else {
+    __draw_canvas_lin(cv_pix, cv_w, cv_h, src_pix, src_w, src_h, __bytes_swap(bck));
+  }
 }
 
 
@@ -3135,21 +3326,38 @@ void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const 
 ///
 uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix, unsigned src_w, unsigned src_h)
 {
-  #ifdef DEBUG
-  clock_t t = clock();
-  #endif // DEBUG
-
   // prevent idiot attempts
   if(!span || !src_pix || !src_w || !src_h)
     return nullptr;
-
 
   // create output buffer
   uint8_t* thumb = reinterpret_cast<uint8_t*>(Om_alloc(span * span * 4));
   if(!thumb) return nullptr;
 
   if((src_w == src_h) || (mode == OMM_SIZE_FIT)) {
-    __draw_canvas(thumb, span, span, src_pix, src_w, src_h, 0x0);
+    if(src_w == span && src_h == span) {
+      memcpy(thumb, src_pix, src_w * src_h * 4);
+    } else {
+
+      // resize image to fit desired size
+      bool mag;
+
+      // determins whether we need to downsample or upsample source image
+      if((static_cast<float>(src_w) / src_h) > 1.0f) {
+        mag = span > src_w;
+      } else {
+        mag = span > src_h;
+      }
+
+      if(mag) {
+        // bicubic interpolation
+        __draw_canvas_cub(thumb, span, span, src_pix, src_w, src_h, 0x0);
+      } else {
+        // average box filter
+        __draw_canvas_box(thumb, span, span, src_pix, src_w, src_h, 0x0);
+      }
+    }
+
   } else {
     // calculate rectangle in source image to get the proper image portion to
     // resize according the specified mode
@@ -3165,14 +3373,49 @@ uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix,
       rec_y = (src_h * 0.5f) - (src_w * 0.5f);
       rec_w = rec_h = src_w;
     }
-    // copy rectangle in source image to destination
-    __copy_resample(thumb, span, span, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+
+    // resize image to fit desired size
+    if(rec_w == span && rec_h == span) {
+
+      size_t row_bytes = (rec_w * 4); //< assuming RGBA data
+      size_t row_shift = (rec_x * 4); //< assuming RGBA data
+
+      const uint8_t* sp;
+      uint8_t* dp;
+
+      for(unsigned y = 0; y < span; ++y) {
+        sp = src_pix + ((y + rec_y) * row_bytes) + row_shift;
+        dp = thumb + (y * row_bytes);
+        for(unsigned x = 0; x < span; ++x, dp += 4, sp += 4) {
+          __cpy_pixel_32(dp, sp);
+        }
+      }
+    } else {
+
+      if(span > rec_w || span > rec_h) {
+        // bicubic interpolation
+        __copy_resample_cub(thumb, span, span, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+      } else {
+        // average box filter
+        __copy_resample_box(thumb, span, span, src_pix, src_w, src_h, rec_x, rec_y, rec_w, rec_h);
+      }
+
+    }
   }
 
-  #ifdef DEBUG
-  t = clock() - t;
-  std::cout << "DEBUG => Om_imgMakeThumb : " << 1000.0 * ((double)t / CLOCKS_PER_SEC) << " ms\n";
-  #endif // DEBUG
 
   return thumb;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_imgRbSwap(uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned src_c)
+{
+  if(src_c > 3) {
+    __in_place_rb_swap_32(src_pix, src_w * src_h * 4);
+  } else {
+    __in_place_rb_swap_24(src_pix, src_w * src_h * 3);
+  }
 }

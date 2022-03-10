@@ -250,10 +250,9 @@ HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h,
 /// \param[out] dst_pix   : Destination pixel buffer that receive result.
 /// \param[in]  dst_w     : Destination width in pixel.
 /// \param[in]  dst_h     : Destination height in pixel.
-/// \param[in]  src_pix   : Source pixel buffer.
+/// \param[in]  src_pix   : Source image RGBA pixel data.
 /// \param[in]  src_w     : Source width.
 /// \param[in]  src_h     : source height.
-/// \param[in]  src_c     : Source component count (bytes per pixel)
 /// \param[in]  rec_x     : Rectangle top-left corner x coordinate in source.
 /// \param[in]  rec_y     : Rectangle top-left corner y coordinate in source
 /// \param[in]  rec_w     : Rectangle width
@@ -261,12 +260,55 @@ HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h,
 ///
 void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned rec_x, unsigned rec_y, unsigned rec_w, unsigned rec_h);
 
+/// \brief Resample image
+///
+/// Resamples source image to the specified destination buffer using
+/// bilinear interpolation filter.
+///
+/// \param[out] dst_pix   : Destination pixel buffer that receive result.
+/// \param[in]  dst_w     : Destination width in pixel.
+/// \param[in]  dst_h     : Destination height in pixel.
+/// \param[in]  src_pix   : Source image RGBA pixel data.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+///
+void Om_imgResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h);
+
+/// \brief Draw image in destination canvas.
+///
+/// Draws and resamples the specified rectangle of source image to destination
+/// using best filtering method according source and destination resolutions.
+///
+/// \param[out] cv_pix    : Canvas pixel buffer that receive result.
+/// \param[in]  cv_w      : Canvas width in pixel.
+/// \param[in]  cv_h      : Canvas height in pixel.
+/// \param[in]  dst_f     : Destination color format.
+/// \param[in]  src_pix   : Source image RGBA pixel data.
+/// \param[in]  src_w     : Source width.
+/// \param[in]  src_h     : source height.
+/// \param[in]  bck       : Background color
+///
+void Om_imgDrawCanvas(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, const uint8_t* src_pix, unsigned src_w, unsigned src_h, uint32_t bck);
+
+
 /// \brief Create image thumbnail.
 ///
 /// Create thumbnail version of the given image data.
 ///
 /// \param[in]  span    : Thumbnail target span.
 /// \param[in]  mode    : Thumbnail resize mode.
+/// \param[in]  src_pix : Source image RGBA pixel data.
+/// \param[in]  src_w   : Source image width.
+/// \param[in]  src_h   : Source image height.
+///
+/// \return New pointer to resized image data or null if error.
+///
+uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix, unsigned src_w, unsigned src_h);
+
+/// \brief Swap Red and Blue components.
+///
+/// Swap Rend and Blue components of the given data buffer.
+///
 /// \param[in]  src_pix : Source image RGB or RGBA pixel data.
 /// \param[in]  src_w   : Source image width.
 /// \param[in]  src_h   : Source image height.
@@ -274,6 +316,6 @@ void Om_imgCopyResample(uint8_t* dst_buf, unsigned dst_w, unsigned dst_h, const 
 ///
 /// \return New pointer to resized image data or null if error.
 ///
-uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix, unsigned src_w, unsigned src_h);
+void Om_imgRbSwap(uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned src_c);
 
 #endif // OMUTILIMG_H_INCLUDED
