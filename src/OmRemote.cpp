@@ -99,11 +99,14 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
 
   // check for checksum attribute
   if(!entry.hasAttr(L"checksum")) {
-    // try to get alternative md5sum attribute
-    if(!entry.hasAttr(L"md5sum")) {
-      this->_error = L"Invalid definition : 'checksum'/'md5sum' attribute missing.";
-      this->log(0, L"Remote(<anonymous>) Parse", this->_error);
-      return false;
+    // try to get alternative xxhsum attribute
+    if(!entry.hasAttr(L"xxhsum")) {
+      // try to get alternative md5sum attribute
+      if(!entry.hasAttr(L"md5sum")) {
+        this->_error = L"Invalid definition : 'checksum'/'xxhsum'/'md5sum' attribute missing.";
+        this->log(0, L"Remote(<anonymous>) Parse", this->_error);
+        return false;
+      }
     }
   }
 
