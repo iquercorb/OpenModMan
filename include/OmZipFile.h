@@ -229,6 +229,8 @@ class OmZipFile
 
     void*               _data;        //< internal data structure
 
+    void*               _file;        //< internal file pointer
+
     unsigned            _stat;        //< file status
 };
 

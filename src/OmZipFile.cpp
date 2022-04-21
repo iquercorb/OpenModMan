@@ -15,7 +15,7 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "OmUtilStr.h"
-
+#include <utime.h>
 #include "miniz/miniz.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -39,12 +39,30 @@ static unsigned __mzlvl[] = { 0,    //< MZ_NO_COMPRESSION
                               6,    //< MZ_DEFAULT_LEVEL
                               9 };  //< MZ_BEST_COMPRESSION
 
+/// \brief Get file last modified time.
+///
+/// Returns last modified time of the specified file.
+///
+/// \param[in]  path  File path.
+///
+/// \return Last modified time or 0 if failed.
+///
+static inline time_t __get_file_modified_time(const wstring& path)
+{
+  struct __stat64 stat;
+
+  if(_wstat64(path.c_str(), &stat) != 0) {
+    return 0;
+  }
+
+  return stat.st_mtime;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmZipFile::OmZipFile() :
-  _data(new mz_zip_archive()), _stat(0)
+  _data(new mz_zip_archive()), _file(nullptr), _stat(0)
 {
 
 }
@@ -65,11 +83,18 @@ OmZipFile::~OmZipFile()
 ///
 bool OmZipFile::init(const wstring& path)
 {
-  string ansi_path;
+  if(_file) close();
 
-  Om_toANSI(&ansi_path, path);
+  _wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"wb");
 
-  if(!mz_zip_writer_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
+  if(!_file) {
+    // emultate mz_zip_set_error()
+    static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
+    return false;
+  }
+
+  if(!mz_zip_writer_init_cfile(static_cast<mz_zip_archive*>(_data), reinterpret_cast<FILE*>(_file), 0)) {
+    fclose(reinterpret_cast<FILE*>(_file)); _file = nullptr;
     return false;
   }
 
@@ -84,11 +109,18 @@ bool OmZipFile::init(const wstring& path)
 ///
 bool OmZipFile::load(const wstring& path)
 {
-  string ansi_path;
+  if(_file) close();
 
-  Om_toANSI(&ansi_path, path);
+  _wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"rb");
 
-  if(!mz_zip_reader_init_file(static_cast<mz_zip_archive*>(_data), ansi_path.c_str(), 0)) {
+  if(!_file) {
+    // emultate mz_zip_set_error()
+    static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
+    return false;
+  }
+
+  if(!mz_zip_reader_init_cfile(static_cast<mz_zip_archive*>(_data), reinterpret_cast<FILE*>(_file), 0, 0)) {
+    fclose(reinterpret_cast<FILE*>(_file)); _file = nullptr;
     return false;
   }
 
@@ -106,14 +138,26 @@ bool OmZipFile::append(const wstring& src, const wstring& dst, unsigned lvl)
   if(_stat & ZIP_WRITER) {
 
     string zcdr_dst;
-    string ansi_src;
 
     Om_toZipCDR(&zcdr_dst, dst);
-    Om_toANSI(&ansi_src, src);
 
-    if(mz_zip_writer_add_file(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), ansi_src.c_str(), nullptr, 0, __mzlvl[lvl])) {
-      return true;
+    FILE *pSrc_file = nullptr;
+    _wfopen_s(&pSrc_file, src.c_str(), L"rb");
+
+    if(!pSrc_file) {
+      // emultate mz_zip_set_error()
+      static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
+      return false;
     }
+
+    // retrieve file last modified time
+    MZ_TIME_T file_time = __get_file_modified_time(src);
+
+    int result = mz_zip_writer_add_cfile(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), pSrc_file, 0, &file_time, nullptr, 0, __mzlvl[lvl], nullptr, 0, nullptr, 0);
+
+    fclose(pSrc_file);
+
+    return result;
 
   }
 
@@ -135,7 +179,6 @@ bool OmZipFile::append(const void* data, size_t size, const wstring& dst, unsign
     if(!mz_zip_writer_add_mem(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), data, size, __mzlvl[lvl])) {
       return false;
     }
-
 
     return true;
   }
@@ -227,18 +270,25 @@ bool OmZipFile::extract(const wstring& src, const wstring& dst) const
   if(_stat & ZIP_READER) {
 
     string zcdr_src;
-    string ansi_dst;
 
     Om_toZipCDR(&zcdr_src, src);
-    Om_toANSI(&ansi_dst, dst);
 
     int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
-      if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst.c_str(), 0)) {
-        return true;
-      }
-    }
+      FILE *pDst_file = nullptr;
+      _wfopen_s(&pDst_file, dst.c_str(), L"wb");
 
+      if(!pDst_file) {
+        // emultate mz_zip_set_error()
+        static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
+        return false;
+      }
+
+      int result = mz_zip_reader_extract_to_cfile(static_cast<mz_zip_archive*>(_data), i, pDst_file, 0);
+
+      fclose(pDst_file);
+      return result;
+    }
   }
   return false;
 }
@@ -251,13 +301,20 @@ bool OmZipFile::extract(unsigned i, const wstring& dst) const
 {
   if(_stat & ZIP_READER) {
 
-    string ansi_dst;
+    FILE *pDst_file = nullptr;
+    _wfopen_s(&pDst_file, dst.c_str(), L"wb");
 
-    Om_toANSI(&ansi_dst, dst);
-
-    if(mz_zip_reader_extract_to_file(static_cast<mz_zip_archive*>(_data), i, ansi_dst.c_str(), 0)) {
-      return true;
+    if(!pDst_file) {
+      // emultate mz_zip_set_error()
+      static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
+      return false;
     }
+
+    int result = mz_zip_reader_extract_to_cfile(static_cast<mz_zip_archive*>(_data), i, pDst_file, 0);
+
+    fclose(pDst_file);
+
+    return result;
 
   }
   return false;
@@ -351,6 +408,11 @@ void OmZipFile::close()
 
   if(_stat & ZIP_READER) {
     mz_zip_reader_end(static_cast<mz_zip_archive*>(_data));
+  }
+
+  if(_file) {
+    fclose(reinterpret_cast<FILE*>(_file));
+    _file = nullptr;
   }
 }
 

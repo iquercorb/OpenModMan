@@ -1083,7 +1083,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
 
   // initialize zip archive
   if(!pkg_zip.init(pkg_tmp_path)) {
-    this->_error = Om_errInit(L"Package (temp) file", out_path, pkg_zip.lastErrorStr());
+    this->_error = Om_errInit(L"Package temporary file", pkg_tmp_path, pkg_zip.lastErrorStr());
     this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
     pkg_zip.close();
     Om_fileDelete(pkg_tmp_path);
@@ -1317,7 +1317,7 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   // the original file if exists
   result = Om_fileMove(pkg_tmp_path, pkg_path);
   if(result != 0) {
-    this->_error = Om_errRename(L"Package (temp) file", pkg_tmp_path, result);
+    this->_error = Om_errRename(L"Package temporary file", pkg_tmp_path, result);
     this->log(0, L"Package("+pkg_ident+L") Save", this->_error);
     Om_fileDelete(pkg_tmp_path);
     return false;
