@@ -85,10 +85,7 @@ bool OmZipFile::init(const wstring& path)
 {
   if(_file) close();
 
-  _wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"wb");
-
-  if(!_file) {
-    // emultate mz_zip_set_error()
+  if(_wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"wb") != 0) {
     static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
     return false;
   }
@@ -111,10 +108,7 @@ bool OmZipFile::load(const wstring& path)
 {
   if(_file) close();
 
-  _wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"rb");
-
-  if(!_file) {
-    // emultate mz_zip_set_error()
+  if(_wfopen_s(reinterpret_cast<FILE**>(&_file), path.c_str(), L"rb") != 0) {
     static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
     return false;
   }
@@ -142,23 +136,24 @@ bool OmZipFile::append(const wstring& src, const wstring& dst, unsigned lvl)
     Om_toZipCDR(&zcdr_dst, dst);
 
     FILE *pSrc_file = nullptr;
-    _wfopen_s(&pSrc_file, src.c_str(), L"rb");
-
-    if(!pSrc_file) {
-      // emultate mz_zip_set_error()
+    if(_wfopen_s(&pSrc_file, src.c_str(), L"rb") != 0) {
       static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
       return false;
     }
 
+    // get file original size
+    _fseeki64(pSrc_file, 0, SEEK_END);
+    mz_uint64 uncomp_size = _ftelli64(pSrc_file);
+    _fseeki64(pSrc_file, 0, SEEK_SET);
+
     // retrieve file last modified time
     MZ_TIME_T file_time = __get_file_modified_time(src);
 
-    int result = mz_zip_writer_add_cfile(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), pSrc_file, 0, &file_time, nullptr, 0, __mzlvl[lvl], nullptr, 0, nullptr, 0);
+    int result = mz_zip_writer_add_cfile(static_cast<mz_zip_archive*>(_data), zcdr_dst.c_str(), pSrc_file, uncomp_size, &file_time, nullptr, 0, __mzlvl[lvl], nullptr, 0, nullptr, 0);
 
     fclose(pSrc_file);
 
     return result;
-
   }
 
   return false;
@@ -275,11 +270,9 @@ bool OmZipFile::extract(const wstring& src, const wstring& dst) const
 
     int i = mz_zip_reader_locate_file(static_cast<mz_zip_archive*>(_data), zcdr_src.c_str(), "", 0);
     if(i != -1) {
-      FILE *pDst_file = nullptr;
-      _wfopen_s(&pDst_file, dst.c_str(), L"wb");
 
-      if(!pDst_file) {
-        // emultate mz_zip_set_error()
+      FILE *pDst_file = nullptr;
+      if(_wfopen_s(&pDst_file, dst.c_str(), L"wb") != 0) {
         static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
         return false;
       }
@@ -302,10 +295,7 @@ bool OmZipFile::extract(unsigned i, const wstring& dst) const
   if(_stat & ZIP_READER) {
 
     FILE *pDst_file = nullptr;
-    _wfopen_s(&pDst_file, dst.c_str(), L"wb");
-
-    if(!pDst_file) {
-      // emultate mz_zip_set_error()
+    if(_wfopen_s(&pDst_file, dst.c_str(), L"wb") != 0) {
       static_cast<mz_zip_archive*>(_data)->m_last_error = MZ_ZIP_FILE_OPEN_FAILED;
       return false;
     }
