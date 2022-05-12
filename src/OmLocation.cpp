@@ -1360,10 +1360,10 @@ bool OmLocation::dstDirAccess(bool rw)
     // Check for special case of network folder
     if(Om_pathIsNetwork(this->_dstDir.c_str())) {
 
-      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // the Om_checkAccess (AccessCheck) method does not properly handle
       // permissions for network share that are not public/guest allowed.
 
-      // Proper permissions check would require to implement domaine-user login
+      // Proper permissions check would require to implement domain-user login
       // using LogonUser and ImpersonateLoggedOnUser functions to test against
       // the given network folder.
 
@@ -1425,10 +1425,10 @@ bool OmLocation::libDirAccess(bool rw)
     // Check for special case of network folder
     if(Om_pathIsNetwork(this->_libDir.c_str())) {
 
-      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // the Om_checkAccess (AccessCheck) method does not properly handle
       // permissions for network share that are not public/guest allowed.
 
-      // Proper permissions check would require to implement domaine-user login
+      // Proper permissions check would require to implement domain-user login
       // using LogonUser and ImpersonateLoggedOnUser functions to test against
       // the given network folder.
 
@@ -1490,10 +1490,10 @@ bool OmLocation::bckDirAccess(bool rw)
     // Check for special case of network folder
     if(Om_pathIsNetwork(this->_bckDir.c_str())) {
 
-      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // the Om_checkAccess (AccessCheck) method does not properly handle
       // permissions for network share that are not public/guest allowed.
 
-      // Proper permissions check would require to implement domaine-user login
+      // Proper permissions check would require to implement domain-user login
       // using LogonUser and ImpersonateLoggedOnUser functions to test against
       // the given network folder.
 
