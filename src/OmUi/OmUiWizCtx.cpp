@@ -135,7 +135,7 @@ void OmUiWizCtx::_onWizFinish()
   static_cast<OmUiMgr*>(this->root())->ctxSel(-1);
 
   // force parent dialog to refresh
-  this->_parent->refresh();
+  this->root()->refresh();
 }
 
 

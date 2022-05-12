@@ -336,6 +336,10 @@ void OmUiMgr::_buildCbCtx()
       this->msgItem(IDC_CB_CTX, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     }
 
+    // If no context selected, force the selection of the last added context
+    if(!pMgr->ctxCur())
+      pMgr->ctxSel(pMgr->ctxCount() - 1);
+
     // select context according current active one
     this->msgItem(IDC_CB_CTX, CB_SETCURSEL, pMgr->ctxCurId());
 
@@ -537,7 +541,7 @@ void OmUiMgr::_onRefresh()
     this->setPopupItem(static_cast<int>(1), 5, MF_GRAYED); // Edit > Package []
   }
 
-  // rebuild the Recent Contect menu
+  // rebuild the Recent Context menu
   this->_buildMnRct();
 
   // rebuild the Context list Combo-Box
