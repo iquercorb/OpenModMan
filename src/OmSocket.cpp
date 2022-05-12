@@ -81,7 +81,7 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_HTTPGET, 1L);
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEFUNCTION, &this->_writeMemCb);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEFUNCTION, OmSocket::_writeMemCb);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEDATA, this);
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_NOPROGRESS, 1L);
@@ -141,11 +141,11 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_HTTPGET, 1L);
 
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEFUNCTION, &this->_writeFioCb);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEFUNCTION, OmSocket::_writeFileCb);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_WRITEDATA, this);
 
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_NOPROGRESS, 0L);
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFOFUNCTION, &this->_progressCb);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFOFUNCTION, OmSocket::_progressCb);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFODATA, this);
 
   // follow HTTP redirections
@@ -155,6 +155,9 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYPEER, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);
+
+  // Set large buffer to optimize write/download rate
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_BUFFERSIZE, 512000L);
 
   this->_out_file = file;
   this->_user_download = download_cb;
@@ -378,28 +381,11 @@ size_t OmSocket::_writeFileCb(char *recv_data, size_t recv_s, size_t recv_n, voi
     self->_rate_time = clock();
   }
 
+  /*
   DWORD dwB;
   WriteFile(static_cast<HANDLE>(self->_out_file), recv_data, recv_size, &dwB, nullptr);
-
   return recv_size;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-size_t OmSocket::_writeFioCb(char *recv_data, size_t recv_s, size_t recv_n, void *ptr)
-{
-  OmSocket* self = static_cast<OmSocket*>(ptr);
-
-  // compute download rate
-  self->_rate_byte += (recv_s * recv_n);
-  double sec = static_cast<double>(clock() - self->_rate_time) / CLOCKS_PER_SEC;
-  if(sec >= 0.5) { // 500 Ms
-    self->_progress_bps = static_cast<double>(self->_rate_byte) / sec;
-    self->_rate_byte = 0;
-    self->_rate_time = clock();
-  }
+  */
 
   return fwrite(recv_data, recv_s, recv_n, static_cast<FILE*>(self->_out_file));
 }

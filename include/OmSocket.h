@@ -173,9 +173,7 @@ class OmSocket
 
     static size_t       _writeMemCb(char*, size_t, size_t, void*);
 
-    static size_t       _writeFioCb(char *, size_t, size_t, void*);
-
-    static size_t       _writeFileCb(char*, size_t, size_t, void*);
+    static size_t       _writeFileCb(char *, size_t, size_t, void*);
 
     static size_t       _progressCb(void*, int64_t, int64_t, int64_t, int64_t);
 };
