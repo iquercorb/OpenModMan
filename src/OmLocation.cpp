@@ -1337,6 +1337,7 @@ bool OmLocation::dstDirAccess(bool rw)
 
   // checks whether folder exists
   if(Om_isDir(this->_dstDir)) {
+
     // checks for proper permissions on folder
     if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
       if(rw) { //< check for writing access
@@ -1355,8 +1356,29 @@ bool OmLocation::dstDirAccess(bool rw)
   }
 
   if(!access_ok) {
-    this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
-    return false;
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_dstDir.c_str())) {
+
+      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // permissions for network share that are not public/guest allowed.
+
+      // Proper permissions check would require to implement domaine-user login
+      // using LogonUser and ImpersonateLoggedOnUser functions to test against
+      // the given network folder.
+
+      // To avoid wrong permissions issues, we bypass check but emit a warning
+      // in log
+
+      this->log(1, L"Location("+this->_title+L") Destination access",
+                L"Access denied ignored because \""+this->_dstDir+L"\" is a "
+                "network folder and permissions may not be properly evaluated; "
+                "Please be aware of this in case of file write or read error.");
+      return true;
+    } else {
+      this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
+      return false;
+    }
   }
 
   return true;
@@ -1399,8 +1421,29 @@ bool OmLocation::libDirAccess(bool rw)
   }
 
   if(!access_ok) {
-    this->log(0, L"Location("+this->_title+L") Library access", this->_error);
-    return false;
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_libDir.c_str())) {
+
+      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // permissions for network share that are not public/guest allowed.
+
+      // Proper permissions check would require to implement domaine-user login
+      // using LogonUser and ImpersonateLoggedOnUser functions to test against
+      // the given network folder.
+
+      // To avoid wrong permissions issues, we bypass check but emit a warning
+      // in log
+
+      this->log(1, L"Location("+this->_title+L") Library access",
+                L"Access denied ignored because \""+this->_libDir+L"\" is a "
+                "network folder and permissions may not be properly evaluated; "
+                "Please be aware of this in case of file write or read error.");
+      return true;
+    } else {
+      this->log(0, L"Location("+this->_title+L") Library access", this->_error);
+      return false;
+    }
   }
 
   return true;
@@ -1443,8 +1486,29 @@ bool OmLocation::bckDirAccess(bool rw)
   }
 
   if(!access_ok) {
-    this->log(0, L"Location("+this->_title+L") Backup access", this->_error);
-    return false;
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_bckDir.c_str())) {
+
+      // the Om_checkAccess (AccessCheck) methode does not properly handle
+      // permissions for network share that are not public/guest allowed.
+
+      // Proper permissions check would require to implement domaine-user login
+      // using LogonUser and ImpersonateLoggedOnUser functions to test against
+      // the given network folder.
+
+      // To avoid wrong permissions issues, we bypass check but emit a warning
+      // in log
+
+      this->log(1, L"Location("+this->_title+L") Backup access",
+                L"Access denied ignored because \""+this->_bckDir+L"\" is a "
+                "network folder and permissions may not be properly evaluated; "
+                "Please be aware of this in case of file write or read error.");
+      return true;
+    } else {
+      this->log(0, L"Location("+this->_title+L") Backup access", this->_error);
+      return false;
+    }
   }
 
   return true;

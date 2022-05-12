@@ -134,6 +134,16 @@ bool Om_isDir(const wstring& path);
 ///
 bool Om_pathExists(const wstring& path);
 
+/// \brief Check for network path
+///
+/// Checks whether the specified path is a network path.
+///
+/// \param[in]  path   : Path to item to check.
+///
+/// \return True if item is actually network path, false otherwise.
+///
+bool Om_pathIsNetwork(const wstring& path);
+
 /// \brief Set item attribute
 ///
 /// Set attribute to specified item, either file or folder.

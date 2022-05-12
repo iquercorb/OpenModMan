@@ -2381,7 +2381,7 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     #ifdef DEBUG
-    std::cout << "DEBUG => OmUiMgrMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    //std::cout << "DEBUG => OmUiMgrMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
 
     switch(LOWORD(wParam))

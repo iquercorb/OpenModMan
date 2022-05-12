@@ -112,6 +112,13 @@ bool Om_isDir(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_pathIsNetwork(const wstring& path) {
+  return PathIsNetworkPathW(path.c_str());
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool Om_pathExists(const wstring& path) {
   return PathFileExistsW(path.c_str());
 }
@@ -540,8 +547,6 @@ int Om_moveToTrash(const wstring& path)
 ///
 bool Om_checkAccess(const wstring& path, unsigned mask)
 {
-  //return __checkAccess(path, mask);
-
   // Thanks to this article for giving some clues :
   // http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
 
@@ -559,7 +564,11 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   pSd = reinterpret_cast<SECURITY_DESCRIPTOR*>(Om_alloc(sdSize + 1));
   // second call to get SECURITY_DESCRIPTOR data
   if(!GetFileSecurityW(path.c_str(), sdMask, pSd, sdSize, &sdSize)) {
-    Om_free(pSd); return false;
+    Om_free(pSd);
+    #ifdef DEBUG
+    cout << "DEBUG => Om_checkAccess :: GetFileSecurityW failed\n";
+    #endif
+    return false;
   }
 
   // STEP 2 - creates a "security token" of the current application process
@@ -568,7 +577,11 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
                 | STANDARD_RIGHTS_READ;
   HANDLE hTokenProc = nullptr;
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
-    Om_free(pSd); return false;
+    Om_free(pSd);
+    #ifdef DEBUG
+    cout << "DEBUG => Om_checkAccess :: OpenProcessToken failed\n";
+    #endif
+    return false;
   }
   // the current process token is a "primary" one (don't know what that mean)
   // so we need to duplicate it to transform it into a standard "user" token by
@@ -576,6 +589,9 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   HANDLE hTokenUser = nullptr;
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
     CloseHandle(hTokenProc); Om_free(pSd);
+    #ifdef DEBUG
+    cout << "DEBUG => Om_checkAccess :: DuplicateToken failed\n";
+    #endif
     return false;
   }
 
@@ -590,50 +606,55 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   DWORD psSize = sizeof(PRIVILEGE_SET);
   DWORD allowed = 0;      //< mask of allowed access
   BOOL  status = false;   //< access status according supplied GENERIC_MAPPING
-  AccessCheck(pSd, hTokenUser, mask, &gm, &ps, &psSize, &allowed, &status);
+  if(!AccessCheck(pSd, hTokenUser, mask, &gm, &ps, &psSize, &allowed, &status)) {
+    CloseHandle(hTokenProc); CloseHandle(hTokenUser); Om_free(pSd);
+    #ifdef DEBUG
+    wcout << L"DEBUG => Om_checkAccess :: AccessCheck failed: " << GetLastError() << L"\n";
+    #endif
+  }
 
   if(!status) {
     #ifdef DEBUG
-    wcout << L"DEBUG => Om_checkAccess(";
-    if(mask & FILE_LIST_DIRECTORY) wcout << L"FILE_LIST_DIRECTORY | ";
-    if(mask & FILE_TRAVERSE) wcout << L"FILE_TRAVERSE | ";
-    if(mask & FILE_ADD_FILE) wcout << L"FILE_ADD_FILE | ";
-    if(mask & FILE_ADD_SUBDIRECTORY) wcout << L"FILE_ADD_SUBDIRECTORY | ";
-    if(mask & FILE_READ_DATA) wcout << L"FILE_READ_DATA | ";
-    if(mask & FILE_WRITE_DATA) wcout << L"FILE_WRITE_DATA | ";
-    if(mask & FILE_APPEND_DATA) wcout << L"FILE_APPEND_DATA | ";
-    if(mask & FILE_EXECUTE) wcout << L"FILE_EXECUTE";
-    if(mask & FILE_READ_ATTRIBUTES) wcout << L"FILE_READ_ATTRIBUTES";
-    if(mask & FILE_WRITE_ATTRIBUTES) wcout << L"FILE_WRITE_ATTRIBUTES";
-    wcout << L") : denied, allowed access: \n";
+    cout << "DEBUG => Om_checkAccess(";
+    if(mask & FILE_LIST_DIRECTORY) cout << "FILE_LIST_DIRECTORY | ";
+    if(mask & FILE_TRAVERSE) cout << "FILE_TRAVERSE | ";
+    if(mask & FILE_ADD_FILE) cout << "FILE_ADD_FILE | ";
+    if(mask & FILE_ADD_SUBDIRECTORY) cout << "FILE_ADD_SUBDIRECTORY | ";
+    if(mask & FILE_READ_DATA) cout << "FILE_READ_DATA | ";
+    if(mask & FILE_WRITE_DATA) cout << "FILE_WRITE_DATA | ";
+    if(mask & FILE_APPEND_DATA) cout << "FILE_APPEND_DATA | ";
+    if(mask & FILE_EXECUTE) cout << "FILE_EXECUTE";
+    if(mask & FILE_READ_ATTRIBUTES) cout << "FILE_READ_ATTRIBUTES";
+    if(mask & FILE_WRITE_ATTRIBUTES) cout << "FILE_WRITE_ATTRIBUTES";
+    cout << ") : denied, allowed access: \n";
     AccessCheck(pSd, hTokenUser, FILE_READ_DATA, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_DATA + LIST_DIRECTORY\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_DATA + LIST_DIRECTORY\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_DATA, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_DATA + ADD_FILE\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_DATA + ADD_FILE\n";
     AccessCheck(pSd, hTokenUser, FILE_APPEND_DATA, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_APPEND_DATA + ADD_SUBDIRECTORY\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_APPEND_DATA + ADD_SUBDIRECTORY\n";
     AccessCheck(pSd, hTokenUser, FILE_READ_EA, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_EA\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_EA\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_EA, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_EA\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_EA\n";
     AccessCheck(pSd, hTokenUser, FILE_EXECUTE, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_EXECUTE + TRAVERSE\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_EXECUTE + TRAVERSE\n";
     AccessCheck(pSd, hTokenUser, FILE_DELETE_CHILD, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_DELETE_CHILD\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_DELETE_CHILD\n";
     AccessCheck(pSd, hTokenUser, FILE_READ_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_READ_ATTRIBUTES\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_ATTRIBUTES\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  FILE_WRITE_ATTRIBUTES\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_ATTRIBUTES\n";
     AccessCheck(pSd, hTokenUser, DELETE, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  DELETE\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  DELETE\n";
     AccessCheck(pSd, hTokenUser, READ_CONTROL, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  READ_CONTROL\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  READ_CONTROL\n";
     AccessCheck(pSd, hTokenUser, WRITE_DAC, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  WRITE_DAC\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  WRITE_DAC\n";
     AccessCheck(pSd, hTokenUser, WRITE_OWNER, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  WRITE_OWNER\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  WRITE_OWNER\n";
     AccessCheck(pSd, hTokenUser, SYNCHRONIZE, &gm, &ps, &psSize, &allowed, &status);
-    wcout << ((status) ? L"[x]" : L"[ ]") << L"  SYNCHRONIZE\n";
+    cout << ((status) ? "[x]" : "[ ]") << "  SYNCHRONIZE\n";
     #endif
     status = 0;
   }
