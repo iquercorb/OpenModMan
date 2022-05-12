@@ -434,9 +434,8 @@ bool OmPackage::srcParse(const wstring& path)
 
   // if this is development folder we try to find description text and thumnail
   // image next the folder within the Library
-  if(!this->isType(PKG_TYPE_ZIP)) {
+  if(!this->isType(PKG_TYPE_ZIP))
     this->loadOverview(Om_getDirPart(this->_src));
-  }
 
   // store source last write time
   this->_srcTime = Om_itemTime(this->_src);
@@ -1337,23 +1336,14 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
 ///
 void OmPackage::clear()
 {
+  this->srcClear();
+  this->bckClear();
   this->_type = 0;
   this->_hash = 0;
-  this->_thumb.clear();
   this->_name.clear();
   this->_ident.clear();
-  this->_src.clear();
-  this->_srcDir.clear();
-  this->_srcTime = 0;
-  this->_srcItemLs.clear();
-  this->_depLs.clear();
-  this->_bck.clear();
-  this->_bckDir.clear();
-  this->_bckItemLs.clear();
-  this->_ovrLs.clear();
-  this->_category.clear();
-  this->_desc.clear();
   this->_version.define(0,0,0);
+  this->_category.clear();
 }
 
 
