@@ -275,7 +275,8 @@ bool OmRemote::download(const wstring& path, bool supersedes, Om_downloadCb down
   this->_downl_temp = this->_downl_path + L".dl_temp";
 
   // Open file for writing
-  if((this->_downl_file = _wfopen(this->_downl_temp.c_str(), L"wb")) == nullptr) {
+  //if((this->_downl_file = _wfopen_s(this->_downl_temp.c_str(), L"wb")) == nullptr) {
+  if(_wfopen_s(&this->_downl_file, this->_downl_temp.c_str(), L"wb") != 0) {
     this->_error =  L"Temporary file \""+this->_downl_temp+L"\" creation failed: ";
     this->_error += L"Unable to open file for writing.";
     this->log(0, L"Remote("+this->_ident+L") Download", this->_error);
