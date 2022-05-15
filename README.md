@@ -72,7 +72,8 @@ Open Mod Mananager currently implements the following key features:
  - Added bypass of access denied for network folders which access cannot be properly evaluated
  - Fixed newly created Software Context not properly selected after Wizard dialog closed
  - Fix potential memory leaks when closing software context
- - Upgraded libcurl to version 7.83.1
+ - Update embedded libcurl library to version 7.83.1
+ - Update embedded miniz library to version 2.2.0
 
 0.9.9 (2022-02-19)
  - Fix command shortcuts still working when main dialog is not active.
