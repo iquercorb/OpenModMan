@@ -1024,7 +1024,6 @@ bool OmPackage::loadOverview(const wstring& path)
   return changed;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///

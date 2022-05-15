@@ -157,7 +157,7 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);
 
   // Set large buffer to optimize write/download rate
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_BUFFERSIZE, 512000L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_BUFFERSIZE, 120000L);
 
   this->_out_file = file;
   this->_user_download = download_cb;

@@ -273,7 +273,7 @@ class OmContext
     /// \return Batch count.
     ///
     size_t batCount() {
-      return _batLst.size();
+      return _batLs.size();
     }
 
     /// \brief Get Batch.
@@ -285,7 +285,7 @@ class OmContext
     /// \return Batch object at index.
     ///
     OmBatch* batGet(unsigned i) {
-      return (i < _batLst.size()) ? _batLst[i] : nullptr;
+      return (i < _batLs.size()) ? _batLs[i] : nullptr;
     }
 
     /// \brief Sort Batches list.
@@ -358,7 +358,7 @@ class OmContext
 
     int                 _locCur;
 
-    vector<OmBatch*>    _batLst;
+    vector<OmBatch*>    _batLs;
 
     bool                _batQuietMode;
 

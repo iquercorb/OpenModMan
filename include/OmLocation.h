@@ -913,6 +913,12 @@ class OmLocation
     ///
     void setWarnUpgdBrkDeps(bool enable);
 
+    /// \brief Clear Remote list.
+    ///
+    /// Deletes all remote packages from current list.
+    ///
+    void rmtClear();
+
     /// \brief Refresh Remote list.
     ///
     /// Refresh remote package state against local packages lst.

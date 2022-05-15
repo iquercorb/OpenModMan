@@ -70,7 +70,7 @@ static bool __bat_sort_index_fn(const OmBatch* a, const OmBatch* b)
 ///
 OmContext::OmContext(OmManager* pMgr) :
   _manager(pMgr), _config(), _path(), _uuid(), _title(), _home(), _icon(nullptr),
-  _locLs(), _locCur(-1), _batLst(), _batQuietMode(true), _valid(false), _error()
+  _locLs(), _locCur(-1), _batLs(), _batQuietMode(true), _valid(false), _error()
 {
 
 }
@@ -203,7 +203,7 @@ bool OmContext::open(const wstring& path)
       OmBatch* pBat = new OmBatch(this);
 
       if(pBat->open(file_ls[i])) {
-        this->_batLst.push_back(pBat);
+        this->_batLs.push_back(pBat);
       } else {
         delete pBat;
       }
@@ -215,8 +215,8 @@ bool OmContext::open(const wstring& path)
     sort(this->_locLs.begin(), this->_locLs.end(), __loc_sort_index_fn);
 
   // sort Batches by index
-  if(this->_batLst.size() > 1)
-    sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
+  if(this->_batLs.size() > 1)
+    sort(this->_batLs.begin(), this->_batLs.end(), __bat_sort_index_fn);
 
   // the first location in list become the default active one
   if(this->_locLs.size()) {
@@ -251,6 +251,11 @@ void OmContext::close()
     this->_locLs.clear();
 
     this->_locCur = -1;
+
+    for(size_t i = 0; i < this->_batLs.size(); ++i)
+      delete this->_batLs[i];
+
+    this->_batLs.clear();
 
     this->_valid = false;
 
@@ -633,8 +638,8 @@ bool OmContext::locRem(unsigned id)
 ///
 void OmContext::batSort()
 {
-  if(this->_batLst.size() > 1)
-    sort(this->_batLst.begin(), this->_batLst.end(), __bat_sort_index_fn);
+  if(this->_batLs.size() > 1)
+    sort(this->_batLs.begin(), this->_batLs.end(), __bat_sort_index_fn);
 }
 
 
@@ -649,8 +654,8 @@ OmBatch* OmContext::batAdd(const wstring& title)
 
   // Create new batch object
   OmBatch* pBat = new OmBatch(this);
-  pBat->init(path, title, this->_batLst.size());
-  this->_batLst.push_back(pBat);
+  pBat->init(path, title, this->_batLs.size());
+  this->_batLs.push_back(pBat);
 
   this->log(2, L"Context("+this->_title+L") Create Batch", L"Batch \""+title+L"\" created.");
 
@@ -697,7 +702,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
   def_xml.addChild(L"title").setContent(title);
 
   // define ordering index in definition file
-  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batLst.size()));
+  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batLs.size()));
 
   // useful variables
   OmLocation* pLoc;
@@ -741,7 +746,7 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
   // load the newly created Batch
   OmBatch* pBat = new OmBatch(this);
   pBat->open(bat_def_path);
-  this->_batLst.push_back(pBat);
+  this->_batLs.push_back(pBat);
 
   // sort Batches by index
   this->batSort();
@@ -755,9 +760,9 @@ bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, co
 ///
 bool OmContext::batRem(unsigned id)
 {
-  if(id < this->_batLst.size()) {
+  if(id < this->_batLs.size()) {
 
-    OmBatch* pBat = this->_batLst[id];
+    OmBatch* pBat = this->_batLs[id];
 
     wstring bat_path = pBat->path();
     wstring bat_title = pBat->title();
@@ -779,11 +784,11 @@ bool OmContext::batRem(unsigned id)
     delete pBat;
 
     // remove from list
-    this->_batLst.erase(this->_batLst.begin()+id);
+    this->_batLs.erase(this->_batLs.begin()+id);
 
     // update batches order indexing
-    for(size_t i = 0; i < this->_batLst.size(); ++i) {
-      this->_batLst[i]->setIndex(i);
+    for(size_t i = 0; i < this->_batLs.size(); ++i) {
+      this->_batLs[i]->setIndex(i);
     }
 
     // sort Batches by index

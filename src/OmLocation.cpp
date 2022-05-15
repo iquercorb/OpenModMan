@@ -1315,6 +1315,9 @@ void OmLocation::close()
   wstring title = this->_title;
 
   this->libClear();
+
+  this->rmtClear();
+
   this->_home.clear();
   this->_path.clear();
   this->_title.clear();
@@ -1324,6 +1327,10 @@ void OmLocation::close()
   this->_bckDir.clear();
   this->_bckDirCust = false;
   this->_config.close();
+
+  for(size_t i = 0; i < this->_repLs.size(); ++i) delete this->_repLs[i];
+  this->_repLs.clear();
+
   this->_valid = false;
 }
 
@@ -1513,7 +1520,6 @@ bool OmLocation::bckDirAccess(bool rw)
 
   return true;
 }
-
 
 
 ///
@@ -2619,7 +2625,6 @@ void OmLocation::repRem(unsigned i)
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -2797,6 +2802,18 @@ void OmLocation::rmtSetSorting(OmLocLsSort sorting)
 
   // finally sort packages
   this->_rmtSort();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::rmtClear()
+{
+  for(size_t i = 0; i < this->_rmtLs.size(); ++i)
+    delete this->_rmtLs[i];
+
+  this->_rmtLs.clear();
 }
 
 
