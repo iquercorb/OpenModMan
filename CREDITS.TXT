@@ -47,7 +47,7 @@ This is free and unencumbered software released into the public domain.
 
 * * *
 
-CURL 7.74.0
+CURL 7.83.1
 
 Copyright (c) 1996 - 2020, Daniel Stenberg, <daniel@haxx.se>, and many contributors, see the THANKS file.
 
