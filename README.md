@@ -61,7 +61,7 @@ Open Mod Mananager currently implements the following key features:
 ## Version history
 
 1.0 (2022-05-16)
- - Includes all cumulatives changes and fixes of 0.9.9 hotfixes, including:
+ - Includes all cumulatives changes and fixes of 0.9.9.x hotfixes, including:
  - Fix and optimize markdown rendering
  - Fix loading JPEG files may cause application to crash
  - Fix and optimized image processing
@@ -72,6 +72,7 @@ Open Mod Mananager currently implements the following key features:
  - Added bypass of access denied for network folders which access cannot be properly evaluated
  - Fixed newly created Software Context not properly selected after Wizard dialog closed
  - Fix potential memory leaks when closing software context
+ - Upgraded libcurl to version 7.83.1
 
 0.9.9 (2022-02-19)
  - Fix command shortcuts still working when main dialog is not active.
