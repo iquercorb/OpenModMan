@@ -36,9 +36,9 @@ OmUiMgrFoot::OmUiMgrFoot(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr)
 {
   // create child tab dialogs
-  this->_addTab(L"Overview", new OmUiMgrFootOvw(hins));
+  this->_addTab(L"Package Overview", new OmUiMgrFootOvw(hins));
   //this->_addTab(L"Screenshots", new OmUiMgrFootGal(hins));
-  this->_addTab(L"Details", new OmUiMgrFootDet(hins));
+  this->_addTab(L"Package Details", new OmUiMgrFootDet(hins));
 }
 
 ///

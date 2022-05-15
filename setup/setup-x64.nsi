@@ -62,8 +62,6 @@ Section "Install (required)"
   ; Put file there
   File "/oname=${APP_EXE_NAME}.exe"     "${REL_64_EXE}"
 
-  File "/oname=libssl-1_1-x64.dll"      "${SSL_64_DLL}"
-  File "/oname=libcrypto-1_1-x64.dll"   "${CRYPTO_64_DLL}"
   File "/oname=libcurl-x64.dll"         "${CURL_64_DLL}"
 
   file "/oname=omm_icon.ico"            "${OMM_ICO}"

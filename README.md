@@ -2,7 +2,7 @@
 
 Open source and generic Mod ("Modifications") manager.
 
-## Version: 0.9.9 (beta)
+## Version: 1.0
 
 ## Presentation
 
@@ -60,7 +60,20 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
-0.9.9 (19-02-2022)
+1.0 (2022-05-16)
+ - Includes all cumulatives changes and fixes of 0.9.9 hotfixes, including:
+ - Fix and optimize markdown rendering
+ - Fix loading JPEG files may cause application to crash
+ - Fix and optimized image processing
+ - Fix deleting package may crash application
+ - Fix Repository Package parse failing due to 'xxhsum' tag not properly handled
+ - New support of paths with non-ANSI characters for ZIP file I/O
+ - Fix download low performances on large files over high-speed network
+ - Added bypass of access denied for network folders which access cannot be properly evaluated
+ - Fixed newly created Software Context not properly selected after Wizard dialog closed
+ - Fix potential memory leaks when closing software context
+
+0.9.9 (2022-02-19)
  - Fix command shortcuts still working when main dialog is not active.
  - Fix scrolling for Overlap and Dependencies in Package Properties Dialog.
  - Fix missing dialogs for package download errors.
@@ -79,7 +92,7 @@ Open Mod Mananager currently implements the following key features:
  - New improved UI with resizable frames.
  - New Markdown parsing support for package description.
 
-0.9.8 (04-01-2022)
+0.9.8 (2022-01-04)
  - Add support and automatic follow of HTTP redirect responses.
  - Fix Network ListView columns click wrongly pops up contextual menu.
  - Fix Network ListView not properly redrawn after item sorting.
@@ -89,12 +102,12 @@ Open Mod Mananager currently implements the following key features:
  - Fix not working delete repository button of Network tab.
  - Fix overly long warning messages with huge packages list.
 
-0.9.7 (07-18-2021)
+0.9.7 (2021-07-18)
  - Developer mode back as enabled by default.
  - Fix undo install not working with archive files backup.
  - Package created folders no longer generate overlapping.
 
-0.9.6 (07-07-2021)
+0.9.6 (2021-07-07)
  - Overall optimization and various debug.
  - Repaired broken Context Wizard dialog.
  - Fix Load Contexts At Startup option dialog not saving properly.

@@ -3,9 +3,9 @@
 !define MUI_ICON          "..\res\images\inst_icon.ico"
 !define MUI_UNICON        "..\res\images\unin_icon.ico"
 
-!define AAP_MAJ           "0"
-!define AAP_MIN           "9"
-!define AAP_REV           "9"
+!define AAP_MAJ           "1"
+!define AAP_MIN           "0"
+!define AAP_REV           "0"
 
 !define APP_NAME          "Open Mod Manager"
 !define APP_SHORT_NAME    "OpenModMan"
@@ -16,14 +16,10 @@
 !define REL_64_EXE        "..\bin\64-bit\Release\OpenModMan.exe"
 
 !define CURL_64_DLL       "..\dll\64-bit\libcurl-x64.dll"
-!define SSL_64_DLL        "..\dll\64-bit\libssl-1_1-x64.dll"
-!define CRYPTO_64_DLL     "..\dll\64-bit\libcrypto-1_1-x64.dll"
 
 !define REL_32_EXE        "..\bin\32-bit\Release\OpenModMan.exe"
 
 !define CURL_32_DLL       "..\dll\32-bit\libcurl.dll"
-!define SSL_32_DLL        "..\dll\32-bit\libssl-1_1.dll"
-!define CRYPTO_32_DLL     "..\dll\32-bit\libcrypto-1_1.dll"
 
 !define OMM_ICO           "..\res\images\omm_icon.ico"
 !define OMB_ICO           "..\res\images\omb_icon.ico"

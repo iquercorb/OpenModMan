@@ -20,9 +20,9 @@
 #define OMM_APP_NAME              L"Open Mod Manager"
 #define OMM_APP_SHORT_NAME        L"OpenModMan"
 
-#define OMM_APP_MAJ               0
-#define OMM_APP_MIN               9
-#define OMM_APP_REV               9
+#define OMM_APP_MAJ               1
+#define OMM_APP_MIN               0
+#define OMM_APP_REV               0
 
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
@@ -30,7 +30,7 @@
   #define OMM_APP_ARCH            L"x86"
 #endif
 
-#define OMM_APP_DATE              L"Feburary 2022"
+#define OMM_APP_DATE              L"May 2022"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2022"
