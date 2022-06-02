@@ -1401,7 +1401,7 @@ void OmUiMgrMainNet::_onLvRmtHit()
   if(pRmt->isState(RMT_STATE_UPG)) {
 
     // ask user for upgrade
-    if(!Om_dlgBox_yn(this->_hwnd, L"Download Package", IDI_QRY,
+    if(Om_dlgBox_yn(this->_hwnd, L"Download Package", IDI_QRY,
                   L"Package upgrade", L"The selected remote Package supersedes "
                   "one or more local Packages. Do you want to keep older "
                   "Package versions ?"))
