@@ -44,7 +44,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmRemote::OmRemote() :
-  _location(nullptr),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),
+  _repository(nullptr),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),
   _state(0),_ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),
   _thumb(),_error(),_downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),
   _downl_user_download(nullptr),_downl_user_ptr(nullptr),_downl_hth(nullptr),
@@ -57,8 +57,8 @@ OmRemote::OmRemote() :
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmRemote::OmRemote(OmLocation* pLoc) :
-  _location(pLoc),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),_state(0),
+OmRemote::OmRemote(OmRepository* pRep) :
+  _repository(pRep),_url(),_file(),_bytes(0),_csum(),_csumType(RMT_CHECKSUM_NUL),_state(0),
   _ident(),_hash(0),_core(),_version(),_name(),_depLs(),_desc(),_thumb(),_error(),
   _downl_file(),_downl_path(),_downl_temp(),_downl_spsd(false),_downl_user_download(nullptr),
   _downl_user_ptr(nullptr),_downl_hth(nullptr),_downl_percent(0)
@@ -316,12 +316,12 @@ void OmRemote::clear()
 ///
 void OmRemote::log(unsigned level, const wstring& head, const wstring& detail)
 {
-  if(this->_location != nullptr) {
+  if(this->_repository->pLoc() != nullptr) {
 
-    wstring log_str = L"Location("; log_str.append(this->_location->title());
+    wstring log_str = L"Location("; log_str.append(this->_repository->pLoc()->title());
     log_str.append(L"):: "); log_str.append(head);
 
-    this->_location->log(level, log_str, detail);
+    this->_repository->pLoc()->log(level, log_str, detail);
   }
 }
 
@@ -403,7 +403,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
         OmPackage* pPkg;
 
-        bool rename = self->_location->upgdRename();
+        bool rename = self->_repository->pLoc()->upgdRename();
 
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
           pPkg = self->_supLs[i];

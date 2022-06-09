@@ -153,6 +153,15 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
   if(!this->_valid)
     return 0;
 
+  // remove all previous packages from this repository
+  size_t i = rmt_ls.size();
+  while(i--) {
+    if(rmt_ls[i]->pRep() == this) {
+      delete rmt_ls[i];
+      rmt_ls.erase(rmt_ls.begin() + i);
+    }
+  }
+
   // Get the package list XML node
   OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
 
@@ -160,41 +169,25 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
   std::vector<OmXmlNode> xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
-  wstring ident;
-  bool unique;
   unsigned n = 0;
 
-  // search <remote> with specified identity
+  // Parse and add remote packages
   OmRemote* pRmt;
+
   for(size_t i = 0; i < xml_rmt_ls.size(); ++i) {
 
-    pRmt = new OmRemote(this->_location);
-
+    pRmt = new OmRemote(this);
     if(pRmt->parse(this->_base, this->_downpath, xml_rmt_ls[i])) {
 
-      unique = true;
-
-      // check whether remote with same identity already exists in given list
-      for(size_t j = 0; j < rmt_ls.size(); ++j) {
-        if(pRmt->ident() == rmt_ls[j]->ident()) {
-          unique = false;
-          // we simply add download URL to existing
-          rmt_ls[j]->urlAdd(pRmt->urlGet(0));
-          n++;
-          // TODO: we may do further checks here, by checksum and so and choose what to do...
-        }
-      }
-
-      if(unique) {
-        rmt_ls.push_back(pRmt);
-        n++;
-      }
+      rmt_ls.push_back(pRmt); n++;
 
     } else {
+
       this->_error =  L"<remote> #" + to_wstring(i);
       this->_error += L" parse failed: " + pRmt->lastError();
       log(1, L"Repository("+this->_title+L") Query", this->_error);
       delete pRmt;
+
     }
   }
 

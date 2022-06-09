@@ -186,6 +186,16 @@ class OmRepository
     ///
     bool rmtHas(const wstring& ident);
 
+    /// \brief Get owner Location.
+    ///
+    /// Returns Location that own this remote package.
+    ///
+    /// \return Pointer to Location or nullptr.
+    ///
+    OmLocation* pLoc() const {
+      return _location;
+    }
+
     /// \brief Clear repository.
     ///
     /// Resets repository. This function does not erase the

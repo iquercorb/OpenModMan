@@ -72,7 +72,6 @@ int Om_imgGetType(FILE* file);
 ///
 /// \param[out] out_w   : Output image width
 /// \param[out] out_h   : Output image height
-/// \param[out] out_c   : Output image color component count.
 /// \param[in]  in_path : Input image file path to read data.
 /// \param[in]  flip_y  : Load image for bottom-left origin usage (upside down)
 ///

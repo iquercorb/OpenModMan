@@ -24,7 +24,7 @@
 #include "OmVersion.h"
 #include "OmImage.h"
 
-class OmLocation;
+class OmRepository;
 class OmPackage;
 
 /// \brief Remote package Type Mask
@@ -57,6 +57,7 @@ enum OmRmtHash : unsigned {
 class OmRemote
 {
   friend class OmLocation;
+  friend class OmRepository;
 
   public:
 
@@ -68,11 +69,11 @@ class OmRemote
 
     /// \brief Constructor.
     ///
-    /// Constructor with Location.
+    /// Constructor with Repository.
     ///
-    /// \param[in]  pLoc    : Related Location for the Package.
+    /// \param[in]  pRep    : Related Repository for the Package.
     ///
-    OmRemote(OmLocation* pLoc);
+    OmRemote(OmRepository* pRep);
 
     /// \brief Destructor.
     ///
@@ -339,14 +340,14 @@ class OmRemote
       return false;
     }
 
-    /// \brief Get owner Location.
+    /// \brief Get owner Repository.
     ///
-    /// Returns Location that own this remote package.
+    /// Returns Repository that own this remote package.
     ///
-    /// \return Pointer to Location or nullptr.
+    /// \return Pointer to Repository or nullptr.
     ///
-    OmLocation* ownerLoc() const {
-      return _location;
+    OmRepository* pRep() const {
+      return _repository;
     }
 
     /// \brief Download remote package.
@@ -418,7 +419,7 @@ class OmRemote
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _location;
+    OmRepository*       _repository;
 
     vector<wstring>     _url;
 
