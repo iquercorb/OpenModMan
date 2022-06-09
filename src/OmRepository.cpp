@@ -169,6 +169,7 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
   std::vector<OmXmlNode> xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
+  bool unique;
   unsigned n = 0;
 
   // Parse and add remote packages
@@ -179,7 +180,20 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
     pRmt = new OmRemote(this);
     if(pRmt->parse(this->_base, this->_downpath, xml_rmt_ls[i])) {
 
-      rmt_ls.push_back(pRmt); n++;
+      unique = true;
+
+      for(size_t j = 0; j < rmt_ls.size(); ++i) {
+        if(rmt_ls[j]->ident() == pRmt->ident()) {
+          unique = false;
+          delete rmt_ls[j]; //< remove previous
+          rmt_ls[j] = pRmt; //< replace object
+          n++; break;
+        }
+      }
+
+      if(unique) {
+        rmt_ls.push_back(pRmt); n++;
+      }
 
     } else {
 
