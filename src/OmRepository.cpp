@@ -182,7 +182,7 @@ size_t OmRepository::rmtMerge(vector<OmRemote*>& rmt_ls)
 
       unique = true;
 
-      for(size_t j = 0; j < rmt_ls.size(); ++i) {
+      for(size_t j = 0; j < rmt_ls.size(); ++j) {
         if(rmt_ls[j]->ident() == pRmt->ident()) {
           unique = false;
           delete rmt_ls[j]; //< remove previous
