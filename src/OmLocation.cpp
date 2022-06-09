@@ -2617,6 +2617,15 @@ void OmLocation::repRem(unsigned i)
     // save configuration
     this->_config.save();
 
+    // remove all Remote packages related to this Repository
+    size_t i = this->_rmtLs.size();
+    while(i--) {
+      if(this->_rmtLs[i]->pRep() == pRep) {
+        delete this->_rmtLs[i];
+        this->_rmtLs.erase(this->_rmtLs.begin() + i);
+      }
+    }
+
     // delete object
     delete pRep;
 
