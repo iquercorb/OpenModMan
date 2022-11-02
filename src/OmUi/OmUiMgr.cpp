@@ -408,10 +408,13 @@ void OmUiMgr::_onInit()
   int y = rect.top;
   int w = rect.right - rect.left;
   int h = rect.bottom - rect.top;
+  int s = (x < 0 || y < 0 ) ? SWP_NOMOVE|SWP_NOZORDER : SWP_NOZORDER;
 
-  if(x >= 0 && y >= 0 && w > 0 && h > 0) {
-    SetWindowPos(this->_hwnd, nullptr, x, y, w, h, SWP_NOZORDER);
-  }
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMgr::_onInit : SetWindowPos(" << x << ", " << y << ", " << w << ", " << h << ")\n";
+  #endif
+
+  SetWindowPos(this->_hwnd, nullptr, x, y, w, h, s);
 
   // create frames dialogs
   this->_pUiMgrMain->modeless(true);
@@ -602,6 +605,11 @@ void OmUiMgr::_onQuit()
 
   RECT rec;
   GetWindowRect(this->_hwnd, &rec);
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMgr::_onQuit : Window Rect { left=" << rec.left << ", top=" << rec.top << ", bottom=" << rec.bottom <<  ", right=" << rec.right << "}\n";
+  #endif
+
   pMgr->saveWindowRect(rec);
   pMgr->saveWindowFoot(this->_pUiMgrFoot->height());
 

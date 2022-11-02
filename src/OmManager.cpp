@@ -191,16 +191,10 @@ void OmManager::saveWindowRect(const RECT& rect)
       window = this->_config.xml().addChild(L"window");
     }
 
-    // prevent evil values
-    int l = (rect.left >= 0 && rect.left < 2000) ? rect.left : 0;
-    int t = (rect.top >= 0 && rect.top < 2000) ? rect.top : 0;
-    int r = (rect.right >= 0 && rect.right < 2000) ? rect.right : (l + 505);
-    int b = (rect.bottom >= 0 && rect.bottom < 2000) ? rect.bottom : (t + 340);
-
-    window.setAttr(L"left", l);
-    window.setAttr(L"top", t);
-    window.setAttr(L"right", r);
-    window.setAttr(L"bottom", b);
+    window.setAttr(L"left", static_cast<int>(rect.left));
+    window.setAttr(L"top", static_cast<int>(rect.top));
+    window.setAttr(L"right", static_cast<int>(rect.right));
+    window.setAttr(L"bottom", static_cast<int>(rect.bottom));
 
     this->_config.save();
   }
