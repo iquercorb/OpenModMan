@@ -400,21 +400,27 @@ void OmUiMgr::_onInit()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  RECT rect = {0,0,0,0};
-  // set window to saved position and size
-  pMgr->loadWindowRect(rect);
+  // retrieve saved window rect values
+  RECT rec = {0,0,0,0};
+  pMgr->loadWindowRect(rec);
 
-  int x = rect.left;
-  int y = rect.top;
-  int w = rect.right - rect.left;
-  int h = rect.bottom - rect.top;
-  int s = (x < 0 || y < 0 ) ? SWP_NOMOVE|SWP_NOZORDER : SWP_NOZORDER;
+  // window size
+  int w = rec.right - rec.left;
+  int h = rec.bottom - rec.top;
+  if(w <= 0) w = 505; //< default width
+  if(h <= 0) h = 340; //< default height
 
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgr::_onInit : SetWindowPos(" << x << ", " << y << ", " << w << ", " << h << ")\n";
-  #endif
+  // window placement flags
+  unsigned uFlags = SWP_NOZORDER;
 
-  SetWindowPos(this->_hwnd, nullptr, x, y, w, h, s);
+  // check whether any top-left or top-right window corner is outside visible desktop
+  if(!MonitorFromPoint({rec.top, rec.left}, MONITOR_DEFAULTTONULL) ||
+     !MonitorFromPoint({rec.top, rec.right}, MONITOR_DEFAULTTONULL) ) {
+    uFlags |= SWP_NOMOVE; //< keep window default placement by the system
+  }
+
+  // move window rect to the last saved
+  SetWindowPos(this->_hwnd, nullptr, rec.left, rec.top, w, h, uFlags);
 
   // create frames dialogs
   this->_pUiMgrMain->modeless(true);
@@ -607,7 +613,10 @@ void OmUiMgr::_onQuit()
   GetWindowRect(this->_hwnd, &rec);
 
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMgr::_onQuit : Window Rect { left=" << rec.left << ", top=" << rec.top << ", bottom=" << rec.bottom <<  ", right=" << rec.right << "}\n";
+  std::cout << "DEBUG => OmUiMgr::_onQuit : Window Rect { left=" << rec.left
+                                                    << ", top=" << rec.top
+                                                    << ", bottom=" << rec.bottom
+                                                    <<  ", right=" << rec.right << "}\n";
   #endif
 
   pMgr->saveWindowRect(rec);
