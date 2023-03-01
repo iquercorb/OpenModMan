@@ -1871,6 +1871,9 @@ void OmUiMgrMainLib::_onLvPkgSel()
   // get count of selected item
   unsigned lv_nsl = this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT);
 
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+
   // check count of selected item
   if(!lv_nsl) {
 
@@ -1881,6 +1884,9 @@ void OmUiMgrMainLib::_onLvPkgSel()
 
     // disable "Edit > Package" in main menu
     this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
+    // disable all menu-item (for right click menu)
+    for(unsigned i = 0; i < 10; ++i)
+      this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
 
     // show nothing in footer frame
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -1901,21 +1907,20 @@ void OmUiMgrMainLib::_onLvPkgSel()
 
   // enable "Edit > Package []" pop-up menu
   this->_pUiMgr->setPopupItem(1, 5, MF_ENABLED);
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // enable all menu-item (for right click menu)
+  for(unsigned i = 0; i < 10; ++i)
+    this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
 
   // Check whether we have multiple selection
   if(lv_nsl > 1) {
 
     // disable the "Edit > Package > View detail..." menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 6, MF_GRAYED); //< "View detail..." menu-item
+    this->_pUiMgr->setPopupItem(hPopup, 9, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
     this->_pUiMgr->pUiMgrFoot()->clearItem();
 
   } else {
-
-    // enable the "Edit > Package > .. " menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 6, MF_ENABLED); //< "View details" menu-item
 
     OmPackage* pPkg;
 
@@ -1943,6 +1948,45 @@ void OmUiMgrMainLib::_onLvBatSel()
 
   this->enableItem(IDC_BC_RUN, (lv_nsl > 0));
   this->enableItem(IDC_BC_EDI, (lv_nsl > 0));
+}
+
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrMainLib::_onLvBatRclk()
+{
+  // get count of selected item
+  unsigned lv_nsl = this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT);
+
+  HMENU hMenu;
+  HMENU hPopup;
+
+  // Load the menu resource.
+  if((hMenu = LoadMenu(this->_pUiMgr->hins(), MAKEINTRESOURCE(IDR_MENU_BAT))) == nullptr)
+      return;
+
+  // TrackPopupMenu cannot display the menu bar so get
+  // a handle to the first shortcut menu.
+  hPopup = GetSubMenu(hMenu, 0);
+
+  // Disable menu-item if no item is selected (let "New" enabled)
+  if(!lv_nsl) {
+    for(unsigned i = 1; i < 6; ++i)
+      this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
+  }
+
+  // get mouse cursor position
+  POINT pt;
+  GetCursorPos(&pt);
+
+  // Display the shortcut menu. Track the right mouse
+  // button.
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
+
+  // Destroy the menu.
+  DestroyMenu(hMenu);
 }
 
 
@@ -2005,6 +2049,58 @@ void OmUiMgrMainLib::_onBcEdiBat()
   this->_buildLvBat();
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrMainLib::_onBcDelBat()
+{
+  // prevent useless processing
+  if(this->msgItem(IDC_LV_BAT, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView unique selection
+  int lv_sel = this->msgItem(IDC_LV_BAT, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0)
+    return;
+
+  // structure for ListView update
+  LVITEMW lvItem = {};
+  lvItem.mask = LVIF_PARAM; //< we want item param
+  lvItem.iItem = lv_sel;
+  lvItem.lParam = -1;
+  this->msgItem(IDC_LV_BAT, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+  if(lvItem.lParam >= 0) {
+
+    OmManager* pMgr = static_cast<OmManager*>(this->_data);
+    OmContext* pCtx = pMgr->ctxCur();
+    if(!pCtx) return;
+
+    // warns the user before committing the irreparable
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Software Context properties", IDI_QRY,
+              L"Delete Installation Batch", L"Delete the Installation Batch ?",
+              pCtx->batGet(lvItem.lParam)->title()))
+    {
+      return;
+    }
+
+    if(!pCtx->batRem(lvItem.lParam)) {
+
+      // warns the user error occurred
+      Om_dlgBox_okl(this->_hwnd, L"Software Context properties", IDI_ERR,
+                L"Installation Batch delete error", L"Installation Batch deletion "
+                "process failed because of the following error:",
+                pCtx->lastError());
+
+      return;
+    }
+
+  }
+
+  // reload the batch list-box
+  this->_buildLvBat();
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -2365,6 +2461,10 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->_onBcRunBat();
         break;
 
+      case NM_RCLICK:
+        this->_onLvBatRclk();
+        break;
+
       case LVN_ITEMCHANGED:
         this->_onLvBatSel();
         break;
@@ -2444,6 +2544,22 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->pkgProp();
       break;
 
+    // Batches contextual pop-up menu
+    case IDM_BATCH_NEW:
+      this->_onBcNewBat();
+      break;
+
+    case IDM_BATCH_EXE:
+      this->_onBcRunBat();
+      break;
+
+    case IDM_BATCH_EDI:
+      this->_onBcEdiBat();
+      break;
+
+    case IDM_BATCH_DEL:
+      this->_onBcDelBat();
+      break;
     }
   }
 

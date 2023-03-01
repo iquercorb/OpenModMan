@@ -219,11 +219,15 @@ class OmUiMgrMainLib : public OmDialog
 
     void                _onLvBatSel();
 
+    void                _onLvBatRclk();
+
     void                _onBcRunBat();
 
     void                _onBcNewBat();
 
     void                _onBcEdiBat();
+
+    void                _onBcDelBat();
 
     void                _onInit();
 

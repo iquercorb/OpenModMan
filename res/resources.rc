@@ -204,6 +204,19 @@ IDR_MENU MENU
     }
 }
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDR_MENU_BAT  MENU
+{
+  POPUP "Installation &Batch"
+  {
+    MENUITEM "&New...", IDM_BATCH_NEW
+    MENUITEM SEPARATOR
+    MENUITEM "&Launch", IDM_BATCH_EXE
+    MENUITEM "&Modify...", IDM_BATCH_EDI
+    MENUITEM SEPARATOR
+    MENUITEM "&Delete", IDM_BATCH_DEL
+  }
+}
 
 //
 // Dialog resources

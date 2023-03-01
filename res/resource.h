@@ -4,6 +4,7 @@
 
 #define IDR_MENU                                600
 #define IDR_ACCEL                               601
+#define IDR_MENU_BAT                            602
 #define IDD_MGR                                 700
 #define IDD_MGR_MAIN                            701
 #define IDD_MGR_FOOT                            702
@@ -289,3 +290,7 @@
 #define IDM_TOOLS_EDI_REP                       40851
 #define IDM_HELP_LOG                            40860
 #define IDM_HELP_ABOUT                          40861
+#define IDM_BATCH_EXE                           40880
+#define IDM_BATCH_EDI                           40881
+#define IDM_BATCH_DEL                           40882
+#define IDM_BATCH_NEW                           40883
