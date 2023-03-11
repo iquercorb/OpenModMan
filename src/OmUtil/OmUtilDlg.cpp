@@ -545,8 +545,43 @@ void Om_dlgBox_wrn(const wstring& cpt, const wstring& hdr, const wstring& msg)
 INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
   if(uMsg == BFFM_INITIALIZED) { //< Brother dialog windows is initialized
-    SendMessageW(hWnd, BFFM_SETSELECTION, false, lpData);  //< set the selected folder
+    //SendMessageW(hWnd, BFFM_SETSELECTION, false, lpData);  //< set the selected folder
+    SendMessageW(hWnd, BFFM_SETEXPANDED, false, lpData);  //< set and expand the selected folder
   }
+
+  // try to scroll down to the selected item, but this does not work...
+  if(uMsg == BFFM_SELCHANGED) {
+
+    HWND hTvm = GetDlgItem(hWnd, 0x3741); //< 0x3741 == IDC_TREE
+    HTREEITEM hTir, hTic, hTis;
+    int count, pos;
+    if(IsWindow(hTvm)) {
+      hTir = TreeView_GetRoot(hTvm);
+      hTis = TreeView_GetSelection(hTvm);
+      hTic = TreeView_GetChild(hTvm, hTir);
+
+      for(count = pos = 0; hTic; hTic = TreeView_GetNextVisible(hTvm, hTic), count++){
+        if(hTis==hTic) pos = count;
+      }
+
+      SCROLLINFO si = {};
+      si.cbSize = sizeof(SCROLLINFO);
+      si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE;
+
+      GetScrollInfo(hTvm, SB_VERT, &si);
+      si.nPage /= 2;
+
+      if((pos>(int)(si.nMin+si.nPage)) && (pos<=(int)(si.nMax-si.nMin-si.nPage)))
+      {
+        si.nMax = si.nPos - si.nMin + si.nPage;
+        for(;pos<si.nMax;pos++) PostMessage(hTvm,WM_VSCROLL,MAKEWPARAM(SB_LINEUP,0),0);
+        for(;pos>si.nMax;pos--) PostMessage(hTvm,WM_VSCROLL,MAKEWPARAM(SB_LINEDOWN,0),0);
+      }
+
+    }
+
+  }
+
   return 0;
 }
 
