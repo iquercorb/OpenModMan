@@ -289,7 +289,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     this->setItemText(IDC_EC_DESC, this->_package.desc());
   }
 
-  wstring item_str;
+  wstring item_str, dst_path;
 
   // Add package content to output EditText
   unsigned n = this->_package.srcItemCount();
@@ -325,11 +325,14 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
     // refresh final filename
     this->_onNameChange();
 
-    // prefill destination path
-    item_str = Om_getDirPart(item_str);
+    // prefill destination path if empty
+    if(this->getItemText(IDC_EC_INP06, dst_path) == 0) {
 
-    if(Om_isDir(item_str))
-      this->setItemText(IDC_EC_INP06, item_str);
+      dst_path = Om_getDirPart(item_str);
+
+      if(Om_isDir(dst_path))
+        this->setItemText(IDC_EC_INP06, dst_path);
+    }
   }
 
   this->_unsaved = false; //< reset unsaved changes
