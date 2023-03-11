@@ -5,7 +5,7 @@
 
 !define AAP_MAJ           "1"
 !define AAP_MIN           "0"
-!define AAP_REV           "3"
+!define AAP_REV           "4"
 
 !define APP_NAME          "Open Mod Manager"
 !define APP_SHORT_NAME    "OpenModMan"

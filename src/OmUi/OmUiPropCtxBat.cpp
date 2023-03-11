@@ -201,7 +201,7 @@ void OmUiPropCtxBat::_onBcDelBat()
 
     if(!pCtx->batRem(bat_id)) {
 
-      // warns the user before committing the irreparable
+      // warns the user error occurred
       Om_dlgBox_okl(this->_hwnd, L"Software Context properties", IDI_ERR,
                 L"Installation Batch delete error", L"Installation Batch deletion "
                 "process failed because of the following error:",

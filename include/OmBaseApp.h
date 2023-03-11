@@ -22,7 +22,7 @@
 
 #define OMM_APP_MAJ               1
 #define OMM_APP_MIN               0
-#define OMM_APP_REV               3
+#define OMM_APP_REV               4
 
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
@@ -30,10 +30,10 @@
   #define OMM_APP_ARCH            L"x86"
 #endif
 
-#define OMM_APP_DATE              L"November 2022"
+#define OMM_APP_DATE              L"March 2023"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
-#define OMM_APP_C_YEAR            L"2022"
+#define OMM_APP_C_YEAR            L"2023"
 #define OMM_APP_GIT               L"https://github.com/sedenion/OpenModMan"
 #define OMM_APP_URL               L"https://github.com/sedenion/OpenModMan"
 
