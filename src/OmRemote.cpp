@@ -407,10 +407,12 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       self->_state |= RMT_STATE_ERR;
     }
 
+    wstring log;
+
     if(!self->isState(RMT_STATE_ERR)) {
 
-      // some log outpute
-      wstring log =  L"File \""+self->_downl_path+L"\" successfully downloaded.";
+      // some log output
+      log =  L"File \""+self->_downl_path+L"\" successfully downloaded.";
       self->log(2, L"Remote("+self->_ident+L") Download", log);
 
       // manage previous packages supersedes
@@ -429,7 +431,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
           // uninstall superseded package
           if(pPkg->hasBck()) {
             pPkg->uninst(nullptr, nullptr);
-            wstring log =  L"Previous Package \""+pPkg->ident()+L"\" uninstalled";
+            log =  L"Previous Package \""+pPkg->ident()+L"\" uninstalled";
             self->log(2, L"Remote("+self->_ident+L") Download", log);
             install = true;
           }
@@ -439,11 +441,11 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
             if(rename) {
               // rename source with .old extension
               Om_fileMove(pPkg->srcPath(), pPkg->srcPath() + L".old");
-              wstring log =  L"Previous Package \""+pPkg->ident()+L"\" renamed as .old";
+              log =  L"Previous Package \""+pPkg->ident()+L"\" renamed as .old";
             } else {
               // move source to recycle bin
               Om_moveToTrash(pPkg->srcPath());
-              wstring log =  L"Previous Package \""+pPkg->ident()+L"\" moved to trash";
+              log =  L"Previous Package \""+pPkg->ident()+L"\" moved to trash";
             }
             self->log(2, L"Remote("+self->_ident+L") Download", log);
           }
