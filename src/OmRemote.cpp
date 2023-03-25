@@ -306,6 +306,7 @@ void OmRemote::clear()
   this->_name.clear();
   this->_ident.clear();
   this->_depLs.clear();
+  this->_supLs.clear();
   this->_desc.clear();
   this->_version.define(0,0,0);
 }
@@ -406,7 +407,14 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         bool rename = self->_repository->pLoc()->upgdRename();
 
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
+
           pPkg = self->_supLs[i];
+
+          // uninstall package to prevent confusing situation
+          if(pPkg->hasBck())
+            pPkg->uninst(nullptr, nullptr);
+
+          // rename or trash package source
           if(pPkg->hasSrc()) {
             if(rename) {
               // rename source with .old extension
@@ -416,6 +424,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
               Om_moveToTrash(pPkg->srcPath());
             }
           }
+
         }
       }
     }
