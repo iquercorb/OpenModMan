@@ -424,17 +424,32 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         bool install = false;
         bool rename = pLoc->upgdRename();
 
+        // create base uninstall list
+        vector<OmPackage*> pkg_ls;
+
+        for(size_t i = 0; i < self->_supLs.size(); ++i) {
+          if(pPkg->hasBck()) pkg_ls.push_back(pPkg);
+        }
+
+        install = !pkg_ls.empty();
+
+        vector<OmPackage*> over_ls; // extra overlapped uninstall list
+        vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
+        vector<OmPackage*> unin_ls; // final uninstall list
+        vector<wstring> ident_ls; // install list
+
+        // prepare packages uninstall and backups restoration
+        pLoc->bckPrepareUnin(unin_ls, over_ls, dpnd_ls, self->_supLs);
+
+        // clean uninstall with proper overlaps and dependencies managnement
+        for(size_t i = 0; i < unin_ls.size(); ++i) {
+          ident_ls.push_back(unin_ls[i]->ident());
+          unin_ls[i]->uninst(nullptr, nullptr);
+        }
+
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
 
           pPkg = self->_supLs[i];
-
-          // uninstall superseded package
-          if(pPkg->hasBck()) {
-            pPkg->uninst(nullptr, nullptr);
-            log =  L"Previous Package \""+pPkg->ident()+L"\" uninstalled";
-            self->log(2, L"Remote("+self->_ident+L") Download", log);
-            install = true;
-          }
 
           // rename or trash package source
           if(pPkg->hasSrc()) {
@@ -454,11 +469,28 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         // clear the supersede list
         self->_supLs.clear();
 
+        // Reinstall all packages with the new one
         if(install) {
-          // find the downloaded package in library
-          pPkg = pLoc->pkgFind(self->ident(), PKG_TYPE_ZIP);
-          // Install package
-          if(pPkg) pPkg->install(pLoc->bckZipLevel(), nullptr, nullptr);
+
+          pkg_ls.clear();
+
+          for(size_t i = 0; i < ident_ls.size(); ++i) {
+            // find the downloaded package in library
+            pPkg = pLoc->pkgFind(ident_ls[i], PKG_TYPE_ZIP);
+            if(pPkg) pkg_ls.push_back(pPkg);
+          }
+
+          vector<OmPackage*> inst_ls; //< final install list
+          vector<OmPackage*> over_ls; //< overlapping list
+          vector<OmPackage*> dpcs_ls; //< extra dependencies install list
+          vector<wstring> miss_ls;    //< missing dependencies lists
+
+          // prepare package installation
+          pLoc->pkgPrepareInst(inst_ls, over_ls, dpcs_ls, miss_ls, pkg_ls);
+
+          for(size_t i = 0; i < inst_ls.size(); ++i) {
+            inst_ls[i]->install(pLoc->bckZipLevel(), nullptr, nullptr);
+          }
         }
       }
     }
