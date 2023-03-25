@@ -1907,6 +1907,7 @@ void OmUiMgrMainLib::_onLvPkgSel()
 
   // enable "Edit > Package []" pop-up menu
   this->_pUiMgr->setPopupItem(1, 5, MF_ENABLED);
+
   // enable all menu-item (for right click menu)
   for(unsigned i = 0; i < 10; ++i)
     this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
@@ -1930,6 +1931,18 @@ void OmUiMgrMainLib::_onLvPkgSel()
       pPkg = pLoc->pkgGet(lv_sel);
       // show packages info in footer frame
       this->_pUiMgr->pUiMgrFoot()->selectItem(pPkg);
+
+      // enable proper menu-item
+      if(pPkg->hasBck()) {
+        this->_pUiMgr->setPopupItem(hPopup, 0, MF_GRAYED); //< Install
+        this->_pUiMgr->setPopupItem(hPopup, 1, MF_ENABLED); //< Uninstall
+        this->_pUiMgr->setPopupItem(hPopup, 2, MF_ENABLED); //< Uninstall tree
+      } else {
+        this->_pUiMgr->setPopupItem(hPopup, 0, MF_ENABLED); //< Install
+        this->_pUiMgr->setPopupItem(hPopup, 1, MF_GRAYED); //< Uninstall
+        this->_pUiMgr->setPopupItem(hPopup, 2, MF_GRAYED); //< Uninstall tree
+      }
+
     } else {
       // reset footer frame
       this->_pUiMgr->pUiMgrFoot()->clearItem();
