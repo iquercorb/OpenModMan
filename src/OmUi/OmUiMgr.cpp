@@ -831,11 +831,11 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     // Menu : Edit > Remote > []
-    case IDM_EDIT_RMT_DOWN:
+    case IDM_EDIT_RMT_DNWS:
       static_cast<OmUiMgrMainNet*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_NET))->rmtDown(false);
       break;
 
-    case IDM_EDIT_RMT_UPGR:
+    case IDM_EDIT_RMT_DNLD:
       static_cast<OmUiMgrMainNet*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_NET))->rmtDown(true);
       break;
 

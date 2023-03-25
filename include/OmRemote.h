@@ -38,6 +38,7 @@ enum OmRmtState : unsigned {
   RMT_STATE_DEP = 0x8,     ///< Remote package is downloaded but has missing dependencies
   RMT_STATE_DNL = 0x10,    ///< Remote package is downloading
   RMT_STATE_ERR = 0x20,    ///< Remote package download error
+  RMT_STATE_WIP = 0x40,    ///< Remote package is work in progress
 };
 
 /// \brief Remote package checksum type
@@ -381,6 +382,16 @@ class OmRemote
     ///
     unsigned downPercent() const {
       return _downl_percent;
+    }
+
+    /// \brief Get download supersede.
+    ///
+    /// Returns whether previous package supersede is required at end of download.
+    ///
+    /// \return Download supersede.
+    ///
+    bool downSpsd() const {
+      return _downl_spsd;
     }
 
     /// \brief Get superseded count.

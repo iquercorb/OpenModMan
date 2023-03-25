@@ -31,6 +31,7 @@
 #include "OmUiAddRep.h"
 #include "OmUiPropRmt.h"
 
+#include "OmUtilFs.h"
 #include "OmUtilDlg.h"
 #include "OmUtilWin.h"
 #include "OmUtilStr.h"
@@ -388,9 +389,8 @@ void OmUiMgrMainNet::rmtDown(bool upgrade)
       lvItem.iItem = this->msgItem(IDC_LV_RMT, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvFind));
       this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-      // disable download and upgrade buttons
-      this->enableItem(IDC_BC_LOAD, false);
-      this->enableItem(IDC_BC_UPGD, false);
+      // disable download buttons
+      this->enableItem(IDC_BC_DNLD, false);
       // enable abort button
       this->enableItem(IDC_BC_ABORT, true);
 
@@ -515,9 +515,8 @@ void OmUiMgrMainNet::rmtFixd(bool upgrade)
       lvItem.iItem = this->msgItem(IDC_LV_RMT, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvFind));
       this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
-      // disable download and upgrade buttons
-      this->enableItem(IDC_BC_LOAD, false);
-      this->enableItem(IDC_BC_UPGD, false);
+      // disable download button
+      this->enableItem(IDC_BC_DNLD, false);
 
       // increment download count
       this->_rmtDnl_count++;
@@ -862,12 +861,22 @@ bool OmUiMgrMainNet::_rmtDnl_update(double tot, double cur, double rate, uint64_
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
 {
+  // retrieve Remote object
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmContext* pCtx = pMgr->ctxCur();
+  if(!pCtx)return; //< Houston we have a problem
+  OmLocation* pLoc = pCtx->locCur();
+  if(!pLoc)return; //< Houston we have a problem
+
+  // retrieve Remote object
+  OmRemote* pRmt = pLoc->rmtFind(hash);
+  if(!pRmt)return; //< Houston we have a problem
+
   // retrieve ListView entry corresponding to current object
   LVFINDINFOW lvFind = {};
   lvFind.flags = LVFI_PARAM;
@@ -884,33 +893,43 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
   LVITEMW lvItem;
   lvItem.iItem = lv_id;
 
-  // update download percent
-  lvItem.mask = LVIF_TEXT;
-  lvItem.iSubItem = 5; //< this is the right most column, "Download"
-  lvItem.pszText = 0; // download finished, we erase text
-
-  // send to ListView
-  this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
-
-   // We update main dialog the progress bar according item selection
+  // We update main dialog progress bar according item selection
   if(this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT) == 1) {
-    // We update main dialog the progress bar according item selection
+    // We update main dialog progress bar according item selection
     if(this->msgItem(IDC_LV_RMT, LVM_GETITEMSTATE, lv_id, LVIS_SELECTED)) {
-      this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
-      this->enableItem(IDC_PB_PKG, false);
+      if(pRmt->isState(RMT_STATE_WIP)) {
+        this->msgItem(IDC_PB_PKG, PBM_SETPOS, 100);
+      } else {
+        this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0);
+        this->enableItem(IDC_PB_PKG, false);
+      }
     }
   }
 
-  // retrieve Remote object
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return; //< Houston we have a problem
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return; //< Houston we have a problem
+  // update status text
+  lvItem.mask = LVIF_TEXT;
+  lvItem.iSubItem = 5; //< this is the right most column, "Download"
 
-  // retrieve Remote object
-  OmRemote* pRmt = pLoc->rmtFind(hash);
-  if(!pRmt)return; //< Houston we have a problem
+  // check whether Remote package is in WIP status
+  if(pRmt->isState(RMT_STATE_WIP)) {
+    lvItem.pszText = const_cast<LPWSTR>(L"Processing...");
+    this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    // update status icon
+    lvItem.mask = LVIF_IMAGE;
+    lvItem.iSubItem = 0; //< this is the left most column, "Status"
+    lvItem.iImage = 4; //< STS_WIP
+    this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+
+    return; //< return now, will finish next time
+
+  } else {
+    // update status text
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iSubItem = 5; //< this is the right most column, "Download"
+    lvItem.pszText = const_cast<LPWSTR>(L""); // download finished, we erase text
+    this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
+  }
 
   // update status icon
   lvItem.mask = LVIF_IMAGE;
@@ -920,8 +939,13 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
   if(pRmt->isState(RMT_STATE_ERR)) {
     lvItem.iImage = 5; //< STS_ERR
   } else if(pRmt->isState(RMT_STATE_NEW)) {
-    if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
-    if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
+    if(pRmt->isState(RMT_STATE_UPG)) {
+      lvItem.iImage = 10; //< STS_UPG
+    } else if(pRmt->isState(RMT_STATE_OLD)) {
+      lvItem.iImage =  9; //< STS_OLD
+    } else {
+      lvItem.iImage = 12; //< STS_NEW
+    }
   } else {
     lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
   }
@@ -931,12 +955,12 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
 
   // if an error occurred, display error dialog
   if(pRmt->isState(RMT_STATE_ERR)) {
-
       Om_dlgBox_okl(this->_hwnd, L"Download Packages", IDI_PKG_ERR,
                   L"Package download error", L"The download of Package \""
                   +pRmt->ident()+L"\" failed because of the following error:",
                   pRmt->lastError());
   }
+
 
   // decrement download count
   this->_rmtDnl_count--;
@@ -1190,30 +1214,34 @@ void OmUiMgrMainNet::_buildLvRmt()
     hImgLs = reinterpret_cast<HIMAGELIST>(this->msgItem(IDC_LV_RMT, LVM_GETIMAGELIST, LVSIL_NORMAL));
     if(hImgLs) ImageList_Destroy(hImgLs);
 
-    // - 0: PKG_ERR - 1: PKG_DIR -  2: PKG_ZIP -  3: PKG_DPN
-    // - 4: STS_WIP - 5: STS_ERR -  6: STS_WRN -  7: STS_BOK
-    // - 8: STS_OWR - 9: STS_OLD - 10: STS_UPG - 11: STS_DNL
+    // -  0: PKG_ERR -  1: PKG_DIR -  2: PKG_ZIP -  3: PKG_DPN
+    // -  4: STS_WIP -  5: STS_ERR -  6: STS_WRN -  7: STS_BOK
+    // -  8: STS_OWR -  9: STS_OLD - 10: STS_UPG - 11: STS_DNL
+    // - 12: STS_NEW
 
     // Build list of images resource ID for the required size
     unsigned idb[] = {IDB_PKG_ERR_16, IDB_PKG_DIR_16, IDB_PKG_ZIP_16, IDB_PKG_DPN_16,
                       IDB_STS_WIP_16, IDB_STS_ERR_16, IDB_STS_WRN_16, IDB_STS_BOK_16,
-                      IDB_STS_OWR_16, IDB_STS_OLD_16, IDB_STS_UPG_16, IDB_STS_DNL_16};
+                      IDB_STS_OWR_16, IDB_STS_OLD_16, IDB_STS_UPG_16, IDB_STS_DNL_16,
+                      IDB_STS_NEW_16};
+
+    unsigned idb_size = sizeof(idb) / 4;
 
     switch(pMgr->iconsSize())
     {
     case 24:
-      for(unsigned i = 0; i < 12; ++i)
+      for(unsigned i = 0; i < idb_size; ++i)
         idb[i] += 1; //< steps IDs to 24 pixels images
       break;
     case 32:
-      for(unsigned i = 0; i < 12; ++i)
+      for(unsigned i = 0; i < idb_size; ++i)
         idb[i] += 2; //< steps IDs to 32 pixels images
       break;
     }
 
     // Create ImageList and fill it with bitmaps
-    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, 12, 0);
-    for(unsigned i = 0; i < 12; ++i)
+    hImgLs = ImageList_Create(pMgr->iconsSize(), pMgr->iconsSize(), ILC_COLOR32, idb_size, 0);
+    for(unsigned i = 0; i < idb_size; ++i)
       ImageList_Add(hImgLs, Om_getResImage(this->_hins, idb[i]), nullptr);
 
     // Set ImageList to ListView
@@ -1260,9 +1288,16 @@ void OmUiMgrMainNet::_buildLvRmt()
       lvItem.iImage = 5; //< STS_ERR
     } else if(pRmt->isState(RMT_STATE_DNL)) {
       lvItem.iImage = 11; //< STS_DNL
+    } else if(pRmt->isState(RMT_STATE_WIP)) {
+      lvItem.iImage = 4; //< STS_WIP
     } else if(pRmt->isState(RMT_STATE_NEW)) {
-      if(pRmt->isState(RMT_STATE_UPG)) lvItem.iImage = 10; //< STS_UPG
-      if(pRmt->isState(RMT_STATE_OLD)) lvItem.iImage =  9; //< STS_OLD
+      if(pRmt->isState(RMT_STATE_UPG)) {
+        lvItem.iImage = 10; //< STS_UPG
+      } else if(pRmt->isState(RMT_STATE_OLD)) {
+        lvItem.iImage =  9; //< STS_OLD
+      } else {
+        lvItem.iImage = 12; //< STS_NEW
+      }
     } else {
       lvItem.iImage = pRmt->isState(RMT_STATE_DEP) ? 6/*STS_WRN*/:7/*STS_BOK*/;
     }
@@ -1301,7 +1336,11 @@ void OmUiMgrMainNet::_buildLvRmt()
     // Sixth column, the package download progress, we set to empty
     lvItem.mask = LVIF_TEXT;
     lvItem.iSubItem = 5;
-    lvItem.pszText = const_cast<LPWSTR>(L""); //< download string will be updated if currently running
+    if(pRmt->isState(RMT_STATE_WIP)) {
+      lvItem.pszText = const_cast<LPWSTR>(L"Processing...");
+    } else {
+      lvItem.pszText = const_cast<LPWSTR>(L""); //< download string will be updated if currently running
+    }
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
@@ -1387,36 +1426,8 @@ void OmUiMgrMainNet::_onLvRmtHit()
   if(lv_sel < 0)
     return;
 
-  // get remote package object
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc) return;
-
-  OmRemote* pRmt = pLoc->rmtGet(lv_sel);
-
-  // check whether remote package is an upgrade
-  if(pRmt->isState(RMT_STATE_UPG)) {
-
-    // ask user for upgrade
-    if(Om_dlgBox_yn(this->_hwnd, L"Download Package", IDI_QRY,
-                  L"Package upgrade", L"The selected remote Package supersedes "
-                  "one or more local Packages. Do you want to keep older "
-                  "Package versions ?"))
-    {
-      // simply download the package
-      this->rmtDown(false);
-    } else {
-      // upgrade (delete superseded packages)
-      this->rmtDown(true);
-    }
-
-  } else {
-    // simply download the package
-    this->rmtDown(false);
-  }
+  // replacing the previous package is the new default behavior
+  this->rmtDown(true);
 }
 
 
@@ -1447,8 +1458,7 @@ void OmUiMgrMainNet::_onLvRmtSel()
   if(!lv_nsl) {
 
     // disable all action buttons
-    this->enableItem(IDC_BC_LOAD, false);
-    this->enableItem(IDC_BC_UPGD, false);
+    this->enableItem(IDC_BC_DNLD, false);
     this->enableItem(IDC_BC_ABORT, false);
 
     // disable "Edit > Remote []" pop-up menu
@@ -1474,8 +1484,7 @@ void OmUiMgrMainNet::_onLvRmtSel()
   if(lv_nsl > 1) {
 
     // multiple selection, we allow more than one download at a time
-    this->enableItem(IDC_BC_LOAD, true);
-    this->enableItem(IDC_BC_UPGD, true); //< enable anyway when multiple selection
+    this->enableItem(IDC_BC_DNLD, true); //< enable anyway when multiple selection
 
     // disable the "Edit > Remote > View detail..." menu-item
     this->_pUiMgr->setPopupItem(hPopup, 3, MF_GRAYED); //< "Fix dependencies" menu-item
@@ -1502,16 +1511,14 @@ void OmUiMgrMainNet::_onLvRmtSel()
 
       // get remote package states
       bool can_dnld = pRmt->isState(RMT_STATE_NEW) && !pRmt->isState(RMT_STATE_DNL);
-      bool can_upgd = can_dnld && pRmt->isState(RMT_STATE_UPG);
       bool can_fixd = pRmt->isState(RMT_STATE_DEP);
-      bool progress = pRmt->isState(RMT_STATE_DNL);
+      bool progress = pRmt->isState(RMT_STATE_DNL) || pRmt->isState(RMT_STATE_WIP);
 
-      this->_pUiMgr->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Dwonload" menu-item
-      this->_pUiMgr->setPopupItem(hPopup, 1, can_upgd ? MF_ENABLED : MF_GRAYED); //< "Upgrade" menu-item
+      this->_pUiMgr->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download" menu-item
+      this->_pUiMgr->setPopupItem(hPopup, 1, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download without supersede" menu-item
       this->_pUiMgr->setPopupItem(hPopup, 3, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
 
-      this->enableItem(IDC_BC_LOAD, can_dnld);
-      this->enableItem(IDC_BC_UPGD, can_upgd);
+      this->enableItem(IDC_BC_DNLD, can_dnld);
       this->enableItem(IDC_BC_ABORT, progress);
       this->enableItem(IDC_PB_PKG, progress);
 
@@ -1662,8 +1669,7 @@ void OmUiMgrMainNet::_onInit()
   this->_createTooltip(IDC_BC_NEW,    L"Configure and add new repository");
   this->_createTooltip(IDC_BC_DEL,    L"Remove selected repository entry");
   this->_createTooltip(IDC_LV_RMT,    L"Remote packages list");
-  this->_createTooltip(IDC_BC_LOAD,   L"Download selected packages");
-  this->_createTooltip(IDC_BC_UPGD,   L"Download selected packages for upgrade");
+  this->_createTooltip(IDC_BC_DNLD,   L"Download selected packages");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort download");
 
   DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
@@ -1801,11 +1807,9 @@ void OmUiMgrMainNet::_onResize()
   this->_setItemPos(IDC_LV_RMT, 2, 74, this->cliUnitX()-4, this->cliUnitY()-92);
   this->_rsizeLvRmt(); //< resize ListView columns adapted to client area
 
-  // Upgrade and Sync buttons
-  this->_setItemPos(IDC_BC_LOAD, 2, this->cliUnitY()-15, 52, 14);
-  this->_setItemPos(IDC_BC_UPGD, 56, this->cliUnitY()-15, 52, 14);
+  this->_setItemPos(IDC_BC_DNLD, 2, this->cliUnitY()-15, 52, 14);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 110, this->cliUnitY()-14, this->cliUnitX()-166, 12);
+  this->_setItemPos(IDC_PB_PKG, 56, this->cliUnitY()-14, this->cliUnitX()-113, 12);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->cliUnitX()-54, this->cliUnitY()-15, 52, 14);
 }
@@ -1822,6 +1826,7 @@ void OmUiMgrMainNet::_onRefresh()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmContext* pCtx = pMgr->ctxCur();
+  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   // disable the Progress-Bar
   this->enableItem(IDC_PB_PKG, false);
@@ -1843,18 +1848,16 @@ void OmUiMgrMainNet::_onRefresh()
 
   // We try to avoid unnecessary refresh of ListView by
   // select specific condition of refresh
-  if(pCtx) {
-    if(pCtx->locCur()) {
+  if(pLoc) {
 
-      // restart folder monitoring if required
-      if(pCtx->locCur()->libDirAccess(true)) {
-        this->_dirMon_init(pCtx->locCur()->libDir());
-      } else {
-        lib_access = false;
-      }
-
-      pCtx->locCur()->rmtRefresh(true);
+    // restart folder monitoring if required
+    if(pLoc->libDirAccess(true)) {
+      this->_dirMon_init(pLoc->libDir());
+    } else {
+      lib_access = false;
     }
+
+    pLoc->rmtRefresh(true);
   }
 
   this->_buildLvRmt();
@@ -1862,7 +1865,7 @@ void OmUiMgrMainNet::_onRefresh()
   if(!pCtx) return;
 
   // Display error dialog AFTER ListView refreshed its content
-  if(pCtx->locCur()) {
+  if(pLoc) {
     if(!lib_access) {
       Om_dlgBox_okl(this->_hwnd, L"Network Repositories", IDI_WRN,
                     L"Library folder access error", L"The Library folder "
@@ -2041,11 +2044,7 @@ INT_PTR OmUiMgrMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcDelRep();
       break;
 
-    case IDC_BC_LOAD: //< Main "Download" button
-      this->rmtDown(false);
-      break;
-
-    case IDC_BC_UPGD: //< Main "Upgrade" button
+    case IDC_BC_DNLD: //< Main "Upgrade" button
       this->rmtDown(true);
       break;
 
@@ -2054,11 +2053,11 @@ INT_PTR OmUiMgrMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     // Menu : Edit > Remote > []
-    case IDM_EDIT_RMT_DOWN:
+    case IDM_EDIT_RMT_DNWS:
       this->rmtDown(false);
       break;
 
-    case IDM_EDIT_RMT_UPGR:
+    case IDM_EDIT_RMT_DNLD:
       this->rmtDown(true);
       break;
 

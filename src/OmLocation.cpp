@@ -2858,24 +2858,26 @@ bool OmLocation::rmtRefresh(bool force)
       new_state &= ~RMT_STATE_OLD;
       new_state &= ~RMT_STATE_DEP;
 
-      // clear the superseded list
+      // clear the superseded and downgraded list
       pRmt->_supLs.clear();
 
       for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
 
         pPkg = this->_pkgLs[p];
 
+        // We do not check against dev/folder packages
+        if(!pPkg->isZip()) continue;
+
         // search for same core but different version
         if(pRmt->core() == pPkg->core()) {
           // check whether this identity matches
           if(pRmt->ident() != pPkg->ident()) {
+            // add (unique) superseded package
+            if(std::find(pRmt->_supLs.begin(), pRmt->_supLs.end(), pPkg) == pRmt->_supLs.end())
+              pRmt->_supLs.push_back(pPkg);
             // check version changes
             if(pRmt->version() > pPkg->version()) {
               new_state |= RMT_STATE_UPG;
-              // add (unique) superseded package
-              if(std::find(pRmt->_supLs.begin(), pRmt->_supLs.end(), pPkg) == pRmt->_supLs.end()) {
-                pRmt->_supLs.push_back(pPkg);
-              }
             } else {
               new_state |= RMT_STATE_OLD;
             }

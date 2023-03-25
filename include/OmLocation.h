@@ -182,6 +182,7 @@ class OmLocation
     bool upgdRename() const {
       return _upgdRename;
     }
+
     /// \brief Get package legacy support size option.
     ///
     /// Returns package legacy support option value.
@@ -381,9 +382,9 @@ class OmLocation
     ///
     /// Defines and save upgrade rename mode for remote packages.
     ///
-    /// \param[in]  enable   : Enable or upgrade rename mode.
+    /// \param[in]  enable   : Enable or disable upgrade rename mode.
     ///
-    void setUpgdRename(bool always);
+    void setUpgdRename(bool enable);
 
     /// \brief Verify Destination folder access.
     ///
@@ -512,6 +513,26 @@ class OmLocation
     OmPackage* pkgFind(const wstring& ident) const {
       for(size_t i = 0; i < _pkgLs.size(); ++i) {
         if(_pkgLs[i]->ident() == ident) return _pkgLs[i];
+      }
+      return nullptr;
+    }
+
+    /// \brief Find package by identity and type.
+    ///
+    /// Find package by its identity and type mask.
+    ///
+    /// \param[in] ident : Package identity to search.
+    /// \param[in] type : Package type to search.
+    ///
+    /// \return Package or nullptr if not found.
+    ///
+    OmPackage* pkgFind(const wstring& ident, OmPkgType type) const {
+      for(size_t i = 0; i < _pkgLs.size(); ++i) {
+        if(_pkgLs[i]->ident() == ident) {
+          if((type & _pkgLs[i]->type()) == type) {
+            return _pkgLs[i];
+          }
+        }
       }
       return nullptr;
     }

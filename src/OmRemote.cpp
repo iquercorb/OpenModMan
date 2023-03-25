@@ -355,8 +355,22 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
     }
   }
 
+  self->_downl_percent = 100;
+
   // close file
   fclose(self->_downl_file);
+
+  // no more in DNL state
+  self->_state &= ~RMT_STATE_DNL;
+
+  // now in WIP state
+  self->_state |= RMT_STATE_WIP;
+
+  // before last call to callback to update to "post-process" state
+  if(self->_downl_user_download) {
+    // download rate less than 0.0 is signal HTTP transfer ended.
+    self->_downl_user_download(self->_downl_user_ptr, 0.0, 0.0, -1.0, self->_hash);
+  }
 
   if(exitCode == 0) {
 
@@ -399,52 +413,71 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       wstring log =  L"File \""+self->_downl_path+L"\" successfully downloaded.";
       self->log(2, L"Remote("+self->_ident+L") Download", log);
 
-      // now move to trash superseded packages
+      // manage previous packages supersedes
       if(self->_downl_spsd) {
 
+        OmLocation* pLoc = self->_repository->pLoc();
         OmPackage* pPkg;
 
-        bool rename = self->_repository->pLoc()->upgdRename();
+        bool install = false;
+        bool rename = pLoc->upgdRename();
 
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
 
           pPkg = self->_supLs[i];
 
-          // uninstall package to prevent confusing situation
-          if(pPkg->hasBck())
+          // uninstall superseded package
+          if(pPkg->hasBck()) {
             pPkg->uninst(nullptr, nullptr);
+            wstring log =  L"Previous Package \""+pPkg->ident()+L"\" uninstalled";
+            self->log(2, L"Remote("+self->_ident+L") Download", log);
+            install = true;
+          }
 
           // rename or trash package source
           if(pPkg->hasSrc()) {
             if(rename) {
               // rename source with .old extension
               Om_fileMove(pPkg->srcPath(), pPkg->srcPath() + L".old");
+              wstring log =  L"Previous Package \""+pPkg->ident()+L"\" renamed as .old";
             } else {
               // move source to recycle bin
               Om_moveToTrash(pPkg->srcPath());
+              wstring log =  L"Previous Package \""+pPkg->ident()+L"\" moved to trash";
             }
+            self->log(2, L"Remote("+self->_ident+L") Download", log);
           }
+        }
 
+        // clear the supersede list
+        self->_supLs.clear();
+
+        if(install) {
+          // find the downloaded package in library
+          pPkg = pLoc->pkgFind(self->ident(), PKG_TYPE_ZIP);
+          // Install package
+          if(pPkg) pPkg->install(pLoc->bckZipLevel(), nullptr, nullptr);
         }
       }
     }
-
   } else {
     Om_fileDelete(self->_downl_temp);
   }
 
+  // no more in WIP state
+  self->_state &= ~RMT_STATE_WIP;
+
   // last call to callback so it can check for download result
   if(self->_downl_user_download) {
-    // download rate less than 0.0 is signal for ended download
+    // download rate less than 0.0 is signal HTTP transfer ended.
     self->_downl_user_download(self->_downl_user_ptr, 0.0, 0.0, -1.0, self->_hash);
   }
-
-  self->_state &= ~RMT_STATE_DNL;
 
   self->_downl_temp.clear();
   self->_downl_path.clear();
   self->_downl_user_download = nullptr;
   self->_downl_user_ptr = nullptr;
+  self->_downl_percent = 0;
 
   // not pretty but no choice
   self->_downl_hth = nullptr;

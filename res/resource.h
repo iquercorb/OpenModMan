@@ -109,6 +109,9 @@
 #define IDB_STS_DNL_16                          943
 #define IDB_STS_DNL_24                          944
 #define IDB_STS_DNL_32                          945
+#define IDB_STS_NEW_16                          946
+#define IDB_STS_NEW_24                          947
+#define IDB_STS_NEW_32                          948
 #define IDB_BAT_16                              980
 #define IDB_BAT_24                              981
 #define IDB_BAT_32                              982
@@ -190,7 +193,7 @@
 #define IDC_BC_OPEN3                            40317
 #define IDC_BC_INST                             40321
 #define IDC_BC_UNIN                             40322
-#define IDC_BC_UPGD                             40324
+#define IDC_BC_DNLD                             40324
 #define IDC_BC_SYNC                             40325
 #define IDC_BC_DEL                              40330
 #define IDC_BC_ADD                              40331
@@ -282,8 +285,8 @@
 #define IDM_EDIT_PKG_TRSH                       40834
 #define IDM_EDIT_PKG_OPEN                       40835
 #define IDM_EDIT_PKG_EDIT                       40836
-#define IDM_EDIT_RMT_DOWN                       40840
-#define IDM_EDIT_RMT_UPGR                       40841
+#define IDM_EDIT_RMT_DNWS                       40840
+#define IDM_EDIT_RMT_DNLD                       40841
 #define IDM_EDIT_RMT_FIXD                       40842
 #define IDM_EDIT_RMT_INFO                       40843
 #define IDM_TOOLS_EDI_PKG                       40850
