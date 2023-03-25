@@ -2858,6 +2858,9 @@ bool OmLocation::rmtRefresh(bool force)
       new_state &= ~RMT_STATE_OLD;
       new_state &= ~RMT_STATE_DEP;
 
+      // clear the superseded list
+      pRmt->_supLs.clear();
+
       for(size_t p = 0; p < this->_pkgLs.size(); ++p) {
 
         pPkg = this->_pkgLs[p];
@@ -2869,8 +2872,10 @@ bool OmLocation::rmtRefresh(bool force)
             // check version changes
             if(pRmt->version() > pPkg->version()) {
               new_state |= RMT_STATE_UPG;
-              // add superseded package
-              pRmt->_supLs.push_back(pPkg);
+              // add (unique) superseded package
+              if(std::find(pRmt->_supLs.begin(), pRmt->_supLs.end(), pPkg) == pRmt->_supLs.end()) {
+                pRmt->_supLs.push_back(pPkg);
+              }
             } else {
               new_state |= RMT_STATE_OLD;
             }
