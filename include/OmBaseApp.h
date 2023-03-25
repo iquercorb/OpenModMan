@@ -22,7 +22,7 @@
 
 #define OMM_APP_MAJ               1
 #define OMM_APP_MIN               0
-#define OMM_APP_REV               5
+#define OMM_APP_REV               6
 
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
