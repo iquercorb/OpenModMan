@@ -1852,6 +1852,9 @@ void OmUiMgrMainLib::_onCbLocSel()
 ///
 void OmUiMgrMainLib::_onLvPkgRclk()
 {
+  // Refresh pop-up menu according selection
+  this->_onLvPkgSel();
+
   // get handle to "Edit > Packages..." sub-menu
   HMENU hMenu = this->_pUiMgr->getPopupItem(1, 5);
 
@@ -1884,6 +1887,7 @@ void OmUiMgrMainLib::_onLvPkgSel()
 
     // disable "Edit > Package" in main menu
     this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
+
     // disable all menu-item (for right click menu)
     for(unsigned i = 0; i < 10; ++i)
       this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
@@ -1901,21 +1905,22 @@ void OmUiMgrMainLib::_onLvPkgSel()
   OmLocation* pLoc = pCtx->locCur();
   if(!pLoc) return;
 
-  // at least one, we enable buttons
-  this->enableItem(IDC_BC_INST, true);
-  this->enableItem(IDC_BC_UNIN, true);
-
   // enable "Edit > Package []" pop-up menu
   this->_pUiMgr->setPopupItem(1, 5, MF_ENABLED);
-
-  // enable all menu-item (for right click menu)
-  for(unsigned i = 0; i < 10; ++i)
-    this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
 
   // Check whether we have multiple selection
   if(lv_nsl > 1) {
 
-    // disable the "Edit > Package > View detail..." menu-item
+    // Enable both buttons
+    this->enableItem(IDC_BC_INST, true);
+    this->enableItem(IDC_BC_UNIN, true);
+
+    // enable menu-items from "install" to "Move to recycle bin"
+    for(unsigned i = 0; i < 6; ++i)
+      this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
+
+    // disable proper menu-items
+    this->_pUiMgr->setPopupItem(hPopup, 7, MF_GRAYED); //< "Load in Package Editor" menu-item
     this->_pUiMgr->setPopupItem(hPopup, 9, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
@@ -1923,24 +1928,43 @@ void OmUiMgrMainLib::_onLvPkgSel()
 
   } else {
 
+    // enable menu-items from "Open in explorer..." to "View details..."
+    for(unsigned i = 3; i < 10; ++i)
+      this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
+
     OmPackage* pPkg;
 
     // get the selected item id (only one, no need to iterate)
     int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
     if(lv_sel >= 0) {
+
       pPkg = pLoc->pkgGet(lv_sel);
+
       // show packages info in footer frame
       this->_pUiMgr->pUiMgrFoot()->selectItem(pPkg);
 
-      // enable proper menu-item
+      // enable proper menu-item and buttons
       if(pPkg->hasBck()) {
-        this->_pUiMgr->setPopupItem(hPopup, 0, MF_GRAYED); //< Install
-        this->_pUiMgr->setPopupItem(hPopup, 1, MF_ENABLED); //< Uninstall
-        this->_pUiMgr->setPopupItem(hPopup, 2, MF_ENABLED); //< Uninstall tree
+
+        // Enable and disable proper buttons
+        this->enableItem(IDC_BC_INST, false);
+        this->enableItem(IDC_BC_UNIN, true);
+
+        // enable and disable proper menu-items
+        this->_pUiMgr->setPopupItem(hPopup, 0, MF_GRAYED);  //< "Install"
+        this->_pUiMgr->setPopupItem(hPopup, 1, MF_ENABLED); //< "Uninstall"
+        this->_pUiMgr->setPopupItem(hPopup, 2, MF_ENABLED); //< "Uninstall tree"
+
       } else {
-        this->_pUiMgr->setPopupItem(hPopup, 0, MF_ENABLED); //< Install
-        this->_pUiMgr->setPopupItem(hPopup, 1, MF_GRAYED); //< Uninstall
-        this->_pUiMgr->setPopupItem(hPopup, 2, MF_GRAYED); //< Uninstall tree
+
+        // Enable and disable proper buttons
+        this->enableItem(IDC_BC_INST, true);
+        this->enableItem(IDC_BC_UNIN, false);
+
+        // enable and disable proper menu-items
+        this->_pUiMgr->setPopupItem(hPopup, 0, MF_ENABLED); //< "Install"
+        this->_pUiMgr->setPopupItem(hPopup, 1, MF_GRAYED);  //< "Uninstall"
+        this->_pUiMgr->setPopupItem(hPopup, 2, MF_GRAYED);  //< "Uninstall tree"
       }
 
     } else {
