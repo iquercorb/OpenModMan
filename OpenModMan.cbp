@@ -630,10 +630,6 @@
 		<Unit filename="include/OmXmlDoc.h" />
 		<Unit filename="include/OmZipFile.h" />
 		<Unit filename="main.cpp" />
-		<Unit filename="plugins/cwb/cwb.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="plugins/cwb/cwb.h" />
 		<Unit filename="plugins/md4c-rtf/md4c-rtf.c">
 			<Option compilerVar="CC" />
 		</Unit>
