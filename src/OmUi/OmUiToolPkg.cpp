@@ -1082,6 +1082,9 @@ void OmUiToolPkg::_onInit()
     // Reset initial source path
     this->_initsrc.clear();
   }
+
+  // Nothing to save
+  this->_unsaved = false;
 }
 
 
