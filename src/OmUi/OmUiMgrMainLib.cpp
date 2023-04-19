@@ -249,6 +249,8 @@ void OmUiMgrMainLib::locSel(int id)
 
       // Check Location Library folder access
       if(pLoc->libDirAccess(false)) { //< check only for reading
+        // force refresh library
+        pLoc->libRefresh();
         // start Library folder monitoring
         this->_dirMon_init(pLoc->libDir());
       }
