@@ -152,12 +152,12 @@ void OmDialogProp::_onResize()
     }
   }
 
-  // OK Button
-  this->_setItemPos(IDC_BC_OK, this->cliUnitX()-161, this->cliUnitY()-19, 50, 14);
+  // Apply Button
+  this->_setItemPos(IDC_BC_APPLY, this->cliUnitX()-161, this->cliUnitY()-19, 50, 14);
   // Cancel Button
   this->_setItemPos(IDC_BC_CANCEL, this->cliUnitX()-108, this->cliUnitY()-19, 50, 14);
-  // Apply Button
-  this->_setItemPos(IDC_BC_APPLY, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
+  // Close Button
+  this->_setItemPos(IDC_BC_OK, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
 
   this->_onPropResize();
 

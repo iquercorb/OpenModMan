@@ -482,9 +482,9 @@ CAPTION "Manager options"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                            MANAGER PROPERTIES
@@ -517,9 +517,9 @@ CAPTION "Software Context properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                     SOFTWARE CONTEXT PROPERTIES DIALOG
@@ -598,9 +598,9 @@ CAPTION "Target Location properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                       TARGET LOCATION PROPERTIES
@@ -695,9 +695,9 @@ CAPTION "Installation Batch properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                        INSTALLATION BATCH PROPERTIES
@@ -747,9 +747,9 @@ CAPTION "Package properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 370, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 382, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 382, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 382, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                            PACKAGE PROPERTIES
@@ -819,9 +819,9 @@ CAPTION "Remote package properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 370, WS_EX_LEFT
-    PUSHBUTTON      "OK", IDC_BC_OK, 159, 382, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 382, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Apply", IDC_BC_APPLY, 266, 382, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Apply", IDC_BC_APPLY, 159, 201, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 212, 201, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                          REMOTE PACKAGE PROPERTIES
