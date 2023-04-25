@@ -285,6 +285,7 @@
 #define IDM_EDIT_PKG_TRSH                       40834
 #define IDM_EDIT_PKG_OPEN                       40835
 #define IDM_EDIT_PKG_EDIT                       40836
+#define IDM_EDIT_PKG_PURG                       40837
 #define IDM_EDIT_RMT_DNWS                       40840
 #define IDM_EDIT_RMT_DNLD                       40841
 #define IDM_EDIT_RMT_FIXD                       40842

@@ -121,6 +121,7 @@ OmUiMgrMainLib::OmUiMgrMainLib(HINSTANCE hins) : OmDialog(hins),
   _pkgInst_hth(nullptr),
   _pkgUnin_hth(nullptr),
   _pkgClns_hth(nullptr),
+  _pkgPurg_hth(nullptr),
   _batExe_hth(nullptr),
   _thread_abort(false),
   _buildLvBat_icSize(0),
@@ -318,6 +319,22 @@ void OmUiMgrMainLib::pkgClns()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMgrMainLib::pkgPurg()
+{
+  // prevent useless processing
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
+
+  if(!pLoc->bckHasData()) return;
+
+  this->_pkgPurg_init();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMgrMainLib::pkgTogg()
 {
   // prevent useless processing
@@ -330,10 +347,10 @@ void OmUiMgrMainLib::pkgTogg()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
-  if(pCtx->locCur()->pkgGet(lv_sel)->hasBck()) {
+  if(pLoc->pkgGet(lv_sel)->hasBck()) {
     this->_pkgUnin_init();
   } else {
     this->_pkgInst_init();
@@ -356,12 +373,12 @@ void OmUiMgrMainLib::pkgProp()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   OmPackage* pPkg = nullptr;
 
-  pPkg = pCtx->locCur()->pkgGet(lv_sel);
+  pPkg = pLoc->pkgGet(lv_sel);
 
   if(pPkg) {
     OmUiPropPkg* pUiPropPkg = static_cast<OmUiPropPkg*>(this->childById(IDD_PROP_PKG));
@@ -381,15 +398,15 @@ void OmUiMgrMainLib::pkgTrsh()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   vector<OmPackage*> sel_ls;
 
   int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
   while(lv_sel != -1) {
 
-    sel_ls.push_back(pCtx->locCur()->pkgGet(lv_sel));
+    sel_ls.push_back(pLoc->pkgGet(lv_sel));
 
     // next selected item
     lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
@@ -454,15 +471,15 @@ void OmUiMgrMainLib::pkgOpen()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   vector<OmPackage*> sel_ls;
 
   int lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
   while(lv_sel != -1) {
 
-    sel_ls.push_back(pCtx->locCur()->pkgGet(lv_sel));
+    sel_ls.push_back(pLoc->pkgGet(lv_sel));
 
     // next selected item
     lv_sel = this->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
@@ -497,12 +514,12 @@ void OmUiMgrMainLib::pkgEdit()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   OmPackage* pPkg = nullptr;
 
-  pPkg = pCtx->locCur()->pkgGet(lv_sel);
+  pPkg = pLoc->pkgGet(lv_sel);
 
   if(pPkg) {
     OmUiToolPkg* pUiToolPkg = static_cast<OmUiToolPkg*>(this->_pUiMgr->childById(IDD_TOOL_PKG));
@@ -536,9 +553,7 @@ bool OmUiMgrMainLib::_pkgProgressCb(void* ptr, size_t tot, size_t cur, uint64_t 
 void OmUiMgrMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   wstring msg_lst;
@@ -658,9 +673,7 @@ void OmUiMgrMainLib::_pkgInstLs(const vector<OmPackage*>& pkg_ls, bool silent)
 void OmUiMgrMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   wstring msg_lst;
@@ -769,9 +782,7 @@ void OmUiMgrMainLib::_pkgUninLs(const vector<OmPackage*>& pkg_ls, bool silent)
 void OmUiMgrMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   wstring msg_lst;
@@ -972,10 +983,7 @@ void OmUiMgrMainLib::_buildEcLib()
   #endif
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  // get current context and location
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmLocation* pLoc = pMgr->locCur();
 
   wstring item_str;
 
@@ -1054,8 +1062,7 @@ void OmUiMgrMainLib::_buildLvPkg()
   this->msgItem(IDC_LV_PKG, LVM_DELETEALLITEMS);
 
   // get current context and location
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmLocation* pLoc = pMgr->locCur();
 
   if(!pLoc) {
     // disable ListView
@@ -1110,6 +1117,11 @@ void OmUiMgrMainLib::_buildLvPkg()
     lvItem.pszText = const_cast<LPWSTR>(pPkg->category().c_str());
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
+
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // Enable or disable "Uninstall all" item
+  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 
   // we enable the ListView
   this->enableItem(IDC_LV_PKG, true);
@@ -1250,12 +1262,8 @@ void OmUiMgrMainLib::_rsizeLvBat()
 void OmUiMgrMainLib::_pkgInst_init()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return;
-
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
@@ -1310,6 +1318,16 @@ void OmUiMgrMainLib::_pkgInst_stop()
 
   // Unfreezes dialog so user can interact again
   this->_pUiMgr->freeze(false);
+
+  // Need to update Menu
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
+
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // Enable or disable "Uninstall all" item
+  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1321,10 +1339,8 @@ DWORD WINAPI OmUiMgrMainLib::_pkgInst_fth(void* arg)
   OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return 1;
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return 1;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
 
   // string for dialog messages
   wstring msg;
@@ -1365,12 +1381,8 @@ DWORD WINAPI OmUiMgrMainLib::_pkgInst_fth(void* arg)
 void OmUiMgrMainLib::_pkgUnin_init()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return;
-
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
@@ -1418,15 +1430,18 @@ void OmUiMgrMainLib::_pkgUnin_stop()
   // Uninstall process may have leaved a ghost package (no source and
   // no backup), so we clean Library and rebuild ListView if needed
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
 
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // clean Library list and rebuild ListView
   if(pLoc->libClean())
     this->_buildLvPkg();
+
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // Enable or disable "Uninstall all" item
+  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 ///
@@ -1437,10 +1452,9 @@ DWORD WINAPI OmUiMgrMainLib::_pkgUnin_fth(void* arg)
   OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return 1;
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return 1;
+
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
 
   // string for dialog messages
   wstring msg;
@@ -1482,11 +1496,8 @@ void OmUiMgrMainLib::_pkgClns_init()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return;
-
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   // checks whether we have a valid Destination folder
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
@@ -1535,15 +1546,18 @@ void OmUiMgrMainLib::_pkgClns_stop()
   // Uninstall process may have leaved a ghost package (no source and
   // no backup), so we clean Library and rebuild ListView if needed
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
 
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // clean Library list and rebuild ListView
   if(pLoc->libClean())
     this->_buildLvPkg();
+
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // Enable or disable "Uninstall all" item
+  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1555,10 +1569,9 @@ DWORD WINAPI OmUiMgrMainLib::_pkgClns_fth(void* arg)
   OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return 1;
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return 1;
+
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
 
   // string for dialog messages
   wstring msg;
@@ -1590,6 +1603,118 @@ DWORD WINAPI OmUiMgrMainLib::_pkgClns_fth(void* arg)
   self->postMessage(UWM_PKGCLNS_DONE);
 
   return 0;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrMainLib::_pkgPurg_init()
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
+
+  // checks whether we have a valid Destination folder
+  if(!pLoc->dstDirAccess(true)) { //< check for read and write
+    Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
+                  L"Destination folder access error", L"The Destination folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->dstDir());
+    return;
+  }
+  // checks whether we have a valid Backup folder
+  if(!pLoc->bckDirAccess(true)) { //< check for read and write
+    Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
+                  L"Backup folder access error", L"The Backup folder "
+                  "cannot be accessed because it do not exist or have read/write "
+                  "access restrictions. Please check Target Location's settings "
+                  "and folder permissions.", pLoc->bckDir());
+    return;
+  }
+
+  // freeze dialog so user cannot interact
+  this->_pUiMgr->freeze(true);
+
+  DWORD dwId;
+  this->_pkgPurg_hth = CreateThread(nullptr, 0, this->_pkgPurg_fth, this, 0, &dwId);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMgrMainLib::_pkgPurg_fth(void* arg)
+{
+  OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
+
+  OmManager* pMgr = static_cast<OmManager*>(self->_data);
+
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
+
+  // string for dialog messages
+  wstring msg;
+
+  // get installed packages
+  vector<OmPackage*> pkgs_ls;
+
+  OmPackage* pPkg;
+
+  for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
+
+    pPkg = pLoc->pkgGet(i);
+
+    if(pPkg->hasBck())
+      pkgs_ls.push_back(pPkg);
+  }
+
+  // reset abort status
+  self->_thread_abort = false;
+
+  // uninstall packages
+  self->_pkgUninLs(pkgs_ls, false);
+
+  // send message to notify process ended
+  self->postMessage(UWM_PKGUNIN_DONE);
+
+  return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMgrMainLib::_pkgPurg_stop()
+{
+  DWORD exitCode;
+
+  if(this->_pkgPurg_hth) {
+    WaitForSingleObject(this->_pkgPurg_hth, INFINITE);
+    GetExitCodeThread(this->_pkgPurg_hth, &exitCode);
+    CloseHandle(this->_pkgPurg_hth);
+    this->_pkgPurg_hth = nullptr;
+  }
+
+  // unfreeze dialog to allow user to interact again
+  this->_pUiMgr->freeze(false);
+
+  // Uninstall process may have leaved a ghost package (no source and
+  // no backup), so we clean Library and rebuild ListView if needed
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
+
+  // clean Library list and rebuild ListView
+  if(pLoc->libClean())
+    this->_buildLvPkg();
+
+  // handle to Edit > Package submenu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // Enable or disable "Uninstall all" item
+  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1630,10 +1755,8 @@ void OmUiMgrMainLib::_batExe_stop()
   // Uninstall process may have leaved a ghost package (no source and
   // no backup), so we clean Library and rebuild ListView if needed
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
 
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // clean Library list and rebuild ListView
@@ -1887,12 +2010,11 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->enableItem(IDC_BC_UNIN, false);
     this->enableItem(IDC_PB_PKG, false);
 
-    // disable "Edit > Package" in main menu
-    this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
-
     // disable all menu-item (for right click menu)
-    for(unsigned i = 0; i < 10; ++i)
+    for(unsigned i = 0; i < 11; ++i) {
+      if(i == 3) continue; //< Do not touch "Uninstall all"
       this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
+    }
 
     // show nothing in footer frame
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -1902,13 +2024,8 @@ void OmUiMgrMainLib::_onLvPkgSel()
   }
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
-
-  // enable "Edit > Package []" pop-up menu
-  this->_pUiMgr->setPopupItem(1, 5, MF_ENABLED);
 
   // Check whether we have multiple selection
   if(lv_nsl > 1) {
@@ -1918,21 +2035,25 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->enableItem(IDC_BC_UNIN, true);
 
     // enable menu-items from "install" to "Move to recycle bin"
-    for(unsigned i = 0; i < 6; ++i)
+    for(unsigned i = 0; i < 7; ++i) {
+      if(i == 3) continue; //< Do not touch "Uninstall all"
       this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
+    }
 
     // disable proper menu-items
-    this->_pUiMgr->setPopupItem(hPopup, 7, MF_GRAYED); //< "Load in Package Editor" menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 9, MF_GRAYED); //< "View detail..." menu-item
+    this->_pUiMgr->setPopupItem(hPopup, 8, MF_GRAYED); //< "Load in Package Editor" menu-item
+    this->_pUiMgr->setPopupItem(hPopup, 10, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
     this->_pUiMgr->pUiMgrFoot()->clearItem();
 
   } else {
 
-    // enable menu-items from "Open in explorer..." to "View details..."
-    for(unsigned i = 3; i < 10; ++i)
+    // enable menu-items from "Uninstall all" to "View details..."
+    for(unsigned i = 3; i < 11; ++i) {
+      if(i == 3) continue; //< Do not touch "Uninstall all"
       this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
+    }
 
     OmPackage* pPkg;
 
@@ -2565,6 +2686,10 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_PKG_CLNS:
       this->pkgClns();
+      break;
+
+    case IDM_EDIT_PKG_PURG:
+      this->pkgPurg();
       break;
 
     case IDM_EDIT_PKG_TRSH:

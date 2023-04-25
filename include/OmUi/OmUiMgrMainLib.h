@@ -94,17 +94,23 @@ class OmUiMgrMainLib : public OmDialog
 
     /// \brief Uninstall selected packages.
     ///
-    /// Public function to launch unsintall process for selected packages if
+    /// Public function to launch uninstall process for selected packages if
     /// any.
     ///
     void pkgUnin();
 
     /// \brief Cleanse selected packages.
     ///
-    /// Public function to launch cleanse unsintall process for selected packages if
+    /// Public function to launch cleanse uninstall process for selected packages if
     /// any.
     ///
     void pkgClns();
+
+    /// \brief Purge installed packages.
+    ///
+    /// Public function to launch uninstall all installed packages.
+    ///
+    void pkgPurg();
 
     /// \brief Toggle selected packages installation.
     ///
@@ -182,6 +188,14 @@ class OmUiMgrMainLib : public OmDialog
     void*               _pkgClns_hth;
 
     static DWORD WINAPI _pkgClns_fth(void*);
+
+    void                _pkgPurg_init();
+
+    void                _pkgPurg_stop();
+
+    void*               _pkgPurg_hth;
+
+    static DWORD WINAPI _pkgPurg_fth(void*);
 
     void                _batExe_init();
 

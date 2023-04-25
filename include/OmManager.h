@@ -134,6 +134,16 @@ class OmManager
       return _ctxCur;
     }
 
+    /// \brief Get active Location from active Context.
+    ///
+    /// Returns current active Location from active Context.
+    ///
+    /// \return Current active Location or null.
+    ///
+    OmLocation* locCur() const {
+      return _ctxCur >= 0 ? _ctxLs[_ctxCur]->locCur() : nullptr;
+    }
+
     /// \brief Save configuration window RECT.
     ///
     /// Stores the specified window RECT to configuration file.
