@@ -176,12 +176,13 @@ IDR_MENU MENU
         MENUITEM "Target &Location properties...", IDM_EDIT_LOC_PROP
         MENUITEM "&Add Target Location...", IDM_EDIT_ADD_LOC
         MENUITEM SEPARATOR
-        POPUP "&Package"
+        MENUITEM "Uninstall &all packages\tCtrl+Backspace", IDM_EDIT_UINS_ALL
+        MENUITEM SEPARATOR
+        POPUP "&Package", GRAYED
         {
             MENUITEM "&Install\tEnter", IDM_EDIT_PKG_INST
             MENUITEM "&Uninstall\tBackspace", IDM_EDIT_PKG_UINS
             MENUITEM "Uninstall &tree\tShift+Backspace", IDM_EDIT_PKG_CLNS
-            MENUITEM "Uninstall &all\tCtrl+Backspace", IDM_EDIT_PKG_PURG
             MENUITEM SEPARATOR
             MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_PKG_OPEN
             MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_PKG_TRSH

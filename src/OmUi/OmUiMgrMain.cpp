@@ -314,7 +314,5 @@ INT_PTR OmUiMgrMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
   }
 
-
-
   return false;
 }

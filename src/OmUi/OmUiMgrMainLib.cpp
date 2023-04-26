@@ -237,7 +237,7 @@ void OmUiMgrMainLib::locSel(int id)
   if(this->_dirMon_hth) this->_dirMon_stop();
 
   // disable "Edit > Package []" in main menu
-  this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_GRAYED);
 
   // select the requested Location
   if(pCtx) {
@@ -257,12 +257,12 @@ void OmUiMgrMainLib::locSel(int id)
       }
 
       // enable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(1, 2, MF_ENABLED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_ENABLED);
 
     } else {
 
       // disable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(1, 2, MF_GRAYED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_GRAYED);
     }
   }
 
@@ -1118,10 +1118,8 @@ void OmUiMgrMainLib::_buildLvPkg()
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
-  // Enable or disable "Uninstall all" item
-  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
+  // Enable or disable "Uninstall all packages" menu item
+  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 
   // we enable the ListView
   this->enableItem(IDC_LV_PKG, true);
@@ -1324,10 +1322,8 @@ void OmUiMgrMainLib::_pkgInst_stop()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
-  // Enable or disable "Uninstall all" item
-  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
+  // Enable or disable "Uninstall all packages" menu item
+  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1438,10 +1434,8 @@ void OmUiMgrMainLib::_pkgUnin_stop()
   if(pLoc->libClean())
     this->_buildLvPkg();
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
-  // Enable or disable "Uninstall all" item
-  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
+  // Enable or disable "Uninstall all packages" menu item
+  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 ///
@@ -1554,10 +1548,8 @@ void OmUiMgrMainLib::_pkgClns_stop()
   if(pLoc->libClean())
     this->_buildLvPkg();
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
-  // Enable or disable "Uninstall all" item
-  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
+  // Enable or disable "Uninstall all packages" menu item
+  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1651,16 +1643,15 @@ DWORD WINAPI OmUiMgrMainLib::_pkgPurg_fth(void* arg)
   OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-
-  OmLocation* pLoc = pMgr->locCur();
-  if(!pLoc) return 1;
-
-  // string for dialog messages
-  wstring msg;
+  OmContext* pCtx = pMgr->ctxCur();
 
   // get installed packages
-  vector<OmPackage*> pkgs_ls;
+  vector<OmPackage*> uni_ls;
 
+  // reset abort status
+  self->_thread_abort = false;
+
+  /*
   OmPackage* pPkg;
 
   for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
@@ -1668,14 +1659,52 @@ DWORD WINAPI OmUiMgrMainLib::_pkgPurg_fth(void* arg)
     pPkg = pLoc->pkgGet(i);
 
     if(pPkg->hasBck())
-      pkgs_ls.push_back(pPkg);
+      uni_ls.push_back(pPkg);
   }
 
   // reset abort status
   self->_thread_abort = false;
 
   // uninstall packages
-  self->_pkgUninLs(pkgs_ls, false);
+  self->_pkgUninLs(uni_ls, false);
+  */
+
+  // save current selected location
+  int cb_sel = self->msgItem(IDC_CB_LOC, CB_GETCURSEL);
+
+  OmLocation* pLoc;
+  OmPackage* pPkg;
+
+  for(size_t l = 0; l < pCtx->locCount(); ++l) {
+
+    if(self->_thread_abort)
+      break;
+
+    // Select the Location
+    self->locSel(l);
+    pLoc = pCtx->locCur();
+
+    // create the uninstall list, here we do not care order
+    uni_ls.clear();
+
+    for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
+
+      pPkg = pLoc->pkgGet(i);
+
+      if(pPkg->hasBck())
+        uni_ls.push_back(pPkg);
+    }
+
+    // first, uninstall packages which must be uninstalled
+    if(uni_ls.size()) {
+      // uninstall packages
+      self->_pkgUninLs(uni_ls, true);
+    }
+
+  }
+
+  // Select previously selected location
+  self->locSel(cb_sel);
 
   // send message to notify process ended
   self->postMessage(UWM_PKGUNIN_DONE);
@@ -1711,10 +1740,8 @@ void OmUiMgrMainLib::_pkgPurg_stop()
   if(pLoc->libClean())
     this->_buildLvPkg();
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
-  // Enable or disable "Uninstall all" item
-  this->_pUiMgr->setPopupItem(hPopup, 3, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
+  // Enable or disable "Uninstall all packages" menu item
+  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1796,10 +1823,16 @@ DWORD WINAPI OmUiMgrMainLib::_batExe_fth(void* arg)
     // batch, install and uninstall list
     vector<OmPackage*> bat_ls, ins_ls, uni_ls;
 
+    // reset abort status
+    self->_thread_abort = false;
+
     OmPackage* pPkg;
     OmLocation* pLoc;
 
     for(size_t l = 0; l < pCtx->locCount(); ++l) {
+
+      if(self->_thread_abort)
+        break;
 
       // retrieve batch install list for Target Location
       bat_ls.clear();
@@ -1981,7 +2014,7 @@ void OmUiMgrMainLib::_onLvPkgRclk()
   this->_onLvPkgSel();
 
   // get handle to "Edit > Packages..." sub-menu
-  HMENU hMenu = this->_pUiMgr->getPopupItem(1, 5);
+  HMENU hMenu = this->_pUiMgr->getPopupItem(MNU_EDIT, MNU_EDIT_PKG);
 
   // get mouse cursor position
   POINT pt;
@@ -1999,8 +2032,8 @@ void OmUiMgrMainLib::_onLvPkgSel()
   // get count of selected item
   unsigned lv_nsl = this->msgItem(IDC_LV_PKG, LVM_GETSELECTEDCOUNT);
 
-  // handle to Edit > Package submenu
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 5);
+  // handle to "Edit > Package >" sub-menu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(MNU_EDIT, MNU_EDIT_PKG);
 
   // check count of selected item
   if(!lv_nsl) {
@@ -2010,11 +2043,12 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->enableItem(IDC_BC_UNIN, false);
     this->enableItem(IDC_PB_PKG, false);
 
+    // disable "Edit > Package" in main menu
+    this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_GRAYED);
+
     // disable all menu-item (for right click menu)
-    for(unsigned i = 0; i < 11; ++i) {
-      if(i == 3) continue; //< Do not touch "Uninstall all"
+    for(unsigned i = 0; i < 10; ++i)
       this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
-    }
 
     // show nothing in footer frame
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -2027,6 +2061,9 @@ void OmUiMgrMainLib::_onLvPkgSel()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
+  // at least one selected, enable "Edit > Package []" pop-up menu
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_ENABLED);
+
   // Check whether we have multiple selection
   if(lv_nsl > 1) {
 
@@ -2035,14 +2072,12 @@ void OmUiMgrMainLib::_onLvPkgSel()
     this->enableItem(IDC_BC_UNIN, true);
 
     // enable menu-items from "install" to "Move to recycle bin"
-    for(unsigned i = 0; i < 7; ++i) {
-      if(i == 3) continue; //< Do not touch "Uninstall all"
+    for(unsigned i = 0; i < 6; ++i)
       this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
-    }
 
     // disable proper menu-items
-    this->_pUiMgr->setPopupItem(hPopup, 8, MF_GRAYED); //< "Load in Package Editor" menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 10, MF_GRAYED); //< "View detail..." menu-item
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_EDIT, MF_GRAYED); //< "Load in Package Editor" menu-item
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_INFO, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -2050,10 +2085,8 @@ void OmUiMgrMainLib::_onLvPkgSel()
   } else {
 
     // enable menu-items from "Uninstall all" to "View details..."
-    for(unsigned i = 3; i < 11; ++i) {
-      if(i == 3) continue; //< Do not touch "Uninstall all"
+    for(unsigned i = 3; i < 10; ++i)
       this->_pUiMgr->setPopupItem(hPopup, i, MF_ENABLED);
-    }
 
     OmPackage* pPkg;
 
@@ -2074,9 +2107,9 @@ void OmUiMgrMainLib::_onLvPkgSel()
         this->enableItem(IDC_BC_UNIN, true);
 
         // enable and disable proper menu-items
-        this->_pUiMgr->setPopupItem(hPopup, 0, MF_GRAYED);  //< "Install"
-        this->_pUiMgr->setPopupItem(hPopup, 1, MF_ENABLED); //< "Uninstall"
-        this->_pUiMgr->setPopupItem(hPopup, 2, MF_ENABLED); //< "Uninstall tree"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_INST, MF_GRAYED);  //< "Install"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_UINS, MF_ENABLED); //< "Uninstall"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_CLNS, MF_ENABLED); //< "Uninstall tree"
 
       } else {
 
@@ -2085,9 +2118,9 @@ void OmUiMgrMainLib::_onLvPkgSel()
         this->enableItem(IDC_BC_UNIN, false);
 
         // enable and disable proper menu-items
-        this->_pUiMgr->setPopupItem(hPopup, 0, MF_ENABLED); //< "Install"
-        this->_pUiMgr->setPopupItem(hPopup, 1, MF_GRAYED);  //< "Uninstall"
-        this->_pUiMgr->setPopupItem(hPopup, 2, MF_GRAYED);  //< "Uninstall tree"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_INST, MF_ENABLED); //< "Install"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_UINS, MF_GRAYED);  //< "Uninstall"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_CLNS, MF_GRAYED);  //< "Uninstall tree"
       }
 
     } else {
@@ -2361,7 +2394,7 @@ void OmUiMgrMainLib::_onHide()
   #endif
 
   // disable "Edit > Package" in main menu
-  this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_GRAYED);
 
   // stop folder monitoring
   if(this->_dirMon_hth) this->_dirMon_stop();
@@ -2641,7 +2674,7 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     #ifdef DEBUG
-    //std::cout << "DEBUG => OmUiMgrMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    std::cout << "DEBUG => OmUiMgrMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
 
     switch(LOWORD(wParam))
@@ -2686,10 +2719,6 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_EDIT_PKG_CLNS:
       this->pkgClns();
-      break;
-
-    case IDM_EDIT_PKG_PURG:
-      this->pkgPurg();
       break;
 
     case IDM_EDIT_PKG_TRSH:

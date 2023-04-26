@@ -225,8 +225,8 @@ void OmUiMgrMainNet::locSel(int id)
   // stop Library folder monitoring
   if(this->_dirMon_hth) this->_dirMon_stop();
 
-  // disable "Edit > Package []" in main menu
-  this->_pUiMgr->setPopupItem(1, 5, MF_GRAYED);
+  // disable "Edit > Remote []" in main menu
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_GRAYED);
 
   // select the requested Location
   if(pCtx) {
@@ -246,12 +246,12 @@ void OmUiMgrMainNet::locSel(int id)
       }
 
       // enable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(1, 2, MF_ENABLED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_ENABLED);
 
     } else {
 
       // disable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(1, 2, MF_GRAYED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_GRAYED);
     }
   }
 
@@ -274,11 +274,7 @@ void OmUiMgrMainNet::rmtDown(bool upgrade)
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // get user selection
@@ -418,9 +414,7 @@ void OmUiMgrMainNet::rmtFixd(bool upgrade)
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // string for dialog messages
@@ -548,10 +542,10 @@ void OmUiMgrMainNet::rmtProp()
     return;
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx->locCur()) return;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
-  OmRemote* pRmt = pCtx->locCur()->rmtGet(lv_sel);
+  OmRemote* pRmt = pLoc->rmtGet(lv_sel);
 
   if(pRmt) {
     OmUiPropRmt* pUiPropRmt = static_cast<OmUiPropRmt*>(this->childById(IDD_PROP_RMT));
@@ -714,10 +708,8 @@ DWORD WINAPI OmUiMgrMainNet::_repQry_fth(void* ptr)
   OmUiMgrMainNet* self = reinterpret_cast<OmUiMgrMainNet*>(ptr);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return 1;
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return 1;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
 
   DWORD exitCode = 0;
 
@@ -868,10 +860,8 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
 {
   // retrieve Remote object
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx)return; //< Houston we have a problem
-  OmLocation* pLoc = pCtx->locCur();
-  if(!pLoc)return; //< Houston we have a problem
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
 
   // retrieve Remote object
   OmRemote* pRmt = pLoc->rmtFind(hash);
@@ -1121,8 +1111,7 @@ void OmUiMgrMainNet::_buildLvRep()
   this->msgItem(IDC_LV_REP, LVM_DELETEALLITEMS);
 
   // get current context and location
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmLocation* pLoc = pMgr->locCur();
 
   if(!pLoc) {
     // disable ListView
@@ -1260,8 +1249,7 @@ void OmUiMgrMainNet::_buildLvRmt()
   this->msgItem(IDC_LV_RMT, LVM_DELETEALLITEMS);
 
   // get current context and location
-  OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmLocation* pLoc = pMgr->locCur();
 
   if(!pLoc) {
     // disable ListView
@@ -1437,7 +1425,7 @@ void OmUiMgrMainNet::_onLvRmtHit()
 void OmUiMgrMainNet::_onLvRmtRclk()
 {
   // get handle to "Edit > Remote..." sub-menu
-  HMENU hMenu = this->_pUiMgr->getPopupItem(1, 6);
+  HMENU hMenu = this->_pUiMgr->getPopupItem(MNU_EDIT, MNU_EDIT_RMT);
 
   // get mouse cursor position
   POINT pt;
@@ -1452,8 +1440,11 @@ void OmUiMgrMainNet::_onLvRmtRclk()
 ///
 void OmUiMgrMainNet::_onLvRmtSel()
 {
-   // get count of selected item
-   unsigned lv_nsl = this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT);
+  // get count of selected item
+  unsigned lv_nsl = this->msgItem(IDC_LV_RMT, LVM_GETSELECTEDCOUNT);
+
+  // handle to "Edit > Remote >" sub-menu
+  HMENU hPopup = this->_pUiMgr->getPopupItem(MNU_EDIT, MNU_EDIT_RMT);
 
   if(!lv_nsl) {
 
@@ -1462,7 +1453,11 @@ void OmUiMgrMainNet::_onLvRmtSel()
     this->enableItem(IDC_BC_ABORT, false);
 
     // disable "Edit > Remote []" pop-up menu
-    this->_pUiMgr->setPopupItem(1, 6, MF_GRAYED);
+    this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_GRAYED);
+
+    // disable all menu-item (for right click menu)
+    for(unsigned i = 0; i < 6; ++i)
+      this->_pUiMgr->setPopupItem(hPopup, i, MF_GRAYED);
 
     // show nothing in footer frame
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -1472,23 +1467,22 @@ void OmUiMgrMainNet::_onLvRmtSel()
   }
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // at least one selected, enable "Edit > Remote []" pop-up menu
-  this->_pUiMgr->setPopupItem(1, 6, MF_ENABLED);
-  HMENU hPopup = this->_pUiMgr->getPopupItem(1, 6);
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_ENABLED);
 
   if(lv_nsl > 1) {
 
     // multiple selection, we allow more than one download at a time
     this->enableItem(IDC_BC_DNLD, true); //< enable anyway when multiple selection
 
-    // disable the "Edit > Remote > View detail..." menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 3, MF_GRAYED); //< "Fix dependencies" menu-item
-    this->_pUiMgr->setPopupItem(hPopup, 5, MF_GRAYED); //< "View detail..." menu-item
+    // enable and disable "Edit > Remote" menu-items
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_DNLD, MF_ENABLED); //< "Download" menu-item
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_DNWS, MF_ENABLED); //< "Download without supersede" menu-item
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_FIXD, MF_GRAYED); //< "Fix dependencies" menu-item
+    this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_INFO, MF_GRAYED); //< "View detail..." menu-item
 
     // on multiple selection, we hide package description
     this->_pUiMgr->pUiMgrFoot()->clearItem();
@@ -1514,9 +1508,11 @@ void OmUiMgrMainNet::_onLvRmtSel()
       bool can_fixd = pRmt->isState(RMT_STATE_DEP);
       bool progress = pRmt->isState(RMT_STATE_DNL) || pRmt->isState(RMT_STATE_WIP);
 
-      this->_pUiMgr->setPopupItem(hPopup, 0, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download" menu-item
-      this->_pUiMgr->setPopupItem(hPopup, 1, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download without supersede" menu-item
-      this->_pUiMgr->setPopupItem(hPopup, 3, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
+      // enable and disable "Edit > Remote" menu-items
+      this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_DNLD, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download" menu-item
+      this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_DNWS, can_dnld ? MF_ENABLED : MF_GRAYED); //< "Download without supersede" menu-item
+      this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_FIXD, can_fixd ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
+      this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_RMT_INFO, MF_ENABLED); //< "View detail..." menu-item
 
       this->enableItem(IDC_BC_DNLD, can_dnld);
       this->enableItem(IDC_BC_ABORT, progress);
@@ -1573,12 +1569,11 @@ void OmUiMgrMainNet::_onBcStopRep()
 void OmUiMgrMainNet::_onBcNewRep()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
+  OmLocation* pLoc = pMgr->locCur();
 
-  if(pCtx->locCur()) {
+  if(pLoc) {
     OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->_pUiMgr->childById(IDD_ADD_REP));
-    pUiNewRep->locSet(pCtx->locCur());
+    pUiNewRep->locSet(pLoc);
     pUiNewRep->open(true);
   }
 }
@@ -1590,10 +1585,7 @@ void OmUiMgrMainNet::_onBcNewRep()
 void OmUiMgrMainNet::_onBcDelRep()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
@@ -1632,10 +1624,7 @@ void OmUiMgrMainNet::_onBcAbort()
   this->enableItem(IDC_BC_ABORT, false);
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  OmContext* pCtx = pMgr->ctxCur();
-  if(!pCtx) return;
-
-  OmLocation* pLoc = pCtx->locCur();
+  OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
   // we set abort value to Remote object hash to identify it
@@ -1775,7 +1764,7 @@ void OmUiMgrMainNet::_onHide()
   #endif
 
   // disable "Edit > Remote" in main menu
-  this->_pUiMgr->setPopupItem(1, 6, MF_GRAYED);
+  this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_GRAYED);
 
   // stop folder monitoring
   if(this->_dirMon_hth) this->_dirMon_stop();
@@ -1825,8 +1814,8 @@ void OmUiMgrMainNet::_onRefresh()
   #endif
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
+
   OmContext* pCtx = pMgr->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
 
   // disable the Progress-Bar
   this->enableItem(IDC_PB_PKG, false);
@@ -1845,6 +1834,8 @@ void OmUiMgrMainNet::_onRefresh()
 
   // values for access errors
   bool lib_access = true;
+
+  OmLocation* pLoc = pMgr->locCur();
 
   // We try to avoid unnecessary refresh of ListView by
   // select specific condition of refresh
@@ -1871,7 +1862,7 @@ void OmUiMgrMainNet::_onRefresh()
                     L"Library folder access error", L"The Library folder "
                     "cannot be accessed because it do not exist or have read "
                     "access restrictions. Please check Target Location's settings "
-                    "and folder permissions.", pCtx->locCur()->libDir());
+                    "and folder permissions.", pLoc->libDir());
     }
   }
 }

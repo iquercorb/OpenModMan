@@ -123,9 +123,9 @@ void OmUiMgr::freeze(bool enable)
 
   // disable menus
   int state = enable ? MF_GRAYED : MF_ENABLED;
-  this->setPopupItem(this->_menu, 0, state); //< File menu
-  this->setPopupItem(this->_menu, 1, state); //< Edit menu
-  this->setPopupItem(this->_menu, 2, state); //< Tools menu
+  this->setPopupItem(this->_menu, MNU_FILE, state); //< File menu
+  this->setPopupItem(this->_menu, MNU_EDIT, state); //< Edit menu
+  this->setPopupItem(this->_menu, MNU_TOOL, state); //< Tools menu
 
   // force menu bar to redraw so enabled/grayed state
   // is properly visually updated
@@ -275,7 +275,7 @@ void OmUiMgr::_buildMnRct()
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   // handle to "File > Recent files" pop-up
-  HMENU hMenu = this->getPopupItem(static_cast<unsigned>(0), 3); //< "File > Recent files" pop-up
+  HMENU hMenu = this->getPopupItem(MNU_FILE, MNU_FILE_RECENT); //< "File > Recent files" pop-up
 
   // remove all entry from "File > Recent files >" pop-up except the two last
   // ones which are the separator and and the "Clear history" menu-item
@@ -300,10 +300,10 @@ void OmUiMgr::_buildMnRct()
       InsertMenuW(hMenu, 0, MF_BYPOSITION|MF_STRING, IDM_FILE_RECENT_PATH + i, item_str.c_str());
     }
     // enable the "File > Recent Files" popup
-    this->setPopupItem(static_cast<int>(0), 3, MF_ENABLED);
+    this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, MF_ENABLED);
   } else {
     // disable the "File > Recent Files" popup
-    this->setPopupItem(static_cast<int>(0), 3, MF_GRAYED);
+    this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, MF_GRAYED);
   }
 }
 
@@ -539,15 +539,16 @@ void OmUiMgr::_onRefresh()
 
   // update menus
   int state = pCtx ? MF_ENABLED : MF_GRAYED;
-  this->setPopupItem(static_cast<int>(0), 5, state); // File > Close
-  this->setPopupItem(static_cast<int>(1), 0, state); // Edit > Context properties...
-  this->setPopupItem(static_cast<int>(1), 3, state); // Edit > Add Location...
+  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state); // File > Close
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_CTXPROP, state); // Edit > Context properties...
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_ADDLOC, state); // Edit > Add Location...
   if(pCtx) {
     // Edit > Location properties...
-    this->setPopupItem(static_cast<int>(1), 2, pMgr->ctxCur()->locCur() ? MF_ENABLED : MF_GRAYED);
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, pMgr->ctxCur()->locCur() ? MF_ENABLED : MF_GRAYED);
   } else {
-    this->setPopupItem(static_cast<int>(1), 2, MF_GRAYED); // Edit > Location properties...
-    this->setPopupItem(static_cast<int>(1), 5, MF_GRAYED); // Edit > Package []
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_GRAYED); // Edit > Location properties...
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_GRAYED); // Edit > Package []
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_GRAYED); // Edit > Remote []
   }
 
   // rebuild the Recent Context menu
@@ -798,6 +799,11 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->childById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
       pUiAddLoc->open();
+      break;
+    }
+
+    case IDM_EDIT_UINS_ALL: {
+      static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgPurg();
       break;
     }
 

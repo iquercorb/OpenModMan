@@ -40,6 +40,59 @@
 ///
 #define UWM_MAIN_ABORT_REQUEST    (WM_APP+17)
 
+/// \brief Main menu intems indices
+///
+/// Indices for main menu items
+///
+#define MNU_FILE             static_cast<unsigned>(0)
+    #define MNU_FILE_NEW         0
+        #define MNU_FILE_NEW_CTX    0
+    // ------------------------- 1
+    #define MNU_FILE_OPEN        2
+    #define MNU_FILE_RECENT      3
+    // ------------------------- 4
+    #define MNU_FILE_CLOSE       5
+    // ------------------------- 6
+    #define MNU_FILE_QUIT        7
+
+#define MNU_EDIT             1
+    #define MNU_EDIT_CTXPROP     0
+    // ------------------------- 1
+    #define MNU_EDIT_LOCPROP     2
+    #define MNU_EDIT_ADDLOC      3
+    // ------------------------- 4
+    #define MNU_EDIT_UINSALL     5
+    // ------------------------- 6
+    #define MNU_EDIT_PKG         7
+        #define MNU_EDIT_PKG_INST    0
+        #define MNU_EDIT_PKG_UINS    1
+        #define MNU_EDIT_PKG_CLNS    2
+        // ------------------------- 3
+        #define MNU_EDIT_PKG_OPEN    4
+        #define MNU_EDIT_PKG_TRSH    5
+        // ------------------------- 6
+        #define MNU_EDIT_PKG_EDIT    7
+        // ------------------------- 8
+        #define MNU_EDIT_PKG_INFO    9
+
+    #define MNU_EDIT_RMT         8
+        #define MNU_EDIT_RMT_DNLD    0
+        #define MNU_EDIT_RMT_DNWS    1
+        // ------------------------- 2
+        #define MNU_EDIT_RMT_FIXD    3
+        // ------------------------- 4
+        #define MNU_EDIT_RMT_INFO    5
+    // ------------------------- 9
+    #define MNU_EDIT_PROPMGR     10
+
+#define MNU_TOOL             2
+    #define MNU_TOOL_EDITPKG     0
+    #define MNU_TOOL_EDITREP     1
+
+#define MNU_HELP   3
+    #define MNU_HELP_DEBUG       0
+    #define MNU_HELP_ABOUT       1
+
 class OmUiMgrMain;
 class OmUiMgrFoot;
 

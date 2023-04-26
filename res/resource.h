@@ -278,6 +278,7 @@
 #define IDM_EDIT_CTX_PROP                       40821
 #define IDM_EDIT_ADD_LOC                        40822
 #define IDM_EDIT_LOC_PROP                       40823
+#define IDM_EDIT_UINS_ALL                       40824
 #define IDM_EDIT_PKG_INST                       40830
 #define IDM_EDIT_PKG_UINS                       40831
 #define IDM_EDIT_PKG_CLNS                       40832
@@ -285,7 +286,6 @@
 #define IDM_EDIT_PKG_TRSH                       40834
 #define IDM_EDIT_PKG_OPEN                       40835
 #define IDM_EDIT_PKG_EDIT                       40836
-#define IDM_EDIT_PKG_PURG                       40837
 #define IDM_EDIT_RMT_DNWS                       40840
 #define IDM_EDIT_RMT_DNLD                       40841
 #define IDM_EDIT_RMT_FIXD                       40842
