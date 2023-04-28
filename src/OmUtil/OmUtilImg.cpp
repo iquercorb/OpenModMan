@@ -1548,7 +1548,7 @@ static bool __gif_encode_common(GifFileType* gif, const uint8_t* in_rgb, unsigne
   gif->SHeight = in_h;
   gif->SColorResolution = 8;
   gif->SBackGroundColor = 0;
-  gif->SColorMap = GifMakeMapObject(cmap_size, reinterpret_cast<GifColorType*>(cmap)); //< global color table
+  gif->SColorMap = GifMakeMapObject(256, reinterpret_cast<GifColorType*>(cmap)); //< global color table
 
   // set image parameters
   SavedImage image;
