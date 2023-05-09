@@ -185,8 +185,9 @@ bool Om_isFileZip(const wstring& path);
 /// \param[in]  origin  : Path where to list folder from.
 /// \param[in]  abs     : If true, returns folder absolute path instead of
 ///                       folder name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsDir(vector<wstring>* ls, const wstring& origin, bool abs = true);
+void Om_lsDir(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files
 ///
@@ -196,8 +197,9 @@ void Om_lsDir(vector<wstring>* ls, const wstring& origin, bool abs = true);
 /// \param[in]  origin  : Path where to list files from.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFile(vector<wstring>* ls, const wstring& origin, bool abs = true);
+void Om_lsFile(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files recursively
 ///
@@ -208,8 +210,9 @@ void Om_lsFile(vector<wstring>* ls, const wstring& origin, bool abs = true);
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true);
+void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files with custom filter
 ///
@@ -221,8 +224,9 @@ void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool abs = t
 /// \param[in]  filter  : Custom filter to select files.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFileFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true);
+void Om_lsFileFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true, bool hidden = false);
 
 /// \brief List files and folders
 ///
@@ -233,8 +237,9 @@ void Om_lsFileFiltered(vector<wstring>* ls, const wstring& origin, const wstring
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAll(vector<wstring>* ls, const wstring& origin, bool abs = true);
+void Om_lsAll(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files and folders recursively
 ///
@@ -245,8 +250,9 @@ void Om_lsAll(vector<wstring>* ls, const wstring& origin, bool abs = true);
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true);
+void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
 
 /// \brief List folders and files with custom filter
 ///
@@ -258,8 +264,9 @@ void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool abs = tr
 /// \param[in]  filter  : Custom filter to select files.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true);
+void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true, bool hidden = false);
 
 /// \brief Get item total size
 ///

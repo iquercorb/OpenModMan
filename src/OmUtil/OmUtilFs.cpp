@@ -209,7 +209,7 @@ bool Om_isFileZip(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute)
+void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
 {
   wstring item;
 
@@ -224,6 +224,10 @@ void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute)
         // skip this and parent folder
         if(!wcscmp(fd.cFileName, L".")) continue;
         if(!wcscmp(fd.cFileName, L"..")) continue;
+
+        // skip in case we do not include hidden items
+        if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+          continue;
 
         if(absolute) {
           item = orig; item += L"\\"; item += fd.cFileName;
@@ -240,7 +244,7 @@ void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute)
+void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
 {
   wstring item;
 
@@ -252,6 +256,11 @@ void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute)
   if(hnd != INVALID_HANDLE_VALUE) {
     do {
       if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
+
+        // skip in case we do not include hidden items
+        if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+          continue;
+
         if(absolute) {
           item = orig; item += L"\\"; item += fd.cFileName;
           ls->push_back(item);
@@ -272,8 +281,9 @@ void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute)
 /// \param[in]  orig    : Path where to list items from.
 /// \param[in]  from    : Path to prepend to result to obtain the item full
 ///                       path from the beginning of the tree exploration.
+/// \param[in]  hidden  : Include items marked as Hidden.
 ///
-static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from)
+static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from, bool hidden)
 {
   wstring item;
   wstring root;
@@ -289,11 +299,15 @@ static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wst
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
 
+      // skip in case we do not include hidden items
+      if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+        continue;
+
       if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         item = from; item += L"\\"; item += fd.cFileName;
         root = orig; root += L"\\"; root += fd.cFileName;
         // go deep in tree
-        __lsFile_Recurse(ls, root, item);
+        __lsFile_Recurse(ls, root, item, hidden);
 
       } else {
         item = from; item += L"\\"; item += fd.cFileName;
@@ -307,19 +321,19 @@ static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wst
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool absolute)
+void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool absolute, bool hidden)
 {
   if(absolute) {
-    __lsFile_Recurse(ls, origin.c_str(), origin.c_str());
+    __lsFile_Recurse(ls, origin.c_str(), origin.c_str(), hidden);
   } else {
-    __lsFile_Recurse(ls, origin.c_str(), L"");
+    __lsFile_Recurse(ls, origin.c_str(), L"", hidden);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& filter, bool absolute)
+void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& filter, bool absolute, bool hidden)
 {
   wstring item;
   wstring root;
@@ -332,6 +346,11 @@ void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& 
   if(hnd != INVALID_HANDLE_VALUE) {
     do {
       if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
+
+        // skip in case we do not include hidden items
+        if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+          continue;
+
         if(absolute) {
           item = orig; item += L"\\"; item += fd.cFileName;
           ls->push_back(item);
@@ -347,7 +366,7 @@ void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute)
+void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
 {
   wstring item;
 
@@ -359,6 +378,10 @@ void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute)
       // skip this and parent folder
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
+
+      // skip in case we do not include hidden items
+      if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+        continue;
 
       if(absolute) {
         item = orig; item += L"\\"; item += fd.cFileName;
@@ -380,7 +403,7 @@ void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute)
 /// \param[in]  from    : Path to prepend to result to obtain the item full
 ///                       path from the beginning of the tree exploration.
 ///
-static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from)
+static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from, bool hidden)
 {
   wstring item;
   wstring root;
@@ -396,13 +419,17 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
 
+      // skip in case we do not include hidden items
+      if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+        continue;
+
       if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         item = from; item += L"\\"; item += fd.cFileName;
         root = orig; root += L"\\"; root += fd.cFileName;
         ls->push_back(item);
 
         // go deep in tree
-        __lsAll_Recurse(ls, root, item);
+        __lsAll_Recurse(ls, root, item, hidden);
 
       } else {
         item = from; item += L"\\"; item += fd.cFileName;
@@ -416,12 +443,12 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute)
+void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute, bool hidden)
 {
   if(absolute) {
-    __lsAll_Recurse(ls, origin.c_str(), origin.c_str());
+    __lsAll_Recurse(ls, origin.c_str(), origin.c_str(), hidden);
   } else {
-    __lsAll_Recurse(ls, origin.c_str(), L"");
+    __lsAll_Recurse(ls, origin.c_str(), L"", hidden);
   }
 }
 
