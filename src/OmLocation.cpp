@@ -875,7 +875,7 @@ static size_t __rmt_get_old_required(vector<OmPackage*>& out_ls, const vector<Om
 ///
 OmLocation::OmLocation(OmContext* pCtx) :
   _context(pCtx), _config(), _uuid(), _title(), _index(0), _home(), _path(),
-  _dstDir(), _libDir(), _libDirCust(false), _libDevMode(true), _bckDir(),
+  _dstDir(), _libDir(), _libDirCust(false), _libDevMode(true), _libShowHidden(false), _bckDir(),
   _bckDirCust(false), _pkgLs(), _bckZipLevel(0), _pkgSorting(LS_SORT_NAME),
   _upgdRename(false), _rmtSorting(LS_SORT_NAME), _warnOverlaps(true),
   _warnExtraInst(true), _warnMissDeps(true), _warnExtraUnin(true),
@@ -946,6 +946,30 @@ void OmLocation::setLibDevMode(bool enable)
       this->_config.xml().child(L"library_devmode").setAttr(L"enable", this->_libDevMode ? 1 : 0);
     } else {
       this->_config.xml().addChild(L"library_devmode").setAttr(L"enable", this->_libDevMode ? 1 : 0);
+    }
+
+    this->_config.save();
+  }
+
+  // refresh all library for all locations
+  this->libClear();
+  this->libRefresh();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmLocation::setLibShowHidden(bool enable)
+{
+  this->_libShowHidden = enable;
+
+  if(this->_config.valid()) {
+
+    if(this->_config.xml().hasChild(L"library_showhidden")) {
+      this->_config.xml().child(L"library_showhidden").setAttr(L"enable", this->_libShowHidden ? 1 : 0);
+    } else {
+      this->_config.xml().addChild(L"library_showhidden").setAttr(L"enable", this->_libShowHidden ? 1 : 0);
     }
 
     this->_config.save();
@@ -1194,6 +1218,13 @@ bool OmLocation::open(const wstring& path)
     this->_libDevMode = this->_config.xml().child(L"library_devmode").attrAsInt(L"enable");
   } else {
     this->setLibDevMode(this->_libDevMode); //< create default
+  }
+
+  // we check for saved library showhidden
+  if(this->_config.xml().hasChild(L"library_showhidden")) {
+    this->_libShowHidden = this->_config.xml().child(L"library_showhidden").attrAsInt(L"enable");
+  } else {
+    this->setLibDevMode(this->_libShowHidden); //< create default
   }
 
   // we check for saved remotes sorting
@@ -1609,10 +1640,10 @@ bool OmLocation::libRefresh()
   if(this->_pkgLs.size()) {
 
     // get content of the package Library folder
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true, this->_libShowHidden);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true, this->_libShowHidden);
     if(this->_libDevMode)
-      Om_lsDir(&path_ls, this->_libDir, true);
+      Om_lsDir(&path_ls, this->_libDir, true, this->_libShowHidden);
 
     bool in_list;
 
@@ -1703,9 +1734,9 @@ bool OmLocation::libRefresh()
     changed = true;
 
     // get Backup folder content
-    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*." OMM_BCK_FILE_EXT, true);
-    Om_lsDir(&path_ls, this->_bckDir, true);
+    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*.zip", true, true);
+    Om_lsFileFiltered(&path_ls, this->_bckDir, L"*." OMM_BCK_FILE_EXT, true, true);
+    Om_lsDir(&path_ls, this->_bckDir, true, true);
 
     // add all available and valid Backups
     for(size_t i = 0; i < path_ls.size(); ++i) {
@@ -1719,10 +1750,10 @@ bool OmLocation::libRefresh()
 
     // get Library folder content
     path_ls.clear();
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true);
-    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*.zip", true, this->_libShowHidden);
+    Om_lsFileFiltered(&path_ls, this->_libDir, L"*." OMM_PKG_FILE_EXT, true, this->_libShowHidden);
     if(this->_libDevMode)
-      Om_lsDir(&path_ls, this->_libDir, true);
+      Om_lsDir(&path_ls, this->_libDir, true, this->_libShowHidden);
 
     bool has_bck;
 

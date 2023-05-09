@@ -201,6 +201,24 @@ class OmLocation
     ///
     void setLibDevMode(bool enable);
 
+    /// \brief Show hidden files and folders option.
+    ///
+    /// Returns show hidden option value option value.
+    ///
+    /// \return Show hidden option value.
+    ///
+    bool libShowHidden() const {
+      return _libShowHidden;
+    }
+
+    /// \brief Set show hidden files and folders option.
+    ///
+    /// Define show hidden files and folders option value.
+    ///
+    /// \param[in]  enable    : Show hidden enable or disable.
+    ///
+    void setLibShowHidden(bool enable);
+
     /// \brief Get warning for overlaps option.
     ///
     /// Returns warning for overlaps option value.
@@ -1067,6 +1085,8 @@ class OmLocation
     bool                _libDirCust;
 
     bool                _libDevMode;
+
+    bool                _libShowHidden;
 
     wstring             _bckDir;
 

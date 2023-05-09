@@ -21,6 +21,7 @@
 
 #define LOC_PROP_LIB_DEVMODE     0
 #define LOC_PROP_LIB_WARNINGS    1
+#define LOC_PROP_LIB_SHOWHIDDEN  2
 
 /// \brief Manager Options / Packages tab child
 ///
@@ -82,6 +83,8 @@ class OmUiPropLocLib : public OmDialog
     void                _onCkBoxDev();
 
     void                _onCkBoxWrn();
+
+    void                _onCkBoxHid();
 
     void                _onInit();
 

@@ -642,6 +642,7 @@ FONT 8, "Ms Shell Dlg"
     AUTOCHECKBOX    "Additional installations of package dependencies", IDC_BC_CKBX3, 65, 72, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Package installation dependencies missing", IDC_BC_CKBX4, 65, 62, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Additional uninstallations of overlapping or dependents", IDC_BC_CKBX5, 65, 82, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Show hidden files and folders", IDC_BC_CKBX6, 50, 110, 170, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                       TARGET LOCATION PROPERTIES

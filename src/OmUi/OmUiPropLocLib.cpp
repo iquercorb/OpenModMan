@@ -88,6 +88,15 @@ void OmUiPropLocLib::_onCkBoxWrn()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiPropLocLib::_onCkBoxHid()
+{
+  // user modified parameter, notify it
+  this->setChParam(LOC_PROP_LIB_SHOWHIDDEN, true);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropLocLib::_onInit()
 {
   // define controls tool-tips
@@ -97,6 +106,7 @@ void OmUiPropLocLib::_onInit()
   this->_createTooltip(IDC_BC_CKBX3,  L"Warn when packages install require additional dependencies installation");
   this->_createTooltip(IDC_BC_CKBX4,  L"Warn when packages dependencies are missing");
   this->_createTooltip(IDC_BC_CKBX5,  L"Warn when packages uninstall require additional uninstallations");
+  this->_createTooltip(IDC_BC_CKBX6,  L"Parse and show library hidden files and subfolders");
 
   OmLocation* pLoc = static_cast<OmUiPropLoc*>(this->_parent)->locCur();
   if(!pLoc) return;
@@ -106,6 +116,7 @@ void OmUiPropLocLib::_onInit()
   this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, pLoc->warnExtraInst());
   this->msgItem(IDC_BC_CKBX4, BM_SETCHECK, pLoc->warnMissDeps());
   this->msgItem(IDC_BC_CKBX5, BM_SETCHECK, pLoc->warnExtraUnin());
+  this->msgItem(IDC_BC_CKBX6, BM_SETCHECK, pLoc->libShowHidden());
 
   // reset modified parameters flags
   for(unsigned i = 0; i < 8; ++i) _chParam[i] = false;
@@ -128,6 +139,9 @@ void OmUiPropLocLib::_onResize()
   this->_setItemPos(IDC_BC_CKBX3, 65, 65, 200, 9);
   this->_setItemPos(IDC_BC_CKBX4, 65, 75, 200, 9);
   this->_setItemPos(IDC_BC_CKBX5, 65, 85, 200, 9);
+
+  // Show Hidden CheckBox
+  this->_setItemPos(IDC_BC_CKBX6, 50, 110, 200, 9);
 }
 
 
@@ -149,6 +163,10 @@ INT_PTR OmUiPropLocLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_CKBX4: //< Check box for Warn at Installation dependencies missing
     case IDC_BC_CKBX5: //< Check box for Warn at Additional restoration due to overlaps
       this->_onCkBoxWrn();
+      break;
+
+    case IDC_BC_CKBX6: //< Check box for Warn at Additional restoration due to overlaps
+      this->_onCkBoxHid();
       break;
     }
   }

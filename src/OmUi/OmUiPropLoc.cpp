@@ -151,6 +151,11 @@ bool OmUiPropLoc::checkChanges()
       changed = true;
   }
 
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_SHOWHIDDEN)) {
+    if(pUiPropLocLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK) != this->_pLoc->libShowHidden())
+      changed = true;
+  }
+
   if(pUiPropLocNet->hasChParam(LOC_PROP_NET_WARNINGS)) {
     if(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_pLoc->warnExtraDnld())
       changed = true;
@@ -244,6 +249,14 @@ bool OmUiPropLoc::applyChanges()
 
     // Reset parameter as unmodified
     pUiPropLocLib->setChParam(LOC_PROP_LIB_WARNINGS, false);
+  }
+
+  if(pUiPropLocLib->hasChParam(LOC_PROP_LIB_SHOWHIDDEN)) {
+
+    this->_pLoc->setLibShowHidden(pUiPropLocLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    pUiPropLocLib->setChParam(LOC_PROP_LIB_SHOWHIDDEN, false);
   }
 
   if(pUiPropLocNet->hasChParam(LOC_PROP_NET_WARNINGS)) {
