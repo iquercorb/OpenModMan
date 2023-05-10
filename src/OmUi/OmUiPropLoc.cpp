@@ -54,9 +54,9 @@ OmUiPropLoc::OmUiPropLoc(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create tab dialogs
   this->_addPage(L"Settings", new OmUiPropLocStg(hins));
-  this->_addPage(L"Library options", new OmUiPropLocLib(hins));
-  this->_addPage(L"Backup options", new OmUiPropLocBck(hins));
-  this->_addPage(L"Network repositories", new OmUiPropLocNet(hins));
+  this->_addPage(L"Library", new OmUiPropLocLib(hins));
+  this->_addPage(L"Backup", new OmUiPropLocBck(hins));
+  this->_addPage(L"Repositories", new OmUiPropLocNet(hins));
 
   // creates child sub-dialogs
   this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
@@ -101,12 +101,12 @@ bool OmUiPropLoc::checkChanges()
     if(this->_pLoc->title() != item_str) changed = true;
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Target path
     pUiPropLocStg->getItemText(IDC_EC_INP02, item_str);
     if(this->_pLoc->dstDir() != item_str) changed = true;
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Library path
     if(pUiPropLocStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP03, item_str);
       if(this->_pLoc->libDir() != item_str || !this->_pLoc->hasCustLibDir())
@@ -116,7 +116,7 @@ bool OmUiPropLoc::checkChanges()
     }
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Backup path
     if(pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
       pUiPropLocStg->getItemText(IDC_EC_INP04, item_str);
       if(this->_pLoc->bckDir() != item_str || !this->_pLoc->hasCustBckDir())
@@ -193,19 +193,19 @@ bool OmUiPropLoc::applyChanges()
   bool cust_bck = false;
 
   // Step 1, verify everything
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Location title
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_TITLE)) { //< parameter for Channel name
     pUiPropLocStg->getItemText(IDC_EC_INP01, loc_name);
-    if(!Om_dlgValidName(this->_hwnd, L"Target Location name", loc_name))
+    if(!Om_dlgValidName(this->_hwnd, L"Channel name", loc_name))
       return false;
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Location Destination path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_INSTALL)) { //< parameter for Target path
     pUiPropLocStg->getItemText(IDC_EC_INP02, loc_dst);
-    if(!Om_dlgValidDir(this->_hwnd, L"Destination folder", loc_dst))
+    if(!Om_dlgValidDir(this->_hwnd, L"Target path", loc_dst))
       return false;
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Location Library path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_LIBRARY)) { //< parameter for Library path
     cust_lib = pUiPropLocStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
     if(cust_lib) { //< Custom Library folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP03, loc_lib);
@@ -218,7 +218,7 @@ bool OmUiPropLoc::applyChanges()
     }
   }
 
-  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Location Backup path
+  if(pUiPropLocStg->hasChParam(LOC_PROP_STG_BACKUP)) { //< parameter for Backup path
     cust_bck = pUiPropLocStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
     if(cust_bck) { //< Custom Backup folder Check-Box checked
       pUiPropLocStg->getItemText(IDC_EC_INP04, loc_bck);
@@ -343,9 +343,9 @@ bool OmUiPropLoc::applyChanges()
     static_cast<OmUiMgr*>(this->root())->safemode(true);
 
     if(!this->_pLoc->renameHome(loc_name)) {
-      Om_dlgBox_okl(this->_hwnd, L"Target Location properties", IDI_WRN,
-                   L"Target Location home rename error", L"Target Location "
-                   "title changed but home folder and definition file rename "
+      Om_dlgBox_okl(this->_hwnd, L"Channel properties", IDI_WRN,
+                   L"Channel files rename error", L"Channel "
+                   "title changed but folder and definition file rename "
                    "failed because of the following error:", this->_pLoc->lastError());
     }
 
@@ -416,8 +416,8 @@ void OmUiPropLoc::_movBck_stop()
 
   if(exitCode == 1)  {
     // an error occurred during backup purge
-    Om_dlgBox_ok(this->_hwnd, L"Target Location properties", IDI_WRN,
-                 L"Target Location backup transfer error", L"Target Location "
+    Om_dlgBox_ok(this->_hwnd, L"Channel properties", IDI_WRN,
+                 L"Channel backup transfer error", L"Channel "
                  "backup data transfer encountered error(s), some backup data may "
                  "had not properly moved. Please read debug log for details.");
   }

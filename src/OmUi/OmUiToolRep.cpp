@@ -203,8 +203,8 @@ bool OmUiToolRep::_repOpen(const wstring& path)
   // Initialize new Repository definition XML scheme
   if(!this->_config.open(path, OMM_XMAGIC_REP)) {
     Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR,
-                 L"Network Repository parse error", L"The specified file is "
-                 "not valid Network Repository definition:", path);
+                 L"Repository definition parse error", L"The specified file is "
+                 "not valid Repository definition:", path);
     return false;
   }
 

@@ -39,8 +39,8 @@ OmUiMgrMain::OmUiMgrMain(HINSTANCE hins) : OmDialog(hins),
   _pUiMgr(nullptr), _tabName(), _tabDial()
 {
   // create child tab dialogs
-  this->_addTab(L"Packages Library", new OmUiMgrMainLib(hins)); // Library Tab
-  this->_addTab(L"Network Repositories", new OmUiMgrMainNet(hins)); // Network Tab
+  this->_addTab(L"Library", new OmUiMgrMainLib(hins)); // Library Tab
+  this->_addTab(L"Repositories", new OmUiMgrMainNet(hins)); // Network Tab
   //this->_addTab(L"Work In Progress", new OmUiMgrMainTst(hins)); // Test Tab, for development an debug purpose
 
   // set the accelerator table for the dialog
@@ -188,6 +188,23 @@ void OmUiMgrMain::_onShow()
 ///
 void OmUiMgrMain::_onResize()
 {
+  /*
+  // Location ListView
+  this->_setItemPos(IDC_LV_LOC, 1, 1, this->cliUnitX()-160, 46);
+
+  // Main Tab Control
+  this->_setItemPos(IDC_TC_MAIN, -1, 80, this->width()+2, this->height()-48, true);
+
+  // Resize page dialogs according IDC_TC_MAIN
+  if(this->_tabDial.size()) {
+
+    // apply this for all dialogs
+    for(size_t i = 0; i < this->_tabDial.size(); ++i) {
+      this->_setChildPos(this->_tabDial[i]->hwnd(), 2, 104, this->cliWidth()-5, this->cliHeight()-107, true);
+    }
+  }
+  */
+
   // Main Tab Control
   this->_setItemPos(IDC_TC_MAIN, -1, -1, this->width()+2, this->height()+2, true);
 
@@ -199,6 +216,7 @@ void OmUiMgrMain::_onResize()
       this->_setChildPos(this->_tabDial[i]->hwnd(), 2, 24, this->cliWidth()-5, this->cliHeight()-27, true);
     }
   }
+
 }
 
 

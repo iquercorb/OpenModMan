@@ -119,14 +119,14 @@ void OmUiWizCtx::_onWizFinish()
     OmContext* pCtx = pMgr->ctxGet(pMgr->ctxCount()-1);
     // create new Location in Context
     if(!pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
-      Om_dlgBox_okl(this->_hwnd, L"Software Context Wizard", IDI_ERR,
-                    L"Target Location creation error", L"Target Location "
+      Om_dlgBox_okl(this->_hwnd, L"Modding Hub Wizard", IDI_ERR,
+                    L"Channel creation error", L"Channel "
                     "creation failed because of the following error:",
                     pCtx->lastError());
     }
   } else {
-    Om_dlgBox_okl(this->_hwnd, L"Software Context Wizard", IDI_ERR,
-                  L"Software Context creation error", L"Software Context "
+    Om_dlgBox_okl(this->_hwnd, L"Modding Hub Wizard", IDI_ERR,
+                  L"Hub creation error", L"Hub "
                   "creation failed because of the following error:",
                   pMgr->lastError());
   }

@@ -84,7 +84,7 @@ void OmUiAddLoc::_onBcBrwDst()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Destination folder, where Mods/Packages are to be installed.", start))
+  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be applied.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -180,11 +180,11 @@ bool OmUiAddLoc::_onBcOk()
   wstring loc_name, loc_dst, loc_lib, loc_bck, msg;
 
   this->getItemText(IDC_EC_INP01, loc_name);
-  if(!Om_dlgValidName(this->_hwnd, L"Target Location name", loc_name))
+  if(!Om_dlgValidName(this->_hwnd, L"Channel name", loc_name))
     return false;
 
   this->getItemText(IDC_EC_INP02, loc_dst);
-  if(!Om_dlgValidDir(this->_hwnd, L"Destination folder", loc_dst))
+  if(!Om_dlgValidDir(this->_hwnd, L"Target path", loc_dst))
     return false;
 
   if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Library CheckBox
@@ -212,8 +212,8 @@ bool OmUiAddLoc::_onBcOk()
   // create new Location in Context
   if(!this->_pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"New Target Location", IDI_ERR,
-                  L"Target Location creation error", L"Target Location "
+    Om_dlgBox_okl(this->_hwnd, L"New Channel", IDI_ERR,
+                  L"Channel creation error", L"Channel "
                   "creation failed because of the following error:",
                   this->_pCtx->lastError());
   }
@@ -234,9 +234,9 @@ void OmUiAddLoc::_onInit()
   this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Target location name, to identify it and create folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Channel name, to identify it and create folder");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
+  this->_createTooltip(IDC_EC_INP02,  L"Target path, where Mods/Packages are to be installed");
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Use a custom Library folder instead of default one");
@@ -248,10 +248,10 @@ void OmUiAddLoc::_onInit()
   this->_createTooltip(IDC_BC_BRW04,  L"Browse to select a custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INP01, L"New Location");
+  this->setItemText(IDC_EC_INP01, L"New Channel");
   this->setItemText(IDC_EC_INP02, L"");
-  this->setItemText(IDC_EC_INP03, L"New Location\\Library");
-  this->setItemText(IDC_EC_INP04, L"New Location\\Backup");
+  this->setItemText(IDC_EC_INP03, L"New Channel\\Library");
+  this->setItemText(IDC_EC_INP04, L"New Channel\\Backup");
 
   wstring item_str;
 
@@ -336,7 +336,7 @@ INT_PTR OmUiAddLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwBck();
       break;
 
-    case IDC_EC_INP02: //< Destination EnditText
+    case IDC_EC_INP02: //< Target path EditText
     case IDC_EC_INP03: //< Library EditText
     case IDC_EC_INP04: //< Backup EditText
       if(HIWORD(wParam) == EN_CHANGE)

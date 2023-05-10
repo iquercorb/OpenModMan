@@ -409,9 +409,9 @@ void OmUiPropBatLst::_onInit()
   this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_LOC,    L"Target location to configure");
-  this->_createTooltip(IDC_LB_INC,    L"Packages the Batch will install (or leave installed)");
-  this->_createTooltip(IDC_LB_EXC,    L"Packages the Batch will uninstall (or leave uninstalled)");
+  this->_createTooltip(IDC_CB_LOC,    L"Channel to configure");
+  this->_createTooltip(IDC_LB_INC,    L"Packages the Script will install (or leave installed)");
+  this->_createTooltip(IDC_LB_EXC,    L"Packages the Script will uninstall (or leave uninstalled)");
   this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
   this->_createTooltip(IDC_BC_LEFT,   L"Remove from installed");
   this->_createTooltip(IDC_BC_UP,     L"Move up in list");

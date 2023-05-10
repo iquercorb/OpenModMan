@@ -192,8 +192,8 @@ void OmUiPropCtxBat::_onBcDelBat()
     int bat_id = this->msgItem(IDC_LB_BAT, LB_GETITEMDATA, lb_sel, 0);
 
     // warns the user before committing the irreparable
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Software Context properties", IDI_QRY,
-              L"Delete Installation Batch", L"Delete the Installation Batch ?",
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Modding Hub properties", IDI_QRY,
+              L"Delete Script", L"Delete the Script ?",
               pCtx->batGet(bat_id)->title()))
     {
       return;
@@ -202,8 +202,8 @@ void OmUiPropCtxBat::_onBcDelBat()
     if(!pCtx->batRem(bat_id)) {
 
       // warns the user error occurred
-      Om_dlgBox_okl(this->_hwnd, L"Software Context properties", IDI_ERR,
-                L"Installation Batch delete error", L"Installation Batch deletion "
+      Om_dlgBox_okl(this->_hwnd, L"Modding Hub properties", IDI_ERR,
+                L"Script delete error", L"Script deletion "
                 "process failed because of the following error:",
                 pCtx->lastError());
 

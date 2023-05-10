@@ -45,8 +45,8 @@ OmUiPropCtx::OmUiPropCtx(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create child tab dialogs
   this->_addPage(L"Settings", new OmUiPropCtxStg(hins));
-  this->_addPage(L"Target Locations", new OmUiPropCtxLoc(hins));
-  this->_addPage(L"Installation Batches", new OmUiPropCtxBat(hins));
+  this->_addPage(L"Channels", new OmUiPropCtxLoc(hins));
+  this->_addPage(L"Scripts", new OmUiPropCtxBat(hins));
 
   this->addChild(new OmUiAddLoc(hins));     //< Dialog for Location creation
   this->addChild(new OmUiAddBat(hins));     //< Dialog for Batch creation
@@ -142,7 +142,7 @@ bool OmUiPropCtx::applyChanges()
   // Step 1, verify everything
   if(pUiPropCtxStg->hasChParam(CTX_PROP_STG_TITLE)) { //< parameter for Context title
     pUiPropCtxStg->getItemText(IDC_EC_INP03, ctx_name);
-    if(!Om_dlgValidName(this->_hwnd, L"Software Context name", ctx_name))
+    if(!Om_dlgValidName(this->_hwnd, L"Modding Hub name", ctx_name))
       return false;
   }
 

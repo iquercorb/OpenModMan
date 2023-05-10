@@ -305,7 +305,7 @@ void OmUiMgrMainNet::rmtDown(bool upgrade)
     Om_dlgBox_okl(this->_hwnd, L"Download Packages", IDI_ERR,
                   L"Library folder access error", L"The Library folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions", pLoc->libDir());
     return;
   }
@@ -425,7 +425,7 @@ void OmUiMgrMainNet::rmtFixd(bool upgrade)
     Om_dlgBox_okl(this->_hwnd, L"Fix dependencies", IDI_ERR,
                   L"Library folder access error", L"The Library folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions", pLoc->libDir());
     return;
   }
@@ -1040,10 +1040,9 @@ void OmUiMgrMainNet::_buildCbLoc()
     this->msgItem(IDC_CB_LOC, CB_SETCURSEL, -1);
 
     // ask user to create at least one Target Location in the Software Context
-    if(!Om_dlgBox_yn(this->_hwnd, L"Network Repositories", IDI_QRY,
-                  L"Empty Software Context", L"The selected Software Context is "
-                  "empty and have no Target Location configured. Do you want "
-                  "to add a Target Location now ?"))
+    if(!Om_dlgBox_yn(this->_hwnd, L"Repositories", IDI_QRY,
+                  L"Empty Hub", L"The Hub is empty and have no Channel configured. "
+                  "Do you want to add a Channel now ?"))
     {
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->_pUiMgr->childById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
@@ -1595,7 +1594,7 @@ void OmUiMgrMainNet::_onBcDelRep()
 
   // warns the user before committing the irreparable
   if(!Om_dlgBox_ynl(this->_hwnd, L"Remove Repository", IDI_QRY,
-                L"Remove Network Repository", L"Remove Network Repository from list ?",
+                L"Remove Repository", L"Remove Repository from list ?",
                 pRep->base()+L" - "+pRep->name()))
     return;
 
@@ -1858,10 +1857,10 @@ void OmUiMgrMainNet::_onRefresh()
   // Display error dialog AFTER ListView refreshed its content
   if(pLoc) {
     if(!lib_access) {
-      Om_dlgBox_okl(this->_hwnd, L"Network Repositories", IDI_WRN,
+      Om_dlgBox_okl(this->_hwnd, L"Repositories", IDI_WRN,
                     L"Library folder access error", L"The Library folder "
                     "cannot be accessed because it do not exist or have read "
-                    "access restrictions. Please check Target Location's settings "
+                    "access restrictions. Please check Channel's settings "
                     "and folder permissions.", pLoc->libDir());
     }
   }

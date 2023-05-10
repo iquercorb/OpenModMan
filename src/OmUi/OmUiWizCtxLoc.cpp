@@ -64,11 +64,11 @@ bool OmUiWizCtxLoc::hasValidParams() const
   wstring item_str, msg;
 
   this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_dlgValidName(this->_hwnd, L"Target Location name", item_str))
+  if(!Om_dlgValidName(this->_hwnd, L"Channel name", item_str))
     return false;
 
   this->getItemText(IDC_EC_INP02, item_str);
-  if(!Om_dlgValidDir(this->_hwnd, L"Destination folder", item_str))
+  if(!Om_dlgValidDir(this->_hwnd, L"Target path", item_str))
     return false;
 
   if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Library CheckBox
@@ -123,7 +123,7 @@ void OmUiWizCtxLoc::_onBcBrwDst()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Destination folder, where Mods/Packages are to be installed.", start))
+  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be installed.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -209,7 +209,7 @@ void OmUiWizCtxLoc::_onBcBrwBck()
 void OmUiWizCtxLoc::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Location name, to identify it and create folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Channel name, to identify it and create folder");
 
   this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
@@ -223,10 +223,10 @@ void OmUiWizCtxLoc::_onInit()
   this->_createTooltip(IDC_BC_BRW04,  L"Browse to select a custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INP01, L"New Location");
+  this->setItemText(IDC_EC_INP01, L"New Channel");
   this->setItemText(IDC_EC_INP02, L"");
-  this->setItemText(IDC_EC_INP03, L"New Location\\Library");
-  this->setItemText(IDC_EC_INP04, L"New Location\\Backup");
+  this->setItemText(IDC_EC_INP03, L"New Channel\\Library");
+  this->setItemText(IDC_EC_INP04, L"New Channel\\Backup");
 
   // disable "next" button
   static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
@@ -333,7 +333,7 @@ INT_PTR OmUiWizCtxLoc::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
       break;
 
-    case IDC_BC_BRW02: //< Destination "..." (browse) Button
+    case IDC_BC_BRW02: //< Target "..." (browse) Button
       this->_onBcBrwDst();
       break;
 

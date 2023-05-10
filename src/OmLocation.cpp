@@ -1131,12 +1131,12 @@ bool OmLocation::open(const wstring& path)
 
   // check for the presence of <install> entry
   if(this->_config.xml().hasChild(L"install")) {
-    // we check whether destination folder is valid
+    // we check whether target path is valid
     this->_dstDir = this->_config.xml().child(L"install").content();
     if(!Om_isDir(this->_dstDir)) {
-      this->log(1, L"Location("+this->_title+L") Open", Om_errIsDir(L"Destination folder", this->_dstDir));
+      this->log(1, L"Location("+this->_title+L") Open", Om_errIsDir(L"Target oath", this->_dstDir));
     } else {
-      this->log(2, L"Location("+this->_title+L") Open", L"Using destination folder: \""+this->_dstDir+L"\".");
+      this->log(2, L"Location("+this->_title+L") Open", L"Using target path: \""+this->_dstDir+L"\".");
     }
   } else {
     this->_error = L"Invalid definition: <install> node missing.";
@@ -1380,16 +1380,16 @@ bool OmLocation::dstDirAccess(bool rw)
     if(Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_READ)) {
       if(rw) { //< check for writing access
         if(!Om_checkAccess(this->_dstDir, OMM_ACCESS_DIR_WRITE)) {
-          this->_error = Om_errWriteAccess(L"Destination folder", this->_dstDir);
+          this->_error = Om_errWriteAccess(L"Target path", this->_dstDir);
           access_ok = false;
         }
       }
     } else {
-      this->_error = Om_errReadAccess(L"Destination folder", this->_dstDir);
+      this->_error = Om_errReadAccess(L"Target path", this->_dstDir);
       access_ok = false;
     }
   } else {
-    this->_error = Om_errIsDir(L"Destination folder", this->_dstDir);
+    this->_error = Om_errIsDir(L"Target path", this->_dstDir);
     access_ok = false;
   }
 
@@ -1408,13 +1408,13 @@ bool OmLocation::dstDirAccess(bool rw)
       // To avoid wrong permissions issues, we bypass check but emit a warning
       // in log
 
-      this->log(1, L"Location("+this->_title+L") Destination access",
+      this->log(1, L"Location("+this->_title+L") Target path access",
                 L"Access denied ignored because \""+this->_dstDir+L"\" is a "
                 "network folder and permissions may not be properly evaluated; "
                 "Please be aware of this in case of file write or read error.");
       return true;
     } else {
-      this->log(0, L"Location("+this->_title+L") Destination access", this->_error);
+      this->log(0, L"Location("+this->_title+L") Target path access", this->_error);
       return false;
     }
   }
@@ -1591,7 +1591,7 @@ bool OmLocation::libRefresh()
   // A "Backup" and a "Source".
   //
   // The "Source" refers to the Package itself, i.e, the Mod's files to be
-  // installed into the Destination folder.
+  // installed into the Target path.
   // The "Backup" refer to original application files saved in a safe place
   // before they were overwritten by the Mod's modified files.
   //
@@ -2102,9 +2102,9 @@ bool OmLocation::bckPurge(Om_progressCb progress_cb, void* user_ptr)
     this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }
-  // checks for access to destination folder
+  // checks for access to Target path
   if(!this->dstDirAccess(true)) { //< check for read and write
-    this->_error =  L"Destination folder \""+this->_dstDir+L"\" access error.";
+    this->_error =  L"Target path \""+this->_dstDir+L"\" access error.";
     this->log(0, L"Location("+this->_title+L") Purge backups", this->_error);
     return false;
   }

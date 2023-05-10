@@ -56,14 +56,19 @@
     #define MNU_FILE_QUIT        7
 
 #define MNU_EDIT             1
-    #define MNU_EDIT_CTXPROP     0
+    #define MNU_EDIT_CTX         0
+        #define MNU_EDIT_UINSALL     0
+        // ------------------------- 1
+        #define MNU_EDIT_ADDLOC      2
+        // ------------------------- 3
+        #define MNU_EDIT_CTXPROP     4
+
     // ------------------------- 1
-    #define MNU_EDIT_LOCPROP     2
-    #define MNU_EDIT_ADDLOC      3
-    // ------------------------- 4
-    #define MNU_EDIT_UINSALL     5
-    // ------------------------- 6
-    #define MNU_EDIT_PKG         7
+    #define MNU_EDIT_LOC         2
+        #define MNU_EDIT_LOCPROP     0
+
+    // ------------------------- 3
+    #define MNU_EDIT_PKG         4
         #define MNU_EDIT_PKG_INST    0
         #define MNU_EDIT_PKG_UINS    1
         #define MNU_EDIT_PKG_CLNS    2
@@ -75,7 +80,7 @@
         // ------------------------- 8
         #define MNU_EDIT_PKG_INFO    9
 
-    #define MNU_EDIT_RMT         8
+    #define MNU_EDIT_RMT         5
         #define MNU_EDIT_RMT_DNLD    0
         #define MNU_EDIT_RMT_DNWS    1
         // ------------------------- 2
@@ -83,7 +88,7 @@
         // ------------------------- 4
         #define MNU_EDIT_RMT_INFO    5
     // ------------------------- 9
-    #define MNU_EDIT_PROPMGR     10
+    #define MNU_EDIT_PROPMGR     6
 
 #define MNU_TOOL             2
     #define MNU_TOOL_EDITPKG     0

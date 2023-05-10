@@ -98,8 +98,8 @@ void OmUiPropLocBck::_onCkBoxZip()
 void OmUiPropLocBck::_onBcDelBck()
 {
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ca(this->_hwnd, L"Target Location properties", IDI_QRY,
-            L"Discard Target Location backup data", L"This will permanently "
+  if(!Om_dlgBox_ca(this->_hwnd, L"Channel properties", IDI_QRY,
+            L"Discard Channel backup data", L"This will permanently "
             "delete all existing backup data without restoring them (which "
             "should never be done except in emergency situation)."))
   {
@@ -122,7 +122,7 @@ void OmUiPropLocBck::_delBck_init()
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
   pUiProgress->open(true);
-  pUiProgress->setCaption(L"Location backup data discard");
+  pUiProgress->setCaption(L"Channel backup data discard");
   pUiProgress->setScHeadText(L"Deleting backup data");
 
   DWORD dwId;
@@ -151,7 +151,7 @@ void OmUiPropLocBck::_delBck_stop()
   static_cast<OmUiMgr*>(this->root())->safemode(false);
 
   if(exitCode == 1) {
-    Om_dlgBox_ok(this->_hwnd, L"Target Location properties", IDI_PKG_ERR,
+    Om_dlgBox_ok(this->_hwnd, L"Channel properties", IDI_PKG_ERR,
               L"Backup data discard error", L"The Backup data discarding "
               "process encountered error(s), some backup data may "
               "had not properly deleted. Please read debug log for details.");

@@ -257,12 +257,12 @@ void OmUiMgrMainLib::locSel(int id)
       }
 
       // enable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_ENABLED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOC, MF_ENABLED);
 
     } else {
 
       // disable the "Edit > Location properties..." menu
-      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_GRAYED);
+      this->_pUiMgr->setPopupItem(MNU_EDIT, MNU_EDIT_LOC, MF_GRAYED);
     }
   }
 
@@ -961,9 +961,9 @@ void OmUiMgrMainLib::_buildCbLoc()
 
     // ask user to create at least one Target Location in the Software Context
     if(!Om_dlgBox_yn(this->_hwnd, L"Packages Library", IDI_QRY,
-                  L"Empty Software Context", L"The selected Software Context is "
-                  "empty and have no Target Location configured. Do you want "
-                  "to add a Target Location now ?"))
+                  L"Empty Modding Hub", L"The selected Modding Hub is "
+                  "empty and have no Channel configured. Do you want "
+                  "to add a Channel now ?"))
     {
       OmUiAddLoc* pUiAddLoc = static_cast<OmUiAddLoc*>(this->_pUiMgr->childById(IDD_ADD_LOC));
       pUiAddLoc->ctxSet(pCtx);
@@ -1263,12 +1263,12 @@ void OmUiMgrMainLib::_pkgInst_init()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // checks whether we have a valid Destination folder
+  // checks whether we have a valid Target path
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, L"Install Packages", IDI_ERR,
-                  L"Destination folder access error", L"The Destination folder "
+                  L"Target path access error", L"The Target path "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->dstDir());
     return;
   }
@@ -1277,7 +1277,7 @@ void OmUiMgrMainLib::_pkgInst_init()
     Om_dlgBox_okl(this->_hwnd, L"Install Packages", IDI_ERR,
                   L"Library folder access error", L"The Library folder "
                   "cannot be accessed because it do not exist or have read "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->libDir());
     return;
   }
@@ -1286,7 +1286,7 @@ void OmUiMgrMainLib::_pkgInst_init()
     Om_dlgBox_okl(this->_hwnd, L"Install Packages", IDI_ERR,
                   L"Backup folder access error", L"The Backup folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->bckDir());
     return;
   }
@@ -1380,12 +1380,12 @@ void OmUiMgrMainLib::_pkgUnin_init()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // checks whether we have a valid Destination folder
+  // checks whether we have a valid Target path
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, L"Uninstall Packages", IDI_ERR,
-                  L"Destination folder access error", L"The Destination folder "
+                  L"Target path access error", L"The Target path "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->dstDir());
     return;
   }
@@ -1394,7 +1394,7 @@ void OmUiMgrMainLib::_pkgUnin_init()
     Om_dlgBox_okl(this->_hwnd, L"Uninstall Packages", IDI_ERR,
                   L"Backup folder access error", L"The Backup folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->bckDir());
     return;
   }
@@ -1493,12 +1493,12 @@ void OmUiMgrMainLib::_pkgClns_init()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // checks whether we have a valid Destination folder
+  // checks whether we have a valid Target path
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, L"Uninstall Tree", IDI_ERR,
-                  L"Destination folder access error", L"The Destination folder "
+                  L"Target path access error", L"The Target path "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->dstDir());
     return;
   }
@@ -1507,7 +1507,7 @@ void OmUiMgrMainLib::_pkgClns_init()
     Om_dlgBox_okl(this->_hwnd, L"Uninstall Tree", IDI_ERR,
                   L"Backup folder access error", L"The Backup folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->bckDir());
     return;
   }
@@ -1608,12 +1608,12 @@ void OmUiMgrMainLib::_pkgPurg_init()
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // checks whether we have a valid Destination folder
+  // checks whether we have a valid Target path
   if(!pLoc->dstDirAccess(true)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
-                  L"Destination folder access error", L"The Destination folder "
+                  L"Target path access error", L"The Target path "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->dstDir());
     return;
   }
@@ -1622,7 +1622,7 @@ void OmUiMgrMainLib::_pkgPurg_init()
     Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
                   L"Backup folder access error", L"The Backup folder "
                   "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Target Location's settings "
+                  "access restrictions. Please check Channel's settings "
                   "and folder permissions.", pLoc->bckDir());
     return;
   }
@@ -2271,8 +2271,8 @@ void OmUiMgrMainLib::_onBcDelBat()
     if(!pCtx) return;
 
     // warns the user before committing the irreparable
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Software Context properties", IDI_QRY,
-              L"Delete Installation Batch", L"Delete the Installation Batch ?",
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Modding Hub properties", IDI_QRY,
+              L"Delete Script", L"Delete the Script ?",
               pCtx->batGet(lvItem.lParam)->title()))
     {
       return;
@@ -2281,8 +2281,8 @@ void OmUiMgrMainLib::_onBcDelBat()
     if(!pCtx->batRem(lvItem.lParam)) {
 
       // warns the user error occurred
-      Om_dlgBox_okl(this->_hwnd, L"Software Context properties", IDI_ERR,
-                L"Installation Batch delete error", L"Installation Batch deletion "
+      Om_dlgBox_okl(this->_hwnd, L"Modding Hub properties", IDI_ERR,
+                L"Script delete error", L"Script deletion "
                 "process failed because of the following error:",
                 pCtx->lastError());
 
@@ -2362,7 +2362,7 @@ void OmUiMgrMainLib::_onInit()
   // we now add columns into Batches list-view control
   lvCol.mask = LVCF_TEXT|LVCF_WIDTH|LVCF_FMT;
 
-  lvCol.pszText = const_cast<LPWSTR>(L"Installation Batch");
+  lvCol.pszText = const_cast<LPWSTR>(L"Scripts");
   lvCol.fmt = LVCFMT_LEFT;
   lvCol.cx = 150;
   lvCol.iSubItem = 0;
@@ -2495,9 +2495,9 @@ void OmUiMgrMainLib::_onRefresh()
   if(pCtx->locCur()) {
     if(!dst_access) {
       Om_dlgBox_okl(this->_hwnd, L"Packages Library", IDI_WRN,
-                    L"Destination folder access error", L"The Destination folder "
+                    L"Target path access error", L"The Target path "
                     "cannot be accessed because it do not exist or have read/write "
-                    "access restrictions. Please check Target Location's settings "
+                    "access restrictions. Please check Channel's settings "
                     "and folder permissions.", pCtx->locCur()->dstDir());
     }
 
@@ -2505,7 +2505,7 @@ void OmUiMgrMainLib::_onRefresh()
       Om_dlgBox_okl(this->_hwnd, L"Packages Library", IDI_WRN,
                     L"Backup folder access error", L"The Backup folder "
                     "cannot be accessed because it do not exist or have read/write "
-                    "access restrictions. Please check Target Location's settings "
+                    "access restrictions. Please check Channel's settings "
                     "and folder permissions.", pCtx->locCur()->bckDir());
     }
 
@@ -2513,7 +2513,7 @@ void OmUiMgrMainLib::_onRefresh()
       Om_dlgBox_okl(this->_hwnd, L"Packages Library", IDI_WRN,
                     L"Library folder access error", L"The Library folder "
                     "cannot be accessed because it do not exist or have read "
-                    "access restrictions. Please check Target Location's settings "
+                    "access restrictions. Please check Channel's settings "
                     "and folder permissions.", pCtx->locCur()->libDir());
     }
   }

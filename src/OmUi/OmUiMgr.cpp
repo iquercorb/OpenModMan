@@ -177,8 +177,8 @@ void OmUiMgr::ctxOpen(const wstring& path)
 
   } else {
 
-    Om_dlgBox_okl(this->_hwnd, L"Open Software Context", IDI_ERR,
-                 L"Software Context open error", L"Software Context "
+    Om_dlgBox_okl(this->_hwnd, L"Open Modding Hub", IDI_ERR,
+                 L"Modding Hub open error", L"Modding Hub "
                  "loading failed because of the following error:",
                  pMgr->lastError());
   }
@@ -393,10 +393,10 @@ void OmUiMgr::_onInit()
   this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
 
   // Defines fonts for Context ComboBox
-  HFONT hFt = Om_createFont(21, 200, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(18, 200, L"Ms Shell Dlg");
   this->msgItem(IDC_CB_CTX, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  this->_createTooltip(IDC_CB_CTX, L"Select active context");
+  this->_createTooltip(IDC_CB_CTX, L"Select Modding Hub");
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
@@ -462,9 +462,9 @@ void OmUiMgr::_onResize()
 
   if(!this->_divIsCapt) {
 
-    // Context list ComboBox
-    this->_setItemPos(IDC_CB_CTX, 4, 3, this->cliWidth()-42 , 28, true);
-    // Context Icon
+    // Modding Hubs ComboBox
+    this->_setItemPos(IDC_CB_CTX, 4, 5, this->cliWidth()-42 , 28, true);
+    // Modding Hub Icon
     this->_setItemPos(IDC_SB_ICON, this->cliWidth()-33, 3, 28, 28, true);
 
   } else {
@@ -540,13 +540,12 @@ void OmUiMgr::_onRefresh()
   // update menus
   int state = pCtx ? MF_ENABLED : MF_GRAYED;
   this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state); // File > Close
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_CTXPROP, state); // Edit > Context properties...
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_ADDLOC, state); // Edit > Add Location...
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_CTX, state); // Edit > Modding Hub...
   if(pCtx) {
     // Edit > Location properties...
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, pMgr->ctxCur()->locCur() ? MF_ENABLED : MF_GRAYED);
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOC, pMgr->ctxCur()->locCur() ? MF_ENABLED : MF_GRAYED);
   } else {
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOCPROP, MF_GRAYED); // Edit > Location properties...
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_LOC, MF_GRAYED); // Edit > Modding Channel
     this->setPopupItem(MNU_EDIT, MNU_EDIT_PKG, MF_GRAYED); // Edit > Package []
     this->setPopupItem(MNU_EDIT, MNU_EDIT_RMT, MF_GRAYED); // Edit > Remote []
   }

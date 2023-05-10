@@ -116,8 +116,8 @@ void OmUiPropLocNet::_onBcDelRepo()
   if(lb_sel >= 0) {
 
     // warns the user before committing the irreparable
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Target Location properties", IDI_QRY,
-                L"Remove Network Repository", L"Remove Network Repository from list ?",
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Channel properties", IDI_QRY,
+                L"Remove Repository", L"Remove Repository from list ?",
                 pLoc->repGet(lb_sel)->base()+L" - "+pLoc->repGet(lb_sel)->name()))
     {
       return;
@@ -206,11 +206,11 @@ void OmUiPropLocNet::_onInit()
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,    L"Location network Repositories list");
+  this->_createTooltip(IDC_LB_LOC,    L"Repositories list");
 
   this->_createTooltip(IDC_BC_DEL,    L"Remove selection Repository");
   this->_createTooltip(IDC_BC_EDI,    L"Test for Repository availability");
-  this->_createTooltip(IDC_BC_ADD,    L"Configure a new network Repository");
+  this->_createTooltip(IDC_BC_ADD,    L"Add a new Repository");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Warn when packages download require additional dependencies download");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn when packages to download have missing dependencies");

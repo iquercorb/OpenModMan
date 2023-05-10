@@ -107,7 +107,7 @@ void OmUiPropCtxLoc::_delLoc_init(int id)
     OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
 
     pUiProgress->open(true);
-    pUiProgress->setCaption(L"Delete Target location");
+    pUiProgress->setCaption(L"Delete Channel");
     pUiProgress->setScHeadText(L"Restoring all backup data");
 
     DWORD dwId;
@@ -148,16 +148,16 @@ void OmUiPropCtxLoc::_delLoc_stop()
 
     // backup data purged, now delete Location
     if(!pCtx->locRem(this->_delLoc_id)) {
-      Om_dlgBox_ok(this->_hwnd, L"Software Context properties", IDI_WRN,
-                L"Target Location remove error", L"Target Location "
+      Om_dlgBox_ok(this->_hwnd, L"Hub properties", IDI_WRN,
+                L"Channel remove error", L"Channel "
                 "remove process encountered error(s), some file may "
                 "had not properly deleted. Please read debug log for details.");
     }
 
   } else {
     // an error occurred during backup purge
-    Om_dlgBox_ok(this->_hwnd, L"Software Context properties", IDI_WRN,
-                L"Target Location backup purge error", L"Target Location "
+    Om_dlgBox_ok(this->_hwnd, L"Hub properties", IDI_WRN,
+                L"Channel backup purge error", L"Channel "
                 "backup purge process encountered error(s), some backup data may "
                 "had not properly restored. Please read debug log for details.");
   }
@@ -348,17 +348,17 @@ void OmUiPropCtxLoc::_onBcDelLoc()
   OmLocation* pLoc = pCtx->locGet(loc_id);
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ca(this->_hwnd, L"Software Context properties", IDI_QRY,
-            L"Delete Target Location", L"The operation will permanently delete "
-            "the Target location \""+pLoc->title()+L"\" and its associated data."))
+  if(!Om_dlgBox_ca(this->_hwnd, L"Hub properties", IDI_QRY,
+            L"Delete Channel", L"The operation will permanently delete "
+            "the Channel \""+pLoc->title()+L"\" and its associated data."))
   {
     return;
   }
 
   if(pLoc->bckHasData()) {
 
-    if(!Om_dlgBox_ca(this->_hwnd, L"Software Context properties", IDI_QRY,
-              L"Remaining backup data", L"The Target location currently have "
+    if(!Om_dlgBox_ca(this->_hwnd, L"Hub properties", IDI_QRY,
+              L"Remaining backup data", L"The Channel currently have "
               "installed packages, the deletion process will uninstall them "
               "and restore all backup data."))
     {
@@ -419,12 +419,12 @@ void OmUiPropCtxLoc::_onInit()
   this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_LOC,  L"Target locations list");
+  this->_createTooltip(IDC_LB_LOC,  L"Channels list");
   this->_createTooltip(IDC_BC_UP,   L"Move up in list");
   this->_createTooltip(IDC_BC_DN,   L"Move down in list");
-  this->_createTooltip(IDC_BC_DEL,  L"Delete Target location and its associated data");
-  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Target location for this Context");
-  this->_createTooltip(IDC_BC_EDI,  L"Modify Target location properties");
+  this->_createTooltip(IDC_BC_DEL,  L"Delete Channel and its associated data");
+  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Channel for this Hub");
+  this->_createTooltip(IDC_BC_EDI,  L"Modify Channel properties");
 
   // Update values
   this->_onRefresh();
@@ -447,13 +447,13 @@ void OmUiPropCtxLoc::_onResize()
   this->_setItemPos(IDC_BC_EDI, 105, 57, 50, 14);
   // Add button
   this->_setItemPos(IDC_BC_ADD, this->cliUnitX()-108, 57, 50, 14);
-  // Location Destination Label & EditControl
+  // Target path Label & EditControl
   this->_setItemPos(IDC_SC_LBL02, 50, 75, 110, 9);
   this->_setItemPos(IDC_EC_READ2, 115, 75, this->cliUnitX()-155, 13);
-  // Location Library Label & EditControl
+  // Mods Library Label & EditControl
   this->_setItemPos(IDC_SC_LBL03, 50, 87, 110, 9);
   this->_setItemPos(IDC_EC_READ3, 115, 87, this->cliUnitX()-155, 13);
-  // Location Backup Label & EditControl
+  // Mods Backup Label & EditControl
   this->_setItemPos(IDC_SC_LBL04, 50, 99, 110, 9);
   this->_setItemPos(IDC_EC_READ4, 115, 99, this->cliUnitX()-155, 13);
 }

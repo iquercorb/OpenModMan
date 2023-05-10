@@ -479,19 +479,19 @@ void OmUiAddBat::_onInit()
   this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
-  this->_createTooltip(IDC_BC_CKBX2,  L"Installation Batch will installs selected packages without uninstalling others");
-  this->_createTooltip(IDC_BC_CKBX1,  L"Create the installation Batch according the current installed and not installed packages");
-  this->_createTooltip(IDC_CB_LOC,    L"Target location to configure");
-  this->_createTooltip(IDC_LB_INC,    L"Packages the Batch will install (or leave installed)");
-  this->_createTooltip(IDC_LB_EXC,    L"Packages the Batch will uninstall (or leave uninstalled)");
+  this->_createTooltip(IDC_EC_INP01,  L"Script name, to identify it");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Script will installs selected packages without uninstalling others");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Create the Script according the current installed and not installed packages");
+  this->_createTooltip(IDC_CB_LOC,    L"Channel to configure");
+  this->_createTooltip(IDC_LB_INC,    L"Packages the Script will install (or leave installed)");
+  this->_createTooltip(IDC_LB_EXC,    L"Packages the Script will uninstall (or leave uninstalled)");
   this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
   this->_createTooltip(IDC_BC_LEFT,   L"Remove from installed");
   this->_createTooltip(IDC_BC_UP,     L"Move up in list");
   this->_createTooltip(IDC_BC_DN,     L"Move down in list");
 
   // Set controls default states and parameters
-  this->setItemText(IDC_EC_INP01, L"New Installation Batch");
+  this->setItemText(IDC_EC_INP01, L"New Script");
 
   // Enable Quick create from current state
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);

@@ -86,8 +86,8 @@ void OmUiPropBatStg::_onCkBoxIonly()
 void OmUiPropBatStg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Installation Batch name, to identify it");
-  this->_createTooltip(IDC_BC_CKBX1,  L"Installation Batch will installs selected packages without uninstalling others");
+  this->_createTooltip(IDC_EC_INP01,  L"Script name, to identify it");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Script will install selected packages without uninstalling others");
 
   this->_onRefresh();
 }

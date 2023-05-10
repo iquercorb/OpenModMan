@@ -132,11 +132,11 @@ class OmLocation
       return _path;
     }
 
-    /// \brief Get Destination path.
+    /// \brief Get Target path.
     ///
     /// Returns Location packages installation destination directory.
     ///
-    /// \return Location destination directory.
+    /// \return Location Target directory.
     ///
     const wstring& dstDir() const {
       return _dstDir;
@@ -404,9 +404,9 @@ class OmLocation
     ///
     void setUpgdRename(bool enable);
 
-    /// \brief Verify Destination folder access.
+    /// \brief Verify Target path access.
     ///
-    /// Checks whether the software has access to Destination folder for
+    /// Checks whether the software has access to Target path for
     /// reading or reading & writing.
     ///
     /// \param[in]  rw  : Also check for write access.

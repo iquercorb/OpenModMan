@@ -968,8 +968,8 @@ void OmUiToolPkg::_onBcSave()
   if(!Om_dlgValidName(this->_hwnd, L"Package filename", out_name))
     return;
 
-  if(Om_dlgValidPath(this->_hwnd, L"destination folder path", out_dir)) {
-    if(!Om_dlgCreateFolder(this->_hwnd, L"Destination folder", out_dir))
+  if(Om_dlgValidPath(this->_hwnd, L"Save Destination", out_dir)) {
+    if(!Om_dlgCreateFolder(this->_hwnd, L"Save Destination", out_dir))
       return;
   } else {
     return;
@@ -1014,7 +1014,7 @@ void OmUiToolPkg::_onInit()
 
   this->_createTooltip(IDC_CB_LVL,    L"Package ZIP compression level");
 
-  this->_createTooltip(IDC_EC_INP06,  L"Destination folder path, where Package will be saved");
+  this->_createTooltip(IDC_EC_INP06,  L"Save destination folder, where Package will be saved");
   this->_createTooltip(IDC_BC_BRW03,  L"Browse to select destination folder");
 
   this->_createTooltip(IDC_BC_SAVE,   L"Build and save Package");

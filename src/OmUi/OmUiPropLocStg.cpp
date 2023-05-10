@@ -76,7 +76,7 @@ void OmUiPropLocStg::_onBcBrwDst()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Destination folder, where Mods/Packages are to be installed.", start))
+  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be applied.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -251,11 +251,11 @@ INT_PTR OmUiPropLocStg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->setChParam(LOC_PROP_STG_TITLE, true);
       break;
 
-    case IDC_BC_BRW02: //< Destination "..." (browse) Button
+    case IDC_BC_BRW02: //< Target path "..." (browse) Button
       this->_onBcBrwDst();
       break;
 
-    case IDC_EC_INP02: //< Destination EditText
+    case IDC_EC_INP02: //< Target path EditText
       if(HIWORD(wParam) == EN_CHANGE)
         // user modified parameter, notify it
         this->setChParam(LOC_PROP_STG_INSTALL, true);

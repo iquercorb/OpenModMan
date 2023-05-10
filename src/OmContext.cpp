@@ -431,13 +431,13 @@ bool OmContext::locAdd(const wstring& title, const wstring& install, const wstri
   if(!Om_isDir(loc_home)) {
     result = Om_dirCreate(loc_home);
     if(result != 0) {
-      this->_error = Om_errCreate(L"Target Location home", loc_home, result);
+      this->_error = Om_errCreate(L"Location home", loc_home, result);
       this->log(0, L"Context("+this->_title+L") Create Location", this->_error);
       return false;
     }
   } else {
     this->log(1, L"Context("+this->_title+L") Create Location",
-              Om_errExists(L"Target Location home",loc_home));
+              Om_errExists(L"Location home",loc_home));
   }
 
   // compose Location definition file name

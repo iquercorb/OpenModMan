@@ -72,10 +72,8 @@ void OmUiMgrMainTst::_onInit()
   // retrieve main dialog
   this->_pUiMgr = static_cast<OmUiMgr*>(this->root());
 
-  DWORD lvStyle;
-  LVCOLUMNW lvCol;
   // Initialize Packages ListView control
-  lvStyle = LVS_EX_DOUBLEBUFFER|LVS_EX_HIDELABELS|LVS_EX_ONECLICKACTIVATE;
+  DWORD lvStyle = LVS_EX_DOUBLEBUFFER|LVS_EX_HIDELABELS|LVS_EX_ONECLICKACTIVATE;
   this->msgItem(IDC_LV_IMG, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
   // set explorer theme
   SetWindowTheme(this->getItem(IDC_LV_IMG),L"Explorer",nullptr);

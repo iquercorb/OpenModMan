@@ -109,9 +109,9 @@ void OmUiAddRep::_onBcChk()
   url += rep_name + L".xml";
 
   if(!Om_isValidFileUrl(url)) {
-    Om_dlgBox_okl(this->_hwnd, L"Add Network Repository", IDI_ERR,
-                  L"Invalid Network Repository parameters", L"The specified "
-                  "Network Repository base address and name combination make "
+    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
+                  L"Invalid Repository parameters", L"The specified "
+                  "Repository base address and name combination make "
                   "no valid file access URL:", url);
   }
 
@@ -154,8 +154,8 @@ bool OmUiAddRep::_onBcOk()
   if(this->_testResult == 0) {
 
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Network Repository", IDI_ERR,
-                  L"Network Repository not tested", L"You did not tested the "
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Repository", IDI_ERR,
+                  L"Repository not tested", L"You did not tested the "
                   "Repository, it may be invalid or unavailable. "
                   "Do you want to add it anyway ?"))
        return false;
@@ -163,8 +163,8 @@ bool OmUiAddRep::_onBcOk()
 
   } else if(this->_testResult == -1) {
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Network Repository", IDI_ERR,
-                  L"Network Repository not tested", L"The last Repository test "
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Repository", IDI_ERR,
+                  L"Repository not tested", L"The last Repository test "
                   "failed, it appear to be invalid or unavailable. "
                   "Do you want to add it anyway ?"))
        return false;
@@ -181,9 +181,9 @@ bool OmUiAddRep::_onBcOk()
 
   if(!Om_isValidFileUrl(url)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Network Repository", IDI_ERR,
-                  L"Invalid Network Repository parameters", L"The specified "
-                  "Network Repository base address and name combination make "
+    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
+                  L"Invalid Repository parameters", L"The specified "
+                  "Repository base address and name combination make "
                   "no valid file access URL:", url);
 
     return false;
@@ -192,8 +192,8 @@ bool OmUiAddRep::_onBcOk()
   // add new repository in Context
   if(!this->_pLoc->repAdd(rep_base, rep_name)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Network Repository", IDI_ERR,
-                 L"Add Network Repository error", L"Network Repository "
+    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
+                 L"Add Repository error", L"Repository "
                  "cannot be added because of the following error:",
                  this->_pLoc->lastError());
   }

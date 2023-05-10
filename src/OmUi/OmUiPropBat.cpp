@@ -123,14 +123,14 @@ bool OmUiPropBat::applyChanges()
   // Step 1, verify everything
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Batch title
     pUiPropBatStg->getItemText(IDC_EC_INP01, bat_name);
-    if(!Om_dlgValidName(this->_hwnd, L"Installation Batch name", bat_name))
+    if(!Om_dlgValidName(this->_hwnd, L"Script name", bat_name))
     return false;
 
     // Check whether name already exists
     for(unsigned i = 0; i < pCtx->batCount(); ++i) {
       if(pCtx->batGet(i)->title() == bat_name) {
-        Om_dlgBox_ok(this->_hwnd, L"Installation Batch Properties", IDI_ERR,
-                     L"Installation Batch name exists", L"Installation Batch "
+        Om_dlgBox_ok(this->_hwnd, L"Script Properties", IDI_ERR,
+                     L"Script name exists", L"Script "
                      "with the same name already exists, please choose another one.");
         return false;
       }
@@ -141,8 +141,8 @@ bool OmUiPropBat::applyChanges()
   // Step 2, save changes
   if(pUiPropBatStg->hasChParam(BAT_PROP_STG_TITLE)) { //< parameter for Context title
     if(!this->_pBat->rename(bat_name)) { //< rename Batch filename
-      Om_dlgBox_okl(this->_hwnd, L"Installation Batch Properties", IDI_WRN,
-                   L"Installation Batch rename error", L"Installation Batch "
+      Om_dlgBox_okl(this->_hwnd, L"Script Properties", IDI_WRN,
+                   L"Script rename error", L"Script "
                    "file rename failed because of the following error:",
                    this->_pBat->lastError());
     }
