@@ -22,7 +22,7 @@
 
 #define OMM_APP_MAJ               1
 #define OMM_APP_MIN               0
-#define OMM_APP_REV               7
+#define OMM_APP_REV               8
 
 #ifdef _WIN64
   #define OMM_APP_ARCH            L"x64"
@@ -30,7 +30,7 @@
   #define OMM_APP_ARCH            L"x86"
 #endif
 
-#define OMM_APP_DATE              L"March 2023"
+#define OMM_APP_DATE              L"May 2023"
 #define OMM_APP_AUTHOR            L"Eric M."
 #define OMM_APP_CONTRIB           L""
 #define OMM_APP_C_YEAR            L"2023"
