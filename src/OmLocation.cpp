@@ -1224,7 +1224,7 @@ bool OmLocation::open(const wstring& path)
   if(this->_config.xml().hasChild(L"library_showhidden")) {
     this->_libShowHidden = this->_config.xml().child(L"library_showhidden").attrAsInt(L"enable");
   } else {
-    this->setLibDevMode(this->_libShowHidden); //< create default
+    this->setLibShowHidden(this->_libShowHidden); //< create default
   }
 
   // we check for saved remotes sorting
