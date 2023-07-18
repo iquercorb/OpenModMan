@@ -221,6 +221,7 @@ size_t OmRepository::rmtCount()
   OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
   return xml_rmts.attrAsInt(L"count");
 }
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///

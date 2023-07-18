@@ -418,16 +418,20 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       // manage previous packages supersedes
       if(self->_downl_spsd) {
 
+        #ifdef DEBUG
+        std::cout << "DEBUG => OmRemote::_downl_fth : supersede packages\n";
+        #endif
+
         OmLocation* pLoc = self->_repository->pLoc();
         OmPackage* pPkg;
 
         bool install = false;
-        bool rename = pLoc->upgdRename();
 
         // create base uninstall list
         vector<OmPackage*> pkg_ls;
 
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
+          pPkg = self->_supLs[i];
           if(pPkg->hasBck()) pkg_ls.push_back(pPkg);
         }
 
@@ -436,16 +440,22 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         vector<OmPackage*> over_ls; // extra overlapped uninstall list
         vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
         vector<OmPackage*> unin_ls; // final uninstall list
-        vector<wstring> ident_ls; // install list
+        vector<wstring> ident_ls; // uninstalled packages ident list
+
+        #ifdef DEBUG
+        std::cout << "DEBUG => OmRemote::_downl_fth: uninstalling old version\n";
+        #endif
 
         // prepare packages uninstall and backups restoration
-        pLoc->bckPrepareUnin(unin_ls, over_ls, dpnd_ls, self->_supLs);
+        pLoc->bckPrepareUnin(unin_ls, over_ls, dpnd_ls, pkg_ls);
 
-        // clean uninstall with proper overlaps and dependencies managnement
+        // clean uninstall with proper overlaps and dependencies management
         for(size_t i = 0; i < unin_ls.size(); ++i) {
           ident_ls.push_back(unin_ls[i]->ident());
           unin_ls[i]->uninst(nullptr, nullptr);
         }
+
+        wstring pkg_path, pkg_iden;
 
         for(size_t i = 0; i < self->_supLs.size(); ++i) {
 
@@ -453,14 +463,19 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
           // rename or trash package source
           if(pPkg->hasSrc()) {
-            if(rename) {
+
+            // store data since object will be deleted after library update
+            pkg_path = pPkg->srcPath();
+            pkg_iden = pPkg->ident();
+
+            if(pLoc->upgdRename()) {
               // rename source with .old extension
-              Om_fileMove(pPkg->srcPath(), pPkg->srcPath() + L".old");
-              log =  L"Previous Package \""+pPkg->ident()+L"\" renamed as .old";
+              Om_fileMove(pkg_path, pkg_path + L".old");
+              log =  L"Previous Package \""+pkg_iden+L"\" renamed as .old";
             } else {
               // move source to recycle bin
-              Om_moveToTrash(pPkg->srcPath());
-              log =  L"Previous Package \""+pPkg->ident()+L"\" moved to trash";
+              Om_moveToTrash(pkg_path);
+              log =  L"Previous Package \""+pkg_iden+L"\" moved to trash";
             }
             self->log(2, L"Remote("+self->_ident+L") Download", log);
           }
@@ -472,13 +487,21 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         // Reinstall all packages with the new one
         if(install) {
 
+          #ifdef DEBUG
+          std::cout << "DEBUG => OmRemote::_downl_fth: installing new version\n";
+          #endif
+
           pkg_ls.clear();
 
           for(size_t i = 0; i < ident_ls.size(); ++i) {
-            // find the downloaded package in library
+            // find additional uninstalled packages to be reinstalled
             pPkg = pLoc->pkgFind(ident_ls[i], PKG_TYPE_ZIP);
             if(pPkg) pkg_ls.push_back(pPkg);
           }
+
+          // add this new version to be installed
+          pPkg = pLoc->pkgFind(self->ident(), PKG_TYPE_ZIP);
+          if(pPkg) pkg_ls.push_back(pPkg);
 
           vector<OmPackage*> inst_ls; //< final install list
           vector<OmPackage*> over_ls; //< overlapping list
@@ -501,11 +524,19 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   // no more in WIP state
   self->_state &= ~RMT_STATE_WIP;
 
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmRemote::_downl_fth: sending end download signal\n";
+  #endif
+
   // last call to callback so it can check for download result
   if(self->_downl_user_download) {
     // download rate less than 0.0 is signal HTTP transfer ended.
     self->_downl_user_download(self->_downl_user_ptr, 0.0, 0.0, -1.0, self->_hash);
   }
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmRemote::_downl_fth: clearing download parameters\n";
+  #endif
 
   self->_downl_temp.clear();
   self->_downl_path.clear();
