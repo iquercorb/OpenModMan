@@ -418,11 +418,8 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       // manage previous packages supersedes
       if(self->_downl_spsd) {
 
-        #ifdef DEBUG
-        std::cout << "DEBUG => OmRemote::_downl_fth : supersede packages\n";
-        #endif
-
         OmLocation* pLoc = self->_repository->pLoc();
+        OmContext* pCtx = pLoc->pCtx();
         OmPackage* pPkg;
 
         bool install = false;
@@ -441,10 +438,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
         vector<OmPackage*> dpnd_ls; // extra dependents uninstall list
         vector<OmPackage*> unin_ls; // final uninstall list
         vector<wstring> ident_ls; // uninstalled packages ident list
-
-        #ifdef DEBUG
-        std::cout << "DEBUG => OmRemote::_downl_fth: uninstalling old version\n";
-        #endif
+        vector<wstring> remid_ls; // removed/renamed packages ident list
 
         // prepare packages uninstall and backups restoration
         pLoc->bckPrepareUnin(unin_ls, over_ls, dpnd_ls, pkg_ls);
@@ -468,6 +462,9 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
             pkg_path = pPkg->srcPath();
             pkg_iden = pPkg->ident();
 
+            // add to removed packages ident list
+            remid_ls.push_back(pkg_iden);
+
             if(pLoc->upgdRename()) {
               // rename source with .old extension
               Om_fileMove(pkg_path, pkg_path + L".old");
@@ -477,6 +474,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
               Om_moveToTrash(pkg_path);
               log =  L"Previous Package \""+pkg_iden+L"\" moved to trash";
             }
+
             self->log(2, L"Remote("+self->_ident+L") Download", log);
           }
         }
@@ -486,10 +484,6 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
         // Reinstall all packages with the new one
         if(install) {
-
-          #ifdef DEBUG
-          std::cout << "DEBUG => OmRemote::_downl_fth: installing new version\n";
-          #endif
 
           pkg_ls.clear();
 
@@ -515,6 +509,32 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
             inst_ls[i]->install(pLoc->bckZipLevel(), nullptr, nullptr);
           }
         }
+
+        OmBatch* pBat;
+
+        // find our new version package
+        pPkg = pLoc->pkgFind(self->ident(), PKG_TYPE_ZIP);
+
+        bool add_new;
+
+        // remove package references from existing batches
+        for(size_t i = 0; i < pCtx->batCount(); ++i) {
+
+          pBat = pCtx->batGet(i);
+
+          add_new = false;
+
+          // remove all reference to deleted packages
+          for(size_t j = 0; j < remid_ls.size(); ++j) {
+
+            // search for package reference in batch, then remove
+            if(pBat->instRem(pLoc, remid_ls[j]))
+              add_new = true;
+          }
+
+          // old reference was found, add reference to the new version
+          if(add_new) pBat->instAdd(pLoc, pPkg);
+        }
       }
     }
   } else {
@@ -524,19 +544,11 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   // no more in WIP state
   self->_state &= ~RMT_STATE_WIP;
 
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmRemote::_downl_fth: sending end download signal\n";
-  #endif
-
   // last call to callback so it can check for download result
   if(self->_downl_user_download) {
     // download rate less than 0.0 is signal HTTP transfer ended.
     self->_downl_user_download(self->_downl_user_ptr, 0.0, 0.0, -1.0, self->_hash);
   }
-
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmRemote::_downl_fth: clearing download parameters\n";
-  #endif
 
   self->_downl_temp.clear();
   self->_downl_path.clear();

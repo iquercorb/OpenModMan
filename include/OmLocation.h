@@ -47,6 +47,7 @@ enum OmLocLsSort : unsigned {
 class OmLocation
 {
   friend class OmPackage;
+  friend class OmRemote;
 
   public:
 
@@ -1051,6 +1052,14 @@ class OmLocation
     /// \return Count of remote package found.
     ///
     size_t rmtGetDepends(vector<OmRemote*>& dep_ls, vector<wstring>& mis_ls, const OmRemote* rmt) const;
+
+    /// \brief Get Context
+    ///
+    /// Return Location affiliated context.
+    ///
+    OmContext* pCtx() const {
+      return _context;
+    }
 
     /// \brief Add log.
     ///

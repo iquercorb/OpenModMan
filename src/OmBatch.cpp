@@ -229,7 +229,7 @@ wstring OmBatch::locUuid(unsigned i)
 
   if(this->_config.valid()) {
     OmXmlNode xml_loc = this->_config.xml().child(L"location", i);
-    uuid =  xml_loc.attrAsString(L"uuid");
+    uuid = xml_loc.attrAsString(L"uuid");
   }
 
   return uuid;
@@ -313,6 +313,41 @@ void OmBatch::instAdd(const OmLocation* pLoc, const OmPackage* pPkg)
   }
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmBatch::instRem(const OmLocation* pLoc, const wstring ident)
+{
+  if(this->_config.valid()) {
+
+    bool result = false;
+
+    // get the proper <location> node.
+    OmXmlNode xml_loc = this->_config.xml().child(L"location", L"uuid", pLoc->uuid());
+
+    // if no <location> with uuid was found, return
+    if(xml_loc.empty()) {
+      return false;
+    }
+
+    // get <install> node list
+    vector<OmXmlNode> xml_ins_ls;
+    xml_loc.children(xml_ins_ls, L"install");
+
+    // check for <install> entry and remove it
+    if(xml_loc.hasChild(L"install", L"ident", ident)) {
+      result = xml_loc.remChild(xml_loc.child(L"install", L"ident", ident));
+    }
+
+    // Write definition file
+    if(this->_path.size())
+      this->_config.save();
+
+    return result;
+  }
+
+  return false;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

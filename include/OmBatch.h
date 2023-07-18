@@ -200,15 +200,17 @@ class OmBatch
     ///
     void instAdd(const OmLocation* pLoc, const OmPackage* pPkg);
 
-    /// \brief Discard install list package
+    /// \brief Remove package from install list.
     ///
-    /// Removes the specified Package reference from the install list of the.
-    /// specified Target Location.
+    /// Remove the specified Package references from the installation list of
+    /// the specified Target Location.
     ///
     /// \param[in]  pLoc    : Pointer to Target Location object.
-    /// \param[in]  pPkg    : Pointer to Package object to reference.
+    /// \param[in]  ident   : Package identity to search and remove.
     ///
-    void instDiscard(const OmLocation* pLoc, const OmPackage* pPkg);
+    /// \return true if reference was removed, false otherwise
+    ///
+    bool instRem(const OmLocation* pLoc, const wstring ident);
 
     /// \brief Get install list size.
     ///
@@ -231,6 +233,7 @@ class OmBatch
     /// \return Pointer to Package object or nullptr if not found.
     ///
     OmPackage* instGet(const OmLocation* pLoc, unsigned i);
+
 
     /// \brief Get install list
     ///
