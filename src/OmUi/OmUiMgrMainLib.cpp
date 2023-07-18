@@ -453,6 +453,13 @@ void OmUiMgrMainLib::pkgTrsh()
     }
   }
 
+  // remove package references from existing batches
+  OmContext* pCtx = pLoc->pCtx();
+
+  for(size_t i = 0; i < pCtx->batCount(); ++i) {
+    pCtx->batGet(i)->instRem(pLoc, pPkg->ident());
+  }
+
   // unfreeze dialog to allow user to interact
   this->_pUiMgr->freeze(false);
 
