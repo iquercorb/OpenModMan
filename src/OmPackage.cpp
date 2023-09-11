@@ -1241,41 +1241,41 @@ bool OmPackage::save(const wstring& out_path, unsigned zipLvl, Om_progressCb pro
   // Compose and add a REAMDE.TXT file into archive
   string pkg_readme;
 
-  if(!this->_desc.empty()) {
-    Om_toANSI(&pkg_readme, this->_desc);
-    pkg_readme += "\r\n"
-    "\r\n"
-    "-- END OF DESCRIPTION ---------------------------------------------------------"
-    "\r\n"
-    "\r\n";
-  }
+  if(this->_desc.empty()) {
 
-  pkg_readme += "Open Mod Manager Package file for \"";
-  pkg_readme += Om_toUTF8(pkg_ident); pkg_readme += "\" Mod.\r\n"
-  "\r\n"
-  "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
-  "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
-  "If you want to install this Mod manually, you will find the Mod files into\r\n"
-  "the following folder : \r\n"
-  "\r\n  \""; pkg_readme += Om_toUTF8(pkg_ident);
-  pkg_readme += "\"\r\n"
-  "\r\n"
-  "Its content is respecting the destination folder tree and includes files to\r\n"
-  "be overwritten or added :\r\n"
-  "\r\n";
-  for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
-    pkg_readme += "   ";
-    pkg_readme += Om_toUTF8(this->_srcItemLs[i].path);
-    pkg_readme += "\r\n";
+    // Create default README text
+    pkg_readme += "Open Mod Manager Package file for \"";
+    pkg_readme += Om_toUTF8(pkg_ident); pkg_readme += "\" Mod.\r\n"
+    "\r\n"
+    "This Mod Package was created using Open Mod Manager and is intended to be\r\n"
+    "installed using Open Mod Manager or any other compatible software.\r\n\r\n"
+    "If you want to install this Mod manually, you will find the Mod files into\r\n"
+    "the following folder : \r\n"
+    "\r\n  \""; pkg_readme += Om_toUTF8(pkg_ident);
+    pkg_readme += "\"\r\n"
+    "\r\n"
+    "Its content is respecting the destination folder tree and includes files to\r\n"
+    "be overwritten or added :\r\n"
+    "\r\n";
+    for(size_t i = 0; i < this->_srcItemLs.size(); ++i) {
+      pkg_readme += "   ";
+      pkg_readme += Om_toUTF8(this->_srcItemLs[i].path);
+      pkg_readme += "\r\n";
+    }
+    pkg_readme += "\r\n"
+    "Once you made a backup of the original files, you can install the Mod by\r\n"
+    "extracting the content of the previously indicated folder into the\r\n"
+    "proper application or game folder, overwriting original files.\r\n"
+    "\r\n"
+    "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
+    "visit :\r\n"
+    "\r\n   "; pkg_readme += Om_toUTF8(OMM_APP_URL);
+
+  } else {
+
+    // Use description as README
+    Om_toANSI(&pkg_readme, this->_desc);
   }
-  pkg_readme += "\r\n"
-  "Once you made a backup of the original files, you can install the Mod by\r\n"
-  "extracting the content of the previously indicated folder into the\r\n"
-  "proper application or game folder, overwriting original files.\r\n"
-  "\r\n"
-  "For more information about Open Mod Manager and Open Mod Packages, please\r\n"
-  "visit :\r\n"
-  "\r\n   "; pkg_readme += Om_toUTF8(OMM_APP_URL);
 
   // add the REAMDE.TXT file in zip archive
   if(!pkg_zip.append(pkg_readme.c_str(), pkg_readme.size(), L"README.TXT", zipLvl)) {
