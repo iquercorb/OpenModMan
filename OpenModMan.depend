@@ -604,14 +604,14 @@
 1679911077 d:\atelier\code\cpp\openmodman\include\omxmldoc.h
 	"OmBase.h"
 
-1679911077 d:\atelier\code\cpp\openmodman\include\omcontext.h
+1689711777 d:\atelier\code\cpp\openmodman\include\omcontext.h
 	"OmBase.h"
 	"OmBaseWin.h"
 	"OmConfig.h"
 	"OmLocation.h"
 	"OmBatch.h"
 
-1683703310 d:\atelier\code\cpp\openmodman\include\omlocation.h
+1689713103 d:\atelier\code\cpp\openmodman\include\omlocation.h
 	"OmBase.h"
 	"OmConfig.h"
 	"OmPackage.h"
@@ -624,7 +624,7 @@
 	"OmVersion.h"
 	"OmImage.h"
 
-1679911077 d:\atelier\code\cpp\openmodman\include\ombatch.h
+1689714072 d:\atelier\code\cpp\openmodman\include\ombatch.h
 	"OmBase.h"
 	"OmConfig.h"
 
@@ -1010,7 +1010,7 @@
 	"Util/OmUtilDlg.h"
 	"Util/OmUtilStr.h"
 
-1679911077 source:d:\atelier\code\cpp\openmodman\src\ombatch.cpp
+1689715204 source:d:\atelier\code\cpp\openmodman\src\ombatch.cpp
 	"OmBase.h"
 	"OmBaseApp.h"
 	"OmUtilFs.h"
@@ -1093,7 +1093,7 @@
 	<string.h>
 	<stdio.h>
 
-1683703428 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
+1684481062 source:d:\atelier\code\cpp\openmodman\src\omlocation.cpp
 	<algorithm>
 	"OmBaseApp.h"
 	"OmUtilFs.h"
@@ -1269,7 +1269,7 @@
 	"OmConfig.h"
 	"OmRemote.h"
 
-1679911077 source:d:\atelier\code\cpp\openmodman\src\omrepository.cpp
+1684757968 source:d:\atelier\code\cpp\openmodman\src\omrepository.cpp
 	"OmBaseApp.h"
 	"OmLocation.h"
 	"OmSocket.h"
@@ -2167,7 +2167,7 @@
 	<unistd.h>
 	<unixio.h>
 
-1679911077 source:d:\atelier\code\cpp\openmodman\src\omremote.cpp
+1689715378 source:d:\atelier\code\cpp\openmodman\src\omremote.cpp
 	<algorithm>
 	"OmBaseApp.h"
 	"OmBaseWin.h"
@@ -4992,7 +4992,7 @@
 
 1644081152 d:\atelier\code\cpp\openmodman\include\util\omutilsys.h
 
-1683737067 d:\atelier\code\cpp\openmodman\include\ombaseapp.h
+1689715735 d:\atelier\code\cpp\openmodman\include\ombaseapp.h
 
 1644084533 d:\atelier\code\cpp\openmodman\include\util\omutilerr.h
 	"OmBase.h"
@@ -5041,7 +5041,7 @@
 	"OmBaseWin.h"
 	"xxhash/xxh3.h"
 
-1683735325 source:d:\atelier\code\cpp\openmodman\res\resources.rc
+1683823293 source:d:\atelier\code\cpp\openmodman\res\resources.rc
 	<Windows.h>
 	<CommCtrl.h>
 	<RichEdit.h>
@@ -7494,7 +7494,7 @@
 	"OmUiMgrMainTst.h"
 	"OmUiMgrMain.h"
 
-1683717694 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmainlib.cpp
+1689714552 source:d:\atelier\code\cpp\openmodman\src\omui\omuimgrmainlib.cpp
 	"OmBase.h"
 	<algorithm>
 	"OmBaseUi.h"
@@ -8103,4 +8103,1698 @@
 	"OmDialog.h"
 
 1679911077 d:\atelier\code\cpp\openmodman\3rdparty\curl\header.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\dgif_lib.c
+	<stdlib.h>
+	<limits.h>
+	<stdint.h>
+	<fcntl.h>
+	<stdio.h>
+	<string.h>
+	<io.h>
+	<unistd.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_lib.h
+	<stddef.h>
+	<stdbool.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_lib_private.h
+	"gif_lib.h"
+	"gif_hash.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_hash.h
+	<unistd.h>
+	<stdint.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\egif_lib.c
+	<stdint.h>
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<fcntl.h>
+	<io.h>
+	<unistd.h>
+	<sys/types.h>
+	<sys/stat.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_err.c
+	<stdio.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_font.c
+	<string.h>
+	<stdlib.h>
+	"gif_lib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\gif_hash.c
+	<stdint.h>
+	<stdlib.h>
+	<fcntl.h>
+	<stdio.h>
+	<string.h>
+	"gif_lib.h"
+	"gif_hash.h"
+	"gif_lib_private.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\gifalloc.c
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\openbsd-reallocarray.c
+	<sys/types.h>
+	<errno.h>
+	<stdint.h>
+	<stdlib.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\qprintf.c
+	<stdio.h>
+	<stdbool.h>
+	<stdarg.h>
+	"gif_lib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\gif\quantize.c
+	<stdlib.h>
+	<stdio.h>
+	"gif_lib.h"
+	"gif_lib_private.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jaricom.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jinclude.h
+	"jconfig.h"
+	<stddef.h>
+	<stdlib.h>
+	<sys/types.h>
+	<stdio.h>
+	<strings.h>
+	<string.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jconfig.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jpeglib.h
+	"jconfig.h"
+	"jmorecfg.h"
+	"jpegint.h"
+	"jerror.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jmorecfg.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jpegint.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jerror.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcapimin.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcapistd.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcarith.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jccoefct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jccolor.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcdctmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdct.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jchuff.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcinit.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcmainct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcmarker.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcmaster.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcomapi.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcparam.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcprepct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jcsample.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jctrans.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdapimin.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdapistd.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdarith.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdatadst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdatasrc.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdcoefct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdcolor.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jddctmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdhuff.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdinput.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdmainct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdmarker.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdmaster.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdmerge.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdpostct.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdsample.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jdtrans.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jerror.c
+	<windows.h>
+	"jinclude.h"
+	"jpeglib.h"
+	"jversion.h"
+	"jerror.h"
+	"jerror.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jversion.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jfdctflt.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jfdctfst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jfdctint.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jidctflt.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jidctfst.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jidctint.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jdct.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jmemmgr.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jmemsys.h
+	<Files.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jmemnobs.c
+	"jinclude.h"
+	"jpeglib.h"
+	"jmemsys.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jquant1.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jquant2.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\jutils.c
+	"jinclude.h"
+	"jpeglib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdbmp.c
+	"cdjpeg.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\cdjpeg.h
+	"jinclude.h"
+	"jpeglib.h"
+	"jerror.h"
+	"cderror.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\cderror.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdcolmap.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdgif.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdppm.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdrle.c
+	"cdjpeg.h"
+	<rle.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdswitch.c
+	"cdjpeg.h"
+	<ctype.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\rdtarga.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\transupp.c
+	"jinclude.h"
+	"jpeglib.h"
+	"transupp.h"
+	<ctype.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\jpeg\transupp.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\wrbmp.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\wrgif.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\wrppm.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\wrrle.c
+	"cdjpeg.h"
+	<rle.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\jpeg\wrtarga.c
+	"cdjpeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\md4c\entity.c
+	"entity.h"
+	<string.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\md4c\entity.h
+	<stdlib.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\md4c\md4c.c
+	"md4c.h"
+	<limits.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\md4c\md4c.h
+	<windows.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\miniz\miniz.c
+	"miniz.h"
+	<sys/stat.h>
+	<sys/utime.h>
+	<sys/utime.h>
+	<sys/utime.h>
+	<utime.h>
+	<utime.h>
+	<utime.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\miniz\miniz.h
+	<stddef.h>
+	<time.h>
+	<assert.h>
+	<stdint.h>
+	<stdlib.h>
+	<string.h>
+	<stdio.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\png.c
+	"pngpriv.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pngpriv.h
+	<stdlib.h>
+	<string.h>
+	<config.h>
+	"pnglibconf.h"
+	"pngprefix.h"
+	"pngusr.h"
+	"png.h"
+	<float.h>
+	<fp.h>
+	<math.h>
+	<m68881.h>
+	<mem.h>
+	<alloc.h>
+	<windows.h>
+	"pngstruct.h"
+	"pnginfo.h"
+	"pngdebug.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pnglibconf.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\png.h
+	"pnglibconf.h"
+	"pngconf.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pngconf.h
+	<limits.h>
+	<stddef.h>
+	<stdio.h>
+	<setjmp.h>
+	<time.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pngstruct.h
+	"zlib.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\zlib.h
+	"zconf.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\zconf.h
+	<stddef.h>
+	<windows.h>
+	<limits.h>
+	<sys/types.h>
+	<stdarg.h>
+	<stddef.h>
+	<unistd.h>
+	<unixio.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pnginfo.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\png\pngdebug.h
+	<crtdbg.h>
+	<stdio.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngerror.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngget.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngmem.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngpread.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngread.c
+	"pngpriv.h"
+	<errno.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngrio.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngrtran.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngrutil.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngset.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngtrans.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngwio.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngwrite.c
+	"pngpriv.h"
+	<errno.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngwtran.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\png\pngwutil.c
+	"pngpriv.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\pugixml\pugixml.cpp
+	"pugixml.hpp"
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<assert.h>
+	<limits.h>
+	<wchar.h>
+	<math.h>
+	<float.h>
+	<istream>
+	<ostream>
+	<string>
+	<new>
+	<stdint.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\pugixml\pugixml.hpp
+	"pugiconfig.hpp"
+	<stddef.h>
+	<exception>
+	<iterator>
+	<iosfwd>
+	<string>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\pugixml\pugiconfig.hpp
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\xxhash\xxhash.c
+	"xxhash.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\xxhash\xxhash.h
+	<stddef.h>
+	<stdint.h>
+	<limits.h>
+	<stdint.h>
+	<limits.h>
+	<stdalign.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	<assert.h>
+	<assert.h>
+	<stdint.h>
+	<immintrin.h>
+	<emmintrin.h>
+	<arm_neon.h>
+	<intrin.h>
+	<s390intrin.h>
+	<altivec.h>
+	<mmintrin.h>
+	<intrin.h>
+	<string.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\adler32.c
+	"zutil.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\zutil.h
+	"zlib.h"
+	<stddef.h>
+	<string.h>
+	<stdlib.h>
+	<alloc.h>
+	<malloc.h>
+	<malloc.h>
+	<unix.h>
+	<stdio.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\compress.c
+	"zlib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\crc32.c
+	<stdio.h>
+	"zutil.h"
+	"crc32.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\crc32.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\deflate.c
+	"deflate.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\deflate.h
+	"zutil.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\gzclose.c
+	"gzguts.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\gzguts.h
+	<stdio.h>
+	"zlib.h"
+	<string.h>
+	<stdlib.h>
+	<limits.h>
+	<fcntl.h>
+	<stddef.h>
+	<io.h>
+	<windows.h>
+	<errno.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\gzlib.c
+	"gzguts.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\gzread.c
+	"gzguts.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\gzwrite.c
+	"gzguts.h"
+	<stdarg.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\infback.c
+	"zutil.h"
+	"inftrees.h"
+	"inflate.h"
+	"inffast.h"
+	"inffixed.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\inftrees.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\inflate.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\inffast.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\inffixed.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\inffast.c
+	"zutil.h"
+	"inftrees.h"
+	"inflate.h"
+	"inffast.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\inflate.c
+	"zutil.h"
+	"inftrees.h"
+	"inflate.h"
+	"inffast.h"
+	"inffixed.h"
+	<stdio.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\inftrees.c
+	"zutil.h"
+	"inftrees.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\trees.c
+	"deflate.h"
+	<ctype.h>
+	"trees.h"
+	<stdio.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\zlib\trees.h
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\uncompr.c
+	"zlib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\3rdparty\zlib\zutil.c
+	"zutil.h"
+	"gzguts.h"
+	<stdlib.h>
+
+1682691650 source:e:\atelier\code\cpp\openmodman\main.cpp
+	"OmManager.h"
+	"OmUiMgr.h"
+
+1682408339 e:\atelier\code\cpp\openmodman\include\ommanager.h
+	"OmBase.h"
+	"OmConfig.h"
+	"OmContext.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\ombase.h
+	<string>
+	<vector>
+	<iostream>
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omconfig.h
+	"OmBase.h"
+	"OmXmlDoc.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omxmldoc.h
+	"OmBase.h"
+
+1689711777 e:\atelier\code\cpp\openmodman\include\omcontext.h
+	"OmBase.h"
+	"OmBaseWin.h"
+	"OmConfig.h"
+	"OmLocation.h"
+	"OmBatch.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\ombasewin.h
+	<Windows.h>
+
+1689713103 e:\atelier\code\cpp\openmodman\include\omlocation.h
+	"OmBase.h"
+	"OmConfig.h"
+	"OmPackage.h"
+	"OmRepository.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\ompackage.h
+	"OmBase.h"
+	"OmVersion.h"
+	"OmImage.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omversion.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omimage.h
+	"OmBase.h"
+	"OmBaseWin.h"
+	"OmUtilImg.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilimg.h
+	"OmBase.h"
+	"OmBaseWin.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omrepository.h
+	"OmBase.h"
+	"OmConfig.h"
+	"OmRemote.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omremote.h
+	"OmBase.h"
+	"OmBaseWin.h"
+	"OmXmlDoc.h"
+	"OmVersion.h"
+	"OmImage.h"
+
+1689714072 e:\atelier\code\cpp\openmodman\include\ombatch.h
+	"OmBase.h"
+	"OmConfig.h"
+
+1683705170 e:\atelier\code\cpp\openmodman\include\omui\omuimgr.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omdialog.h
+	"OmBase.h"
+	"OmBaseWin.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\plugins\md4c-rtf\md4c-rtf.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"md4c-rtf.h"
+	"entity.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\plugins\md4c-rtf\md4c-rtf.h
+	"md4c.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\plugins\md5\md5.c
+	"md5.h"
+	<string.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\plugins\md5\md5.h
+
+1683823293 source:e:\atelier\code\cpp\openmodman\res\resources.rc
+	<Windows.h>
+	<CommCtrl.h>
+	<RichEdit.h>
+	"resource.h"
+
+1682499996 e:\atelier\code\cpp\openmodman\res\resource.h
+
+1689715204 source:e:\atelier\code\cpp\openmodman\src\ombatch.cpp
+	"OmBase.h"
+	"OmBaseApp.h"
+	"OmUtilFs.h"
+	"OmUtilWin.h"
+	"OmUtilHsh.h"
+	"OmManager.h"
+	"OmContext.h"
+	"OmLocation.h"
+	"OmPackage.h"
+	"OmBatch.h"
+
+1694421604 e:\atelier\code\cpp\openmodman\include\ombaseapp.h
+
+1683644903 e:\atelier\code\cpp\openmodman\include\omutil\omutilfs.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilwin.h
+	"OmBase.h"
+	"OmBaseWin.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilhsh.h
+	"OmBase.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omconfig.cpp
+	"OmConfig.h"
+
+1683718347 source:e:\atelier\code\cpp\openmodman\src\omcontext.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmLocation.h"
+	"OmUtilFs.h"
+	"OmUtilHsh.h"
+	"OmUtilErr.h"
+	"OmUtilStr.h"
+	"OmContext.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilerr.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilstr.h
+	"OmBase.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omdialog.cpp
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmUtilWin.h"
+	"OmDialog.h"
+
+1681900713 source:e:\atelier\code\cpp\openmodman\src\omdialogprop.cpp
+	"OmBaseWin.h"
+	<UxTheme.h>
+	"OmBaseUi.h"
+	"OmDialogProp.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\ombaseui.h
+	"../res/resource.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omdialogprop.h
+	"OmBase.h"
+	"OmBaseWin.h"
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omdialogwiz.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmDialogWiz.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omdialogwiz.h
+	"OmBase.h"
+	"OmBaseWin.h"
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omimage.cpp
+	"OmUtilImg.h"
+	<ctime>
+	<iostream>
+	"OmImage.h"
+
+1684481062 source:e:\atelier\code\cpp\openmodman\src\omlocation.cpp
+	<algorithm>
+	"OmBaseApp.h"
+	"OmUtilFs.h"
+	"OmUtilHsh.h"
+	"OmUtilErr.h"
+	"OmUtilStr.h"
+	"OmManager.h"
+	"OmContext.h"
+	"OmLocation.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\ommanager.cpp
+	<ctime>
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmBaseApp.h"
+	"OmUtilFs.h"
+	"OmUtilStr.h"
+	"OmUtilHsh.h"
+	"OmUtilDlg.h"
+	"OmUtilErr.h"
+	"OmUtilSys.h"
+	"OmDialog.h"
+	"OmPackage.h"
+	"OmManager.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutildlg.h
+	"OmBase.h"
+	"OmBaseWin.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilsys.h
+
+1689715378 source:e:\atelier\code\cpp\openmodman\src\omremote.cpp
+	<algorithm>
+	"OmBaseApp.h"
+	"OmBaseWin.h"
+	<ProcessThreadsApi.h>
+	"OmManager.h"
+	"OmContext.h"
+	"OmLocation.h"
+	"OmPackage.h"
+	"OmImage.h"
+	"OmSocket.h"
+	"OmUtilFs.h"
+	"OmUtilStr.h"
+	"OmUtilHsh.h"
+	"OmUtilB64.h"
+	"OmUtilPkg.h"
+	"OmUtilZip.h"
+	"OmUtilErr.h"
+	"OmRemote.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omsocket.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilb64.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilpkg.h
+	"OmBase.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilzip.h
+
+1684757968 source:e:\atelier\code\cpp\openmodman\src\omrepository.cpp
+	"OmBaseApp.h"
+	"OmLocation.h"
+	"OmSocket.h"
+	"OmUtilStr.h"
+	"OmUtilErr.h"
+	"OmRepository.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omsocket.cpp
+	"OmUtilStr.h"
+	<curl/curl.h>
+	"OmSocket.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\curl.h
+	"curlver.h"
+	"system.h"
+	<stdio.h>
+	<limits.h>
+	<osreldate.h>
+	<sys/types.h>
+	<time.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<sys/select.h>
+	<sys/socket.h>
+	<sys/time.h>
+	"easy.h"
+	"multi.h"
+	"urlapi.h"
+	"options.h"
+	"header.h"
+	"typecheck-gcc.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\curlver.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\system.h
+	<winsock2.h>
+	<windows.h>
+	<ws2tcpip.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<sys/poll.h>
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\easy.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\multi.h
+	"curl.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\urlapi.h
+	"curl.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\options.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\header.h
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\curl\typecheck-gcc.h
+
+1683717557 source:e:\atelier\code\cpp\openmodman\src\omui\omuiaddbat.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmBatch.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiAddBat.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiaddbat.h
+	"OmDialog.h"
+
+1683718402 source:e:\atelier\code\cpp\openmodman\src\omui\omuiaddloc.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiAddLoc.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiaddloc.h
+	"OmDialog.h"
+
+1683718626 source:e:\atelier\code\cpp\openmodman\src\omui\omuiaddrep.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmSocket.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilSys.h"
+	"OmUtilWin.h"
+	"OmUiAddRep.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiaddrep.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuihelpabt.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmUtilWin.h"
+	"OmUtilFs.h"
+	"OmUiHelpAbt.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuihelpabt.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuihelplog.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUtilWin.h"
+	"OmUiHelpLog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuihelplog.h
+	"OmDialog.h"
+
+1683736887 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgr.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmUiMgrMain.h"
+	"OmUiMgrFoot.h"
+	"OmUiMgrMainLib.h"
+	"OmUiMgrMainNet.h"
+	"OmUiMgrMainTst.h"
+	"OmUiAddBat.h"
+	"OmUiAddRep.h"
+	"OmUiAddLoc.h"
+	"OmUiPropCtx.h"
+	"OmUiPropLoc.h"
+	"OmUiPropMgr.h"
+	"OmUiPropBat.h"
+	"OmUiHelpLog.h"
+	"OmUiHelpAbt.h"
+	"OmUiWizCtx.h"
+	"OmUiToolPkg.h"
+	"OmUiToolRep.h"
+	"OmUiPictView.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiMgr.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrmain.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrfoot.h
+	"OmDialog.h"
+
+1682497768 e:\atelier\code\cpp\openmodman\include\omui\omuimgrmainlib.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrmainnet.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrmaintst.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropctx.h
+	"OmDialogProp.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproploc.h
+	"OmDialogProp.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropmgr.h
+	"OmDialogProp.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropbat.h
+	"OmDialogProp.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiwizctx.h
+	"OmDialogWiz.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuitoolpkg.h
+	"OmDialog.h"
+	"OmPackage.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuitoolrep.h
+	"OmDialog.h"
+	"OmImage.h"
+	"OmConfig.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipictview.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrfoot.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	"OmUiMgr.h"
+	"OmUiMgrFootOvw.h"
+	"OmUiMgrFootDet.h"
+	"OmUiMgrFootGal.h"
+	"OmUiMgrFoot.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrfootovw.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrfootdet.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuimgrfootgal.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrfootdet.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<RichEdit.h>
+	"OmManager.h"
+	"OmPackage.h"
+	"OmRemote.h"
+	"OmUiMgr.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilRtf.h"
+	"OmUiMgrFootDet.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omutil\omutilrtf.h
+	"OmBaseWin.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrfootgal.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<RichEdit.h>
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUtilWin.h"
+	"OmUiPictView.h"
+	"OmUiMgrFootGal.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrfootovw.cpp
+	"OmBase.h"
+	<cstdlib>
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<RichEdit.h>
+	"OmManager.h"
+	"OmPackage.h"
+	"OmRemote.h"
+	"OmUiMgr.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilRtf.h"
+	"OmUiMgrFootOvw.h"
+
+1683718643 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrmain.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiMgrMainLib.h"
+	"OmUiMgrMainNet.h"
+	"OmUiMgrMainTst.h"
+	"OmUiMgrMain.h"
+
+1689714552 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrmainlib.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiMgrMain.h"
+	"OmUiMgrFoot.h"
+	"OmUiAddLoc.h"
+	"OmUiAddBat.h"
+	"OmUiPropPkg.h"
+	"OmUiPropBat.h"
+	"OmUiToolPkg.h"
+	"OmUtilFs.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUtilErr.h"
+	"OmUiMgrMainLib.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproppkg.h
+	"OmDialogProp.h"
+
+1683718703 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrmainnet.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<ShlWApi.h>
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiMgrMain.h"
+	"OmUiMgrFoot.h"
+	"OmUiAddLoc.h"
+	"OmUiAddRep.h"
+	"OmUiPropRmt.h"
+	"OmUtilFs.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUiMgrMainNet.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproprmt.h
+	"OmDialogProp.h"
+
+1682496968 source:e:\atelier\code\cpp\openmodman\src\omui\omuimgrmaintst.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<UxTheme.h>
+	<RichEdit.h>
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUtilWin.h"
+	"OmUiMgrMainTst.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuipictview.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	"OmImage.h"
+	"OmUiPictView.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiprogress.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmUtilWin.h"
+	"OmUiProgress.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiprogress.h
+	"OmDialog.h"
+
+1683717144 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropbat.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropBatStg.h"
+	"OmUiPropBatLst.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropBat.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropbatstg.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropbatlst.h
+	"OmDialog.h"
+
+1683717740 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropbatlst.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmBaseUi.h"
+	"OmContext.h"
+	"OmBatch.h"
+	"OmDialogProp.h"
+	"OmUiPropBat.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropBatLst.h"
+
+1683717166 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropbatstg.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmBaseUi.h"
+	"OmContext.h"
+	"OmBatch.h"
+	"OmDialogProp.h"
+	"OmUiPropBat.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropBatStg.h"
+
+1683717747 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropctx.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiAddLoc.h"
+	"OmUiPropLoc.h"
+	"OmUiAddBat.h"
+	"OmUiPropBat.h"
+	"OmUiPropCtxStg.h"
+	"OmUiPropCtxLoc.h"
+	"OmUiPropCtxBat.h"
+	"OmUiProgress.h"
+	"OmUtilDlg.h"
+	"OmUtilStr.h"
+	"OmUtilWin.h"
+	"OmUiPropCtx.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropctxstg.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropctxloc.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropctxbat.h
+	"OmDialog.h"
+
+1683717238 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropctxbat.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiAddBat.h"
+	"OmUiPropBat.h"
+	"OmUiPropCtx.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropCtxBat.h"
+
+1683719176 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropctxloc.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiAddLoc.h"
+	"OmUiPropCtx.h"
+	"OmUiPropLoc.h"
+	"OmUiProgress.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropCtxLoc.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropctxstg.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropCtx.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUiPropCtxStg.h"
+
+1683717939 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproploc.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiAddRep.h"
+	"OmUiPropLocStg.h"
+	"OmUiPropLocLib.h"
+	"OmUiPropLocBck.h"
+	"OmUiPropLocNet.h"
+	"OmUiProgress.h"
+	"OmUtilFs.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropLoc.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproplocstg.h
+	"OmDialog.h"
+
+1683646343 e:\atelier\code\cpp\openmodman\include\omui\omuiproploclib.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproplocbck.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproplocnet.h
+	<OmDialog.h>
+
+1683717939 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproplocbck.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiMgr.h"
+	"OmUiPropLoc.h"
+	"OmUiProgress.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiPropLocBck.h"
+
+1683646811 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproploclib.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropLoc.h"
+	"OmUiPropLocLib.h"
+
+1683718702 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproplocnet.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmSocket.h"
+	"OmUiAddRep.h"
+	"OmUiPropLoc.h"
+	"OmUtilDlg.h"
+	"OmUtilStr.h"
+	"OmUtilSys.h"
+	"OmUtilWin.h"
+	"OmUiPropLocNet.h"
+
+1683703745 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproplocstg.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropLoc.h"
+	"OmUtilDlg.h"
+	"OmUiPropLocStg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropmgr.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropMgrGle.h"
+	"OmUtilWin.h"
+	"OmUiPropMgr.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuipropmgrgle.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuipropmgrgle.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmDialogProp.h"
+	"OmUtilDlg.h"
+	"OmUiPropMgrGle.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproppkg.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiPropPkgSrc.h"
+	"OmUiPropPkgBck.h"
+	"OmUtilWin.h"
+	"OmUiPropPkg.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproppkgsrc.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproppkgbck.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproppkgbck.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmPackage.h"
+	"OmLocation.h"
+	"OmUiPropPkg.h"
+	"OmUtilFs.h"
+	"OmUtilHsh.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUiPropPkgBck.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproppkgsrc.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmPackage.h"
+	"OmUiPropPkg.h"
+	"OmUtilHsh.h"
+	"OmUtilWin.h"
+	"OmUiPropPkgSrc.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproprmt.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmUiPropRmtDet.h"
+	"OmUtilWin.h"
+	"OmUiPropRmt.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiproprmtdet.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiproprmtdet.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmRemote.h"
+	"OmPackage.h"
+	"OmUiPropRmt.h"
+	"OmUtilHsh.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+	"OmUiPropRmtDet.h"
+
+1683703745 source:e:\atelier\code\cpp\openmodman\src\omui\omuitoolpkg.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmBaseUi.h"
+	"OmBaseApp.h"
+	"OmManager.h"
+	"OmPackage.h"
+	"OmImage.h"
+	"OmUtilFs.h"
+	"OmUtilStr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiToolPkg.h"
+
+1683718732 source:e:\atelier\code\cpp\openmodman\src\omui\omuitoolrep.cpp
+	"OmBase.h"
+	"OmBaseWin.h"
+	<ShlObj.h>
+	"OmBaseUi.h"
+	"OmBaseApp.h"
+	"OmPackage.h"
+	"OmManager.h"
+	"OmContext.h"
+	"OmUiProgress.h"
+	"OmUtilFs.h"
+	"OmUtilDlg.h"
+	"OmUtilStr.h"
+	"OmUtilImg.h"
+	"OmUtilHsh.h"
+	"OmUtilB64.h"
+	"OmUtilZip.h"
+	"OmUtilWin.h"
+	"OmUiToolRep.h"
+
+1683717998 source:e:\atelier\code\cpp\openmodman\src\omui\omuiwizctx.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmContext.h"
+	"OmUiWizCtxBeg.h"
+	"OmUiWizCtxCfg.h"
+	"OmUiWizCtxLoc.h"
+	"OmUiMgr.h"
+	"OmUtilDlg.h"
+	"OmUtilWin.h"
+	"OmUiWizCtx.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiwizctxbeg.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiwizctxcfg.h
+	"OmDialog.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omui\omuiwizctxloc.h
+	"OmDialog.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiwizctxbeg.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiWizCtx.h"
+	"OmUiWizCtxBeg.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omui\omuiwizctxcfg.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiWizCtx.h"
+	"OmUtilDlg.h"
+	"OmUtilStr.h"
+	"OmUiWizCtxCfg.h"
+
+1683718413 source:e:\atelier\code\cpp\openmodman\src\omui\omuiwizctxloc.cpp
+	"OmBase.h"
+	"OmBaseUi.h"
+	"OmManager.h"
+	"OmUiWizCtx.h"
+	"OmUtilDlg.h"
+	"OmUtilStr.h"
+	"OmUiWizCtxLoc.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilb64.cpp
+	"OmBase.h"
+	<regex>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutildlg.cpp
+	"OmBase.h"
+	"OmBaseWin.h"
+	<ShlObj.h>
+	<ShlWApi.h>
+	"OmBaseApp.h"
+	"OmUtilWin.h"
+	"OmUtilStr.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilerr.cpp
+	"OmBase.h"
+	"OmUtilWin.h"
+
+1683645251 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilfs.cpp
+	"OmBase.h"
+	"OmBaseWin.h"
+	<ShlwApi.h>
+	<ShlObj.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilhsh.cpp
+	"OmBase.h"
+	<random>
+	<ctime>
+	"OmBaseWin.h"
+	"xxhash/xxh3.h"
+	"md5/md5.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\3rdparty\xxhash\xxh3.h
+	"xxhash.h"
+
+1682691333 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilimg.cpp
+	"OmBase.h"
+	<algorithm>
+	<cmath>
+	<ctime>
+	"OmBaseWin.h"
+	"OmUtilImg.h"
+	"jpeg/jpeglib.h"
+	"png/png.h"
+	"gif/gif_lib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilpkg.cpp
+	"OmBase.h"
+	<algorithm>
+	"OmUtilStr.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilrtf.cpp
+	"OmBase.h"
+	"OmUtilRtf.h"
+	"OmBaseWin.h"
+	<RichEdit.h>
+	"md4c-rtf/md4c-rtf.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilstr.cpp
+	"OmBase.h"
+	<regex>
+	<algorithm>
+	"OmBaseWin.h"
+	<ShlWApi.h>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilsys.cpp
+	"OmBase.h"
+	<ctime>
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilwin.cpp
+	"OmBase.h"
+	"OmBaseWin.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omutil\omutilzip.cpp
+	"OmBase.h"
+	"OmBaseWin.h"
+	"zlib/zlib.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omversion.cpp
+	"OmVersion.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omxmldoc.cpp
+	"pugixml/pugixml.hpp"
+	"OmXmlDoc.h"
+
+1679911077 source:e:\atelier\code\cpp\openmodman\src\omzipfile.cpp
+	"OmUtilStr.h"
+	<utime.h>
+	"miniz/miniz.h"
+	"OmZipFile.h"
+
+1679911077 e:\atelier\code\cpp\openmodman\include\omzipfile.h
+	"OmBase.h"
+
+1694422053 source:e:\atelier\code\cpp\openmodman\src\ompackage.cpp
+	"OmBaseApp.h"
+	"OmZipFile.h"
+	"OmXmlDoc.h"
+	"OmManager.h"
+	"OmContext.h"
+	"OmLocation.h"
+	"OmImage.h"
+	"OmUtilFs.h"
+	"OmUtilStr.h"
+	"OmUtilHsh.h"
+	"OmUtilErr.h"
+	"OmUtilPkg.h"
+	"miniz/miniz.h"
+	"OmPackage.h"
 
