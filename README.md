@@ -60,6 +60,15 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
+1.1.1 (2023-10-29)
+
+- Fix inconsistent and buggy file size handling for 32 bit version
+- Fix very slow XXHash digest computing, now way faster
+- Fix application crash when remove package
+- Removed Modding Hub "Uinstall All" feature
+- Adding Per-Package "Discard backup data" feature
+- Adding partial or aborted download resume mechanism
+
 1.1 (2023-09-11)
  - Includes all cumulatives changes and fixes of 1.0.x hotfixes, including:
  - Fix application crash after download for package upgrade
