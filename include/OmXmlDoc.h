@@ -142,7 +142,8 @@ class OmXmlNode
     ///
     /// \return Attribute data as 64 bits unsigned integer number.
     ///
-    uint64_t attrAsUint64(const wstring& attr, int base) const;
+    //uint64_t attrAsUint64(const wstring& attr, int base) const;
+    uint64_t attrAsUint64(const wstring& attr) const;
 
     /// \brief Set node name.
     ///

@@ -386,7 +386,7 @@ OmPackage* OmBatch::instGet(const OmLocation* pLoc, unsigned i)
 
       // first try and rely on package hash value
       if(xml_ins.hasAttr(L"hash")) {
-        if((pPkg = pLoc->pkgFind(xml_ins.attrAsUint64(L"hash", 16))))
+        if((pPkg = pLoc->pkgFind(xml_ins.attrAsUint64(L"hash"))))
           return pPkg;
       }
 
@@ -425,7 +425,7 @@ size_t OmBatch::instGetList(const OmLocation* pLoc, vector<OmPackage*>& pkg_ls)
 
         // first try and rely on package hash value
         if(xml_ins_ls[i].hasAttr(L"hash")) {
-          if((pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsUint64(L"hash", 16)))) {
+          if((pPkg = pLoc->pkgFind(xml_ins_ls[i].attrAsUint64(L"hash")))) {
             pkg_ls.push_back(pPkg); continue;
           }
         }
@@ -517,7 +517,7 @@ bool OmBatch::repair()
 
       if(xml_ins_ls[j].hasAttr(L"hash")) {
 
-        uint64_t hash = xml_ins_ls[j].attrAsUint64(L"hash", 16);
+        uint64_t hash = xml_ins_ls[j].attrAsUint64(L"hash");
 
         if((pPkg = pLoc->pkgFind(hash))) {
 

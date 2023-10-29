@@ -499,7 +499,7 @@ wstring Om_formatSizeStr(size_t bytes, bool octet = false);
 ///
 /// \return Formated string describing size.
 ///
-wstring Om_formatSizeSysStr(size_t bytes, bool kbytes = true);
+wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes = true);
 
 /// \brief Check whether is version string
 ///

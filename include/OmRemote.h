@@ -151,7 +151,7 @@ class OmRemote
     ///
     /// \return File size in bytes.
     ///
-    size_t bytes() const {
+    uint64_t bytes() const {
       return _bytes;
     }
 
@@ -447,7 +447,7 @@ class OmRemote
 
     wstring             _file;
 
-    size_t              _bytes;
+    uint64_t            _bytes;
 
     wstring             _csum;
 
@@ -483,7 +483,7 @@ class OmRemote
 
     wstring             _downl_temp;
 
-    size_t              _downl_ofst;
+    uint64_t            _downl_ofst;
 
     bool                _downl_spsd;
 

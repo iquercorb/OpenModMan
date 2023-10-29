@@ -277,7 +277,7 @@ void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring&
 ///
 /// \return Total size in bytes of the specified item
 ///
-size_t Om_itemSize(const wstring& path);
+uint64_t Om_itemSize(const wstring& path);
 
 /// \brief Get item last time
 ///

@@ -275,7 +275,7 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.remChild(L"picture");
     xml_rmt.remChild(L"description");
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
-    xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
+    xml_rmt.setAttr(L"bytes", Om_itemSize(path));
     xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
     xml_rmt.setAttr(L"category", pkg.category());
 
@@ -288,7 +288,7 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt = xml_rmts.addChild(L"remote");
     xml_rmt.setAttr(L"ident", pkg.ident());
     xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
-    xml_rmt.setAttr(L"bytes", static_cast<int>(Om_itemSize(path)));
+    xml_rmt.setAttr(L"bytes", Om_itemSize(path));
     xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
     xml_rmt.setAttr(L"category", pkg.category());
 

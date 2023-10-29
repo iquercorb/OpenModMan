@@ -976,7 +976,7 @@ wstring Om_formatSizeStr(size_t bytes, bool octet)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_formatSizeSysStr(size_t bytes, bool kbytes)
+wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes)
 {
   wchar_t buf[64];
 

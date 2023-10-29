@@ -461,9 +461,11 @@ void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute
 /// \param[in]  orig    : Path of folder to get total size (start of recursive
 ///                       exploration).
 ///
-void __folderSize(size_t* size, const wstring& orig)
+void __folderSize(uint64_t* size, const wstring& orig)
 {
   wstring root;
+
+  DWORD hi, lo;
 
   wstring srch(orig); srch += L"\\*";
   WIN32_FIND_DATAW fd;
@@ -489,7 +491,8 @@ void __folderSize(size_t* size, const wstring& orig)
                                    OPEN_EXISTING,
                                    FILE_ATTRIBUTE_NORMAL,
                                    nullptr);
-        *size += GetFileSize(hFile, nullptr);
+        lo = GetFileSize(hFile, &hi);
+        *size += ((uint64_t)hi << 32) + lo;
         CloseHandle(hFile);
       }
     } while(FindNextFileW(hnd, &fd));
@@ -500,11 +503,12 @@ void __folderSize(size_t* size, const wstring& orig)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_itemSize(const wstring& path)
+uint64_t Om_itemSize(const wstring& path)
 {
-  size_t ret = 0;
+  uint64_t ret = 0;
 
   if(Om_isFile(path)) {
+    DWORD hi, lo;
     HANDLE hFile = CreateFileW(path.c_str(),
                                GENERIC_READ,
                                FILE_SHARE_READ,
@@ -512,8 +516,13 @@ size_t Om_itemSize(const wstring& path)
                                OPEN_EXISTING,
                                FILE_ATTRIBUTE_NORMAL,
                                nullptr);
-    ret = GetFileSize(hFile, nullptr);
+
+    lo = GetFileSize(hFile, &hi);
     CloseHandle(hFile);
+
+    if(lo != INVALID_FILE_SIZE)
+      ret = ((uint64_t)hi << 32) & lo;
+
   } else {
     ret = 0;
     __folderSize(&ret, path);

@@ -119,7 +119,7 @@ bool OmRemote::parse(const wstring& base_url, const wstring& path_url, OmXmlNode
 
   // get file informations
   this->_file = entry.attrAsString(L"file");
-  this->_bytes = entry.attrAsInt(L"bytes");
+  this->_bytes = entry.attrAsUint64(L"bytes");
 
   if(entry.hasAttr(L"checksum")) { //< legacy, deprecated
 
@@ -288,7 +288,7 @@ bool OmRemote::download(const wstring& path, bool supersedes, Om_downloadCb down
 
     // get file size for download offset
     fseek(this->_downl_file, 0, SEEK_END);
-    this->_downl_ofst = ftell(this->_downl_file);
+    this->_downl_ofst = _ftelli64(this->_downl_file);
 
   } else {
     // Open file for writing
@@ -366,17 +366,19 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   DWORD exitCode = 0;
 
   self->_state |= RMT_STATE_DNL;
+  self->_state |= RMT_STATE_PRT;
 
   self->log(2, L"Remote("+self->_ident+L") Download", L"Start \""+self->_url[0]+L"\"");
 
   if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self, self->_downl_ofst)) {
 
     exitCode = sock.lastError(); //< curl error code
-    self->_error = L"HTTP request failed: "+sock.lastErrorStr();
 
     if(exitCode == 42) { //< CURLE_ABORTED_BY_CALLBACK
+      self->_error = L"Transfer stoped by user.";
       self->log(1, L"Remote("+self->_ident+L") Download", self->_error);
     } else {
+      self->_error = L"HTTP request failed: "+sock.lastErrorStr();
       self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
       self->_state |= RMT_STATE_ERR;
     }
@@ -390,7 +392,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
   // no more in DNL state
   self->_state &= ~RMT_STATE_DNL;
 
-  // now in WIP state
+  // now in WIP & PRT state
   self->_state |= RMT_STATE_WIP;
 
   // before last call to callback to update to "post-process" state
@@ -416,6 +418,8 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       match = false;
     }
 
+    self->_state &= ~RMT_STATE_PRT; //< no more partial download
+
     if(match) {
       int result = Om_fileMove(self->_downl_temp, self->_downl_path);
       if(result == 0) {
@@ -423,14 +427,15 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       } else {
         self->_error = Om_errRename(L"Temporary file", self->_downl_temp, result);
         self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
-        //Om_fileDelete(self->_downl_temp);
+        Om_fileDelete(self->_downl_temp);
         self->_state |= RMT_STATE_ERR;
       }
+
     } else {
       self->_error = L"The downloaded data checksum mismatch the reference";
       self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
       // Delete or not delete ? that is the question...
-      //Om_fileDelete(self->_downl_temp);
+      Om_fileDelete(self->_downl_temp);
       self->_state |= RMT_STATE_ERR;
     }
 

@@ -129,7 +129,7 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, size_t resume)
+bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, uint64_t resume)
 {
   this->clear();
 
@@ -152,8 +152,8 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
     #ifdef DEBUG
     std::cout << "DEBUG => OmSocket::httpGet : resume download from byte:" << resume << "\n";
     #endif // DEBUG
-    curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_RESUME_FROM_LARGE, resume);
-    this->_progress_off = resume;
+    curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_RESUME_FROM_LARGE, static_cast<curl_off_t>(resume));
+    this->_progress_off = static_cast<int64_t>(resume);
   }
 
   #ifdef DEBUG
@@ -169,7 +169,7 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FAILONERROR, 1L);
 
   // Set large buffer to optimize write/download rate
-  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_BUFFERSIZE, 256000L);
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_BUFFERSIZE, 262144L);
 
   this->_out_file = file;
   this->_user_download = download_cb;
@@ -407,7 +407,7 @@ size_t OmSocket::_writeFileCb(char *recv_data, size_t recv_s, size_t recv_n, voi
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmSocket::_progressCb(void* ptr, int64_t dltot, int64_t dlnow, int64_t ultot, int64_t ulnow)
+int OmSocket::_progressCb(void* ptr, int64_t dltot, int64_t dlnow, int64_t ultot, int64_t ulnow)
 {
   OmSocket* self = static_cast<OmSocket*>(ptr);
 
@@ -417,7 +417,9 @@ size_t OmSocket::_progressCb(void* ptr, int64_t dltot, int64_t dlnow, int64_t ul
   self->_progress_now = dlnow + self->_progress_off;
 
   if(self->_user_download) {
-    if(!self->_user_download(self->_user_ptr, self->_progress_tot, self->_progress_now, self->_progress_bps, 0)) {
+    if(!self->_user_download(self->_user_ptr, static_cast<double>(self->_progress_tot),
+                                              static_cast<double>(self->_progress_now),
+                                              static_cast<double>(self->_progress_bps), 0)) {
       return 1; //< abort process
     }
   }

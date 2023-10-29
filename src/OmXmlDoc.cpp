@@ -150,11 +150,16 @@ double OmXmlNode::attrAsDouble(const wstring& attr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+uint64_t OmXmlNode::attrAsUint64(const wstring& attr) const
+{
+  return static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).as_ullong();
+}
+/*
 uint64_t OmXmlNode::attrAsUint64(const wstring& attr, int base) const
 {
   return wcstoull(static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str()).value(), nullptr, base);
 }
-
+*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -203,7 +208,6 @@ void OmXmlNode::setAttr(const wstring& attr, int value)
   attribute.set_value(value);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -239,6 +243,20 @@ void OmXmlNode::setAttr(const wstring& attr, uint64_t value)
   if(attribute.empty()) {
     attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
   }
+  attribute.set_value(value);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+/*
+void OmXmlNode::setAttr(const wstring& attr, uint64_t value)
+{
+  pugi::xml_attribute attribute = static_cast<pugi::xml_node*>(_data)->attribute(attr.c_str());
+  if(attribute.empty()) {
+    attribute = static_cast<pugi::xml_node*>(_data)->append_attribute(attr.c_str());
+  }
 
   wchar_t buf[17];
   wchar_t *p = buf;
@@ -255,7 +273,7 @@ void OmXmlNode::setAttr(const wstring& attr, uint64_t value)
 
   attribute.set_value(buf);
 }
-
+*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

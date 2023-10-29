@@ -63,7 +63,7 @@ class OmSocket
     ///
     /// \return True if operation succeed and data received, false otherwise.
     ///
-    bool httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, size_t resume = 0L);
+    bool httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, uint64_t resume = 0L);
 
     /// \brief Check whether downloading
     ///
@@ -158,17 +158,17 @@ class OmSocket
 
     bool                _downloading;
 
-    size_t              _rate_byte;
+    int64_t             _rate_byte;
 
     double              _rate_time;
 
     double              _progress_bps;
 
-    size_t              _progress_tot;
+    int64_t             _progress_tot;
 
-    size_t              _progress_now;
+    int64_t             _progress_now;
 
-    size_t              _progress_off;
+    int64_t             _progress_off;
 
     unsigned            _ercode;
 
@@ -178,7 +178,7 @@ class OmSocket
 
     static size_t       _writeFileCb(char *, size_t, size_t, void*);
 
-    static size_t       _progressCb(void*, int64_t, int64_t, int64_t, int64_t);
+    static int          _progressCb(void*, int64_t, int64_t, int64_t, int64_t);
 };
 
 #endif // OMSOCKET_H
