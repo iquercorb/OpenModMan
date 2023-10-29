@@ -2888,6 +2888,7 @@ bool OmLocation::rmtRefresh(bool force)
       new_state &= ~RMT_STATE_UPG;
       new_state &= ~RMT_STATE_OLD;
       new_state &= ~RMT_STATE_DEP;
+      new_state &= ~RMT_STATE_PRT;
 
       // clear the superseded and downgraded list
       pRmt->_supLs.clear();
@@ -2898,6 +2899,11 @@ bool OmLocation::rmtRefresh(bool force)
 
         // We do not check against dev/folder packages
         if(!pPkg->isZip()) continue;
+
+        //check whether remote has partial download
+        if(pRmt->downHasPart(this->libDir())) {
+          new_state |= RMT_STATE_PRT;
+        }
 
         // search for same core but different version
         if(pRmt->core() == pPkg->core()) {

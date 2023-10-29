@@ -112,6 +112,9 @@
 #define IDB_STS_NEW_16                          946
 #define IDB_STS_NEW_24                          947
 #define IDB_STS_NEW_32                          948
+#define IDB_STS_PRT_16                          949
+#define IDB_STS_PRT_24                          950
+#define IDB_STS_PRT_32                          951
 #define IDB_BAT_16                              980
 #define IDB_BAT_24                              981
 #define IDB_BAT_32                              982

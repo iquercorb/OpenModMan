@@ -39,6 +39,7 @@ enum OmRmtState : unsigned {
   RMT_STATE_DNL = 0x10,    ///< Remote package is downloading
   RMT_STATE_ERR = 0x20,    ///< Remote package download error
   RMT_STATE_WIP = 0x40,    ///< Remote package is work in progress
+  RMT_STATE_PRT = 0x80,    ///< Remote package has partial download
 };
 
 /// \brief Remote package checksum type
@@ -384,6 +385,16 @@ class OmRemote
       return _downl_percent;
     }
 
+    /// \brief Has download part available
+    ///
+    /// Returns whether remotes has download part data available for download resume.
+    ///
+    /// \param[in]  path        : Destination folder path to save downloaded file.
+    ///
+    /// \return Download supersede.
+    ///
+    bool downHasPart(const wstring& path) const;
+
     /// \brief Get download supersede.
     ///
     /// Returns whether previous package supersede is required at end of download.
@@ -471,6 +482,8 @@ class OmRemote
     wstring             _downl_path;
 
     wstring             _downl_temp;
+
+    size_t              _downl_ofst;
 
     bool                _downl_spsd;
 

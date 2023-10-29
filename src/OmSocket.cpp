@@ -129,7 +129,7 @@ bool OmSocket::httpGet(const wstring& url, string& data)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr)
+bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, size_t resume)
 {
   this->clear();
 
@@ -147,6 +147,18 @@ bool OmSocket::httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_NOPROGRESS, 0L);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFOFUNCTION, OmSocket::_progressCb);
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_XFERINFODATA, this);
+
+  if(resume > 0L) {
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmSocket::httpGet : resume download from byte:" << resume << "\n";
+    #endif // DEBUG
+    curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_RESUME_FROM_LARGE, resume);
+    this->_progress_off = resume;
+  }
+
+  #ifdef DEBUG
+  curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_MAX_RECV_SPEED_LARGE, 512000L);
+  #endif
 
   // follow HTTP redirections
   curl_easy_setopt(reinterpret_cast<CURL*>(this->_hcurl), CURLOPT_FOLLOWLOCATION, 1L);
@@ -206,6 +218,7 @@ void OmSocket::clear()
   this->_progress_bps = 0.0;
   this->_progress_tot = 0;
   this->_progress_now = 0;
+  this->_progress_off = 0;
 
   if(this->_hcurl != nullptr) {
     curl_easy_cleanup(reinterpret_cast<CURL*>(this->_hcurl));
@@ -400,11 +413,11 @@ size_t OmSocket::_progressCb(void* ptr, int64_t dltot, int64_t dlnow, int64_t ul
 
   self->_downloading = true;
 
-  self->_progress_tot = dltot;
-  self->_progress_now = dlnow;
+  self->_progress_tot = dltot + self->_progress_off;
+  self->_progress_now = dlnow + self->_progress_off;
 
   if(self->_user_download) {
-    if(!self->_user_download(self->_user_ptr, dltot, dlnow, self->_progress_bps, 0)) {
+    if(!self->_user_download(self->_user_ptr, self->_progress_tot, self->_progress_now, self->_progress_bps, 0)) {
       return 1; //< abort process
     }
   }

@@ -59,10 +59,11 @@ class OmSocket
     /// \param[out] file        : Destination file pointer.
     /// \param[in]  download_cb : Optional progression callback function.
     /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
+    /// \param[in]  resume      : Download resume offset in byte.
     ///
     /// \return True if operation succeed and data received, false otherwise.
     ///
-    bool httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr);
+    bool httpGet(const wstring& url, FILE* file, Om_downloadCb download_cb, void* user_ptr, size_t resume = 0L);
 
     /// \brief Check whether downloading
     ///
@@ -166,6 +167,8 @@ class OmSocket
     size_t              _progress_tot;
 
     size_t              _progress_now;
+
+    size_t              _progress_off;
 
     unsigned            _ercode;
 

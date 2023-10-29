@@ -1205,13 +1205,13 @@ void OmUiMgrMainNet::_buildLvRmt()
     // -  0: PKG_ERR -  1: PKG_DIR -  2: PKG_ZIP -  3: PKG_DPN
     // -  4: STS_WIP -  5: STS_ERR -  6: STS_WRN -  7: STS_BOK
     // -  8: STS_OWR -  9: STS_OLD - 10: STS_UPG - 11: STS_DNL
-    // - 12: STS_NEW
+    // - 12: STS_NEW - 13: STS_PRT
 
     // Build list of images resource ID for the required size
     unsigned idb[] = {IDB_PKG_ERR_16, IDB_PKG_DIR_16, IDB_PKG_ZIP_16, IDB_PKG_DPN_16,
                       IDB_STS_WIP_16, IDB_STS_ERR_16, IDB_STS_WRN_16, IDB_STS_BOK_16,
                       IDB_STS_OWR_16, IDB_STS_OLD_16, IDB_STS_UPG_16, IDB_STS_DNL_16,
-                      IDB_STS_NEW_16};
+                      IDB_STS_NEW_16, IDB_STS_PRT_16};
 
     unsigned idb_size = sizeof(idb) / 4;
 
@@ -1277,6 +1277,8 @@ void OmUiMgrMainNet::_buildLvRmt()
       lvItem.iImage = 11; //< STS_DNL
     } else if(pRmt->isState(RMT_STATE_WIP)) {
       lvItem.iImage = 4; //< STS_WIP
+    } else if(pRmt->isState(RMT_STATE_PRT)) {
+      lvItem.iImage = 13; //< STS_PRT
     } else if(pRmt->isState(RMT_STATE_NEW)) {
       if(pRmt->isState(RMT_STATE_UPG)) {
         lvItem.iImage = 10; //< STS_UPG

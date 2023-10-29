@@ -272,15 +272,34 @@ bool OmRemote::download(const wstring& path, bool supersedes, Om_downloadCb down
 
   // set file path
   this->_downl_path = path + L"\\" + this->_file;
-  this->_downl_temp = this->_downl_path + L".dl_temp";
+  this->_downl_temp = this->_downl_path + L".dl_part";
 
-  // Open file for writing
-  //if((this->_downl_file = _wfopen_s(this->_downl_temp.c_str(), L"wb")) == nullptr) {
-  if(_wfopen_s(&this->_downl_file, this->_downl_temp.c_str(), L"wb") != 0) {
-    this->_error =  L"Temporary file \""+this->_downl_temp+L"\" creation failed: ";
-    this->_error += L"Unable to open file for writing.";
-    this->log(0, L"Remote("+this->_ident+L") Download", this->_error);
-    return false;
+
+  // check whether temporary file already exist for potential download resume
+  if(Om_isFile(this->_downl_temp)) {
+
+    // Open file for appending data
+    if(_wfopen_s(&this->_downl_file, this->_downl_temp.c_str(), L"ab") != 0) {
+      this->_error =  L"Temporary file \""+this->_downl_temp+L"\" read failed: ";
+      this->_error += L"Unable to open file for reading.";
+      this->log(0, L"Remote("+this->_ident+L") Download", this->_error);
+      return false;
+    }
+
+    // get file size for download offset
+    fseek(this->_downl_file, 0, SEEK_END);
+    this->_downl_ofst = ftell(this->_downl_file);
+
+  } else {
+    // Open file for writing
+    if(_wfopen_s(&this->_downl_file, this->_downl_temp.c_str(), L"wb") != 0) {
+      this->_error =  L"Temporary file \""+this->_downl_temp+L"\" creation failed: ";
+      this->_error += L"Unable to open file for writing.";
+      this->log(0, L"Remote("+this->_ident+L") Download", this->_error);
+      return false;
+    }
+
+    this->_downl_ofst = 0L;
   }
 
   // set user defined callback and pointer
@@ -294,6 +313,14 @@ bool OmRemote::download(const wstring& path, bool supersedes, Om_downloadCb down
   return true;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmRemote::downHasPart(const wstring& path) const
+{
+  wstring part_name = path + L"\\" + this->_file + L".dl_part";
+  return Om_isFile(part_name);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -342,7 +369,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
 
   self->log(2, L"Remote("+self->_ident+L") Download", L"Start \""+self->_url[0]+L"\"");
 
-  if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self)) {
+  if(!sock.httpGet(self->_url[0], self->_downl_file, &self->_downl_download, self, self->_downl_ofst)) {
 
     exitCode = sock.lastError(); //< curl error code
     self->_error = L"HTTP request failed: "+sock.lastErrorStr();
@@ -396,7 +423,7 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       } else {
         self->_error = Om_errRename(L"Temporary file", self->_downl_temp, result);
         self->log(0, L"Remote("+self->_ident+L") Download", self->_error);
-        Om_fileDelete(self->_downl_temp);
+        //Om_fileDelete(self->_downl_temp);
         self->_state |= RMT_STATE_ERR;
       }
     } else {
@@ -538,7 +565,8 @@ DWORD WINAPI OmRemote::_downl_fth(void* ptr)
       }
     }
   } else {
-    Om_fileDelete(self->_downl_temp);
+    // maybe we could resume download
+    //Om_fileDelete(self->_downl_temp);
   }
 
   // no more in WIP state

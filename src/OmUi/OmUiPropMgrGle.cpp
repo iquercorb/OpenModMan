@@ -71,7 +71,7 @@ void OmUiPropMgrGle::setChParam(unsigned i, bool en)
 ///
 void OmUiPropMgrGle::_onCkBoxRaw()
 {
-  int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
+  //int bm_chk = this->msgItem(IDC_BC_CKBX1, BM_GETCHECK);
 
   // user modified parameter, notify it
   this->setChParam(MGR_PROP_GLE_NO_MDPARSE, true);
