@@ -404,6 +404,7 @@ void OmUiMgrMainLib::pkgTrsh()
 
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmLocation* pLoc = pMgr->locCur();
+  OmContext* pCtx = pLoc->pCtx();
   if(!pLoc) return;
 
   vector<OmPackage*> sel_ls;
@@ -437,11 +438,18 @@ void OmUiMgrMainLib::pkgTrsh()
 
   OmPackage* pPkg;
 
+
   for(size_t i = 0; i < sel_ls.size(); ++i) {
 
     pPkg = sel_ls[i];
 
     if(pPkg->hasSrc()) {
+
+      // remove package references from existing batches
+      for(size_t i = 0; i < pCtx->batCount(); ++i) {
+        pCtx->batGet(i)->instRem(pLoc, pPkg->ident());
+      }
+
       int result = Om_moveToTrash(pPkg->srcPath());
       if(result != 0) {
         wstring err_str = Om_errShell(L"", pPkg->srcPath(), result);
@@ -456,13 +464,6 @@ void OmUiMgrMainLib::pkgTrsh()
                     L"Source file or folder of Package \""+pPkg->ident()+
                     L"\" does not exists in Library folder.");
     }
-  }
-
-  // remove package references from existing batches
-  OmContext* pCtx = pLoc->pCtx();
-
-  for(size_t i = 0; i < pCtx->batCount(); ++i) {
-    pCtx->batGet(i)->instRem(pLoc, pPkg->ident());
   }
 
   // unfreeze dialog to allow user to interact
