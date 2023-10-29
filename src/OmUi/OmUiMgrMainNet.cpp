@@ -792,7 +792,7 @@ bool OmUiMgrMainNet::_rmtDnl_update(double tot, double cur, double rate, uint64_
   wchar_t item_str[OMM_ITM_BUFF];
 
   // compute download progression percent
-  unsigned percent = (tot > 0.0) ? static_cast<int>((cur / tot) * 100.0) : 0;
+  unsigned percent = (tot > 0.0) ? static_cast<unsigned>((cur / tot) * 100.0) : 0;
 
   // retrieve ListView entry corresponding to current object
   LVFINDINFOW lvFind = {};
@@ -817,7 +817,7 @@ bool OmUiMgrMainNet::_rmtDnl_update(double tot, double cur, double rate, uint64_
   wchar_t time_str[64];
   StrFromTimeIntervalW(time_str, 64, static_cast<unsigned>(((tot-cur)/rate))*1000, 3);
   // create download progression string and assign to ListView item
-  swprintf(item_str, OMM_ITM_BUFF, L"%i %% - %ls", percent, time_str);
+  swprintf(item_str, OMM_ITM_BUFF, L"%i%% - %ls", percent, time_str);
   lvItem.pszText =  const_cast<LPWSTR>(item_str);
 
   // send to ListView
@@ -902,7 +902,7 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
 
   // check whether Remote package is in WIP status
   if(pRmt->isState(RMT_STATE_WIP)) {
-    lvItem.pszText = const_cast<LPWSTR>(L"Processing...");
+    lvItem.pszText = const_cast<LPWSTR>(L"Computing checksum...");
     this->msgItem(IDC_LV_RMT, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
 
     // update status icon
@@ -928,6 +928,8 @@ void OmUiMgrMainNet::_rmtDnl_finish(uint64_t hash)
 
   if(pRmt->isState(RMT_STATE_ERR)) {
     lvItem.iImage = 5; //< STS_ERR
+  } else if(pRmt->isState(RMT_STATE_PRT)) {
+    lvItem.iImage = 13; //< STS_PRT
   } else if(pRmt->isState(RMT_STATE_NEW)) {
     if(pRmt->isState(RMT_STATE_UPG)) {
       lvItem.iImage = 10; //< STS_UPG
