@@ -2090,5 +2090,5 @@ bool OmPackage::_discard()
 
   log(2, L"Package("+this->_ident+L") Unbackup", log_buf);
 
-  return true;
+  return (result == 0);
 }

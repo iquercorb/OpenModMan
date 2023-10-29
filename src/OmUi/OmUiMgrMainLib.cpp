@@ -62,6 +62,13 @@
 ///
 #define UWM_PKGCLNS_DONE     (WM_APP+3)
 
+/// \brief Custom "Package Backup Discard Done" Message
+///
+/// Custom "Package Backup Discard Done" window message to notify the dialog that the
+/// running thread finished his job.
+///
+#define UWM_PKGDISC_DONE     (WM_APP+5)
+
 /// \brief Custom "Package Uninstall Done" Message
 ///
 /// Custom "Package Uninstall Done" window message to notify the dialog that the
@@ -121,7 +128,7 @@ OmUiMgrMainLib::OmUiMgrMainLib(HINSTANCE hins) : OmDialog(hins),
   _pkgInst_hth(nullptr),
   _pkgUnin_hth(nullptr),
   _pkgClns_hth(nullptr),
-  _pkgPurg_hth(nullptr),
+  _pkgDisc_hth(nullptr),
   _batExe_hth(nullptr),
   _thread_abort(false),
   _buildLvBat_icSize(0),
@@ -319,16 +326,14 @@ void OmUiMgrMainLib::pkgClns()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrMainLib::pkgPurg()
+void OmUiMgrMainLib::pkgDisc()
 {
   // prevent useless processing
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  if(!pLoc->bckHasData()) return;
-
-  this->_pkgPurg_init();
+  this->_pkgDisc_init();
 }
 
 
@@ -910,6 +915,87 @@ void OmUiMgrMainLib::_pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiMgrMainLib::_pkgDiscLs(const vector<OmPackage*>& pkg_ls)
+{
+  OmManager* pMgr = static_cast<OmManager*>(this->_data);
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return;
+
+  wstring msg_lst;
+
+  // Warn
+  if(!Om_dlgBox_ca(this->_hwnd, L"Discard backup data", IDI_PKG_WRN,
+                L"Deleting package(s) backup data", L"The backup data of the selected package(s) "
+                "will be deleted and no longer be able to be restored."))
+  {
+    return;
+  }
+
+  // this is to update list view item's icon individually
+  LVITEMW lvi;
+  lvi.mask = LVIF_IMAGE;
+  lvi.iSubItem = 0;
+
+  OmPackage* pPkg;
+  vector<OmPackage*> ovlp_ls; //< overlapped packages list
+
+  for(size_t i = 0; i < pkg_ls.size(); ++i) {
+
+    pPkg = pkg_ls[i];
+
+    // check whether abort is requested
+    if(this->_thread_abort)
+      break;
+
+    // set WIP status image
+    lvi.iItem = pLoc->pkgIndex(pPkg);
+    lvi.iImage = 4; //< STS_WIP
+    this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+
+    if(!pPkg->hasBck()) //< this should be always the case
+      continue;
+
+    // before discard backup, get list of overlapped packages (by this one)
+    ovlp_ls.clear();
+    for(size_t j = 0; j < pPkg->ovrCount(); ++j) {
+      ovlp_ls.push_back(pLoc->pkgFind(pPkg->ovrGet(j)));
+    }
+
+    // discard package backup data
+    if(!pPkg->unbackup()) {
+      Om_dlgBox_okl(this->_hwnd, L"Discard backup data", IDI_PKG_ERR,
+                    L"Package discard backup error", L"Deleting backup data of \""+
+                    pPkg->name()+L"\" failed or may be incomplete because of "
+                    "the following error:", pPkg->lastError());
+    }
+
+    if(pPkg->hasBck()) { //< this mean something went wrong
+      lvi.iImage = pLoc->bckOverlapped(pPkg) ? 8/*STS_OWR*/:7/*STS_BOK*/;
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+    } else {
+      lvi.iImage = -1; //< No Icon
+      this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      // update status icon for overlapped packages
+      for(size_t j = 0; j < ovlp_ls.size(); ++j) {
+        lvi.iItem = pLoc->pkgIndex(ovlp_ls[j]);
+        lvi.iImage = pLoc->bckOverlapped(ovlp_ls[j]) ? 8/*STS_OWR*/:7/*STS_BOK*/;
+        this->msgItem(IDC_LV_PKG, LVM_SETITEM, 0, reinterpret_cast<LPARAM>(&lvi));
+      }
+    }
+
+    // reset progress bar
+    this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
+
+    #ifdef DEBUG
+    Sleep(OMM_DEBUG_SLOW); //< for debug
+    #endif
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiMgrMainLib::_buildCbLoc()
 {
   #ifdef DEBUG
@@ -1125,9 +1211,6 @@ void OmUiMgrMainLib::_buildLvPkg()
     this->msgItem(IDC_LV_PKG, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvItem));
   }
 
-  // Enable or disable "Uninstall all packages" menu item
-  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
-
   // we enable the ListView
   this->enableItem(IDC_LV_PKG, true);
 
@@ -1328,9 +1411,6 @@ void OmUiMgrMainLib::_pkgInst_stop()
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
-
-  // Enable or disable "Uninstall all packages" menu item
-  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1440,9 +1520,6 @@ void OmUiMgrMainLib::_pkgUnin_stop()
   // clean Library list and rebuild ListView
   if(pLoc->libClean())
     this->_buildLvPkg();
-
-  // Enable or disable "Uninstall all packages" menu item
-  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 ///
@@ -1554,9 +1631,6 @@ void OmUiMgrMainLib::_pkgClns_stop()
   // clean Library list and rebuild ListView
   if(pLoc->libClean())
     this->_buildLvPkg();
-
-  // Enable or disable "Uninstall all packages" menu item
-  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -1608,25 +1682,16 @@ DWORD WINAPI OmUiMgrMainLib::_pkgClns_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrMainLib::_pkgPurg_init()
+void OmUiMgrMainLib::_pkgDisc_init()
 {
   OmManager* pMgr = static_cast<OmManager*>(this->_data);
 
   OmLocation* pLoc = pMgr->locCur();
   if(!pLoc) return;
 
-  // checks whether we have a valid Target path
-  if(!pLoc->dstDirAccess(true)) { //< check for read and write
-    Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
-                  L"Target path access error", L"The Target path "
-                  "cannot be accessed because it do not exist or have read/write "
-                  "access restrictions. Please check Channel's settings "
-                  "and folder permissions.", pLoc->dstDir());
-    return;
-  }
   // checks whether we have a valid Backup folder
   if(!pLoc->bckDirAccess(true)) { //< check for read and write
-    Om_dlgBox_okl(this->_hwnd, L"Uninstall All", IDI_ERR,
+    Om_dlgBox_okl(this->_hwnd, L"Discard backup data", IDI_ERR,
                   L"Backup folder access error", L"The Backup folder "
                   "cannot be accessed because it do not exist or have read/write "
                   "access restrictions. Please check Channel's settings "
@@ -1638,83 +1703,47 @@ void OmUiMgrMainLib::_pkgPurg_init()
   this->_pUiMgr->freeze(true);
 
   DWORD dwId;
-  this->_pkgPurg_hth = CreateThread(nullptr, 0, this->_pkgPurg_fth, this, 0, &dwId);
+  this->_pkgDisc_hth = CreateThread(nullptr, 0, this->_pkgDisc_fth, this, 0, &dwId);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiMgrMainLib::_pkgPurg_fth(void* arg)
+DWORD WINAPI OmUiMgrMainLib::_pkgDisc_fth(void* arg)
 {
   OmUiMgrMainLib* self = static_cast<OmUiMgrMainLib*>(arg);
 
   OmManager* pMgr = static_cast<OmManager*>(self->_data);
-  OmContext* pCtx = pMgr->ctxCur();
 
-  // get installed packages
-  vector<OmPackage*> uni_ls;
+  OmLocation* pLoc = pMgr->locCur();
+  if(!pLoc) return 1;
 
-  // reset abort status
-  self->_thread_abort = false;
+    // get user selection
+  vector<OmPackage*> user_ls;
 
-  /*
   OmPackage* pPkg;
 
-  for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
+  int lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  while(lv_sel != -1) {
 
-    pPkg = pLoc->pkgGet(i);
+    pPkg = pLoc->pkgGet(lv_sel);
 
     if(pPkg->hasBck())
-      uni_ls.push_back(pPkg);
+      user_ls.push_back(pPkg);
+
+    // next selected item
+    lv_sel = self->msgItem(IDC_LV_PKG, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
   // reset abort status
   self->_thread_abort = false;
 
-  // uninstall packages
-  self->_pkgUninLs(uni_ls, false);
-  */
-
-  // save current selected location
-  int cb_sel = self->msgItem(IDC_CB_LOC, CB_GETCURSEL);
-
-  OmLocation* pLoc;
-  OmPackage* pPkg;
-
-  for(size_t l = 0; l < pCtx->locCount(); ++l) {
-
-    if(self->_thread_abort)
-      break;
-
-    // Select the Location
-    self->locSel(l);
-    pLoc = pCtx->locCur();
-
-    // create the uninstall list, here we do not care order
-    uni_ls.clear();
-
-    for(size_t i = 0; i < pLoc->pkgCount(); ++i) {
-
-      pPkg = pLoc->pkgGet(i);
-
-      if(pPkg->hasBck())
-        uni_ls.push_back(pPkg);
-    }
-
-    // first, uninstall packages which must be uninstalled
-    if(uni_ls.size()) {
-      // uninstall packages
-      self->_pkgUninLs(uni_ls, true);
-    }
-
-  }
-
-  // Select previously selected location
-  self->locSel(cb_sel);
+  // discard packages backup data
+  self->_pkgDiscLs(user_ls);
 
   // send message to notify process ended
-  self->postMessage(UWM_PKGUNIN_DONE);
+  self->postMessage(UWM_PKGDISC_DONE);
 
   return 0;
 }
@@ -1722,15 +1751,15 @@ DWORD WINAPI OmUiMgrMainLib::_pkgPurg_fth(void* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMgrMainLib::_pkgPurg_stop()
+void OmUiMgrMainLib::_pkgDisc_stop()
 {
   DWORD exitCode;
 
-  if(this->_pkgPurg_hth) {
-    WaitForSingleObject(this->_pkgPurg_hth, INFINITE);
-    GetExitCodeThread(this->_pkgPurg_hth, &exitCode);
-    CloseHandle(this->_pkgPurg_hth);
-    this->_pkgPurg_hth = nullptr;
+  if(this->_pkgDisc_hth) {
+    WaitForSingleObject(this->_pkgDisc_hth, INFINITE);
+    GetExitCodeThread(this->_pkgDisc_hth, &exitCode);
+    CloseHandle(this->_pkgDisc_hth);
+    this->_pkgDisc_hth = nullptr;
   }
 
   // unfreeze dialog to allow user to interact again
@@ -1746,9 +1775,6 @@ void OmUiMgrMainLib::_pkgPurg_stop()
   // clean Library list and rebuild ListView
   if(pLoc->libClean())
     this->_buildLvPkg();
-
-  // Enable or disable "Uninstall all packages" menu item
-  //this->_pUiMgr->setPopupItem(MNU_EDIT, 4, pLoc->bckHasData() ? MF_ENABLED : MF_GRAYED);
 }
 
 
@@ -2117,6 +2143,7 @@ void OmUiMgrMainLib::_onLvPkgSel()
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_INST, MF_GRAYED);  //< "Install"
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_UINS, MF_ENABLED); //< "Uninstall"
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_CLNS, MF_ENABLED); //< "Uninstall tree"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_DISC, MF_ENABLED); //< "Discard Backup data"
 
       } else {
 
@@ -2128,6 +2155,7 @@ void OmUiMgrMainLib::_onLvPkgSel()
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_INST, MF_ENABLED); //< "Install"
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_UINS, MF_GRAYED);  //< "Uninstall"
         this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_CLNS, MF_GRAYED);  //< "Uninstall tree"
+        this->_pUiMgr->setPopupItem(hPopup, MNU_EDIT_PKG_DISC, MF_GRAYED);  //< "Discard Backup data"
       }
 
     } else {
@@ -2570,6 +2598,14 @@ INT_PTR OmUiMgrMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == UWM_PKGCLNS_DONE) {
     // properly stop the running thread and finish process
     this->_pkgClns_stop();
+    return false;
+  }
+
+  // UWM_PKGDISC_DONE is a custom message sent from Package Backup Discard
+  // thread function, to notify the thread ended is job.
+  if(uMsg == UWM_PKGDISC_DONE) {
+    // properly stop the running thread and finish process
+    this->_pkgDisc_stop();
     return false;
   }
 

@@ -87,22 +87,19 @@ class OmUiMgrMainLib : public OmDialog
 
     /// \brief Install selected packages.
     ///
-    /// Public function to launch install process for selected packages if
-    /// any.
+    /// Public function to launch install process for selected packages if any.
     ///
     void pkgInst();
 
     /// \brief Uninstall selected packages.
     ///
-    /// Public function to launch uninstall process for selected packages if
-    /// any.
+    /// Public function to launch uninstall process for selected packages if any.
     ///
     void pkgUnin();
 
     /// \brief Cleanse selected packages.
     ///
-    /// Public function to launch cleanse uninstall process for selected packages if
-    /// any.
+    /// Public function to launch cleanse uninstall process for selected packages if any.
     ///
     void pkgClns();
 
@@ -110,7 +107,13 @@ class OmUiMgrMainLib : public OmDialog
     ///
     /// Public function to launch uninstall all installed packages.
     ///
-    void pkgPurg();
+    void _pkgDisc();
+
+    /// \brief Discard packages backup.
+    ///
+    /// Public function to launch backup discard process for selected packages if any.
+    ///
+    void pkgDisc();
 
     /// \brief Toggle selected packages installation.
     ///
@@ -153,6 +156,8 @@ class OmUiMgrMainLib : public OmDialog
 
     void                _pkgClnsLs(const vector<OmPackage*>& pkg_ls, bool silent = false);
 
+    void                _pkgDiscLs(const vector<OmPackage*>& pkg_ls);
+
     static bool         _pkgProgressCb(void* ptr, size_t tot, size_t cur, uint64_t data);
 
     void                _dirMon_init(const wstring& path);
@@ -189,13 +194,13 @@ class OmUiMgrMainLib : public OmDialog
 
     static DWORD WINAPI _pkgClns_fth(void*);
 
-    void                _pkgPurg_init();
+    void                _pkgDisc_init();
 
-    void                _pkgPurg_stop();
+    void                _pkgDisc_stop();
 
-    void*               _pkgPurg_hth;
+    void*               _pkgDisc_hth;
 
-    static DWORD WINAPI _pkgPurg_fth(void*);
+    static DWORD WINAPI _pkgDisc_fth(void*);
 
     void                _batExe_init();
 

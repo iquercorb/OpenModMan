@@ -801,11 +801,6 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
     }
 
-    case IDM_EDIT_UINS_ALL: {
-      static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgPurg();
-      break;
-    }
-
     // Menu : Edit > Package > []
     case IDM_EDIT_PKG_INST:
       static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgInst();
@@ -818,6 +813,11 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDM_EDIT_PKG_CLNS:
       static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgClns();
       break;
+
+    case IDM_EDIT_PKG_DISC: {
+      static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgDisc();
+      break;
+    }
 
     case IDM_EDIT_PKG_TRSH:
       static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgTrsh();
@@ -834,6 +834,7 @@ INT_PTR OmUiMgr::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDM_EDIT_PKG_INFO:
       static_cast<OmUiMgrMainLib*>(this->_pUiMgrMain->childById(IDD_MGR_MAIN_LIB))->pkgProp();
       break;
+
 
     // Menu : Edit > Remote > []
     case IDM_EDIT_RMT_DNWS:
