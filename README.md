@@ -60,6 +60,20 @@ Open Mod Mananager currently implements the following key features:
 
 ## Version history
 
+1.1 (2023-09-11)
+ - Includes all cumulatives changes and fixes of 1.0.x hotfixes, including:
+ - Fix application crash after download for package upgrade
+ - Fix wrong behavior on package upgrade dialog message
+ - Fix remote package update inconsistencies when refresh repositories
+ - Fix critical bug in remote package refresh process
+ - Fix Package Editor inconsistent prompts for unsaved changes
+ - Fix Package Editor destination path set to default again even if not empty
+ - Fix window geometry save and restore mechanism
+ - Automatic README text now generated only if no description is provided
+ - Changes Packages download and upgrade default behavior
+ - Add support for detecting and skipping hidden files
+ - Added contextual menu for Installation Batches List
+
 1.0 (2022-05-16)
  - Includes all cumulatives changes and fixes of 0.9.9.x hotfixes, including:
  - Fix and optimize markdown rendering
