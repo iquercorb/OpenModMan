@@ -26,7 +26,7 @@
 static mt19937                             __rnd_generator(time(0));
 static uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
 
-#define READ_BUF_SIZE 4096
+#define READ_BUF_SIZE 262144
 static uint8_t __read_buf[READ_BUF_SIZE];
 
 /// \brief Swap bytes
