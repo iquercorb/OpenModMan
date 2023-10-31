@@ -114,9 +114,9 @@ void OmUiWizCtx::_onWizFinish()
   this->quit();
 
   // create the new Context, if an error occur, error message
-  if(pMgr->ctxNew(ctx_name, ctx_home)) {
-    // get last created Context
-    OmContext* pCtx = pMgr->ctxGet(pMgr->ctxCount()-1);
+  if(pMgr->ctxNew(ctx_name, ctx_home, true)) {
+    // get current selected Context (the just created one)
+    OmContext* pCtx = pMgr->ctxCur();
     // create new Location in Context
     if(!pCtx->locAdd(loc_name, loc_dst, loc_lib, loc_bck)) {
       Om_dlgBox_okl(this->_hwnd, L"Modding Hub Wizard", IDI_ERR,
@@ -130,9 +130,6 @@ void OmUiWizCtx::_onWizFinish()
                   "creation failed because of the following error:",
                   pMgr->lastError());
   }
-
-  // Unselect current context, this will force to select last one at next refresh
-  static_cast<OmUiMgr*>(this->root())->ctxSel(-1);
 
   // force parent dialog to refresh
   this->root()->refresh();

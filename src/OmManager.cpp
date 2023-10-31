@@ -137,8 +137,11 @@ bool OmManager::init(const char* arg)
   if(autoload) {
     this->log(2, L"Manager() Init", L"Load startup Context file(s)");
     for(size_t i = 0; i < path_ls.size(); ++i) {
-      this->ctxOpen(path_ls[i]);
+      this->ctxOpen(path_ls[i], false);
     }
+
+    // we select the first Context in list
+    this->ctxSel(0);
   }
 
   // add the context file passed as argument if any
@@ -402,12 +405,12 @@ void OmManager::saveStartContexts(bool enable, const vector<wstring>& path)
     }
     xml_stl.setAttr(L"enable", enable ? 1 : 0);
 
-    vector<OmXmlNode> start_file;
-    xml_stl.children(start_file, L"file");
+    vector<OmXmlNode> file_ls;
+    xml_stl.children(file_ls, L"file");
 
     // remove all current file list
-    for(size_t i = 0; i < start_file.size(); ++i)
-      xml_stl.remChild(start_file[i]);
+    for(size_t i = 0; i < file_ls.size(); ++i)
+      xml_stl.remChild(file_ls[i]);
 
     // add new list
     for(size_t i = 0; i < path.size(); ++i)
@@ -437,12 +440,12 @@ void OmManager::getStartContexts(bool* enable, vector<wstring>& path)
 
     *enable = start_list.attrAsInt(L"enable");
 
-    vector<OmXmlNode> start_file;
-    start_list.children(start_file, L"file");
+    vector<OmXmlNode> file_ls;
+    start_list.children(file_ls, L"file");
 
     // get list
-    for(size_t i = 0; i < start_file.size(); ++i)
-      path.push_back(start_file[i].content());
+    for(size_t i = 0; i < file_ls.size(); ++i)
+      path.push_back(file_ls[i].content());
   }
 }
 
@@ -538,9 +541,8 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
   ctx_def.close();
 
   // open the new created Context
-  if(open) {
+  if(open)
     return this->ctxOpen(ctx_def_path);
-  }
 
   return true;
 }
@@ -549,7 +551,7 @@ bool OmManager::ctxNew(const wstring& title, const wstring& path, bool open)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmManager::ctxOpen(const wstring& path)
+bool OmManager::ctxOpen(const wstring& path, bool select)
 {
   // check whether Context is already opened
   for(size_t i = 0; i < _ctxLs.size(); ++i) {
@@ -572,7 +574,8 @@ bool OmManager::ctxOpen(const wstring& path)
   this->saveRecentFile(path);
 
   // the last loaded context become the active one
-  this->ctxSel(this->_ctxLs.size() - 1);
+  if(select)
+    this->ctxSel(this->_ctxLs.size() - 1);
 
   return true;
 }

@@ -22,6 +22,7 @@
 #define MGR_PROP_GLE_ICON_SIZE          0
 #define MGR_PROP_GLE_NO_MDPARSE         1
 #define MGR_PROP_GLE_START_LIST         2
+#define MGR_PROP_GLE_SARRT_ORDER        3
 
 /// \brief Manager Options / General tab child
 ///
@@ -85,6 +86,10 @@ class OmUiPropMgrGle : public OmDialog
     void                _onCkBoxStr();
 
     void                _onLbStrlsSel();
+
+    void                _onBcUpStr();
+
+    void                _onBcDnStr();
 
     void                _onBcBrwStr();
 

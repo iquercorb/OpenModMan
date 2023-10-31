@@ -284,8 +284,9 @@ class OmManager
     /// Open a Context configuration at the specified path.
     ///
     /// \param[in]  path      : Context file path.
+    /// \param[in]  select    : Select the opened Context.
     ///
-    bool ctxOpen(const wstring& path);
+    bool ctxOpen(const wstring& path, bool select = true);
 
     /// \brief Close current Context.
     ///

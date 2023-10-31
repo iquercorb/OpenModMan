@@ -336,9 +336,9 @@ void OmUiMgr::_buildCbCtx()
       this->msgItem(IDC_CB_CTX, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(item_str.c_str()));
     }
 
-    // If no context selected, force the selection of the last added context
+    // If no context selected, force the selection of the first context in list
     if(!pMgr->ctxCur())
-      pMgr->ctxSel(pMgr->ctxCount() - 1);
+      pMgr->ctxSel(0);
 
     // select context according current active one
     this->msgItem(IDC_CB_CTX, CB_SETCURSEL, pMgr->ctxCurId());
