@@ -64,7 +64,7 @@ bool OmUiWizCtxLoc::hasValidParams() const
   wstring item_str, msg;
 
   this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_dlgValidName(this->_hwnd, L"Channel name", item_str))
+  if(!Om_dlgValidName(this->_hwnd, L"Mod Channel name", item_str))
     return false;
 
   this->getItemText(IDC_EC_INP02, item_str);
@@ -209,7 +209,7 @@ void OmUiWizCtxLoc::_onBcBrwBck()
 void OmUiWizCtxLoc::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Channel name, to identify it and create folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Mod Channel name, to identify it and create folder");
 
   this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
@@ -223,10 +223,10 @@ void OmUiWizCtxLoc::_onInit()
   this->_createTooltip(IDC_BC_BRW04,  L"Browse to select a custom Backup folder");
 
   // set default start values
-  this->setItemText(IDC_EC_INP01, L"New Channel");
+  this->setItemText(IDC_EC_INP01, L"New Mod Channel");
   this->setItemText(IDC_EC_INP02, L"");
-  this->setItemText(IDC_EC_INP03, L"New Channel\\Library");
-  this->setItemText(IDC_EC_INP04, L"New Channel\\Backup");
+  this->setItemText(IDC_EC_INP03, L"New Mod Channel\\Library");
+  this->setItemText(IDC_EC_INP04, L"New Mod Channel\\Backup");
 
   // disable "next" button
   static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);

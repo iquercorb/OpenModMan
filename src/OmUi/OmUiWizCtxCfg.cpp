@@ -64,12 +64,12 @@ bool OmUiWizCtxCfg::hasValidParams() const
   wstring item_str;
 
   this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_dlgValidName(this->_hwnd, L"Context name", item_str))
+  if(!Om_dlgValidName(this->_hwnd, L"Mod Hub name", item_str))
     return false;
 
   this->getItemText(IDC_EC_INP02, item_str);
-  if(Om_dlgValidPath(this->_hwnd, L"Context path", item_str)) {
-    if(!Om_dlgCreateFolder(this->_hwnd, L"Context path", item_str))
+  if(Om_dlgValidPath(this->_hwnd, L"Mod Hub path", item_str)) {
+    if(!Om_dlgCreateFolder(this->_hwnd, L"Mod Hub path", item_str))
       return false;
   } else {
     return false;
@@ -108,7 +108,7 @@ void OmUiWizCtxCfg::_onBcBrwHome()
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Context path, where to create the Context home folder", start))
+  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Mod Hub path, where to create the Mod Hub home folder", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -121,13 +121,13 @@ void OmUiWizCtxCfg::_onBcBrwHome()
 void OmUiWizCtxCfg::_onInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Context name, both to identify it and create home folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Mod Hub name, both to identify it and create home folder");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Context path, where to create the Context home folder");
-  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select Context path");
+  this->_createTooltip(IDC_EC_INP02,  L"Mod Hub path, where to create the Mod Hub home folder");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select Hub path");
 
   // set default start values
-  this->setItemText(IDC_EC_INP01, L"New Context");
+  this->setItemText(IDC_EC_INP01, L"New Mod Hub");
   this->setItemText(IDC_EC_INP02, L"");
   this->setItemText(IDC_EC_INP03, L"<invalid path>");
 
