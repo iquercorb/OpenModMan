@@ -261,6 +261,9 @@ void OmUiPropCtxLoc::_onLbLoclsSel()
 
     this->enableItem(IDC_BC_DEL, false);
     this->enableItem(IDC_BC_EDI, false);
+
+    this->enableItem(IDC_BC_UP, false);
+    this->enableItem(IDC_BC_DN, false);
   }
 }
 
