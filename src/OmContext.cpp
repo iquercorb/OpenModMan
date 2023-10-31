@@ -265,7 +265,6 @@ void OmContext::close()
 }
 
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -666,94 +665,6 @@ OmBatch* OmContext::batAdd(const wstring& title)
 }
 
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-/*
-bool OmContext::batAdd(const wstring& title, const vector<wstring>& loc_uuid, const vector<vector<uint64_t>>& loc_hash_list)
-{
-  // check whether we have same count of Location and hash list
-  if(loc_hash_list.size() != loc_uuid.size()) {
-    this->_error = L"Supplied hash and location arrays size mismatches";
-    this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
-    return false;
-  }
-
-  // compose path using title and context home
-  wstring bat_def_path = this->_home + L"\\";
-  bat_def_path += title; bat_def_path += L"."; bat_def_path += OMM_BAT_DEF_FILE_EXT;
-
-  // initialize new definition file
-  OmConfig bat_def;
-  if(!bat_def.init(bat_def_path, OMM_XMAGIC_BAT)) {
-    this->_error = Om_errInit(L"Definition file", bat_def_path, bat_def.lastErrorStr());
-    this->log(0, L"Context("+this->_title+L") Create Batch", this->_error);
-    return false;
-  }
-
-  // Generate a new UUID for this Batch
-  wstring uuid = Om_genUUID();
-
-  // Get XML document instance
-  OmXmlNode def_xml = bat_def.xml();
-
-  // set uuid and title
-  def_xml.addChild(L"uuid").setContent(uuid);
-  def_xml.addChild(L"title").setContent(title);
-
-  // define ordering index in definition file
-  def_xml.child(L"title").setAttr(L"index", static_cast<int>(this->_batLs.size()));
-
-  // useful variables
-  OmLocation* pLoc;
-  OmXmlNode xml_loc, xml_ins;
-
-  // For each Location defined
-  for(size_t l = 0; l < loc_uuid.size(); ++l) {
-
-    pLoc = this->locGet(loc_uuid[l]);
-
-    if(pLoc != nullptr) {
-
-      // add <location> entry
-      xml_loc = def_xml.addChild(L"location");
-      xml_loc.setAttr(L"uuid", loc_uuid[l]);
-
-      for(size_t i = 0; i < loc_hash_list[l].size(); ++i) {
-        // check whether package with this hash exists
-        if(pLoc->pkgFind(loc_hash_list[l][i])) {
-          xml_ins = xml_loc.addChild(L"install");
-          xml_ins.setAttr(L"hash", Om_uint64ToStr(loc_hash_list[l][i]));
-        } else {
-          this->_error = L"Package with hash "+Om_uint64ToStr(loc_hash_list[l][i]);
-          this->_error += L" was not found in Location.";
-          this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
-        }
-      }
-    } else {
-      this->_error = L"Location with UUID "+loc_uuid[l];
-      this->_error += L" was not found.";
-      this->log(1, L"Context("+this->_title+L") Create Batch", this->_error);
-    }
-  }
-
-  // save and close definition file
-  bat_def.save();
-  bat_def.close();
-
-  this->log(2, L"Context("+this->_title+L") Create Batch", L"Batch \""+title+L"\" created.");
-
-  // load the newly created Batch
-  OmBatch* pBat = new OmBatch(this);
-  pBat->open(bat_def_path);
-  this->_batLs.push_back(pBat);
-
-  // sort Batches by index
-  this->batSort();
-
-  return true;
-}
-*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

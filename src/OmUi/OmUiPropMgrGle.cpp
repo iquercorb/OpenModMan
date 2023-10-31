@@ -22,6 +22,7 @@
 #include "OmDialogProp.h"
 
 #include "OmUtilDlg.h"
+#include "OmUtilWin.h"         //< Om_getResIcon
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiPropMgrGle.h"
@@ -100,7 +101,83 @@ void OmUiPropMgrGle::_onLbStrlsSel()
 {
   int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
-  this->enableItem(IDC_BC_REM, (lb_sel >= 0));
+  if(lb_sel >= 0) {
+    this->enableItem(IDC_BC_REM, true);
+    this->enableItem(IDC_BC_UP, (lb_sel > 0));
+    int lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
+    this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+  } else {
+    this->enableItem(IDC_BC_REM, false);
+    this->enableItem(IDC_BC_UP, false);
+    this->enableItem(IDC_BC_DN, false);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropMgrGle::_onBcUpStr()
+{
+  // get selected item (index)
+  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+
+  // check whether we can move up
+  if(lb_sel == 0)
+    return;
+
+  wchar_t item_buf[OMM_ITM_BUFF];
+  int idx;
+
+  // retrieve the package List-Box label
+  this->msgItem(IDC_LB_PATH, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_PATH, LB_GETITEMDATA, lb_sel - 1);
+
+  this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel - 1);
+
+  this->msgItem(IDC_LB_PATH, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_PATH, LB_SETITEMDATA, lb_sel, idx);
+
+  this->enableItem(IDC_BC_UP, (lb_sel > 1));
+  this->enableItem(IDC_BC_DN, true);
+
+  // user modified parameter, notify it
+  this->setChParam(MGR_PROP_GLE_START_LIST, true);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropMgrGle::_onBcDnStr()
+{
+  // get selected item (index)
+  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  // get count of item in List-Box as index to for insertion
+  int lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
+
+  // check whether we can move down
+  if(lb_sel == lb_max)
+    return;
+
+  wchar_t item_buf[OMM_ITM_BUFF];
+  int idx;
+
+  this->msgItem(IDC_LB_PATH, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  idx = this->msgItem(IDC_LB_PATH, LB_GETITEMDATA, lb_sel);
+  this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
+
+  lb_sel++;
+
+  this->msgItem(IDC_LB_PATH, LB_INSERTSTRING, lb_sel, reinterpret_cast<LPARAM>(item_buf));
+  this->msgItem(IDC_LB_PATH, LB_SETITEMDATA, lb_sel, idx);
+  this->msgItem(IDC_LB_PATH, LB_SETCURSEL, lb_sel);
+
+  this->enableItem(IDC_BC_UP, true);
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
+
+  // user modified parameter, notify it
+  this->setChParam(MGR_PROP_GLE_START_LIST, true);
 }
 
 
@@ -144,12 +221,18 @@ void OmUiPropMgrGle::_onBcRemStr()
 ///
 void OmUiPropMgrGle::_onInit()
 {
+  // Set buttons inner icons
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
+
   // define controls tool-tips
   this->_createTooltip(IDC_CB_ICS,    L"Size of icons in packages lists");
 
   this->_createTooltip(IDC_BC_CKBX2,  L"Disables Markdown parsing and display descriptions as raw text");
   this->_createTooltip(IDC_BC_CKBX2,  L"Automatically opens Context files at application startup");
   this->_createTooltip(IDC_LB_PATH,   L"Context files to be opened at application startup");
+  this->_createTooltip(IDC_BC_UP,   L"Move up in list");
+  this->_createTooltip(IDC_BC_DN,   L"Move down in list");
   this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Context file to add");
   this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
 
@@ -160,7 +243,6 @@ void OmUiPropMgrGle::_onInit()
 
   // Update values
   this->_onRefresh();
-
 }
 
 
@@ -181,6 +263,10 @@ void OmUiPropMgrGle::_onResize()
   // Startup Contexts list CheckBox & ListBox
   this->_setItemPos(IDC_BC_CKBX2, 50, 79, 100, 9);
   this->_setItemPos(IDC_LB_PATH, 50, 90, this->cliUnitX()-100, this->cliUnitY()-130);
+
+  // Startup Contexts list Up and Down buttons
+  this->_setItemPos(IDC_BC_UP, this->cliUnitX()-48, 105, 16, 15);
+  this->_setItemPos(IDC_BC_DN, this->cliUnitX()-48, 120, 16, 15);
 
   // Startup Contexts list Add and Remove... buttons
   this->_setItemPos(IDC_BC_BRW01, 50, this->cliUnitY()-38, 50, 14);
@@ -263,6 +349,14 @@ INT_PTR OmUiPropMgrGle::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_LB_PATH: //< List-Box for startup Context(s) list
       if(HIWORD(wParam) == LBN_SELCHANGE)
         this->_onLbStrlsSel();
+      break;
+
+    case IDC_BC_UP: //< Up Buttn
+      this->_onBcUpStr();
+      break;
+
+    case IDC_BC_DN: //< Down Buttn
+      this->_onBcDnStr();
       break;
 
     case IDC_BC_BRW01: //< Startup Context list "Add.." Button

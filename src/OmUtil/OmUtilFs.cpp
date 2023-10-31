@@ -492,7 +492,7 @@ void __folderSize(uint64_t* size, const wstring& orig)
                                    FILE_ATTRIBUTE_NORMAL,
                                    nullptr);
         lo = GetFileSize(hFile, &hi);
-        *size += ((uint64_t)hi << 32) + lo;
+        *size += (static_cast<uint64_t>(hi) << 32) & lo;
         CloseHandle(hFile);
       }
     } while(FindNextFileW(hnd, &fd));
@@ -521,7 +521,7 @@ uint64_t Om_itemSize(const wstring& path)
     CloseHandle(hFile);
 
     if(lo != INVALID_FILE_SIZE)
-      ret = ((uint64_t)hi << 32) & lo;
+      ret = (static_cast<uint64_t>(hi) << 32) & lo;
 
   } else {
     ret = 0;
@@ -760,7 +760,7 @@ size_t Om_loadPlainText(string* text, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_loadBinary(size_t* size, const wstring& path)
+uint8_t* Om_loadBinary(uint64_t* size, const wstring& path)
 {
   // initialize size
   (*size) = 0;
@@ -772,7 +772,9 @@ uint8_t* Om_loadBinary(size_t* size, const wstring& path)
   if(hFile == INVALID_HANDLE_VALUE)
     return nullptr;
 
-  size_t data_size = GetFileSize(hFile, nullptr);
+  DWORD hi, lo;
+  lo = GetFileSize(hFile, &hi);
+  uint64_t data_size = (static_cast<uint64_t>(hi) << 32) & lo;
 
   // allocate buffer and read
   uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(data_size));

@@ -371,6 +371,6 @@ size_t Om_loadPlainText(string* pstr, const wstring& path);
 ///
 /// \return Pointer to loaded data.
 ///
-uint8_t* Om_loadBinary(size_t* size, const wstring& path);
+uint8_t* Om_loadBinary(uint64_t* size, const wstring& path);
 
 #endif // OMUTILFS_H_INCLUDED
