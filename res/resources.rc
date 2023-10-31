@@ -164,7 +164,7 @@ IDR_MENU MENU
     {
         POPUP "&New"
         {
-            MENUITEM "Modding &Hub...", IDM_FILE_NEW_CTX
+            MENUITEM "Mod &Hub...", IDM_FILE_NEW_CTX
         }
         MENUITEM SEPARATOR
         MENUITEM "&Open\tCtrl+O", IDM_FILE_OPEN
@@ -180,19 +180,19 @@ IDR_MENU MENU
     }
     POPUP "&Edit"
     {
-        POPUP "Modding &Hub", GRAYED
+        POPUP "Mod &Hub", GRAYED
         {
-          MENUITEM "&Add Channel...", IDM_EDIT_ADD_LOC
+          MENUITEM "&Add Mod Channel...", IDM_EDIT_ADD_LOC
           MENUITEM SEPARATOR
           MENUITEM "&Properties...", IDM_EDIT_CTX_PROP
         }
         MENUITEM SEPARATOR
-        POPUP "&Channel", GRAYED
+        POPUP "Mod &Channel", GRAYED
         {
           MENUITEM "&Properties...", IDM_EDIT_LOC_PROP
         }
         MENUITEM SEPARATOR
-        POPUP "&Package", GRAYED
+        POPUP "Mod &Package", GRAYED
         {
             MENUITEM "&Install\tEnter", IDM_EDIT_PKG_INST
             MENUITEM "&Uninstall\tBackspace", IDM_EDIT_PKG_UINS
@@ -418,7 +418,7 @@ EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "New Channel"
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Channel name :", IDC_SC_LBL01, 10, 10, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Channel name :", IDC_SC_LBL01, 10, 10, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 20, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     LTEXT           "Target path, where Mods/Packages are to be applied :", IDC_SC_LBL02, 5, 50, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 5, 60, 182, 13, ES_AUTOHSCROLL, WS_EX_LEFT
@@ -519,7 +519,9 @@ FONT 8, "Ms Shell Dlg"
     COMBOBOX        IDC_CB_ICS, 50, 30, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     AUTOCHECKBOX    "Disable Markdown (display descriptions as raw text)", IDC_BC_CKBX1, 50, 45, 100, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Open Contexts at startup :", IDC_BC_CKBX2, 50, 70, 100, 9, 0, WS_EX_LEFT
-    LISTBOX         IDC_LB_PATH, 50, 80, 205, 35, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_SORT | LBS_NOTIFY, WS_EX_LEFT
+    LISTBOX         IDC_LB_PATH, 50, 80, 205, 35, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
+    PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
+    PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_BRW01, 50, 127, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Remove", IDC_BC_REM, 102, 127, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
