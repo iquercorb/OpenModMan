@@ -21,6 +21,8 @@
 #include "OmUtilWin.h"
 #endif
 
+#define UWM_QUIT (WM_USER+1)
+
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDialog.h"
 
@@ -60,9 +62,24 @@ static inline void __cce_init()
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialog::OmDialog(HINSTANCE hins) :
-  _hins(hins), _hwnd(nullptr), _parent(nullptr), _child(), _accel(nullptr),
-  _menu(nullptr), _data(nullptr), _init(true), _modal(false), _recw{}, _recc{},
-  _ubase{}, _limit{}, _size{}, _usize{}, _active(false), _minimized(false),
+  _hins(hins),
+  _hwnd(nullptr),
+  _parent(nullptr),
+  _accel(nullptr),
+  _menu(nullptr),
+  _data(nullptr),
+  _init(true),
+  _modal(false),
+  _recw{},
+  _recc{},
+  _ubase{},
+  _limit{},
+  _size{},
+  _usize{},
+  _active(false),
+  _minimized(false),
+  _safe(true),
+  _wait_safe(false),
   _hdwp(nullptr)
 {
 
@@ -75,7 +92,7 @@ OmDialog::OmDialog(HINSTANCE hins) :
 OmDialog::~OmDialog()
 {
   for(size_t i = 0; i < this->_child.size(); ++i)
-     delete this->_child[i];
+    delete this->_child[i];
 }
 
 
@@ -94,7 +111,8 @@ long OmDialog::id() const
 OmDialog* OmDialog::childById(long id) const
 {
   for(size_t i = 0; i < this->_child.size(); ++i)
-     if(this->_child[i]->id() == id) return this->_child[i];
+    if(this->_child[i]->id() == id)
+      return this->_child[i];
 
   return nullptr;
 }
@@ -158,6 +176,10 @@ void OmDialog::open(bool show)
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
 
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open (thread=: "<<GetCurrentThreadId()<<L")\n";
+    #endif
+
   } else {
     #ifdef DEBUG
     int err = GetLastError();
@@ -194,6 +216,10 @@ void OmDialog::modeless(bool show)
     this->_menu = GetMenu(this->_hwnd);
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
+
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless (thread=: "<<GetCurrentThreadId()<<L")\n";
+    #endif
 
   } else {
     #ifdef DEBUG
@@ -243,6 +269,10 @@ void OmDialog::registered(const char* classname, bool show)
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
   }
+
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered (thread=: "<<GetCurrentThreadId()<<L")\n";
+  #endif
 }
 
 
@@ -252,7 +282,8 @@ void OmDialog::registered(const char* classname, bool show)
 void OmDialog::refresh()
 {
   if(this->_hwnd) {
-    if(IsWindowVisible(this->_hwnd)) {
+    //if(IsWindowVisible(this->_hwnd)) {
+    if(!this->_init) {
 
       this->_onRefresh();
 
@@ -268,25 +299,27 @@ void OmDialog::refresh()
 ///
 void OmDialog::quit()
 {
-  for(size_t i = 0; i < this->_child.size(); ++i) {
+  for(size_t i = 0; i < this->_child.size(); ++i)
     this->_child[i]->quit();
-  }
-
-  this->_onQuit();
 
   if(this->_hwnd) {
 
-    DestroyWindow(this->_hwnd);
+    // prevent onQuit to called twice in case dialog first
+    // attempt to quit was delayed due to non-safe
+    if(!this->_wait_safe)
+      this->_onQuit();
 
-    this->_hwnd = nullptr;
-  }
+    // check whether dialog is safe to quit
+    if(this->_safe) {
 
-  if(this->_modal) {
-    // in case the window is modal (typically a sub-dialog window)
-    // the parent window must be enabled and activated back again
-    EnableWindow(this->_parent->_hwnd, true);
-    SetActiveWindow(this->_parent->_hwnd);
-    this->_modal = false;
+      SendMessage(this->_hwnd, UWM_QUIT, 0, 0);
+
+    } else {
+
+      // we are waiting for dialog to be safe again to quit
+      this->_wait_safe = true;
+
+    }
   }
 }
 
@@ -297,8 +330,11 @@ void OmDialog::quit()
 void OmDialog::addChild(OmDialog* dialog)
 {
   if(dialog->_parent) {
+
     for(size_t i = 0; i < dialog->_parent->_child.size(); ++i) {
+
       if(dialog->_parent->_child[i] == dialog) {
+
         dialog->_parent->_child.erase(dialog->_parent->_child.begin() + i);
         break;
       }
@@ -319,8 +355,11 @@ void OmDialog::addChild(OmDialog* dialog)
 void OmDialog::setParent(OmDialog* dialog)
 {
   if(this->_parent) {
+
     for(size_t i = 0; i < this->_parent->_child.size(); ++i) {
+
       if(this->_parent->_child[i] == this) {
+
         this->_parent->_child.erase(this->_parent->_child.begin() + i);
         break;
       }
@@ -352,6 +391,7 @@ void OmDialog::setAccel(long id)
 void OmDialog::setData(void* data)
 {
   this->_data = data;
+
   for(size_t i = 0; i < this->_child.size(); ++i)
     this->_child[i]->setData(this->_data);
 }
@@ -375,10 +415,10 @@ void OmDialog::setStyle(long style, long exstyle)
 bool OmDialog::sendMessage(MSG* msg) const
 {
   if(this->_hwnd) {
-    for(size_t i = 0; i < this->_child.size(); ++i) {
+
+    for(size_t i = 0; i < this->_child.size(); ++i)
       if(this->_child[i]->sendMessage(msg))
         return true;
-    }
 
     return IsDialogMessage(this->_hwnd, msg);
   }
@@ -404,11 +444,19 @@ void OmDialog::loopMessage() const
   }
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmDialog::redrawItem(unsigned id, RECT* rect, uint32_t falgs) const
+{
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  RedrawWindow(hCtrl, rect, nullptr, falgs);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::setItemText(unsigned id, const wstring& text) const
+void OmDialog::setItemText(unsigned id, const OmWString& text) const
 {
   SendMessageW(GetDlgItem(this->_hwnd, id), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text.c_str()));
 }
@@ -417,7 +465,7 @@ void OmDialog::setItemText(unsigned id, const wstring& text) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t OmDialog::getItemText(unsigned id, wstring& text) const
+size_t OmDialog::getItemText(unsigned id, OmWString& text) const
 {
   HWND hCtrl = GetDlgItem(this->_hwnd, id);
   int len = SendMessageW(hCtrl, WM_GETTEXTLENGTH , 0, 0);
@@ -439,6 +487,51 @@ size_t OmDialog::getItemText(unsigned id, wstring& text) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+size_t OmDialog::getLbText(unsigned id, unsigned i, OmWString& text) const
+{
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  int len = SendMessageW(hCtrl, LB_GETTEXTLEN, i, 0);
+  if(len > 0) {
+    text.resize(len);
+    int n = SendMessageW(hCtrl, LB_GETTEXT, i, reinterpret_cast<LPARAM>(&text[0]));
+    // Under certain conditions, the DefWindowProc function returns a value that is
+    // larger than the actual length of the text. This occurs with certain mixtures
+    // of ANSI and Unicode, and is due to the system allowing for the possible
+    // existence of double-byte character set (DBCS) characters within the text.
+    if(n < len) text.resize(n);
+    return n;
+  }
+  text.clear();
+  return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmDialog::findLvParam(unsigned id, uint64_t param) const
+{
+  // necessary to update icon in ListView
+  LVFINDINFOW lvFind = {};
+  lvFind.flags = LVFI_PARAM;
+  lvFind.lParam = static_cast<LPARAM>(param); //< FIXME: What about 32-bit systems ?
+
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  return SendMessageW(hCtrl, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvFind));
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmDialog::getLvSubRect(unsigned id, uint64_t item, uint32_t subitem, RECT* rect) const
+{
+  rect->top = subitem; rect->left = LVIR_BOUNDS;
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  return SendMessageW(hCtrl, LVM_GETSUBITEMRECT, item, reinterpret_cast<LPARAM>(rect));
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image) const
 {
   LPARAM lParam = reinterpret_cast<LPARAM>(image);
@@ -446,6 +539,16 @@ HBITMAP OmDialog::setStImage(unsigned id, HBITMAP image) const
   return reinterpret_cast<HBITMAP>(lResult);
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HICON OmDialog::setStIcon(unsigned id, HICON icon) const
+{
+  WPARAM wParam = reinterpret_cast<LPARAM>(icon);
+  LRESULT lResult = SendMessageW(GetDlgItem(this->_hwnd, id), STM_SETICON, wParam, 0);
+  return reinterpret_cast<HICON>(lResult);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -521,7 +624,7 @@ void OmDialog::_getItemSize(unsigned id, long* size, bool pixel)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialog::_createTooltip(unsigned id, const wstring& text)
+void OmDialog::_createTooltip(unsigned id, const OmWString& text)
 {
   // create new Tooltip control
   HWND hTtip = CreateWindowEx(0, TOOLTIPS_CLASS, nullptr,
@@ -542,6 +645,34 @@ void OmDialog::_createTooltip(unsigned id, const wstring& text)
   SendMessageW(hTtip, TTM_ADDTOOLW, 0, reinterpret_cast<LPARAM>(&toolInfo));
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::_setSafe(bool safe)
+{
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::_setSafe (thread=: "<<GetCurrentThreadId()<<L")\n";
+  #endif
+
+  if(safe && !this->_safe) {
+
+    // check for all children to be safe in order
+    // to make this instance safe
+    for(size_t i = 0; i < this->_child.size(); ++i)
+      if(!this->_child[i]->_safe)
+        return;
+  }
+
+  this->_safe = safe;
+
+  // check whether dialog wait safe to quit
+  if(this->_wait_safe && this->_safe)
+    this->quit();
+
+  // propagate to parent
+  if(this->_parent)
+    this->_parent->_setSafe(safe);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -621,16 +752,16 @@ INT_PTR OmDialog::_onMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 ///
 INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  OmDialog* dialog;
+  OmDialog* self;
 
   if(msg == WM_INITDIALOG) {
     SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
-    dialog = reinterpret_cast<OmDialog*>(lParam);
+    self = reinterpret_cast<OmDialog*>(lParam);
   } else {
-    dialog = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    self = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
   }
 
-  if(dialog) {
+  if(self) {
 
     LONG temp[4] = {0, 0, 4, 8};
 
@@ -638,71 +769,71 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     {
 
     case WM_ACTIVATE:
-      dialog->_active = (LOWORD(wParam) != WA_INACTIVE);
+      self->_active = (LOWORD(wParam) != WA_INACTIVE);
       #ifdef DEBUG
         if(LOWORD(wParam) == WA_INACTIVE) {
-          std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WA_INACTIVE\n";
+          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_INACTIVE\n";
         } else {
-          std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WA_ACTIVE\n";
+          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_ACTIVE\n";
         }
       #endif
       break; // case WM_ACTIVATE:
 
     case WM_INITDIALOG:
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_INITDIALOG\n";
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_INITDIALOG\n";
       #endif
-      dialog->_init = true;
+      self->_init = true;
       return 1; // case WM_INITDIALOG:
 
     case WM_SHOWWINDOW:
       if(wParam) { // SHOW
 
         // Get the initial window size and store it as min size
-        GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recw));
-        dialog->_size[0] = dialog->_recw[2] - dialog->_recw[0];
-        dialog->_size[1] = dialog->_recw[3] - dialog->_recw[1];
-        dialog->_limit[0] = dialog->_size[0];
-        dialog->_limit[1] = dialog->_size[1];
+        GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&self->_recw));
+        self->_size[0] = self->_recw[2] - self->_recw[0];
+        self->_size[1] = self->_recw[3] - self->_recw[1];
+        self->_limit[0] = self->_size[0];
+        self->_limit[1] = self->_size[1];
 
         // Calculate the dialog base unit
         MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&temp));
-        dialog->_ubase[0] = temp[2];
-        dialog->_ubase[1] = temp[3];
+        self->_ubase[0] = temp[2];
+        self->_ubase[1] = temp[3];
 
         // Update dialog client rect
-        GetClientRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recc));
+        GetClientRect(hwnd, reinterpret_cast<LPRECT>(&self->_recc));
         // calculate dialog client size in base unit
-        dialog->_usize[0] = MulDiv(dialog->_recc[2], 4, dialog->_ubase[0]);
-        dialog->_usize[1] = MulDiv(dialog->_recc[3], 8, dialog->_ubase[1]);
+        self->_usize[0] = MulDiv(self->_recc[2], 4, self->_ubase[0]);
+        self->_usize[1] = MulDiv(self->_recc[3], 8, self->_ubase[1]);
 
         // if this is the first show after WM_INITDIALOG
-        if(dialog->_init) {
-          dialog->_init = false;
-          dialog->_onInit();
+        if(self->_init) {
+          self->_init = false;
+          self->_onInit();
         }
 
         // call user function
-        dialog->_onShow();
+        self->_onShow();
 
         // call user function
-        dialog->_onResize();
+        self->_onResize();
 
       } else {
         // call user function
-        dialog->_onHide();
+        self->_onHide();
       }
       return 0; // case WM_SHOWWINDOW
 
     case WM_WINDOWPOSCHANGED:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGED
 
     case WM_WINDOWPOSCHANGING:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGING
 
@@ -711,66 +842,86 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_SIZE:
       // Update dialog window rect
-      GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recw));
-      dialog->_size[0] = dialog->_recw[2] - dialog->_recw[0];
-      dialog->_size[1] = dialog->_recw[3] - dialog->_recw[1];
+      GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&self->_recw));
+      self->_size[0] = self->_recw[2] - self->_recw[0];
+      self->_size[1] = self->_recw[3] - self->_recw[1];
       // Update dialog client rect
-      GetClientRect(hwnd, reinterpret_cast<LPRECT>(&dialog->_recc));
+      GetClientRect(hwnd, reinterpret_cast<LPRECT>(&self->_recc));
       // calculate dialog size in base unit
-      dialog->_usize[0] = MulDiv(dialog->_recc[2], 4, dialog->_ubase[0]);
-      dialog->_usize[1] = MulDiv(dialog->_recc[3], 8, dialog->_ubase[1]);
+      self->_usize[0] = MulDiv(self->_recc[2], 4, self->_ubase[0]);
+      self->_usize[1] = MulDiv(self->_recc[3], 8, self->_ubase[1]);
 
       if(wParam == SIZE_MINIMIZED)
-        dialog->_minimized = true;
+        self->_minimized = true;
 
       if(wParam == SIZE_RESTORED) {
-        if(dialog->_minimized)
-          dialog->_minimized = false;
+        if(self->_minimized)
+          self->_minimized = false;
       }
 
       // call user function
-      dialog->_onResize();
+      self->_onResize();
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_SIZE\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_SIZE\n";
       #endif
 
       return 0; // case WM_SIZE
 
     case WM_GETMINMAXINFO:
       // Set minimum window size as initial window size
-      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.x = dialog->_limit[0];
-      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.y = dialog->_limit[1];
+      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.x = self->_limit[0];
+      reinterpret_cast<LPMINMAXINFO>(lParam)->ptMinTrackSize.y = self->_limit[1];
       return 0; // case WM_GETMINMAXINFO:
 
     case 736: // WM_DPICHANGED
     case WM_FONTCHANGE:
       #ifdef DEBUG
-        std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : WM_DPICHANGED or WM_FONTCHANGE\n";
+        std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DPICHANGED or WM_FONTCHANGE\n";
       #endif
       // I think this will never happen...
       MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&temp));
-      dialog->_ubase[0] = temp[2];
-      dialog->_ubase[1] = temp[3];
+      self->_ubase[0] = temp[2];
+      self->_ubase[1] = temp[3];
 
       // call user function
-      dialog->_onResize();
+      self->_onResize();
 
       return 0; // case WM_DPICHANGED WM_FONTCHANGE
 
     case WM_CLOSE:
-      dialog->_onClose();
+      self->_onClose();
       return 0; // case WM_CLOSE
 
-    case WM_DESTROY:
+    case UWM_QUIT: //< Custom QUIT message to destroy window from any thread
+      if(DestroyWindow(self->_hwnd)) {
+
+        self->_hwnd = nullptr;
+
+        if(self->_modal) {
+          // in case the window is modal (typically a sub-dialog window)
+          // the parent window must be enabled and activated back again
+          EnableWindow(self->_parent->_hwnd, true);
+          SetActiveWindow(self->_parent->_hwnd);
+          self->_modal = false;
+        }
+
+        if(!self->_parent)
+          PostQuitMessage(0);
+      }
       return 0;
 
+    case WM_DESTROY:
+      #ifdef DEBUG
+        std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DESTROY\n";
+      #endif
+      return 0;
     }
 
     #ifdef DEBUG
-    //std::cout << "DEBUG => OmDialog(ID=" << (int)dialog->id() << ")::_wndproc : "<< msg <<"\n";
+    //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : "<< msg <<"\n";
     #endif
 
-    return dialog->_onMsg(msg, wParam, lParam);
+    return self->_onMsg(msg, wParam, lParam);
   }
 
   return 0;

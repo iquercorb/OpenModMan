@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILBASE64_H_INCLUDED
-#define OMUTILBASE64_H_INCLUDED
+#ifndef OMUTILBASE64_H
+#define OMUTILBASE64_H
 
 #include "OmBase.h"
 
@@ -28,7 +28,7 @@
 ///
 /// \return String containing Base64 encoded data
 ///
-wstring Om_toBase64(const uint8_t* data, size_t size);
+OmWString Om_toBase64(const uint8_t* data, size_t size);
 
 /// \brief Encode bytes to Base64.
 ///
@@ -38,7 +38,7 @@ wstring Om_toBase64(const uint8_t* data, size_t size);
 /// \param[in]  data    : Data to encode.
 /// \param[in]  size    : data size in bytes.
 ///
-void Om_toBase64(wstring& b64, const uint8_t* data, size_t size);
+void Om_toBase64(OmWString& b64, const uint8_t* data, size_t size);
 
 /// \brief Decode Base64 to bytes.
 ///
@@ -49,7 +49,7 @@ void Om_toBase64(wstring& b64, const uint8_t* data, size_t size);
 ///
 /// \return Pointer to decoded data.
 ///
-uint8_t* Om_fromBase64(size_t* size, const wstring& b64);
+uint8_t* Om_fromBase64(size_t* size, const OmWString& b64);
 
 /// \brief Format to Base64 encoded Data URI.
 ///
@@ -61,7 +61,7 @@ uint8_t* Om_fromBase64(size_t* size, const wstring& b64);
 /// \param[in]  data      : Data to encode.
 /// \param[in]  size      : data size in bytes.
 ///
-void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& charset, const uint8_t* data, size_t size);
+void Om_encodeDataUri(OmWString& uri, const OmWString& mime_type, const OmWString& charset, const uint8_t* data, size_t size);
 
 /// \brief Get data from Data URI.
 ///
@@ -74,6 +74,6 @@ void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& cha
 ///
 /// \return Pointer to decoded data.
 ///
-uint8_t* Om_decodeDataUri(size_t* size, wstring& mime_type, wstring& charset, const wstring& uri);
+uint8_t* Om_decodeDataUri(size_t* size, OmWString& mime_type, OmWString& charset, const OmWString& uri);
 
-#endif // OMUTILBASE64_H_INCLUDED
+#endif // OMUTILBASE64_H

@@ -23,9 +23,9 @@
 
 #include "OmBaseApp.h"
 
-#include "OmPackage.h"
-#include "OmManager.h"
-#include "OmContext.h"
+#include "OmModMan.h"
+#include "OmModHub.h"
+#include "OmModPack.h"
 
 #include "OmUiProgress.h"
 
@@ -71,14 +71,14 @@ static inline bool __save_snapshot(OmXmlNode& xml_pic, const OmImage& image)
   if(image.valid()) {
 
     // Get RGBA thumbnail
-    uint8_t* rgb_data = Om_imgMakeThumb(128, OMM_SIZE_FILL, image.data(), image.width(), image.height());
+    uint8_t* rgb_data = Om_imgMakeThumb(128, OM_SIZE_FILL, image.data(), image.width(), image.height());
 
     // Encode RGBA to JPEG
     size_t jpg_size;
     uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, rgb_data, 128, 128, 4, 7);
 
     // format jpeg to base64 encoded data URI
-    wstring data_uri;
+    OmWString data_uri;
     Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg_data, jpg_size);
 
     // set node content to data URI string
@@ -108,10 +108,10 @@ static inline bool __save_snapshot(OmXmlNode& xml_pic, const OmImage& image)
 ///
 /// \return True if operation succeed, false otherwise
 ///
-static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
+static inline bool __save_description(OmXmlNode& xml_des, const OmWString& text)
 {
   // convert to UTF-8
-  string utf8 = Om_toUTF8(text);
+  OmCString utf8 = Om_toUTF8(text);
   size_t txt_size = utf8.size() + 1; // we include the nullchar
 
   if(txt_size > 1) {
@@ -124,7 +124,7 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
     uint8_t* zip = Om_zDeflate(&zip_size, reinterpret_cast<const uint8_t*>(utf8.c_str()), txt_size, 9);
 
     // Encode to data URI Base64
-    wstring data_uri;
+    OmWString data_uri;
     Om_encodeDataUri(data_uri, L"application/octet-stream", L"", zip, zip_size);
     Om_free(zip);
 
@@ -142,14 +142,13 @@ static inline bool __save_description(OmXmlNode& xml_des, const wstring& text)
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
-  _config(),
+  _xmlconf(),
   _rmtCur(),
   _unsaved(false),
   _addDir_hth(nullptr),
   _addDir_path()
 {
-  this->addChild(new OmUiProgress(hins));   //< for Location backup cleaning
-
+  this->addChild(new OmUiProgress(hins));
 }
 
 
@@ -181,27 +180,23 @@ long OmUiToolRep::id() const
 void OmUiToolRep::_repInit()
 {
   // Initialize new Repository definition XML scheme
-  this->_config.init(OMM_XMAGIC_REP);
-
-  // Generate a new UUID for this Repository
-  wstring uuid = Om_genUUID();
+  this->_xmlconf.init(OM_XMAGIC_REP);
 
   // Create repository base scheme
-  OmXmlNode xml_def = this->_config.xml();
-  xml_def.addChild(L"uuid").setContent(uuid);
-  xml_def.addChild(L"title").setContent(L"New Repository");
-  xml_def.addChild(L"downpath").setContent(REPO_DEFAULT_DOWLOAD);
-  xml_def.addChild(L"remotes").setAttr(L"count", 0);
+  this->_xmlconf.addChild(L"uuid").setContent(Om_genUUID());
+  this->_xmlconf.addChild(L"title").setContent(L"New Repository");
+  this->_xmlconf.addChild(L"downpath").setContent(REPO_DEFAULT_DOWLOAD);
+  this->_xmlconf.addChild(L"remotes").setAttr(L"count", 0);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repOpen(const wstring& path)
+bool OmUiToolRep::_repOpen(const OmWString& path)
 {
   // Initialize new Repository definition XML scheme
-  if(!this->_config.open(path, OMM_XMAGIC_REP)) {
+  if(!this->_xmlconf.load(path, OM_XMAGIC_REP)) {
     Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR,
                  L"Repository definition parse error", L"The specified file is "
                  "not valid Repository definition:", path);
@@ -215,15 +210,15 @@ bool OmUiToolRep::_repOpen(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmXmlNode OmUiToolRep::_rmtGet(const wstring& ident)
+OmXmlNode OmUiToolRep::_rmtGet(const OmWString& ident)
 {
   OmXmlNode result;
 
   // Get the package list XML node
-  OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
+  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
 
   // Get all <remote> children
-  std::vector<OmXmlNode> xml_rmt_ls;
+  OmXmlNodeArray xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
   // search <remote> with specified identity
@@ -240,32 +235,32 @@ OmXmlNode OmUiToolRep::_rmtGet(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_rmtAdd(const wstring& path)
+bool OmUiToolRep::_rmtAdd(const OmWString& path)
 {
   // parse the package
   OmXmlNode xml_node, xml_rmt, xml_rmts;
 
   // try to parse package
-  OmPackage pkg;
-  if(!pkg.srcParse(path))
+  OmModPack ModPack;
+  if(!ModPack.parseSource(path))
     return false;
 
   // Search for already existing <remote>
-  xml_rmt = this->_rmtGet(pkg.ident());
+  xml_rmt = this->_rmtGet(ModPack.iden());
 
   // if <remote> with same identity already exist, user have to choose
   if(!xml_rmt.empty()) {
 
     if(!Om_dlgBox_yn(this->_hwnd, L"Repository Editor", IDI_QRY,
                 L"Empty Package source folder", L"Package with identity \""
-                +pkg.ident()+L"\" already exists in current Repository, "
+                +ModPack.iden()+L"\" already exists in current Repository, "
                 "do you want to replace the existing one ?"))
       return true; // cancel operation
 
     // check whether the current duplicate <remote> is the current selected one
     if(!this->_rmtCur.empty()) {
       // unselect package in list, to prevent inconsistent control contents
-      if(this->_rmtCur.attrAsString(L"ident") == pkg.ident()) {
+      if(this->_rmtCur.attrAsString(L"ident") == ModPack.iden()) {
         this->_rmtSel(L"");
       }
     }
@@ -274,47 +269,47 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
     xml_rmt.remChild(L"dependencies");
     xml_rmt.remChild(L"picture");
     xml_rmt.remChild(L"description");
-    xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
+    xml_rmt.setAttr(L"file", Om_getFilePart(ModPack.sourcePath()));
     xml_rmt.setAttr(L"bytes", Om_itemSize(path));
     xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
-    xml_rmt.setAttr(L"category", pkg.category());
+    xml_rmt.setAttr(L"category", ModPack.category());
 
   } else {
 
     // Get the remote package list XML node
-    xml_rmts = this->_config.xml().child(L"remotes");
+    xml_rmts = this->_xmlconf.child(L"remotes");
 
     // create new <remote> in repository
     xml_rmt = xml_rmts.addChild(L"remote");
-    xml_rmt.setAttr(L"ident", pkg.ident());
-    xml_rmt.setAttr(L"file", Om_getFilePart(pkg.srcPath()));
+    xml_rmt.setAttr(L"ident", ModPack.iden());
+    xml_rmt.setAttr(L"file", Om_getFilePart(ModPack.sourcePath()));
     xml_rmt.setAttr(L"bytes", Om_itemSize(path));
     xml_rmt.setAttr(L"xxhsum", Om_getXXHsum(path)); //< use XXHash3 by default
-    xml_rmt.setAttr(L"category", pkg.category());
+    xml_rmt.setAttr(L"category", ModPack.category());
 
     // Add package to ListBox
-    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pkg.ident().c_str()));
+    this->msgItem(IDC_LB_PKG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ModPack.iden().c_str()));
 
     // increment <remote> count
     int n = xml_rmts.attrAsInt(L"count");
     xml_rmts.setAttr(L"count", n + 1);
   }
 
-  if(pkg.depCount()) {
+  if(ModPack.dependCount()) {
     xml_node = xml_rmt.addChild(L"dependencies");
-    for(size_t i = 0; i < pkg.depCount(); ++i) {
-      xml_node.addChild(L"ident").setContent(pkg.depGet(i));
+    for(size_t i = 0; i < ModPack.dependCount(); ++i) {
+      xml_node.addChild(L"ident").setContent(ModPack.getDependIden(i));
     }
   }
 
-  if(pkg.thumb().valid()) {
+  if(ModPack.thumbnail().valid()) {
     xml_node = xml_rmt.addChild(L"picture");
-    __save_snapshot(xml_node, pkg.thumb());
+    __save_snapshot(xml_node, ModPack.thumbnail());
   }
 
-  if(!pkg.desc().empty()) {
+  if(!ModPack.description().empty()) {
     xml_node = xml_rmt.addChild(L"description");
-    __save_description(xml_node, pkg.desc());
+    __save_description(xml_node, ModPack.description());
   }
 
   return true;
@@ -324,13 +319,13 @@ bool OmUiToolRep::_rmtAdd(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_rmtRem(const wstring& ident)
+bool OmUiToolRep::_rmtRem(const OmWString& ident)
 {
   // Get the package list XML node
-  OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
+  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
 
   // Get all <remote> children
-  std::vector<OmXmlNode> xml_rmt_ls;
+  OmXmlNodeArray xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
   // search <remote> with specified identity
@@ -353,7 +348,7 @@ bool OmUiToolRep::_rmtRem(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_rmtSel(const wstring& ident)
+bool OmUiToolRep::_rmtSel(const OmWString& ident)
 {
   // clear current selected <remote>
   this->_rmtCur.clear();
@@ -387,10 +382,10 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   }
 
   // Get the remote packages list XML node
-  OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
+  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
 
   // Get all <remote> children
-  std::vector<OmXmlNode> xml_rmt_ls;
+  OmXmlNodeArray xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
   // search <remote> with specified identity
@@ -405,7 +400,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
     return false;
 
   OmXmlNode xml_node;
-  wstring tmp_str1, tmp_str2;
+  OmWString tmp_str1, tmp_str2;
   HBITMAP hBm_new, hBm_old;
 
   this->setItemText(IDC_EC_READ1, this->_rmtCur.attrAsString(L"file"));
@@ -452,10 +447,11 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
   if(this->_rmtCur.hasChild(L"dependencies")) {
 
     xml_node = this->_rmtCur.child(L"dependencies");
-    std::vector<OmXmlNode> xml_ls;
+    OmXmlNodeArray xml_ls;
     xml_node.children(xml_ls, L"ident");
 
-    wstring dpn_str;
+    OmWString dpn_str;
+
     for(unsigned i = 0; i < xml_ls.size(); ++i) {
       dpn_str += xml_ls[i].content();
       if(i < (xml_ls.size() - 1)) {
@@ -566,7 +562,7 @@ bool OmUiToolRep::_rmtSel(const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int OmUiToolRep::_rmtGetDeps(vector<wstring>& miss_list, const wstring& ident)
+int OmUiToolRep::_rmtGetDeps(OmWStringArray& miss_list, const OmWString& ident)
 {
   // our missing result
   int miss = 0;
@@ -577,11 +573,11 @@ int OmUiToolRep::_rmtGetDeps(vector<wstring>& miss_list, const wstring& ident)
   // get list of dependencies
   if(xml_rmt.hasChild(L"dependencies")) {
 
-    std::vector<OmXmlNode> xml_dep_ls;
+    OmXmlNodeArray xml_dep_ls;
     xml_rmt.child(L"dependencies").children(xml_dep_ls, L"ident");
 
     bool unique;
-    wstring dep_idt;
+    OmWString dep_idt;
     OmXmlNode xml_dep;
 
     for(unsigned i = 0; i < xml_dep_ls.size(); ++i) {
@@ -619,7 +615,7 @@ int OmUiToolRep::_rmtGetDeps(vector<wstring>& miss_list, const wstring& ident)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_addDir_init(const wstring& path)
+void OmUiToolRep::_addDir_init(const OmWString& path)
 {
   OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
 
@@ -670,7 +666,7 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
   const bool* abort = pUiProgress->abortPtr();
 
   // get all file from given path
-  vector<wstring> ls;
+  OmWStringArray ls;
   Om_lsFile(&ls, self->_addDir_path, true);
 
   // initialize the progress bar
@@ -691,8 +687,9 @@ DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
 
     // step progress bar
     if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
+
     #ifdef DEBUG
-    Sleep(OMM_DEBUG_SLOW); //< for debug
+    Sleep(50); //< for debug
     #endif
 
     if(*abort) break;
@@ -714,7 +711,7 @@ void OmUiToolRep::_onBcNew()
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgResetUnsaved(this->_hwnd)) {
+    if(!Om_dlgResetUnsaved(this->_hwnd, L"Mod Repo Editor")) {
       return; //< don't change anything
     }
   }
@@ -729,9 +726,8 @@ void OmUiToolRep::_onBcNew()
   this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
 
   // Set default title and download path to controls
-  OmXmlNode xml_def = this->_config.xml();
-  this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
+  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
+  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
 
   // reset unsaved changes
   this->_unsaved = false;
@@ -746,21 +742,21 @@ void OmUiToolRep::_onBcOpen()
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgResetUnsaved(this->_hwnd)) {
+    if(!Om_dlgResetUnsaved(this->_hwnd, L"Mod Repo Editor")) {
       return; //< don't change anything
     }
   }
 
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(pModChan) start = pModChan->libraryPath();
 
   // new dialog to open file
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Repository definition", OMM_XML_FILES_FILTER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Repository definition", OM_XML_FILES_FILTER, start))
     return;
 
   if(!Om_isFile(result))
@@ -776,14 +772,14 @@ void OmUiToolRep::_onBcOpen()
     return;
 
   // Get Repository Title
-  this->setItemText(IDC_EC_INP01, this->_config.xml().child(L"title").content());
+  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
   // Get Download path
-  this->setItemText(IDC_EC_INP02, this->_config.xml().child(L"downpath").content());
+  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
 
-  OmXmlNode xml_rmts = this->_config.xml().child(L"remotes");
+  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
 
   // get all <remote> nodes within <remotes>
-  std::vector<OmXmlNode> xml_rmt_ls;
+  OmXmlNodeArray xml_rmt_ls;
   xml_rmts.children(xml_rmt_ls, L"remote");
 
   // Add each <remote> to ListBox
@@ -801,16 +797,16 @@ void OmUiToolRep::_onBcOpen()
 ///
 bool OmUiToolRep::_onBcBrwPkg()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(pModChan) start = pModChan->libraryPath();
 
   // open file dialog
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Package file", OMM_PKG_FILES_FILTER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Package file", OM_PKG_FILES_FILTER, start))
     return false;
 
   if(!Om_isFile(result))
@@ -832,13 +828,13 @@ bool OmUiToolRep::_onBcBrwPkg()
 ///
 bool OmUiToolRep::_onBcBrwDir()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(pModChan) start = pModChan->libraryPath();
 
   // open dialog to select folder
   if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select a folder where to find packages to parse and add", start))
@@ -872,7 +868,7 @@ void OmUiToolRep::_onBcRemPkg()
     return;
 
   // get identity from ListBox string
-  wchar_t iden_buf[OMM_ITM_BUFF];
+  wchar_t iden_buf[OM_MAX_ITEM];
   this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
   // remove <remote> from XML definition
@@ -901,7 +897,7 @@ void OmUiToolRep::_onLbPkglsSel()
   if(lb_sel >= 0) {
 
     // Get identity to select
-    wchar_t iden_buf[OMM_ITM_BUFF];
+    wchar_t iden_buf[OM_MAX_ITEM];
     this->msgItem(IDC_LB_PKG, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(iden_buf));
 
     // Select remote by identity
@@ -920,7 +916,7 @@ void OmUiToolRep::_onBcSavUrl()
     return;
 
   // Get URL from EditText
-  wstring url_str;
+  OmWString url_str;
   this->getItemText(IDC_EC_INP03, url_str);
 
   // Check for empty string
@@ -969,10 +965,10 @@ void OmUiToolRep::_onBcChkDeps()
     return;
 
   // get identity for this remote
-  wstring ident = this->_rmtCur.attrAsString(L"ident");
+  OmWString ident = this->_rmtCur.attrAsString(L"ident");
 
   // Dependencies missing list
-  vector<wstring> miss_ls;
+  OmWStringArray miss_ls;
 
   // go for recursive dependencies search
   int miss_cnt = this->_rmtGetDeps(miss_ls, ident);
@@ -980,7 +976,7 @@ void OmUiToolRep::_onBcChkDeps()
   if(miss_cnt > 0) {
 
     // Compost list for warning message
-    wstring msg_ls;
+    OmWString msg_ls;
 
     for(unsigned i = 0; i < miss_ls.size(); ++i) {
       msg_ls += miss_ls[i];
@@ -1011,23 +1007,23 @@ bool OmUiToolRep::_onBcBrwSnap()
   if(this->_rmtCur.empty())
     return false;
 
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(ModChan)
+    start = ModChan->libraryPath();
 
   // open file dialog
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OM_IMG_FILES_FILTER, start))
     return false;
 
   OmImage thumb;
 
   // try to load image file
 
-  if(thumb.loadThumbnail(result, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
+  if(thumb.loadThumbnail(result, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL)) {
 
     OmXmlNode xml_pic;
 
@@ -1086,23 +1082,22 @@ void OmUiToolRep::_onBcDelSnap()
 ///
 void OmUiToolRep::_onBcBrwDesc()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(ModChan) start = ModChan->libraryPath();
 
   // open file dialog
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open text file", OMM_TXT_FILES_FILTER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open text file", OM_TXT_FILES_FILTER, start))
     return;
 
   if(!Om_isFile(result))
     return;
 
   // set loaded text as description
-  string text_str = Om_loadPlainText(result);
+  OmCString text_str = Om_loadPlainText(result);
   SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text_str.c_str());
 
   // enable Description "Save" Button
@@ -1120,7 +1115,7 @@ void OmUiToolRep::_onBcSavDesc()
     return;
 
   // get description string
-  wstring desc_str;
+  OmWString desc_str;
   this->getItemText(IDC_EC_DESC, desc_str);
 
   if(!desc_str.empty()) {
@@ -1155,18 +1150,14 @@ void OmUiToolRep::_onBcSavDesc()
 ///
 void OmUiToolRep::_onBcSave()
 {
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
-
-  // Repository XML node
-  OmXmlNode xml_def = this->_config.xml();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   // Before saving, update the download path and title
-  wstring item_str;
+  OmWString item_str;
   this->getItemText(IDC_EC_INP01, item_str);
 
   // set title
-  xml_def.child(L"title").setContent(item_str);
+  this->_xmlconf.child(L"title").setContent(item_str);
 
   this->getItemText(IDC_EC_INP02, item_str);
 
@@ -1192,17 +1183,17 @@ void OmUiToolRep::_onBcSave()
   }
 
   // set download path
-  xml_def.child(L"downpath").setContent(item_str);
+  this->_xmlconf.child(L"downpath").setContent(item_str);
   // echo changes in EditText
   this->setItemText(IDC_EC_INP02, item_str);
 
-  wstring start, result;
+  OmWString start, result;
 
   // select the initial location for browsing start
-  if(pLoc) start = pLoc->libDir();
+  if(ModChan) start = ModChan->libraryPath();
 
   // send save dialog to user
-  if(!Om_dlgSaveFile(result, this->_hwnd, L"Save Repository definition...", OMM_XML_FILES_FILTER, start))
+  if(!Om_dlgSaveFile(result, this->_hwnd, L"Save Repository definition...", OM_XML_FILES_FILTER, start))
     return;
 
   // check for ".xml" extension, add it if needed
@@ -1217,8 +1208,9 @@ void OmUiToolRep::_onBcSave()
     return;
   }
 
-  if(!this->_config.save(result)) {
-    Om_dlgSaveError(this->_hwnd, L"Repository definition", this->_config.lastErrorStr());
+  if(!this->_xmlconf.save(result)) {
+    Om_dlgSaveError(this->_hwnd, L"Mod Repo Editor", L"Save Mod repo definition",
+                    L"Mod repo definition", this->_xmlconf.lastErrorStr());
     return;
   }
 
@@ -1229,7 +1221,8 @@ void OmUiToolRep::_onBcSave()
   this->_unsaved = false;
 
   // a reassuring message
-  Om_dlgSaveSucces(this->_hwnd, L"Repository definition");
+  Om_dlgSaveSucces(this->_hwnd, L"Mod Repo Editor", L"Save Mod repo definition",
+                   L"Mod repo definition");
 }
 
 
@@ -1241,7 +1234,7 @@ void OmUiToolRep::_onBcClose()
   // check whether there is unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgCloseUnsaved(this->_hwnd)) {
+    if(!Om_dlgCloseUnsaved(this->_hwnd, L"Mod Repo Editor")) {
       return; //< do NOT close
     }
   }
@@ -1296,9 +1289,9 @@ void OmUiToolRep::_onInit()
   // Set buttons icons
   this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_NEW));
   this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_OPN));
-  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDI_BT_DIR));
-  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_FAD));
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDI_BT_DAD));
+  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDI_BT_FRM));
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
@@ -1307,9 +1300,8 @@ void OmUiToolRep::_onInit()
   this->_repInit();
 
   // Set default title and download path to controls
-  OmXmlNode xml_def = this->_config.xml();
-  this->setItemText(IDC_EC_INP01, xml_def.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, xml_def.child(L"downpath").content());
+  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
+  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
 
   // reset unsaved changes
   this->_unsaved = false;
@@ -1442,7 +1434,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // UWM_ADDENTRIES_DONE is a custom message sent from add entries thread
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_ADDENTRIES_DONE) {
-    // end the removing Location process
+    // end the Add Entries process
     this->_addDir_stop();
     has_changed = true;
   }

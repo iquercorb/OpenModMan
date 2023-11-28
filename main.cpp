@@ -1,12 +1,12 @@
 /*
   This file is part of Open Mod Manager.
 
-  void Mod OmManager is free software: you can redistribute it and/or modify
+  void Mod OmModMan is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  void Mod OmManager is distributed in the hope that it will be useful,
+  void Mod OmModMan is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -14,11 +14,17 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmManager.h"
-#include "OmUiMgr.h"
+#include "OmModMan.h"
+#include "OmUiMan.h"
+
+#include "OmUtilDlg.h"
+
+#include "OmUtilWin.h"
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
+  Om_getAppIconImage(L"D:\\Programmes\\Jeux\\DCS World\\bin-mt\\DCS.exe");
+
   // Check if another instance already running
   HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Mutex");
   if(hMutex) {
@@ -53,12 +59,14 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
   // Create new Mutex for single instance check
   hMutex = CreateMutexW(nullptr, true, L"OpenModMan.Mutex");
 
-  OmManager manager;
-  OmUiMgr dialog(hInst);
+  OmModMan manager;
+  OmUiMan dialog(hInst);
 
   if(manager.init(lpCmdLine)) {
 
+    // set manager pointer as dialog internal data
     dialog.setData(&manager);
+
     // open main dialog with registered class name
     dialog.registered("OpenModMan.Class", true);
 

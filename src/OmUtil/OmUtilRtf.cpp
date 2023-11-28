@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include "OmUtilRtf.h"        //< OM_MD2RTF_CTX
 
 #include "OmBaseWin.h"        //< SendMessage etc.
@@ -171,7 +171,7 @@ void Om_md2rtf_clear(OM_MD2RTF_CTX* ctx)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_md2rtf_render(OM_MD2RTF_CTX* ctx, const wstring& text, unsigned fs, unsigned w)
+void Om_md2rtf_render(OM_MD2RTF_CTX* ctx, const OmWString& text, unsigned fs, unsigned w)
 {
   // convert width pixels to millimeters
   w *= 0.2645833333f;

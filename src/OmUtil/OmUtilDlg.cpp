@@ -14,13 +14,14 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 
 #include "OmBaseWin.h"
 #include <ShlObj.h>           //< BROWSEINFOW, etc.
 #include <ShlWApi.h>          //< PathFileExistW, etc.
 
-#include "OmBaseApp.h"        //< OMM_APP_NAME, etc.
+#include "OmBaseUi.h"
+#include "OmBaseApp.h"        //< OM_APP_NAME, etc.
 
 #include "OmUtilWin.h"   //< Om_getErrorStr
 #include "OmUtilStr.h"   //< Om_isValidName, etc.
@@ -29,13 +30,13 @@
 ///
 /// Custom IDs for message box dialog controls.
 ///
-#define OMM_DLGBOX_BTN0      200
-#define OMM_DLGBOX_BTN1      201
-#define OMM_DLGBOX_SC_RECT   300
-#define OMM_DLGBOX_SC_ICON   301
-#define OMM_DLGBOX_SC_HEAD   400
-#define OMM_DLGBOX_SC_MESG   401
-#define OMM_DLGBOX_SC_LIST   402
+#define OM_DLGBOX_BTN0      200
+#define OM_DLGBOX_BTN1      201
+#define OM_DLGBOX_SC_RECT   300
+#define OM_DLGBOX_SC_ICON   301
+#define OM_DLGBOX_SC_HEAD   400
+#define OM_DLGBOX_SC_MESG   401
+#define OM_DLGBOX_SC_LIST   402
 
 /// \brief Fonts for custom message box.
 ///
@@ -43,6 +44,7 @@
 ///
 static HFONT __Om_dlgBox_FontB = nullptr;
 static HFONT __Om_dlgBox_FontS = nullptr;
+static HICON __Om_dlgBox_TIcon = nullptr;
 
 /// \brief Dialog Procedure function for message box.
 ///
@@ -50,7 +52,7 @@ static HFONT __Om_dlgBox_FontS = nullptr;
 ///
 static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  if(uMsg == WM_SHOWWINDOW) {
+  if(uMsg == WM_INITDIALOG) {
 
     HWND hItem;
     wchar_t* str_buf;
@@ -60,8 +62,14 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     HWND hParent = GetParent(hWnd);
     UINT uSwp;
 
+    if(__Om_dlgBox_TIcon == nullptr)
+      __Om_dlgBox_TIcon = Om_getResIcon(reinterpret_cast<HINSTANCE>(lParam), IDI_APP, 1);
+
+    // set title bar icon
+    SendMessageW(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(__Om_dlgBox_TIcon));
+
     // make sure icon is 32 pixels wide
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_SC_ICON);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_ICON);
     SetWindowPos(hItem, nullptr, 25, yalign, 32, 32, SWP_NOZORDER|SWP_NOACTIVATE);
 
     // create header font
@@ -74,14 +82,14 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     if(__Om_dlgBox_FontS == nullptr)
       __Om_dlgBox_FontS = CreateFontW(16,0,0,0,400,false,false,false,
                                       ANSI_CHARSET,OUT_TT_PRECIS,0,
-                                      CLEARTYPE_QUALITY,0,L"Arial");
+                                      CLEARTYPE_QUALITY,0,L"Ms Shell Dlg");
 
     // create and setup HDC for DrawText
     HDC hDc = GetDC(hWnd);
     HGDIOBJ hOldFont = SelectObject(hDc, __Om_dlgBox_FontS);
 
     // Static Control - Header/Title
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_SC_HEAD);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_HEAD);
     if(hItem) {
       // set font for this control
       SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_dlgBox_FontB), true);
@@ -91,7 +99,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     }
 
     // Static Control - Main message
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_SC_MESG);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_MESG);
     if(hItem) {
 
       // set font for this control
@@ -113,7 +121,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     }
 
     // Static Control - Item List
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_SC_LIST);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_LIST);
     if(hItem) {
 
       // set font for this control
@@ -145,7 +153,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     ReleaseDC(hWnd, hDc);
 
     // resize white rect
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_SC_RECT);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_RECT);
     yalign += 20;
     SetWindowPos(hItem, nullptr, 0, 0, 500, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
@@ -154,14 +162,14 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     xalign = 394;
 
     // if present, move the No/Cancel button to the left of dialog
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_BTN0);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_BTN0);
     if(hItem) {
       SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
       xalign -= 95; // shift position for the next button
     }
 
     // move the OK/Yes button button
-    hItem = GetDlgItem(hWnd, OMM_DLGBOX_BTN1);
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_BTN1);
     SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
 
     // finaly resize the dialog and center to parent client
@@ -185,7 +193,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     SetBkMode(reinterpret_cast<HDC>(wParam),TRANSPARENT);
     SetBkColor(reinterpret_cast<HDC>(wParam), 0x00FFFFFF);
 
-    if(reinterpret_cast<HWND>(lParam) == GetDlgItem(hWnd, OMM_DLGBOX_SC_HEAD)) {
+    if(reinterpret_cast<HWND>(lParam) == GetDlgItem(hWnd, OM_DLGBOX_SC_HEAD)) {
       SetTextColor(reinterpret_cast<HDC>(wParam), 0x00993322);
     }
 
@@ -196,12 +204,12 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
     switch(LOWORD(wParam))
     {
-    case OMM_DLGBOX_BTN1:
+    case OM_DLGBOX_BTN1:
       // exit dialog and return 1
       EndDialog(hWnd, 1);
       break;
 
-    case OMM_DLGBOX_BTN0:
+    case OM_DLGBOX_BTN0:
       // exit dialog and return 0
       EndDialog(hWnd, 0);
       break;
@@ -250,11 +258,11 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   const wchar_t* fnt = __Om_dlgBox_str_FNT;
   const wchar_t* bt1 = __Om_dlgBox_str_OK;
   const wchar_t* bt0 = nullptr;
-  if(flags & 0x1) { //< OMM_DLGBOX_OC: OK - Cancel
+  if(flags & 0x1) { //< OM_DLGBOX_OC: OK - Cancel
     bt0 = __Om_dlgBox_str_CA;
-  } else if(flags & 0x2) { //< OMM_DLGBOX_YN: Yes - No
+  } else if(flags & 0x2) { //< OM_DLGBOX_YN: Yes - No
     bt1 = __Om_dlgBox_str_YE; bt0 = __Om_dlgBox_str_NO;
-  } else if(flags & 0x4) { //< OMM_DLGBOX_CA: Continue - Abort
+  } else if(flags & 0x4) { //< OM_DLGBOX_CA: Continue - Abort
     bt1 = __Om_dlgBox_str_CO; bt0 = __Om_dlgBox_str_AB;
   }
   bool has_bt0 = bt0 != nullptr;
@@ -282,9 +290,9 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   if(!dlgt) return -1;
 
   // main dialog template definition
-  dlgt->style = WS_POPUP|DS_MODALFRAME|WS_CAPTION|DS_SETFONT;
+  dlgt->style = DS_3DLOOK|DS_MODALFRAME|WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_SETFONT;
   if(!hwnd) dlgt->style |= DS_CENTER;
-  dlgt->dwExtendedStyle = 0;
+  dlgt->dwExtendedStyle = DS_SHELLFONT;
   dlgt->cdit = 0; //< item count
   dlgt->x = 0; dlgt->y = 0; dlgt->cx = 330; dlgt->cy = 150;
   pTpl = reinterpret_cast<uint16_t*>(dlgt + 1);
@@ -301,7 +309,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Button Control for Cancel/No - Return 0
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-    itmt->id = OMM_DLGBOX_BTN0;
+    itmt->id = OM_DLGBOX_BTN0;
     itmt->style = WS_CHILD|WS_VISIBLE;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
@@ -317,7 +325,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
   // Button Control for OK/YES - Return 1
   itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-  itmt->id = OMM_DLGBOX_BTN1;
+  itmt->id = OM_DLGBOX_BTN1;
   itmt->style = WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON;
   itmt->dwExtendedStyle = WS_EX_LEFT;
   itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
@@ -331,7 +339,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
   // Static Control for white background
   itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-  itmt->id = OMM_DLGBOX_SC_RECT;
+  itmt->id = OM_DLGBOX_SC_RECT;
   itmt->style = WS_CHILD|WS_VISIBLE|SS_WHITERECT;
   itmt->dwExtendedStyle = WS_EX_LEFT;
   itmt->x = 0; itmt->y = 0; itmt->cx = 400; itmt->cy = 50;
@@ -345,7 +353,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
   // Static Control for icon
   itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-  itmt->id = OMM_DLGBOX_SC_ICON;
+  itmt->id = OM_DLGBOX_SC_ICON;
   itmt->style = WS_CHILD|WS_VISIBLE|SS_ICON;
   itmt->dwExtendedStyle = WS_EX_LEFT;
   itmt->x = 16; itmt->y = 12; itmt->cx = 25; itmt->cy = 24;
@@ -360,7 +368,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Static Control for title/header
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-    itmt->id = OMM_DLGBOX_SC_HEAD;
+    itmt->id = OM_DLGBOX_SC_HEAD;
     itmt->style = WS_CHILD|WS_VISIBLE;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = 45; itmt->y = 12; itmt->cx = 267; itmt->cy = 14;
@@ -376,7 +384,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Static Control main message
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-    itmt->id = OMM_DLGBOX_SC_MESG;
+    itmt->id = OM_DLGBOX_SC_MESG;
     itmt->style = WS_CHILD|WS_VISIBLE;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = 45; itmt->y = 30; itmt->cx = 220; itmt->cy = 0;
@@ -392,7 +400,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Edit Control for item list
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-    itmt->id = OMM_DLGBOX_SC_LIST;
+    itmt->id = OM_DLGBOX_SC_LIST;
     itmt->style = WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = 45; itmt->y = 50; itmt->cx = 255; itmt->cy = 0;
@@ -403,7 +411,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     dlgt->cdit++; //< increment item count
   }
 
-  INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, (LPARAM)0);
+  INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, (LPARAM)hins);
 
   Om_free(dlgt);
 
@@ -423,116 +431,116 @@ int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_ok(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
+void Om_dlgBox_ok(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OMM_DLGBOX_OK
+  __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_okl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
+void Om_dlgBox_okl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg, const OmWString& lst)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x0); //< OMM_DLGBOX_OK
+  __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x0); //< OM_DLGBOX_OK
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgBox_yn(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
+bool Om_dlgBox_yn(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x2)); //< OMM_DLGBOX_YN
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x2)); //< OM_DLGBOX_YN
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgBox_ynl(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
+bool Om_dlgBox_ynl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg, const OmWString& lst)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x2)); //< OMM_DLGBOX_YN
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x2)); //< OM_DLGBOX_YN
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgBox_ca(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg)
+bool Om_dlgBox_ca(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x4)); //< OMM_DLGBOX_CA
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x4)); //< OM_DLGBOX_CA
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgBox_cal(HWND hwnd, const wstring& cpt, uint16_t ico, const wstring& hdr, const wstring& msg, const wstring& lst)
+bool Om_dlgBox_cal(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg, const OmWString& lst)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x4)); //< OMM_DLGBOX_CA
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x4)); //< OM_DLGBOX_CA
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_err(const wstring& cpt, const wstring& hdr, const wstring& msg)
+void Om_dlgBox_err(const OmWString& cpt, const OmWString& hdr, const OmWString& msg)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
-  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x62, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OMM_DLGBOX_OK
+  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x62, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_wrn(const wstring& cpt, const wstring& hdr, const wstring& msg)
+void Om_dlgBox_wrn(const OmWString& cpt, const OmWString& hdr, const OmWString& msg)
 {
-  wchar_t cpt_buf[OMM_ITM_BUFF];
+  wchar_t cpt_buf[OM_MAX_ITEM];
 
-  swprintf(cpt_buf, OMM_ITM_BUFF, L"%ls - %ls", cpt.c_str(), OMM_APP_NAME);
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
-  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x54, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OMM_DLGBOX_OK
+  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x54, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
 }
 
 
@@ -545,41 +553,8 @@ void Om_dlgBox_wrn(const wstring& cpt, const wstring& hdr, const wstring& msg)
 INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
   if(uMsg == BFFM_INITIALIZED) { //< Brother dialog windows is initialized
-    //SendMessageW(hWnd, BFFM_SETSELECTION, false, lpData);  //< set the selected folder
-    SendMessageW(hWnd, BFFM_SETEXPANDED, false, lpData);  //< set and expand the selected folder
-  }
-
-  // try to scroll down to the selected item, but this does not work...
-  if(uMsg == BFFM_SELCHANGED) {
-
-    HWND hTvm = GetDlgItem(hWnd, 0x3741); //< 0x3741 == IDC_TREE
-    HTREEITEM hTir, hTic, hTis;
-    int count, pos;
-    if(IsWindow(hTvm)) {
-      hTir = TreeView_GetRoot(hTvm);
-      hTis = TreeView_GetSelection(hTvm);
-      hTic = TreeView_GetChild(hTvm, hTir);
-
-      for(count = pos = 0; hTic; hTic = TreeView_GetNextVisible(hTvm, hTic), count++){
-        if(hTis==hTic) pos = count;
-      }
-
-      SCROLLINFO si = {};
-      si.cbSize = sizeof(SCROLLINFO);
-      si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE;
-
-      GetScrollInfo(hTvm, SB_VERT, &si);
-      si.nPage /= 2;
-
-      if((pos>(int)(si.nMin+si.nPage)) && (pos<=(int)(si.nMax-si.nMin-si.nPage)))
-      {
-        si.nMax = si.nPos - si.nMin + si.nPage;
-        for(;pos<si.nMax;pos++) PostMessage(hTvm,WM_VSCROLL,MAKEWPARAM(SB_LINEUP,0),0);
-        for(;pos>si.nMax;pos--) PostMessage(hTvm,WM_VSCROLL,MAKEWPARAM(SB_LINEDOWN,0),0);
-      }
-
-    }
-
+    if(lpData != 0) SendMessageW(hWnd, BFFM_SETSELECTION, true, lpData);  //< set the selected folder
+    if(lpData != 0) SendMessageW(hWnd, BFFM_SETEXPANDED, false, lpData);  //< set and expand the selected folder
   }
 
   return 0;
@@ -589,44 +564,37 @@ INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wstring& start, bool captive)
+bool Om_dlgBrowseDir(OmWString& result, HWND hWnd, const wchar_t* title, const OmWString& start, bool captive, bool nonew)
 {
   BROWSEINFOW bI = {};
   bI.hwndOwner = hWnd;
   bI.lpszTitle = title;
   bI.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS|BIF_VALIDATE;
+  if(nonew) bI.ulFlags |= BIF_NONEWFOLDERBUTTON;
 
-  if(captive) {
-    // this is the standard easy way to use SHBrowseForFolderW, this will
-    // set the "start" path as the root of browsing, so the user cannot go up
-    // to parent folder
-    if(start.size()) {
-      PIDLIST_ABSOLUTE pIdl = nullptr;
-      SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      bI.pidlRoot = pIdl;
-    }
-  } else {
-      // this is the advanced way to use SHBrowseForFolderW, here we use a
-      // callback function to handle the dialog window initialization, the "start"
-      // path object will be passed as lParam to the callback with the
-      // BFFM_INITIALIZED message.
-    if(start.size()) {
-      PIDLIST_ABSOLUTE pIdl = nullptr;
-      SHParseDisplayName(start.c_str(), nullptr, &pIdl, 0, nullptr); //< convert path string to LPITEMIDLIST
-      bI.lpfn = __dialogBrowseDir_Proc;
-      bI.lParam = reinterpret_cast<LPARAM>(pIdl);
-    }
+  PIDLIST_ABSOLUTE pIdl_start = nullptr;
+
+  // this is the advanced way to use SHBrowseForFolderW, here we use a
+  // callback function to handle the dialog window initialization, the "start"
+  // path object will be passed as lParam to the callback with the
+  // BFFM_INITIALIZED message.
+  if(start.size()) {
+    SHParseDisplayName(start.c_str(), nullptr, &pIdl_start, 0, nullptr); //< convert path string to LPITEMIDLIST
   }
+
+  bI.pidlRoot = (captive) ? pIdl_start : 0;
+  bI.lpfn = __dialogBrowseDir_Proc;
+  bI.lParam = reinterpret_cast<LPARAM>(pIdl_start);
 
   bool suceess = false;
 
   LPITEMIDLIST pIdl;
   if((pIdl = SHBrowseForFolderW(&bI)) != nullptr) {
 
-    wchar_t psz_path[OMM_MAX_PATH];
+    wchar_t psz_path[OM_MAX_PATH];
 
     psz_path[0] = 0;
-    if(SHGetPathFromIDListEx(pIdl, psz_path, OMM_MAX_PATH, GPFIDL_DEFAULT)) {
+    if(SHGetPathFromIDListEx(pIdl, psz_path, OM_MAX_PATH, GPFIDL_DEFAULT)) {
       result = psz_path;
       suceess = true;
     }
@@ -641,9 +609,9 @@ bool Om_dlgBrowseDir(wstring& result, HWND hWnd, const wchar_t* title, const wst
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
+bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start)
 {
-  wchar_t str_file[OMM_MAX_PATH];
+  wchar_t str_file[OM_MAX_PATH];
 
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -667,7 +635,7 @@ bool Om_dlgOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wcha
   ofn.lpstrFile = str_file;
   ofn.lpstrFile[0] = L'\0';
 
-  ofn.nMaxFile = OMM_MAX_PATH;
+  ofn.nMaxFile = OM_MAX_PATH;
 
   ofn.lpstrTitle = title;
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
@@ -684,10 +652,10 @@ bool Om_dlgOpenFile(wstring& result, HWND hWnd, const wchar_t* title, const wcha
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wstring& start)
+bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start)
 {
-  wchar_t str_file[OMM_MAX_PATH];
-  swprintf(str_file, OMM_MAX_PATH, L"%ls", result.c_str());
+  wchar_t str_file[OM_MAX_PATH];
+  swprintf(str_file, OM_MAX_PATH, L"%ls", result.c_str());
 
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -696,7 +664,7 @@ bool Om_dlgSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wcha
   ofn.lpstrFilter = filter;
 
   ofn.lpstrFile = str_file;
-  ofn.nMaxFile = OMM_MAX_PATH;
+  ofn.nMaxFile = OM_MAX_PATH;
 
   ofn.lpstrInitialDir = start.c_str();
 
@@ -715,16 +683,16 @@ bool Om_dlgSaveFile(wstring& result, HWND hWnd, const wchar_t* title, const wcha
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgCreateFolder(HWND hwnd, const wstring& item, const wstring& path)
+bool Om_dlgCreateFolder(HWND hwnd, const OmWString& item, const OmWString& path)
 {
   if(!PathFileExistsW(path.c_str())) {
 
-    wstring msg;
+    OmWString msg;
 
     msg = item + L" does not exists.\n\n  \"";
     msg += path + L"\"\n\nDo you want to create it ?";
 
-    if(IDYES == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_YESNO|MB_ICONQUESTION)) {
+    if(IDYES == MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_YESNO|MB_ICONQUESTION)) {
 
       int result = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
       if(result != 0) {
@@ -732,7 +700,7 @@ bool Om_dlgCreateFolder(HWND hwnd, const wstring& item, const wstring& path)
         msg = item + L" cannot be created.\n\n  \"";
         msg += path + L"\"\n\nError : " + Om_getErrorStr(result);
 
-        MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONERROR);
+        MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONERROR);
         return false;
       }
 
@@ -748,7 +716,7 @@ bool Om_dlgCreateFolder(HWND hwnd, const wstring& item, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgOverwriteFile(HWND hwnd, const wstring& path)
+bool Om_dlgOverwriteFile(HWND hwnd, const OmWString& path)
 {
   // check whether file already exists
   DWORD attr = GetFileAttributesW(path.c_str());
@@ -762,16 +730,16 @@ bool Om_dlgOverwriteFile(HWND hwnd, const wstring& path)
 
   return (IDYES == MessageBoxW(hwnd,
                               L"The file already exists. Do you want to overwrite it ?",
-                              OMM_APP_NAME, MB_YESNO|MB_ICONQUESTION));
+                              OM_APP_NAME, MB_YESNO|MB_ICONQUESTION));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgValidName(HWND hwnd, const wstring& item, const wstring& name)
+bool Om_dlgValidName(HWND hwnd, const OmWString& item, const OmWString& name)
 {
-  wstring msg;
+  OmWString msg;
 
   if(!name.empty()) {
 
@@ -786,7 +754,7 @@ bool Om_dlgValidName(HWND hwnd, const wstring& item, const wstring& name)
   }
 
   if(!msg.empty()) {
-    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
     return false;
   }
 
@@ -797,9 +765,9 @@ bool Om_dlgValidName(HWND hwnd, const wstring& item, const wstring& name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgValidPath(HWND hwnd, const wstring& item, const wstring& path)
+bool Om_dlgValidPath(HWND hwnd, const OmWString& item, const OmWString& path)
 {
-  wstring msg;
+  OmWString msg;
 
   if(!path.empty()) {
 
@@ -814,7 +782,7 @@ bool Om_dlgValidPath(HWND hwnd, const wstring& item, const wstring& path)
   }
 
   if(!msg.empty()) {
-    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
     return false;
   }
 
@@ -825,15 +793,15 @@ bool Om_dlgValidPath(HWND hwnd, const wstring& item, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgValidDir(HWND hwnd, const wstring& item,  const wstring& path)
+bool Om_dlgValidDir(HWND hwnd, const OmWString& item,  const OmWString& path)
 {
   // check whether file already exists
   DWORD attr = GetFileAttributesW(path.c_str());
 
   if(attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-    wstring msg = L"Invalid" + item + L".\n\n\"";
+    OmWString msg = L"Invalid" + item + L".\n\n\"";
     msg += L"\"\n\nFolder does not exists, " + item + L" must be an existing directory.";
-    MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONWARNING);
+    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
   }
 
   return true;
@@ -843,38 +811,64 @@ bool Om_dlgValidDir(HWND hwnd, const wstring& item,  const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgCloseUnsaved(HWND hwnd)
+bool Om_dlgCloseUnsaved(HWND hwnd, const OmWString& cpt)
 {
-  wstring msg = L"You made unsaved changes. Close without saving ?";
-  return (IDOK == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OKCANCEL|MB_ICONQUESTION));
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804, L"Unsaved changes",
+                           L"You made unsaved changes. Close without saving ?", nullptr, 0x2)); //< OM_DLGBOX_YN
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_dlgResetUnsaved(HWND hwnd)
+bool Om_dlgResetUnsaved(HWND hwnd, const OmWString& cpt)
 {
-  wstring msg = L"You made unsaved changes. Continue without saving ?";
-  return (IDOK == MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OKCANCEL|MB_ICONQUESTION));
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804, L"Unsaved changes",
+                           L"You made unsaved changes. Continue without saving ?", nullptr, 0x2)); //< OM_DLGBOX_YN
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgSaveSucces(HWND hwnd, const wstring& item)
+void Om_dlgSaveSucces(HWND hwnd, const OmWString& cpt, const OmWString& hdr, const OmWString& item)
 {
-  wstring msg = item + L" file was successfully saved.";
-  MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONINFORMATION);
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+
+  OmWString msg(item); msg.append(L" file was successfully saved.");
+
+  __Om_dlgBox(hins, hwnd, cpt_buf, 803, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgSaveError(HWND hwnd, const wstring& item, const wstring& error)
+void Om_dlgSaveError(HWND hwnd, const OmWString& cpt, const OmWString& hdr, const OmWString& item, const OmWString& error)
 {
-  wstring msg = L"Unable to save " + item + L" file.\n\n" + error;
-  MessageBoxW(hwnd, msg.c_str(), OMM_APP_NAME, MB_OK|MB_ICONERROR);
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+
+  OmWString msg(L"Saving "); msg.append(item); msg.append(L" file has failed:");
+
+  __Om_dlgBox(hins, hwnd, cpt_buf, 801, hdr.c_str(), msg.c_str(), error.c_str(), 0x0); //< OM_DLGBOX_OK
 }

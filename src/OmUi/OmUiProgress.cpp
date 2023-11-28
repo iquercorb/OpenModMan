@@ -76,7 +76,7 @@ void OmUiProgress::setPbPos(uint16_t pos) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setScHeadText(const wstring& text) const
+void OmUiProgress::setScHeadText(const OmWString& text) const
 {
   this->setItemText(IDC_SC_HEAD, text);
 }
@@ -85,7 +85,7 @@ void OmUiProgress::setScHeadText(const wstring& text) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::setScItemText(const wstring& text) const
+void OmUiProgress::setScItemText(const OmWString& text) const
 {
   this->setItemText(IDC_SC_ITEM, text);
 }
@@ -132,7 +132,7 @@ void OmUiProgress::abortSet(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::_onBcAbort()
+void OmUiProgress::_bc_abort_hit()
 {
   this->_abort = true;
 
@@ -191,7 +191,7 @@ INT_PTR OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_ABORT:
-      this->_onBcAbort();
+      this->_bc_abort_hit();
       break;
     }
 

@@ -14,14 +14,14 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 
 #include "OmUtilWin.h"   //< Om_getErrorStr
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errIsDir(const wstring& item,  const wstring& path)
+OmWString Om_errNotDir(const OmWString& item,  const OmWString& path)
 {
   return item + L" \"" + path + L"\" does not exist or is not a directory.";
 }
@@ -29,7 +29,7 @@ wstring Om_errIsDir(const wstring& item,  const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errCreate(const wstring& item,  const wstring& path, int result)
+OmWString Om_errCreate(const OmWString& item,  const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" creation error: " + Om_getErrorStr(result);
 }
@@ -37,7 +37,7 @@ wstring Om_errCreate(const wstring& item,  const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errDelete(const wstring& item,  const wstring& path, int result)
+OmWString Om_errDelete(const OmWString& item,  const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" delete error: " + Om_getErrorStr(result);
 }
@@ -45,7 +45,7 @@ wstring Om_errDelete(const wstring& item,  const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errRename(const wstring& item,  const wstring& path, int result)
+OmWString Om_errRename(const OmWString& item,  const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" rename error: " + Om_getErrorStr(result);
 }
@@ -53,7 +53,7 @@ wstring Om_errRename(const wstring& item,  const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errMove(const wstring& item,  const wstring& path, int result)
+OmWString Om_errMove(const OmWString& item,  const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" move error: " + Om_getErrorStr(result);
 }
@@ -61,7 +61,7 @@ wstring Om_errMove(const wstring& item,  const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errCopy(const wstring& item, const wstring& path, int result)
+OmWString Om_errCopy(const OmWString& item, const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" copy error: " + Om_getErrorStr(result);
 }
@@ -69,7 +69,7 @@ wstring Om_errCopy(const wstring& item, const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errShell(const wstring& item, const wstring& path, int result)
+OmWString Om_errShell(const OmWString& item, const OmWString& path, int result)
 {
   return item + L" \"" + path + L"\" shell error: " + Om_getErrorStr(result);
 }
@@ -77,7 +77,7 @@ wstring Om_errShell(const wstring& item, const wstring& path, int result)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errReadAccess(const wstring& item, const wstring& path)
+OmWString Om_errReadAccess(const OmWString& item, const OmWString& path)
 {
   return item + L" \"" + path + L"\" read access denied";
 }
@@ -85,7 +85,7 @@ wstring Om_errReadAccess(const wstring& item, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errWriteAccess(const wstring& item, const wstring& path)
+OmWString Om_errWriteAccess(const OmWString& item, const OmWString& path)
 {
   return item + L" \"" + path + L"\" write access denied";
 }
@@ -93,7 +93,7 @@ wstring Om_errWriteAccess(const wstring& item, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errInit(const wstring& item, const wstring& path, const wstring& error)
+OmWString Om_errInit(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" cannot be created: " + error;
 }
@@ -101,7 +101,7 @@ wstring Om_errInit(const wstring& item, const wstring& path, const wstring& erro
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errOpen(const wstring& item, const wstring& path, const wstring& error)
+OmWString Om_errOpen(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" cannot be opened: " + error;
 }
@@ -109,7 +109,7 @@ wstring Om_errOpen(const wstring& item, const wstring& path, const wstring& erro
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errLoad(const wstring& item, const wstring& path, const wstring& error)
+OmWString Om_errLoad(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" cannot be loaded: " + error;
 }
@@ -117,7 +117,7 @@ wstring Om_errLoad(const wstring& item, const wstring& path, const wstring& erro
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errSave(const wstring& item, const wstring& path, const wstring& error)
+OmWString Om_errSave(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" cannot be saved: " + error;
 }
@@ -125,7 +125,7 @@ wstring Om_errSave(const wstring& item, const wstring& path, const wstring& erro
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errParse(const wstring& item, const wstring& path, const wstring& error)
+OmWString Om_errParse(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" parse error: " + error;
 }
@@ -133,39 +133,31 @@ wstring Om_errParse(const wstring& item, const wstring& path, const wstring& err
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errZipInit(const wstring& item, const wstring& path, const wstring& mesg)
+OmWString Om_errZipComp(const OmWString& item, const OmWString& path, const OmWString& mesg)
 {
-  return item + L" \"" + path + L"\" ZIP create error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP compression error: " + mesg;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errZipLoad(const wstring& item, const wstring& path, const wstring& mesg)
+OmWString Om_errZipExtr(const OmWString& item, const OmWString& path, const OmWString& mesg)
 {
-  return item + L" \"" + path + L"\" ZIP open error: " + mesg;
+  return item + L" \"" + path + L"\" ZIP extraction error: " + mesg;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_errZipDefl(const wstring& item, const wstring& path, const wstring& mesg)
-{
-  return item + L" \"" + path + L"\" ZIP compress error: " + mesg;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_errZipInfl(const wstring& item, const wstring& path, const wstring& mesg)
-{
-  return item + L" \"" + path + L"\" ZIP extract error: " + mesg;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-wstring Om_errExists(const wstring& item, const wstring& path)
+OmWString Om_errExists(const OmWString& item, const OmWString& path)
 {
   return item + L" \"" + path + L"\" already exists";
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_errBadAlloc(const OmWString& subject, const OmWString& name)
+{
+  return subject + L" \"" + name + L"\" error: out of memory.";
 }

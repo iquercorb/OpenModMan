@@ -24,8 +24,10 @@
 
 #include "OmBaseApp.h"
 
-#include "OmManager.h"
-#include "OmPackage.h"
+#include "OmArchive.h"
+
+#include "OmModMan.h"
+#include "OmModChan.h"
 #include "OmImage.h"
 
 #include "OmUtilFs.h"
@@ -81,7 +83,7 @@ long OmUiToolPkg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::selSrc(const wstring& path)
+void OmUiToolPkg::selectSource(const OmWString& path)
 {
   bool is_dir = Om_isDir(path);
 
@@ -108,7 +110,8 @@ void OmUiToolPkg::_freeze(bool freeze)
   this->enableItem(IDC_EC_INP03, enable);
   this->enableItem(IDC_EC_INP04, enable);
   this->enableItem(IDC_CB_EXT, enable);
-  this->enableItem(IDC_CB_LVL, enable);
+  this->enableItem(IDC_CB_ZMD, enable);
+  this->enableItem(IDC_CB_ZLV, enable);
   this->enableItem(IDC_EC_INP05, enable);
   this->enableItem(IDC_BC_BRW03, enable);
   this->enableItem(IDC_BC_CKBX1, enable);
@@ -125,7 +128,7 @@ void OmUiToolPkg::_freeze(bool freeze)
   if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
     this->enableItem(IDC_EC_INP07, enable);
     if(enable) {
-      wstring ident;
+      OmWString ident;
       this->getItemText(IDC_EC_INP07, ident);
       this->enableItem(IDC_BC_ADD, !ident.empty());
     } else {
@@ -149,12 +152,12 @@ void OmUiToolPkg::_freeze(bool freeze)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_parseSrc(const wstring& path)
+bool OmUiToolPkg::_parseSrc(const OmWString& path)
 {
   HBITMAP hBm;
 
   // reset current package
-  this->_package.clear();
+  this->_ModPack.clearAll();
 
   // name and extension controls initial state
   this->setItemText(IDC_EC_INP03, L"");
@@ -162,7 +165,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->setItemText(IDC_EC_INP04, L"");
   this->enableItem(IDC_EC_INP04, false);
   this->enableItem(IDC_CB_EXT, false);
-  this->enableItem(IDC_CB_LVL, false);
+  this->enableItem(IDC_CB_ZMD, false);
+  this->enableItem(IDC_CB_ZLV, false);
   this->setItemText(IDC_EC_READ1, L"");
 
   // destination folder disabled
@@ -212,7 +216,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   }
 
   // Try to parse the package
-  if(!this->_package.srcParse(path)) {
+  if(!this->_ModPack.parseSource(path)) {
     return false;
   }
 
@@ -220,7 +224,8 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   this->enableItem(IDC_EC_INP03, true);
   this->enableItem(IDC_EC_INP04, true);
   this->enableItem(IDC_CB_EXT, true);
-  this->enableItem(IDC_CB_LVL, true);
+  this->enableItem(IDC_CB_ZMD, true);
+  this->enableItem(IDC_CB_ZLV, true);
 
   this->enableItem(IDC_EC_INP06, true);
   this->enableItem(IDC_BC_BRW03, true);
@@ -245,16 +250,16 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   }
 
   // check for package category
-  if(!this->_package.category().empty()) {
-    int cb_idx = this->msgItem(IDC_CB_CAT, CB_FINDSTRING, -1, reinterpret_cast<LPARAM>(this->_package.category().c_str()));
+  if(!this->_ModPack.category().empty()) {
+    int cb_idx = this->msgItem(IDC_CB_CAT, CB_FINDSTRING, -1, reinterpret_cast<LPARAM>(this->_ModPack.category().c_str()));
     if(cb_idx >= 0) {
       this->msgItem(IDC_CB_CAT, CB_SETCURSEL, cb_idx);
       this->setItemText(IDC_EC_INP09, L"");
       this->enableItem(IDC_EC_INP09, false);
     } else {
-      this->msgItem(IDC_CB_CAT, CB_SETCURSEL, OmPkgCatCnt);
+      this->msgItem(IDC_CB_CAT, CB_SETCURSEL, OmModCategoryCount);
       this->enableItem(IDC_EC_INP09, true);
-      this->setItemText(IDC_EC_INP09, this->_package.category());
+      this->setItemText(IDC_EC_INP09, this->_ModPack.category());
     }
   } else {
     this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0);
@@ -263,47 +268,47 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   }
 
   // check for package dependencies
-  if(this->_package.depCount()) {
+  if(this->_ModPack.dependCount()) {
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
     this->enableItem(IDC_SC_LBL06, true); //< "Ident" label
     this->enableItem(IDC_LB_DPN, true);
     this->enableItem(IDC_EC_INP07, true);
-    for(unsigned i = 0; i < this->_package.depCount(); ++i) {
-      this->msgItem(IDC_LB_DPN, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(this->_package.depGet(i).c_str()));
+    for(unsigned i = 0; i < this->_ModPack.dependCount(); ++i) {
+      this->msgItem(IDC_LB_DPN, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(this->_ModPack.getDependIden(i).c_str()));
     }
   }
 
   // check for package snapshot
-  if(this->_package.thumb().valid()) {
+  if(this->_ModPack.thumbnail().valid()) {
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
-    hBm = this->setStImage(IDC_SB_SNAP, this->_package.thumb().hbmp());
+    hBm = this->setStImage(IDC_SB_SNAP, this->_ModPack.thumbnail().hbmp());
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
   }
 
   // check for package description
-  if(this->_package.desc().size()) {
+  if(this->_ModPack.description().size()) {
     this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW05, true);
     this->enableItem(IDC_EC_DESC, true);
-    this->setItemText(IDC_EC_DESC, this->_package.desc());
+    this->setItemText(IDC_EC_DESC, this->_ModPack.description());
   }
 
-  wstring item_str, dst_path;
+  OmWString item_str, dst_path;
 
   // Add package content to output EditText
-  unsigned n = this->_package.srcItemCount();
-  for(unsigned i = 0; i < this->_package.srcItemCount(); ++i) {
-    item_str.append(this->_package.srcItemGet(i).path);
+  unsigned n = this->_ModPack.sourceEntryCount();
+  for(unsigned i = 0; i < this->_ModPack.sourceEntryCount(); ++i) {
+    item_str.append(this->_ModPack.getSourceEntry(i).path);
     if(i < n - 1) item_str.append(L"\r\n");
   }
   this->setItemText(IDC_EC_READ1, item_str);
 
   // update name and version
-  this->setItemText(IDC_EC_INP03, this->_package.name());
+  this->setItemText(IDC_EC_INP03, this->_ModPack.name());
 
-  if(!this->_package.version().isNull())
-    this->setItemText(IDC_EC_INP04, this->_package.version().asString());
+  if(!this->_ModPack.version().isNull())
+    this->setItemText(IDC_EC_INP04, this->_ModPack.version().asString());
 
   // get current source path
   item_str.clear();
@@ -316,7 +321,7 @@ bool OmUiToolPkg::_parseSrc(const wstring& path)
   if(!item_str.empty()) {
 
     // preselect file extention
-    if(Om_extensionMatches(item_str, OMM_PKG_FILE_EXT)) {
+    if(Om_extensionMatches(item_str, OM_PKG_FILE_EXT)) {
       this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 1);
     } else {
       this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0);
@@ -385,11 +390,11 @@ void OmUiToolPkg::_save_stop()
   if(exitCode == 0) {
 
     // get destination filename
-    wstring item_str;
+    OmWString item_str;
     this->getItemText(IDC_EC_RESUL, item_str);
 
     // a reassuring message
-    Om_dlgSaveSucces(this->_hwnd, L"Package");
+    Om_dlgSaveSucces(this->_hwnd, L"Mod Pack Editor", L"Save Mod pack", L"Mod pack");
   }
 
   // refresh the main window dialog, this will also refresh this one
@@ -418,32 +423,32 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(arg);
 
-  wstring item_str;
+  OmWString item_str;
 
   // get package category
-  int cb_sel = self->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+  int32_t cb_sel = self->msgItem(IDC_CB_CAT, CB_GETCURSEL);
   if(cb_sel == self->msgItem(IDC_CB_CAT, CB_GETCOUNT)-1) {
     // get category from text field
     self->getItemText(IDC_EC_INP09, item_str);
     Om_strToUpper(&item_str); //< convert to upper case
   } else {
     // Get from ComboBox
-    wchar_t catg[OMM_ITM_BUFF];
-    self->msgItem(IDC_CB_CAT, CB_GETLBTEXT, cb_sel, reinterpret_cast<LPARAM>(catg));
-    item_str = catg;
+    wchar_t cate[OM_MAX_ITEM];
+    self->msgItem(IDC_CB_CAT, CB_GETLBTEXT, cb_sel, reinterpret_cast<LPARAM>(cate));
+    item_str = cate;
   }
-  self->_package.setCategory(item_str);
+  self->_ModPack.setCategory(item_str);
 
 
   // get/update package dependencies list
-  self->_package.depClear(); //< clear previous list
+  self->_ModPack.clearDepend();
   if(self->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
-    int lb_cnt = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
+    int32_t lb_cnt = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
     if(lb_cnt) {
-      wchar_t ident[OMM_ITM_BUFF];
-      for(int i = 0; i < lb_cnt; ++i) {
-        self->msgItem(IDC_LB_DPN, LB_GETTEXT, i, reinterpret_cast<LPARAM>(ident));
-        self->_package.depAdd(ident);
+      wchar_t iden[OM_MAX_ITEM];
+      for(int32_t i = 0; i < lb_cnt; ++i) {
+        self->msgItem(IDC_LB_DPN, LB_GETTEXT, i, reinterpret_cast<LPARAM>(iden));
+        self->_ModPack.addDependIden(iden);
       }
     }
   }
@@ -452,37 +457,54 @@ DWORD WINAPI OmUiToolPkg::_save_fth(void* arg)
   if(self->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
     self->getItemText(IDC_EC_INP08, item_str);
     if(!item_str.empty()) {
-      self->_package.loadThumb(item_str, OMM_THUMB_SIZE);
+      self->_ModPack.setThumbnail(item_str);
     }
   } else {
-    self->_package.clearThumb();
+    self->_ModPack.clearThumbnail();
   }
 
   // get package description text
   if(self->msgItem(IDC_BC_CKBX3, BM_GETCHECK)) {
     self->getItemText(IDC_EC_DESC, item_str);
-    self->_package.setDesc(item_str);
+    self->_ModPack.setDescription(item_str);
   } else {
-    self->_package.setDesc(L"");
+    self->_ModPack.setDescription(L"");
   }
 
   // get package compression level
-  int zip_lvl = self->msgItem(IDC_CB_LVL, CB_GETCURSEL);
+  int32_t comp_md, comp_lv;
+
+  switch(self->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
+  case 1:   comp_md = OM_METHOD_DEFLATE; break; //< MZ_COMPRESS_METHOD_DEFLATE
+  case 2:   comp_md = OM_METHOD_LZMA; break;    //< MZ_COMPRESS_METHOD_LZMA
+  case 3:   comp_md = OM_METHOD_LZMA2; break;   //< MZ_COMPRESS_METHOD_XZ
+  case 4:   comp_md = OM_METHOD_ZSTD; break;    //< MZ_COMPRESS_METHOD_ZSTD
+  default:  comp_md = OM_METHOD_STORE; break;   //< MZ_COMPRESS_METHOD_STORE
+  }
+
+  switch(self->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
+  case 1:   comp_lv = OM_LEVEL_FAST; break; //< MZ_COMPRESS_LEVEL_FAST
+  case 2:   comp_lv = OM_LEVEL_SLOW; break; //< MZ_COMPRESS_LEVEL_NORMAL
+  case 3:   comp_lv = OM_LEVEL_BEST; break; //< MZ_COMPRESS_LEVEL_BEST
+  default:  comp_lv = OM_LEVEL_NONE; break;
+  }
 
   // get destination path & filename
-  wstring out_path, out_file;
-  self->getItemText(IDC_EC_INP06, out_path);
-  self->getItemText(IDC_EC_RESUL, out_file);
+  OmWString out_path, out_dir, out_name;
+  self->getItemText(IDC_EC_INP06, out_dir);
+  self->getItemText(IDC_EC_RESUL, out_name);
+  Om_concatPaths(out_path, out_dir, out_name);
 
   self->_save_abort = false;
   self->enableItem(IDC_BC_ABORT, true);
 
   DWORD exitCode = 0;
 
-  if(!self->_package.save(out_path + L"\\" + out_file, zip_lvl, &self->_save_progress_cb, self)) {
+  if(!self->_ModPack.saveAs(out_path, comp_md, comp_lv, &self->_save_progress_cb, self)) {
 
     // show error dialog box
-    Om_dlgSaveError(self->_hwnd, L"Package", self->_package.lastError());
+    Om_dlgSaveError(self->_hwnd, L"Mod Pack Editor", L"Save Mod pack",
+                    L"Mod pack", self->_ModPack.lastError());
 
     exitCode = 1;
   }
@@ -511,7 +533,7 @@ void OmUiToolPkg::_onBcRadSrc()
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgResetUnsaved(this->_hwnd)) {
+    if(!Om_dlgResetUnsaved(this->_hwnd, L"Mod Pack Editor")) {
       // undo the radio button changes by user
       this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !bm_chk);
       this->msgItem(IDC_BC_RAD02, BM_SETCHECK, bm_chk);
@@ -547,14 +569,11 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgResetUnsaved(this->_hwnd))
+    if(!Om_dlgResetUnsaved(this->_hwnd, L"Mod Pack Editor"))
       return false; //< return now, don't change anything
   }
 
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
-
-  wstring result, start;
+  OmWString result, start;
 
   if(path != nullptr) {
 
@@ -566,12 +585,21 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
     this->getItemText(IDC_EC_INP01, start);
 
     if(start.empty()) {
-      if(pLoc) start = pLoc->libDir();
+
+      // select current Mod Channel library as default
+      OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+      if(ModHub) {
+        OmModChan* ModChan = ModHub->activeChannel();
+        if(ModChan) {
+          start = ModChan->libraryPath();
+        }
+      }
+
     } else {
       start = Om_getDirPart(start);
     }
 
-    if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select installation file(s) location", start)) {
+    if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Mod source directory", start)) {
       this->setItemText(IDC_EC_INP01, L"");
       this->_parseSrc(L"");
       return false;
@@ -589,8 +617,8 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
   if(Om_isDirEmpty(result)) {
 
     // show warning dialog box
-    if(!Om_dlgBox_yn(this->_hwnd, L"Package Editor", IDI_QRY,
-                L"Empty Package source folder", L"The selected source folder is "
+    if(!Om_dlgBox_yn(this->_hwnd, L"Mod Pack Editor", IDI_QRY,
+                L"Empty source directory", L"The selected source directory is "
                 "empty, the resulting package will have no content to install."
                 "Do you want to continue anyway ?"))
     {
@@ -606,9 +634,9 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
   // Try to parse the folder (as package source)
   if(!this->_parseSrc(result)) {
     // this cannot happen at this stage... but...
-    Om_dlgBox_okl(this->_hwnd, L"Package Editor", IDI_ERR,
-                 L"Package source parse error", L"Unable to parse "
-                 "the specified folder as Package:", result);
+    Om_dlgBox_okl(this->_hwnd, L"Mod Pack Editor", IDI_ERR,
+                 L"Mod source parse error", L"Unable to parse "
+                 "the specified directory Mod source:", result);
 
     this->setItemText(IDC_EC_INP01, L"");
   }
@@ -625,17 +653,14 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgResetUnsaved(this->_hwnd))
+    if(!Om_dlgResetUnsaved(this->_hwnd, L"Mod Pack Editor"))
       return false; //< return now, don't change anything
   }
 
   // reset unsaved changes
   this->_unsaved = false;
 
-  OmContext* pCtx = static_cast<OmManager*>(this->_data)->ctxCur();
-  OmLocation* pLoc = pCtx ? pCtx->locCur() : nullptr;
-
-  wstring result, start;
+  OmWString result, start;
 
   if(path != nullptr) {
 
@@ -647,13 +672,22 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
     this->getItemText(IDC_EC_INP02, start);
 
     if(start.empty()) {
-      if(pLoc) start = pLoc->libDir();
+
+      // select current Mod Channel library as default
+      OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+      if(ModHub) {
+        OmModChan* ModChan = ModHub->activeChannel();
+        if(ModChan) {
+          start = ModChan->libraryPath();
+        }
+      }
+
     } else {
       start = Om_getDirPart(start);
     }
 
     // open select file dialog
-    if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Package file", OMM_PKG_FILES_FILTER, start)) {
+    if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Mod Pack file", OM_PKG_FILES_FILTER, start)) {
       this->setItemText(IDC_EC_INP02, L"");
       this->_parseSrc(L"");
       return false;
@@ -669,9 +703,9 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
 
   // parse this package source
   if(!this->_parseSrc(result)) {
-    Om_dlgBox_okl(this->_hwnd, L"Package Editor", IDI_ERR,
-                 L"Package source parse error", L"Unable to parse "
-                 "the specified file as Package:", result);
+    Om_dlgBox_okl(this->_hwnd, L"Mod Pack Editor", IDI_ERR,
+                 L"Mod source parse error", L"Unable to parse "
+                 "the specified file as Mod source:", result);
 
     this->setItemText(IDC_EC_INP02, L"");
   }
@@ -686,7 +720,7 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
 void OmUiToolPkg::_onNameChange()
 {
   // get base name
-  wstring name_str;
+  OmWString name_str;
   this->getItemText(IDC_EC_INP03, name_str);
 
   if(!name_str.empty()) {
@@ -695,7 +729,7 @@ void OmUiToolPkg::_onNameChange()
     replace(name_str.begin(), name_str.end(), L' ', L'_');
 
     // get version
-    wstring vers_str;
+    OmWString vers_str;
     this->getItemText(IDC_EC_INP04, vers_str);
 
     // check if version string is valid
@@ -726,7 +760,7 @@ void OmUiToolPkg::_onNameChange()
 ///
 void OmUiToolPkg::_onBcBrwDest()
 {
-  wstring result, start;
+  OmWString result, start;
 
   // select start directory
   this->getItemText(IDC_EC_INP06, start);
@@ -800,7 +834,7 @@ void OmUiToolPkg::_onCkBoxDep()
 void OmUiToolPkg::_onBcAddDep()
 {
   // Get identity string from EditText
-  wstring ident;
+  OmWString ident;
   this->getItemText(IDC_EC_INP07, ident);
 
   if(ident.empty())
@@ -861,7 +895,7 @@ void OmUiToolPkg::_onCkBoxSnap()
 ///
 bool OmUiToolPkg::_onBcBrwSnap()
 {
-  wstring result, start;
+  OmWString result, start;
 
   // select the start directory from package source path
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
@@ -871,14 +905,14 @@ bool OmUiToolPkg::_onBcBrwSnap()
   }
 
   // open file dialog
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OMM_IMG_FILES_FILTER, Om_getDirPart(start)))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open image file", OM_IMG_FILES_FILTER, Om_getDirPart(start)))
     return false;
 
   OmImage thumb;
   HBITMAP hBm;
 
   // Try to open image
-  if(thumb.loadThumbnail(result, OMM_THUMB_SIZE, OMM_SIZE_FILL)) {
+  if(thumb.loadThumbnail(result, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL)) {
 
     // set thumbnail
     hBm = this->setStImage(IDC_SB_SNAP, thumb.hbmp());
@@ -918,7 +952,7 @@ void OmUiToolPkg::_onCkBoxDesc()
 ///
 bool OmUiToolPkg::_onBcBrwDesc()
 {
-  wstring result, start;
+  OmWString result, start;
 
   // select the start directory from package source path
   if(this->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
@@ -928,13 +962,13 @@ bool OmUiToolPkg::_onBcBrwDesc()
   }
 
   // open file dialog
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open text file", OMM_TXT_FILES_FILTER, Om_getDirPart(start)))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Open text file", OM_TXT_FILES_FILTER, Om_getDirPart(start)))
     return false;
 
   if(!Om_isFile(result))
     return false;
 
-  wstring text_wcs;
+  OmWString text_wcs;
   Om_loadToUTF16(&text_wcs, result);
 
   SetDlgItemTextW(this->_hwnd, IDC_EC_DESC, text_wcs.c_str());
@@ -948,24 +982,25 @@ bool OmUiToolPkg::_onBcBrwDesc()
 ///
 void OmUiToolPkg::_onBcSave()
 {
-  wstring item_str, msg;
+  OmWString item_str, msg;
 
   // verify package has parsed source
-  if(!this->_package.srcValid()) {
+  if(!this->_ModPack.hasSource()) {
+
     // show error dialog box
-    Om_dlgBox_ok(this->_hwnd, L"Package Editor", IDI_ERR,
-                 L"Invalid Package source", L"Invalid or empty Package source. "
-                 "Please select a file or folder as Package source.");
+    Om_dlgBox_ok(this->_hwnd, L"Mod Pack Editor", IDI_ERR,
+                 L"Invalid Mod source", L"Invalid or empty Mod source. "
+                 "Please select a file or directory as Mod source.");
     return;
   }
 
   // verify the destination path and name
-  wstring out_name, out_dir;
+  OmWString out_name, out_dir;
 
   this->getItemText(IDC_EC_INP06, out_dir);
   this->getItemText(IDC_EC_RESUL, out_name);
 
-  if(!Om_dlgValidName(this->_hwnd, L"Package filename", out_name))
+  if(!Om_dlgValidName(this->_hwnd, L"Mod Pack filename", out_name))
     return;
 
   if(Om_dlgValidPath(this->_hwnd, L"Save Destination", out_dir)) {
@@ -998,40 +1033,41 @@ void OmUiToolPkg::_onInit()
   this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
-  this->setCaption(L"Package editor ");
+  this->setCaption(L"Mod Pack editor ");
 
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_RAD01,  L"Use a folder to parse it as Package source");
-  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a folder to parse as Package source");
-  this->_createTooltip(IDC_EC_INP01,  L"Path to folder parsed as Package source");
-  this->_createTooltip(IDC_BC_RAD02,  L"Use an existing package to parse it as source");
-  this->_createTooltip(IDC_BC_BRW02,  L"Browse to open a Package file to parse as source");
-  this->_createTooltip(IDC_EC_INP02,  L"Path to Package file parsed as source");
+  this->_createTooltip(IDC_BC_RAD01,  L"Use a directory to parse it as Mod source");
+  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a folder to parse as Mod source");
+  this->_createTooltip(IDC_EC_INP01,  L"Path to directory parsed as Mod source");
+  this->_createTooltip(IDC_BC_RAD02,  L"Use an existing Mod Pack file to parse it as source");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to open a Mod Pack file to parse as source");
+  this->_createTooltip(IDC_EC_INP02,  L"Path to Mod Pack file parsed as source");
 
-  this->_createTooltip(IDC_EC_INP03,  L"Package name");
-  this->_createTooltip(IDC_EC_INP04,  L"Package version string");
-  this->_createTooltip(IDC_CB_EXT,    L"Package filename extension");
+  this->_createTooltip(IDC_EC_INP03,  L"Mod name");
+  this->_createTooltip(IDC_EC_INP04,  L"Mod version string");
+  this->_createTooltip(IDC_CB_EXT,    L"Mod Pack filename extension");
 
-  this->_createTooltip(IDC_CB_LVL,    L"Package ZIP compression level");
+  this->_createTooltip(IDC_CB_ZMD,    L"Mod Pack compression method");
+  this->_createTooltip(IDC_CB_ZLV,    L"Mod Pack compression level");
 
-  this->_createTooltip(IDC_EC_INP06,  L"Save destination folder, where Package will be saved");
+  this->_createTooltip(IDC_EC_INP06,  L"Save destination folder, where Mod Pack will be saved");
   this->_createTooltip(IDC_BC_BRW03,  L"Browse to select destination folder");
 
-  this->_createTooltip(IDC_BC_SAVE,   L"Build and save Package");
+  this->_createTooltip(IDC_BC_SAVE,   L"Build and save Mod Pack");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort process");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Define dependencies for this Package");
-  this->_createTooltip(IDC_EC_INP07,  L"Dependency identity, the Package identity to set as dependency");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Define dependencies for this Mod");
+  this->_createTooltip(IDC_EC_INP07,  L"Dependency identity, the Mod identity to set as dependency");
   this->_createTooltip(IDC_BC_ADD,    L"Insert identity to dependency list");
   this->_createTooltip(IDC_BC_DEL,    L"Remove selected entry from dependency list");
-  this->_createTooltip(IDC_LB_DPN,    L"List of package dependencies");
+  this->_createTooltip(IDC_LB_DPN,    L"List of Mod dependencies");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Define a snapshot for this Package");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Define a snapshot for this Mod");
   this->_createTooltip(IDC_BC_BRW04,  L"Browse to select an image file to set as snapshot");
 
-  this->_createTooltip(IDC_BC_CKBX3,  L"Define a description for this Package");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Define a description for this Mod");
   this->_createTooltip(IDC_BC_BRW05,  L"Browse to open text file and use its content as description");
-  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
+  this->_createTooltip(IDC_EC_DESC,   L"Mod description text");
 
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
@@ -1049,19 +1085,27 @@ void OmUiToolPkg::_onInit()
 
   // add items to extension ComboBox
   this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L".zip"));
-  this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"." OMM_PKG_FILE_EXT));
+  this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"." OM_PKG_FILE_EXT));
   this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0, 0);
 
-  // add items into Zip Level ComboBox
-  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None ( very fast )"));
-  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Low ( fast )"));
-  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal ( slow )"));
-  this->msgItem(IDC_CB_LVL, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best ( very slow )"));
-  this->msgItem(IDC_CB_LVL, CB_SETCURSEL, 2, 0);
+  // add items to Compression Method ComboBox
+  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
+  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Deflate (Legacy Zip)"));
+  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA"));
+  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA2"));
+  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Zstandard"));
+  this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 4, 0);
+
+  // add items into Compression Level ComboBox
+  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
+  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Fast"));
+  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal"));
+  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best"));
+  this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 2, 0);
 
   // add items into Category ComboBox
-  for(size_t i = 0; i < OmPkgCatCnt; ++i) {
-    this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(OmPkgCatStr[i]));
+  for(size_t i = 0; i < OmModCategoryCount; ++i) {
+    this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(OmModCategory[i]));
   }
   this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"- CUSTOM -"));
   this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0, 0);
@@ -1074,13 +1118,13 @@ void OmUiToolPkg::_onInit()
   this->enableItem(IDC_BC_ABORT, false);
 
   // Parse initial source if any
-  if(!this->_initsrc.empty()) {
+  if(!this->_initial_src.empty()) {
 
     // select initial source
-    this->selSrc(this->_initsrc);
+    this->selectSource(this->_initial_src);
 
     // Reset initial source path
-    this->_initsrc.clear();
+    this->_initial_src.clear();
   }
 
   // Nothing to save
@@ -1123,9 +1167,12 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_CB_EXT, half_w-40, 88, 30, 13);
   // Output filname EditText
   this->_setItemPos(IDC_EC_RESUL, 10, 104, half_w-20, 13);
-  // Zip compression Label & ComboBox
-  this->_setItemPos(IDC_SC_LBL04, 10, 125, 120, 9);
-  this->_setItemPos(IDC_CB_LVL, 10, 137, half_w-20, 13);
+  // Compression Method Label & ComboBox
+  this->_setItemPos(IDC_SC_LBL09, 10, 125, 90, 9);
+  this->_setItemPos(IDC_CB_ZMD, 10, 137, half_w-140, 13);
+  // Compression Level Label & ComboBox
+  this->_setItemPos(IDC_SC_LBL04, 120, 125, 90, 9);
+  this->_setItemPos(IDC_CB_ZLV, 120, 137, half_w-130, 13);
   // Package content Label & output EditText
   this->_setItemPos(IDC_SC_LBL07, 10, 158, 150, 13);
   this->_setItemPos(IDC_EC_READ1, 10, 170, half_w-20, this->cliUnitY()-258);
@@ -1217,7 +1264,7 @@ void OmUiToolPkg::_onClose()
   // Check for unsaved changes
   if(this->_unsaved) {
     // ask user to save
-    if(!Om_dlgCloseUnsaved(this->_hwnd)) {
+    if(!Om_dlgCloseUnsaved(this->_hwnd, L"Mod Pack Editor")) {
       return; //< do NOT close
     }
   }
@@ -1249,7 +1296,7 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    wstring item_str;
+    OmWString item_str;
 
     switch(LOWORD(wParam))
     {

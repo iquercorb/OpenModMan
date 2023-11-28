@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILRTF_H_INCLUDED
-#define OMUTILRTF_H_INCLUDED
+#ifndef OMUTILRTF_H
+#define OMUTILRTF_H
 
 #include "OmBaseWin.h"
 
@@ -60,7 +60,7 @@ void Om_md2rtf_clear(OM_MD2RTF_CTX* ctx);
 /// \param[in]  fs    : RTF document base font size in points.
 /// \param[in]  w     : RTF document page width in pixels.
 ///
-void Om_md2rtf_render(OM_MD2RTF_CTX* ctx, const wstring& text, unsigned fs, unsigned w);
+void Om_md2rtf_render(OM_MD2RTF_CTX* ctx, const OmWString& text, unsigned fs, unsigned w);
 
 /// \brief Autofit RTF tables
 ///
@@ -86,4 +86,4 @@ bool Om_md2rtf_autofit(OM_MD2RTF_CTX* ctx, HWND hwnd);
 ///
 bool Om_md2rtf_stream(OM_MD2RTF_CTX* ctx, HWND hwnd);
 
-#endif // OMUTILRTF_H_INCLUDED
+#endif // OMUTILRTF_H

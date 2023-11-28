@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include <regex>              //< std::wregex
 #include <algorithm>          //< std::replace
 
@@ -36,7 +36,7 @@
 /// \param[in]  pwcs    : Wide char string to receive conversion result.
 /// \param[out] utf8    : Pointer to null-terminated Multibyte string to convert.
 ///
-inline static void __utf8_decode(wstring* pwcs, const char* str)
+inline static void __utf8_decode(OmWString* pwcs, const char* str)
 {
   pwcs->clear();
   pwcs->reserve(strlen(str));
@@ -88,7 +88,7 @@ inline static void __utf8_decode(wstring* pwcs, const char* str)
 /// \param[out] utf8    : Multibyte string to receive conversion result.
 /// \param[in]  wstr    : Wide char string to convert.
 ///
-inline static void __utf8_encode(string& utf8, const wstring& wstr)
+inline static void __utf8_encode(OmCString& utf8, const OmWString& wstr)
 {
   utf8.clear();
   utf8.reserve(wstr.size() * 4);
@@ -142,7 +142,7 @@ inline static void __utf8_encode(string& utf8, const wstring& wstr)
 /// \param[in]  pwcs    : Wide char string to receive conversion result.
 /// \param[out] utf8    : Pointer to null-terminated Multibyte string to convert.
 ///
-inline static size_t __multibyte_decode(UINT cp, wstring* pwcs, const char* utf8)
+inline static size_t __multibyte_decode(UINT cp, OmWString* pwcs, const char* utf8)
 {
   int n = MultiByteToWideChar(cp, 0, utf8, -1, nullptr, 0);
   if(n > 0) {
@@ -174,7 +174,7 @@ inline static size_t __multibyte_decode(UINT cp, wstring* pwcs, const char* utf8
 /// \param[out] utf8    : Multibyte string to receive conversion result.
 /// \param[in]  wstr    : Wide char string to convert.
 ///
-inline static size_t __multibyte_encode(UINT cp, string* pstr, const wchar_t* wstr)
+inline static size_t __multibyte_encode(UINT cp, OmCString* pstr, const wchar_t* wstr)
 {
   int n = WideCharToMultiByte(cp, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
   if(n > 0) {
@@ -220,7 +220,7 @@ static const uint8_t __utf8_bom[] = {0xEF, 0xBB, 0xBF};
 ///
 /// \return Count of written UTF16 codet.
 ///
-static inline size_t __utf16_encode(wstring* pwcs, const uint8_t* data, size_t size)
+static inline size_t __utf16_encode(OmWString* pwcs, const uint8_t* data, size_t size)
 {
   // Macros to check valid unicode trail bytes
   #define IS_UTF8_2BYTES(a) (((a)[1] & 0xC0) == 0x80)
@@ -307,7 +307,7 @@ static inline size_t __utf16_encode(wstring* pwcs, const uint8_t* data, size_t s
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toUTF16(wstring* pwcs, const string& utf8)
+size_t Om_toUTF16(OmWString* pwcs, const OmCString& utf8)
 {
   return __multibyte_decode(CP_UTF8, pwcs, utf8.data());
 }
@@ -315,7 +315,7 @@ size_t Om_toUTF16(wstring* pwcs, const string& utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toUTF16(wstring* pwcs, const char* utf8)
+size_t Om_toUTF16(OmWString* pwcs, const char* utf8)
 {
   return __multibyte_decode(CP_UTF8, pwcs, utf8);
 }
@@ -323,9 +323,9 @@ size_t Om_toUTF16(wstring* pwcs, const char* utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_toUTF16(const string& utf8)
+OmWString Om_toUTF16(const OmCString& utf8)
 {
-  wstring result;
+  OmWString result;
   __multibyte_decode(CP_UTF8, &result, utf8.data());
   return result;
 }
@@ -333,9 +333,9 @@ wstring Om_toUTF16(const string& utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_toUTF16(const char* utf8)
+OmWString Om_toUTF16(const char* utf8)
 {
-  wstring result;
+  OmWString result;
   __multibyte_decode(CP_UTF8, &result, utf8);
   return result;
 }
@@ -343,7 +343,7 @@ wstring Om_toUTF16(const char* utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toUTF16(wstring* pwcs, const uint8_t* data, size_t size)
+size_t Om_toUTF16(OmWString* pwcs, const uint8_t* data, size_t size)
 {
   return __utf16_encode(pwcs, data, size);
 }
@@ -351,9 +351,9 @@ size_t Om_toUTF16(wstring* pwcs, const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_toUTF16(const uint8_t* data, size_t size)
+OmWString Om_toUTF16(const uint8_t* data, size_t size)
 {
-  wstring result;
+  OmWString result;
   __utf16_encode(&result, data, size);
   return result;
 }
@@ -361,7 +361,7 @@ wstring Om_toUTF16(const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_loadToUTF16(wstring* pwcs, const wstring& path)
+size_t Om_loadToUTF16(OmWString* pwcs, const OmWString& path)
 {
   size_t len = 0;
 
@@ -393,9 +393,9 @@ size_t Om_loadToUTF16(wstring* pwcs, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_fromUtf8(const char* utf8)
+OmWString Om_fromUtf8(const char* utf8)
 {
-  wstring result;
+  OmWString result;
   __multibyte_decode(CP_UTF8, &result, utf8);
   return result;
 }
@@ -404,7 +404,7 @@ wstring Om_fromUtf8(const char* utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_fromUtf8(wstring* wstr, const char* utf8)
+size_t Om_fromUtf8(OmWString* wstr, const char* utf8)
 {
   return __multibyte_decode(CP_UTF8, wstr, utf8);
 }
@@ -413,7 +413,7 @@ size_t Om_fromUtf8(wstring* wstr, const char* utf8)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toUTF8(char* utf8, size_t len, const wstring& wstr)
+size_t Om_toUTF8(char* utf8, size_t len, const OmWString& wstr)
 {
   // The WinAPI implementation is the fastest one at this time
   int n = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, utf8, len, nullptr, nullptr);
@@ -424,9 +424,9 @@ size_t Om_toUTF8(char* utf8, size_t len, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-string Om_toUTF8(const wstring& wstr)
+OmCString Om_toUTF8(const OmWString& wstr)
 {
-  string result;
+  OmCString result;
   __multibyte_encode(CP_UTF8, &result, wstr.c_str());
   return result;
 }
@@ -435,7 +435,7 @@ string Om_toUTF8(const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toUTF8(string* utf8, const wstring& wstr)
+size_t Om_toUTF8(OmCString* utf8, const OmWString& wstr)
 {
   return __multibyte_encode(CP_UTF8, utf8, wstr.c_str());
 }
@@ -444,7 +444,7 @@ size_t Om_toUTF8(string* utf8, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toANSI(char* ansi, size_t len, const wstring& wstr)
+size_t Om_toANSI(char* ansi, size_t len, const OmWString& wstr)
 {
   // The WinAPI implementation is the fastest one at this time
   int n = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, ansi, len, nullptr, nullptr);
@@ -455,7 +455,7 @@ size_t Om_toANSI(char* ansi, size_t len, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toANSI(string* ansi, const wstring& wstr)
+size_t Om_toANSI(OmCString* ansi, const OmWString& wstr)
 {
   return __multibyte_encode(CP_ACP, ansi, wstr.c_str());
 }
@@ -464,7 +464,7 @@ size_t Om_toANSI(string* ansi, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_fromAnsiCp(wstring* wstr, const char* ansi)
+size_t Om_fromAnsiCp(OmWString* wstr, const char* ansi)
 {
   return __multibyte_decode(CP_ACP, wstr, ansi);
 }
@@ -473,7 +473,7 @@ size_t Om_fromAnsiCp(wstring* wstr, const char* ansi)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
+size_t Om_toZipCDR(char* cdr, size_t len, const OmWString& wstr)
 {
   // The WinAPI implementation is the fastest one at this time
   int n = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, cdr, len, nullptr, nullptr);
@@ -489,9 +489,14 @@ size_t Om_toZipCDR(char* cdr, size_t len, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_toZipCDR(string* cdr, const wstring& wstr)
+size_t Om_toZipCDR(OmCString* cdr, const OmWString& wstr)
 {
-  __multibyte_encode(CP_UTF8, cdr, wstr.c_str());
+  // "remove" the leading slash if exists
+  const wchar_t* c_wstr = wstr.c_str();
+  if(c_wstr[0] == L'/' || c_wstr[0] == L'\\')
+    c_wstr += 1;
+
+  __multibyte_encode(CP_UTF8, cdr, c_wstr);
 
   std::replace(cdr->begin(), cdr->end(), '\\', '/');
 
@@ -501,7 +506,7 @@ size_t Om_toZipCDR(string* cdr, const wstring& wstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_fromZipCDR(wstring* wstr, const char* cdr)
+size_t Om_fromZipCDR(OmWString* wstr, const char* cdr)
 {
   __multibyte_decode(CP_UTF8, wstr, cdr);
 
@@ -521,7 +526,7 @@ size_t Om_fromZipCDR(wstring* wstr, const char* cdr)
 ///
 /// \return True if a is "before" b, false otherwise
 ///
-static bool __sortStrings_Func(const wstring& a, const wstring& b)
+static bool __sortStrings_Func(const OmWString& a, const OmWString& b)
 {
   // get size of the shorter string to compare
   size_t l = a.size() > b.size() ? b.size() : a.size();
@@ -550,7 +555,7 @@ static bool __sortStrings_Func(const wstring& a, const wstring& b)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_sortStrings(vector<wstring>* strings)
+void Om_sortStrings(OmWStringArray* strings)
 {
   sort(strings->begin(), strings->end(), __sortStrings_Func);
 }
@@ -559,7 +564,7 @@ void Om_sortStrings(vector<wstring>* strings)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_strToUpper(wstring* str) {
+void Om_strToUpper(OmWString* str) {
   for(size_t i = 0; i < str->size(); ++i)
     str->at(i) = towupper(str->at(i));
 }
@@ -567,7 +572,7 @@ void Om_strToUpper(wstring* str) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_namesMatches(const wstring& left, const wstring& right)
+bool Om_namesMatches(const OmWString& left, const OmWString& right)
 {
   if(left.size() != right.size())
     return false;
@@ -583,7 +588,7 @@ bool Om_namesMatches(const wstring& left, const wstring& right)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_namesMatches(const wstring& left, const wchar_t* right)
+bool Om_namesMatches(const OmWString& left, const wchar_t* right)
 {
   if(left.size() != wcslen(right))
     return false;
@@ -644,7 +649,7 @@ bool Om_isValidUrl(const wchar_t* url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrl(const wstring& url)
+bool Om_isValidUrl(const OmWString& url)
 {
   return Om_isValidUrl(url.c_str());
 }
@@ -682,7 +687,7 @@ bool Om_isValidFileUrl(const wchar_t* url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidFileUrl(const wstring& url)
+bool Om_isValidFileUrl(const OmWString& url)
 {
   return Om_isValidFileUrl(url.c_str());
 }
@@ -705,13 +710,13 @@ bool Om_isValidUrlPath(const wchar_t* path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrlPath(const wstring& path)
+bool Om_isValidUrlPath(const OmWString& path)
 {
   if(path.empty())
     return false;
 
   for(unsigned i = 0; i < 16; ++i) // forbids all including back-slash
-    if(path.find_first_of(__illegal_url_chr[i]) != wstring::npos)
+    if(path.find_first_of(__illegal_url_chr[i]) != OmWString::npos)
       return false;
 
   return true;
@@ -735,13 +740,13 @@ bool Om_isValidName(const wchar_t* name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidName(const wstring& name)
+bool Om_isValidName(const OmWString& name)
 {
   if(name.empty())
     return false;
 
   for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
-    if(name.find_first_of(__illegal_win_chr[i]) != wstring::npos)
+    if(name.find_first_of(__illegal_win_chr[i]) != OmWString::npos)
       return false;
 
   return true;
@@ -766,13 +771,13 @@ bool Om_isValidPath(const wchar_t* path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidPath(const wstring& path)
+bool Om_isValidPath(const OmWString& path)
 {
   if(path.empty())
     return false;
 
   for(unsigned i = 0; i < 7; ++i)  // excluding back-slash
-    if(path.find_first_of(__illegal_win_chr[i]) != wstring::npos)
+    if(path.find_first_of(__illegal_win_chr[i]) != OmWString::npos)
       return false;
 
   return true;
@@ -781,23 +786,23 @@ bool Om_isValidPath(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getFileExtPart(const wstring& path) {
+OmWString Om_getFileExtPart(const OmWString& path) {
   size_t d = path.find_last_of(L'.') + 1;
-  return path.substr(d, wstring::npos);
+  return path.substr(d, OmWString::npos);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getFilePart(const wstring& path){
+OmWString Om_getFilePart(const OmWString& path){
   size_t s = path.find_last_of(L'\\') + 1;
-  return path.substr(s, wstring::npos);
+  return path.substr(s, OmWString::npos);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getDirPart(const wstring& uri){
+OmWString Om_getDirPart(const OmWString& uri){
   size_t e = uri.find_last_of(L'\\');
   return uri.substr(0, e);
 }
@@ -805,7 +810,7 @@ wstring Om_getDirPart(const wstring& uri){
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getNamePart(const wstring& uri){
+OmWString Om_getNamePart(const OmWString& uri){
   size_t s = uri.find_last_of(L'\\') + 1;
   size_t e = uri.find_last_of(L'.');
   return uri.substr(s, e-s);
@@ -814,10 +819,10 @@ wstring Om_getNamePart(const wstring& uri){
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_extensionMatches(const wstring& file, const wchar_t* ext)
+bool Om_extensionMatches(const OmWString& file, const wchar_t* ext)
 {
   size_t d = file.find_last_of(L'.') + 1;
-  if(d > 0 && d != wstring::npos) {
+  if(d > 0 && d != OmWString::npos) {
 
     size_t len = wcslen(ext);
 
@@ -839,15 +844,22 @@ bool Om_extensionMatches(const wstring& file, const wchar_t* ext)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_concatPaths(const wstring& left, const wstring& right) {
+OmWString Om_concatPaths(const OmWString& left, const OmWString& right) {
 
-  wstring result;
+  OmWString result;
+
   if(left.empty()) {
-    result = right;
+
+    result.assign(right);
+
   } else {
-    result = left;
-    if(left.back() != L'\\' && right.front() != L'\\') result += L"\\";
-    result += right;
+
+    result.assign(left);
+
+    if(left.back() != L'\\' && right.front() != L'\\')
+      result.push_back(L'\\');
+
+    result.append(right);
   }
   return result;
 }
@@ -855,22 +867,77 @@ wstring Om_concatPaths(const wstring& left, const wstring& right) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_concatPaths(wstring& conc, const wstring& left, const wstring& right) {
+void Om_concatPaths(OmWString& conc, const OmWString& left, const OmWString& right) {
 
   if(left.empty()) {
-    conc = right;
+
+    conc.assign(right);
+
   } else {
-    conc = left;
-    if(left.back() != L'\\' && right.front() != L'\\') conc += L"\\";
-    conc += right;
+
+    conc.assign(left);
+
+    if(left.back() != L'\\' && right.front() != L'\\')
+      conc.push_back(L'\\');
+
+    conc.append(right);
   }
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isRootOfPath(const wstring& root, const wstring& path) {
+OmWString Om_concatPathsExt(const OmWString& left, const OmWString& right, const wchar_t* ext)
+{
+  OmWString result;
+  if(left.empty()) {
+
+    result.assign(right);
+
+  } else {
+
+    result.assign(left);
+
+    if(left.back() != L'\\' && right.front() != L'\\')
+      result.push_back(L'\\');
+
+    result.append(right);
+
+  }
+
+  result.push_back(L'.');
+  result.append(ext);
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_concatPathsExt(OmWString& conc, const OmWString& left, const OmWString& right, const wchar_t* ext)
+{
+  if(left.empty()) {
+
+    conc.assign(right);
+
+  } else {
+
+    conc.assign(left);
+
+    if(left.back() != L'\\' && right.front() != L'\\')
+      conc.push_back(L'\\');
+
+    conc.append(right);
+  }
+
+  conc.push_back(L'.');
+  conc.append(ext);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isRootOfPath(const OmWString& root, const OmWString& path) {
 
   size_t l = root.size();
 
@@ -887,7 +954,7 @@ bool Om_isRootOfPath(const wstring& root, const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring& path) {
+bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& path) {
 
   size_t l = root.size();
 
@@ -898,7 +965,7 @@ bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring& path) 
     if(path[l] == L'\\') { //< verify this is a folder
       l++;
       if(path.size() > l) {
-        rel = path.substr(l, -1);
+        *rel = path.substr(l, -1);
         return true;
       }
     }
@@ -910,9 +977,9 @@ bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring& path) 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_concatURLs(const wstring& left, const wstring& right) {
+OmWString Om_concatURLs(const OmWString& left, const OmWString& right) {
 
-  wstring result;
+  OmWString result;
   if(left.empty()) {
     result = right;
   } else {
@@ -926,7 +993,7 @@ wstring Om_concatURLs(const wstring& left, const wstring& right) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_concatURLs(wstring& conc, const wstring& left, const wstring& right) {
+void Om_concatURLs(OmWString& conc, const OmWString& left, const OmWString& right) {
 
   if(left.empty()) {
     conc = right;
@@ -940,13 +1007,13 @@ void Om_concatURLs(wstring& conc, const wstring& left, const wstring& right) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_formatSizeStr(size_t bytes, bool octet)
+OmWString Om_formatSizeStr(uint64_t bytes, bool octet)
 {
   wchar_t swp_buf[64];
   wchar_t unit = (octet) ? 'o' : 'B';
 
   double fbytes;
-  wstring result;
+  OmWString result;
 
   if(bytes < 1024) { // 1 Ko
     if(octet) {
@@ -976,7 +1043,7 @@ wstring Om_formatSizeStr(size_t bytes, bool octet)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes)
+OmWString Om_formatSizeSysStr(uint64_t bytes, bool kbytes)
 {
   wchar_t buf[64];
 
@@ -986,13 +1053,13 @@ wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes)
     StrFormatByteSizeW(bytes, buf, 64);
   }
 
-  return wstring(buf);
+  return OmWString(buf);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_strIsVersion(const wstring& str)
+bool Om_strIsVersion(const OmWString& str)
 {
   unsigned n = 0;
   unsigned j = 0;
@@ -1027,7 +1094,7 @@ bool Om_strIsVersion(const wstring& str)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_escapeMarkdown(wstring* dst, const wstring& src)
+void Om_escapeMarkdown(OmWString* dst, const OmWString& src)
 {
   // the following implementation is twice faster than
   // usual ways using STL functions and methods.
@@ -1053,7 +1120,7 @@ void Om_escapeMarkdown(wstring* dst, const wstring& src)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src)
+size_t Om_escapeMarkdown(wchar_t* buf, const OmWString& src)
 {
   size_t n = 0;
   const wchar_t* s = src.data();
@@ -1068,4 +1135,58 @@ size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src)
   *buf++ = '\0';
 
   return n;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_toCRLF(OmWString* crlf_txt, const OmWString& lf_txt)
+{
+  crlf_txt->clear();
+  for(size_t i = 0; i < lf_txt.size(); ++i) {
+    if(lf_txt[i] == L'\n') {
+      *crlf_txt += L"\r\n"; continue;
+    }
+    crlf_txt->push_back(lf_txt[i]);
+  }
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_toCRLF(const OmWString& lf_txt)
+{
+  OmWString crlf_txt;
+
+  for(size_t i = 0; i < lf_txt.size(); ++i) {
+    if(lf_txt[i] == L'\n') {
+      crlf_txt += L"\r\n"; continue;
+    }
+    crlf_txt.push_back(lf_txt[i]);
+  }
+
+  return crlf_txt;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_concatStrings(const OmWStringArray& strings, const OmWString& separator)
+{
+  OmWString concat;
+
+  size_t stop = strings.size() - 1;
+
+  size_t i;
+
+  for(i = 0; i < stop; ++i) {
+    concat += strings[i];
+    concat += separator;
+  }
+
+  concat += strings[i];
+
+  return concat;
 }

@@ -56,7 +56,7 @@ class OmDialogWiz : public OmDialog
 
   protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    vector<OmDialog*>   _pageDial;
+    std::vector<OmDialog*>   _pageDial;
 
     void                _addPage(OmDialog* dialog);
 

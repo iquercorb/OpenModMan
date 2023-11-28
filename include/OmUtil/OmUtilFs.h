@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILFS_H_INCLUDED
-#define OMUTILFS_H_INCLUDED
+#ifndef OMUTILFS_H
+#define OMUTILFS_H
 
 #include "OmBase.h"
 
@@ -27,7 +27,7 @@
 ///
 /// \return True if the specified folder is empty, false otherwise.
 ///
-bool Om_isDirEmpty(const wstring& path);
+bool Om_isDirEmpty(const OmWString& path);
 
 /// \brief Create folder
 ///
@@ -37,7 +37,7 @@ bool Om_isDirEmpty(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_dirCreate(const wstring& path);
+int Om_dirCreate(const OmWString& path);
 
 /// \brief Create folder recursively
 ///
@@ -47,7 +47,7 @@ int Om_dirCreate(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_dirCreateRecursive(const wstring& path);
+int Om_dirCreateRecursive(const OmWString& path);
 
 /// \brief Delete folder
 ///
@@ -57,7 +57,7 @@ int Om_dirCreateRecursive(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_dirDelete(const wstring& path);
+int Om_dirDelete(const OmWString& path);
 
 /// \brief Delete folder recursively
 ///
@@ -67,7 +67,7 @@ int Om_dirDelete(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_dirDeleteRecursive(const wstring& path);
+int Om_dirDeleteRecursive(const OmWString& path);
 
 /// \brief Copy file
 ///
@@ -79,7 +79,7 @@ int Om_dirDeleteRecursive(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_fileCopy(const wstring& src, const wstring& dst, bool ow = true);
+int Om_fileCopy(const OmWString& src, const OmWString& dst, bool ow = true);
 
 /// \brief Copy file
 ///
@@ -90,7 +90,7 @@ int Om_fileCopy(const wstring& src, const wstring& dst, bool ow = true);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_fileMove(const wstring& src, const wstring& dst);
+int Om_fileMove(const OmWString& src, const OmWString& dst);
 
 /// \brief Delete file
 ///
@@ -100,7 +100,7 @@ int Om_fileMove(const wstring& src, const wstring& dst);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_fileDelete(const wstring& path);
+int Om_fileDelete(const OmWString& path);
 
 /// \brief Check valid file
 ///
@@ -111,7 +111,7 @@ int Om_fileDelete(const wstring& path);
 /// \return True if item is actually a file, false if it does not exists or
 ///         is a folder.
 ///
-bool Om_isFile(const wstring& path);
+bool Om_isFile(const OmWString& path);
 
 /// \brief Check valid folder
 ///
@@ -122,7 +122,7 @@ bool Om_isFile(const wstring& path);
 /// \return True if item is actually a folder, false if it does not exists or
 ///         is a file.
 ///
-bool Om_isDir(const wstring& path);
+bool Om_isDir(const OmWString& path);
 
 /// \brief Check existing item
 ///
@@ -132,7 +132,7 @@ bool Om_isDir(const wstring& path);
 ///
 /// \return True if item is actually a file or folder, false otherwise.
 ///
-bool Om_pathExists(const wstring& path);
+bool Om_pathExists(const OmWString& path);
 
 /// \brief Check for network path
 ///
@@ -142,7 +142,7 @@ bool Om_pathExists(const wstring& path);
 ///
 /// \return True if item is actually network path, false otherwise.
 ///
-bool Om_pathIsNetwork(const wstring& path);
+bool Om_pathIsNetwork(const OmWString& path);
 
 /// \brief Set item attribute
 ///
@@ -153,7 +153,7 @@ bool Om_pathIsNetwork(const wstring& path);
 ///
 /// \return True if operation succeed, false otherwise.
 ///
-bool Om_itemSetAttr(const wstring& path, uint32_t attr);
+bool Om_itemSetAttr(const OmWString& path, uint32_t attr);
 
 /// \brief Check item attributes
 ///
@@ -165,7 +165,7 @@ bool Om_itemSetAttr(const wstring& path, uint32_t attr);
 ///
 /// \return True if mask matches item attributes, false otherwise.
 ///
-bool Om_itemHasAttr(const wstring& path, uint32_t mask);
+bool Om_itemHasAttr(const OmWString& path, uint32_t mask);
 
 /// \brief Check valid Zip file
 ///
@@ -175,98 +175,98 @@ bool Om_itemHasAttr(const wstring& path, uint32_t mask);
 ///
 /// \return True if item is actually a file with Zip signature, false otherwise.
 ///
-bool Om_isFileZip(const wstring& path);
+bool Om_isFileZip(const OmWString& path);
 
 /// \brief List folders
 ///
 /// Retrieves the list of folders contained in the specified origin location.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list folder from.
 /// \param[in]  abs     : If true, returns folder absolute path instead of
 ///                       folder name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsDir(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
+void Om_lsDir(OmWStringArray* ls, const OmWString& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files
 ///
 /// Retrieves the list of files contained in the specified origin location.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list files from.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFile(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
+void Om_lsFile(OmWStringArray* ls, const OmWString& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files recursively
 ///
 /// Retrieves the list of files contained in the specified origin
 /// location, exploring sub-folders recursively.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
+void Om_lsFileRecursive(OmWStringArray* ls, const OmWString& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files with custom filter
 ///
 /// Retrieves the list of files contained in the specified origin location using
 /// the given custom filter.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list files from.
 /// \param[in]  filter  : Custom filter to select files.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsFileFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true, bool hidden = false);
+void Om_lsFileFiltered(OmWStringArray* ls, const OmWString& origin, const OmWString& filter, bool abs = true, bool hidden = false);
 
 /// \brief List files and folders
 ///
 /// Retrieves the list of files and folders contained in the specified origin
 /// location.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAll(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
+void Om_lsAll(OmWStringArray* ls, const OmWString& origin, bool abs = true, bool hidden = false);
 
 /// \brief List files and folders recursively
 ///
 /// Retrieves the list of files and folders contained in the specified origin
 /// location, exploring sub-folders recursively.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list items from.
 /// \param[in]  abs     : If true, returns items absolute path instead of
 ///                       items name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool abs = true, bool hidden = false);
+void Om_lsAllRecursive(OmWStringArray* ls, const OmWString& origin, bool abs = true, bool hidden = false);
 
 /// \brief List folders and files with custom filter
 ///
 /// Retrieves the list of folders and files contained in the specified origin location
 /// using the given custom filter.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  origin  : Path where to list files from.
 /// \param[in]  filter  : Custom filter to select files.
 /// \param[in]  abs     : If true, returns files absolute path instead of
 ///                       files name alone.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring& filter, bool abs = true, bool hidden = false);
+void Om_lsAllFiltered(OmWStringArray* ls, const OmWString& origin, const OmWString& filter, bool abs = true, bool hidden = false);
 
 /// \brief Get item total size
 ///
@@ -277,7 +277,7 @@ void Om_lsAllFiltered(vector<wstring>* ls, const wstring& origin, const wstring&
 ///
 /// \return Total size in bytes of the specified item
 ///
-uint64_t Om_itemSize(const wstring& path);
+uint64_t Om_itemSize(const OmWString& path);
 
 /// \brief Get item last time
 ///
@@ -287,7 +287,7 @@ uint64_t Om_itemSize(const wstring& path);
 ///
 /// \return Item last write time.
 ///
-time_t Om_itemTime(const wstring& path);
+time_t Om_itemTime(const OmWString& path);
 
 /// \brief Move to trash
 ///
@@ -297,37 +297,37 @@ time_t Om_itemTime(const wstring& path);
 ///
 /// \return 0 if operation succeed, WinAPI error code otherwise.
 ///
-int Om_moveToTrash(const wstring& path);
+int Om_moveToTrash(const OmWString& path);
 
 /// \brief Read into directory access mask
 ///
 /// Access mask for directory read/traverse content
 ///
-#define OMM_ACCESS_DIR_READ     FILE_LIST_DIRECTORY|FILE_TRAVERSE|FILE_READ_ATTRIBUTES
+#define OM_ACCESS_DIR_READ     FILE_LIST_DIRECTORY|FILE_TRAVERSE|FILE_READ_ATTRIBUTES
 
 /// \brief Write into directory access mask
 ///
 /// Access mask for directory write/add content
 ///
-#define OMM_ACCESS_DIR_WRITE    FILE_ADD_FILE|FILE_ADD_SUBDIRECTORY|FILE_WRITE_ATTRIBUTES
+#define OM_ACCESS_DIR_WRITE    FILE_ADD_FILE|FILE_ADD_SUBDIRECTORY|FILE_WRITE_ATTRIBUTES
 
 /// \brief Execute file access mask
 ///
 /// Access mask for fie execute
 ///
-#define OMM_ACCESS_FILE_EXEC    FILE_EXECUTE
+#define OM_ACCESS_FILE_EXEC    FILE_EXECUTE
 
 /// \brief Read file access mask
 ///
 /// Access mask for file read data
 ///
-#define OMM_ACCESS_FILE_READ    FILE_READ_DATA|FILE_READ_ATTRIBUTES
+#define OM_ACCESS_FILE_READ    FILE_READ_DATA|FILE_READ_ATTRIBUTES
 
 /// \brief Write file access mask
 ///
 /// Access mask for file write/append data
 ///
-#define OMM_ACCESS_FILE_WRITE   FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES
+#define OM_ACCESS_FILE_WRITE   FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES
 
 /// \brief check file or directory permission
 ///
@@ -339,7 +339,7 @@ int Om_moveToTrash(const wstring& path);
 ///
 /// \return True if requested permission are allowed, false otherwise
 ///
-bool Om_checkAccess(const wstring& path, unsigned mask);
+bool Om_checkAccess(const OmWString& path, unsigned mask);
 
 /// \brief Load plan text.
 ///
@@ -349,7 +349,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask);
 ///
 /// \return String of file content
 ///
-string Om_loadPlainText(const wstring& path);
+OmCString Om_loadPlainText(const OmWString& path);
 
 /// \brief Load plan text.
 ///
@@ -360,7 +360,7 @@ string Om_loadPlainText(const wstring& path);
 ///
 /// \return Count of bytes read.
 ///
-size_t Om_loadPlainText(string* pstr, const wstring& path);
+size_t Om_loadPlainText(OmCString* pstr, const OmWString& path);
 
 /// \brief Load binary file.
 ///
@@ -371,6 +371,6 @@ size_t Om_loadPlainText(string* pstr, const wstring& path);
 ///
 /// \return Pointer to loaded data.
 ///
-uint8_t* Om_loadBinary(uint64_t* size, const wstring& path);
+uint8_t* Om_loadBinary(uint64_t* size, const OmWString& path);
 
-#endif // OMUTILFS_H_INCLUDED
+#endif // OMUTILFS_H

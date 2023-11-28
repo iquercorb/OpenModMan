@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILWIN_H_INCLUDED
-#define OMUTILWIN_H_INCLUDED
+#ifndef OMUTILWIN_H
+#define OMUTILWIN_H
 
 #include "OmBase.h"
 #include "OmBaseWin.h"
@@ -28,7 +28,7 @@
 ///
 /// \return Error string.
 ///
-wstring Om_getErrorStr(int code);
+OmWString Om_getErrorStr(int code);
 
 /// \brief Load stock shell icon
 ///
@@ -90,4 +90,7 @@ HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size = 0);
 ///
 HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name);
 
-#endif // OMUTILWIN_H_INCLUDED
+void Om_getAppIconInfos(const OmWString& path, int16_t res_id);
+void Om_getAppIconImage(const OmWString& path);
+
+#endif // OMUTILWIN_H

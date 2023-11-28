@@ -39,7 +39,7 @@ class OmVersion
     ///
     /// \param[in]  str     : Version string to parse.
     ///
-    OmVersion(const wstring& str);
+    OmVersion(const OmWString& str);
 
     /// \brief Constructor.
     ///
@@ -73,7 +73,7 @@ class OmVersion
     ///
     /// \return Reference to this.
     ///
-    OmVersion& operator=(const wstring& str);
+    OmVersion& operator=(const OmWString& str);
 
     /// \brief Parse version string.
     ///
@@ -83,7 +83,7 @@ class OmVersion
     ///
     /// \return True if parsing succeed, false otherwise.
     ///
-    bool parse(const wstring& str);
+    bool parse(const OmWString& str);
 
     /// \brief Define version.
     ///
@@ -94,6 +94,16 @@ class OmVersion
     /// \param[in]  rev     : Revision number to set.
     ///
     void define(unsigned maj, unsigned min, unsigned rev);
+
+    /// \brief Check validity
+    ///
+    /// Check whether this instance has valid parsed value.
+    ///
+    /// \return True if version is valid, false otherwise
+    ///
+    bool valid() const {
+      return !this->_str.empty();
+    }
 
     /// \brief Major number.
     ///
@@ -131,7 +141,7 @@ class OmVersion
     ///
     /// \return Version string.
     ///
-    wstring asString() const;
+    OmWString asString() const;
 
     /// \brief Array subscript.
     ///
@@ -223,9 +233,15 @@ class OmVersion
       return (_maj == 0 && _min == 0 && _rev == 0);
     }
 
+    /// \brief Clear instance
+    ///
+    /// Reset instance to its initial values
+    ///
+    void clear();
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    vector<wstring>     _str;   //< version as string
+    OmWStringArray     _str;   //< version as string
 
     unsigned            _maj;   //< version major number
 

@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include <regex>
 
 
@@ -35,7 +35,7 @@ static const uint8_t __b64_dec_table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 /// \param[in]  in_data : Input data to encode.
 /// \param[in]  in_size : Input size of data in bytes.
 ///
-static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, size_t in_size)
+static inline void __base64_encode(OmWString& out_b64, const uint8_t* in_data, size_t in_size)
 {
   // compute string size now
   size_t size = 4 * ((in_size + 2) / 3);
@@ -76,7 +76,7 @@ static inline void __base64_encode(wstring& out_b64, const uint8_t* in_data, siz
 ///
 /// \return Pointer to decoded data.
 ///
-static inline uint8_t* __base64_decode(size_t* out_size, const wstring& in_b64)
+static inline uint8_t* __base64_decode(size_t* out_size, const OmWString& in_b64)
 {
   // check whether input data is valid
   if(in_b64.size() % 4 != 0)
@@ -115,9 +115,9 @@ static inline uint8_t* __base64_decode(size_t* out_size, const wstring& in_b64)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_toBase64(const uint8_t* data, size_t size)
+OmWString Om_toBase64(const uint8_t* data, size_t size)
 {
-  wstring b64;
+  OmWString b64;
   __base64_encode(b64, data, size);
   return b64;
 }
@@ -126,7 +126,7 @@ wstring Om_toBase64(const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_toBase64(wstring& b64, const uint8_t* data, size_t size)
+void Om_toBase64(OmWString& b64, const uint8_t* data, size_t size)
 {
   __base64_encode(b64, data, size);
 }
@@ -135,7 +135,7 @@ void Om_toBase64(wstring& b64, const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_fromBase64(size_t* size, const wstring& b64)
+uint8_t* Om_fromBase64(size_t* size, const OmWString& b64)
 {
   return __base64_decode(size, b64);
 }
@@ -151,19 +151,19 @@ static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& charset, const uint8_t* data, size_t size)
+void Om_encodeDataUri(OmWString& uri, const OmWString& mime_type, const OmWString& charset, const uint8_t* data, size_t size)
 {
   // compose final data URI string
   uri.clear();
   uri.append(L"data:");
   uri.append(mime_type);
 
-  wstring uri_data;
+  OmWString uri_data;
 
   if(!charset.empty()) {
     uri.append(L";charset=");
     uri.append(charset);
-    // convert data to wstring
+    // convert data to OmWString
     for(unsigned i = 0; i < size; ++i)
       uri_data.push_back(static_cast<wchar_t>(data[i]));
   } else {
@@ -181,7 +181,7 @@ void Om_encodeDataUri(wstring& uri, const wstring& mime_type, const wstring& cha
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_decodeDataUri(size_t* size, wstring& mime_type, wstring& charset, const wstring& uri)
+uint8_t* Om_decodeDataUri(size_t* size, OmWString& mime_type, OmWString& charset, const OmWString& uri)
 {
   // initialize values
   (*size) = 0;
@@ -213,7 +213,7 @@ uint8_t* Om_decodeDataUri(size_t* size, wstring& mime_type, wstring& charset, co
         charset = matches[4];
 
         // get data as wide string
-        wstring wdata = matches.suffix();
+        OmWString wdata = matches.suffix();
 
         // allocate new buffer to hold data
         uint8_t* ascii = reinterpret_cast<uint8_t*>(Om_alloc(wdata.size()));

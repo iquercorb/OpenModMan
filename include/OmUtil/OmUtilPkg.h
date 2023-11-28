@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILPKG_H_INCLUDED
-#define OMUTILPKG_H_INCLUDED
+#ifndef OMUTILPKG_H
+#define OMUTILPKG_H
 
 #include "OmBase.h"
 
@@ -33,6 +33,50 @@
 ///
 /// \return True if version string candidate was found, false otherwise
 ///
-bool Om_parsePkgIdent(wstring& name, wstring& core, wstring& vers, const wstring& filename, bool isfile = true, bool us2spc = true);
+bool Om_parsePkgIdent(OmWString& name, OmWString& core, OmWString& vers, const OmWString& filename, bool isfile = true, bool us2spc = true);
 
-#endif // OMUTILPKG_H_INCLUDED
+
+/// \brief Parse Mod file name
+///
+/// Parse Mod identity, core name, version string and displayed name from file name.
+///
+/// \param[out] filename  : File name to parse
+/// \param[out] iden      : Parsed Mod identity
+/// \param[out] core      : Parsed Mod core name
+/// \param[in]  vers      : Parsed Mod version string
+/// \param[in]  name      : Parsed and formated Mod displayed name
+///
+/// \return True if version string candidate was found, false otherwise
+///
+bool Om_parseModFilename(const OmWString& filename, OmWString* iden, OmWString* core, OmWString* vers, OmWString* name);
+
+
+/// \brief Parse Mod directory name
+///
+/// Parse Mod identity, core name, version string and displayed name from directory name.
+///
+/// \param[out] dirname   : Directory name to parse
+/// \param[out] iden      : Parsed Mod identity
+/// \param[out] core      : Parsed Mod core name
+/// \param[in]  vers      : Parsed Mod version string
+/// \param[in]  name      : Parsed and formated Mod displayed name
+///
+/// \return True if version string candidate was found, false otherwise
+///
+bool Om_parseModDirname(const OmWString& dirname, OmWString* iden, OmWString* core, OmWString* vers, OmWString* name);
+
+
+/// \brief Parse Mod identity
+///
+/// Parse Mod core name, version string and displayed name and from directory name.
+///
+/// \param[out] iden      : Mod identity to parse
+/// \param[out] core      : Parsed Mod core name
+/// \param[in]  vers      : Parsed Mod version string
+/// \param[in]  name      : Parsed and formated Mod displayed name
+///
+/// \return True if version string candidate was found, false otherwise
+///
+bool Om_parseModIdent(const OmWString& iden, OmWString* core, OmWString* vers, OmWString* name);
+
+#endif // OMUTILPKG_H

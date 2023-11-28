@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 
 #include "OmBaseWin.h"        //< WinAPI
 #include <ShlwApi.h>          //< PathIsDirectoryEmptyW
@@ -23,14 +23,14 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isDirEmpty(const wstring& path) {
+bool Om_isDirEmpty(const OmWString& path) {
   return PathIsDirectoryEmptyW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirCreate(const wstring& path) {
+int Om_dirCreate(const OmWString& path) {
   if(!CreateDirectoryW(path.c_str(), nullptr)) {
     return GetLastError();
   }
@@ -40,7 +40,7 @@ int Om_dirCreate(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirCreateRecursive(const wstring& path)
+int Om_dirCreateRecursive(const OmWString& path)
 {
   return SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
 }
@@ -48,7 +48,7 @@ int Om_dirCreateRecursive(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirDelete(const wstring& path) {
+int Om_dirDelete(const OmWString& path) {
   if(!RemoveDirectoryW(path.c_str())) {
     return GetLastError();
   }
@@ -58,7 +58,7 @@ int Om_dirDelete(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileCopy(const wstring& src, const wstring& dst, bool ow = true) {
+int Om_fileCopy(const OmWString& src, const OmWString& dst, bool ow = true) {
   if(!ow) {
     if(GetFileAttributesW(dst.c_str()) != INVALID_FILE_ATTRIBUTES)
       return 0; /* we do not write, but this is not a error */
@@ -72,7 +72,7 @@ int Om_fileCopy(const wstring& src, const wstring& dst, bool ow = true) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileMove(const wstring& src, const wstring& dst) {
+int Om_fileMove(const OmWString& src, const OmWString& dst) {
   if(!MoveFileExW(src.c_str(),dst.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
     return GetLastError();
   }
@@ -82,7 +82,7 @@ int Om_fileMove(const wstring& src, const wstring& dst) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileDelete(const wstring& path){
+int Om_fileDelete(const OmWString& path){
   if(!DeleteFileW(path.c_str())) {
     return GetLastError();
   }
@@ -92,7 +92,7 @@ int Om_fileDelete(const wstring& path){
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFile(const wstring& path) {
+bool Om_isFile(const OmWString& path) {
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
     return !(attr&FILE_ATTRIBUTE_DIRECTORY);
@@ -102,7 +102,7 @@ bool Om_isFile(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isDir(const wstring& path) {
+bool Om_isDir(const OmWString& path) {
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
     return (attr&FILE_ATTRIBUTE_DIRECTORY);
@@ -112,28 +112,28 @@ bool Om_isDir(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_pathIsNetwork(const wstring& path) {
+bool Om_pathIsNetwork(const OmWString& path) {
   return PathIsNetworkPathW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_pathExists(const wstring& path) {
+bool Om_pathExists(const OmWString& path) {
   return PathFileExistsW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_itemSetAttr(const wstring& path, uint32_t attr) {
+bool Om_itemSetAttr(const OmWString& path, uint32_t attr) {
   return SetFileAttributesW(path.c_str(), attr);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_itemHasAttr(const wstring& path, uint32_t mask) {
+bool Om_itemHasAttr(const OmWString& path, uint32_t mask) {
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
     return ((mask & attr) == mask);
@@ -143,9 +143,9 @@ bool Om_itemHasAttr(const wstring& path, uint32_t mask) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirDeleteRecursive(const wstring& path)
+int Om_dirDeleteRecursive(const OmWString& path)
 {
-  wchar_t path_buf[OMM_MAX_PATH];
+  wchar_t path_buf[OM_MAX_PATH];
 
   wcscpy(path_buf, path.c_str());
   path_buf[path.size()+1] = 0; // the buffer must end with double null character
@@ -163,7 +163,7 @@ int Om_dirDeleteRecursive(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFileZip(const wstring& path) {
+bool Om_isFileZip(const OmWString& path) {
 
   // Microsoft functions are ugly (this is not new) but they are proven to be
   // the most efficient for file I/O... maybe because they are directly sticked
@@ -209,11 +209,11 @@ bool Om_isFileZip(const wstring& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
+void Om_lsDir(OmWStringArray* ls, const OmWString& orig, bool absolute, bool hidden)
 {
-  wstring item;
+  OmWString item;
 
-  wstring srch(orig);
+  OmWString srch(orig);
   srch += L"\\*";
 
   WIN32_FIND_DATAW fd;
@@ -244,11 +244,11 @@ void Om_lsDir(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidd
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
+void Om_lsFile(OmWStringArray* ls, const OmWString& orig, bool absolute, bool hidden)
 {
-  wstring item;
+  OmWString item;
 
-  wstring srch(orig);
+  OmWString srch(orig);
   srch += L"\\*";
 
   WIN32_FIND_DATAW fd;
@@ -277,18 +277,18 @@ void Om_lsFile(vector<wstring>* ls, const wstring& orig, bool absolute, bool hid
 ///
 /// This is the private function used to list files recursively.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  orig    : Path where to list items from.
 /// \param[in]  from    : Path to prepend to result to obtain the item full
 ///                       path from the beginning of the tree exploration.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from, bool hidden)
+static void __lsFile_Recurse(OmWStringArray* ls, const OmWString& orig, const OmWString& from, bool hidden)
 {
-  wstring item;
-  wstring root;
+  OmWString item;
+  OmWString root;
 
-  wstring srch(orig);
+  OmWString srch(orig);
   srch += L"\\*";
 
   WIN32_FIND_DATAW fd;
@@ -321,7 +321,7 @@ static void __lsFile_Recurse(vector<wstring>* ls, const wstring& orig, const wst
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool absolute, bool hidden)
+void Om_lsFileRecursive(OmWStringArray* ls, const OmWString& origin, bool absolute, bool hidden)
 {
   if(absolute) {
     __lsFile_Recurse(ls, origin.c_str(), origin.c_str(), hidden);
@@ -333,12 +333,12 @@ void Om_lsFileRecursive(vector<wstring>* ls, const wstring& origin, bool absolut
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& filter, bool absolute, bool hidden)
+void Om_lsFileFiltered(OmWStringArray* ls, const OmWString& orig, const OmWString& filter, bool absolute, bool hidden)
 {
-  wstring item;
-  wstring root;
+  OmWString item;
+  OmWString root;
 
-  wstring srch(orig);
+  OmWString srch(orig);
   srch += L"\\" + filter;
 
   WIN32_FIND_DATAW fd;
@@ -366,11 +366,11 @@ void Om_lsFileFiltered(vector<wstring>* ls, const wstring& orig, const wstring& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidden)
+void Om_lsAll(OmWStringArray* ls, const OmWString& orig, bool absolute, bool hidden)
 {
-  wstring item;
+  OmWString item;
 
-  wstring srch(orig); srch += L"\\*";
+  OmWString srch(orig); srch += L"\\*";
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
@@ -398,17 +398,17 @@ void Om_lsAll(vector<wstring>* ls, const wstring& orig, bool absolute, bool hidd
 ///
 /// This is the private function used to list files and folder recursively.
 ///
-/// \param[out] ls      : Pointer to array of wstring to be filled with result.
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  orig    : Path where to list items from.
 /// \param[in]  from    : Path to prepend to result to obtain the item full
 ///                       path from the beginning of the tree exploration.
 ///
-static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstring& from, bool hidden)
+static void __lsAll_Recurse(OmWStringArray* ls, const OmWString& orig, const OmWString& from, bool hidden)
 {
-  wstring item;
-  wstring root;
+  OmWString item;
+  OmWString root;
 
-  wstring srch(orig);
+  OmWString srch(orig);
   srch += L"\\*";
 
   WIN32_FIND_DATAW fd;
@@ -423,16 +423,14 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
       if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
         continue;
 
+      item = from; item += L"\\"; item += fd.cFileName;
+
       if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        item = from; item += L"\\"; item += fd.cFileName;
-        root = orig; root += L"\\"; root += fd.cFileName;
         ls->push_back(item);
-
         // go deep in tree
+        root = orig; root += L"\\"; root += fd.cFileName;
         __lsAll_Recurse(ls, root, item, hidden);
-
       } else {
-        item = from; item += L"\\"; item += fd.cFileName;
         ls->push_back(item);
       }
     } while(FindNextFileW(hnd, &fd));
@@ -443,7 +441,7 @@ static void __lsAll_Recurse(vector<wstring>* ls, const wstring& orig, const wstr
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute, bool hidden)
+void Om_lsAllRecursive(OmWStringArray* ls, const OmWString& origin, bool absolute, bool hidden)
 {
   if(absolute) {
     __lsAll_Recurse(ls, origin.c_str(), origin.c_str(), hidden);
@@ -461,13 +459,13 @@ void Om_lsAllRecursive(vector<wstring>* ls, const wstring& origin, bool absolute
 /// \param[in]  orig    : Path of folder to get total size (start of recursive
 ///                       exploration).
 ///
-void __folderSize(uint64_t* size, const wstring& orig)
+void __folderSize(uint64_t* size, const OmWString& orig)
 {
-  wstring root;
+  OmWString root;
 
-  DWORD hi, lo;
+  LARGE_INTEGER FileSize;
 
-  wstring srch(orig); srch += L"\\*";
+  OmWString srch(orig); srch += L"\\*";
   WIN32_FIND_DATAW fd;
   HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
@@ -491,8 +489,10 @@ void __folderSize(uint64_t* size, const wstring& orig)
                                    OPEN_EXISTING,
                                    FILE_ATTRIBUTE_NORMAL,
                                    nullptr);
-        lo = GetFileSize(hFile, &hi);
-        *size += (static_cast<uint64_t>(hi) << 32) & lo;
+
+        GetFileSizeEx(hFile, &FileSize);
+        *size += FileSize.QuadPart;
+
         CloseHandle(hFile);
       }
     } while(FindNextFileW(hnd, &fd));
@@ -503,12 +503,12 @@ void __folderSize(uint64_t* size, const wstring& orig)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint64_t Om_itemSize(const wstring& path)
+uint64_t Om_itemSize(const OmWString& path)
 {
   uint64_t ret = 0;
 
   if(Om_isFile(path)) {
-    DWORD hi, lo;
+    LARGE_INTEGER FileSize;
     HANDLE hFile = CreateFileW(path.c_str(),
                                GENERIC_READ,
                                FILE_SHARE_READ,
@@ -517,11 +517,9 @@ uint64_t Om_itemSize(const wstring& path)
                                FILE_ATTRIBUTE_NORMAL,
                                nullptr);
 
-    lo = GetFileSize(hFile, &hi);
+    GetFileSizeEx(hFile, &FileSize);
     CloseHandle(hFile);
-
-    if(lo != INVALID_FILE_SIZE)
-      ret = (static_cast<uint64_t>(hi) << 32) & lo;
+    ret = FileSize.QuadPart;
 
   } else {
     ret = 0;
@@ -534,7 +532,7 @@ uint64_t Om_itemSize(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-time_t Om_itemTime(const wstring& path)
+time_t Om_itemTime(const OmWString& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(),
                              GENERIC_READ,
@@ -561,9 +559,9 @@ time_t Om_itemTime(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_moveToTrash(const wstring& path)
+int Om_moveToTrash(const OmWString& path)
 {
-  wchar_t path_buf[OMM_MAX_PATH];
+  wchar_t path_buf[OM_MAX_PATH];
 
   wcscpy(path_buf, path.c_str());
   path_buf[path.size()+1] = 0;
@@ -581,7 +579,7 @@ int Om_moveToTrash(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_checkAccess(const wstring& path, unsigned mask)
+bool Om_checkAccess(const OmWString& path, unsigned mask)
 {
   // Thanks to this article for giving some clues :
   // http://blog.aaronballman.com/2011/08/how-to-check-access-rights/
@@ -602,7 +600,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   if(!GetFileSecurityW(path.c_str(), sdMask, pSd, sdSize, &sdSize)) {
     Om_free(pSd);
     #ifdef DEBUG
-    cout << "DEBUG => Om_checkAccess :: GetFileSecurityW failed\n";
+    std::wcout << "DEBUG => Om_checkAccess :: GetFileSecurityW failed\n";
     #endif
     return false;
   }
@@ -615,7 +613,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   if(!OpenProcessToken(GetCurrentProcess(), daMask, &hTokenProc)) {
     Om_free(pSd);
     #ifdef DEBUG
-    cout << "DEBUG => Om_checkAccess :: OpenProcessToken failed\n";
+    std::wcout << "DEBUG => Om_checkAccess :: OpenProcessToken failed\n";
     #endif
     return false;
   }
@@ -626,7 +624,7 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   if(!DuplicateToken(hTokenProc, SecurityImpersonation, &hTokenUser)) {
     CloseHandle(hTokenProc); Om_free(pSd);
     #ifdef DEBUG
-    cout << "DEBUG => Om_checkAccess :: DuplicateToken failed\n";
+    std::wcout << "DEBUG => Om_checkAccess :: DuplicateToken failed\n";
     #endif
     return false;
   }
@@ -645,52 +643,52 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
   if(!AccessCheck(pSd, hTokenUser, mask, &gm, &ps, &psSize, &allowed, &status)) {
     CloseHandle(hTokenProc); CloseHandle(hTokenUser); Om_free(pSd);
     #ifdef DEBUG
-    wcout << L"DEBUG => Om_checkAccess :: AccessCheck failed: " << GetLastError() << L"\n";
+    std::wcout << L"DEBUG => Om_checkAccess :: AccessCheck failed: " << GetLastError() << L"\n";
     #endif
   }
 
   if(!status) {
     #ifdef DEBUG
-    cout << "DEBUG => Om_checkAccess(";
-    if(mask & FILE_LIST_DIRECTORY) cout << "FILE_LIST_DIRECTORY | ";
-    if(mask & FILE_TRAVERSE) cout << "FILE_TRAVERSE | ";
-    if(mask & FILE_ADD_FILE) cout << "FILE_ADD_FILE | ";
-    if(mask & FILE_ADD_SUBDIRECTORY) cout << "FILE_ADD_SUBDIRECTORY | ";
-    if(mask & FILE_READ_DATA) cout << "FILE_READ_DATA | ";
-    if(mask & FILE_WRITE_DATA) cout << "FILE_WRITE_DATA | ";
-    if(mask & FILE_APPEND_DATA) cout << "FILE_APPEND_DATA | ";
-    if(mask & FILE_EXECUTE) cout << "FILE_EXECUTE";
-    if(mask & FILE_READ_ATTRIBUTES) cout << "FILE_READ_ATTRIBUTES";
-    if(mask & FILE_WRITE_ATTRIBUTES) cout << "FILE_WRITE_ATTRIBUTES";
-    cout << ") : denied, allowed access: \n";
+    std::wcout << "DEBUG => Om_checkAccess(";
+    if(mask & FILE_LIST_DIRECTORY) std::wcout << "FILE_LIST_DIRECTORY | ";
+    if(mask & FILE_TRAVERSE) std::wcout << "FILE_TRAVERSE | ";
+    if(mask & FILE_ADD_FILE) std::wcout << "FILE_ADD_FILE | ";
+    if(mask & FILE_ADD_SUBDIRECTORY) std::wcout << "FILE_ADD_SUBDIRECTORY | ";
+    if(mask & FILE_READ_DATA) std::wcout << "FILE_READ_DATA | ";
+    if(mask & FILE_WRITE_DATA) std::wcout << "FILE_WRITE_DATA | ";
+    if(mask & FILE_APPEND_DATA) std::wcout << "FILE_APPEND_DATA | ";
+    if(mask & FILE_EXECUTE) std::wcout << "FILE_EXECUTE";
+    if(mask & FILE_READ_ATTRIBUTES) std::wcout << "FILE_READ_ATTRIBUTES";
+    if(mask & FILE_WRITE_ATTRIBUTES) std::wcout << "FILE_WRITE_ATTRIBUTES";
+    std::wcout << ") : denied, allowed access: \n";
     AccessCheck(pSd, hTokenUser, FILE_READ_DATA, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_DATA + LIST_DIRECTORY\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_DATA + LIST_DIRECTORY\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_DATA, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_DATA + ADD_FILE\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_DATA + ADD_FILE\n";
     AccessCheck(pSd, hTokenUser, FILE_APPEND_DATA, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_APPEND_DATA + ADD_SUBDIRECTORY\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_APPEND_DATA + ADD_SUBDIRECTORY\n";
     AccessCheck(pSd, hTokenUser, FILE_READ_EA, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_EA\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_EA\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_EA, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_EA\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_EA\n";
     AccessCheck(pSd, hTokenUser, FILE_EXECUTE, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_EXECUTE + TRAVERSE\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_EXECUTE + TRAVERSE\n";
     AccessCheck(pSd, hTokenUser, FILE_DELETE_CHILD, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_DELETE_CHILD\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_DELETE_CHILD\n";
     AccessCheck(pSd, hTokenUser, FILE_READ_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_ATTRIBUTES\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_READ_ATTRIBUTES\n";
     AccessCheck(pSd, hTokenUser, FILE_WRITE_ATTRIBUTES, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_ATTRIBUTES\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  FILE_WRITE_ATTRIBUTES\n";
     AccessCheck(pSd, hTokenUser, DELETE, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  DELETE\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  DELETE\n";
     AccessCheck(pSd, hTokenUser, READ_CONTROL, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  READ_CONTROL\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  READ_CONTROL\n";
     AccessCheck(pSd, hTokenUser, WRITE_DAC, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  WRITE_DAC\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  WRITE_DAC\n";
     AccessCheck(pSd, hTokenUser, WRITE_OWNER, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  WRITE_OWNER\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  WRITE_OWNER\n";
     AccessCheck(pSd, hTokenUser, SYNCHRONIZE, &gm, &ps, &psSize, &allowed, &status);
-    cout << ((status) ? "[x]" : "[ ]") << "  SYNCHRONIZE\n";
+    std::wcout << ((status) ? "[x]" : "[ ]") << "  SYNCHRONIZE\n";
     #endif
     status = 0;
   }
@@ -712,9 +710,10 @@ bool Om_checkAccess(const wstring& path, unsigned mask)
 ///
 /// \return Count of bytes read.
 ///
-inline static size_t __load_plaintxt(string* pstr, const wchar_t* path)
+inline static size_t __load_plaintxt(OmCString* pstr, const wchar_t* path)
 {
-  HANDLE hFile = CreateFileW( path, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+  HANDLE hFile = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ,
+                              nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
 
   if(hFile == INVALID_HANDLE_VALUE)
@@ -742,9 +741,9 @@ inline static size_t __load_plaintxt(string* pstr, const wchar_t* path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-string Om_loadPlainText(const wstring& path)
+OmCString Om_loadPlainText(const OmWString& path)
 {
-  string result;
+  OmCString result;
   __load_plaintxt(&result, path.c_str());
   return result;
 }
@@ -752,7 +751,7 @@ string Om_loadPlainText(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_loadPlainText(string* text, const wstring& path)
+size_t Om_loadPlainText(OmCString* text, const OmWString& path)
 {
   return __load_plaintxt(text, path.c_str());
 }
@@ -760,21 +759,22 @@ size_t Om_loadPlainText(string* text, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_loadBinary(uint64_t* size, const wstring& path)
+uint8_t* Om_loadBinary(uint64_t* size, const OmWString& path)
 {
   // initialize size
   (*size) = 0;
 
   // open file for reading
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+  HANDLE hFile = CreateFileW( path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+                              nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
 
   if(hFile == INVALID_HANDLE_VALUE)
     return nullptr;
 
-  DWORD hi, lo;
-  lo = GetFileSize(hFile, &hi);
-  uint64_t data_size = (static_cast<uint64_t>(hi) << 32) & lo;
+  LARGE_INTEGER FileSize;
+  GetFileSizeEx(hFile, &FileSize);
+  uint64_t data_size = FileSize.QuadPart;
 
   // allocate buffer and read
   uint8_t* data = reinterpret_cast<uint8_t*>(Om_alloc(data_size));

@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILZIP_H_INCLUDED
-#define OMUTILZIP_H_INCLUDED
+#ifndef OMUTILZIP_H
+#define OMUTILZIP_H
 
 /// \brief Compress data
 ///
@@ -42,4 +42,4 @@ uint8_t* Om_zDeflate(size_t* out_size, const uint8_t* in_data, size_t in_size, u
 ///
 uint8_t* Om_zInflate(const uint8_t* in_data, size_t in_size, size_t def_size);
 
-#endif // OMUTILZIP_H_INCLUDED
+#endif // OMUTILZIP_H

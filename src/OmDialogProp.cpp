@@ -19,6 +19,8 @@
 
 #include "OmBaseUi.h"
 
+#include "OmUtilWin.h"      //< Om_getResIcon, etc.
+
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDialogProp.h"
 
@@ -26,8 +28,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialogProp::OmDialogProp(HINSTANCE hins) : OmDialog(hins),
-  _pageName(), _pageDial(), _hTab(nullptr), _hBcOk(nullptr), _hBcApply(nullptr),
-  _hBcCancel(nullptr)
+  _pageName(), _pageDial(), _noChanges(false), _hTab(nullptr),
+  _hBcOk(nullptr), _hBcApply(nullptr), _hBcCancel(nullptr)
 {
 
 }
@@ -54,6 +56,14 @@ bool OmDialogProp::checkChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmDialogProp::validChanges()
+{
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmDialogProp::applyChanges()
 {
   return true;
@@ -63,7 +73,7 @@ bool OmDialogProp::applyChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogProp::_addPage(const wstring& title, OmDialog* dialog)
+void OmDialogProp::_addPage(const OmWString& title, OmDialog* dialog)
 {
   this->addChild(dialog);
   this->_pageDial.push_back(dialog);
@@ -74,13 +84,31 @@ void OmDialogProp::_addPage(const wstring& title, OmDialog* dialog)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDialogProp::_setNoChange(bool enable)
+{
+  this->_noChanges = enable;
+
+  this->showItem(IDC_BC_APPLY, !enable);
+  this->showItem(IDC_BC_CANCEL, !enable);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialogProp::_onInit()
 {
+  // set dialog icon
+  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
+
   // Retrieve handle to common controls
   this->_hTab = this->getItem(IDC_TC_PROP);
   this->_hBcOk = this->getItem(IDC_BC_OK);
   this->_hBcApply = this->getItem(IDC_BC_APPLY);
   this->_hBcCancel = this->getItem(IDC_BC_CANCEL);
+
+  this->showItem(IDC_BC_APPLY, !this->_noChanges);
+  this->showItem(IDC_BC_CANCEL, !this->_noChanges);
 
   if(this->_pageDial.size() && this->_hwnd) {
 
@@ -217,15 +245,22 @@ INT_PTR OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_APPLY:
-      this->applyChanges();
+      if(this->validChanges()) {
+        if(this->applyChanges()) {
+          // refresh all dialogs from root (Main dialog)
+          this->root()->refresh();
+        }
+      }
       break;
 
     case IDC_BC_OK:
-      if(this->applyChanges()) {
-        // quit the dialog
-        this->quit();
-        // refresh all dialogs from root (Main dialog)
-        this->root()->refresh();
+      if(this->validChanges()) {
+        if(this->applyChanges()) {
+          // quit the dialog
+          this->quit();
+          // refresh all dialogs from root (Main dialog)
+          this->root()->refresh();
+        }
       }
       break; // case BTN_OK:
 

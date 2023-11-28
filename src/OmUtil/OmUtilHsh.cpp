@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include <random>
 #include <ctime>
 
@@ -23,8 +23,8 @@
 #include "xxhash/xxh3.h"
 #include "md5/md5.h"
 
-static mt19937                             __rnd_generator(time(0));
-static uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
+static std::mt19937                             __rnd_generator(time(0));
+static std::uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
 
 #define READ_BUF_SIZE 262144
 static uint8_t __read_buf[READ_BUF_SIZE];
@@ -60,7 +60,7 @@ static const wchar_t __hex_digit[] = L"0123456789abcdef";
 /// \param[in]  data  : Data to translate.
 /// \param[in]  size  : Data size in bytes.
 ///
-static inline void __bytes_to_hex_be(wstring* dest, const uint8_t* data, size_t size)
+static inline void __bytes_to_hex_be(OmWString* dest, const uint8_t* data, size_t size)
 {
   dest->clear();
   uint8_t c;
@@ -81,12 +81,11 @@ static inline void __bytes_to_hex_be(wstring* dest, const uint8_t* data, size_t 
 /// \param[in]  data  : Data to translate.
 /// \param[in]  size  : Data size in bytes.
 ///
-static inline void __bytes_to_hex_le(wstring* dest, const uint8_t* data, size_t size)
+static inline void __bytes_to_hex_le(OmWString* dest, const uint8_t* data, size_t size)
 {
   dest->clear();
-  uint8_t c;
   for(size_t i = 0; i < size; ++i) {
-    c = data[i];
+    uint8_t c = data[i];
     dest->push_back(__hex_digit[(c >> 4) & 0x0F]);
     dest->push_back(__hex_digit[(c)      & 0x0F]);
   }
@@ -132,7 +131,7 @@ static inline uint64_t __hex_to_uint64(const wchar_t* str)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size)
+void Om_bytesToStrBe(OmWString* dest, const uint8_t* data, size_t size)
 {
   __bytes_to_hex_be(dest, data, size);
 }
@@ -141,7 +140,7 @@ void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size)
+void Om_bytesToStrLe(OmWString* dest, const uint8_t* data, size_t size)
 {
   __bytes_to_hex_le(dest, data, size);
 }
@@ -150,7 +149,7 @@ void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint64_t Om_strToUint64(const wstring& str) {
+uint64_t Om_strToUint64(const OmWString& str) {
   return __hex_to_uint64(str.data());
 }
 
@@ -166,9 +165,9 @@ uint64_t Om_strToUint64(const wchar_t* str) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_uint64ToStr(uint64_t num)
+OmWString Om_uint64ToStr(uint64_t num)
 {
-  wstring dest;
+  OmWString dest;
   uint8_t c, b = 64;
   while(b) {
     b -= 8;
@@ -183,7 +182,7 @@ wstring Om_uint64ToStr(uint64_t num)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_uint64ToStr(wstring* dest, uint64_t num)
+void Om_uint64ToStr(OmWString* dest, uint64_t num)
 {
   dest->clear();
   uint8_t c, b = 64;
@@ -369,7 +368,7 @@ uint64_t Om_getCRC64(const void* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint64_t Om_getCRC64(const wstring& str)
+uint64_t Om_getCRC64(const OmWString& str)
 {
   return __CRC64(0, (unsigned char*)str.c_str(), str.size()*sizeof(wchar_t));
 }
@@ -384,7 +383,7 @@ uint64_t Om_getCRC64(const wstring& str)
 ///
 /// \return True if operation succeed, false if file open error.
 ///
-static inline bool __XXHash3_file_digest(uint64_t* xxh, const wstring& path)
+static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -425,7 +424,7 @@ uint64_t Om_getXXHash3(const void* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint64_t Om_getXXHash3(const wstring& str)
+uint64_t Om_getXXHash3(const OmWString& str)
 {
   return XXH3_64bits(str.data(), str.size() * sizeof(wchar_t));
 }
@@ -434,7 +433,7 @@ uint64_t Om_getXXHash3(const wstring& str)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getXXHdigest(uint64_t* xxh, const wstring& path)
+bool Om_getXXHdigest(uint64_t* xxh, const OmWString& path)
 {
   return __XXHash3_file_digest(xxh, path);
 }
@@ -443,11 +442,11 @@ bool Om_getXXHdigest(uint64_t* xxh, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getXXHsum(const wstring& path)
+OmWString Om_getXXHsum(const OmWString& path)
 {
   uint64_t xxh;
 
-  wstring str;
+  OmWString str;
 
   if(__XXHash3_file_digest(&xxh, path)) {
     __bytes_to_hex_be(&str, reinterpret_cast<const uint8_t*>(&xxh), 8);
@@ -460,7 +459,7 @@ wstring Om_getXXHsum(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getXXHsum(wstring* pstr, const wstring& path)
+bool Om_getXXHsum(OmWString* pstr, const OmWString& path)
 {
   uint64_t xxh;
 
@@ -476,7 +475,7 @@ bool Om_getXXHsum(wstring* pstr, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_cmpXXHsum(const wstring& path, const wstring& str)
+bool Om_cmpXXHsum(const OmWString& path, const OmWString& str)
 {
   uint64_t xxh_l, xxh_r;
 
@@ -498,7 +497,7 @@ bool Om_cmpXXHsum(const wstring& path, const wstring& str)
 ///
 /// \return True if operation succeed, false if file open error.
 ///
-static inline bool __MD5_file_digest(uint8_t* md5, const wstring& path)
+static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -530,7 +529,7 @@ static inline bool __MD5_file_digest(uint8_t* md5, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getMD5digest(uint8_t* md5, const wstring& path)
+bool Om_getMD5digest(uint8_t* md5, const OmWString& path)
 {
   return __MD5_file_digest(md5, path);
 }
@@ -539,11 +538,11 @@ bool Om_getMD5digest(uint8_t* md5, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getMD5sum(const wstring& path)
+OmWString Om_getMD5sum(const OmWString& path)
 {
   uint8_t md5[16] = {};
 
-  wstring str;
+  OmWString str;
 
   if(__MD5_file_digest(md5, path)) {
     __bytes_to_hex_le(&str, md5, 16);
@@ -556,7 +555,7 @@ wstring Om_getMD5sum(const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getMD5sum(wstring* pstr, const wstring& path)
+bool Om_getMD5sum(OmWString* pstr, const OmWString& path)
 {
   uint8_t md5[16] = {};
 
@@ -572,14 +571,14 @@ bool Om_getMD5sum(wstring* pstr, const wstring& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_cmpMD5sum(const wstring& path, const wstring& str)
+bool Om_cmpMD5sum(const OmWString& path, const OmWString& str)
 {
   uint8_t md5[16] = {};
 
   if(!__MD5_file_digest(md5, path))
     return false;
 
-  wstring ctrl;
+  OmWString ctrl;
 
   __bytes_to_hex_le(&ctrl, md5, 16);
 
@@ -603,7 +602,7 @@ void Om_getRandBytes(uint8_t* dest, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_genUUID()
+OmWString Om_genUUID()
 {
   uint8_t uuid[16];
 
@@ -616,7 +615,7 @@ wstring Om_genUUID()
   uuid[8] = (uuid[8] & 0x3F) | 0x80; //< Set DCE variant
 
   // Create formated UUID string from random sequence
-  wstring str(L"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
+  OmWString str(L"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx");
 
   unsigned u = 0;
   unsigned c = 0;

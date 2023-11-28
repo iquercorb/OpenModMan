@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include <algorithm>          //< std::sort
 #include <cmath>              //< modf, floor, etc.
 
@@ -24,7 +24,7 @@
 
 #include "OmBaseWin.h"        //< WinAPI
 
-#include "OmUtilImg.h"   //< OMM_IMAGE_TYPE_*
+#include "OmUtilImg.h"        //< OM_IMAGE_TYPE_*
 
 #include "jpeg/jpeglib.h"
 #include "png/png.h"
@@ -220,25 +220,23 @@ inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const 
 {
   float u_x, v_y;
 
-  float t_x = modf((u * src_w) - 0.5f, &u_x);
-  float t_y = modf((v * src_h) - 0.5f, &v_y);
+  float t_x = std::modf((u * src_w) - 0.5f, &u_x);
+  float t_y = std::modf((v * src_h) - 0.5f, &v_y);
 
-  int b_x = static_cast<int>(u_x) - 1;
-  int b_y = static_cast<int>(v_y) - 1;
+  int32_t b_x = static_cast<int32_t>(u_x) - 1;
+  int32_t b_y = static_cast<int32_t>(v_y) - 1;
 
   const uint8_t* sp[4];
 
   float r[4]; float g[4]; float b[4]; float a[4];
 
-  int x, y;
+  for(int32_t j = 0; j < 4; ++j) {
 
-  for(int j = 0; j < 4; ++j) {
+    int32_t y = CLAMP(0, b_y + j, max_h) * row_bytes;
 
-    y = CLAMP(0, b_y + j, max_h) * row_bytes;
+    for(int32_t i = 0; i < 4; ++i) {
 
-    for(int i = 0; i < 4; ++i) {
-
-      x = CLAMP(0, b_x + i, max_w) * 4;
+      int32_t x = CLAMP(0, b_x + i, max_w) * 4;
 
       sp[i] = src_pix + (y + x);
     }
@@ -278,8 +276,8 @@ inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const 
 {
   float u_x, v_y;
 
-  float t_x = modf((u * src_w) - 0.5f, &u_x);
-  float t_y = modf((v * src_h) - 0.5f, &v_y);
+  float t_x = std::modf((u * src_w) - 0.5f, &u_x);
+  float t_y = std::modf((v * src_h) - 0.5f, &v_y);
 
   int b_x = static_cast<int>(u_x) - 1;
   int b_y = static_cast<int>(v_y) - 1;
@@ -291,15 +289,13 @@ inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const 
   float b[2];
   float a[2];
 
-  int x, y;
+  for(int32_t j = 0; j < 2; ++j) {
 
-  for(int j = 0; j < 2; ++j) {
+    int32_t y = CLAMP(0, b_y + j, max_h) * row_bytes;
 
-    y = CLAMP(0, b_y + j, max_h) * row_bytes;
+    for(int32_t i = 0; i < 2; ++i) {
 
-    for(int i = 0; i < 2; ++i) {
-
-      x = CLAMP(0, b_x + i, max_w) * 4;
+      int32_t x = CLAMP(0, b_x + i, max_w) * 4;
 
       sp[i] = src_pix + (y + x);
     }
@@ -343,24 +339,22 @@ inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float 
 
   const uint8_t *sp;
 
-  int x, y;
-
   float n = 0;
 
   // box top-left corner position
   int b_x = (u * src_w) - (0.5f * b_w);
   int b_y = (v * src_h) - (0.5f * b_h);
 
-  for(int j = 0; j < b_h; ++j) {
+  for(int32_t j = 0; j < b_h; ++j) {
 
-    y = b_y + j;
+    int32_t y = b_y + j;
     if(y < 0 || y > max_h) continue;
 
     y *= row_bytes;
 
-    for(int i = 0; i < b_w; ++i) {
+    for(int32_t i = 0; i < b_w; ++i) {
 
-      x = b_x + i;
+      int32_t x = b_x + i;
       if(x < 0 || x > max_w) continue;
 
       sp = src_pix + (y + (x * 4));
@@ -415,9 +409,6 @@ inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigne
   float f_u = (1.0f / static_cast<float>(dst_w)) * (static_cast<float>(rec_w) / src_w);
   float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
 
-  uint8_t* dp;
-  float u, v;
-
   // some constants
   size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
   size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
@@ -426,10 +417,10 @@ inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigne
 
   // Loop for RGBA
   for(unsigned y = 0; y < dst_h; ++y) {
-    dp = dst_pix + (dst_row_bytes * y);
-    v = s_v + (y * f_v);
+    uint8_t* dp = dst_pix + (dst_row_bytes * y);
+    float v = s_v + (y * f_v);
     for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
-      u = s_u + (x * f_u);
+      float u = s_u + (x * f_u);
       __get_sample_cub_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
     }
   }
@@ -471,9 +462,6 @@ inline static void __copy_resample_lin(uint8_t* dst_pix, unsigned dst_w, unsigne
   float f_u = (1.0f / static_cast<float>(dst_w)) * (static_cast<float>(rec_w) / src_w);
   float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
 
-  uint8_t* dp;
-  float u, v;
-
   // some constants
   size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
   size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
@@ -482,10 +470,10 @@ inline static void __copy_resample_lin(uint8_t* dst_pix, unsigned dst_w, unsigne
 
   // Loop for RGBA
   for(unsigned y = 0; y < dst_h; ++y) {
-    dp = dst_pix + (dst_row_bytes * y);
-    v = s_v + (y * f_v);
+    uint8_t* dp = dst_pix + (dst_row_bytes * y);
+    float v = s_v + (y * f_v);
     for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
-      u = s_u + (x * f_u);
+      float u = s_u + (x * f_u);
       __get_sample_lin_32(dp, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
     }
   }
@@ -540,14 +528,11 @@ inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigne
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
-  uint8_t* dp;
-  float u, v;
-
   for(unsigned y = 0; y < dst_h; ++y) {
-    dp = dst_pix + (dst_row_bytes * y);
-    v = s_v + (y * f_v);
+    uint8_t* dp = dst_pix + (dst_row_bytes * y);
+    float v = s_v + (y * f_v);
     for(unsigned x = 0; x < dst_w; ++x, dp += 4) {
-      u = s_u + (x * f_u);
+      float u = s_u + (x * f_u);
       __get_sample_box_32(dp, b_w, b_h, u, v, src_pix, src_w, src_h, max_w, max_h, src_row_bytes);
     }
   }
@@ -598,12 +583,9 @@ inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned ds
     size_t row_bytes = (rec_w * 4); //< assuming RGBA data
     size_t row_shift = (rec_x * 4); //< assuming RGBA data
 
-    const uint8_t* sp;
-    uint8_t* dp;
-
     for(unsigned y = 0; y < dst_h; ++y) {
-      sp = src_pix + ((y + rec_y) * row_bytes) + row_shift;
-      dp = dst_pix + (y * row_bytes);
+      const uint8_t* sp = src_pix + ((y + rec_y) * row_bytes) + row_shift;
+      uint8_t* dp = dst_pix + (y * row_bytes);
       for(unsigned x = 0; x < dst_w; ++x, dp += 4, sp += 4) {
         dp[0] = sp[0];
         dp[1] = sp[1];
@@ -673,18 +655,15 @@ inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
-  uint8_t* dp;
-  float u, v;
-
   for(unsigned y = 0; y < cv_h; ++y) {
-    dp = cv_pix + (dst_row_bytes * y);
-    v = (y * f_v) - s_v;
+    uint8_t* dp = cv_pix + (dst_row_bytes * y);
+    float v = (y * f_v) - s_v;
     if(v < 0.0 || v > 1.0) {
       __set_row_32(dp, cv_w, bck);
       continue;
     }
     for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
-      u = (x * f_u) - s_u;
+      float u = (x * f_u) - s_u;
       if(u < 0.0 || u > 1.0) {
         __set_pixel_32(dp, bck);
       } else {
@@ -754,18 +733,15 @@ inline static void __draw_canvas_lin(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
-  uint8_t* dp;
-  float u, v;
-
   for(unsigned y = 0; y < cv_h; ++y) {
-    dp = cv_pix + (dst_row_bytes * y);
-    v = (y * f_v) - s_v;
+    uint8_t* dp = cv_pix + (dst_row_bytes * y);
+    float v = (y * f_v) - s_v;
     if(v < 0.0 || v > 1.0) {
       __set_row_32(dp, cv_w, bck);
       continue;
     }
     for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
-      u = (x * f_u) - s_u;
+      float u = (x * f_u) - s_u;
       if(u < 0.0 || u > 1.0) {
         __set_pixel_32(dp, bck);
       } else {
@@ -839,18 +815,15 @@ inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
-  uint8_t* dp;
-  float u, v;
-
   for(unsigned y = 0; y < cv_h; ++y) {
-    dp = cv_pix + (dst_row_bytes * y);
-    v = (y * f_v) - s_v;
+    uint8_t* dp = cv_pix + (dst_row_bytes * y);
+    float v = (y * f_v) - s_v;
     if(v < 0.0f || v > 1.0f) {
       __set_row_32(dp, cv_w, bck);
       continue;
     }
     for(unsigned x = 0; x < cv_w; ++x, dp += 4) {
-      u = (x * f_u) - s_u;
+      float u = (x * f_u) - s_u;
       if(u < 0.0f || u > 1.0f) {
         __set_pixel_32(dp, bck);
       } else {
@@ -950,7 +923,7 @@ inline static void __draw_canvas(uint8_t* cv_pix, unsigned cv_w, unsigned cv_h, 
 /// \brief BMP info header
 ///
 /// Structure for BMP file info header
-struct OMM_BITMAPINFOHEADER {
+struct OM_BITMAPINFOHEADER {
   uint32_t  size;           ///< size of the structure
   uint32_t  width;          ///< image width
   uint32_t  height;         ///< image height
@@ -966,7 +939,7 @@ struct OMM_BITMAPINFOHEADER {
 /// \brief BMP base header
 ///
 /// Structure for BMP file base header
-struct OMM_BITMAPHEADER {
+struct OM_BITMAPHEADER {
   uint8_t   signature[2];   ///< BM magic word
   uint32_t  size;           ///< size of the whole .bmp file
   uint16_t  reserved1;      ///< must be 0
@@ -996,13 +969,13 @@ static const unsigned char __sign_gif[] = "GIF89a";
 inline static unsigned __image_sign_matches(const uint8_t* buff)
 {
   // Test BMP signature
-  if(0 == memcmp(buff, __sign_bmp, 2)) return OMM_IMAGE_BMP;
+  if(0 == memcmp(buff, __sign_bmp, 2)) return OM_IMAGE_BMP;
   // Test JPG signature
-  if(0 == memcmp(buff, __sign_jpg, 3)) return OMM_IMAGE_JPG;
+  if(0 == memcmp(buff, __sign_jpg, 3)) return OM_IMAGE_JPG;
   // Test PNG signature
-  if(0 == memcmp(buff, __sign_png, 8)) return OMM_IMAGE_PNG;
+  if(0 == memcmp(buff, __sign_png, 8)) return OM_IMAGE_PNG;
   // Test GIF signature
-  if(0 == memcmp(buff, __sign_gif, 6)) return OMM_IMAGE_GIF;
+  if(0 == memcmp(buff, __sign_gif, 6)) return OM_IMAGE_GIF;
 
   return 0;
 }
@@ -1090,7 +1063,7 @@ static bool (*__qz_sort_fn[])(const __qz_rgb*, const __qz_rgb*) = {
 static inline void __image_quantize_subdiv(__qz_map* cmap, unsigned* out_size, unsigned in_size)
 {
   __qz_rgb* node;
-  vector<__qz_rgb*> sort_list;
+  std::vector<__qz_rgb*> sort_list;
   unsigned sort_axis, min_color, max_color, n, c, i, j, u = 0;
   int rng_max, r;
 
@@ -1988,8 +1961,8 @@ static uint8_t* __bmp_decode_common(unsigned* w, unsigned* h, BMP_CONTEXT* bmp_c
   if(!seek_cb) return nullptr;
 
   // BMP headers structures
-  OMM_BITMAPHEADER bmp_head;
-  OMM_BITMAPINFOHEADER bmp_info;
+  OM_BITMAPHEADER bmp_head;
+  OM_BITMAPINFOHEADER bmp_info;
   // get base header
   if(read_cb(bmp_ctx, &bmp_head, 14) != 14)
     return nullptr;
@@ -2078,20 +2051,20 @@ static bool __bmp_encode_common(BMP_CONTEXT* bmp_ctx, const uint8_t* in_rgb, uns
   //bmp_seek_fn seek_cb = bmp_ctx->seek_fn;
 
   // compute data sizes
-  size_t hdr_bytes = sizeof(OMM_BITMAPHEADER) + sizeof(OMM_BITMAPINFOHEADER);
+  size_t hdr_bytes = sizeof(OM_BITMAPHEADER) + sizeof(OM_BITMAPINFOHEADER);
   size_t row_bytes = in_w * in_c;                   //< row size in bytes
   size_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
   size_t tot_bytes = r4b_bytes * in_h;
   size_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
-  OMM_BITMAPHEADER bmp_head = {};
+  OM_BITMAPHEADER bmp_head = {};
   bmp_head.signature[0] = 0x42; bmp_head.signature[1] = 0x4D; // BM signature
   bmp_head.offbits = hdr_bytes; // file header + info header = 54 bytes
   bmp_head.size = bmp_bytes;
 
-  OMM_BITMAPINFOHEADER bmp_info = {};
-  bmp_info.size = sizeof(OMM_BITMAPINFOHEADER);
+  OM_BITMAPINFOHEADER bmp_info = {};
+  bmp_info.size = sizeof(OM_BITMAPINFOHEADER);
   bmp_info.width = in_w;
   bmp_info.height = in_h;
   bmp_info.planes = 1;
@@ -2106,12 +2079,12 @@ static bool __bmp_encode_common(BMP_CONTEXT* bmp_ctx, const uint8_t* in_rgb, uns
   }
 
   // write file header
-  if(write_cb(bmp_ctx, &bmp_head, sizeof(OMM_BITMAPHEADER)) != sizeof(OMM_BITMAPHEADER)) {
+  if(write_cb(bmp_ctx, &bmp_head, sizeof(OM_BITMAPHEADER)) != sizeof(OM_BITMAPHEADER)) {
     __bmp_free(bmp_ctx); return false;
   }
 
   // write info header
-  if(write_cb(bmp_ctx, &bmp_info, sizeof(OMM_BITMAPINFOHEADER)) != sizeof(OMM_BITMAPINFOHEADER)) {
+  if(write_cb(bmp_ctx, &bmp_info, sizeof(OM_BITMAPINFOHEADER)) != sizeof(OM_BITMAPINFOHEADER)) {
     __bmp_free(bmp_ctx); return false;
   }
 
@@ -2926,7 +2899,7 @@ int Om_imgGetType(FILE* file)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgLoadFile(unsigned* w, unsigned* h, const wstring& path, bool flip_y)
+uint8_t* Om_imgLoadFile(unsigned* w, unsigned* h, const OmWString& path, bool flip_y)
 {
   #ifdef DEBUG
   clock_t t = clock();
@@ -2955,16 +2928,16 @@ uint8_t* Om_imgLoadFile(unsigned* w, unsigned* h, const wstring& path, bool flip
   if(type != 0) {
     switch(type)
     {
-    case OMM_IMAGE_BMP:
+    case OM_IMAGE_BMP:
       pix = __bmp_read(w, h, fp, flip_y);
       break;
-    case OMM_IMAGE_JPG:
+    case OM_IMAGE_JPG:
       pix = __jpg_read(w, h, fp, flip_y);
       break;
-    case OMM_IMAGE_PNG:
+    case OM_IMAGE_PNG:
       pix = __png_read(w, h, fp, flip_y);
       break;
-    case OMM_IMAGE_GIF:
+    case OM_IMAGE_GIF:
       pix = __gif_read(w, h, fp, flip_y);
       break;
     }
@@ -3005,16 +2978,16 @@ uint8_t* Om_imgLoadData(unsigned* w, unsigned* h, const uint8_t* data, size_t si
   if(type != 0) {
     switch(type)
     {
-    case OMM_IMAGE_BMP:
+    case OM_IMAGE_BMP:
       pix = __bmp_decode(w, h, data, flip_y);
       break;
-    case OMM_IMAGE_JPG:
+    case OM_IMAGE_JPG:
       pix = __jpg_decode(w, h, data, size, flip_y);
       break;
-    case OMM_IMAGE_PNG:
+    case OM_IMAGE_PNG:
       pix = __png_decode(w, h, data, flip_y);
       break;
-    case OMM_IMAGE_GIF:
+    case OM_IMAGE_GIF:
       pix = __gif_decode(w, h, data, flip_y);
       break;
     }
@@ -3095,7 +3068,7 @@ uint8_t* Om_imgLoadHBmp(unsigned *w, unsigned *h, HBITMAP hBmp)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+bool Om_imgSaveBmp(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3119,7 +3092,7 @@ bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_imgSaveJpg(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3143,7 +3116,7 @@ bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+bool Om_imgSavePng(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3167,7 +3140,7 @@ bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_imgSaveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+bool Om_imgSaveGif(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3334,7 +3307,7 @@ uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix,
   uint8_t* thumb = reinterpret_cast<uint8_t*>(Om_alloc(span * span * 4));
   if(!thumb) return nullptr;
 
-  if((src_w == src_h) || (mode == OMM_SIZE_FIT)) {
+  if((src_w == src_h) || (mode == OM_SIZE_FIT)) {
     if(src_w == span && src_h == span) {
       memcpy(thumb, src_pix, src_w * src_h * 4);
     } else {

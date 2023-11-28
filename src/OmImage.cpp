@@ -22,11 +22,11 @@
 #include "OmImage.h"
 
 
-#define OMM_IMAGE_ERR_OPEN    -1
-#define OMM_IMAGE_ERR_READ    -2
-#define OMM_IMAGE_ERR_LOAD    -3
-#define OMM_IMAGE_ERR_TYPE    -4
-#define OMM_IMAGE_ERR_THMB    -5
+#define OM_IMAGE_ERR_OPEN    -1
+#define OM_IMAGE_ERR_READ    -2
+#define OM_IMAGE_ERR_LOAD    -3
+#define OM_IMAGE_ERR_TYPE    -4
+#define OM_IMAGE_ERR_THMB    -5
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -51,7 +51,7 @@ OmImage::~OmImage()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmImage::load(const wstring& path)
+bool OmImage::load(const OmWString& path)
 {
   // clear all previous data
   this->clear();
@@ -61,7 +61,7 @@ bool OmImage::load(const wstring& path)
                               FILE_ATTRIBUTE_NORMAL, nullptr);
 
   if(hFile == INVALID_HANDLE_VALUE) {
-    this->_ercode = OMM_IMAGE_ERR_OPEN;
+    this->_ercode = OM_IMAGE_ERR_OPEN;
     return false;
   }
 
@@ -79,7 +79,7 @@ bool OmImage::load(const wstring& path)
   CloseHandle(hFile);
 
   if(!result) {
-    this->_ercode = OMM_IMAGE_ERR_READ;
+    this->_ercode = OM_IMAGE_ERR_READ;
     delete [] data;
     return false;
   }
@@ -87,7 +87,7 @@ bool OmImage::load(const wstring& path)
   // check for image type
   int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
-    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    this->_ercode = OM_IMAGE_ERR_TYPE;
     return false;
   }
 
@@ -97,7 +97,7 @@ bool OmImage::load(const wstring& path)
   this->_data = Om_imgLoadData(&w, &h, data, size, false);
 
   if(!this->_data) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -127,7 +127,7 @@ bool OmImage::load(uint8_t* data, size_t size)
   // check for image type
   int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
-    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    this->_ercode = OM_IMAGE_ERR_TYPE;
     return false;
   }
 
@@ -136,7 +136,7 @@ bool OmImage::load(uint8_t* data, size_t size)
   this->_data = Om_imgLoadData(&w, &h, data, size, false);
 
   if(!this->_data) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -156,7 +156,7 @@ bool OmImage::load(uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
+bool OmImage::loadThumbnail(const OmWString& path, unsigned span, OmSizeMode mode)
 {
   // clear all previous data
   this->clear();
@@ -166,7 +166,7 @@ bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
                               FILE_ATTRIBUTE_NORMAL, nullptr);
 
   if(hFile == INVALID_HANDLE_VALUE) {
-    this->_ercode = OMM_IMAGE_ERR_OPEN;
+    this->_ercode = OM_IMAGE_ERR_OPEN;
     return false;
   }
 
@@ -184,7 +184,7 @@ bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
   CloseHandle(hFile);
 
   if(!result) {
-    this->_ercode = OMM_IMAGE_ERR_READ;
+    this->_ercode = OM_IMAGE_ERR_READ;
     delete [] data;
     return false;
   }
@@ -192,7 +192,7 @@ bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
   // check for image type
   int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
-    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    this->_ercode = OM_IMAGE_ERR_TYPE;
     return false;
   }
 
@@ -200,7 +200,7 @@ bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
   uint8_t* rgb = Om_imgLoadData(&w, &h, data, size, false);
 
   if(!rgb) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -208,7 +208,7 @@ bool OmImage::loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode)
   Om_free(rgb);
 
   if(!this->_data) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -238,7 +238,7 @@ bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMod
   // check for image type
   int type = Om_imgGetType(data);
   if(type == 0) { //< unknown image format
-    this->_ercode = OMM_IMAGE_ERR_TYPE;
+    this->_ercode = OM_IMAGE_ERR_TYPE;
     return false;
   }
 
@@ -246,7 +246,7 @@ bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMod
   uint8_t* rgb = Om_imgLoadData(&w, &h, data, size, false);
 
   if(!rgb) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -254,7 +254,7 @@ bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMod
   Om_free(rgb);
 
   if(!this->_data) {
-    this->_ercode = OMM_IMAGE_ERR_LOAD;
+    this->_ercode = OM_IMAGE_ERR_LOAD;
     return false;
   }
 
@@ -297,17 +297,17 @@ void OmImage::clear()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring OmImage::lastErrorStr() const
+OmWString OmImage::lastErrorStr() const
 {
-  wstring err;
+  OmWString err;
 
   switch(this->_ercode)
   {
-    case OMM_IMAGE_ERR_OPEN: err = L"File open error"; break;
-    case OMM_IMAGE_ERR_READ: err = L"File read error"; break;
-    case OMM_IMAGE_ERR_TYPE: err = L"Unsupported image format"; break;
-    case OMM_IMAGE_ERR_LOAD: err = L"Error decoding image data"; break;
-    case OMM_IMAGE_ERR_THMB: err = L"Thumbnail creation error"; break;
+    case OM_IMAGE_ERR_OPEN: err = L"File open error"; break;
+    case OM_IMAGE_ERR_READ: err = L"File read error"; break;
+    case OM_IMAGE_ERR_TYPE: err = L"Unsupported image format"; break;
+    case OM_IMAGE_ERR_LOAD: err = L"Error decoding image data"; break;
+    case OM_IMAGE_ERR_THMB: err = L"Thumbnail creation error"; break;
     default: err = L"No error"; break;
   }
 

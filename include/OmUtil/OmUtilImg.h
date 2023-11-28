@@ -14,22 +14,22 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILIMG_H_INCLUDED
-#define OMUTILIMG_H_INCLUDED
+#ifndef OMUTILIMG_H
+#define OMUTILIMG_H
 
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
 enum OmImgType : unsigned {
-  OMM_IMAGE_BMP = 1,
-  OMM_IMAGE_JPG,
-  OMM_IMAGE_PNG,
-  OMM_IMAGE_GIF
+  OM_IMAGE_BMP = 1,
+  OM_IMAGE_JPG,
+  OM_IMAGE_PNG,
+  OM_IMAGE_GIF
 };
 
 enum OmSizeMode : unsigned {
-  OMM_SIZE_FIT = 0,
-  OMM_SIZE_FILL
+  OM_SIZE_FIT = 0,
+  OM_SIZE_FILL
 };
 
 /// \brief Get image type.
@@ -38,10 +38,10 @@ enum OmSizeMode : unsigned {
 /// values are the following:
 ///
 /// \c 0 : unknown or invalid image format.
-/// \c 1 or \c OMM_IMAGE_TYPE_BMP : BMP image.
-/// \c 2 or \c OMM_IMAGE_TYPE_JPG : JPEG image.
-/// \c 3 or \c OMM_IMAGE_TYPE_PNG : PNG image.
-/// \c 4 or \c OMM_IMAGE_TYPE_GIF : GIF image.
+/// \c 1 or \c OM_IMAGE_TYPE_BMP : BMP image.
+/// \c 2 or \c OM_IMAGE_TYPE_JPG : JPEG image.
+/// \c 3 or \c OM_IMAGE_TYPE_PNG : PNG image.
+/// \c 4 or \c OM_IMAGE_TYPE_GIF : GIF image.
 ///
 /// \param[in]  data  : Image data to read, must be at least 8 bytes length.
 ///
@@ -55,10 +55,10 @@ int Om_imgGetType(uint8_t* data);
 /// values are the following:
 ///
 /// \c 0 : unknown or invalid image format.
-/// \c 1 or \c OMM_IMAGE_TYPE_BMP : BMP image.
-/// \c 2 or \c OMM_IMAGE_TYPE_JPG : JPEG image.
-/// \c 3 or \c OMM_IMAGE_TYPE_PNG : PNG image.
-/// \c 4 or \c OMM_IMAGE_TYPE_GIF : GIF image.
+/// \c 1 or \c OM_IMAGE_TYPE_BMP : BMP image.
+/// \c 2 or \c OM_IMAGE_TYPE_JPG : JPEG image.
+/// \c 3 or \c OM_IMAGE_TYPE_PNG : PNG image.
+/// \c 4 or \c OM_IMAGE_TYPE_GIF : GIF image.
 ///
 /// \param[in]  file  : File pointer to read data.
 ///
@@ -77,7 +77,7 @@ int Om_imgGetType(FILE* file);
 ///
 /// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-uint8_t* Om_imgLoadFile(unsigned* out_w, unsigned* out_h, const wstring& in_path, bool flip_y = false);
+uint8_t* Om_imgLoadFile(unsigned* out_w, unsigned* out_h, const OmWString& in_path, bool flip_y = false);
 
 /// \brief Load image.
 ///
@@ -119,7 +119,7 @@ uint8_t* Om_imgLoadHBmp(unsigned* dst_w, unsigned* dst_h, HBITMAP in_hbmp);
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_imgSaveBmp(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Save image as JPEG.
 ///
@@ -134,7 +134,7 @@ bool Om_imgSaveBmp(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+bool Om_imgSaveJpg(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Save image as PNG.
 ///
@@ -149,7 +149,7 @@ bool Om_imgSaveJpg(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
+bool Om_imgSavePng(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
 
 /// \brief Save image as GIF.
 ///
@@ -163,7 +163,7 @@ bool Om_imgSavePng(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w
 ///
 /// \return True if operation succeed, false otherwise
 ///
-bool Om_imgSaveGif(const wstring& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+bool Om_imgSaveGif(const OmWString& out_path, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode BMP data.
 ///
@@ -317,4 +317,4 @@ uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix,
 ///
 void Om_imgRbSwap(uint8_t* src_pix, unsigned src_w, unsigned src_h, unsigned src_c);
 
-#endif // OMUTILIMG_H_INCLUDED
+#endif // OMUTILIMG_H

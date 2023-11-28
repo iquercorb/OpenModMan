@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILSYS_H_INCLUDED
-#define OMUTILSYS_H_INCLUDED
+#ifndef OMUTILSYS_H
+#define OMUTILSYS_H
 
 /// \brief Get current time.
 ///
@@ -37,4 +37,4 @@ void Om_getTime(int *t_sec, int *t_min, int *t_hour);
 ///
 void Om_getDate(int *t_day, int *t_mon, int *t_year);
 
-#endif // OMUTILSYS_H_INCLUDED
+#endif // OMUTILSYS_H

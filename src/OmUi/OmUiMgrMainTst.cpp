@@ -91,11 +91,7 @@ void OmUiMgrMainTst::_onShow()
   #endif
 
   OmImage image;
-  HBITMAP hBm;
-  /*
-  image.open(L"D:\\Atelier\\Code\\Cpp\\OpenModMan\\screenshot.png", 128);
-  HBITMAP hBm = image.thumbnail();
-*/
+  HBITMAP hBm = nullptr;
   HIMAGELIST hImgLs;
 
   // Get the previous Image List to be destroyed (Small and Normal uses the same)

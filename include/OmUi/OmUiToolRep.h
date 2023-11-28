@@ -19,7 +19,7 @@
 
 #include "OmDialog.h"
 #include "OmImage.h"
-#include "OmConfig.h"
+#include "OmXmlConf.h"
 
 /// \brief Repository Editor tool dialog
 ///
@@ -53,7 +53,7 @@ class OmUiToolRep : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmConfig            _config;
+    OmXmlConf           _xmlconf;
 
     OmXmlNode           _rmtCur;
 
@@ -61,19 +61,19 @@ class OmUiToolRep : public OmDialog
 
     void                _repInit();
 
-    bool                _repOpen(const wstring& path);
+    bool                _repOpen(const OmWString& path);
 
-    OmXmlNode           _rmtGet(const wstring& ident);
+    OmXmlNode           _rmtGet(const OmWString& ident);
 
-    bool                _rmtAdd(const wstring& path);
+    bool                _rmtAdd(const OmWString& path);
 
-    bool                _rmtRem(const wstring& ident);
+    bool                _rmtRem(const OmWString& ident);
 
-    bool                _rmtSel(const wstring& ident);
+    bool                _rmtSel(const OmWString& ident);
 
-    int                 _rmtGetDeps(vector<wstring>& miss_list, const wstring& ident);
+    int                 _rmtGetDeps(OmWStringArray& miss_list, const OmWString& ident);
 
-    void                _addDir_init(const wstring& path);
+    void                _addDir_init(const OmWString& path);
 
     void                _addDir_stop();
 
@@ -81,7 +81,7 @@ class OmUiToolRep : public OmDialog
 
     static DWORD WINAPI _addDir_fth(void*);
 
-    wstring             _addDir_path;
+    OmWString           _addDir_path;
 
     void                _onLbPkglsSel();
 

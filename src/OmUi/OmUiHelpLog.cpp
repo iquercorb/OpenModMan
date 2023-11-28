@@ -18,7 +18,7 @@
 
 #include "OmBaseUi.h"
 
-#include "OmManager.h"
+#include "OmModMan.h"
 
 #include "OmUtilWin.h"
 
@@ -41,9 +41,6 @@ OmUiHelpLog::~OmUiHelpLog()
 {
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_RESUL, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
-
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  pMgr->setLogOutput(nullptr);
 }
 
 
@@ -53,6 +50,23 @@ OmUiHelpLog::~OmUiHelpLog()
 long OmUiHelpLog::id() const
 {
   return IDD_HELP_LOG;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiHelpLog::_logCb(void* ptr, const OmWString& log)
+{
+  OmUiHelpLog* self = reinterpret_cast<OmUiHelpLog*>(ptr);
+
+  size_t len = self->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
+  self->msgItem(IDC_EC_RESUL, EM_SETSEL, len, len);
+  self->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(log.c_str()));
+  self->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_BOTTOM, 0);
+  self->msgItem(IDC_EC_RESUL, 0, 0, RDW_ERASE|RDW_INVALIDATE);
+
+  return true;
 }
 
 
@@ -70,8 +84,13 @@ void OmUiHelpLog::_onInit()
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  OmManager* pMgr = static_cast<OmManager*>(this->_data);
-  pMgr->setLogOutput(this->getItem(IDC_EC_RESUL));
+  OmModMan* ModMan = reinterpret_cast<OmModMan*>(this->_data);
+  if(!ModMan) return;
+
+  this->msgItem(IDC_EC_RESUL, EM_SETLIMITTEXT, 0, 0);
+  this->msgItem(IDC_EC_RESUL, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(ModMan->currentLog().c_str()));
+
+  ModMan->addLogCallback(OmUiHelpLog::_logCb, this);
 }
 
 
@@ -91,6 +110,16 @@ void OmUiHelpLog::_onResize()
   RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiHelpLog::_onQuit()
+{
+  OmModMan* ModMan = reinterpret_cast<OmModMan*>(this->_data);
+  if(!ModMan) return;
+
+  ModMan->removeLogCallback(OmUiHelpLog::_logCb);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

@@ -18,8 +18,9 @@
 #define OMUIADDREP_H
 
 #include "OmDialog.h"
+#include "OmConnect.h"
 
-class OmLocation;
+class OmModChan;
 
 /// \brief Add Repository dialog
 ///
@@ -51,38 +52,41 @@ class OmUiAddRep : public OmDialog
     ///
     long id() const;
 
-    /// \brief Get associated Location.
+    /// \brief Get associated Mod Channel.
     ///
-    /// Returns associated Location object previously defined
-    /// via OmUiAddLoc.setLocation
+    /// Returns associated Mod Channel object
     ///
-    /// \return Associated Location or nullptr if none.
+    /// \return Associated Mod Channel or nullptr if none.
     ///
-    OmLocation* locCur() const {
-      return _pLoc;
+    OmModChan* ModChan() const {
+      return this->_ModChan;
     }
 
-    /// \brief Set associated Location.
+    /// \brief Set associated Mod Channel.
     ///
-    /// Define the associated Location, which the dialog is intended to
-    /// work with and on. A valid Location must be set in order before
+    /// Define the associated Mod Channel, which the dialog is intended to
+    /// work with and on. A valid Mod Channel must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  pCtx  : Location object to associate.
+    /// \param[in]  ModChan  : Mod Channel object to associate.
     ///
-    void locSet(OmLocation* pLoc) {
-      _pLoc = pLoc;
+    void setModChan(OmModChan* ModChan) {
+      this->_ModChan = ModChan;
     }
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmLocation*         _pLoc;
+    OmModChan*          _ModChan;
 
-    int                 _testResult;
+    OmConnect           _connect;
 
-    void                _testLog(const wstring& log);
+    OmResult            _qry_result;
+
+    void                _qry_addlog(const OmWString& log);
+
+    static void         _qry_reponse_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t code);
 
     void                _onBcChk();
 

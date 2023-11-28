@@ -18,7 +18,7 @@
 #define OMUITOOLPKG_H
 
 #include "OmDialog.h"
-#include "OmPackage.h"
+#include "OmModPack.h"
 
 /// \brief Package Editor tool dialog
 ///
@@ -56,8 +56,8 @@ class OmUiToolPkg : public OmDialog
     ///
     /// \param[in]  path    : Path to source to parse.
     ///
-    void setSrc(const wstring& path) {
-      this->_initsrc = path;
+    void setSource(const OmWString& path) {
+      this->_initial_src = path;
     }
 
     /// \brief Select source path.
@@ -66,19 +66,19 @@ class OmUiToolPkg : public OmDialog
     ///
     /// \param[in]  path    : Path to source to parse.
     ///
-    void selSrc(const wstring& path);
+    void selectSource(const OmWString& path);
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmPackage           _package;
+    OmModPack           _ModPack;
 
     bool                _unsaved;
 
-    wstring             _initsrc;
+    OmWString           _initial_src;
 
-    bool                _parseSrc(const wstring& path);
+    bool                _parseSrc(const OmWString& path);
 
     void                _freeze(bool freeze);
 

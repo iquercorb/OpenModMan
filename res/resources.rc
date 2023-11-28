@@ -70,31 +70,31 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_STS_WRN_32  BITMAP    ".\\images\\sts_wrn_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_BOK_16  BITMAP    ".\\images\\sts_bok_16.bmp"
+IDB_STS_CHK_16  BITMAP    ".\\images\\sts_chk_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_BOK_24  BITMAP    ".\\images\\sts_bok_24.bmp"
+IDB_STS_CHK_24  BITMAP    ".\\images\\sts_chk_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_BOK_32  BITMAP    ".\\images\\sts_bok_32.bmp"
+IDB_STS_CHK_32  BITMAP    ".\\images\\sts_chk_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OWR_16  BITMAP    ".\\images\\sts_owr_16.bmp"
+IDB_STS_OVR_16  BITMAP    ".\\images\\sts_ovr_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OWR_24  BITMAP    ".\\images\\sts_owr_24.bmp"
+IDB_STS_OVR_24  BITMAP    ".\\images\\sts_ovr_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OWR_32  BITMAP    ".\\images\\sts_owr_32.bmp"
+IDB_STS_OVR_32  BITMAP    ".\\images\\sts_ovr_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OLD_16  BITMAP    ".\\images\\sts_dng_16.bmp"
+IDB_STS_DNG_16  BITMAP    ".\\images\\sts_dng_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OLD_24  BITMAP    ".\\images\\sts_dng_24.bmp"
+IDB_STS_DNG_24  BITMAP    ".\\images\\sts_dng_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OLD_32  BITMAP    ".\\images\\sts_dng_32.bmp"
+IDB_STS_DNG_32  BITMAP    ".\\images\\sts_dng_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_STS_UPG_16  BITMAP    ".\\images\\sts_upg_16.bmp"
@@ -124,22 +124,67 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_STS_NEW_32  BITMAP    ".\\images\\sts_new_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_PRT_16  BITMAP    ".\\images\\sts_prt_16.bmp"
+IDB_STS_RES_16  BITMAP    ".\\images\\sts_res_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_PRT_24  BITMAP    ".\\images\\sts_prt_24.bmp"
+IDB_STS_RES_24  BITMAP    ".\\images\\sts_res_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_PRT_32  BITMAP    ".\\images\\sts_prt_32.bmp"
+IDB_STS_RES_32  BITMAP    ".\\images\\sts_res_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BAT_16      BITMAP    ".\\images\\bat_16.bmp"
+IDB_STS_RB0_16  BITMAP    ".\\images\\sts_rb0_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BAT_24      BITMAP    ".\\images\\bat_24.bmp"
+IDB_STS_RB0_24  BITMAP    ".\\images\\sts_rb0_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BAT_32      BITMAP    ".\\images\\bat_32.bmp"
+IDB_STS_RB0_32  BITMAP    ".\\images\\sts_rb0_32.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_RB1_16  BITMAP    ".\\images\\sts_rb1_16.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_RB1_24  BITMAP    ".\\images\\sts_rb1_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_RB1_32  BITMAP    ".\\images\\sts_rb1_32.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_QUE_16  BITMAP    ".\\images\\sts_que_16.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_QUE_24  BITMAP    ".\\images\\sts_que_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_STS_QUE_32  BITMAP    ".\\images\\sts_que_32.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_PST_16      BITMAP    ".\\images\\pst_16.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_PST_24      BITMAP    ".\\images\\pst_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_PST_32      BITMAP    ".\\images\\pst_32.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_CHN_16      BITMAP    ".\\images\\chn_16.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_CHN_24      BITMAP    ".\\images\\chn_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_CHN_32      BITMAP    ".\\images\\chn_32.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_REP_16      BITMAP    ".\\images\\rep_16.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_REP_24      BITMAP    ".\\images\\rep_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_REP_32      BITMAP    ".\\images\\rep_32.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDB_WIZARD      BITMAP    ".\\images\\wiz_splash.bmp"
@@ -182,47 +227,50 @@ IDR_MENU MENU
     {
         POPUP "Mod &Hub", GRAYED
         {
-          MENUITEM "&Add Mod Channel...", IDM_EDIT_ADD_LOC
+          MENUITEM "&Add Mod Channel...", IDM_EDIT_ADD_CHN
           MENUITEM SEPARATOR
           MENUITEM "&Properties...", IDM_EDIT_CTX_PROP
         }
         MENUITEM SEPARATOR
         POPUP "Mod &Channel", GRAYED
         {
-          MENUITEM "&Properties...", IDM_EDIT_LOC_PROP
+          MENUITEM "&Properties...", IDM_EDIT_CHN_PROP
         }
         MENUITEM SEPARATOR
-        POPUP "Mod &Package", GRAYED
+        POPUP "Mod &Pack", GRAYED
         {
-            MENUITEM "&Install\tEnter", IDM_EDIT_PKG_INST
-            MENUITEM "&Uninstall\tBackspace", IDM_EDIT_PKG_UINS
-            MENUITEM "Uninstall &tree\tShift+Backspace", IDM_EDIT_PKG_CLNS
+            MENUITEM "&Install\tEnter", IDM_EDIT_MOD_INST
+            MENUITEM "&Uninstall\tBackspace", IDM_EDIT_MOD_UINS
+            MENUITEM "&Clean uninstall\tShift+Backspace", IDM_EDIT_MOD_CLNS
             MENUITEM SEPARATOR
-            MENUITEM "Di&scard backup data\tCtrl+Shift+Backspace", IDM_EDIT_PKG_DISC
+            MENUITEM "Di&scard backup data\tCtrl+Shift+Backspace", IDM_EDIT_MOD_DISC
             MENUITEM SEPARATOR
-            MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_PKG_OPEN
-            MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_PKG_TRSH
+            MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_MOD_OPEN
+            MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_MOD_TRSH
             MENUITEM SEPARATOR
-            MENUITEM "Load in Package &Editor...\tCtrl+S", IDM_EDIT_PKG_EDIT
+            MENUITEM "Load in &Editor...\tCtrl+S", IDM_EDIT_MOD_EDIT
             MENUITEM SEPARATOR
-            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_PKG_INFO
+            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_MOD_INFO
         }
-        POPUP "&Remote", GRAYED
+        POPUP "&Repository Mod Pack", GRAYED
         {
-            MENUITEM "&Download\tEnter", IDM_EDIT_RMT_DNLD
-            MENUITEM "Download &without supersede\tShift+Enter", IDM_EDIT_RMT_DNWS
+            MENUITEM "&Download\tEnter", IDM_EDIT_NET_DNLD
+            MENUITEM "Download &without supersede\tShift+Enter", IDM_EDIT_NET_DNWS
             MENUITEM SEPARATOR
-            MENUITEM "Fix de&pendencies\tCtrl+Enter", IDM_EDIT_RMT_FIXD
+            MENUITEM "Stop/Pause download\tCtrl+P", IDM_EDIT_NET_STOP
+            MENUITEM "Revoke partial download\tDelete", IDM_EDIT_NET_RVOK
             MENUITEM SEPARATOR
-            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_RMT_INFO
+            MENUITEM "Fix de&pendencies\tCtrl+Enter", IDM_EDIT_NET_FIXD
+            MENUITEM SEPARATOR
+            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_NET_INFO
         }
         MENUITEM SEPARATOR
         MENUITEM "&Manager options...", IDM_EDIT_OPTIONS
     }
     POPUP "&Tools"
     {
-        MENUITEM "&Package editor...", IDM_TOOLS_EDI_PKG
-        MENUITEM "&Repository editor...", IDM_TOOLS_EDI_REP
+        MENUITEM "&Mod Pack editor...", IDM_TOOLS_EDI_PKG
+        MENUITEM "&Mod Repository editor...", IDM_TOOLS_EDI_REP
     }
     POPUP "&Help"
     {
@@ -232,16 +280,17 @@ IDR_MENU MENU
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDR_MENU_BAT  MENU
+IDR_MENU_PST  MENU
 {
-  POPUP "&Script"
+  POPUP "&Preset"
   {
-    MENUITEM "&New...", IDM_BATCH_NEW
+    //MENUITEM "&New...", IDM_PRESET_NEW
+    //MENUITEM SEPARATOR
+    MENUITEM "&Launch", IDM_PRESET_EXE
     MENUITEM SEPARATOR
-    MENUITEM "&Launch", IDM_BATCH_EXE
-    MENUITEM "&Properties...", IDM_BATCH_EDI
+    MENUITEM "&Delete", IDM_PRESET_DEL
     MENUITEM SEPARATOR
-    MENUITEM "&Delete", IDM_BATCH_DEL
+    MENUITEM "&Properties...", IDM_PRESET_EDI
   }
 }
 
@@ -255,16 +304,22 @@ IDR_MENU_BAT  MENU
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR DIALOG 0, 0, 505, 340
+IDD_MGR DIALOGEX 0, 0, 505, 340
 CLASS "OpenModMan.Class"
 STYLE DS_3DLOOK | DS_CENTER | DS_SHELLFONT | WS_CAPTION | WS_GROUP | WS_TABSTOP | WS_THICKFRAME | WS_SYSMENU
-EXSTYLE WS_EX_WINDOWEDGE
+EXSTYLE WS_EX_WINDOWEDGE | DS_SHELLFONT
 CAPTION "Open Mod Manager"
 MENU IDR_MENU
 FONT 8, "Ms Shell Dlg"
 {
-    ICON            "", IDC_SB_ICON, 5, 5, 19, 19, SS_ICON | SS_CENTERIMAGE, WS_EX_LEFT
-    COMBOBOX        IDC_CB_CTX, 30, 8, 445, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    ICON            "", IDC_SB_ICON, 5, 5, 20, 20, SS_ICON | SS_CENTERIMAGE, WS_EX_LEFT
+    COMBOBOX        IDC_CB_HUB, 1, 8, 445, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    CONTROL         "", IDC_LV_CHN, WC_LISTVIEW, WS_DISABLED|WS_TABSTOP|LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SINGLESEL|LVS_SHAREIMAGELISTS|LVS_NOSORTHEADER, 1, 16, 480, 46, WS_EX_STATICEDGE
+    PUSHBUTTON      "Run", IDC_BC_PSRUN, 380, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "New...", IDC_BC_PSNEW, 395, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Edit", IDC_BC_PSEDI, 410, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Delete", IDC_BC_PSDEL, 410, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    CONTROL         "", IDC_LV_PST, WC_LISTVIEW, WS_DISABLED|WS_TABSTOP|LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SINGLESEL|LVS_SHAREIMAGELISTS|LVS_NOSORTHEADER, 378, 64, 124, 125, WS_EX_STATICEDGE
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                MAIN WINDOW
@@ -272,12 +327,12 @@ FONT 8, "Ms Shell Dlg"
 //                            TOP FRAME CHILD DIALOG
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_MAIN DIALOG 0, 25, 505, 210
+IDD_MGR_MAIN DIALOGEX 0, 25, 505, 210
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
-EXSTYLE WS_EX_STATICEDGE | WS_EX_CONTROLPARENT
+EXSTYLE WS_EX_STATICEDGE | DS_SHELLFONT | WS_EX_CONTROLPARENT
 FONT 8, "Ms Shell Dlg"
 {
-  //CONTROL         "", IDC_LV_LOC, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL, 1, 1, 480, 46, WS_EX_ACCEPTFILES
+  //CONTROL         "", IDC_LV_CHN, WC_LISTVIEW, /*WS_DISABLED | */WS_TABSTOP /*| WS_BORDER*/ | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS /*| LVS_NOCOLUMNHEADER*/ | LVS_REPORT | LVS_SINGLESEL, 1, 16, 480, 46, WS_EX_ACCEPTFILES
   CONTROL         "", IDC_TC_MAIN, WC_TABCONTROL, WS_TABSTOP, 5, 46, 495, 260, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -286,7 +341,7 @@ FONT 8, "Ms Shell Dlg"
 //                           FOOT FRAME CHILD DIALOG
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_FOOT DIALOG 0, 240, 505, 100
+IDD_MGR_FOOT DIALOGEX 0, 240, 505, 100
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 EXSTYLE WS_EX_STATICEDGE | WS_EX_CONTROLPARENT
 FONT 8, "Ms Shell Dlg"
@@ -298,26 +353,19 @@ FONT 8, "Ms Shell Dlg"
 //
 //                                  TOP FRAME
 //
-//                             PACKAGES LIBRARY TAB
+//                               MODS LIBRARY TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_MAIN_LIB DIALOG 0, 0, 490, 274
+IDD_MGR_MAIN_LIB DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    COMBOBOX        IDC_CB_LOC, 5, 5, 480, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 20, 480, 12, WS_DISABLED | NOT WS_TABSTOP | ES_READONLY, WS_EX_LEFT
-    CONTROL         "", IDC_LV_PKG, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT, 5, 35, 480, 123, WS_EX_ACCEPTFILES
+    CONTROL         "", IDC_LV_MOD, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER |LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SHAREIMAGELISTS, 5, 35, 480, 123, WS_EX_ACCEPTFILES
     PUSHBUTTON      "Install", IDC_BC_INST, 5, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Uninstall", IDC_BC_UNIN, 55, 160, 50, 14, WS_DISABLED | NOT WS_TABSTOP, WS_EX_LEFT
     CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, 0, 107, 161, 326, 12, WS_EX_LEFT
     PUSHBUTTON      "Abort", IDC_BC_ABORT, 435, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDVERT, 488, 5, 1, 270, WS_EX_LEFT
-    //LTEXT           "Scripts : ", IDC_SC_LBL01, 490, 8, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
-    CONTROL         "", IDC_LV_BAT, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL, 5, 35, 148, 123, WS_EX_ACCEPTFILES
-    PUSHBUTTON      "Launch", IDC_BC_RUN, 490, 271, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "New...", IDC_BC_NEW, 549, 271, 45, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Modify", IDC_BC_EDI, 595, 271, 45, 14, WS_DISABLED, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                 MAIN WINDOW
@@ -327,21 +375,21 @@ FONT 8, "Ms Shell Dlg"
 //                           NETWORK REPOSITORIES TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_MAIN_NET DIALOG 0, 0, 490, 274
+IDD_MGR_MAIN_NET DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    COMBOBOX        IDC_CB_LOC, 5, 5, 480, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    //LTEXT           "Repositories : ", IDC_SC_LBL01, 5, 24, 150, 12, WS_DISABLED | SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
-    PUSHBUTTON      "Refresh", IDC_BC_QRY, 470, 20, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    CONTROL         "", IDC_LV_REP, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL, 5, 37, 460, 46, WS_EX_ACCEPTFILES
-    PUSHBUTTON      "Add...", IDC_BC_NEW, 470, 36, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    PUSHBUTTON      "Delete", IDC_BC_DEL, 470, 52, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 5, 70, 480, 1, WS_EX_LEFT
-    CONTROL         "", IDC_LV_RMT, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT | LVS_SHOWSELALWAYS | LVS_REPORT, 5, 75, 480, 83, WS_EX_ACCEPTFILES
+    PUSHBUTTON      "Query", IDC_BC_QRY, 470, 20, 16, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Add...", IDC_BC_NEW, 470, 36, 16, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Delete", IDC_BC_DEL, 470, 52, 16, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    //CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 5, 70, 480, 1, WS_EX_LEFT
+
+    CONTROL         "", IDC_LV_REP, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SINGLESEL|LVS_SHAREIMAGELISTS, 5, 37, 460, 46, WS_EX_ACCEPTFILES
+    CONTROL         "", IDC_LV_NET, WC_LISTVIEW, WS_DISABLED | WS_TABSTOP | WS_BORDER | LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SHAREIMAGELISTS, 5, 75, 480, 83, WS_EX_ACCEPTFILES
     PUSHBUTTON      "Download", IDC_BC_DNLD, 5, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
-    CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, WS_DISABLED, 108, 161, 314, 12, WS_EX_LEFT
-    PUSHBUTTON      "Abort", IDC_BC_ABORT, 435, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Stop", IDC_BC_STOP, 55, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
+    CONTROL         "|||||||||||", IDC_PB_PKG, PROGRESS_CLASS, WS_DISABLED, 107, 161, 314, 12, WS_EX_LEFT
+    PUSHBUTTON      "Abort all", IDC_BC_ABORT, 435, 160, 50, 14, WS_DISABLED, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                 MAIN WINDOW
@@ -351,7 +399,7 @@ FONT 8, "Ms Shell Dlg"
 //                                 TEST&DEV TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_MAIN_TST DIALOG 0, 0, 490, 274
+IDD_MGR_MAIN_TST DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -363,14 +411,13 @@ FONT 8, "Ms Shell Dlg"
 //
 //                                 FOOT  FRAME
 //
-//                             PACKAGE OVERVIEW TAB
+//                                MOD OVERVIEW TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_FOOT_OVW DIALOG 0, 0, 490, 274
+IDD_MGR_FOOT_OVW DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    //LTEXT           "Package Name", IDC_SC_NAME, 5, 177, 480, 12, SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
     CONTROL         "", IDC_SB_SNAP, WC_STATIC, SS_BITMAP | SS_CENTERIMAGE, 5, 191, 86, 79, WS_EX_LEFT
     CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 2, 480, 80, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 2, 2, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
@@ -380,10 +427,10 @@ FONT 8, "Ms Shell Dlg"
 //
 //                                 FOOT  FRAME
 //
-//                           PACKAGE SCREENSHOTS TAB
+//                              MOD SCREENSHOTS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_FOOT_GAL DIALOG 0, 0, 490, 274
+IDD_MGR_FOOT_GAL DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -394,14 +441,13 @@ FONT 8, "Ms Shell Dlg"
 //
 //                                 FOOT  FRAME
 //
-//                             PACKAGE DETAILS TAB
+//                                MOD DETAILS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_MGR_FOOT_DET DIALOG 0, 0, 490, 274
+IDD_MGR_FOOT_DET DIALOGEX 0, 0, 490, 274
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    //LTEXT           "Package Name", IDC_SC_NAME, 5, 177, 480, 12, SS_LEFT | SS_ENDELLIPSIS, WS_EX_LEFT
     CONTROL         "", IDC_FT_DESC, MSFTEDIT_CLASS, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP, 2, 2, 480, 80, WS_EX_LEFT
     EDITTEXT        IDC_EC_DESC, 2, 2, 480, 80, ES_READONLY | ES_MULTILINE | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP , WS_EX_LEFT
 
@@ -412,18 +458,18 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_ADD_LOC DIALOG 0, 0, 300, 220
+IDD_ADD_CHN DIALOGEX 0, 0, 300, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "New Channel"
+CAPTION "New Mod Channel"
 FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "Mod Channel name :", IDC_SC_LBL01, 10, 10, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 20, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Target path, where Mods/Packages are to be applied :", IDC_SC_LBL02, 5, 50, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Target path, where Mods are to be applied :", IDC_SC_LBL02, 5, 50, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 5, 60, 182, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW02, 190, 60, 16, 13, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Use custom Library folder (where Mods/Packages are stored) :", IDC_BC_CKBX1, 5, 110, 200, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Use custom Library folder (where Mods are stored) :", IDC_BC_CKBX1, 5, 110, 200, 8, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 5, 120, 182, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW03, 190, 120, 16, 13, WS_DISABLED, WS_EX_LEFT
     AUTOCHECKBOX    "Use custom Backup folder (where backup data will be stored) :", IDC_BC_CKBX2, 5, 140, 200, 8, 0, WS_EX_LEFT
@@ -435,27 +481,27 @@ FONT 8, "Ms Shell Dlg"
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                       NEW INSTALLATION BATCH DIALOG
+//                           NEW MOD PRESET DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_ADD_BAT DIALOG 0, 0, 300, 260
+IDD_ADD_PST DIALOGEX 0, 0, 300, 260
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "New Script"
+CAPTION "New Mod Preset"
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Script name :", IDC_SC_LBL01, 10, 10, 150, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Preset name :", IDC_SC_LBL01, 10, 10, 150, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 10, 20, 300, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    AUTOCHECKBOX    "Install Only (Do not uninstall not-selected packages)", IDC_BC_CKBX2, 10, 40, 150, 9, 0, WS_EX_LEFT
-    LTEXT           "Per Mods Target Installation-List :", IDC_SC_LBL02, 10, 30, 150, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Install Only (Ignore Mods to be uninstalled)", IDC_BC_CKBX2, 10, 40, 150, 9, 0, WS_EX_LEFT
+    LTEXT           "Mod Channel :", IDC_SC_LBL02, 10, 30, 150, 9, SS_LEFT, WS_EX_LEFT
     AUTOCHECKBOX    "Clone from current state", IDC_BC_CKBX1, 10, 40, 150, 9, 0, WS_EX_LEFT
-    COMBOBOX        IDC_CB_LOC, 10, 50, 300, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Not selected :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_CHN, 10, 50, 300, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "To uninstall (or ignore) :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_EXC, 10, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      ">", IDC_BC_RIGH, 140, 180, 16, 15, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "<", IDC_BC_LEFT, 140, 195, 16, 15, WS_DISABLED, WS_EX_LEFT
-    LTEXT           "To be installed :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "To install :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_INC, 160, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 290, 180, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 290, 195, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -469,20 +515,20 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_ADD_REP DIALOG 0, 0, 300, 220
+IDD_ADD_REP DIALOGEX 0, 0, 300, 220
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "New Repository"
+CAPTION "Add Mod Repository"
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Repository address :", IDC_SC_LBL01, 10, 10, 150, 9, SS_LEFT, WS_EX_LEFT
-    LTEXT           "URL :", IDC_SC_LBL02, 10, 25, 40, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Repository address :", IDC_SC_LBL01, 10, 10, 150, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Base :", IDC_SC_LBL02, 10, 25, 40, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 40, 25, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     LTEXT           "Name :", IDC_SC_LBL03, 200, 25, 40, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 240, 25, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Repository checkout :", IDC_SC_LBL04, 10, 40, 40, 9, SS_LEFT, WS_EX_LEFT
-    DEFPUSHBUTTON   "Test", IDC_BC_QRY, 10, 50, 50, 14, WS_DISABLED, WS_EX_LEFT
-    LTEXT           "Test result", IDC_SC_STATE, 40, 62, 120, 18, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Repository checkout :", IDC_SC_LBL04, 10, 40, 40, 9, SS_LEFT, WS_EX_LEFT
+    DEFPUSHBUTTON   "Query", IDC_BC_QRY, 10, 50, 50, 14, WS_DISABLED, WS_EX_LEFT
+    LTEXT           "Query result", IDC_SC_STATE, 40, 62, 120, 18, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_RESUL, 10, 70, 280, 45, WS_HSCROLL | WS_VSCROLL | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, 0
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 6, 335, 310, 1, WS_EX_LEFT
     PUSHBUTTON      "OK", IDC_BC_OK, 157, 278, 50, 14, WS_DISABLED, WS_EX_LEFT
@@ -494,7 +540,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_MGR DIALOG 0, 0, 340, 240
+IDD_PROP_MGR DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "Manager options"
@@ -511,14 +557,14 @@ FONT 8, "Ms Shell Dlg"
 //                                GENERAL TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_MGR_GLE DIALOG 0, 0, 305, 175
+IDD_PROP_MGR_GLE DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "List views icons size :", IDC_SC_LBL01, 50, 20, 100, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_ICS, 50, 30, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     AUTOCHECKBOX    "Disable Markdown (display descriptions as raw text)", IDC_BC_CKBX1, 50, 45, 100, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Open Contexts at startup :", IDC_BC_CKBX2, 50, 70, 100, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Open Mod Hub at startup :", IDC_BC_CKBX2, 50, 70, 100, 9, 0, WS_EX_LEFT
     LISTBOX         IDC_LB_PATH, 50, 80, 205, 35, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -531,7 +577,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX DIALOG 0, 0, 340, 240
+IDD_PROP_HUB DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "Hub properties"
@@ -548,7 +594,7 @@ FONT 8, "Ms Shell Dlg"
 //                                SETTINGS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_STG DIALOG 0, 0, 305, 175
+IDD_PROP_HUB_STG DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -568,12 +614,12 @@ FONT 8, "Ms Shell Dlg"
 //                            TARGET LOCATIONS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_LOC DIALOG 0, 0, 305, 175
+IDD_PROP_HUB_CHN DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Channels :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_LOC, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
+    LTEXT           "Mod Channels :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_CHN, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     LTEXT           "Target Path :", IDC_SC_LBL02, 71, 60, 40, 9, SS_LEFT, WS_EX_LEFT
@@ -589,33 +635,32 @@ FONT 8, "Ms Shell Dlg"
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                     SOFTWARE CONTEXT PROPERTIES DIALOG
 //
-//                         INSTALLATION BATCHES TAB
+//                              MOD PRESETS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_CTX_BAT DIALOG 0, 0, 305, 175
+IDD_PROP_HUB_BAT DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Scripts :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
-    LISTBOX         IDC_LB_BAT, 70, 70, 190, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
+    LTEXT           "Mod Presets :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LISTBOX         IDC_LB_PST, 70, 70, 190, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
-    //LTEXT           "Execution options :", IDC_SC_LBL02, 5, 115, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Scripts execution in Quiet Mode (ignore warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Apply in Quiet Mode (ignore warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                    TARGET LOCATION PROPERTIES DIALOG
+//                     MOD CHANNEL PROPERTIES DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_LOC DIALOG 0, 0, 340, 240
+IDD_PROP_CHN DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Channel properties"
+CAPTION "Mod Channel properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
@@ -624,96 +669,98 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                       TARGET LOCATION PROPERTIES
+//                          MOD CHANNEL PROPERTIES
 //
 //                               SETTINGS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_LOC_STG DIALOG 0, 0, 305, 175
+IDD_PROP_CHN_STG DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Indicative name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Channel name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 70, 19, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Target path :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Target installation path :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 70, 60, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW02, 261, 60, 16, 13, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Use custom Library folder", IDC_BC_CKBX1, 70, 90, 120, 9, 0, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP03, 70, 100, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    PUSHBUTTON      "...", IDC_BC_BRW03, 261, 100, 16, 13, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Use custom Backup folder", IDC_BC_CKBX2, 70, 120, 120, 9, 0, WS_EX_LEFT
-    EDITTEXT        IDC_EC_INP04, 70, 130, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    PUSHBUTTON      "...", IDC_BC_BRW04, 261, 130, 16, 13, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                       TARGET LOCATION PROPERTIES
+//                          MOD CHANNEL PROPERTIES
 //
 //                               LIBRARY TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_LOC_LIB DIALOG 0, 0, 305, 175
+IDD_PROP_CHN_LIB DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    AUTOCHECKBOX    "Developer mode (parse subfolders as package sources)", IDC_BC_CKBX1, 50, 20, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Use custom Library folder", IDC_BC_CKBX1, 70, 20, 120, 9, 0, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP01, 70, 30, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
+    PUSHBUTTON      "...", IDC_BC_BRW01, 261, 30, 16, 13, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Developer mode (parse subfolders as Mods)", IDC_BC_CKBX2, 50, 20, 170, 9, 0, WS_EX_LEFT
     LTEXT           "Enable warning messages for :", IDC_SC_LBL01, 50, 40, 170, 9, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Package installation overlapping", IDC_BC_CKBX2, 65, 52, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Additional installations of package dependencies", IDC_BC_CKBX3, 65, 72, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Package installation dependencies missing", IDC_BC_CKBX4, 65, 62, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Additional uninstallations of overlapping or dependents", IDC_BC_CKBX5, 65, 82, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Show hidden files and folders", IDC_BC_CKBX6, 50, 110, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Mod installation overlapping", IDC_BC_CKBX3, 65, 52, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Additional installations of Mod dependencies", IDC_BC_CKBX4, 65, 72, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Mod installation dependencies missing", IDC_BC_CKBX5, 65, 62, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Additional uninstallations of overlapping or dependents", IDC_BC_CKBX6, 65, 82, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Show hidden files and folders", IDC_BC_CKBX7, 50, 110, 170, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                       TARGET LOCATION PROPERTIES
+//                         MOD CHANNEL PROPERTIES
 //
 //                             BACKUP DATA TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_LOC_BCK DIALOG 0, 0, 305, 175
+IDD_PROP_CHN_BCK DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    AUTOCHECKBOX    "Store backup data as archive files", IDC_BC_CKBX1, 50, 20, 120, 9, 0, WS_EX_LEFT
-    LTEXT           "Backup archive files compression :", IDC_SC_LBL01, 50, 40, 120, 9, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        IDC_CB_LVL, 50, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Maintenance operations :", IDC_SC_LBL02, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Use custom data backup folder", IDC_BC_CKBX1, 70, 120, 120, 9, 0, WS_EX_LEFT
+    EDITTEXT        IDC_EC_INP01, 70, 130, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
+    PUSHBUTTON      "...", IDC_BC_BRW01, 261, 130, 16, 13, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Store backup data as compressed files", IDC_BC_CKBX2, 50, 20, 120, 9, 0, WS_EX_LEFT
+    LTEXT           "Compression method :", IDC_SC_LBL01, 50, 50, 80, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_ZLV, 80, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Compression level :", IDC_SC_LBL02, 50, 60, 80, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_ZMD, 80, 60, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Maintenance operations :", IDC_SC_LBL03, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Discard backup data", IDC_BC_DEL, 50, 90, 80, 15, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                       TARGET LOCATION PROPERTIES
+//                         MOD CHANNEL PROPERTIES
 //
 //                        NETWORK REPOSITORIES TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_LOC_NET DIALOG 0, 0, 305, 175
+IDD_PROP_CHN_NET DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "Repositories :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_REP, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Remove", IDC_BC_DEL, 70, 55, 50, 14, WS_DISABLED, WS_EX_LEFT
-    PUSHBUTTON      "Test", IDC_BC_QRY, 122, 55, 50, 14, WS_DISABLED, WS_EX_LEFT
+    PUSHBUTTON      "Query", IDC_BC_QRY, 122, 55, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_ADD, 235, 55, 50, 14, 0, WS_EX_LEFT
-    //LTEXT           "Status :", IDC_SC_LBL02, 71, 80, 40, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Query status :", IDC_SC_LBL04, 70, 92, 40, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_SC_STATE, 122, 92, 155, 13, WS_DISABLED | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     LTEXT           "Enable warning messages for :", IDC_SC_LBL02, 5, 100, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Additional download of package dependencies", IDC_BC_CKBX1, 65, 110, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Package download dependencies missing", IDC_BC_CKBX2, 65, 62, 120, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Package upgrade breaks dependencies", IDC_BC_CKBX3, 65, 62, 130, 9, 0, WS_EX_LEFT
-    LTEXT           "On package upgrade :", IDC_SC_LBL03, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Additional download of Mod dependencies", IDC_BC_CKBX1, 65, 110, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Mod download dependencies missing", IDC_BC_CKBX2, 65, 62, 120, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Mod upgrade breaks dependencies", IDC_BC_CKBX3, 65, 62, 130, 9, 0, WS_EX_LEFT
+    LTEXT           "On Mod upgrade :", IDC_SC_LBL03, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
     AUTORADIOBUTTON "Move older versions to recycle bin", IDC_BC_RAD01, 5, 145, 64, 9, SS_LEFT, WS_EX_LEFT
     AUTORADIOBUTTON "Rename older versions with .old extension", IDC_BC_RAD02, 5, 165, 64, 9, SS_LEFT, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                    INSTALLATION BATCH PROPERTIES DIALOG
+//                        MOD PRESET PROPERTIES DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT DIALOG 0, 0, 340, 240
+IDD_PROP_PST DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Script properties"
+CAPTION "Mod Preset properties"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 192, WS_EX_LEFT
@@ -722,50 +769,50 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                        INSTALLATION BATCH PROPERTIES
+//                           MOD PRESET PROPERTIES
 //
 //                                SETTINGS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT_STG DIALOG 0, 0, 305, 175
+IDD_PROP_PST_STG DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Script name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Preset name :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 70, 20, 205, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    AUTOCHECKBOX    "Install Only (Do not uninstall not-selected packages)", IDC_BC_CKBX1, 10, 40, 150, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Install Only (Ignore Mods to be uninstalled)", IDC_BC_CKBX1, 10, 40, 150, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                        INSTALLATION BATCH PROPERTIES
+//                            MOD PRESET PROPERTIES
 //
 //                            INSTALLATION LISTS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_BAT_LST DIALOG 0, 0, 305, 175
+IDD_PROP_PST_LST DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Per Modding Channel Installation-List :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        IDC_CB_LOC, 10, 65, 300, 12, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Not selected :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Channel :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_CHN, 10, 65, 300, 12, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "To uninstall (or ignore) :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_EXC, 10, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      ">", IDC_BC_RIGH, 140, 180, 16, 15, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "<", IDC_BC_LEFT, 140, 195, 16, 15, WS_DISABLED, WS_EX_LEFT
-    LTEXT           "To be installed :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "To install :", IDC_SC_LBL04, 160, 85, 150, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_INC, 160, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 290, 180, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 290, 195, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                       PACKAGE PROPERTIES DIALOG
+//                       MOD PACK PROPERTIES DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG DIALOG 0, 0, 340, 400
+IDD_PROP_PKG DIALOGEX 0, 0, 340, 320
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Package properties"
+CAPTION "Mod Pack details"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 370, WS_EX_LEFT
@@ -774,50 +821,65 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                            PACKAGE PROPERTIES
+//                            MOD PACK PROPERTIES
+//
+//                                COMMON TAB
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDD_PROP_PKG_CMN DIALOGEX 0, 0, 305, 300
+STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "Ms Shell Dlg"
+{
+    LTEXT           "Name :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ1, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Version :", IDC_SC_LBL02, 5, 50, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ2, 70, 50, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Category :", IDC_SC_LBL03, 5, 70, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ3, 70, 70, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 175, 270, 1, WS_EX_LEFT
+    LTEXT           "Hash:", IDC_SC_LBL04, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ4, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Identity :", IDC_SC_LBL05, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ5, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Core name :", IDC_SC_LBL06, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ6, 70, 30, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//                            MOD PACK PROPERTIES
 //
 //                                SOURCE TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_SRC DIALOG 0, 0, 305, 360
+IDD_PROP_PKG_SRC DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Identity :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ1, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Core name :", IDC_SC_LBL02, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ2, 70, 30, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Version :", IDC_SC_LBL03, 5, 50, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ3, 70, 50, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Category :", IDC_SC_LBL04, 5, 70, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ4, 70, 70, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 115, 270, 1, WS_EX_LEFT
-    LTEXT           "Source type :", IDC_SC_LBL06, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ5, 70, 130, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Source location :", IDC_SC_LBL07, 5, 150, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ6, 70, 150, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP02, WC_STATIC, SS_ETCHEDHORZ, 5, 175, 270, 1, WS_EX_LEFT
-    LTEXT           "Dependencies :", IDC_SC_LBL08, 5, 190, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_READ7, 70, 190, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP03, WC_STATIC, SS_ETCHEDHORZ, 5, 225, 270, 1, WS_EX_LEFT
-    LTEXT           "Snapshot :", IDC_SC_LBL09, 5, 240, 64, 9, SS_LEFT, WS_EX_LEFT
-    CONTROL         "", IDC_SB_SNAP, WC_STATIC, SS_BITMAP, 70, 240, 42, 38, WS_EX_STATICEDGE
-    LTEXT           "Description :", IDC_SC_LBL10, 5, 285, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_DESC, 70, 285, 205, 65, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
+    LTEXT           "Type :", IDC_SC_LBL01, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ1, 70, 130, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Location :", IDC_SC_LBL02, 5, 150, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ2, 70, 150, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 175, 270, 1, WS_EX_LEFT
+    LTEXT           "Dependencies :", IDC_SC_LBL03, 5, 190, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ3, 70, 190, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
+    CONTROL         "-----------", IDC_SC_SEP02, WC_STATIC, SS_ETCHEDHORZ, 5, 105, 270, 1, WS_EX_LEFT
+    LTEXT           "Total size :", IDC_SC_LBL04, 5, 120, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ4, 70, 120, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Content tree :", IDC_SC_LBL05, 5, 140, 64, 9, SS_LEFT, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ5, 70, 140, 205, 171, WS_HSCROLL | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                            PACKAGE PROPERTIES
+//                            MOD PACK PROPERTIES
 //
 //                                BACKUP TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_BCK DIALOG 0, 0, 305, 360
+IDD_PROP_PKG_BCK DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Backup type :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Type :", IDC_SC_LBL01, 5, 10, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ1, 70, 10, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    LTEXT           "Backup location :", IDC_SC_LBL02, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Location :", IDC_SC_LBL02, 5, 30, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ2, 70, 30, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 55, 270, 1, WS_EX_LEFT
     LTEXT           "Overlap :", IDC_SC_LBL03, 5, 70, 64, 9, SS_LEFT, WS_EX_LEFT
@@ -830,14 +892,14 @@ FONT 8, "Ms Shell Dlg"
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                     REMOTE PACKAGE PROPERTIES DIALOG
+//                     NETWORK PACKAGE PROPERTIES DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_RMT DIALOG 0, 0, 340, 400
+IDD_PROP_RMT DIALOGEX 0, 0, 340, 320
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Remote package properties"
+CAPTION "Repository Mod Pack details"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_TC_PROP, WC_TABCONTROL, WS_TABSTOP, 4, 5, 312, 370, WS_EX_LEFT
@@ -846,12 +908,12 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Close", IDC_BC_OK, 266, 201, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                          REMOTE PACKAGE PROPERTIES
+//                         NETWORK PACKAGE PROPERTIES
 //
 //                                DETAILS TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_RMT_DET DIALOG 0, 0, 305, 360
+IDD_PROP_RMT_DET DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -876,41 +938,38 @@ FONT 8, "Ms Shell Dlg"
     CONTROL         "-----------", IDC_SC_SEP03, WC_STATIC, SS_ETCHEDHORZ, 5, 175, 270, 1, WS_EX_LEFT
     LTEXT           "Dependencies :", IDC_SC_LBL09, 5, 190, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ9, 70, 190, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
-    CONTROL         "-----------", IDC_SC_SEP04, WC_STATIC, SS_ETCHEDHORZ, 5, 225, 270, 1, WS_EX_LEFT
-    LTEXT           "Snapshot :", IDC_SC_LBL10, 5, 240, 64, 9, SS_LEFT, WS_EX_LEFT
-    CONTROL         "", IDC_SB_SNAP, WC_STATIC, SS_BITMAP, 70, 240, 42, 38, WS_EX_STATICEDGE
-    LTEXT           "Description :", IDC_SC_LBL11, 5, 285, 64, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        IDC_EC_DESC, 70, 285, 205, 65, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                            PACKAGE EDITOR DIALOG
+//                         MOD PACK EDITOR DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_TOOL_PKG DIALOG 0, 0, 485, 375
+IDD_TOOL_PKG DIALOGEX 0, 0, 485, 375
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Package editor"
+CAPTION "Mod Pack editor"
 FONT 8, "Ms Shell Dlg"
 {
     AUTORADIOBUTTON "Create from folder content :", IDC_BC_RAD01, 10, 10, 140, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 10, 20, 170, 13, ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     PUSHBUTTON      "Select...", IDC_BC_BRW01, 190, 20, 40, 13, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "Edit/Create from existing Package :", IDC_BC_RAD02, 10, 40, 140, 9, SS_LEFT, WS_EX_LEFT
+    AUTORADIOBUTTON "Edit/Create from existing Mod Pack :", IDC_BC_RAD02, 10, 40, 140, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 10, 50, 170, 13, WS_DISABLED | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     PUSHBUTTON      "Open...", IDC_BC_BRW02, 190, 50, 40, 13, WS_DISABLED, WS_EX_LEFT
     GROUPBOX        "", IDC_GB_GRP01, 5, 65, 235, 150, 0, WS_EX_LEFT
-    LTEXT           "Package filename :", IDC_SC_LBL01, 10, 75, 120, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod filename :", IDC_SC_LBL01, 10, 75, 120, 9, SS_LEFT, WS_EX_LEFT
     LTEXT           "Name :", IDC_SC_LBL02, 10, 90, 23, 9, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 35, 88, 100, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     LTEXT           "Version :", IDC_SC_LBL03, 140, 90, 27, 9, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP04, 170, 88, 30, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     COMBOBOX        IDC_CB_EXT, 205, 88, 30, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     EDITTEXT        IDC_EC_RESUL, 10, 104, 225, 13, ES_READONLY | ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Zip compression level :", IDC_SC_LBL04, 10, 125, 80, 9, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        IDC_CB_LVL, 10, 137, 225, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Package Content :", IDC_SC_LBL07, 10, 158, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Compression method :", IDC_SC_LBL09, 10, 110, 80, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_ZMD, 10, 137, 110, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Compression level :", IDC_SC_LBL04, 130, 110, 80, 9, SS_LEFT, WS_EX_LEFT
+    COMBOBOX        IDC_CB_ZLV, 130, 137, 110, 14, WS_DISABLED | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    LTEXT           "Mod Content :", IDC_SC_LBL07, 10, 158, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ1, 10, 170, 220, 35, WS_HSCROLL | WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_MULTILINE | ES_READONLY, WS_EX_STATICEDGE
     LTEXT           "Save Destination :", IDC_SC_LBL05, 10, 215, 80, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP06, 10, 230, 205, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
@@ -948,7 +1007,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_TOOL_REP DIALOG 0, 0, 485, 360
+IDD_TOOL_REP DIALOGEX 0, 0, 485, 360
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "Repository editor"
@@ -963,7 +1022,7 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Default download path :", IDC_SC_LBL03, 10, 90, 70, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 10, 105, 220, 12, ES_AUTOHSCROLL, WS_EX_LEFT
     GROUPBOX        "", IDC_GB_GRP03, 5, 130, 235, 135, 0, WS_EX_LEFT
-    LTEXT           "Package(s):", IDC_SC_LBL02, 10, 147, 120, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod(s):", IDC_SC_LBL02, 10, 147, 120, 9, SS_LEFT, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_BRW02, 125, 144, 40, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Add...", IDC_BC_BRW03, 165, 144, 40, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Remove", IDC_BC_REM, 214, 144, 16, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -1001,10 +1060,10 @@ FONT 8, "Ms Shell Dlg"
 
 /*
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_LOC DIALOG 0, 0, 300, 225
+IDD_WIZ_CHN DIALOG 0, 0, 300, 225
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Channel Creation Wizard"
+CAPTION "Mod Channel Creation Wizard"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_SB_IMAGE, WC_STATIC, SS_BITMAP | SS_CENTERIMAGE, 5, 5, 68, 189, WS_EX_STATICEDGE
@@ -1015,20 +1074,20 @@ FONT 8, "Ms Shell Dlg"
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_LOC_BEG DIALOG 0, 0, 225, 200
+IDD_WIZ_CHN_BEG DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Welcome to the Channel creation wizard !\n\nThis wizard will guide you to create a new Channel for the current Context.\n\nWhen you are ready to proceed, please click ""Next""...", IDC_SC_INTRO, 10, 5, 190, 60, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Welcome to the Mod Channel creation wizard !\n\nThis wizard will guide you to create a new Mod Channel for the current Mod Hub.\n\nWhen you are ready to proceed, please click ""Next""...", IDC_SC_INTRO, 10, 5, 190, 60, SS_LEFT, WS_EX_LEFT
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_LOC_CFG DIALOG 0, 0, 225, 200
+IDD_WIZ_CHN_CFG DIALOG 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Please select the Target path for the Channel as well as its name. You also can choose custom location for mods library and backup data storage.", IDC_SC_INTRO, 5, 5, 200, 17, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Channel name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Please select the Target path for the Mod Channel as well as its name. You also can choose custom location for mods library and backup data storage.", IDC_SC_INTRO, 5, 5, 200, 17, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Channel name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 50, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     LTEXT           "Target path, where Mods will be applied:", IDC_SC_LBL02, 5, 70, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 5, 90, 182, 13, ES_AUTOHSCROLL, WS_EX_LEFT
@@ -1043,14 +1102,14 @@ FONT 8, "Ms Shell Dlg"
 */
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//                     SOTFWARE CONTEXT WIZARD DIALOG
+//                         MOD HUB WIZARD DIALOG
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_CTX DIALOG 0, 0, 300, 225
+IDD_WIZ_HUB DIALOGEX 0, 0, 300, 225
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
-CAPTION "Modding Hub Creation Wizard"
+CAPTION "Mod Hub Creation Wizard"
 FONT 8, "Ms Shell Dlg"
 {
     CONTROL         "", IDC_SB_IMAGE, WC_STATIC, SS_BITMAP | SS_CENTERIMAGE, 5, 5, 68, 189, WS_EX_STATICEDGE
@@ -1060,50 +1119,51 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Cancel", IDC_BC_CANCEL, 246, 222, 50, 14, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                        SOTFWARE CONTEXT WIZARD
+//                             MOD HUB WIZARD
 //
 //                               START PAGE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_CTX_BEG DIALOG 0, 0, 225, 200
+IDD_WIZ_HUB_BEG DIALOGEX 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Welcome to the Modding Hub creation wizard !\n\n"
-                    "This wizard will guide you to create a new Modding Hub and its first Channel.\n\n"
+    LTEXT           "Welcome to the Mod Hub creation wizard !\n\n"
+                    "This wizard will guide you to create a new Mod Hub and its first Mod Channel.\n\n"
                     "When you are ready to proceed, please click ""Next""...", IDC_SC_INTRO, 10, 5, 190, 60, SS_LEFT, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                        SOTFWARE CONTEXT WIZARD
+//                             MOD HUB WIZARD
 //
+
 //                          MAIN PARAMETERS PAGE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_CTX_CFG DIALOG 0, 0, 225, 200
+IDD_WIZ_HUB_CFG DIALOGEX 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Please select the folder where you want the Modding Hub home folder to be created as well as its name.", IDC_SC_INTRO, 5, 5, 210, 25, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Modding Hub name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Please select the folder where you want the Mod Hub home folder to be created as well as its name.", IDC_SC_INTRO, 5, 5, 210, 25, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Hub name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 50, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
-    LTEXT           "Path where to create Modding Hub home folder :", IDC_SC_LBL02, 5, 80, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Path where to create Mod Hub home folder :", IDC_SC_LBL02, 5, 80, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 5, 90, 182, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW02, 190, 90, 16, 13, 0, WS_EX_LEFT
-    LTEXT           "Resulting Modding Hub home folder :", IDC_SC_LBL03, 5, 150, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Resulting Mod Hub home folder :", IDC_SC_LBL03, 5, 150, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP03, 5, 160, 200, 13, ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//                        SOTFWARE CONTEXT WIZARD
+//                             MOD HUB WIZARD
 //
 //                     TARGET LOCATION PARAMETERS PAGE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_WIZ_CTX_LOC DIALOG 0, 0, 225, 200
+IDD_WIZ_HUB_CHN DIALOGEX 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Please select Target path for the Channel as well as its title. You also can choose custom folders for Mods/Packages library and backup data.", IDC_SC_INTRO, 5, 5, 200, 17, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Channel name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Please select Target path for the Mod Channel as well as its title. You also can choose custom folders for Mods library and backup data.", IDC_SC_INTRO, 5, 5, 200, 17, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Mod Channel name :", IDC_SC_LBL01, 5, 40, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 50, 200, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     LTEXT           "Target path, where Mods are to be applied :", IDC_SC_LBL02, 5, 70, 200, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP02, 5, 90, 182, 13, ES_AUTOHSCROLL, WS_EX_LEFT
@@ -1121,7 +1181,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_HELP_ABT DIALOG 0, 0, 340, 240
+IDD_HELP_ABT DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 CAPTION "About"
 FONT 8, "Ms Shell Dlg"
@@ -1141,7 +1201,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_HELP_LOG DIALOG 0, 0, 340, 240
+IDD_HELP_LOG DIALOGEX 0, 0, 340, 240
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "Debug log"
@@ -1157,7 +1217,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROGRESS DIALOG 0, 0, 320, 80
+IDD_PROGRESS DIALOGEX 0, 0, 320, 80
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 CAPTION "Progress"
 FONT 8, "Ms Shell Dlg"
@@ -1173,7 +1233,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PICT_VIEW DIALOG 0, 0, 300, 300
+IDD_PICT_VIEW DIALOGEX 0, 0, 300, 300
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 CAPTION "Image Viewer"
 FONT 8, "Ms Shell Dlg"
@@ -1190,17 +1250,19 @@ IDR_ACCEL ACCELERATORS
     "O",            IDM_FILE_OPEN, VIRTKEY, CONTROL
     "W",            IDM_FILE_CLOSE, VIRTKEY, CONTROL
     "Q",            IDM_FILE_QUIT, VIRTKEY, CONTROL
-    VK_RETURN,      IDM_EDIT_PKG_INST, VIRTKEY
-    VK_BACK,        IDM_EDIT_PKG_UINS, VIRTKEY
-    VK_BACK,        IDM_EDIT_PKG_CLNS, VIRTKEY, SHIFT
-    "E",            IDM_EDIT_PKG_OPEN, VIRTKEY, CONTROL
-    VK_DELETE,      IDM_EDIT_PKG_TRSH, VIRTKEY
-    "S",            IDM_EDIT_PKG_EDIT, VIRTKEY, CONTROL
-    "I",            IDM_EDIT_PKG_INFO, VIRTKEY, CONTROL
-    VK_RETURN,      IDM_EDIT_RMT_DNWS, VIRTKEY
-    VK_RETURN,      IDM_EDIT_RMT_DNLD, VIRTKEY, SHIFT
-    VK_RETURN,      IDM_EDIT_RMT_FIXD, VIRTKEY, CONTROL
-    "I",            IDM_EDIT_RMT_INFO, VIRTKEY, CONTROL
+    VK_RETURN,      IDM_EDIT_MOD_INST, VIRTKEY
+    VK_BACK,        IDM_EDIT_MOD_UINS, VIRTKEY
+    VK_BACK,        IDM_EDIT_MOD_CLNS, VIRTKEY, SHIFT
+    "E",            IDM_EDIT_MOD_OPEN, VIRTKEY, CONTROL
+    VK_DELETE,      IDM_EDIT_MOD_TRSH, VIRTKEY
+    "S",            IDM_EDIT_MOD_EDIT, VIRTKEY, CONTROL
+    "I",            IDM_EDIT_MOD_INFO, VIRTKEY, CONTROL
+    VK_RETURN,      IDM_EDIT_NET_DNWS, VIRTKEY
+    VK_RETURN,      IDM_EDIT_NET_DNLD, VIRTKEY, SHIFT
+    "P",            IDM_EDIT_NET_STOP, VIRTKEY, CONTROL
+    VK_DELETE,      IDM_EDIT_NET_RVOK, VIRTKEY
+    VK_RETURN,      IDM_EDIT_NET_FIXD, VIRTKEY, CONTROL
+    "I",            IDM_EDIT_NET_INFO, VIRTKEY, CONTROL
     "D",            IDM_HELP_LOG, VIRTKEY, CONTROL
 }
 
@@ -1251,7 +1313,13 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDI_BT_REF  ICON      ".\\images\\btn_ref.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_DIR  ICON      ".\\images\\btn_dir.ico"
+IDI_BT_DAD  ICON      ".\\images\\btn_dad.ico"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_BT_FAD  ICON      ".\\images\\btn_fad.ico"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_BT_FRM  ICON      ".\\images\\btn_frm.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDI_BT_ENT  ICON      ".\\images\\btn_ent.ico"
@@ -1274,6 +1342,8 @@ IDI_BT_UP   ICON      ".\\images\\btn_up.ico"
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDI_BT_DN   ICON      ".\\images\\btn_dn.ico"
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_BT_RUN  ICON      ".\\images\\btn_run.ico"
 
 //
 // Manifest resources

@@ -22,11 +22,14 @@
 
 #include "OmDialog.h"
 
-/// \brief Property Dialog window.
+/// \brief Property Dialog main frame.
 ///
-/// Base class for Property dialog window interface, inherited from Dialog base
-/// class. This class is used as interface for specific dialog which use others
-/// dialog as child within a TabControl control.
+/// Base class for Property dialog main frame and parent window.
+/// This class inherit from OmDialog and is used as base class to create
+/// specific dialog properties main/parent window that contain properties
+/// Tab child dialogs (OmDialogPropTab).
+///
+/// \see OmDialogPropTab
 ///
 class OmDialogProp : public OmDialog
 {
@@ -53,6 +56,13 @@ class OmDialogProp : public OmDialog
     ///
     virtual bool checkChanges();
 
+    /// \brief Validate properties changes
+    ///
+    /// Checks whether dialog's changed properties are valid and suitable
+    /// then alert user or perform required action in context.
+    ///
+    virtual bool validChanges();
+
     /// \brief Apply properties changes
     ///
     /// Retrieve dialog's dedicated properties then apply changes.
@@ -62,13 +72,17 @@ class OmDialogProp : public OmDialog
 
   protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    vector<wstring>     _pageName;
+    OmWStringArray     _pageName;
 
-    vector<OmDialog*>   _pageDial;
+    std::vector<OmDialog*>   _pageDial;
 
-    void                _addPage(const wstring& name, OmDialog* dialog);
+    void                _addPage(const OmWString& name, OmDialog* dialog);
+
+    void                _setNoChange(bool enable);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool                _noChanges;
 
     HWND                _hTab;
 

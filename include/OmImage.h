@@ -50,7 +50,7 @@ class OmImage
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool load(const wstring& path);
+    bool load(const OmWString& path);
 
     /// \brief Load image.
     ///
@@ -74,7 +74,7 @@ class OmImage
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool loadThumbnail(const wstring& path, unsigned span, OmSizeMode mode);
+    bool loadThumbnail(const OmWString& path, unsigned span, OmSizeMode mode);
 
     /// \brief Load image to thumbnail.
     ///
@@ -107,7 +107,7 @@ class OmImage
     ///
     /// \return Pointer to pixel data.
     ///
-    const wstring& path() const {
+    const OmWString& path() const {
       return _path;
     }
 
@@ -163,11 +163,11 @@ class OmImage
     ///
     /// \return XML parsing error as string.
     ///
-    wstring lastErrorStr() const;
+    OmWString lastErrorStr() const;
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    wstring             _path;        //< Source image path if exists
+    OmWString           _path;        //< Source image path if exists
 
     uint8_t*            _data;        //< Image pixel data
 

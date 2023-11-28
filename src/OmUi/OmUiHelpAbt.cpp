@@ -23,7 +23,7 @@
 
 #include "OmBaseApp.h"
 
-#include "OmManager.h"
+#include "OmModMan.h"
 
 #include "OmUtilWin.h"
 #include "OmUtilFs.h"
@@ -67,31 +67,35 @@ void OmUiHelpAbt::_onInit()
   // set dialog icon
   this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
-  wstring about = OMM_APP_NAME;
+  OmWString about = OM_APP_NAME;
   about.append(L" - version ");
-  about.append(to_wstring(OMM_APP_MAJ)); about.push_back(L'.');
-  about.append(to_wstring(OMM_APP_MIN)); about.push_back(L'.');
-  about.append(to_wstring(OMM_APP_REV));
-  about.append(L" ( "); about.append(OMM_APP_ARCH); about.append(L" )\n\n");
-  about.append(OMM_APP_DATE); about.append(L"  by ");
-  about.append(OMM_APP_AUTHOR);
+  about.append(std::to_wstring(OM_APP_MAJ));
+  about.push_back(L'.');
+  about.append(std::to_wstring(OM_APP_MIN));
+  #if (OM_APP_REV > 0)
+  about.push_back(L'.');
+  about.append(std::to_wstring(OM_APP_REV));
+  #endif
+  about.append(L" ( "); about.append(OM_APP_ARCH); about.append(L" )\n\n");
+  about.append(OM_APP_DATE); about.append(L"  by ");
+  about.append(OM_APP_AUTHOR);
   this->setItemText(IDC_SC_INTRO, about);
 
-  wstring home_url = L"<a href=\"";
-  home_url.append(OMM_APP_URL); home_url.append(L"\">");
-  home_url.append(OMM_APP_URL); home_url.append(L"</a>");
+  OmWString home_url = L"<a href=\"";
+  home_url.append(OM_APP_URL); home_url.append(L"\">");
+  home_url.append(OM_APP_URL); home_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK01, home_url);
-
-  wstring repo_url = L"<a href=\"";
-  repo_url.append(OMM_APP_GIT); repo_url.append(L"\">");
-  repo_url.append(OMM_APP_GIT); repo_url.append(L"</a>");
+/*
+  OmWString repo_url = L"<a href=\"";
+  repo_url.append(OM_APP_GIT); repo_url.append(L"\">");
+  repo_url.append(OM_APP_GIT); repo_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK02, repo_url);
-
+*/
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  string txt;
-  if(Om_loadPlainText(&txt, L"CREDITS.TXT")) {
+  OmCString txt;
+  if(Om_loadPlainText(&txt, L"CREDITS")) {
     SetDlgItemText(this->_hwnd, IDC_EC_RESUL, txt.c_str());
   }
 }

@@ -20,7 +20,7 @@
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
-class OmManager;
+class OmModMan;
 
 /// \brief Dialog window.
 ///
@@ -428,7 +428,7 @@ class OmDialog
     ///
     /// \param[in]  caption : Caption text to set.
     ///
-    void setCaption(const wstring& caption) const {
+    void setCaption(const OmWString& caption) const {
       SetWindowTextW(_hwnd, caption.c_str());
     }
 
@@ -456,6 +456,18 @@ class OmDialog
       return GetDlgItem(this->_hwnd, id);
     }
 
+    /// \brief Redraw item region
+    ///
+    /// Send a redraw message to the specified item.
+    ///
+    /// \param[in]  id    : Control resource ID to set text for.
+    /// \param[in]  rect  : Pointer to RECT struct for redraw region.
+    /// \param[in]  falgs : Redraw flags.
+    ///
+    /// \return True if succeed, false otherwise
+    ///
+    bool redrawItem(unsigned id, RECT* rect, uint32_t falgs) const;
+
     /// \brief Set control text
     ///
     /// Define inner text for the specified dialog control.
@@ -463,18 +475,54 @@ class OmDialog
     /// \param[in]  id    : Control resource ID to set text for.
     /// \param[in]  text  : Text to set.
     ///
-    void setItemText(unsigned id, const wstring& text) const;
+    void setItemText(unsigned id, const OmWString& text) const;
 
-    /// \brief Set control text
+    /// \brief Get control text
     ///
-    /// Define inner text for the specified dialog control.
+    /// Retrieve inner text for the specified dialog control.
     ///
     /// \param[in]  id    : Control resource ID to set text for.
     /// \param[in]  text  : Wide char string to get text.
     ///
     /// \return Count of written characters.
     ///
-    size_t getItemText(unsigned id, wstring& text) const;
+    size_t getItemText(unsigned id, OmWString& text) const;
+
+    /// \brief Get ListBox control text
+    ///
+    /// Retrieve text at specified index of the specified ListBox control.
+    ///
+    /// \param[in]  id    : ListBox resource ID to set text for.
+    /// \param[in]  i     : ListBox entry index to get text.
+    /// \param[in]  text  : Wide char string to get text.
+    ///
+    /// \return Count of written characters.
+    ///
+    size_t getLbText(unsigned id, unsigned i, OmWString& text) const;
+
+    /// \brief Find listView param
+    ///
+    /// Retrieve listView item index that has the specified param value.
+    ///
+    /// \param[in]  id    : listView resource ID to set text for.
+    /// \param[in]  param : LPARAM value to search.
+    ///
+    /// \return Count of written characters.
+    ///
+    size_t findLvParam(unsigned id, uint64_t param) const;
+
+    /// \brief Get listView subitem rectangle
+    ///
+    /// Get the listView bounding rectangle of the specified subitem of item.
+    ///
+    /// \param[in]  id      : listView resource ID to set text for.
+    /// \param[in]  item    : ListView item (raw) index
+    /// \param[in]  subitem : ListView subitem (col) index
+    /// \param[out] rect    : Pointer to RECT struct to be filled.
+    ///
+    /// \return Nonzero if successful, or zero otherwise.
+    ///
+    size_t getLvSubRect(unsigned id, uint64_t item, uint32_t subitem, RECT* rect) const;
 
     /// \brief Set static control image
     ///
@@ -486,6 +534,17 @@ class OmDialog
     /// \return Previously associated image to control, or nullptr.
     ///
     HBITMAP setStImage(unsigned id, HBITMAP image) const;
+
+    /// \brief Set static control icon
+    ///
+    /// Define icon for the specified dialog static control.
+    ///
+    /// \param[in]  id    : Static control resource ID to set image to.
+    /// \param[in]  icon  : Icon to set.
+    ///
+    /// \return Previously associated icon to control, or nullptr.
+    ///
+    HICON setStIcon(unsigned id, HICON icon) const;
 
     /// \brief Set button control image
     ///
@@ -692,7 +751,7 @@ class OmDialog
 
     OmDialog*           _parent;    //< Parent dialog
 
-    vector<OmDialog*>   _child;     //< Children dialogs
+    std::vector<OmDialog*>   _child;     //< Children dialogs
 
     HACCEL              _accel;     //< Accelerator table handle for dialog
 
@@ -708,7 +767,9 @@ class OmDialog
 
     void                _getItemSize(unsigned, long*, bool pixel = false);
 
-    void                _createTooltip(unsigned, const wstring&);
+    void                _createTooltip(unsigned, const OmWString&);
+
+    void                _setSafe(bool safe);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -731,6 +792,10 @@ class OmDialog
     bool                _active;    //< Dialog window tracked ACTIVE state
 
     bool                _minimized; //< Dialog window tracked MINIMIZED state
+
+    bool                _safe;      //< Dialog is safe to quit
+
+    bool                _wait_safe; //< Dialog wait safe for quit
 
     HDWP                _hdwp;      //< Defer window pos handle
 

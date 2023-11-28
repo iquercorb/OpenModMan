@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILHASH_H_INCLUDED
-#define OMUTILHASH_H_INCLUDED
+#ifndef OMUTILHASH_H
+#define OMUTILHASH_H
 
 #include "OmBase.h"
 
@@ -28,7 +28,7 @@
 /// \param[in]  data    : Data to create representation.
 /// \param[in]  size    : Size of data in bytes.
 ///
-void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size);
+void Om_bytesToStrBe(OmWString* dest, const uint8_t* data, size_t size);
 
 /// \brief Get hexadecimal string representation.
 ///
@@ -39,7 +39,7 @@ void Om_bytesToStrBe(wstring* dest, const uint8_t* data, size_t size);
 /// \param[in]  data    : Data to create representation.
 /// \param[in]  size    : Size of data in bytes.
 ///
-void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size);
+void Om_bytesToStrLe(OmWString* dest, const uint8_t* data, size_t size);
 
 /// \brief Get string representation of a 64 bits integer.
 ///
@@ -50,7 +50,7 @@ void Om_bytesToStrLe(wstring* dest, const uint8_t* data, size_t size);
 ///
 /// \return Hexadecimal string representation of 64 bits integer
 ///
-wstring Om_uint64ToStr(uint64_t num);
+OmWString Om_uint64ToStr(uint64_t num);
 
 /// \brief Get string representation of a 64 bits integer.
 ///
@@ -60,7 +60,7 @@ wstring Om_uint64ToStr(uint64_t num);
 /// \param[out] str     : Pointer to string that receive result.
 /// \param[in]  num     : 64 bits unsigned integer.
 ///
-void Om_uint64ToStr(wstring* str, uint64_t num);
+void Om_uint64ToStr(OmWString* str, uint64_t num);
 
 /// \brief Get 64 bits integer from string.
 ///
@@ -71,7 +71,7 @@ void Om_uint64ToStr(wstring* str, uint64_t num);
 ///
 /// \return Converted 64 bits integer value.
 ///
-uint64_t Om_strToUint64(const wstring& str);
+uint64_t Om_strToUint64(const OmWString& str);
 
 /// \brief Get 64 bits integer from string.
 ///
@@ -105,7 +105,7 @@ uint64_t Om_getXXHash3(const void* data, size_t size);
 ///
 /// \return Resulting 64 bits unsigned integer hash.
 ///
-uint64_t Om_getXXHash3(const wstring& str);
+uint64_t Om_getXXHash3(const OmWString& str);
 
 /// \brief Compute XXHash3 digest from file.
 ///
@@ -117,7 +117,7 @@ uint64_t Om_getXXHash3(const wstring& str);
 ///
 /// \return True if operation succeed, false if open file error.
 ///
-bool Om_getXXHdigest(uint64_t* xxh, const wstring& path);
+bool Om_getXXHdigest(uint64_t* xxh, const OmWString& path);
 
 /// \brief Get file XXHash3 checksum.
 ///
@@ -128,7 +128,7 @@ bool Om_getXXHdigest(uint64_t* xxh, const wstring& path);
 ///
 /// \return 16 hexadecimal characters hash string.
 ///
-wstring Om_getXXHsum(const wstring& path);
+OmWString Om_getXXHsum(const OmWString& path);
 
 /// \brief Get file XXHash3 checksum.
 ///
@@ -139,7 +139,7 @@ wstring Om_getXXHsum(const wstring& path);
 ///
 /// \return True if operation succeed, false if open file error.
 ///
-bool Om_getXXHsum(wstring* pstr, const wstring& path);
+bool Om_getXXHsum(OmWString* pstr, const OmWString& path);
 
 /// \brief Compare file XXHash3 checksum.
 ///
@@ -150,7 +150,7 @@ bool Om_getXXHsum(wstring* pstr, const wstring& path);
 ///
 /// \return true if checksum matches, false otherwise
 ///
-bool Om_cmpXXHsum(const wstring& path, const wstring& str);
+bool Om_cmpXXHsum(const OmWString& path, const OmWString& str);
 
 /// \brief Get file MD5 digest.
 ///
@@ -161,7 +161,7 @@ bool Om_cmpXXHsum(const wstring& path, const wstring& str);
 ///
 /// \return True if operation succeed, false if open file error.
 ///
-bool Om_getMD5digest(uint8_t* md5, const wstring& path);
+bool Om_getMD5digest(uint8_t* md5, const OmWString& path);
 
 /// \brief Get file MD5 checksum.
 ///
@@ -172,7 +172,7 @@ bool Om_getMD5digest(uint8_t* md5, const wstring& path);
 ///
 /// \return MD5 checksum string.
 ///
-wstring Om_getMD5sum(const wstring& path);
+OmWString Om_getMD5sum(const OmWString& path);
 
 /// \brief Get file MD5 checksum.
 ///
@@ -183,7 +183,7 @@ wstring Om_getMD5sum(const wstring& path);
 ///
 /// \return True if operation succeed, false if open file error.
 ///
-bool Om_getMD5sum(wstring* pstr, const wstring& path);
+bool Om_getMD5sum(OmWString* pstr, const OmWString& path);
 
 /// \brief Compare file MD5 checksum.
 ///
@@ -194,7 +194,7 @@ bool Om_getMD5sum(wstring* pstr, const wstring& path);
 ///
 /// \return true if checksum matches, false otherwise
 ///
-bool Om_cmpMD5sum(const wstring& path, const wstring& str);
+bool Om_cmpMD5sum(const OmWString& path, const OmWString& str);
 
 /// \brief Calculate CRC64 value.
 ///
@@ -217,7 +217,7 @@ uint64_t Om_getCRC64(const void* data, size_t size);
 ///
 /// \return Resulting CRC64 unsigned integer.
 ///
-uint64_t Om_getCRC64(const wstring& str);
+uint64_t Om_getCRC64(const OmWString& str);
 
 /// \brief Generate random bytes.
 ///
@@ -235,6 +235,6 @@ void Om_getRandBytes(uint8_t* dest, size_t size);
 ///
 /// \return 36 characters UUID version 4 string.
 ///
-wstring Om_genUUID();
+OmWString Om_genUUID();
 
-#endif // OMUTILHASH_H_INCLUDED
+#endif // OMUTILHASH_H

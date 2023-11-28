@@ -14,18 +14,18 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "OmBase.h"           //< string, vector, Om_alloc, OMM_MAX_PATH, etc.
+#include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include "OmBaseWin.h"        //< WinAPI
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring Om_getErrorStr(int code) {
+OmWString Om_getErrorStr(int code) {
 
   wchar_t num_buf[32];
   swprintf(num_buf, 32, L"%x", code);
 
-  wstring ret = L"(0x"; ret.append(num_buf); ret.append(L") ");
+  OmWString ret = L"(0x"; ret.append(num_buf); ret.append(L") ");
 
   switch(code)
   {
@@ -214,4 +214,97 @@ HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name)
                       ANSI_CHARSET,
                       OUT_TT_PRECIS, 0, CLEARTYPE_QUALITY, 0,
                       name);
+}
+
+#include <list>
+
+#pragma pack( push )
+#pragma pack( 2 )
+typedef struct
+{
+    BYTE   bWidth;               // Width, in pixels, of the image
+    BYTE   bHeight;              // Height, in pixels, of the image
+    BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
+    BYTE   bReserved;            // Reserved
+    WORD   wPlanes;              // Color Planes
+    WORD   wBitCount;            // Bits per pixel
+    DWORD  dwBytesInRes;         // how many bytes in this resource?
+    WORD   nID;                  // the ID
+} GRPICONDIRENTRY, *LPGRPICONDIRENTRY;
+#pragma pack( pop )
+
+#pragma pack( push )
+#pragma pack( 2 )
+typedef struct
+{
+    WORD            idReserved;   // Reserved (must be 0)
+    WORD            idType;       // Resource type (1 for icons)
+    WORD            idCount;      // How many images?
+    GRPICONDIRENTRY idEntries[1]; // The entries for each image
+} GRPICONDIR, *LPGRPICONDIR;
+#pragma pack( pop )
+
+typedef std::list<GRPICONDIRENTRY> IconDirectory;
+
+IconDirectory GetIconDirectory( HMODULE hMod, WORD Id ) {
+    HRSRC hRsrc = FindResource( hMod, MAKEINTRESOURCE( Id ), RT_GROUP_ICON );
+    HGLOBAL hGlobal = LoadResource( hMod, hRsrc );
+    GRPICONDIR* lpGrpIconDir = (GRPICONDIR*)LockResource( hGlobal );
+
+    IconDirectory dir;
+    for ( size_t i = 0; i < lpGrpIconDir->idCount; ++i ) {
+        dir.push_back( lpGrpIconDir->idEntries[ i ] );
+    }
+    return dir;
+}
+
+HICON LoadSpecificIcon( HMODULE hMod, WORD Id ) {
+    HRSRC hRsrc = FindResource( hMod, MAKEINTRESOURCE( Id ), RT_ICON );
+    HGLOBAL hGlobal = LoadResource( hMod, hRsrc );
+    BYTE* lpData = (BYTE*)LockResource( hGlobal );
+    DWORD dwSize = SizeofResource( hMod, hRsrc );
+
+    HICON hIcon = CreateIconFromResourceEx( lpData, dwSize, TRUE, 0x00030000,
+                                            0, 0, LR_DEFAULTCOLOR );
+    return hIcon;
+}
+void PrintIconDirEntry( const GRPICONDIRENTRY& DirEntry ) {
+    _wprintf_p( L"ID: %04d; width=%02d; height=%02d; bpp=%02d\n",
+                DirEntry.nID,
+                DirEntry.bWidth, DirEntry.bHeight, DirEntry.wBitCount );
+}
+
+void PrintIconInfo( HICON hIcon ) {
+    ICONINFO ii = { 0 };
+    GetIconInfo( hIcon, &ii );
+    _wprintf_p( L"xHotspot=%02d; yHotspot=%02d\n", ii.xHotspot, ii.yHotspot );
+}
+
+typedef std::list<GRPICONDIRENTRY>::const_iterator IconDirectoryCIt;
+
+
+void Om_getAppIconInfos(const OmWString& path, int16_t res_id)
+{
+  HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
+  IconDirectory dir = GetIconDirectory( hMod, res_id );
+  for( IconDirectoryCIt it = dir.begin(); it != dir.end(); ++it ) {
+    PrintIconDirEntry( *it );
+    HICON hIcon = LoadSpecificIcon( hMod, it->nID );
+    PrintIconInfo( hIcon );
+    DestroyIcon( hIcon );
+  }
+}
+
+BOOL Enumresnameprocw(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+{
+  std::wcout << L"DEBUG => Enumresnameprocw - lpType: " << std::to_wstring((int64_t)lpType) << L"    lpName: " << std::to_wstring((int64_t)lpName) << L"\n";
+}
+
+void Om_getAppIconImage(const OmWString& path)
+{
+  HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
+  //HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE );
+
+  EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
+  //LoadImageW(hMod, MAKEINTRESOURCE(3), IMAGE_ICON, 0, 0, 0);
 }

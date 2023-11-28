@@ -73,7 +73,7 @@ class OmUiProgress : public OmDialog
     ///
     /// \param[in]  text   : Text to set.
     ///
-    void setScHeadText(const wstring& text) const;
+    void setScHeadText(const OmWString& text) const;
 
     /// \brief Set item text
     ///
@@ -82,7 +82,7 @@ class OmUiProgress : public OmDialog
     ///
     /// \param[in]  text   : Text to set.
     ///
-    void setScItemText(const wstring& text) const;
+    void setScItemText(const OmWString& text) const;
 
     /// \brief Get progress bar control
     ///
@@ -142,7 +142,7 @@ class OmUiProgress : public OmDialog
 
     bool                _abort;
 
-    void                _onBcAbort();
+    void                _bc_abort_hit();
 
     void                _onInit();
 

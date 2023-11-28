@@ -14,8 +14,8 @@
   You should have received a copy of the GNU General Public License
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OMUTILSTR_H_INCLUDED
-#define OMUTILSTR_H_INCLUDED
+#ifndef OMUTILSTR_H
+#define OMUTILSTR_H
 
 #include "OmBase.h"
 
@@ -29,7 +29,7 @@
 ///
 /// \return Count of written UTF-16 character.
 ///
-size_t Om_toUTF16(wstring* pwcs, const string& utf8);
+size_t Om_toUTF16(OmWString* pwcs, const OmCString& utf8);
 
 /// \brief Convert UTF-8 to UTF-16
 ///
@@ -40,7 +40,7 @@ size_t Om_toUTF16(wstring* pwcs, const string& utf8);
 ///
 /// \return Count of written UTF-16 character.
 ///
-size_t Om_toUTF16(wstring* pwcs, const char* utf8);
+size_t Om_toUTF16(OmWString* pwcs, const char* utf8);
 
 /// \brief Convert UTF-8 to UTF-16
 ///
@@ -50,7 +50,7 @@ size_t Om_toUTF16(wstring* pwcs, const char* utf8);
 ///
 /// \return Resulting UTF-16 wide string.
 ///
-wstring Om_toUTF16(const string& utf8);
+OmWString Om_toUTF16(const OmCString& utf8);
 
 /// \brief Convert UTF-8 to UTF-16
 ///
@@ -60,7 +60,7 @@ wstring Om_toUTF16(const string& utf8);
 ///
 /// \return Resulting UTF-16 wide string.
 ///
-wstring Om_toUTF16(const char* utf8);
+OmWString Om_toUTF16(const char* utf8);
 
 /// \brief Convert Unknown to UTF-16
 ///
@@ -74,7 +74,7 @@ wstring Om_toUTF16(const char* utf8);
 ///
 /// \return Count of written UTF-16 character.
 ///
-size_t Om_toUTF16(wstring* pwcs, const uint8_t* data, size_t size);
+size_t Om_toUTF16(OmWString* pwcs, const uint8_t* data, size_t size);
 
 /// \brief Convert Unknown to UTF-16
 ///
@@ -87,7 +87,7 @@ size_t Om_toUTF16(wstring* pwcs, const uint8_t* data, size_t size);
 ///
 /// \return Resulting UTF-16 wide string.
 ///
-wstring Om_toUTF16(const uint8_t* data, size_t size);
+OmWString Om_toUTF16(const uint8_t* data, size_t size);
 
 /// \brief Load text file and convert to UTF-16
 ///
@@ -100,7 +100,7 @@ wstring Om_toUTF16(const uint8_t* data, size_t size);
 ///
 /// \return Count of written UTF-16 codet.
 ///
-size_t Om_loadToUTF16(wstring* pwcs, const wstring& path);
+size_t Om_loadToUTF16(OmWString* pwcs, const OmWString& path);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
@@ -112,7 +112,7 @@ size_t Om_loadToUTF16(wstring* pwcs, const wstring& path);
 ///
 /// \return Count of written ANSI characters.
 ///
-size_t Om_toUTF8(char* utf8, size_t len, const wstring& wstr);
+size_t Om_toUTF8(char* utf8, size_t len, const OmWString& wstr);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
@@ -122,7 +122,7 @@ size_t Om_toUTF8(char* utf8, size_t len, const wstring& wstr);
 ///
 /// \return UTF-8 multibyte string conversion result.
 ///
-string Om_toUTF8(const wstring& wstr);
+OmCString Om_toUTF8(const OmWString& wstr);
 
 /// \brief UTF-16 to UTF-8 conversion.
 ///
@@ -131,7 +131,7 @@ string Om_toUTF8(const wstring& wstr);
 /// \param[in]  utf8    : Pointer to multibyte string that receives the converted data.
 /// \param[in]  wstr    : Wide char string to convert.
 ///
-size_t Om_toUTF8(string* utf8, const wstring& wstr);
+size_t Om_toUTF8(OmCString* utf8, const OmWString& wstr);
 
 /// \brief Conversion to ANSI multibyte.
 ///
@@ -144,7 +144,7 @@ size_t Om_toUTF8(string* utf8, const wstring& wstr);
 ///
 /// \return Count of written ANSI characters.
 ///
-size_t Om_toANSI(char* ansi, size_t len, const wstring& wstr);
+size_t Om_toANSI(char* ansi, size_t len, const OmWString& wstr);
 
 /// \brief Conversion to ANSI multibyte.
 ///
@@ -156,7 +156,7 @@ size_t Om_toANSI(char* ansi, size_t len, const wstring& wstr);
 ///
 /// \return Count of written ANSI characters.
 ///
-size_t Om_toANSI(string* ansi, const wstring& wstr);
+size_t Om_toANSI(OmCString* ansi, const OmWString& wstr);
 
 /// \brief Conversion from ANSI multibyte.
 ///
@@ -168,7 +168,7 @@ size_t Om_toANSI(string* ansi, const wstring& wstr);
 ///
 /// \return Count of written wide characters.
 ///
-size_t Om_fromAnsiCp(wstring* wstr, const char* ansi);
+size_t Om_fromAnsiCp(OmWString* wstr, const char* ansi);
 
 /// \brief Zip CDR entry to Windows path conversion.
 ///
@@ -180,7 +180,7 @@ size_t Om_fromAnsiCp(wstring* wstr, const char* ansi);
 ///
 /// \return Count of read CDR entry characters.
 ///
-size_t Om_fromZipCDR(wstring* wstr, const char* zcdr);
+size_t Om_fromZipCDR(OmWString* wstr, const char* zcdr);
 
 /// \brief Windows path to Zip CDR entry conversion.
 ///
@@ -193,7 +193,7 @@ size_t Om_fromZipCDR(wstring* wstr, const char* zcdr);
 ///
 /// \return Count of written CDR entry characters.
 ///
-size_t Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
+size_t Om_toZipCDR(char* zcdr, size_t len, const OmWString& wstr);
 
 /// \brief Windows path to Zip CDR entry conversion.
 ///
@@ -205,15 +205,15 @@ size_t Om_toZipCDR(char* zcdr, size_t len, const wstring& wstr);
 ///
 /// \return Count of written CDR entry characters.
 ///
-size_t Om_toZipCDR(string* zcdr, const wstring& wstr);
+size_t Om_toZipCDR(OmCString* zcdr, const OmWString& wstr);
 
 /// \brief Sort strings
 ///
 /// Sorts the given array of strings in alphanumeric order.
 ///
-/// \param[in]  string  : Pointer to vector array of wstring to sort.
+/// \param[in]  string  : Pointer to vector array of OmWString to sort.
 ///
-//void Om_sortStrings(vector<wstring>* strings);
+//void Om_sortStrings(OmWStringArray* strings);
 
 /// \brief Convert string to upper case.
 ///
@@ -221,7 +221,7 @@ size_t Om_toZipCDR(string* zcdr, const wstring& wstr);
 ///
 /// \param[in]  str    : Pointer to string to convert.
 ///
-void Om_strToUpper(wstring* str);
+void Om_strToUpper(OmWString* str);
 
 /// \brief Check if names matches
 ///
@@ -232,7 +232,7 @@ void Om_strToUpper(wstring* str);
 ///
 /// \return True if strings are same despite unmatched case, false otherwise.
 ///
-bool Om_namesMatches(const wstring& left, const wstring& right);
+bool Om_namesMatches(const OmWString& left, const OmWString& right);
 
 /// \brief Check if names matches
 ///
@@ -243,7 +243,7 @@ bool Om_namesMatches(const wstring& left, const wstring& right);
 ///
 /// \return True if strings are same despite unmatched case, false otherwise.
 ///
-bool Om_namesMatches(const wstring& left, const wchar_t* right);
+bool Om_namesMatches(const OmWString& left, const wchar_t* right);
 
 
 /// \brief Check URL validity
@@ -264,7 +264,7 @@ bool Om_isValidUrl(const wchar_t* url);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidUrl(const wstring& url);
+bool Om_isValidUrl(const OmWString& url);
 
 /// \brief Check file URL validity
 ///
@@ -286,7 +286,7 @@ bool Om_isValidFileUrl(const wchar_t* url);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidFileUrl(const wstring& url);
+bool Om_isValidFileUrl(const OmWString& url);
 
 /// \brief Check URL path validity
 ///
@@ -306,7 +306,7 @@ bool Om_isValidUrlPath(const wchar_t* path);
 ///
 /// \return True if the given string is a valid URL path, false otherwise.
 ///
-bool Om_isValidUrlPath(const wstring& path);
+bool Om_isValidUrlPath(const OmWString& path);
 
 /// \brief Check file name validity
 ///
@@ -328,7 +328,7 @@ bool Om_isValidName(const wchar_t* name);
 ///
 /// \return True if the given string is suitable for file name, false otherwise.
 ///
-bool Om_isValidName(const wstring& name);
+bool Om_isValidName(const OmWString& name);
 
 /// \brief Check file path validity
 ///
@@ -350,7 +350,7 @@ bool Om_isValidPath(const wchar_t* path);
 ///
 /// \return True if the given string is suitable for file path, false otherwise.
 ///
-bool Om_isValidPath(const wstring& path);
+bool Om_isValidPath(const OmWString& path);
 
 /// \brief Extract file extension from path
 ///
@@ -361,7 +361,7 @@ bool Om_isValidPath(const wstring& path);
 ///
 /// \return Extracted extension without the separating dot.
 ///
-wstring Om_getFileExtPart(const wstring& path);
+OmWString Om_getFileExtPart(const OmWString& path);
 
 /// \brief Extract file part from path
 ///
@@ -373,7 +373,7 @@ wstring Om_getFileExtPart(const wstring& path);
 ///
 /// \return Extracted path part.
 ///
-wstring Om_getFilePart(const wstring& path);
+OmWString Om_getFilePart(const OmWString& path);
 
 /// \brief Extract directory part from path
 ///
@@ -386,7 +386,7 @@ wstring Om_getFilePart(const wstring& path);
 ///
 /// \return Extracted path part.
 ///
-wstring Om_getDirPart(const wstring& uri);
+OmWString Om_getDirPart(const OmWString& uri);
 
 
 /// \brief Extract file name without extension from path
@@ -398,7 +398,7 @@ wstring Om_getDirPart(const wstring& uri);
 ///
 /// \return Extracted file name without extension.
 ///
-wstring Om_getNamePart(const wstring& uri);
+OmWString Om_getNamePart(const OmWString& uri);
 
 /// \brief Check if for file name extension matches
 ///
@@ -409,7 +409,7 @@ wstring Om_getNamePart(const wstring& uri);
 ///
 /// \return True if given filename has the requested extension, false otherwise.
 ///
-bool Om_extensionMatches(const wstring& file, const wchar_t* ext);
+bool Om_extensionMatches(const OmWString& file, const wchar_t* ext);
 
 /// \brief Concatenate paths
 ///
@@ -420,7 +420,7 @@ bool Om_extensionMatches(const wstring& file, const wchar_t* ext);
 ///
 /// \return Result of the concatenation.
 ///
-wstring Om_concatPaths(const wstring& left, const wstring& right);
+OmWString Om_concatPaths(const OmWString& left, const OmWString& right);
 
 /// \brief Concatenate paths
 ///
@@ -430,7 +430,32 @@ wstring Om_concatPaths(const wstring& left, const wstring& right);
 /// \param[in]  left    : Left path part to concatenate.
 /// \param[in]  right   : Right path part to concatenate.
 ///
-void Om_concatPaths(wstring& conc, const wstring& left, const wstring& right);
+void Om_concatPaths(OmWString& conc, const OmWString& left, const OmWString& right);
+
+/// \brief Concatenate paths and file extension
+///
+/// Concatenates two paths, adding separator if necessary then
+/// append the given file extension.
+///
+/// \param[in]  left    : Left path part to concatenate.
+/// \param[in]  right   : Right path part to concatenate.
+/// \param[in]  ext     : file extension to append (without the dot).
+///
+/// \return Result of the concatenation.
+///
+OmWString Om_concatPathsExt(const OmWString& left, const OmWString& right, const wchar_t* ext);
+
+/// \brief Concatenate paths and file extension
+///
+/// Concatenates two paths, adding separator if necessary then
+/// append the given file extension.
+///
+/// \param[out] conc    : String to be set as the result of concatenation.
+/// \param[in]  left    : Left path part to concatenate.
+/// \param[in]  right   : Right path part to concatenate.
+/// \param[in]  ext     : file extension to append (without the dot).
+///
+void Om_concatPathsExt(OmWString& conc, const OmWString& left, const OmWString& right, const wchar_t* ext);
 
 /// \brief Compare path roots
 ///
@@ -441,21 +466,21 @@ void Om_concatPaths(wstring& conc, const wstring& left, const wstring& right);
 ///
 /// \return True if path actually has the specified root, false otherwise.
 ///
-bool Om_isRootOfPath(const wstring& root, const wstring& path);
+bool Om_isRootOfPath(const OmWString& root, const OmWString& path);
 
 /// \brief Get relative part of path
 ///
 /// Checks whether the given path has the specified root, then extract its
 /// relative part.
 ///
-/// \param[out] rel     : String to be set as the extracted relative path.
+/// \param[out] rel     : Pointer to string to be set as relative path.
 /// \param[in]  root    : Root of path used to check and extract relative part.
 /// \param[in]  item    : Path to be checked and to get the relative part from.
 ///
 /// \return True if path actually has the specified root and operation succeed,
 ///         false otherwise.
 ///
-bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring& path);
+bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& path);
 
 /// \brief Concatenate paths
 ///
@@ -466,7 +491,7 @@ bool Om_getRelativePath(wstring& rel, const wstring& root, const wstring& path);
 ///
 /// \return Result of the concatenation.
 ///
-wstring Om_concatURLs(const wstring& left, const wstring& right);
+OmWString Om_concatURLs(const OmWString& left, const OmWString& right);
 
 /// \brief Concatenate paths
 ///
@@ -476,7 +501,7 @@ wstring Om_concatURLs(const wstring& left, const wstring& right);
 /// \param[in]  left    : Left path part to concatenate.
 /// \param[in]  right   : Right path part to concatenate.
 ///
-void Om_concatURLs(wstring& conc, const wstring& left, const wstring& right);
+void Om_concatURLs(OmWString& conc, const OmWString& left, const OmWString& right);
 
 /// \brief Get formated bytes/octets size string
 ///
@@ -488,7 +513,7 @@ void Om_concatURLs(wstring& conc, const wstring& left, const wstring& right);
 ///
 /// \return Formated string describing size.
 ///
-wstring Om_formatSizeStr(size_t bytes, bool octet = false);
+OmWString Om_formatSizeStr(uint64_t bytes, bool octet = false);
 
 /// \brief Get system formated bytes size string
 ///
@@ -499,7 +524,7 @@ wstring Om_formatSizeStr(size_t bytes, bool octet = false);
 ///
 /// \return Formated string describing size.
 ///
-wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes = true);
+OmWString Om_formatSizeSysStr(uint64_t bytes, bool kbytes = true);
 
 /// \brief Check whether is version string
 ///
@@ -509,7 +534,7 @@ wstring Om_formatSizeSysStr(uint64_t bytes, bool kbytes = true);
 ///
 /// \return True if the given string can be parsed as version number(s).
 ///
-bool Om_strIsVersion(const wstring& str);
+bool Om_strIsVersion(const OmWString& str);
 
 /// \brief Escape string for Markdown
 ///
@@ -519,7 +544,7 @@ bool Om_strIsVersion(const wstring& str);
 /// \param[in] dst       : Destination string to append escaped text.
 /// \param[in] str       : Source string to escape.
 ///
-void Om_escapeMarkdown(wstring* dst, const wstring& src);
+void Om_escapeMarkdown(OmWString* dst, const OmWString& src);
 
 /// \brief Escape string for Markdown
 ///
@@ -531,6 +556,40 @@ void Om_escapeMarkdown(wstring* dst, const wstring& src);
 ///
 /// \return Length of escaped string
 ///
-size_t Om_escapeMarkdown(wchar_t* buf, const wstring& src);
+size_t Om_escapeMarkdown(wchar_t* buf, const OmWString& src);
 
-#endif // OMUTILSTR_H_INCLUDED
+/// \brief Convert to CRLF text
+///
+/// Convert the LF end of line formated text to CRLF end of lines.
+///
+/// \param[in] crlf      : Pointer to string to be set as result
+/// \param[in] lf        : LF string to convert
+///
+/// \return Length of escaped string
+///
+void Om_toCRLF(OmWString* crlf, const OmWString& lf);
+
+/// \brief Convert to CRLF text
+///
+/// Convert the LF end of line formated text to CRLF end of lines.
+///
+/// \param[in] lf        : LF string to convert
+///
+/// \return Resulting CRLF string
+///
+OmWString Om_toCRLF(const OmWString& lf);
+
+/// \brief Concatenate strings
+///
+/// Concatenate strings from given array of string separated
+/// by separator.
+///
+/// \param[in] strings    : Array of OmWString to concatenate
+/// \param[in] separator  : String to use as separator
+///
+/// \return String resulting of concatenation
+///
+OmWString Om_concatStrings(const OmWStringArray& strings, const OmWString& separator);
+
+
+#endif // OMUTILSTR_H

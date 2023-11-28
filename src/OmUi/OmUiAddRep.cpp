@@ -18,8 +18,7 @@
 #include "OmBaseUi.h"
 #include "OmBaseApp.h"
 
-#include "OmManager.h"
-#include "OmSocket.h"
+#include "OmModMan.h"
 
 #include "OmUtilStr.h"
 #include "OmUtilDlg.h"
@@ -33,8 +32,8 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiAddRep::OmUiAddRep(HINSTANCE hins) : OmDialog(hins),
-  _pLoc(nullptr),
-  _testResult(0)
+  _ModChan(nullptr),
+  _qry_result(OM_RESULT_UNKNOW)
 {
 
 }
@@ -65,9 +64,9 @@ long OmUiAddRep::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddRep::_testLog(const wstring& log)
+void OmUiAddRep::_qry_addlog(const OmWString& log)
 {
-  wstring entry;
+  OmWString entry;
 
   // get local time
   int t_h, t_m, t_s;
@@ -88,59 +87,98 @@ void OmUiAddRep::_testLog(const wstring& log)
   RedrawWindow(this->getItem(IDC_EC_RESUL), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiAddRep::_qry_reponse_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t code)
+{
+  OmUiAddRep* self = static_cast<OmUiAddRep*>(ptr);
+
+  OmWString log_entry;
+
+  if(code == 200) {
+
+    log_entry.assign(L"HTTP request success: "); log_entry.append(std::to_wstring(len)); log_entry.append(L" bytes received\r\n");
+    self->_qry_addlog(log_entry);
+
+    char* str = reinterpret_cast<char*>(buf);
+
+    OmXmlConf xml_def;
+
+    // try to parse received data as repository
+    if(!xml_def.parse(Om_toUTF16(str), OM_XMAGIC_REP)) {
+
+      log_entry.assign(L"Definition parse error: "); log_entry.append(xml_def.lastErrorStr()); log_entry.append(L"\r\n");
+      self->_qry_addlog(log_entry);
+
+      self->_qry_result = OM_RESULT_ERROR;
+
+      self->setItemText(IDC_SC_STATE, L"XML definition parse error");
+
+      return;
+    }
+
+    if(!xml_def.hasChild(L"remotes")) {
+
+      log_entry.assign(L"Definition parse error: <remotes> node not found\r\n");
+      self->_qry_addlog(log_entry);
+
+      self->_qry_result = OM_RESULT_ERROR;
+
+      self->setItemText(IDC_SC_STATE, L"XML definition parse error");
+
+      return;
+    }
+
+    size_t mod_count = xml_def.child(L"remotes").attrAsInt(L"count");
+
+    log_entry.assign(L"Definition parse success: "); log_entry.append(std::to_wstring(mod_count)); log_entry.append(L" Mods referenced\r\n");
+    self->_qry_addlog(log_entry);
+
+    self->_qry_result = OM_RESULT_OK;
+
+    self->setItemText(IDC_SC_STATE, L"Valid");
+
+  } else {
+    self->_qry_result = OM_RESULT_ERROR;
+
+    log_entry.assign(L"HTTP request failed: "); log_entry.append(self->_connect.lastError()); log_entry.append(L"\r\n");
+    self->_qry_addlog(log_entry);
+
+    self->setItemText(IDC_SC_STATE, self->_connect.lastError());
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiAddRep::_onBcChk()
 {
-  OmSocket sock;
+  OmWString url_base;
+  OmWString url_name;
+  OmWString url_full;
+
+  this->getItemText(IDC_EC_INP01, url_base);
+  this->getItemText(IDC_EC_INP02, url_name);
+
+  url_full.assign(url_base);
+  url_full.append(L"/");
+  url_full.append(url_name);
+  url_full.append(L".xml");
+
+  if(!Om_isValidFileUrl(url_full)) {
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+                  L"Invalid Mod Repository parameters", L"The specified "
+                  "base address and definition name combination cannot make "
+                  "valid access URL:", url_full);
+  }
 
   this->setItemText(IDC_EC_RESUL, L"");
   this->setItemText(IDC_SC_STATE, L"Pending...");
 
-  wstring rep_base;
-  wstring rep_name;
+  this->_qry_result = OM_RESULT_PENDING;
 
-  this->getItemText(IDC_EC_INP01, rep_base);
-  this->getItemText(IDC_EC_INP02, rep_name);
-
-  wstring url = rep_base + L"/";
-  url += rep_name + L".xml";
-
-  if(!Om_isValidFileUrl(url)) {
-    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
-                  L"Invalid Repository parameters", L"The specified "
-                  "Repository base address and name combination make "
-                  "no valid file access URL:", url);
-  }
-
-  this->_testResult = -1;
-
-  string data;
-
-  this->_testLog(L"HTTP GET request: "+url+L"\r\n");
-
-  if(sock.httpGet(url, data)) {
-
-    this->_testLog(L"HTTP GET succeed: "+to_wstring(data.size())+L" bytes received\r\n");
-
-    OmConfig config;
-
-    if(config.parse(Om_toUTF16(data), OMM_XMAGIC_REP)) {
-      this->_testLog(L"XML parse succeed.\r\n");
-      int n = config.xml().child(L"remotes").attrAsInt(L"count");
-      this->_testLog(L"Repository provides " + std::to_wstring(n) + L" package(s)\r\n");
-      this->setItemText(IDC_SC_STATE, L"The Repository appear to be valid !");
-      this->_testResult = 1;
-    } else {
-      this->_testLog(L"XML parse failed.\r\n");
-      this->setItemText(IDC_SC_STATE, L"Error: Invalid XML definition");
-    }
-  } else {
-    this->_testLog(L"HTTP GET failed: "+sock.lastErrorStr()+L"\r\n");
-    this->setItemText(IDC_SC_STATE, L"Error: HTTP request failed");
-  }
+  this->_connect.requestHttpGet(url_full, OmUiAddRep::_qry_reponse_fn, this);
 }
 
 
@@ -149,53 +187,56 @@ void OmUiAddRep::_onBcChk()
 ///
 bool OmUiAddRep::_onBcOk()
 {
-  if(!this->_pLoc) return false;
+  if(!this->_ModChan)
+    return false;
 
-  if(this->_testResult == 0) {
+  if(this->_qry_result == OM_RESULT_UNKNOW) {
 
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Repository", IDI_ERR,
-                  L"Repository not tested", L"You did not tested the "
-                  "Repository, it may be invalid or unavailable. "
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+                  L"Mod Repository not tested", L"You did not query the "
+                  "Repository, it may be not valid or unavailable. "
                   "Do you want to add it anyway ?"))
        return false;
 
 
-  } else if(this->_testResult == -1) {
+  } else if(this->_qry_result != OM_RESULT_OK) {
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Repository", IDI_ERR,
-                  L"Repository not tested", L"The last Repository test "
-                  "failed, it appear to be invalid or unavailable. "
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+                  L"Mod Repository not valid", L"The last Repository query "
+                  "failed, it appear to be not valid or unavailable. "
                   "Do you want to add it anyway ?"))
        return false;
   }
 
-  wstring rep_base;
-  wstring rep_name;
+  OmWString url_base;
+  OmWString url_name;
+  OmWString url_full;
 
-  this->getItemText(IDC_EC_INP01, rep_base);
-  this->getItemText(IDC_EC_INP02, rep_name);
+  this->getItemText(IDC_EC_INP01, url_base);
+  this->getItemText(IDC_EC_INP02, url_name);
 
-  wstring url = rep_base + L"/";
-  url += rep_name + L".xml";
+  url_full.assign(url_base);
+  url_full.append(L"/");
+  url_full.append(url_name);
+  url_full.append(L".xml");
 
-  if(!Om_isValidFileUrl(url)) {
+  if(!Om_isValidFileUrl(url_full)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
-                  L"Invalid Repository parameters", L"The specified "
-                  "Repository base address and name combination make "
-                  "no valid file access URL:", url);
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+                  L"Invalid Mod Repository parameters", L"The specified "
+                  "base address and definition name combination cannot make "
+                  "make valid access URL:", url_full);
 
     return false;
   }
 
-  // add new repository in Context
-  if(!this->_pLoc->repAdd(rep_base, rep_name)) {
+  // add new repository in Mod Hub
+  if(!this->_ModChan->addRepository(url_base, url_name)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Repository", IDI_ERR,
-                 L"Add Repository error", L"Repository "
-                 "cannot be added because of the following error:",
-                 this->_pLoc->lastError());
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+                 L"Add Mod Repository error", L"Repository cannot be added "
+                 "to Mod Channel:", this->_ModChan->lastError());
   }
 
   this->quit();
@@ -223,8 +264,8 @@ void OmUiAddRep::_onInit()
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Repository base URL, the root HTTP address");
-  this->_createTooltip(IDC_EC_INP02,  L"Repository name, the repository identifier");
+  this->_createTooltip(IDC_EC_INP01,  L"Mod Repository base HTTP address");
+  this->_createTooltip(IDC_EC_INP02,  L"Mod Repository identifier or definition name");
   this->_createTooltip(IDC_BC_QRY,    L"Query the Repository to check its availability");
   this->_createTooltip(IDC_SC_STATE,  L"Repository query test result");
   this->_createTooltip(IDC_EC_RESUL,  L"Repository query test logs");
@@ -261,7 +302,7 @@ void OmUiAddRep::_onResize()
   InvalidateRect(this->getItem(IDC_SC_LBL03), nullptr, true);
 
   // Repository Test Label, Button and Result
-  this->_setItemPos(IDC_SC_LBL04, 10, 55, 80, 9);
+  this->_setItemPos(IDC_SC_LBL04, 10, 55, 120, 9);
   this->_setItemPos(IDC_BC_QRY, 10, 70, 50, 14);
   this->_setItemPos(IDC_SC_STATE, 65, 73, this->cliUnitX()-20, 12);
 
@@ -288,7 +329,7 @@ INT_PTR OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     bool has_changed = false;
 
-    wstring item_str;
+    OmWString item_str;
 
     switch(LOWORD(wParam))
     {

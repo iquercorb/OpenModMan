@@ -32,7 +32,7 @@ OmVersion::OmVersion() :
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmVersion::OmVersion(const wstring& vstr) :
+OmVersion::OmVersion(const OmWString& vstr) :
   _str(), _maj(0), _min(0), _rev(0)
 {
   wchar_t num[32];
@@ -109,7 +109,7 @@ OmVersion::~OmVersion()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmVersion::parse(const wstring& vstr)
+bool OmVersion::parse(const OmWString& vstr)
 {
   wchar_t num[32];
 
@@ -210,7 +210,7 @@ OmVersion& OmVersion::operator=(const OmVersion& other)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmVersion& OmVersion::operator=(const wstring& vstr)
+OmVersion& OmVersion::operator=(const OmWString& vstr)
 {
   wchar_t digits[16];
 
@@ -264,13 +264,12 @@ OmVersion& OmVersion::operator=(const wstring& vstr)
   return *this;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-wstring OmVersion::asString() const
+OmWString OmVersion::asString() const
 {
-  wstring ret;
+  OmWString ret;
 
   if(_str.size() > 0) {
     ret = _str[0];
@@ -381,4 +380,16 @@ bool OmVersion::operator>=(const OmVersion& other) const
     }
   }
   return false;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmVersion::clear()
+{
+  _str.clear();
+  _maj = 0;
+  _min = 0;
+  _rev = 0;
 }

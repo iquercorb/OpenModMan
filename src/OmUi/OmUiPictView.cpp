@@ -89,7 +89,6 @@ INT_PTR OmUiPictView::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     PAINTSTRUCT ps;
     BITMAPINFO bmi;
     unsigned x, y, w, h;
-    const uint8_t* data;
 
     hDc = BeginPaint(this->_hwnd, &ps);
 

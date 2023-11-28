@@ -51,9 +51,13 @@ class OmUiHelpLog : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    static bool         _logCb(void* ptr, const OmWString& log);
+
     void                _onInit();
 
     void                _onResize();
+
+    void                _onQuit();
 
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
