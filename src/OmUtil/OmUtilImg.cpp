@@ -54,9 +54,9 @@ inline static uint32_t __bytes_swap(uint32_t num)
 /// \param[in]  data  : 24 Bits pixel data buffer to swap
 /// \param[in]  size  : Size of data in bytes
 ///
-inline static void __in_place_rb_swap_24(uint8_t* data, size_t size)
+inline static void __in_place_rb_swap_24(uint8_t* data, uint64_t size)
 {
-  for(size_t i = 0; i < size; i += 3)
+  for(uint64_t i = 0; i < size; i += 3)
     data[i] ^= data[i+2] ^= data[i] ^= data[i+2];
 }
 
@@ -67,9 +67,9 @@ inline static void __in_place_rb_swap_24(uint8_t* data, size_t size)
 /// \param[in]  data  : 32 Bits pixel data buffer to swap
 /// \param[in]  size  : Size of data in bytes
 ///
-inline static void __in_place_rb_swap_32(uint8_t* data, size_t size)
+inline static void __in_place_rb_swap_32(uint8_t* data, uint64_t size)
 {
-  for(size_t i = 0; i < size; i += 4)
+  for(uint64_t i = 0; i < size; i += 4)
     data[i] ^= data[i+2] ^= data[i] ^= data[i+2];
 }
 
@@ -83,19 +83,19 @@ inline static void __in_place_rb_swap_32(uint8_t* data, size_t size)
 ///
 /// \return New RGBA buffer
 ///
-inline static uint8_t* __unpack_rgb_to_rgba(const uint8_t* rgb, size_t n, uint8_t a)
+inline static uint8_t* __unpack_rgb_to_rgba(const uint8_t* rgb, uint64_t n, uint8_t a)
 {
   uint8_t* rgba = reinterpret_cast<uint8_t*>(Om_alloc(n * 4));
   if(!rgba) return nullptr;
 
   uint8_t* dp = rgba;
 
-  for(size_t i = n; --i; dp += 4, rgb += 3) {
+  for(uint64_t i = n; --i; dp += 4, rgb += 3) {
     (*reinterpret_cast<uint32_t*>(dp)) = (*reinterpret_cast<const uint32_t*>(rgb));
     dp[3] = a;
   }
 
-  for(size_t i = 0; i < 3; ++i)
+  for(uint64_t i = 0; i < 3; ++i)
     dp[i] = rgb[i];
 
   dp[3] = a;
@@ -114,12 +114,12 @@ inline static uint8_t* __unpack_rgb_to_rgba(const uint8_t* rgb, size_t n, uint8_
 ///
 /// \return New RGBA buffer
 ///
-inline static void __inplace_rgb_to_rgba(uint8_t* data, size_t n, uint8_t a)
+inline static void __inplace_rgb_to_rgba(uint8_t* data, uint32_t n, uint8_t a)
 {
   uint8_t* dp = data + ((n * 4) - 4);
   uint8_t* sp = data + ((n * 3) - 3);
 
-  for(size_t i = n; --i; sp -= 3, dp -= 4) {
+  for(uint32_t i = n; --i; sp -= 3, dp -= 4) {
     (*reinterpret_cast<uint32_t*>(dp)) = (*reinterpret_cast<uint32_t*>(sp));
     dp[3] = a;
   }
@@ -149,9 +149,9 @@ inline static void __set_pixel_32(uint8_t* pixel, uint32_t color)
 ///
 /// \return New RGBA buffer
 ///
-inline static void __set_row_32(uint8_t* row, size_t width, uint32_t color)
+inline static void __set_row_32(uint8_t* row, uint32_t width, uint32_t color)
 {
-  for(size_t i = 0; i < width; ++i, row +=4)
+  for(uint32_t i = 0; i < width; ++i, row +=4)
     (*reinterpret_cast<uint32_t*>(row)) = color;
 }
 
@@ -216,7 +216,7 @@ inline static void __cpy_pixel_32(uint8_t* dst, const uint8_t* src)
 /// \param[in]  src_w   : Input image width.
 /// \param[in]  src_h   : Input image height.
 ///
-inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, uint32_t row_bytes)
 {
   float u_x, v_y;
 
@@ -272,7 +272,7 @@ inline static void __get_sample_cub_32(uint8_t* sample, float u, float v, const 
 /// \param[in]  src_w   : Input image width.
 /// \param[in]  src_h   : Input image height.
 ///
-inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, uint32_t row_bytes)
 {
   float u_x, v_y;
 
@@ -330,7 +330,7 @@ inline static void __get_sample_lin_32(uint8_t* sample, float u, float v, const 
 /// \param[in]  max_h     : Input image Y index limit, should be src_h - 1.
 /// \param[in]  row_bytes : size in bytes of an input image row
 ///
-inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, size_t row_bytes)
+inline static void __get_sample_box_32(uint8_t* sample, int b_w, int b_h, float u, float v, const uint8_t* src_pix, unsigned src_w, unsigned src_h, int max_w, int max_h, uint32_t row_bytes)
 {
   float r = 0.0f;
   float g = 0.0f;
@@ -410,8 +410,8 @@ inline static void __copy_resample_cub(uint8_t* dst_pix, unsigned dst_w, unsigne
   float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
 
   // some constants
-  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -463,8 +463,8 @@ inline static void __copy_resample_lin(uint8_t* dst_pix, unsigned dst_w, unsigne
   float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
 
   // some constants
-  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -523,8 +523,8 @@ inline static void __copy_resample_box(uint8_t* dst_pix, unsigned dst_w, unsigne
   float f_v = (1.0f / static_cast<float>(dst_h)) * (static_cast<float>(rec_h) / src_h);
 
   // some constants
-  size_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (dst_w * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -580,8 +580,8 @@ inline static void __copy_resample(uint8_t* dst_pix, unsigned dst_w, unsigned ds
 
   } else {
 
-    size_t row_bytes = (rec_w * 4); //< assuming RGBA data
-    size_t row_shift = (rec_x * 4); //< assuming RGBA data
+    uint32_t row_bytes = (rec_w * 4); //< assuming RGBA data
+    uint32_t row_shift = (rec_x * 4); //< assuming RGBA data
 
     for(unsigned y = 0; y < dst_h; ++y) {
       const uint8_t* sp = src_pix + ((y + rec_y) * row_bytes) + row_shift;
@@ -650,8 +650,8 @@ inline static void __draw_canvas_cub(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   float s_v = f_v * dst_y;
 
   // some constants
-  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -728,8 +728,8 @@ inline static void __draw_canvas_lin(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   float s_v = f_v * dst_y;
 
   // some constants
-  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -810,8 +810,8 @@ inline static void __draw_canvas_box(uint8_t* cv_pix, unsigned cv_w, unsigned cv
   float s_v = f_v * dst_y;
 
   // some constants
-  size_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
-  size_t src_row_bytes = (src_w * 4); //< assuming RGBA data
+  uint32_t dst_row_bytes = (cv_w  * 4); //< assuming RGBA data
+  uint32_t src_row_bytes = (src_w * 4); //< assuming RGBA data
   int max_w = (src_w - 1);
   int max_h = (src_h - 1);
 
@@ -1187,7 +1187,7 @@ static bool __image_quantize(uint8_t* out_idx, uint8_t* out_map, unsigned* map_s
   const uint8_t* sp;
   uint8_t* dp;
 
-  size_t mtx_bytes = in_w * in_h;
+  uint32_t mtx_bytes = in_w * in_h;
 
   node_list = reinterpret_cast<__qz_rgb*>(Om_alloc(sizeof(__qz_rgb) * 32768));
   if(!node_list) return false;
@@ -1300,7 +1300,7 @@ static int __gif_read_file_fn(GifFileType* gif, uint8_t* dst, int len)
 ///
 struct __gif_read_st {
   const uint8_t*  src_data;
-  size_t    src_seek;
+  uint64_t        src_seek;
 };
 
 /// \brief Custom GIF reader
@@ -1341,9 +1341,9 @@ static int __gif_write_file_fn(GifFileType* gif, const uint8_t* src, int len)
 /// Custom structure for custom GIF write routine.
 ///
 struct __gif_write_st {
-  uint8_t*  dst_data;
-  size_t    dst_size;
-  size_t    dst_seek;
+  uint8_t*    dst_data;
+  uint64_t    dst_size;
+  uint64_t    dst_seek;
 };
 
 /// \brief Custom GIF writer
@@ -1414,8 +1414,8 @@ static uint8_t* __gif_decode_common(unsigned* w, unsigned* h, GifFileType* gif, 
   }
 
   // define some useful sizes, we output as RGBA
-  size_t row_bytes = gif_w * 4;
-  size_t tot_bytes = gif_h * row_bytes;
+  uint32_t row_bytes = gif_w * 4;
+  uint32_t tot_bytes = gif_h * row_bytes;
 
   // allocate new buffer
   uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
@@ -1432,7 +1432,7 @@ static uint8_t* __gif_decode_common(unsigned* w, unsigned* h, GifFileType* gif, 
 
   // here we go to translate indexed color to RGB
   if(flip_y) {
-    size_t max_h = gif_h - 1;
+    uint32_t max_h = gif_h - 1;
     for(unsigned y = 0; y < gif_h; ++y) {
       dp = pixels + (row_bytes * (max_h - y));
       for(unsigned x = 0; x < gif_w; ++x, ++sp, dp += 4) {
@@ -1491,7 +1491,7 @@ static bool __gif_encode_common(GifFileType* gif, const uint8_t* in_rgb, unsigne
   int error;
 
   // define useful sizes
-  size_t mtx_bytes = in_w * in_h; //< image matrix size, one byte per pixel
+  uint32_t mtx_bytes = in_w * in_h; //< image matrix size, one byte per pixel
 
   // allocate new buffer to receive color indices
   uint8_t* imtx = reinterpret_cast<uint8_t*>(Om_alloc(mtx_bytes));
@@ -1654,7 +1654,7 @@ static bool __gif_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded GIF image data or nullptr if failed.
 ///
-static uint8_t* __gif_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static uint8_t* __gif_encode(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   #ifdef DEBUG
   clock_t t = clock();
@@ -1703,7 +1703,7 @@ typedef struct _BMP_CONTEXT BMP_CONTEXT;
 ///
 /// \return Count of read or written bytes.
 ///
-typedef size_t (*bmp_io_fn)(BMP_CONTEXT* ctx, void* buf, size_t len);
+typedef uint64_t (*bmp_io_fn)(BMP_CONTEXT* ctx, void* buf, uint64_t len);
 
 /// \brief BMP seek callback
 ///
@@ -1712,7 +1712,7 @@ typedef size_t (*bmp_io_fn)(BMP_CONTEXT* ctx, void* buf, size_t len);
 /// \param[in]  ctx   : Pointer to BMP_CONTEXT structure.
 /// \param[in]  off   : Offset to seek pointer to.
 ///
-typedef void (*bmp_seek_fn)(BMP_CONTEXT* ctx, size_t off);
+typedef void (*bmp_seek_fn)(BMP_CONTEXT* ctx, uint64_t off);
 
 /// \brief BMP Codec Context
 ///
@@ -1726,11 +1726,11 @@ struct _BMP_CONTEXT
 
   void* o_ptr;
 
-  size_t io_off;
+  uint64_t io_off;
 
   void** out_dest;
 
-  size_t* out_size;
+  uint64_t* out_size;
 
   bmp_io_fn io_fn;
 
@@ -1741,7 +1741,7 @@ struct _BMP_CONTEXT
 ///
 /// Callback function definition for seek file pointer
 ///
-static void __bmp_seek_file(BMP_CONTEXT* ctx, size_t off)
+static void __bmp_seek_file(BMP_CONTEXT* ctx, uint64_t off)
 {
   fseek(ctx->f_ptr, off, SEEK_SET);
 }
@@ -1750,7 +1750,7 @@ static void __bmp_seek_file(BMP_CONTEXT* ctx, size_t off)
 ///
 /// Callback function definition for seek file pointer
 ///
-static void __bmp_seek_mem(BMP_CONTEXT* ctx, size_t off)
+static void __bmp_seek_mem(BMP_CONTEXT* ctx, uint64_t off)
 {
   ctx->io_off = off;
 }
@@ -1759,9 +1759,9 @@ static void __bmp_seek_mem(BMP_CONTEXT* ctx, size_t off)
 ///
 /// Callback function definition for read from file pointer
 ///
-static size_t __bmp_read_file(BMP_CONTEXT* ctx, void* buf, size_t len)
+static uint64_t __bmp_read_file(BMP_CONTEXT* ctx, void* buf, uint64_t len)
 {
-  size_t rb = fread(buf, 1, len, ctx->f_ptr);
+  uint64_t rb = fread(buf, 1, len, ctx->f_ptr);
   return rb;
 }
 
@@ -1769,7 +1769,7 @@ static size_t __bmp_read_file(BMP_CONTEXT* ctx, void* buf, size_t len)
 ///
 /// Callback function definition for read from memory
 ///
-static size_t __bmp_read_mem(BMP_CONTEXT* ctx, void* buf, size_t len)
+static uint64_t __bmp_read_mem(BMP_CONTEXT* ctx, void* buf, uint64_t len)
 {
   const uint8_t* sp = reinterpret_cast<const uint8_t*>(ctx->i_ptr);
   memcpy(buf, sp + ctx->io_off, len);
@@ -1781,9 +1781,9 @@ static size_t __bmp_read_mem(BMP_CONTEXT* ctx, void* buf, size_t len)
 ///
 /// Callback function definition for read from file pointer
 ///
-static size_t __bmp_write_file(BMP_CONTEXT* ctx, void* buf, size_t len)
+static uint64_t __bmp_write_file(BMP_CONTEXT* ctx, void* buf, uint64_t len)
 {
-  size_t wb = fwrite(buf, 1, len, ctx->f_ptr);
+  uint64_t wb = fwrite(buf, 1, len, ctx->f_ptr);
   return wb;
 }
 
@@ -1791,7 +1791,7 @@ static size_t __bmp_write_file(BMP_CONTEXT* ctx, void* buf, size_t len)
 ///
 /// Callback function definition for read from memory
 ///
-static size_t __bmp_write_mem(BMP_CONTEXT* ctx, void* buf, size_t len)
+static uint64_t __bmp_write_mem(BMP_CONTEXT* ctx, void* buf, uint64_t len)
 {
   uint8_t* dp = reinterpret_cast<uint8_t*>(ctx->o_ptr);
   memcpy(dp + ctx->io_off, buf, len);
@@ -1864,9 +1864,9 @@ void __bmp_init_write_file(BMP_CONTEXT* ctx, FILE* file)
 ///
 /// \param[out] ctx     : Pointer to BMP Codec Context structure.
 /// \param[out] pdest   : Pointer to pointer that receive allocated data.
-/// \param[out] psize   : Pointer to size_t that receive allocated data size.
+/// \param[out] psize   : Pointer to uint64_t that receive allocated data size.
 ///
-void __bmp_init_write_mem(BMP_CONTEXT* ctx, void** pdest, size_t* psize)
+void __bmp_init_write_mem(BMP_CONTEXT* ctx, void** pdest, uint64_t* psize)
 {
   // this is not a write to file
   ctx->f_ptr = nullptr;
@@ -1897,7 +1897,7 @@ void __bmp_init_write_mem(BMP_CONTEXT* ctx, void** pdest, size_t* psize)
 ///
 /// \return true if operation succeed, false otherwise
 ///
-inline bool __bmp_alloc_write_mem(BMP_CONTEXT* ctx, size_t size)
+inline bool __bmp_alloc_write_mem(BMP_CONTEXT* ctx, uint64_t size)
 {
   // we do not allocate memory for file
   if(ctx->f_ptr != nullptr)
@@ -1983,8 +1983,8 @@ static uint8_t* __bmp_decode_common(unsigned* w, unsigned* h, BMP_CONTEXT* bmp_c
   unsigned bmp_c = bmp_info.bpp / 8; // channel count
 
   // define some useful sizes
-  size_t row_bytes = bmp_w * bmp_c;
-  size_t tot_bytes = bmp_h * row_bytes;
+  uint32_t row_bytes = bmp_w * bmp_c;
+  uint32_t tot_bytes = bmp_h * row_bytes;
 
   // allocate new buffer, large enough to receive **RGBA** data
   uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(bmp_w * bmp_h * 4));
@@ -2051,11 +2051,11 @@ static bool __bmp_encode_common(BMP_CONTEXT* bmp_ctx, const uint8_t* in_rgb, uns
   //bmp_seek_fn seek_cb = bmp_ctx->seek_fn;
 
   // compute data sizes
-  size_t hdr_bytes = sizeof(OM_BITMAPHEADER) + sizeof(OM_BITMAPINFOHEADER);
-  size_t row_bytes = in_w * in_c;                   //< row size in bytes
-  size_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
-  size_t tot_bytes = r4b_bytes * in_h;
-  size_t bmp_bytes = tot_bytes + hdr_bytes;
+  uint32_t hdr_bytes = sizeof(OM_BITMAPHEADER) + sizeof(OM_BITMAPINFOHEADER);
+  uint32_t row_bytes = in_w * in_c;                   //< row size in bytes
+  uint32_t r4b_bytes = row_bytes + (row_bytes % 4);   //< row size rounded up to a multiple of 4 bytes
+  uint32_t tot_bytes = r4b_bytes * in_h;
+  uint32_t bmp_bytes = tot_bytes + hdr_bytes;
 
   // BMP headers structure
   OM_BITMAPHEADER bmp_head = {};
@@ -2231,14 +2231,14 @@ static bool __bmp_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-static uint8_t* __bmp_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+static uint8_t* __bmp_encode(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // BMP Codec Context
   BMP_CONTEXT bmp;
 
   // pointer to be allocated
   uint8_t* bmp_data;
-  size_t bmp_size;
+  uint64_t bmp_size;
 
   // Initialize BMP context for read from memory
   __bmp_init_write_mem(&bmp, reinterpret_cast<void**>(&bmp_data), &bmp_size);
@@ -2524,7 +2524,7 @@ static bool __jpg_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 /// \return Pointer to decoded RGB(A) image data or nullptr if failed.
 ///
-static uint8_t* __jpg_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static uint8_t* __jpg_encode(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
 
   // create base object for jpeg encoder
@@ -2792,8 +2792,8 @@ static bool __png_write(FILE* out_file, const uint8_t* in_rgb, unsigned in_w, un
 ///
 struct __png_write_st {
   uint8_t*  dst_data;
-  size_t    dst_size;
-  size_t    dst_seek;
+  uint64_t  dst_size;
+  uint64_t  dst_seek;
 };
 
 /// \brief Custom PNG writer
@@ -2839,7 +2839,7 @@ void __png_flush_fn(png_structp png)
 ///
 /// \return Pointer to encoded PNG data
 ///
-static uint8_t* __png_encode(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+static uint8_t* __png_encode(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   #ifdef DEBUG
   clock_t t = clock();
@@ -2956,7 +2956,7 @@ uint8_t* Om_imgLoadFile(unsigned* w, unsigned* h, const OmWString& path, bool fl
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgLoadData(unsigned* w, unsigned* h, const uint8_t* data, size_t size, bool flip_y)
+uint8_t* Om_imgLoadData(unsigned* w, unsigned* h, const uint8_t* data, uint64_t size, bool flip_y)
 {
   #ifdef DEBUG
   clock_t t = clock();
@@ -3026,8 +3026,8 @@ uint8_t* Om_imgLoadHBmp(unsigned *w, unsigned *h, HBITMAP hBmp)
   unsigned bmp_h = bmInfo.bmiHeader.biHeight;
   unsigned bmp_c = bmInfo.bmiHeader.biBitCount / 8;
 
-  size_t row_bytes = bmp_w * bmp_c;
-  size_t tot_bytes = row_bytes * bmp_h;
+  uint32_t row_bytes = bmp_w * bmp_c;
+  uint32_t tot_bytes = row_bytes * bmp_h;
 
   // allocate new buffer, large enough to hold RGBA data
   uint8_t* pixels = reinterpret_cast<uint8_t*>(Om_alloc(bmp_w * bmp_h * 4));
@@ -3164,7 +3164,7 @@ bool Om_imgSaveGif(const OmWString& out_path, const uint8_t* in_rgb, unsigned in
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_imgEncodeBmp(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3177,7 +3177,7 @@ uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_imgEncodeJpg(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3190,7 +3190,7 @@ uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
+uint8_t* Om_imgEncodePng(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level)
 {
   // prevent idiot attempts
   if(!in_rgb || !in_w || !in_h || !in_c)
@@ -3203,7 +3203,7 @@ uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint8_t* Om_imgEncodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
+uint8_t* Om_imgEncodeGif(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c)
 {
 
   // prevent idiot attempts
@@ -3232,7 +3232,7 @@ HBITMAP Om_imgEncodeHbmp(const uint8_t* src_pix, unsigned src_w, unsigned src_h,
   // convert to 32 bits pixels data.
 
   // buffer size
-  size_t tot_bytes = src_w * src_h * 4;
+  uint64_t tot_bytes = src_w * src_h * 4;
 
   // allocate buffer for 32 bits BMP data
   uint8_t* temp = reinterpret_cast<uint8_t*>(Om_alloc(tot_bytes));
@@ -3350,8 +3350,8 @@ uint8_t* Om_imgMakeThumb(unsigned span, OmSizeMode mode, const uint8_t* src_pix,
     // resize image to fit desired size
     if(rec_w == span && rec_h == span) {
 
-      size_t row_bytes = (rec_w * 4); //< assuming RGBA data
-      size_t row_shift = (rec_x * 4); //< assuming RGBA data
+      uint32_t row_bytes = (rec_w * 4); //< assuming RGBA data
+      uint32_t row_shift = (rec_x * 4); //< assuming RGBA data
 
       const uint8_t* sp;
       uint8_t* dp;

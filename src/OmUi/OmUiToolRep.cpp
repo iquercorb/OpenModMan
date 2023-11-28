@@ -74,7 +74,7 @@ static inline bool __save_snapshot(OmXmlNode& xml_pic, const OmImage& image)
     uint8_t* rgb_data = Om_imgMakeThumb(128, OM_SIZE_FILL, image.data(), image.width(), image.height());
 
     // Encode RGBA to JPEG
-    size_t jpg_size;
+    uint64_t jpg_size;
     uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, rgb_data, 128, 128, 4, 7);
 
     // format jpeg to base64 encoded data URI

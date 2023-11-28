@@ -65,7 +65,9 @@ bool OmImage::load(const OmWString& path)
     return false;
   }
 
-  size_t size = GetFileSize(hFile, nullptr);
+  LARGE_INTEGER large_int;
+  GetFileSizeEx(hFile, &large_int);
+  uint64_t size = large_int.QuadPart;
 
   // allocate buffer and read
   uint8_t* data = new(std::nothrow) uint8_t[size];

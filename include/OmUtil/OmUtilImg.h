@@ -92,7 +92,7 @@ uint8_t* Om_imgLoadFile(unsigned* out_w, unsigned* out_h, const OmWString& in_pa
 ///
 /// \return Pointer to RGB(A) image data or nullptr if failed.
 ///
-uint8_t* Om_imgLoadData(unsigned* out_w, unsigned* out_h, const uint8_t* in_data, size_t in_size, bool flip_y = false);
+uint8_t* Om_imgLoadData(unsigned* out_w, unsigned* out_h, const uint8_t* in_data, uint64_t in_size, bool flip_y = false);
 
 /// \brief Load HBITMAP data.
 ///
@@ -177,7 +177,7 @@ bool Om_imgSaveGif(const OmWString& out_path, const uint8_t* in_rgb, unsigned in
 ///
 /// \return Pointer to encoded BMP image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_imgEncodeBmp(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode JPEG data.
 ///
@@ -193,7 +193,7 @@ uint8_t* Om_imgEncodeBmp(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 /// \return Pointer to encoded JPG image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+uint8_t* Om_imgEncodeJpg(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
 
 /// \brief Encode PNG data.
 ///
@@ -209,7 +209,7 @@ uint8_t* Om_imgEncodeJpg(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 /// \return Pointer to encoded PNG image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
+uint8_t* Om_imgEncodePng(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
 
 /// \brief Encode GIF data.
 ///
@@ -224,7 +224,7 @@ uint8_t* Om_imgEncodePng(size_t* out_size, const uint8_t* in_rgb, unsigned in_w,
 ///
 /// \return Pointer to encoded GIF image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodeGif(size_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
+uint8_t* Om_imgEncodeGif(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c);
 
 /// \brief Encode DDB data.
 ///
