@@ -52,6 +52,12 @@ class OmUiManMain : public OmDialog
     ///
     long id() const;
 
+    void lockMan(bool enable);
+
+    void lockHub(bool enable);
+
+    void lockChannel(bool enable);
+
     /// \brief Set dialog install mode
     ///
     /// Enable or disable the dialog install mode.

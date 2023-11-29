@@ -460,8 +460,10 @@ bool OmNetPack::finalizeDownload()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetPack::_dnl_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t rate, uint64_t data)
+bool OmNetPack::_dnl_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t rate, uint64_t param)
 {
+  OM_UNUSED(param);
+
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
   self->_dnl_percent = ((double)cur / tot) * 100;
@@ -477,8 +479,10 @@ bool OmNetPack::_dnl_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t ra
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t data)
+void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t param)
 {
+  OM_UNUSED(param);
+
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
   OM_REM_BIT(self->_stat, PACK_DNL); //< no more in DNL state
@@ -707,6 +711,8 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
 ///
 bool OmNetPack::_upg_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
+  OM_UNUSED(param);
+
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
   self->_upg_percent = ((double)cur / tot) * 100;

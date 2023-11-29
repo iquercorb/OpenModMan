@@ -2824,6 +2824,7 @@ void __png_write_buff_fn(png_structp png, uint8_t* src, size_t len)
 ///
 void __png_flush_fn(png_structp png)
 {
+  OM_UNUSED(png);
 }
 
 /// \brief Encode PNG data.

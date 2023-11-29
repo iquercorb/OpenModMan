@@ -906,8 +906,7 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
   clock_t time = clock();
 
   // initialize progression callback
-  size_t progress_tot, progress_cur;
-
+  size_t progress_tot = 0, progress_cur = 0;
   if(progress_cb) {
     progress_tot = this->_src_entry.size() * 2;   //< backup + install
     progress_cur = 0;
@@ -1172,7 +1171,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
   clock_t time = clock();
 
   // initialize progression callback
-  size_t progress_tot, progress_cur;
+  size_t progress_tot = 0, progress_cur = 0;
   if(progress_cb) {
     if(isundo) {
       progress_cur = this->_bck_entry.size();
@@ -1182,7 +1181,10 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
       progress_tot = this->_bck_entry.size(); //< item we must restore
     }
     this->_op_progress =((double)progress_cur / progress_tot) * 100;
-    progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this));
+    if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this))) {
+      this->_op_restore = false; this->_error_restore = false;
+      return OM_RESULT_ABORT;
+    }
   }
 
   OmArchive backup_zip;
@@ -1203,6 +1205,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
   }
 
   bool has_error = false;
+  bool has_abort = false;
 
   // restore original files from Backup to Target
   for(size_t i = 0; i < this->_bck_entry.size(); ++i) {
@@ -1237,7 +1240,8 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     if(progress_cb) {
       if(isundo) progress_cur--; else progress_cur++;
       this->_op_progress = ((double)progress_cur / progress_tot) * 100;
-      progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this));
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this)))
+        has_abort = true; //< process continue but will return with abort code
     }
 
     #ifdef DEBUG
@@ -1291,7 +1295,8 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     if(progress_cb) {
       if(isundo) progress_cur--; else progress_cur++;
       this->_op_progress = ((double)progress_cur / progress_tot) * 100;
-      progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this));
+      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this)))
+        has_abort = true; //< process continue but will return with abort code
     }
 
     #ifdef DEBUG
@@ -1329,7 +1334,13 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
   // end restore operation
   this->_op_restore = false; this->_error_restore = has_error;
 
-  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
+  if(has_abort)
+    return OM_RESULT_ABORT;
+
+  if(has_error)
+    return OM_RESULT_ERROR;
+
+  return OM_RESULT_OK;
 }
 
 ///
@@ -1350,7 +1361,7 @@ OmResult OmModPack::applySource(Om_progressCb progress_cb, void* user_ptr)
   clock_t time = clock();
 
   // initialize progression callback
-  size_t progress_tot, progress_cur;
+  size_t progress_tot = 0, progress_cur = 0;
   if(progress_cb) {
     progress_tot = this->_src_entry.size() * 2;   //< item we must install
     progress_cur = this->_src_entry.size();       //< start at half the total, backup was the first half

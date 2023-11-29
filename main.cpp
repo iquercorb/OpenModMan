@@ -23,6 +23,8 @@
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
+  OM_UNUSED(hPrevInst); OM_UNUSED(nShowCmd);
+
   Om_getAppIconImage(L"D:\\Programmes\\Jeux\\DCS World\\bin-mt\\DCS.exe");
 
   // Check if another instance already running

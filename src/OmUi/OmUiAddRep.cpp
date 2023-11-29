@@ -266,7 +266,7 @@ void OmUiAddRep::_onInit()
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Mod Repository base HTTP address");
   this->_createTooltip(IDC_EC_INP02,  L"Mod Repository identifier or definition name");
-  this->_createTooltip(IDC_BC_QRY,    L"Query the Repository to check its availability");
+  this->_createTooltip(IDC_BC_RPQRY,    L"Query the Repository to check its availability");
   this->_createTooltip(IDC_SC_STATE,  L"Repository query test result");
   this->_createTooltip(IDC_EC_RESUL,  L"Repository query test logs");
 
@@ -303,7 +303,7 @@ void OmUiAddRep::_onResize()
 
   // Repository Test Label, Button and Result
   this->_setItemPos(IDC_SC_LBL04, 10, 55, 120, 9);
-  this->_setItemPos(IDC_BC_QRY, 10, 70, 50, 14);
+  this->_setItemPos(IDC_BC_RPQRY, 10, 70, 50, 14);
   this->_setItemPos(IDC_SC_STATE, 65, 73, this->cliUnitX()-20, 12);
 
   // Repository Test content
@@ -325,6 +325,8 @@ void OmUiAddRep::_onResize()
 ///
 INT_PTR OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     bool has_changed = false;
@@ -337,12 +339,12 @@ INT_PTR OmUiAddRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_EC_INP01: // Title
       if(HIWORD(wParam) == EN_CHANGE) {
         this->getItemText(IDC_EC_INP01, item_str);
-        this->enableItem(IDC_BC_QRY, (item_str.size() > 7));
+        this->enableItem(IDC_BC_RPQRY, (item_str.size() > 7));
         has_changed = true;
       }
       break;
 
-    case IDC_BC_QRY:
+    case IDC_BC_RPQRY:
       this->_onBcChk();
       break;
 

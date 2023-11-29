@@ -31,6 +31,8 @@
 #define OM_LOG_WRN          1     //< Log level Warning
 #define OM_LOG_ERR          0     //< Log level Error
 
+#define OM_UNUSED(x) (void)(x)    //< To get ride of "Unused parameter" compiler warnings...
+
 #ifdef DEBUG
 #include <iostream>
 #endif

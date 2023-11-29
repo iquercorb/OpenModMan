@@ -177,5 +177,7 @@ void OmDialogPropTab::_onTabQuit()
 ///
 INT_PTR OmDialogPropTab::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(uMsg); OM_UNUSED(wParam);  OM_UNUSED(lParam);
+
   return false;
 }

@@ -41,15 +41,15 @@ OmModHub::OmModHub(OmModMan* ModMan) :
   _ModMan(ModMan),
   _icon_handle(nullptr),
   _active_channel(-1),
-  _setup_abort(false),
-  _setup_hth(nullptr),
-  _setup_hwo(nullptr),
-  _setup_dones(0),
-  _setup_percent(0),
-  _setup_begin_cb(nullptr),
-  _setup_progress_cb(nullptr),
-  _setup_result_cb(nullptr),
-  _setup_user_ptr(nullptr),
+  _psetup_abort(false),
+  _psetup_hth(nullptr),
+  _psetup_hwo(nullptr),
+  _psetup_dones(0),
+  _psetup_percent(0),
+  _psetup_begin_cb(nullptr),
+  _psetup_progress_cb(nullptr),
+  _psetup_result_cb(nullptr),
+  _psetup_user_ptr(nullptr),
   _presets_quietmode(true)
 {
 
@@ -92,16 +92,16 @@ void OmModHub::close()
 
   this->_preset_list.clear();
 
-  this->_setup_abort = false;
-  Om_clearThread(this->_setup_hth, this->_setup_hwo);
-  this->_setup_hth = nullptr;
-  this->_setup_hwo = nullptr;
-  this->_setup_dones = 0;
-  this->_setup_percent = 0;
-  this->_setup_begin_cb = nullptr;
-  this->_setup_progress_cb = nullptr;
-  this->_setup_result_cb = nullptr;
-  this->_setup_user_ptr = nullptr;
+  this->_psetup_abort = false;
+  Om_clearThread(this->_psetup_hth, this->_psetup_hwo);
+  this->_psetup_hth = nullptr;
+  this->_psetup_hwo = nullptr;
+  this->_psetup_dones = 0;
+  this->_psetup_percent = 0;
+  this->_psetup_begin_cb = nullptr;
+  this->_psetup_progress_cb = nullptr;
+  this->_psetup_result_cb = nullptr;
+  this->_psetup_user_ptr = nullptr;
 }
 
 ///
@@ -754,7 +754,7 @@ void OmModHub::setPresetQuietMode(bool enable)
 ///
 void OmModHub::abortPresets()
 {
-  this->_setup_abort = true;
+  this->_psetup_abort = true;
 }
 
 ///
@@ -762,79 +762,76 @@ void OmModHub::abortPresets()
 ///
 void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
 {
-  if(this->_setup_queue.empty()) {
-    /*
-    // another operation is currently processing
-    if(this->_locked_mod_library) {
+  if(this->_psetup_queue.empty()) {
 
-      this->_log(OM_LOG_WRN, L"queueInstalls", L"local library is locked by another operation");
-
-      if(result_cb)  // flush all results with abort
-        for(size_t i = 0; i << selection.size(); ++i)
-          result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
-
-      return;
-    }
-    */
-
-    this->_setup_begin_cb = begin_cb;
-    this->_setup_progress_cb = progress_cb;
-    this->_setup_result_cb = result_cb;
-    this->_setup_user_ptr = user_ptr;
+    this->_psetup_begin_cb = begin_cb;
+    this->_psetup_progress_cb = progress_cb;
+    this->_psetup_result_cb = result_cb;
+    this->_psetup_user_ptr = user_ptr;
 
     // reset global progression parameters
-    this->_setup_dones = 0;
-    this->_setup_percent = 0;
+    this->_psetup_dones = 0;
+    this->_psetup_percent = 0;
 
   } else {
 
     // emit a warning in case a crazy client starts new download with
     // different parameters than current
-    if(this->_setup_begin_cb != begin_cb ||
-       this->_setup_result_cb != result_cb ||
-       this->_setup_progress_cb != progress_cb ||
-       this->_setup_user_ptr != user_ptr) {
+    if(this->_psetup_begin_cb != begin_cb ||
+       this->_psetup_result_cb != result_cb ||
+       this->_psetup_progress_cb != progress_cb ||
+       this->_psetup_user_ptr != user_ptr) {
       this->_log(OM_LOG_WRN, L"queuePresets", L"changing callbacks for a running thread is not allowed");
     }
   }
-  /*
-  // lock the local library to prevent concurrent array manipulation
-  this->_locked_mod_library = true;
-  */
 
   // reset abort flag
-  this->_setup_abort = false;
+  this->_psetup_abort = false;
 
-  Om_push_backUnique(this->_setup_queue, ModPset);
+  Om_push_backUnique(this->_psetup_queue, ModPset);
 
-  if(!this->_setup_hth) {
+  if(!this->_psetup_hth) {
 
     // launch thread
-    this->_setup_hth = Om_createThread(OmModHub::_setup_run_fn, this);
-    this->_setup_hwo = Om_waitForThread(this->_setup_hth, OmModHub::_setup_end_fn, this);
+    this->_psetup_hth = Om_createThread(OmModHub::_psetup_run_fn, this);
+    this->_psetup_hwo = Om_waitForThread(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmModHub::_setup_run_fn(void* ptr)
+DWORD WINAPI OmModHub::_psetup_run_fn(void* ptr)
 {
   OmModHub* self = static_cast<OmModHub*>(ptr);
   DWORD exit_code = 0;
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModHub::_setup_run_fn : enter\n";
+  std::wcout << "DEBUG => OmModHub::_psetup_run_fn : enter\n";
   #endif // DEBUG
 
   OmPModPackArray installs, restores;
 
-  while(self->_setup_queue.size()) {
+  while(self->_psetup_queue.size()) {
 
-    OmModPset* ModPset = self->_setup_queue.front();
+    OmModPset* ModPset = self->_psetup_queue.front();
 
-    if(self->_setup_begin_cb)
-      self->_setup_begin_cb(self->_setup_user_ptr, reinterpret_cast<uint64_t>(ModPset));
+    if(self->_psetup_abort) {
+
+      // flush all queue with abort result
+
+      if(self->_psetup_result_cb)
+        self->_psetup_result_cb(self->_psetup_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(ModPset));
+
+      self->_psetup_queue.pop_front();
+
+      continue;
+    }
+
+    if(self->_psetup_begin_cb)
+      self->_psetup_begin_cb(self->_psetup_user_ptr, reinterpret_cast<uint64_t>(ModPset));
+
+    OmResult result = OM_RESULT_OK;
 
     // perform setup for each existing Mod Channel
     for(size_t i = 0; i < self->_channel_list.size(); ++i) {
@@ -861,32 +858,39 @@ DWORD WINAPI OmModHub::_setup_run_fn(void* ptr)
         }
       }
 
-      if(self->_setup_progress_cb) {
+      if(self->_psetup_progress_cb) {
 
         size_t tot, cur;
 
         tot = 0; cur = restores.size();
         // we send restores fisrt
         for(size_t j = 0; j < restores.size(); ++j)
-          self->_setup_progress_cb(self->_setup_user_ptr, tot, cur--, reinterpret_cast<uint64_t>(restores[j]));
+          if(!self->_psetup_progress_cb(self->_psetup_user_ptr, tot, cur--, reinterpret_cast<uint64_t>(restores[j]))) {
+            self->abortPresets(); break;
+          }
 
         tot = installs.size(); cur = 0;
         // then send installs
         for(size_t j = 0; j < installs.size(); ++j)
-          self->_setup_progress_cb(self->_setup_user_ptr, tot, ++cur, reinterpret_cast<uint64_t>(installs[j]));
+          if(!self->_psetup_progress_cb(self->_psetup_user_ptr, tot, ++cur, reinterpret_cast<uint64_t>(installs[j]))) {
+            self->abortPresets(); break;
+          }
       }
 
+      if(self->_psetup_abort) {
+        result = OM_RESULT_ABORT; break;
+      }
     }
 
-    if(self->_setup_result_cb)
-      self->_setup_result_cb(self->_setup_user_ptr, OM_RESULT_OK, reinterpret_cast<uint64_t>(ModPset));
+    if(self->_psetup_result_cb)
+      self->_psetup_result_cb(self->_psetup_user_ptr, result, reinterpret_cast<uint64_t>(ModPset));
 
-    self->_setup_dones++;
-    self->_setup_queue.pop_front();
+    self->_psetup_dones++;
+    self->_psetup_queue.pop_front();
   }
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModHub::_setup_run_fn : leave\n";
+  std::wcout << "DEBUG => OmModHub::_psetup_run_fn : leave\n";
   #endif // DEBUG
 
   return exit_code;
@@ -895,30 +899,29 @@ DWORD WINAPI OmModHub::_setup_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-VOID WINAPI OmModHub::_setup_end_fn(void* ptr,uint8_t fired)
+VOID WINAPI OmModHub::_psetup_end_fn(void* ptr,uint8_t fired)
 {
+  OM_UNUSED(fired);
+
   OmModHub* self = static_cast<OmModHub*>(ptr);
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModHub::_setup_end_fn\n";
+  std::wcout << "DEBUG => OmModHub::_psetup_end_fn\n";
   #endif // DEBUG
-/*
-  // unlock the local library
-  self->_locked_mod_library = false;
-*/
+
   //DWORD exit_code = Om_threadExitCode(self->_install_hth);
-  Om_clearThread(self->_setup_hth, self->_setup_hwo);
+  Om_clearThread(self->_psetup_hth, self->_psetup_hwo);
 
-  self->_setup_dones = 0;
-  self->_setup_percent = 0;
+  self->_psetup_dones = 0;
+  self->_psetup_percent = 0;
 
-  self->_setup_hth = nullptr;
-  self->_setup_hwo = nullptr;
+  self->_psetup_hth = nullptr;
+  self->_psetup_hwo = nullptr;
 
-  self->_setup_begin_cb = nullptr;
-  self->_setup_progress_cb = nullptr;
-  self->_setup_result_cb = nullptr;
-  self->_setup_user_ptr = nullptr;
+  self->_psetup_begin_cb = nullptr;
+  self->_psetup_progress_cb = nullptr;
+  self->_psetup_result_cb = nullptr;
+  self->_psetup_user_ptr = nullptr;
 }
 
 ///

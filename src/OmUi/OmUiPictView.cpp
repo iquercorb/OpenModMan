@@ -74,6 +74,8 @@ void OmUiPictView::_onResize()
 ///
 INT_PTR OmUiPictView::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(wParam); OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
 

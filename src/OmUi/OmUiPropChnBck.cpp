@@ -356,6 +356,8 @@ void OmUiPropChnBck::_onTabResize()
 ///
 INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   // UWM_BACKDISCARD_DONE is a custom message sent from Mod Channel backups discard thread
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_BACKDISCARD_DONE) {

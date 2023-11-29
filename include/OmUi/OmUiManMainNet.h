@@ -51,6 +51,12 @@ class OmUiManMainNet : public OmDialog
     ///
     long id() const;
 
+    void lockMan(bool enable);
+
+    void lockHub(bool enable);
+
+    void lockChannel(bool enable);
+
     /// \brief Set dialog freeze mode
     ///
     /// Enable or disable the dialog freeze mode.
@@ -124,7 +130,7 @@ class OmUiManMainNet : public OmDialog
     OmUiMan*            _UiMan;
 
     // thread and UI management
-    void                _update_safemode_status();
+    void                _update_processing();
 
     // repository query stuff
     int32_t             _query_count;
@@ -153,7 +159,9 @@ class OmUiManMainNet : public OmDialog
     // Mods upgrade stuff
     int32_t             _upgrade_count;
 
-    void                _upgrade_abort();
+    bool                _upgrade_abort;
+
+    //void                _upgrade_abort();
 
     void                _upgrade_start(const OmPNetPackArray&);
 

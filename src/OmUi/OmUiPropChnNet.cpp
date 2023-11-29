@@ -66,6 +66,8 @@ long OmUiPropChnNet::id() const
 ///
 void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t code)
 {
+  OM_UNUSED(result);
+
   OmUiPropChnNet* self = static_cast<OmUiPropChnNet*>(ptr);
 
   OmModChan* ModChan = static_cast<OmUiPropChn*>(self->_parent)->ModChan();
@@ -115,7 +117,7 @@ void OmUiPropChnNet::_onLbReplsSel()
     OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
 
     this->enableItem(IDC_BC_DEL, true);
-    this->enableItem(IDC_BC_QRY, true);
+    this->enableItem(IDC_BC_RPQRY, true);
     this->enableItem(IDC_SC_STATE, true);
 
     if(ModRepo->queryResult() == OM_RESULT_PENDING) {
@@ -260,7 +262,7 @@ void OmUiPropChnNet::_onTabResize()
 
   // Remove Button
   this->_setItemPos(IDC_BC_DEL, 50, 48, 50, 14);
-  this->_setItemPos(IDC_BC_QRY, 105, 48, 50, 14);
+  this->_setItemPos(IDC_BC_RPQRY, 105, 48, 50, 14);
   // Add button
   this->_setItemPos(IDC_BC_ADD, this->cliUnitX()-107, 48, 50, 14);
   // Query Status Label & result static
@@ -293,7 +295,7 @@ void OmUiPropChnNet::_onTabRefresh()
   //this->setItemText(IDC_SC_STATE, L"Unknown");
 
   this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_QRY,  false);
+  this->enableItem(IDC_BC_RPQRY,  false);
 
   this->msgItem(IDC_LB_REP, LB_RESETCONTENT);
 
@@ -329,6 +331,8 @@ void OmUiPropChnNet::_onTabRefresh()
 ///
 INT_PTR OmUiPropChnNet::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))
@@ -346,7 +350,7 @@ INT_PTR OmUiPropChnNet::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcDelRepo();
       break;
 
-    case IDC_BC_QRY:
+    case IDC_BC_RPQRY:
       this->_onBcQryRepo();
       break;
 

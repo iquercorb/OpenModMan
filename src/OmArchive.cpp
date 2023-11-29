@@ -901,7 +901,7 @@ uint32_t OmArchive::entryLocate(const OmWString& entry) const
 ///
 bool OmArchive::close()
 {
-  int32_t mz_err;
+  int32_t mz_err = MZ_OK;
 
   if(this->_zent) {
     Om_free(this->_zent);

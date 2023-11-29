@@ -450,7 +450,7 @@ void OmDialog::loopMessage() const
 bool OmDialog::redrawItem(unsigned id, RECT* rect, uint32_t falgs) const
 {
   HWND hCtrl = GetDlgItem(this->_hwnd, id);
-  RedrawWindow(hCtrl, rect, nullptr, falgs);
+  return RedrawWindow(hCtrl, rect, nullptr, falgs);
 }
 
 ///
@@ -741,8 +741,10 @@ void OmDialog::_onQuit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmDialog::_onMsg(UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialog::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(uMsg); OM_UNUSED(wParam);  OM_UNUSED(lParam);
+
   return false;
 }
 

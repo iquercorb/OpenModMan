@@ -183,6 +183,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       Y = rect[1] + (rect[3]*0.5f) - (yalign * 0.5f);
     } else {
       // ignore position
+      X = Y = 0;
       uSwp |= SWP_NOMOVE;
     }
     SetWindowPos(hWnd, nullptr, X, Y, 500, yalign, uSwp);
@@ -552,6 +553,8 @@ void Om_dlgBox_wrn(const OmWString& cpt, const OmWString& hdr, const OmWString& 
 ///
 INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == BFFM_INITIALIZED) { //< Brother dialog windows is initialized
     if(lpData != 0) SendMessageW(hWnd, BFFM_SETSELECTION, true, lpData);  //< set the selected folder
     if(lpData != 0) SendMessageW(hWnd, BFFM_SETEXPANDED, false, lpData);  //< set and expand the selected folder

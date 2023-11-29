@@ -210,6 +210,8 @@ void OmUiWizHubCfg::_onQuit()
 ///
 INT_PTR OmUiWizHubCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     bool has_changed = false;

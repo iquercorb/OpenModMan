@@ -275,7 +275,7 @@ void PrintIconDirEntry( const GRPICONDIRENTRY& DirEntry ) {
 }
 
 void PrintIconInfo( HICON hIcon ) {
-    ICONINFO ii = { 0 };
+    ICONINFO ii = {};
     GetIconInfo( hIcon, &ii );
     _wprintf_p( L"xHotspot=%02d; yHotspot=%02d\n", ii.xHotspot, ii.yHotspot );
 }
@@ -297,9 +297,12 @@ void Om_getAppIconInfos(const OmWString& path, int16_t res_id)
 
 BOOL Enumresnameprocw(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
 {
+  OM_UNUSED(hModule); OM_UNUSED(lpType); OM_UNUSED(lpName); OM_UNUSED(lParam);
   #ifdef DEBUG
   std::wcout << L"DEBUG => Enumresnameprocw - lpType: " << std::to_wstring((int64_t)lpType) << L"    lpName: " << std::to_wstring((int64_t)lpName) << L"\n";
   #endif
+
+  return true;
 }
 
 void Om_getAppIconImage(const OmWString& path)
@@ -307,6 +310,6 @@ void Om_getAppIconImage(const OmWString& path)
   HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
   //HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE );
 
-  //EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
+  EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
   //LoadImageW(hMod, MAKEINTRESOURCE(3), IMAGE_ICON, 0, 0, 0);
 }

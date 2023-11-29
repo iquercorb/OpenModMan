@@ -406,7 +406,7 @@ void OmUiPropHubChn::_onTabInit()
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
   this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
   this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
@@ -488,6 +488,8 @@ void OmUiPropHubChn::_onTabRefresh()
 ///
 INT_PTR OmUiPropHubChn::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   // UWM_BACKPURGE_DONE is a custom message sent from Mod Channel backups purge thread
   // function, to notify the progress dialog ended is job.
   if(uMsg == UWM_BACKPURGE_DONE) {

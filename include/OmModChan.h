@@ -195,18 +195,22 @@ class OmModChan
 
     void prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings) const;
 
-    void queueInstalls(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    void queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
-    void execInstalls(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    OmResult execModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
-    void abortInstalls();
+    void abortModOps();
 
-    uint32_t installsProgress() const {
-      return this->_install_percent;
+    uint32_t modOpsProgress() const {
+      return this->_modops_percent;
     }
 
-    size_t installsQueueSize() const {
-      return this->_install_queue.size();
+    size_t modOpsQueueSize() const {
+      return this->_modops_queue.size();
+    }
+
+    bool lockedModLibrary() const {
+      return this->_locked_mod_library;
     }
 
     void prepareRestores(const OmPModPackArray& selection, OmPModPackArray* restores, OmWStringArray* overlappers, OmWStringArray* dependents) const;
@@ -836,7 +840,7 @@ class OmModChan
     OmConnect             _connect;
 
     // mod operations helpers
-    void                  _get_install_depends(const OmModPack*, OmPModPackArray*, OmWStringArray*) const;
+    void                  _get_modops_depends(const OmModPack*, OmPModPackArray*, OmWStringArray*) const;
 
     void                  _get_backup_relations(const OmModPack*, OmPModPackArray*, OmWStringArray*, OmWStringArray*) const;
 
@@ -901,31 +905,31 @@ class OmModChan
     bool                  _locked_net_library;
 
     // mods install/restore
-    bool                  _install_abort;
+    bool                  _modops_abort;
 
-    void*                 _install_hth;
+    void*                 _modops_hth;
 
-    void*                 _install_hwo;
+    void*                 _modops_hwo;
 
-    OmPModPackQueue       _install_queue;
+    OmPModPackQueue       _modops_queue;
 
-    uint32_t              _install_dones;
+    uint32_t              _modops_dones;
 
-    uint32_t              _install_percent;
+    uint32_t              _modops_percent;
 
-    static DWORD WINAPI   _install_run_fn(void*);
+    static DWORD WINAPI   _modops_run_fn(void*);
 
-    static bool           _install_progress_fn(void*, size_t, size_t, uint64_t);
+    static bool           _modops_progress_fn(void*, size_t, size_t, uint64_t);
 
-    static VOID WINAPI    _install_end_fn(void*,uint8_t);
+    static VOID WINAPI    _modops_end_fn(void*,uint8_t);
 
-    Om_beginCb            _install_begin_cb;
+    Om_beginCb            _modops_begin_cb;
 
-    Om_progressCb         _install_progress_cb;
+    Om_progressCb         _modops_progress_cb;
 
-    Om_resultCb           _install_result_cb;
+    Om_resultCb           _modops_result_cb;
 
-    void*                 _install_user_ptr;
+    void*                 _modops_user_ptr;
 
     // mods download stuff
     bool                  _download_abort;

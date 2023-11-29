@@ -53,6 +53,7 @@ OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _download_upgrd(false),
   _download_count(0),
   _upgrade_count(0),
+  _upgrade_abort(false),
   _lv_rep_icons_size(0),
   _lv_net_icons_size(0),
   _lv_net_cdraw_htheme(nullptr)
@@ -79,6 +80,50 @@ OmUiManMainNet::~OmUiManMainNet()
 long OmUiManMainNet::id() const
 {
   return IDD_MGR_MAIN_NET;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::lockMan(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainNet::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  OM_UNUSED(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::lockHub(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainNet::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Manager
+  this->lockMan(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::lockChannel(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainNet::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // disable/enable Repository ListView & buttons
+  this->enableItem(IDC_LV_REP, !enable);
+  this->enableItem(IDC_BC_RPQRY, !enable);
+  this->enableItem(IDC_BC_RPADD, !enable);
+  this->enableItem(IDC_BC_RPDEL, !enable);
+
+  // lock Mud Hub
+  this->lockHub(enable);
 }
 
 ///
@@ -143,12 +188,12 @@ void OmUiManMainNet::queueDownloads(bool upgrade)
   if(!this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT))
     return;
 
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkLibraryWrite(L"Install Mods"))
     return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
 
   // get current selected Net Pack in ListView
   OmPNetPackArray selection, downloads;
@@ -191,6 +236,9 @@ void OmUiManMainNet::downloadDepends(bool upgrade)
   if(this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT) != 1)
     return;
 
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkLibraryWrite(L"Install Mods"))
     return;
@@ -198,9 +246,6 @@ void OmUiManMainNet::downloadDepends(bool upgrade)
   // get single selection
   int32_t lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
   if(lv_sel < 0) return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
 
   OmNetPack* NetPack = ModChan->getNetpack(lv_sel);
 
@@ -258,11 +303,8 @@ void OmUiManMainNet::revokeDownloads()
   if(!this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT))
     return;
 
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
-  if(!ModChan)
-    return;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
 
   // 1. get current selected Net Pack in ListView
   int lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
@@ -288,45 +330,43 @@ void OmUiManMainNet::showProperties() const
   if(this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT) != 1)
     return;
 
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // Get ListView unique selection
   int lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-  if(lv_sel < 0)
-    return;
-
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
-  if(!ModChan)
-    return;
+  if(lv_sel < 0) return;
 
   OmNetPack* NetPack = ModChan->getNetpack(lv_sel);
+  if(!NetPack) return;
 
-  if(NetPack) {
+  OmUiPropNet* UiPropRmt = static_cast<OmUiPropNet*>(this->_UiMan->childById(IDD_PROP_RMT));
 
-    OmUiPropNet* UiPropRmt = static_cast<OmUiPropNet*>(this->_UiMan->childById(IDD_PROP_RMT));
+  UiPropRmt->setNetPack(NetPack);
 
-    UiPropRmt->setNetPack(NetPack);
-
-    UiPropRmt->open(true);
-  }
+  UiPropRmt->open(true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_update_safemode_status()
+void OmUiManMainNet::_update_processing()
 {
-  bool threading = this->_query_count || this->_download_count || this->_upgrade_count;
+  bool processing = this->_query_count || this->_download_count || this->_upgrade_count;
 
-  this->_setSafe(!threading);
+  // dialog is not safe to quit
+  this->_setSafe(!processing);
 
-  this->_UiMan->freeze(threading);
+  // prevent dangerous user interactions
+  this->_UiMan->lockChannel(processing);
 
-  this->enableItem(IDC_BC_ABORT, threading);
+  // enable 'kill-switch" abort button
+  this->enableItem(IDC_BC_ABORT, processing);
 
-  this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
-  this->enableItem(IDC_PB_PKG, threading);
+  // reset progress bar, then enable or disable
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0, 0);
+  this->enableItem(IDC_PB_MOD, processing);
 }
 
 ///
@@ -336,17 +376,14 @@ void OmUiManMainNet::_query_abort()
 {
   if(this->_query_count) {
 
-    OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-    OmModChan* ModChan = ModMan->activeChannel();
-    if(!ModChan)
-      return;
+    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+    if(!ModChan) return;
 
     // cancel queries
     ModChan->abortQueries();
 
     // change button image from stop to refresh
-    this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDI_BT_REF));
+    this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_REF));
   }
 }
 
@@ -359,20 +396,21 @@ void OmUiManMainNet::_query_start(const OmPNetRepoArray& selection)
   if(!ModChan) return;
 
   // change button image from refresh to stop
-  this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDI_BT_NOT));
-
-  // increase count of queued queries
-  this->_query_count += selection.size();
-
-  // operation is running
-  this->_update_safemode_status();
+  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_NOT));
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0}; lvI.iImage = ICON_STS_QUE;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_QUE;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfRepository(selection[i]);
     this->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
+
+  // increase count of queued queries
+  this->_query_count += selection.size();
+
+  // enter processing
+  this->_update_processing();
 
   // send query for this Mod Repo
   ModChan->queueQueries(selection, OmUiManMainNet::_query_begin_fn, OmUiManMainNet::_query_result_fn, this);
@@ -392,7 +430,8 @@ void OmUiManMainNet::_query_begin_fn(void* ptr, uint64_t param)
     return;
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, ModChan->indexOfRepository(NetRepo), 0}; lvI.iImage = ICON_STS_WIP;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = ModChan->indexOfRepository(NetRepo); lvI.iSubItem = 0; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -401,6 +440,8 @@ void OmUiManMainNet::_query_begin_fn(void* ptr, uint64_t param)
 ///
 void OmUiManMainNet::_query_result_fn(void* ptr, OmResult result, uint64_t param)
 {
+  OM_UNUSED(result);
+
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
   OmNetRepo* NetRepo = reinterpret_cast<OmNetRepo*>(param);
@@ -408,13 +449,14 @@ void OmUiManMainNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
   OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
   if(!ModChan) return;
 
-  LVITEMW lvI = {LVIF_IMAGE, ModChan->indexOfRepository(NetRepo), 0};
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = ModChan->indexOfRepository(NetRepo); lvI.iSubItem = 0;
   lvI.iImage = self->_lv_rep_get_status_icon(NetRepo);
   self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // update progression bar
-  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-  self->msgItem(IDC_PB_PKG, PBM_SETPOS, ModChan->queriesProgress());
+  self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->queriesProgress());
 
   // refresh network library list
   self->_lv_net_populate();
@@ -425,10 +467,10 @@ void OmUiManMainNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
   if(!self->_query_count) {
 
     // change button image from stop to refresh
-    self->setBmIcon(IDC_BC_QRY, Om_getResIcon(self->_hins, IDI_BT_REF));
+    self->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(self->_hins, IDI_BT_REF));
 
-    // operation is stopping
-    self->_update_safemode_status();
+    // leaving processing
+    self->_update_processing();
   }
 }
 
@@ -440,8 +482,7 @@ void OmUiManMainNet::_download_abort()
   if(this->_download_count) {
 
     OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan)
-      return;
+    if(!ModChan) return;
 
     ModChan->stopDownloads();
   }
@@ -458,27 +499,28 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
   // do (or do not) upgrade at download end
   this->_download_upgrd = upgrade;
 
-  // increase count of queued download
-  this->_download_count += selection.size();
-
-  // operation is running
-  this->_update_safemode_status();
-
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0}; lvI.iImage = ICON_STS_DNL;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_DNL;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfNetpack(selection[i]);
     this->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
 
-  // start or append downloads
-  ModChan->queueDownloads(selection, OmUiManMainNet::_download_download_fn, OmUiManMainNet::_download_result_fn, this);
-
-  // Enable 'Abort' and disable 'Download'
+  // Enable 'Stop' and disable 'Download'
   if(this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT)) {
     this->enableItem(IDC_BC_STOP, true);
     this->enableItem(IDC_BC_DNLD, false);
   }
+
+  // increase count of queued download
+  this->_download_count += selection.size();
+
+  // enter processing
+  this->_update_processing();
+
+  // start or append downloads
+  ModChan->queueDownloads(selection, OmUiManMainNet::_download_download_fn, OmUiManMainNet::_download_result_fn, this);
 }
 
 ///
@@ -486,24 +528,25 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
 ///
 bool OmUiManMainNet::_download_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t rate, uint64_t param)
 {
+  OM_UNUSED(tot); OM_UNUSED(cur); OM_UNUSED(rate);
+
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
   OmNetPack* NetPack = reinterpret_cast<OmNetPack*>(param);
 
   OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
-  if(!ModChan)
-    return true;
+  if(!ModChan) return true;
 
   // retrieve index of Net Pack in Mod Channel and therefor in ListView
   int32_t item_id = ModChan->indexOfNetpack(NetPack);
 
   // update global progression
-  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-  self->msgItem(IDC_PB_PKG, PBM_SETPOS, ModChan->downloadsProgress());
+  self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->downloadsProgress());
 
   // Invalidate ListView subitem rect to call custom draw (progress bar)
-  RECT rect;
-  self->getLvSubRect(IDC_LV_NET, item_id, 5 /* 'Progress' column */, &rect);
+  RECT rect = {};
+  self->getLvSubRect(IDC_LV_NET, item_id, 5, &rect);
   self->redrawItem(IDC_LV_NET, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
 
   return true; //< continue
@@ -514,6 +557,8 @@ bool OmUiManMainNet::_download_download_fn(void* ptr, int64_t tot, int64_t cur, 
 ///
 void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t param)
 {
+  OM_UNUSED(result);
+
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
   OmNetPack* NetPack = reinterpret_cast<OmNetPack*>(param);
@@ -534,7 +579,8 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
   }
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, item_id, 0}; lvI.iImage = self->_lv_net_get_status_icon(NetPack);
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_net_get_status_icon(NetPack);
   self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // if an error occurred, display error dialog
@@ -544,12 +590,17 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
                   +NetPack->iden()+L"\" failed:", NetPack->lastError());
   }
 
+  // Invalidate ListView subitem rect to call custom draw (progress bar)
+  RECT rect;
+  self->getLvSubRect(IDC_LV_MOD, item_id, 5 /* 'Progress' column */, &rect);
+  self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
+
   // decrease concurrent download count
   self->_download_count--;
 
+  // leaving processing
   if(!self->_download_count)
-    // operation is ending
-    self->_update_safemode_status();
+    self->_update_processing();
 
   // if we are downloading for upgrade, here we go
   if(self->_download_upgrd) {
@@ -561,28 +612,20 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_upgrade_abort()
-{
-  if(this->_download_count) {
-
-    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan) return;
-
-    ModChan->abortUpgrades();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiManMainNet::_upgrade_start(const OmPNetPackArray& selection)
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
+  // increase count of queued upgrade
   this->_upgrade_count += selection.size();
 
-  // properly uninstall and replace old Mods, then install this one
+  // reset abort status
+  this->_upgrade_abort = false;
+
+  // enter processing
+  this->_update_processing();
+
   ModChan->queueUpgrades(selection, OmUiManMainNet::_upgrade_begin_fn, OmUiManMainNet::_upgrade_progress_fn, OmUiManMainNet::_upgrade_result_fn, this);
 }
 
@@ -598,8 +641,12 @@ void OmUiManMainNet::_upgrade_begin_fn(void* ptr, uint64_t param)
   OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
   if(!ModChan) return;
 
+  // retrieve NetPack index in list
+  int32_t item_id = ModChan->indexOfNetpack(NetPack);
+
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, ModChan->indexOfNetpack(NetPack), 0}; lvI.iImage = ICON_STS_WIP;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -608,6 +655,8 @@ void OmUiManMainNet::_upgrade_begin_fn(void* ptr, uint64_t param)
 ///
 bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uint64_t param)
 {
+  OM_UNUSED(cur); OM_UNUSED(tot);
+
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
   OmNetPack* NetPack = reinterpret_cast<OmNetPack*>(param);
@@ -625,11 +674,11 @@ bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uin
 
   // update global progression, but prevent interfering with current downloading
   if(!self->_download_count) {
-    self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-    self->msgItem(IDC_PB_PKG, PBM_SETPOS, ModChan->upgradesProgress());
+    self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress());
   }
 
-  return true;
+  return !self->_upgrade_abort;
 }
 
 ///
@@ -645,8 +694,12 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
   if(!ModChan)
     return;
 
+  // retrieve NetPack index in list
+  int32_t item_id = ModChan->indexOfNetpack(NetPack);
+
   // structure for ListView update
-  LVITEMW lvI = {LVIF_IMAGE, ModChan->indexOfNetpack(NetPack), 0};
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0;
   lvI.iImage = self->_lv_net_get_status_icon(NetPack);
   self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
@@ -656,13 +709,17 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
                 +NetPack->core()+L"\" failed:", NetPack->lastError());
   }
 
+  // Invalidate ListView subitem rect to call custom draw (progress bar)
+  RECT rect;
+  self->getLvSubRect(IDC_LV_MOD, item_id, 5 /* 'Progress' column */, &rect);
+  self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
+
   // decrease pending upgrade count
   self->_upgrade_count--;
 
-  if(!self->_upgrade_count) {
-    // operation is ending
-    self->_update_safemode_status();
-  }
+  // leaving processing
+  if(!self->_upgrade_count)
+    self->_update_processing();
 }
 
 ///
@@ -698,7 +755,7 @@ void OmUiManMainNet::_lv_rep_populate()
     // disable ListView
     this->enableItem(IDC_LV_REP, false);
     // disable query button
-    this->enableItem(IDC_BC_QRY, false);
+    this->enableItem(IDC_BC_RPQRY, false);
     // update Repositories ListView selection
     this->_lv_rep_on_selchg();
     // return now
@@ -706,12 +763,13 @@ void OmUiManMainNet::_lv_rep_populate()
   }
 
   OmWString lv_entry;
+  LVITEMW lvI = {};
 
   for(size_t i = 0; i < ModChan->repositoryCount(); ++i) {
 
     OmNetRepo* NetRepo = ModChan->getRepository(i);
 
-    LVITEMW lvI = {0, static_cast<int>(i)};
+    lvI.iItem = static_cast<int>(i);
 
     // the first column, repository status, here we INSERT the new item
     lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
@@ -722,9 +780,7 @@ void OmUiManMainNet::_lv_rep_populate()
     lvI.iSubItem = 1; lvI.mask = LVIF_TEXT|LVIF_IMAGE;
     lvI.iImage = ICON_REP;
 
-    lv_entry = NetRepo->urlBase();
-    lv_entry += L" -- ";
-    lv_entry += NetRepo->urlName();
+    lv_entry = NetRepo->urlBase(); lv_entry += L" -- "; lv_entry += NetRepo->urlName();
 
     lvI.pszText = const_cast<LPWSTR>(lv_entry.c_str());
     this->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
@@ -742,7 +798,7 @@ void OmUiManMainNet::_lv_rep_populate()
   this->msgItem(IDC_LV_REP, LVM_SCROLL, 0, -lvRec.top );
 
   // enable or disable query button
-  this->enableItem(IDC_BC_QRY, (ModChan->repositoryCount() > 0));
+  this->enableItem(IDC_BC_RPQRY, (ModChan->repositoryCount() > 0));
 
   // resize ListView columns adapted to client area
   this->_lv_rep_on_resize();
@@ -781,8 +837,7 @@ void OmUiManMainNet::_lv_rep_on_selchg()
 void OmUiManMainNet::_lv_rep_on_dblclk()
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan)
-    return;
+  if(!ModChan) return;
 
   // prevent useless processing
   if(this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT) != 1)
@@ -790,8 +845,7 @@ void OmUiManMainNet::_lv_rep_on_dblclk()
 
   // Get ListView unique selection
   int lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-  if(lv_sel < 0)
-    return;
+  if(lv_sel < 0) return;
 
   OmPNetRepoArray selection;
 
@@ -856,12 +910,14 @@ void OmUiManMainNet::_lv_net_populate()
     return;
   }
 
+  LVITEMW lvI = {};
+
   // add item to list view
   for(size_t i = 0; i < ModChan->netpackCount(); ++i) {
 
     OmNetPack* NetPack = ModChan->getNetpack(i);
 
-    LVITEMW lvI = {0, static_cast<int>(i)};
+    lvI.iItem = static_cast<int>(i);
 
     // the first column, mod status, here we INSERT the new item
     lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_PARAM; //< icon and special data
@@ -925,9 +981,7 @@ void OmUiManMainNet::_lv_net_on_resize()
 ///
 void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subitem)
 {
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
   OmNetPack* NetPack = ModChan->getNetpack(item);
@@ -937,7 +991,7 @@ void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
 
   // get rectangle of subitem to draw
   RECT rect, bar_rect, txt_rect;
-  this->getLvSubRect(IDC_LV_NET, item, subitem /* 'Progress' column */, &rect);
+  this->getLvSubRect(IDC_LV_NET, item, subitem, &rect);
 
   double progress = 0.0;
   wchar_t item_str[OM_MAX_ITEM];
@@ -1149,8 +1203,7 @@ void OmUiManMainNet::_onBcQryRep()
   } else {
 
     OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan)
-      return;
+    if(!ModChan) return;
 
     OmPNetRepoArray selection;
 
@@ -1188,18 +1241,14 @@ void OmUiManMainNet::_onBcQryRep()
 ///
 void OmUiManMainNet::_onBcNewRep()
 {
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
 
-  OmModChan* ModChan = ModMan->activeChannel();
+  OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->_UiMan->childById(IDD_ADD_REP));
 
-  if(ModChan) {
+  pUiNewRep->setModChan(ModChan);
 
-    OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->_UiMan->childById(IDD_ADD_REP));
-
-    pUiNewRep->setModChan(ModChan);
-
-    pUiNewRep->open(true);
-  }
+  pUiNewRep->open(true);
 }
 
 ///
@@ -1207,15 +1256,13 @@ void OmUiManMainNet::_onBcNewRep()
 ///
 void OmUiManMainNet::_onBcDelRep()
 {
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  int lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0) return;
 
-  OmNetRepo* NetRepo = ModChan->getRepository(lb_sel);
+  OmNetRepo* NetRepo = ModChan->getRepository(lv_sel);
 
   OmWString repo_name;
   repo_name.assign(NetRepo->urlBase());
@@ -1227,7 +1274,7 @@ void OmUiManMainNet::_onBcDelRep()
                     L"Delete the following Mod Repository from Mod Channel ?", repo_name))
     return;
 
-  ModChan->removeRepository(lb_sel);
+  ModChan->removeRepository(lv_sel);
 
   // reload the repository ListBox
   this->_lv_rep_populate();
@@ -1256,7 +1303,7 @@ void OmUiManMainNet::_bc_abort_hit()
   // Abort all running operation
   this->_download_abort();
   this->_query_abort();
-  this->_upgrade_abort();
+  this->_upgrade_abort = true;
 }
 
 ///
@@ -1272,19 +1319,19 @@ void OmUiManMainNet::_onInit()
   this->_UiMan = static_cast<OmUiMan*>(this->root());
 
   // Set batches New and Delete buttons icons
-  this->setBmIcon(IDC_BC_NEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_QRY, Om_getResIcon(this->_hins, IDI_BT_REF));
+  this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_RPDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_REF));
 
-  SetWindowTheme(this->getItem(IDC_BC_NEW),L"EXPLORER",nullptr);
-  SetWindowTheme(this->getItem(IDC_BC_DEL),L"EXPLORER",nullptr);
-  SetWindowTheme(this->getItem(IDC_BC_QRY),L"EXPLORER",nullptr);
+  SetWindowTheme(this->getItem(IDC_BC_RPADD),L"EXPLORER",nullptr);
+  SetWindowTheme(this->getItem(IDC_BC_RPDEL),L"EXPLORER",nullptr);
+  SetWindowTheme(this->getItem(IDC_BC_RPQRY),L"EXPLORER",nullptr);
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_REP,    L"Repositories list");
-  this->_createTooltip(IDC_BC_QRY,    L"Query repositories");
-  this->_createTooltip(IDC_BC_NEW,    L"Add Repository");
-  this->_createTooltip(IDC_BC_DEL,    L"Delete Repository");
+  this->_createTooltip(IDC_LV_REP,    L"Repositories list");
+  this->_createTooltip(IDC_BC_RPQRY,  L"Query repositories");
+  this->_createTooltip(IDC_BC_RPADD,  L"Add Repository");
+  this->_createTooltip(IDC_BC_RPDEL,  L"Delete Repository");
   this->_createTooltip(IDC_LV_NET,    L"Downloadable Mod list");
   this->_createTooltip(IDC_BC_DNLD,   L"Download selected Mods");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort Mod download");
@@ -1417,13 +1464,10 @@ void OmUiManMainNet::_onResize()
   this->_lv_rep_on_resize(); //< resize ListView columns adapted to client area
 
   // Repositories Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_QRY, 2, 0, 22, 22, true);
-  this->_setItemPos(IDC_BC_NEW, 2, 37, 22, 22, true);
-  this->_setItemPos(IDC_BC_DEL, 2, 59, 22, 22, true);
-  //this->_setItemPos(IDC_SC_SEPAR, 2, 35, 20, 1, true);
-
-  // Horizontal separator
-  //this->_setItemPos(IDC_SC_SEPAR, 2, 54, this->cliUnitX()-4, 1);
+  this->_setItemPos(IDC_BC_RPQRY, 2, 0, 22, 22, true);
+  this->_setItemPos(IDC_SC_SEPAR, 3, 29, 19, 1, true);
+  this->_setItemPos(IDC_BC_RPADD, 2, 37, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPDEL, 2, 59, 22, 22, true);
 
   // Network Mods List ListView
   this->_setItemPos(IDC_LV_NET, 2, 84, this->cliWidth()-3, this->cliHeight()-110, true);
@@ -1433,11 +1477,10 @@ void OmUiManMainNet::_onResize()
   this->_setItemPos(IDC_BC_DNLD, 2, this->cliHeight()-23, 78, 23, true);
   this->_setItemPos(IDC_BC_STOP, 81, this->cliHeight()-23, 78, 23, true);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 161, this->cliHeight()-22, this->cliWidth()-241, 21, true);
+  this->_setItemPos(IDC_PB_MOD, 161, this->cliHeight()-22, this->cliWidth()-241, 21, true);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->cliWidth()-78, this->cliHeight()-23, 78, 23, true);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1452,16 +1495,18 @@ void OmUiManMainNet::_onRefresh()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   // disable the Progress-Bar
-  this->enableItem(IDC_PB_PKG, false);
+  this->enableItem(IDC_PB_MOD, false);
 
   // reload Repository ListBox
   this->_lv_rep_populate();
 
   // disable or enable elements depending context
-  this->enableItem(IDC_SC_LBL01, (ModHub != nullptr));
+  this->enableItem(IDC_LV_REP, (ModHub != nullptr));
+  this->enableItem(IDC_BC_RPADD, (ModHub != nullptr));
+  this->enableItem(IDC_BC_RPDEL, (ModHub != nullptr));
+  this->enableItem(IDC_BC_RPQRY, (ModHub != nullptr));
   this->enableItem(IDC_LV_NET, (ModHub != nullptr));
-  this->enableItem(IDC_LB_REP, (ModHub != nullptr));
-  this->enableItem(IDC_BC_NEW, (ModHub != nullptr));
+
 /*
   if(ModChan)
     ModChan->refreshNetLibrary();
@@ -1491,7 +1536,7 @@ void OmUiManMainNet::_onQuit()
 
   this->_download_abort();
   this->_query_abort();
-  this->_upgrade_abort();
+  this->_upgrade_abort = true;
 }
 
 
@@ -1508,17 +1553,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModHub* ModHub = ModMan->activeHub();
-  if(!ModHub)
-    return false;
-
   if(uMsg == WM_NOTIFY) {
-
-    OmModChan* ModChan = ModHub->activeChannel();
-    if(!ModChan)
-      return false;
 
     if(reinterpret_cast<NMHDR*>(lParam)->code == NM_CUSTOMDRAW) {
 
@@ -1579,6 +1614,9 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     if(LOWORD(wParam) == IDC_LV_NET) {
 
+      OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+      if(!ModChan) return false;
+
       switch(reinterpret_cast<NMHDR*>(lParam)->code)
       {
       case LVN_ITEMCHANGED: {
@@ -1637,15 +1675,15 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_BC_QRY: //< Repository "Refresh" button
+    case IDC_BC_RPQRY: //< Repository "Refresh" button
       this->_onBcQryRep();
       break;
 
-    case IDC_BC_NEW: //< Repository "Add" button
+    case IDC_BC_RPADD: //< Repository "Add" button
       this->_onBcNewRep();
       break;
 
-    case IDC_BC_DEL: //< Repository "Delete" button
+    case IDC_BC_RPDEL: //< Repository "Delete" button
       this->_onBcDelRep();
       break;
 

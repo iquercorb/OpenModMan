@@ -425,30 +425,30 @@ class OmModHub
     OmPModPsetArray       _preset_list;
 
     // mods install/restore
-    bool                  _setup_abort;
+    bool                  _psetup_abort;
 
-    void*                 _setup_hth;
+    void*                 _psetup_hth;
 
-    void*                 _setup_hwo;
+    void*                 _psetup_hwo;
 
-    OmPModPsetQueue       _setup_queue;
+    OmPModPsetQueue       _psetup_queue;
 
-    uint32_t              _setup_dones;
+    uint32_t              _psetup_dones;
 
-    uint32_t              _setup_percent;
+    uint32_t              _psetup_percent;
 
-    static DWORD WINAPI   _setup_run_fn(void*);
+    static DWORD WINAPI   _psetup_run_fn(void*);
 
 
-    static VOID WINAPI    _setup_end_fn(void*,uint8_t);
+    static VOID WINAPI    _psetup_end_fn(void*,uint8_t);
 
-    Om_beginCb            _setup_begin_cb;
+    Om_beginCb            _psetup_begin_cb;
 
-    Om_progressCb         _setup_progress_cb;
+    Om_progressCb         _psetup_progress_cb;
 
-    Om_resultCb           _setup_result_cb;
+    Om_resultCb           _psetup_result_cb;
 
-    void*                 _setup_user_ptr;
+    void*                 _psetup_user_ptr;
 
     // options
     bool                  _presets_quietmode;

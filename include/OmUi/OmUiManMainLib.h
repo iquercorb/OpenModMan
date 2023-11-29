@@ -52,6 +52,12 @@ class OmUiManMainLib : public OmDialog
     ///
     long id() const;
 
+    void lockMan(bool enable);
+
+    void lockHub(bool enable);
+
+    void lockChannel(bool enable);
+
     /// \brief Set dialog freeze mode
     ///
     /// Enable or disable the dialog freeze mode.
@@ -134,7 +140,11 @@ class OmUiManMainLib : public OmDialog
     /// \param[in] selection  : Array of Mods Pack object to install
     /// \param[in] silent     : Do not show warning messages and accept all
     ///
-    void execInstalls(const OmPModPackArray& selection, bool silent);
+    /// \return OM_RESULT_OK if operation succeed without error, OM_RESULT_ERROR if an
+    ///         error occurred and OM_RESULT_ABORT if aborted by user or in case of
+    ///         invalid call.
+    ///
+    OmResult execInstalls(const OmPModPackArray& selection, bool silent);
 
     /// \brief Add selected to queue for restoration
     ///
@@ -154,7 +164,11 @@ class OmUiManMainLib : public OmDialog
     /// \param[in] selection  : Array of Mods Pack object to retore
     /// \param[in] silent     : Do not show warning messages and accept all
     ///
-    void execRestores(const OmPModPackArray& selection, bool silent);
+    /// \return OM_RESULT_OK if operation succeed without error, OM_RESULT_ERROR if an
+    ///         error occurred and OM_RESULT_ABORT if aborted by user or in case of
+    ///         invalid call.
+    ///
+    OmResult execRestores(const OmPModPackArray& selection, bool silent);
 
     /// \brief Add selected to queue for toggle
     ///
@@ -187,18 +201,18 @@ class OmUiManMainLib : public OmDialog
     OmUiMan*            _UiMan;
 
     // thread and UI management
-    void                _update_safemode_status();
+    void                _update_processing();
 
     // mods operation (install/uninstall)
     int32_t             _modops_count;
 
     OmPModPackQueue     _modops_ovr_queue;
 
-    void                _modops_abort();
+    bool                _modops_abort;
 
     void                _modops_add(const OmPModPackArray&);
 
-    void                _modops_exec(const OmPModPackArray&);
+    OmResult            _modops_exec(const OmPModPackArray&);
 
     static void         _modops_begin_fn(void*, uint64_t);
 

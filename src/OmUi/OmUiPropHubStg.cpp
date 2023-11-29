@@ -188,6 +188,8 @@ void OmUiPropHubStg::_onTabRefresh()
 ///
 INT_PTR OmUiPropHubStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     OmWString item_str, brow_str;

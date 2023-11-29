@@ -301,6 +301,8 @@ void OmUiAddChn::_onResize()
 ///
 INT_PTR OmUiAddChn::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     bool has_changed = false;

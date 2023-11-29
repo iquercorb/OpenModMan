@@ -88,12 +88,12 @@ void OmUiPropManGle::_onLbStrlsSel()
   int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
   if(lb_sel >= 0) {
-    this->enableItem(IDC_BC_REM, true);
+    this->enableItem(IDC_BC_DEL, true);
     this->enableItem(IDC_BC_UP, (lb_sel > 0));
     int lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
     this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
   } else {
-    this->enableItem(IDC_BC_REM, false);
+    this->enableItem(IDC_BC_DEL, false);
     this->enableItem(IDC_BC_UP, false);
     this->enableItem(IDC_BC_DN, false);
   }
@@ -220,7 +220,7 @@ void OmUiPropManGle::_onTabInit()
   this->_createTooltip(IDC_BC_UP,     L"Move up in list");
   this->_createTooltip(IDC_BC_DN,     L"Move down in list");
   this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Mod Hub file to add");
-  this->_createTooltip(IDC_BC_REM,    L"Remove the selected entry");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove the selected entry");
 
   // add items to Icon Size ComboBox
   this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
@@ -255,7 +255,7 @@ void OmUiPropManGle::_onTabResize()
 
   // Startup Mod Hub list Add and Remove... buttons
   this->_setItemPos(IDC_BC_BRW01, 50, this->cliUnitY()-38, 50, 14);
-  this->_setItemPos(IDC_BC_REM, 102, this->cliUnitY()-38, 50, 14);
+  this->_setItemPos(IDC_BC_DEL, 102, this->cliUnitY()-38, 50, 14);
 }
 
 
@@ -301,7 +301,7 @@ void OmUiPropManGle::_onTabRefresh()
   }
 
   // Disable the Remove button
-  this->enableItem(IDC_BC_REM, false);
+  this->enableItem(IDC_BC_DEL, false);
 }
 
 
@@ -310,6 +310,8 @@ void OmUiPropManGle::_onTabRefresh()
 ///
 INT_PTR OmUiPropManGle::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))
@@ -345,7 +347,7 @@ INT_PTR OmUiPropManGle::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_onBcBrwStr();
       break;
 
-    case IDC_BC_REM: //< Startup Mod Hub list "Remove" Button
+    case IDC_BC_DEL: //< Startup Mod Hub list "Remove" Button
       this->_onBcRemStr();
       break;
     }

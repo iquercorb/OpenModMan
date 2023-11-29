@@ -241,7 +241,7 @@ void OmUiPropHubBat::_onTabInit()
 {
   this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
+  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
   this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
   this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
 
@@ -313,6 +313,8 @@ void OmUiPropHubBat::_onTabRefresh()
 ///
 INT_PTR OmUiPropHubBat::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))

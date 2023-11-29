@@ -368,9 +368,9 @@ bool OmUiToolRep::_rmtSel(const OmWString& ident)
     this->enableItem(IDC_BC_SAV01, false);
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
     this->setItemText(IDC_EC_READ3, L"");
-    this->enableItem(IDC_BC_QRY, false);
+    this->enableItem(IDC_BC_CHECK, false);
     this->enableItem(IDC_BC_BRW08, false);
-    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_BC_RESET, false);
     HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
     if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
     this->enableItem(IDC_BC_BRW09, false);
@@ -459,13 +459,13 @@ bool OmUiToolRep::_rmtSel(const OmWString& ident)
       }
     }
 
-    this->enableItem(IDC_BC_QRY, true);
+    this->enableItem(IDC_BC_CHECK, true);
     this->enableItem(IDC_EC_READ3, true);
     this->setItemText(IDC_EC_READ3, dpn_str);
 
   } else {
 
-    this->enableItem(IDC_BC_QRY, false);
+    this->enableItem(IDC_BC_CHECK, false);
     this->enableItem(IDC_EC_READ3, false);
     this->setItemText(IDC_EC_READ3, L"");
   }
@@ -496,7 +496,7 @@ bool OmUiToolRep::_rmtSel(const OmWString& ident)
       hBm_old = this->setStImage(IDC_SB_SNAP, hBm_new);
       if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
 
-      this->enableItem(IDC_BC_DEL, true);
+      this->enableItem(IDC_BC_RESET, true);
       this->setItemText(IDC_BC_OPEN1, L"Change...");
 
       has_snap = true;
@@ -512,7 +512,7 @@ bool OmUiToolRep::_rmtSel(const OmWString& ident)
   if(!has_snap) {
     hBm_old = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
     if(hBm_old && hBm_old != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm_old);
-    this->enableItem(IDC_BC_DEL, false);
+    this->enableItem(IDC_BC_RESET, false);
   }
 
   // allow user to edit a description
@@ -747,13 +747,12 @@ void OmUiToolRep::_onBcOpen()
     }
   }
 
-  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   OmWString start, result;
 
   // select the initial location for browsing start
-  if(pModChan) start = pModChan->libraryPath();
+  if(ModChan) start = ModChan->libraryPath();
 
   // new dialog to open file
   if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Repository definition", OM_XML_FILES_FILTER, start))
@@ -797,13 +796,12 @@ void OmUiToolRep::_onBcOpen()
 ///
 bool OmUiToolRep::_onBcBrwPkg()
 {
-  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   OmWString start, result;
 
   // select the initial location for browsing start
-  if(pModChan) start = pModChan->libraryPath();
+  if(ModChan) start = ModChan->libraryPath();
 
   // open file dialog
   if(!Om_dlgOpenFile(result, this->_hwnd, L"Open Package file", OM_PKG_FILES_FILTER, start))
@@ -828,13 +826,12 @@ bool OmUiToolRep::_onBcBrwPkg()
 ///
 bool OmUiToolRep::_onBcBrwDir()
 {
-  OmModHub* pModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  OmModChan* pModChan = pModHub ? pModHub->activeChannel() : nullptr;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   OmWString start, result;
 
   // select the initial location for browsing start
-  if(pModChan) start = pModChan->libraryPath();
+  if(ModChan) start = ModChan->libraryPath();
 
   // open dialog to select folder
   if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select a folder where to find packages to parse and add", start))
@@ -891,7 +888,7 @@ void OmUiToolRep::_onLbPkglsSel()
   int lb_sel = this->msgItem(IDC_LB_PKG, LB_GETCURSEL);
 
   // enable or disable the Package "Remove" Button
-  this->enableItem(IDC_BC_REM, (lb_sel >= 0));
+  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
 
   // if any selection, change current remote
   if(lb_sel >= 0) {
@@ -1041,7 +1038,7 @@ bool OmUiToolRep::_onBcBrwSnap()
       if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
       // enable Snapshot "Delete" Button
-      this->enableItem(IDC_BC_DEL, true);
+      this->enableItem(IDC_BC_RESET, true);
 
       // return now
       return true;
@@ -1073,7 +1070,7 @@ void OmUiToolRep::_onBcDelSnap()
   if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
 
   // disable Snapshot "Delete" Button
-  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_RESET, false);
 }
 
 
@@ -1266,16 +1263,16 @@ void OmUiToolRep::_onInit()
 
   this->_createTooltip(IDC_BC_BRW02,  L"Browse to select a package to parse and add to Repository");
   this->_createTooltip(IDC_BC_BRW03,  L"Browse to select a folder where to find packages to parse and add");
-  this->_createTooltip(IDC_BC_REM,    L"Remove the selected package from Repository");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove the selected package from Repository");
 
-  this->_createTooltip(IDC_BC_QRY,    L"Check for package dependencies availability within the Repository");
+  this->_createTooltip(IDC_BC_CHECK,  L"Check for Mod dependencies availability");
 
-  this->_createTooltip(IDC_BC_BRW08,  L"Browse to select an image to set as Package snapshot");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove the current snapshot image");
+  this->_createTooltip(IDC_BC_BRW08,  L"Browse to select thumbnail image");
+  this->_createTooltip(IDC_BC_RESET,  L"Delete thumbnail image");
 
-  this->_createTooltip(IDC_BC_BRW09,  L"Browse to open text file and use its content as description");
-  this->_createTooltip(IDC_BC_SAV02,  L"Save description changes to Repository");
-  this->_createTooltip(IDC_EC_DESC,    L"Package description text");
+  this->_createTooltip(IDC_BC_BRW09,  L"Browse to load description text");
+  this->_createTooltip(IDC_BC_SAV02,  L"Save description changes");
+  this->_createTooltip(IDC_EC_DESC,   L"Mod description");
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Define a custom download path or URL to download file");
   this->_createTooltip(IDC_EC_INP03,  L"Custom download path, base or full URL to download file");
@@ -1291,7 +1288,7 @@ void OmUiToolRep::_onInit()
   this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_OPN));
   this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_FAD));
   this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(this->_hins, IDI_BT_DAD));
-  this->setBmIcon(IDC_BC_REM, Om_getResIcon(this->_hins, IDI_BT_FRM));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_FRM));
 
   // Set snapshot format advice
   this->setItemText(IDC_SC_NOTES, L"Optimal format:\nSquare image of 128 x 128 pixels");
@@ -1342,7 +1339,7 @@ void OmUiToolRep::_onResize()
   // Add folder.. , Add... & Remove Buttons
   this->_setItemPos(IDC_BC_BRW02, half_w-125, 120, 40, 14);
   this->_setItemPos(IDC_BC_BRW03, half_w-80, 120, 40, 14);
-  this->_setItemPos(IDC_BC_REM, half_w-26, 120, 16, 14);
+  this->_setItemPos(IDC_BC_DEL, half_w-26, 120, 16, 14);
   // Packages list ListBox
   this->_setItemPos(IDC_LB_PKG, 10, 138, half_w-20, this->cliUnitY()-195);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
@@ -1373,7 +1370,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_SC_LBL07, half_w+10, 65, 54, 9);
   // Dependencies EditText & Check Button
   this->_setItemPos(IDC_EC_READ3, half_w+65, 66, half_w-120, 30);
-  this->_setItemPos(IDC_BC_QRY, this->cliUnitX()-50, 65, 40, 13);
+  this->_setItemPos(IDC_BC_CHECK, this->cliUnitX()-50, 65, 40, 13);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
   // [ - - -          Snapshot GroupBox           - - -
@@ -1384,7 +1381,7 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_SB_SNAP, half_w+65, 115, 86, 79);
   // Change.. & Delete Buttons
   this->_setItemPos(IDC_BC_BRW08, this->cliUnitX()-50, 115, 40, 13);
-  this->_setItemPos(IDC_BC_DEL, this->cliUnitX()-50, 130, 40, 13);
+  this->_setItemPos(IDC_BC_RESET, this->cliUnitX()-50, 130, 40, 13);
   // Snapshot helper Static text
   this->_setItemPos(IDC_SC_NOTES, half_w+165, 155, 60, 30);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
@@ -1429,7 +1426,9 @@ void OmUiToolRep::_onResize()
 ///
 INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    bool has_changed = false;
+  OM_UNUSED(lParam);
+
+  bool has_changed = false;
 
   // UWM_ADDENTRIES_DONE is a custom message sent from add entries thread
   // function, to notify the progress dialog ended is job.
@@ -1471,7 +1470,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       has_changed = this->_onBcBrwDir();
       break;
 
-    case IDC_BC_REM:
+    case IDC_BC_DEL:
       this->_onBcRemPkg();
       has_changed = true;
       break;
@@ -1504,7 +1503,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       has_changed = true;
       break;
 
-    case IDC_BC_QRY: //< Dependencies "Check" Button
+    case IDC_BC_CHECK: //< Dependencies "Check" Button
       this->_onBcChkDeps();
       break;
 
@@ -1512,7 +1511,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       has_changed = this->_onBcBrwSnap();
       break;
 
-    case IDC_BC_DEL: //< Snapshot "Delete" Button
+    case IDC_BC_RESET: //< Snapshot "Delete" Button
       this->_onBcDelSnap();
       has_changed = true;
       break;

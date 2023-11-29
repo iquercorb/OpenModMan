@@ -61,20 +61,23 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
-  /*_pageName(), _pageDial(), */
   _UiManMain(nullptr),
   _UiManFoot(nullptr),
   _UiManMainLib(nullptr),
   _freeze_mode(false),
   _freeze_quit(false),
+  _locked_man(false),
+  _locked_hub(false),
+  _locked_chn(false),
   _split_curs_hover(false),
   _split_curs_dragg(false),
   _split_move_param{},
   _lib_monitor_hth(nullptr),
   _listview_himl(nullptr),
   _listview_himl_size(0),
-  _setups_count(0),
-  _setups_chan_sel(0),
+  _psetup_count(0),
+  _psetup_chan_sel(0),
+  _psetup_abort(false),
   _lv_chn_icons_size(0),
   _lv_pst_icons_size(0)
 {
@@ -118,7 +121,6 @@ OmUiMan::~OmUiMan()
   this->monitorLibrary(false);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -127,6 +129,90 @@ long OmUiMan::id() const
   return IDD_MGR;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::lockMan(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMan::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  this->_locked_man = enable;
+
+  // disable/enable menus
+  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
+
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_PROPMAN, state);
+
+  // forward to child windows
+  this->_UiManMain->lockMan(enable);
+  //this->_UiManFoot->lockMan(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::lockHub(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMan::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Manager
+  this->lockMan(enable);
+
+  this->_locked_hub = enable;
+
+  // disable/enable Mod Hub ComboBox
+  this->enableItem(IDC_CB_HUB, !enable);
+
+  // disable/enable Presets buttons
+  this->enableItem(IDC_BC_PSNEW, !enable);
+  this->enableItem(IDC_BC_PSDEL, !enable);
+  this->enableItem(IDC_BC_PSEDI, !enable);
+
+  // disable/enable menus
+  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
+
+  this->setPopupItem(MNU_FILE, MNU_FILE_NEW, state);
+  this->setPopupItem(MNU_FILE, MNU_FILE_OPEN, state);
+  this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, state);
+  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state);
+
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_HUB, state);
+
+  // forward to child windows
+  this->_UiManMain->lockHub(enable);
+  //this->_UiManFoot->lockHub(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::lockChannel(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMan::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Mud Hub
+  this->lockHub(enable);
+
+  this->_locked_chn = enable;
+
+  // disable/enable Mod Channel ListView
+  this->enableItem(IDC_LV_CHN, !enable);
+
+  // disable/enable menus
+  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
+
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, state);
+
+  // forward to child windows
+  this->_UiManMain->lockChannel(enable);
+  //this->_UiManFoot->lockChannel(enable);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -206,17 +292,18 @@ void OmUiMan::monitorLibrary(bool enable)
 
   if(enable) {
 
-    OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-    OmModChan* ModChan = ModMan->activeChannel();
-    if(!ModChan)
-      return;
+    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+    if(!ModChan) return;
 
     // create a new folder change notification event
     DWORD mask =  FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
                   FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
 
     this->_lib_monitor_hev[1] = FindFirstChangeNotificationW(ModChan->libraryPath().c_str(), false, mask);
+
+    // force initial refresh of libraries
+    if(ModChan->refreshLibraries())
+      this->_UiManMain->refreshLibrary();
 
     // launch new thread to handle notifications
     DWORD dwId;
@@ -248,13 +335,10 @@ DWORD WINAPI OmUiMan::_lib_monitor_fth(void* arg)
 
       OmModMan* ModMan = static_cast<OmModMan*>(self->_data);
 
-      if(ModMan) {
-        if(ModMan->activeChannel()) {//< this should be always the case
-          if(ModMan->activeChannel()->refreshLibraries()) {
+      if(ModMan)
+        if(ModMan->activeChannel()) //< this should be always the case
+          if(ModMan->activeChannel()->refreshLibraries())
             self->_UiManMain->refreshLibrary();
-          }
-        }
-      }
 
       FindNextChangeNotification(self->_lib_monitor_hev[1]);
     }
@@ -381,7 +465,8 @@ void OmUiMan::selectChannel(int32_t id)
   }
 
   // update status icons
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0};
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0;
 
   for(size_t i = 0; i < ModHub->channelCount(); ++i) {
 
@@ -422,7 +507,8 @@ void OmUiMan::deletePreset()
   int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {LVIF_PARAM, lv_sel, 0}; lvI.lParam = -1;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
   this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   if(lvI.lParam < 0) return;
 
@@ -461,14 +547,15 @@ void OmUiMan::runPreset()
   int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {LVIF_PARAM, lv_sel, 0}; lvI.lParam = -1;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
   this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   if(lvI.lParam < 0) return;
 
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
-  this->_setups_add(ModHub->getPreset(lvI.lParam));
+  this->_psetup_add(ModHub->getPreset(lvI.lParam));
 }
 
 ///
@@ -484,7 +571,8 @@ void OmUiMan::presetProperties()
   int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {LVIF_PARAM, lv_sel, 0}; lvI.lParam = -1;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
   this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   if(lvI.lParam < 0) return;
 
@@ -682,9 +770,10 @@ bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWS
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_setups_abort()
+/*
+void OmUiMan::_psetup_abort()
 {
-  if(this->_setups_count) {
+  if(this->_psetup_count) {
 
     OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
     if(!ModHub) return;
@@ -692,23 +781,27 @@ void OmUiMan::_setups_abort()
     ModHub->abortPresets();
   }
 }
+*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_setups_add(OmModPset* ModPset)
+void OmUiMan::_psetup_add(OmModPset* ModPset)
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
   // if no queued operation, this is global start
-  if(!this->_setups_count)
-    //this->_update_safemode_status();
+  if(!this->_psetup_count)
+    //this->_update_processing();
 
   // increase count of queued mod operations
-  this->_setups_count++;
+  this->_psetup_count++;
 
-  ModHub->queuePresets(ModPset, OmUiMan::_setups_begin_fn, OmUiMan::_setups_progress_fn, OmUiMan::_setups_result_fn, this);
+  // reset abort status
+  this->_psetup_abort = false;
+
+  ModHub->queuePresets(ModPset, OmUiMan::_psetup_begin_fn, OmUiMan::_psetup_progress_fn, OmUiMan::_psetup_result_fn, this);
 
   // Enable 'Abort' and disable 'Download'
   /*
@@ -722,7 +815,7 @@ void OmUiMan::_setups_add(OmModPset* ModPset)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_setups_begin_fn(void* ptr, uint64_t param)
+void OmUiMan::_psetup_begin_fn(void* ptr, uint64_t param)
 {
   OmUiMan* self = reinterpret_cast<OmUiMan*>(ptr);
 
@@ -730,7 +823,7 @@ void OmUiMan::_setups_begin_fn(void* ptr, uint64_t param)
   if(!ModHub) return;
 
   // store the currently selected channel to restore it after
-  self->_setups_chan_sel = ModHub->activeChannelIndex();
+  self->_psetup_chan_sel = ModHub->activeChannelIndex();
 
   OmModPset* ModPset = reinterpret_cast<OmModPset*>(param);
 
@@ -738,15 +831,18 @@ void OmUiMan::_setups_begin_fn(void* ptr, uint64_t param)
   int32_t lv_index = ModHub->indexOfPreset(ModPset);
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, lv_index, 0}; lvI.iImage = ICON_STS_WIP;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = lv_index; lvI.iSubItem = 0; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_PST, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMan::_setups_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmUiMan::_psetup_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
+  OM_UNUSED(cur);
+
   OmUiMan* self = reinterpret_cast<OmUiMan*>(ptr);
 
   OmModHub* ModHub = static_cast<OmModMan*>(self->_data)->activeHub();
@@ -760,25 +856,34 @@ bool OmUiMan::_setups_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t pa
   self->selectChannel(chn_index);
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmUiMan::_setups_progress_fn : chn_index=" << chn_index << L"\n";
+  std::wcout << L"DEBUG => OmUiMan::_psetup_progress_fn : chn_index=" << chn_index << L"\n";
   #endif // DEBUG
+
+  OmResult result;
 
   if(self->_UiManMainLib) {
     if(tot > 0) {
-      self->_UiManMainLib->execInstalls(OmPModPackArray(1, ModPack), ModHub->presetQuietMode());
+      result = self->_UiManMainLib->execInstalls(OmPModPackArray(1, ModPack), ModHub->presetQuietMode());
     } else {
-      self->_UiManMainLib->execRestores(OmPModPackArray(1, ModPack), ModHub->presetQuietMode());
+      result = self->_UiManMainLib->execRestores(OmPModPackArray(1, ModPack), ModHub->presetQuietMode());
     }
+  } else {
+    result = OM_RESULT_ABORT;
   }
 
-  return true;
+  if(result == OM_RESULT_ABORT)
+    self->_psetup_abort = true;
+
+  return !self->_psetup_abort;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_setups_result_fn(void* ptr, OmResult result, uint64_t param)
+void OmUiMan::_psetup_result_fn(void* ptr, OmResult result, uint64_t param)
 {
+  OM_UNUSED(result);
+
   OmUiMan* self = reinterpret_cast<OmUiMan*>(ptr);
 
   OmModHub* ModHub = static_cast<OmModMan*>(self->_data)->activeHub();
@@ -790,14 +895,15 @@ void OmUiMan::_setups_result_fn(void* ptr, OmResult result, uint64_t param)
   int32_t lv_index = ModHub->indexOfPreset(ModPset);
 
   // reset status icon
-  LVITEMW lvI = {LVIF_IMAGE, lv_index, 0}; lvI.iImage = ICON_NONE;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = lv_index; lvI.iSubItem = 0; lvI.iImage = ICON_NONE;
   self->msgItem(IDC_LV_PST, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // select the initially selected channel
-  self->selectChannel(self->_setups_chan_sel);
+  self->selectChannel(self->_psetup_chan_sel);
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmUiMan::_setups_result_fn : _setups_chan_sel=" << self->_setups_chan_sel << L"\n";
+  std::wcout << L"DEBUG => OmUiMan::_psetup_result_fn : _psetup_chan_sel=" << self->_psetup_chan_sel << L"\n";
   #endif // DEBUG
 }
 
@@ -990,12 +1096,16 @@ void OmUiMan::_lv_chn_populate()
   // Check for presence of Mod Channel
   if(ModHub->channelCount()) {
 
+    LVITEMW lvI = {};
+
     // add Mod Chan(s) to ListView
     for(size_t i = 0; i < ModHub->channelCount(); ++i) {
 
       OmModChan* ModChan = ModHub->getChannel(i);
 
-      LVITEMW lvI = {LVIF_IMAGE, static_cast<int>(i), 0};
+      lvI.iItem = static_cast<int>(i);
+
+      lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
       lvI.iImage = (ModHub->activeChannelIndex() == static_cast<int>(i)) ? ICON_STS_RB1 : ICON_STS_RB0;
       this->msgItem(IDC_LV_CHN, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
@@ -1102,15 +1212,19 @@ void OmUiMan::_lv_pst_populate()
   // empty list view
   this->msgItem(IDC_LV_PST, LVM_DELETEALLITEMS);
 
+  LVITEMW lvI = {};
+
   for(size_t i = 0; i < ModHub->presetCount(); ++i) {
 
     OmModPset* ModPset = ModHub->getPreset(i);
 
-    LVITEMW lvI = {LVIF_IMAGE|LVIF_PARAM, static_cast<int>(i), 0};
-    lvI.lParam = static_cast<LPARAM>(i); // for Preset index sorting and reordering
-    lvI.iImage = ICON_NONE;
-    this->msgItem(IDC_LV_PST, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    lvI.iItem = static_cast<int>(i);
 
+    // status icon collumn
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_PARAM;
+    lvI.iImage = ICON_NONE; lvI.lParam = static_cast<LPARAM>(i); //< for Preset index sorting and reordering
+    this->msgItem(IDC_LV_PST, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    // preset name collumn
     lvI.iSubItem = 1; lvI.mask = LVIF_TEXT|LVIF_IMAGE; lvI.iImage = ICON_PST;
     lvI.pszText = const_cast<LPWSTR>(ModPset->title().c_str());
     this->msgItem(IDC_LV_PST, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
@@ -1150,8 +1264,8 @@ void OmUiMan::_lv_pst_on_selchg()
   unsigned lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
 
   this->enableItem(IDC_BC_PSRUN, (lv_nsl > 0));
-  this->enableItem(IDC_BC_PSDEL, (lv_nsl > 0));
-  this->enableItem(IDC_BC_PSEDI, (lv_nsl > 0));
+  this->enableItem(IDC_BC_PSDEL, (lv_nsl > 0) && !this->_locked_hub);
+  this->enableItem(IDC_BC_PSEDI, (lv_nsl > 0) && !this->_locked_hub);
 }
 
 ///
@@ -1218,7 +1332,7 @@ void OmUiMan::_onInit()
   // Set Presets buttons icons
   this->setBmIcon(IDC_BC_PSRUN, Om_getResIcon(this->_hins, IDI_BT_RUN));
   this->setBmIcon(IDC_BC_PSNEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_PSEDI, Om_getResIcon(this->_hins, IDI_BT_MOD));
+  this->setBmIcon(IDC_BC_PSEDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
   this->setBmIcon(IDC_BC_PSDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
   // new array for the icons res ID
@@ -1938,6 +2052,24 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDM_HELP_ABOUT:
       this->childById(IDD_HELP_ABT)->open();
       break;
+
+    // Debug Shortcut
+    #ifdef DEBUG
+    case IDA_DEBUG_LOCK_MAN:
+      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_MAN\n";
+      this->lockMan(!this->_locked_man);
+      break;
+
+    case IDA_DEBUG_LOCK_HUB:
+      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_HUB\n";
+      this->lockHub(!this->_locked_hub);
+      break;
+
+    case IDA_DEBUG_LOCK_CHN:
+      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_CHN\n";
+      this->lockChannel(!this->_locked_chn);
+      break;
+    #endif // DEBUG
     }
   }
 

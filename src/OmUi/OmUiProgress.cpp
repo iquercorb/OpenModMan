@@ -186,6 +186,8 @@ void OmUiProgress::_onResize()
 ///
 INT_PTR OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))

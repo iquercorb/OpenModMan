@@ -355,7 +355,7 @@ void OmUiToolPkg::_save_init()
   this->_freeze(true);
 
   // enable progress bar and abort button
-  this->enableItem(IDC_PB_PKG, true);
+  this->enableItem(IDC_PB_MOD, true);
   this->enableItem(IDC_BC_ABORT, true);
 
   // start package building thread
@@ -382,8 +382,8 @@ void OmUiToolPkg::_save_stop()
   this->_freeze(false);
 
   // reset & disable progress bar & abort button
-  this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
-  this->enableItem(IDC_PB_PKG, false);
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0, 0);
+  this->enableItem(IDC_PB_MOD, false);
   this->enableItem(IDC_BC_ABORT, false);
 
   // show a reassuring dialog message
@@ -405,12 +405,14 @@ void OmUiToolPkg::_save_stop()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_save_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
+bool OmUiToolPkg::_save_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
+  OM_UNUSED(param);
+
   OmUiToolPkg* self = reinterpret_cast<OmUiToolPkg*>(ptr);
 
-  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, tot));
-  self->msgItem(IDC_PB_PKG, PBM_SETPOS, cur);
+  self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, tot));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, cur);
 
   return !self->_save_abort;
 }
@@ -587,12 +589,9 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
     if(start.empty()) {
 
       // select current Mod Channel library as default
-      OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-      if(ModHub) {
-        OmModChan* ModChan = ModHub->activeChannel();
-        if(ModChan) {
-          start = ModChan->libraryPath();
-        }
+      OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+      if(ModChan) {
+        start = ModChan->libraryPath();
       }
 
     } else {
@@ -674,12 +673,9 @@ bool OmUiToolPkg::_onBcBrwPkg(const wchar_t* path)
     if(start.empty()) {
 
       // select current Mod Channel library as default
-      OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-      if(ModHub) {
-        OmModChan* ModChan = ModHub->activeChannel();
-        if(ModChan) {
-          start = ModChan->libraryPath();
-        }
+      OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+      if(ModChan) {
+        start = ModChan->libraryPath();
       }
 
     } else {
@@ -1187,7 +1183,7 @@ void OmUiToolPkg::_onResize()
   // Save Button
   this->_setItemPos(IDC_BC_SAVE, 10, this->cliUnitY()-45, 45, 14);
   // Progress Bar
-  this->_setItemPos(IDC_PB_PKG, 57, this->cliUnitY()-44, half_w-114, 12);
+  this->_setItemPos(IDC_PB_MOD, 57, this->cliUnitY()-44, half_w-114, 12);
   // Abort Button
   this->_setItemPos(IDC_BC_ABORT, half_w-55, this->cliUnitY()-45, 45, 14);
 
@@ -1284,6 +1280,8 @@ void OmUiToolPkg::_onClose()
 ///
 INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   // UWM_PKGSAVE_DONE is a custom message sent from Package Save
   // thread function, to notify the thread ended is job.
   if(uMsg == UWM_PKGSAVE_DONE) {

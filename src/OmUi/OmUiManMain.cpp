@@ -68,6 +68,83 @@ long OmUiManMain::id() const
   return IDD_MGR_MAIN;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMain::lockMan(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMain::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // forward to child dialogs
+  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
+    switch(this->_tab_dialog[i]->id())
+    {
+    case IDD_MGR_MAIN_LIB:
+      static_cast<OmUiManMainLib*>(this->_tab_dialog[i])->lockMan(enable);
+      break;
+    case IDD_MGR_MAIN_NET:
+      static_cast<OmUiManMainNet*>(this->_tab_dialog[i])->lockMan(enable);
+      break;
+    // TODO: update this if tab child dialog are added
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMain::lockHub(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMain::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Manager
+  this->lockMan(enable);
+
+  // forward to child dialogs
+  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
+    switch(this->_tab_dialog[i]->id())
+    {
+    case IDD_MGR_MAIN_LIB:
+      static_cast<OmUiManMainLib*>(this->_tab_dialog[i])->lockHub(enable);
+      break;
+    case IDD_MGR_MAIN_NET:
+      static_cast<OmUiManMainNet*>(this->_tab_dialog[i])->lockHub(enable);
+      break;
+    // TODO: update this if tab child dialog are added
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMain::lockChannel(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMain::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Mud Hub
+  this->lockHub(enable);
+
+  // forward to child dialogs
+  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
+    switch(this->_tab_dialog[i]->id())
+    {
+    case IDD_MGR_MAIN_LIB:
+      static_cast<OmUiManMainLib*>(this->_tab_dialog[i])->lockChannel(enable);
+      break;
+    case IDD_MGR_MAIN_NET:
+      static_cast<OmUiManMainNet*>(this->_tab_dialog[i])->lockChannel(enable);
+      break;
+    // TODO: update this if tab child dialog are added
+    }
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

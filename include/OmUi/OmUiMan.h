@@ -90,8 +90,8 @@
         #define MNU_EDIT_NET_FIXD    6
         // ------------------------- 7
         #define MNU_EDIT_NET_INFO    8
-    // ------------------------- 9
-    #define MNU_EDIT_PROPMAN     6
+    // ------------------------- 6
+    #define MNU_EDIT_PROPMAN     7
 
 #define MNU_TOOL             2
     #define MNU_TOOL_EDITPKG     0
@@ -137,6 +137,8 @@ class OmUiMan : public OmDialog
     ///
     long id() const;
 
+
+
     /// \brief Set dialog install mode
     ///
     /// Enable or disable the dialog install mode.
@@ -169,6 +171,12 @@ class OmUiMan : public OmDialog
     /// \param[in]  enable  : Start or stop monitoring.
     ///
     void monitorLibrary(bool enable);
+
+    void lockMan(bool enable);
+
+    void lockHub(bool enable);
+
+    void lockChannel(bool enable);
 
     /// \brief Open Mod Hub
     ///
@@ -292,6 +300,12 @@ class OmUiMan : public OmDialog
 
     bool                _freeze_quit;
 
+    bool                _locked_man;
+
+    bool                _locked_hub;
+
+    bool                _locked_chn;
+
     // frame splitter
     bool                _split_curs_hover;
 
@@ -312,19 +326,21 @@ class OmUiMan : public OmDialog
     uint32_t            _listview_himl_size;
 
     // Preset setup processing
-    int32_t             _setups_count;
+    int32_t             _psetup_count;
 
-    int32_t             _setups_chan_sel;
+    int32_t             _psetup_chan_sel;
 
-    void                _setups_abort();
+    //void                _psetup_abort();
 
-    void                _setups_add(OmModPset*);
+    bool                _psetup_abort;
 
-    static void         _setups_begin_fn(void*, uint64_t);
+    void                _psetup_add(OmModPset*);
 
-    static bool         _setups_progress_fn(void*, size_t, size_t, uint64_t);
+    static void         _psetup_begin_fn(void*, uint64_t);
 
-    static void         _setups_result_fn(void*, OmResult, uint64_t);
+    static bool         _psetup_progress_fn(void*, size_t, size_t, uint64_t);
+
+    static void         _psetup_result_fn(void*, OmResult, uint64_t);
 
 
     // main window items

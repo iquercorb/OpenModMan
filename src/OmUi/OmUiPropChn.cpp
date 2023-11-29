@@ -518,5 +518,7 @@ bool OmUiPropChn::applyChanges()
 ///
 INT_PTR OmUiPropChn::_onPropMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(uMsg); OM_UNUSED(wParam); OM_UNUSED(lParam);
+
   return false;
 }

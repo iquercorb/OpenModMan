@@ -47,15 +47,15 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _netpack_list_sort(OM_SORT_NAME),
   _locked_mod_library(false),
   _locked_net_library(false),
-  _install_abort(false),
-  _install_hth(nullptr),
-  _install_hwo(nullptr),
-  _install_dones(0),
-  _install_percent(0),
-  _install_begin_cb(nullptr),
-  _install_progress_cb(nullptr),
-  _install_result_cb(nullptr),
-  _install_user_ptr(nullptr),
+  _modops_abort(false),
+  _modops_hth(nullptr),
+  _modops_hwo(nullptr),
+  _modops_dones(0),
+  _modops_percent(0),
+  _modops_begin_cb(nullptr),
+  _modops_progress_cb(nullptr),
+  _modops_result_cb(nullptr),
+  _modops_user_ptr(nullptr),
   _download_abort(false),
   _download_dones(0),
   _download_percent(0),
@@ -137,17 +137,17 @@ void OmModChan::close()
   this->_locked_mod_library = false;
   this->_locked_net_library = false;
 
-  this->_install_abort = false;
-  Om_clearThread(this->_install_hth, this->_install_hwo);
-  this->_install_hth = nullptr;
-  this->_install_hwo = nullptr;
-  this->_install_dones = 0;
-  this->_install_percent = 0;
-  this->_install_queue.clear();
-  this->_install_begin_cb = nullptr;
-  this->_install_progress_cb = nullptr;
-  this->_install_result_cb = nullptr;
-  this->_install_user_ptr = nullptr;
+  this->_modops_abort = false;
+  Om_clearThread(this->_modops_hth, this->_modops_hwo);
+  this->_modops_hth = nullptr;
+  this->_modops_hwo = nullptr;
+  this->_modops_dones = 0;
+  this->_modops_percent = 0;
+  this->_modops_queue.clear();
+  this->_modops_begin_cb = nullptr;
+  this->_modops_progress_cb = nullptr;
+  this->_modops_result_cb = nullptr;
+  this->_modops_user_ptr = nullptr;
 
   this->_download_abort = false;
   this->_download_dones = 0;
@@ -1055,7 +1055,7 @@ bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::_get_install_depends(const OmModPack* ModPack, OmPModPackArray* depends, OmWStringArray* missings) const
+void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* depends, OmWStringArray* missings) const
 {
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
@@ -1069,7 +1069,7 @@ void OmModChan::_get_install_depends(const OmModPack* ModPack, OmPModPackArray* 
 
       if(ModPack->getDependIden(i) == this->_modpack_list[j]->iden()) {
 
-        this->_get_install_depends(this->_modpack_list[j], depends, missings);
+        this->_get_modops_depends(this->_modpack_list[j], depends, missings);
 
         // we add to list only if unique and not already installed, this allow
         // us to get a consistent dependency list for a bunch of package by
@@ -1095,7 +1095,7 @@ void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArra
   // gather dependencies and create missing lists
   OmPModPackArray found_depends;
   for(size_t i = 0; i < selection.size(); ++i)
-    this->_get_install_depends(selection[i], &found_depends, missings);
+    this->_get_modops_depends(selection[i], &found_depends, missings);
 
   // create the extra install list
   for(size_t i = 0; i < found_depends.size(); ++i) {
@@ -1142,14 +1142,14 @@ void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArra
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueInstalls(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
 {
-  if(this->_install_queue.empty()) {
+  if(this->_modops_queue.empty()) {
 
     // another operation is currently processing
     if(this->_locked_mod_library) {
 
-      this->_log(OM_LOG_WRN, L"queueInstalls", L"local library is locked by another operation");
+      this->_log(OM_LOG_WRN, L"queueModOps", L"local library is locked by another operation");
 
       if(result_cb)  // flush all results with abort
         for(size_t i = 0; i << selection.size(); ++i)
@@ -1158,24 +1158,24 @@ void OmModChan::queueInstalls(const OmPModPackArray& selection, Om_beginCb begin
       return;
     }
 
-    this->_install_begin_cb = begin_cb;
-    this->_install_progress_cb = progress_cb;
-    this->_install_result_cb = result_cb;
-    this->_install_user_ptr = user_ptr;
+    this->_modops_begin_cb = begin_cb;
+    this->_modops_progress_cb = progress_cb;
+    this->_modops_result_cb = result_cb;
+    this->_modops_user_ptr = user_ptr;
 
     // reset global progression parameters
-    this->_install_dones = 0;
-    this->_install_percent = 0;
+    this->_modops_dones = 0;
+    this->_modops_percent = 0;
 
   } else {
 
     // emit a warning in case a crazy client starts new download with
     // different parameters than current
-    if(this->_install_begin_cb != begin_cb ||
-       this->_install_progress_cb != progress_cb ||
-       this->_install_result_cb != result_cb ||
-       this->_install_user_ptr != user_ptr) {
-      this->_log(OM_LOG_WRN, L"queueInstalls", L"changing callbacks for a running thread is not allowed");
+    if(this->_modops_begin_cb != begin_cb ||
+       this->_modops_progress_cb != progress_cb ||
+       this->_modops_result_cb != result_cb ||
+       this->_modops_user_ptr != user_ptr) {
+      this->_log(OM_LOG_WRN, L"queueModOps", L"changing callbacks for a running thread is not allowed");
     }
   }
 
@@ -1183,35 +1183,35 @@ void OmModChan::queueInstalls(const OmPModPackArray& selection, Om_beginCb begin
   this->_locked_mod_library = true;
 
   // reset abort flag
-  this->_install_abort = false;
+  this->_modops_abort = false;
 
   for(size_t i = 0; i < selection.size(); ++i)
-    Om_push_backUnique(this->_install_queue, selection[i]);
+    Om_push_backUnique(this->_modops_queue, selection[i]);
 
-  if(!this->_install_hth) {
+  if(!this->_modops_hth) {
 
     // launch thread
-    this->_install_hth = Om_createThread(OmModChan::_install_run_fn, this);
-    this->_install_hwo = Om_waitForThread(this->_install_hth, OmModChan::_install_end_fn, this);
+    this->_modops_hth = Om_createThread(OmModChan::_modops_run_fn, this);
+    this->_modops_hwo = Om_waitForThread(this->_modops_hth, OmModChan::_modops_end_fn, this);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::execInstalls(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+OmResult OmModChan::execModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
 {
   bool invalid_call = false;
 
   // install queue not empty processing
-  if(!this->_install_queue.empty()) {
-    this->_log(OM_LOG_WRN, L"execInstalls", L"install queue is not empty");
+  if(!this->_modops_queue.empty()) {
+    this->_log(OM_LOG_WRN, L"execModOps", L"install queue is not empty");
     invalid_call = true;
   }
 
   // another operation is currently processing
   if(this->_locked_mod_library) {
-    this->_log(OM_LOG_WRN, L"execInstalls", L"local library is locked by another operation");
+    this->_log(OM_LOG_WRN, L"execModOps", L"local library is locked by another operation");
     invalid_call = true;
   }
 
@@ -1220,30 +1220,32 @@ void OmModChan::execInstalls(const OmPModPackArray& selection, Om_beginCb begin_
       for(size_t i = 0; i << selection.size(); ++i)
         result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
 
-    return;
+    return OM_RESULT_ABORT;
   }
 
-  this->_install_begin_cb = begin_cb;
-  this->_install_progress_cb = progress_cb;
-  this->_install_result_cb = result_cb;
-  this->_install_user_ptr = user_ptr;
+  this->_modops_begin_cb = begin_cb;
+  this->_modops_progress_cb = progress_cb;
+  this->_modops_result_cb = result_cb;
+  this->_modops_user_ptr = user_ptr;
 
   // reset global progression parameters
-  this->_install_dones = 0;
-  this->_install_percent = 0;
+  this->_modops_dones = 0;
+  this->_modops_percent = 0;
 
   // lock the local library to prevent concurrent array manipulation
   this->_locked_mod_library = true;
 
   // reset abort flag
-  this->_install_abort = false;
+  this->_modops_abort = false;
 
   for(size_t i = 0; i < selection.size(); ++i)
-    Om_push_backUnique(this->_install_queue, selection[i]);
+    Om_push_backUnique(this->_modops_queue, selection[i]);
 
   // run install process without thread
-  OmModChan::_install_run_fn(this);
-  OmModChan::_install_end_fn(this, 0);
+  OmResult result = static_cast<OmResult>(OmModChan::_modops_run_fn(this));
+  OmModChan::_modops_end_fn(this, 0);
+
+  return result;
 }
 
 ///
@@ -1417,90 +1419,95 @@ void OmModChan::prepareCleaning(const OmPModPackArray& selection, OmPModPackArra
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::abortInstalls()
+void OmModChan::abortModOps()
 {
-  this->_install_abort = true;
+  this->_modops_abort = true;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmModChan::_install_run_fn(void* ptr)
+DWORD WINAPI OmModChan::_modops_run_fn(void* ptr)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
-  DWORD exit_code = 0;
+  DWORD exit_code = OM_RESULT_OK;
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_install_run_fn : enter\n";
+  std::wcout << "DEBUG => OmModChan::_modops_run_fn : enter\n";
   #endif // DEBUG
 
-  while(self->_install_queue.size()) {
+  while(self->_modops_queue.size()) {
 
-    OmModPack* ModPack = self->_install_queue.front();
+    OmModPack* ModPack = self->_modops_queue.front();
 
-    if(self->_install_abort) {
+    if(self->_modops_abort) {
 
       // flush all queue with abort result
 
-      if(self->_install_result_cb)
-        self->_install_result_cb(self->_install_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(ModPack));
+      if(self->_modops_result_cb)
+        self->_modops_result_cb(self->_modops_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(ModPack));
 
-      self->_install_queue.pop_front();
+      self->_modops_queue.pop_front();
 
       continue;
     }
 
     // call client result callback so it can perform proper operations
-    if(self->_install_begin_cb)
-      self->_install_begin_cb(self->_install_user_ptr, reinterpret_cast<uint64_t>(ModPack));
+    if(self->_modops_begin_cb)
+      self->_modops_begin_cb(self->_modops_user_ptr, reinterpret_cast<uint64_t>(ModPack));
 
     OmResult result;
 
     if(ModPack->hasBackup()) {
 
       // This is a Restore operation
-      result = ModPack->restoreData(OmModChan::_install_progress_fn, self);
+      result = ModPack->restoreData(OmModChan::_modops_progress_fn, self);
 
       // call client result callback so it can perform proper operations
-      if(self->_install_result_cb)
-        self->_install_result_cb(self->_install_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
+      if(self->_modops_result_cb)
+        self->_modops_result_cb(self->_modops_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
 
-      if(result == OM_RESULT_ERROR)
-        exit_code = 1;
+      if(result != OM_RESULT_OK) {
+        exit_code = result;
+        if(result == OM_RESULT_ABORT)
+          self->_modops_abort = true;
+      }
 
     } else {
 
       // This is an Install operation
-      result = ModPack->makeBackup(OmModChan::_install_progress_fn, self);
+      result = ModPack->makeBackup(OmModChan::_modops_progress_fn, self);
       if(result == OM_RESULT_OK)
-        result = ModPack->applySource(OmModChan::_install_progress_fn, self);
+        result = ModPack->applySource(OmModChan::_modops_progress_fn, self);
 
       // call client result callback so it can perform proper operations
-      if(self->_install_result_cb)
-        self->_install_result_cb(self->_install_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
+      if(self->_modops_result_cb)
+        self->_modops_result_cb(self->_modops_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
 
       if(result != OM_RESULT_OK) {
 
+        exit_code = result;
+
         // restore any stored Backup data
-        ModPack->restoreData(OmModChan::_install_progress_fn, self, true);
+        ModPack->restoreData(OmModChan::_modops_progress_fn, self, true);
 
         // reset progression status
-        if(self->_install_progress_cb)
-          self->_install_progress_cb(self->_install_user_ptr, 0, 0, reinterpret_cast<uint64_t>(ModPack));
+        if(self->_modops_progress_cb)
+          self->_modops_progress_cb(self->_modops_user_ptr, 0, 0, reinterpret_cast<uint64_t>(ModPack));
 
-        if(result == OM_RESULT_ERROR)
-          exit_code = 1;
+        if(result == OM_RESULT_ABORT)
+          self->_modops_abort = true;
       }
 
     }
 
-    self->_install_dones++;
-    self->_install_queue.pop_front();
+    self->_modops_dones++;
+    self->_modops_queue.pop_front();
   }
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_install_run_fn : leave\n";
+  std::wcout << "DEBUG => OmModChan::_modops_run_fn : leave\n";
   #endif // DEBUG
 
   return exit_code;
@@ -1509,55 +1516,53 @@ DWORD WINAPI OmModChan::_install_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::_install_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmModChan::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   // compute global queue progress percentage
-  double queue_percents = self->_install_dones * 100;
-  for(size_t i = 0; i < self->_install_queue.size(); ++i)
-    queue_percents += self->_install_queue[i]->operationProgress();
+  double queue_percents = self->_modops_dones * 100;
+  for(size_t i = 0; i < self->_modops_queue.size(); ++i)
+    queue_percents += self->_modops_queue[i]->operationProgress();
 
-  self->_install_percent = queue_percents / (self->_install_dones + self->_install_queue.size());
+  self->_modops_percent = queue_percents / (self->_modops_dones + self->_modops_queue.size());
 
-  bool keep_on;
+  if(self->_modops_progress_cb)
+    if(!self->_modops_progress_cb(self->_modops_user_ptr, tot, cur, param))
+      self->abortModOps();
 
-  if(self->_install_progress_cb) {
-    keep_on = self->_install_progress_cb(self->_install_user_ptr, tot, cur, param);
-  } else {
-    keep_on = true;
-  }
-
-  return self->_install_abort ? false : keep_on;
+  return !self->_modops_abort;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-VOID WINAPI OmModChan::_install_end_fn(void* ptr, uint8_t fired)
+VOID WINAPI OmModChan::_modops_end_fn(void* ptr, uint8_t fired)
 {
+  OM_UNUSED(fired);
+
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_install_end_fn\n";
+  std::wcout << "DEBUG => OmModChan::_modops_end_fn\n";
   #endif // DEBUG
 
   // unlock the local library
   self->_locked_mod_library = false;
 
-  //DWORD exit_code = Om_threadExitCode(self->_install_hth);
-  Om_clearThread(self->_install_hth, self->_install_hwo);
+  //DWORD exit_code = Om_threadExitCode(self->_modops_hth);
+  Om_clearThread(self->_modops_hth, self->_modops_hwo);
 
-  self->_install_dones = 0;
-  self->_install_percent = 0;
+  self->_modops_dones = 0;
+  self->_modops_percent = 0;
 
-  self->_install_hth = nullptr;
-  self->_install_hwo = nullptr;
+  self->_modops_hth = nullptr;
+  self->_modops_hwo = nullptr;
 
-  self->_install_user_ptr = nullptr;
-  self->_install_progress_cb = nullptr;
-  self->_install_result_cb = nullptr;
-  self->_install_begin_cb = nullptr;
+  self->_modops_user_ptr = nullptr;
+  self->_modops_progress_cb = nullptr;
+  self->_modops_result_cb = nullptr;
+  self->_modops_begin_cb = nullptr;
 }
 
 ///
@@ -1627,7 +1632,7 @@ bool OmModChan::purgeBackupData(Om_progressCb progress_cb, void* user_ptr)
     return true;
 
   // initialize progression
-  size_t progress_tot, progress_cur;
+  size_t progress_tot = 0, progress_cur = 0;
   if(progress_cb) {
     progress_tot = selection.size();
     progress_cur = 0;
@@ -2004,9 +2009,10 @@ bool OmModChan::_download_download_fn(void* ptr, int64_t tot, int64_t cur, int64
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   if(self->_download_download_cb)
-    return self->_download_download_cb(self->_download_user_ptr, tot, cur, rate, param);
+    if(!self->_download_download_cb(self->_download_user_ptr, tot, cur, rate, param))
+      self->stopDownloads();
 
-  return true;
+  return !self->_download_abort;
 }
 
 ///
@@ -2207,15 +2213,11 @@ bool OmModChan::_upgrade_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t
 
   self->_upgrade_percent = queue_percents / (self->_upgrade_dones + self->_upgrade_queue.size());
 
-  bool keep_on;
+  if(self->_upgrade_progress_cb)
+    if(!self->_upgrade_progress_cb(self->_upgrade_user_ptr, tot, cur, param))
+      self->abortUpgrades();
 
-  if(self->_upgrade_progress_cb) {
-    keep_on = self->_upgrade_progress_cb(self->_upgrade_user_ptr, tot, cur, param);
-  } else {
-    keep_on = true;
-  }
-
-  return self->_upgrade_abort ? false : keep_on;
+  return !self->_upgrade_abort;
 }
 
 ///
@@ -2223,6 +2225,8 @@ bool OmModChan::_upgrade_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t
 ///
 VOID WINAPI OmModChan::_upgrade_end_fn(void* ptr, uint8_t fired)
 {
+  OM_UNUSED(fired);
+
   #ifdef DEBUG
   std::wcout << "DEBUG => OmModChan::_upgrade_end_fn\n";
   #endif // DEBUG
@@ -2727,6 +2731,8 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
 ///
 VOID WINAPI OmModChan::_query_end_fn(void* ptr, uint8_t fired)
 {
+  OM_UNUSED(fired);
+
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   #ifdef DEBUG

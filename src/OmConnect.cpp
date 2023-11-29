@@ -558,6 +558,8 @@ DWORD WINAPI OmConnect::_perform_run_fn(void* ptr)
 ///
 VOID CALLBACK OmConnect::_perform_end_fn(void* ptr, uint8_t timer)
 {
+  OM_UNUSED(timer);
+
   #ifdef DEBUG
   std::cout << "DEBUG => OmConnect::_perform_end : enter\n";
   #endif // DEBUG
@@ -663,6 +665,8 @@ size_t OmConnect::_perform_write_fio_fn(char *recv_data, size_t recv_s, size_t r
 ///
 int OmConnect::_perform_progress_fn(void* ptr, int64_t dltot, int64_t dlnow, int64_t ultot, int64_t ulnow)
 {
+  OM_UNUSED(ultot); OM_UNUSED(ulnow);
+
   OmConnect* self = static_cast<OmConnect*>(ptr);
 
   self->_progress_tot = dltot + self->_progress_off;

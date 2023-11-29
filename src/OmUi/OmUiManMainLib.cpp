@@ -49,6 +49,7 @@
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
   _modops_count(0),
+  _modops_abort(false),
   _lv_mod_icons_size(0)
 {
   // set the accelerator table for the dialog
@@ -80,6 +81,44 @@ long OmUiManMainLib::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiManMainLib::lockMan(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainLib::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  OM_UNUSED(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::lockHub(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainLib::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Manager
+  this->lockMan(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::lockChannel(bool enable)
+{
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainLib::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
+  #endif
+
+  // lock Mud Hub
+  this->lockHub(enable);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiManMainLib::freeze(bool enable)
 {
   #ifdef DEBUG
@@ -90,21 +129,6 @@ void OmUiManMainLib::freeze(bool enable)
   this->enableItem(IDC_LV_MOD, !enable);
   this->enableItem(IDC_BC_INST, !enable);
   this->enableItem(IDC_BC_UNIN, !enable);
-
-  // Batches Label, ListBox & Buttons
-  this->enableItem(IDC_SC_LBL01, !enable);
-  this->enableItem(IDC_LB_PST, !enable);
-  this->enableItem(IDC_BC_NEW, !enable);
-  this->enableItem(IDC_BC_EDI, !enable);
-  // Batch Launch & Delete Buttons
-  if(enable) {
-    this->enableItem(IDC_BC_DEL, false);
-    this->enableItem(IDC_BC_RUN, false);
-  } else {
-    int lb_sel = this->msgItem(IDC_LB_PST, LB_GETCURSEL);
-    this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
-    this->enableItem(IDC_BC_RUN, (lb_sel >= 0));
-  }
 
   // Abort Button
   this->enableItem(IDC_BC_ABORT, enable);
@@ -154,17 +178,14 @@ void OmUiManMainLib::showProperties()
   if(!ModChan) return;
 
   OmModPack* ModPack = ModChan->getModpack(this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED));
+  if(!ModPack) return;
 
-  if(ModPack) {
+  OmUiPropMod* UiPropPkg = static_cast<OmUiPropMod*>(this->_UiMan->childById(IDD_PROP_PKG));
 
-    OmUiPropMod* UiPropPkg = static_cast<OmUiPropMod*>(this->_UiMan->childById(IDD_PROP_PKG));
+  UiPropPkg->setModPack(ModPack);
 
-    UiPropPkg->setModPack(ModPack);
-
-    UiPropPkg->open(true);
-  }
+  UiPropPkg->open(true);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -198,17 +219,21 @@ void OmUiManMainLib::deleteSources()
     lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
+  // initialize progress bar
+  this->enableItem(IDC_PB_MOD, true);
+  this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, selection.size()));
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
+
   // unselect all items
-  LVITEMW lvI = {LVIF_STATE, 0, 0}; lvI.stateMask = LVIS_SELECTED;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_STATE; lvI.stateMask = LVIS_SELECTED;
   this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  // freeze dialog so user cannot interact
-  this->_UiMan->freeze(true);
+  // stop monitory to avoid real-time library refresh while deleting files which
+  // can cause access violation to unallocated memory (deleted Package)
+  this->_UiMan->monitorLibrary(false);
 
   for(size_t i = 0; i < selection.size(); ++i) {
-
-    this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, selection.size()));
-    this->msgItem(IDC_PB_PKG, PBM_SETPOS, i + 1);
 
     OmModPack* ModPack = selection[i];
 
@@ -222,13 +247,17 @@ void OmUiManMainLib::deleteSources()
                     L"Moving Mod \""+ModPack->iden()+L"\" to recycle bin failed:",
                     Om_errShell(L"", ModPack->sourcePath(), result));
     }
+
+    this->msgItem(IDC_PB_MOD, PBM_SETPOS, i + 1);
   }
 
-  // unfreeze dialog to allow user to interact
-  this->_UiMan->freeze(false);
+  // reset progress bar
+  this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, 0);
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
+  this->enableItem(IDC_PB_MOD, false);
 
-  // rebuild the ListView
-  this->_lv_mod_populate();
+  // restart library directory monitor, refresh and repopulate Listview
+  this->_UiMan->monitorLibrary(true);
 }
 
 ///
@@ -239,9 +268,6 @@ void OmUiManMainLib::discardBackups()
   // prevent useless processing
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
     return;
-
-  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  if(!ModHub) return;
 
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
@@ -264,22 +290,22 @@ void OmUiManMainLib::discardBackups()
     lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
-  // freeze dialog so user cannot interact
-  this->_UiMan->freeze(true);
+  // initialize progress bar
+  this->enableItem(IDC_PB_MOD, true);
+  this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, selection.size()));
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
 
-  // for status icon change
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0};
+  // for status icon update
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0;
 
   for(size_t i = 0; i < selection.size(); ++i) {
-
-    this->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, selection.size()));
-    this->msgItem(IDC_PB_PKG, PBM_SETPOS, i + 1);
 
     OmModPack* ModPack = selection[i];
 
     OmResult result = ModPack->discardBackup();
 
-    // change status icon
+    // update status icon
     lvI.iItem = static_cast<int>(i); lvI.iImage = this->_lv_mod_get_status_icon(ModPack);
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
@@ -287,10 +313,14 @@ void OmUiManMainLib::discardBackups()
       Om_dlgBox_okl(this->_hwnd, L"Discard backup data", IDI_ERR, L"Backup data discord error",
                     L"Deleting backup data of \""+ModPack->name()+L"\" has failed:", ModPack->lastError());
     }
+
+    this->msgItem(IDC_PB_MOD, PBM_SETPOS, i + 1);
   }
 
-  // unfreeze dialog to allow user to interact
-  this->_UiMan->freeze(false);
+  // reset progress bar
+  this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, 0);
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
+  this->enableItem(IDC_PB_MOD, false);
 }
 
 
@@ -373,6 +403,9 @@ void OmUiManMainLib::queueInstalls(bool silent)
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
     return;
 
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkTargetWrite(L"Install Mods"))
     return;
@@ -382,9 +415,6 @@ void OmUiManMainLib::queueInstalls(bool silent)
 
   if(!this->_UiMan->checkBackupWrite(L"Install Mods"))
     return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
 
   OmPModPackArray selection, installs;
 
@@ -425,20 +455,20 @@ void OmUiManMainLib::queueInstalls(bool silent)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool silent)
+OmResult OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool silent)
 {
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return OM_RESULT_ABORT;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkTargetWrite(L"Install Mods"))
-    return;
+    return OM_RESULT_ERROR;
 
   if(!this->_UiMan->checkLibraryRead(L"Install Mods"))
-    return;
+    return OM_RESULT_ERROR;
 
   if(!this->_UiMan->checkBackupWrite(L"Install Mods"))
-    return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
+    return OM_RESULT_ERROR;
 
   OmPModPackArray installs;
   OmWStringArray overlaps, depends, missings;
@@ -450,16 +480,16 @@ void OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool silent)
   if(!silent) {
 
     if(!this->_UiMan->warnMissings(ModChan->warnMissDeps(), L"Install Mods", missings))
-      return;
+      return OM_RESULT_ABORT;
 
     if(!this->_UiMan->warnExtraInstalls(ModChan->warnExtraInst(), L"Install Mods", depends))
-      return;
+      return OM_RESULT_ABORT;
 
     if(!this->_UiMan->warnOverlaps(ModChan->warnOverlaps(), L"Install Mods", overlaps))
-      return;
+      return OM_RESULT_ABORT;
   }
 
-  this->_modops_exec(installs);
+  return this->_modops_exec(installs);
 }
 
 ///
@@ -467,6 +497,9 @@ void OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool silent)
 ///
 void OmUiManMainLib::queueRestores(bool silent)
 {
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // prevent useless processing
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
     return;
@@ -477,9 +510,6 @@ void OmUiManMainLib::queueRestores(bool silent)
 
   if(!this->_UiMan->checkBackupWrite(L"Uninstall Mods"))
     return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
 
   OmPModPackArray selection, restores;
 
@@ -512,17 +542,17 @@ void OmUiManMainLib::queueRestores(bool silent)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::execRestores(const OmPModPackArray& selection, bool silent)
+OmResult OmUiManMainLib::execRestores(const OmPModPackArray& selection, bool silent)
 {
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return OM_RESULT_ABORT;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkTargetWrite(L"Uninstall Mods"))
-    return;
+    return OM_RESULT_ERROR;
 
   if(!this->_UiMan->checkBackupWrite(L"Uninstall Mods"))
-    return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
+    return OM_RESULT_ERROR;
 
   OmPModPackArray restores;
   OmWStringArray overlappers, dependents;
@@ -533,10 +563,10 @@ void OmUiManMainLib::execRestores(const OmPModPackArray& selection, bool silent)
   // warn user for extra and missing stuff
   if(!silent) {
     if(!this->_UiMan->warnExtraRestores(ModChan->warnExtraUnin(), L"Uninstall Mods", overlappers, dependents))
-      return;
+      return OM_RESULT_ABORT;
   }
 
-  this->_modops_exec(restores);
+  return this->_modops_exec(restores);
 }
 
 ///
@@ -570,15 +600,15 @@ void OmUiManMainLib::queueCleaning(bool silent)
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
     return;
 
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
   // checks for proper access on all required directories
   if(!this->_UiMan->checkTargetWrite(L"Clean uninstall Mods"))
     return;
 
   if(!this->_UiMan->checkBackupWrite(L"Clean uninstall Mods"))
     return;
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
 
   OmPModPackArray selection, restores;
 
@@ -624,38 +654,29 @@ void OmUiManMainLib::abortAll()
   this->enableItem(IDC_BC_ABORT, false);
 
   // abort all running jobs
-  this->_modops_abort();
+  //this->_modops_abort();
+  this->_modops_abort = true;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::_update_safemode_status()
+void OmUiManMainLib::_update_processing()
 {
-  bool threading = this->_modops_count;
+  bool processing = this->_modops_count;
 
-  this->_setSafe(!threading);
+  // dialog is not safe to quit
+  this->_setSafe(!processing);
 
-  this->_UiMan->freeze(threading);
+  // prevent dangerous user interactions
+  this->_UiMan->lockChannel(processing);
 
-  this->enableItem(IDC_BC_ABORT, threading);
+  // enable 'kill-switch" abort button
+  this->enableItem(IDC_BC_ABORT, processing);
 
-  this->msgItem(IDC_PB_PKG, PBM_SETPOS, 0, 0);
-  this->enableItem(IDC_PB_PKG, threading);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::_modops_abort()
-{
-  if(this->_modops_count) {
-
-    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan) return;
-
-    ModChan->abortInstalls();
-  }
+  // reset progress bar, then enable or disable
+  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0, 0);
+  this->enableItem(IDC_PB_MOD, processing);
 }
 
 ///
@@ -667,20 +688,23 @@ void OmUiManMainLib::_modops_add(const OmPModPackArray& selection)
   if(!ModChan) return;
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0}; lvI.iImage = ICON_STS_QUE;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_QUE;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfModpack(selection[i]);
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
 
-  // if no queued operation, this is global start
-  if(!this->_modops_count)
-    this->_update_safemode_status();
-
   // increase count of queued mod operations
   this->_modops_count += selection.size();
 
-  ModChan->queueInstalls(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
+  // reset abort state
+  this->_modops_abort = false;
+
+  // enter processing state
+  this->_update_processing();
+
+  ModChan->queueModOps(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
 
   // Enable 'Abort' and disable 'Download'
   if(this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT)) {
@@ -692,36 +716,41 @@ void OmUiManMainLib::_modops_add(const OmPModPackArray& selection)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::_modops_exec(const OmPModPackArray& selection)
+OmResult OmUiManMainLib::_modops_exec(const OmPModPackArray& selection)
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
+  if(!ModChan) return OM_RESULT_ABORT;
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, 0, 0}; lvI.iImage = ICON_STS_QUE;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_QUE;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfModpack(selection[i]);
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
 
-  // if no queued operation, this is global start
-  if(!this->_modops_count)
-    this->_update_safemode_status();
-
-  // increase count of queued mod operations
-  this->_modops_count += selection.size();
-
-  // Enable 'Abort' and disable 'Download'
+  // disable 'Install' and 'Uninstall' buttons
   if(this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT)) {
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
   }
 
-  // this is the synchronous version of the process
-  ModChan->execInstalls(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
+  // increase count of queued mod operations
+  this->_modops_count += selection.size();
 
-  // process endend
-  this->_update_safemode_status();
+  // reset abort state
+  this->_modops_abort = false;
+
+  // enter processing state
+  this->_update_processing();
+
+  // this is the synchronous version of the process
+  OmResult result = ModChan->execModOps(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
+
+  // leaving processing state
+  this->_update_processing();
+
+  return result;
 }
 
 ///
@@ -736,6 +765,9 @@ void OmUiManMainLib::_modops_begin_fn(void* ptr, uint64_t param)
   OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
   if(!ModChan) return;
 
+  // retrieve index of Mod Pack in Mod channel and therefore in ListView
+  int32_t item_id = ModChan->indexOfModpack(ModPack);
+
   // keep list of overlapped Mods before restoration so we can refresh and
   // maybe remove their overlapped status after Mod restoration
   if(ModPack->hasBackup()) {
@@ -746,7 +778,8 @@ void OmUiManMainLib::_modops_begin_fn(void* ptr, uint64_t param)
   }
 
   // change status icon
-  LVITEMW lvI = {LVIF_IMAGE, ModChan->indexOfModpack(ModPack), 0}; lvI.iImage = ICON_STS_WIP;
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0;  lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -755,12 +788,14 @@ void OmUiManMainLib::_modops_begin_fn(void* ptr, uint64_t param)
 ///
 bool OmUiManMainLib::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
+  OM_UNUSED(tot); OM_UNUSED(cur);
+
   OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
   OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
-  if(!ModChan) return true;
+  if(!ModChan) return false;
 
   // retrieve index of Mod Pack in Mod channel and therefore in ListView
   int32_t item_id = ModChan->indexOfModpack(ModPack);
@@ -771,10 +806,10 @@ bool OmUiManMainLib::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint
   self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
 
   // update the general progress bar
-  self->msgItem(IDC_PB_PKG, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-  self->msgItem(IDC_PB_PKG, PBM_SETPOS, ModChan->installsProgress());
+  self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->modOpsProgress());
 
-  return true;
+  return !self->_modops_abort;
 }
 
 ///
@@ -801,7 +836,8 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
   }
 
   // change ListView status icon
-  LVITEMW lvI = {LVIF_IMAGE, item_id, 0}; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
+  LVITEMW lvI = {};
+  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
   self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // update overlapping state of other Mods
@@ -849,11 +885,16 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
   // clear analytical status about install/restore
   ModPack->clearAnalytics();
 
+  // Invalidate ListView subitem rect to call custom draw (progress bar)
+  RECT rect;
+  self->getLvSubRect(IDC_LV_MOD, item_id, 4 /* 'Progress' column */, &rect);
+  self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
+
   self->_modops_count--;
 
-  // if no operation left in queue, this is global stop
+  // leaving processing state
   if(!self->_modops_count)
-    self->_update_safemode_status();
+      self->_update_processing();
 }
 
 ///
@@ -865,9 +906,7 @@ void OmUiManMainLib::_ec_lib_populate()
   std::cout << "DEBUG => OmUiManMainLib::_ec_lib_populate\n";
   #endif
 
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   OmWString item_str;
 
@@ -922,12 +961,14 @@ void OmUiManMainLib::_lv_mod_populate()
     return;
   }
 
+  LVITEMW lvI = {};
+
   // add item to list view
   for(size_t i = 0; i < ModChan->modpackCount(); ++i) {
 
     OmModPack* ModPack = ModChan->getModpack(i);
 
-    LVITEMW lvI = {0, static_cast<int>(i)};
+    lvI.iItem = static_cast<int>(i);
 
     // the first column, Mod status, here we INSERT the new item
     lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
@@ -1004,7 +1045,7 @@ void OmUiManMainLib::_lv_mod_on_selchg()
     // disable install, uninstall abort and progress bar
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
-    this->enableItem(IDC_PB_PKG, false);
+    this->enableItem(IDC_PB_MOD, false);
 
     // disable "Edit > Mod Pack" in main menu
     this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED);
@@ -1020,11 +1061,8 @@ void OmUiManMainLib::_lv_mod_on_selchg()
     return;
   }
 
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
-  if(!ModChan)
-    return;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
 
   // at least one selected, enable "Edit > Mod Pack []" pop-up menu
   this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_ENABLED);
@@ -1120,9 +1158,7 @@ void OmUiManMainLib::_lv_mod_on_rclick()
 ///
 void OmUiManMainLib::_lv_mod_cdraw_progress(HDC hDc, uint64_t item, int32_t subitem)
 {
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  OmModChan* ModChan = ModMan->activeChannel();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
   OmModPack* ModPack = ModChan->getModpack(item);
@@ -1299,7 +1335,7 @@ void OmUiManMainLib::_onResize()
   this->_setItemPos(IDC_BC_INST, 2, this->cliHeight()-23, 78, 23, true);
   this->_setItemPos(IDC_BC_UNIN, 81, this->cliHeight()-23, 78, 23, true);
   // Progress bar
-  this->_setItemPos(IDC_PB_PKG, 161, this->cliHeight()-22, this->cliWidth()-241, 21, true);
+  this->_setItemPos(IDC_PB_MOD, 161, this->cliHeight()-22, this->cliWidth()-241, 21, true);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->cliWidth()-78, this->cliHeight()-23, 78, 23,  true);
 }
@@ -1353,7 +1389,8 @@ void OmUiManMainLib::_onQuit()
   #endif
 
   // abort all running jobs
-  this->_modops_abort();
+  //this->_modops_abort();
+  this->_modops_abort = true;
 }
 
 ///
@@ -1396,7 +1433,7 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           // We seek only for the 'Progress' (#4) column of the ListView
           if(lvCustomDraw->iSubItem == 4) {
             // send this to the custom draw function
-            this->_lv_mod_cdraw_progress(lvCustomDraw->nmcd.hdc, lvCustomDraw->nmcd.dwItemSpec, lvCustomDraw->iSubItem);
+           this->_lv_mod_cdraw_progress(lvCustomDraw->nmcd.hdc, lvCustomDraw->nmcd.dwItemSpec, lvCustomDraw->iSubItem);
             // Prevent system to redraw the default background by returning CDRF_SKIPDEFAULT
             // We must use SetWindowLongPtr() instead of value because we are in DialogProc
             SetWindowLongPtr(this->_hwnd, DWLP_MSGRESULT, CDRF_SKIPDEFAULT); //< ie. return CDRF_SKIPDEFAULT;
