@@ -203,6 +203,12 @@ class OmUiManMainLib : public OmDialog
     // thread and UI management
     void                _update_processing();
 
+    bool                _locked_man;
+
+    bool                _locked_hub;
+
+    bool                _locked_chn;
+
     // mods operation (install/uninstall)
     int32_t             _modops_count;
 

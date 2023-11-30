@@ -58,7 +58,7 @@ class OmUiAddChn : public OmDialog
     /// \return Associated Mod Hub or nullptr if none.
     ///
     OmModHub* activeHub() const {
-      return _modHub;
+      return this->_ModHub;
     }
 
     /// \brief Set associated Mod Hub.
@@ -67,17 +67,17 @@ class OmUiAddChn : public OmDialog
     /// work with and on. A valid Mod Hub must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  pModHub  : Mod Hub object to associate.
+    /// \param[in]  ModHub  : Mod Hub object to associate.
     ///
-    void ctxSet(OmModHub* pModHub) {
-      _modHub = pModHub;
+    void setModHub(OmModHub* ModHub) {
+      this->_ModHub = ModHub;
     }
 
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmModHub*                 _modHub;
+    OmModHub*                 _ModHub;
 
     void                      _onTitleChange();
 

@@ -1547,6 +1547,9 @@ VOID WINAPI OmModChan::_modops_end_fn(void* ptr, uint8_t fired)
   std::wcout << "DEBUG => OmModChan::_modops_end_fn\n";
   #endif // DEBUG
 
+  // clean potential ghost packages, that may appear after restores
+  self->ghostbusterModLibrary();
+
   // unlock the local library
   self->_locked_mod_library = false;
 

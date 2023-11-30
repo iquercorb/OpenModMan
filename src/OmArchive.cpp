@@ -344,6 +344,10 @@ bool OmArchive::entrySave(size_t i, const OmWString& dst, Om_progressCb progress
 
   if(this->_stat & ZIP_READER) {
 
+    // TODO: remove this once most people migrated to this new version
+    if(i > this->_zent_size)
+      return true; //< fail silently
+
     zip_context_t* zctx = static_cast<zip_context_t*>(this->_zctx);
     zip_entry_t* zent = static_cast<zip_entry_t*>(this->_zent);
 
@@ -487,6 +491,10 @@ bool OmArchive::entrySave(size_t i, void* buffer, Om_progressCb progress_cb, voi
   int32_t mz_err;
 
   if(this->_stat & ZIP_READER) {
+
+    // TODO: remove this once most people migrated to this new version
+    if(i > this->_zent_size)
+      return true; //< fail silently
 
     zip_context_t* zctx = static_cast<zip_context_t*>(this->_zctx);
     zip_entry_t* zent = static_cast<zip_entry_t*>(this->_zent);

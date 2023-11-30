@@ -90,6 +90,10 @@ class OmUiManMainNet : public OmDialog
     ///
     void refreshLibrary();
 
+    void queryRepositories();
+
+    void deleteRepository();
+
     /// \brief Stop downloads
     ///
     /// Stop/pause download of the selected Mods
@@ -132,6 +136,12 @@ class OmUiManMainNet : public OmDialog
     // thread and UI management
     void                _update_processing();
 
+    bool                _locked_man;
+
+    bool                _locked_hub;
+
+    bool                _locked_chn;
+
     // repository query stuff
     int32_t             _query_count;
 
@@ -161,8 +171,6 @@ class OmUiManMainNet : public OmDialog
 
     bool                _upgrade_abort;
 
-    //void                _upgrade_abort();
-
     void                _upgrade_start(const OmPNetPackArray&);
 
     static void         _upgrade_begin_fn(void*, uint64_t);
@@ -171,7 +179,7 @@ class OmUiManMainNet : public OmDialog
 
     static void         _upgrade_result_fn(void*, OmResult, uint64_t);
 
-    // dialog construct and interactions
+    // repositories ListView
     void                _lv_rep_populate();
 
     void                _lv_rep_on_resize();
@@ -182,8 +190,11 @@ class OmUiManMainNet : public OmDialog
 
     void                _lv_rep_on_dblclk();
 
+    void                _lv_rep_on_rclick();
+
     int32_t             _lv_rep_get_status_icon(const OmNetRepo* NetRepo);
 
+    // network library ListView
     uint32_t            _lv_net_icons_size;
 
     void                _lv_net_populate();
@@ -202,11 +213,10 @@ class OmUiManMainNet : public OmDialog
 
     void                _lv_net_on_rclick();
 
-    void                _onBcQryRep();
+
+    void                _bc_rpqry_hit();
 
     void                _onBcNewRep();
-
-    void                _onBcDelRep();
 
     void                _bc_stop_hit();
 

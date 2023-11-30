@@ -683,6 +683,18 @@ class OmDialog
       EnableMenuItem(popup, pos, MF_BYPOSITION|enable);
     }
 
+    /// \brief Set pop-up menu-item text
+    ///
+    /// Set pop-up menu-item text
+    ///
+    /// \param[in]  popup   : Menu pop-up handle to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position within the pop-up.
+    /// \param[in]  text    : Text to set.
+    ///
+    /// \return Menu handle.
+    ///
+    void setPopupItemText(HMENU popup, unsigned pos, const OmWString& text);
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     /// \brief On initialize virtual function.

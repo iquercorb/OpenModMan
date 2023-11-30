@@ -21,6 +21,7 @@
 #define NTDDI_VERSION   0x6000000  //< NTDDI_VISTA
 
 #include <Windows.h>
+#include <CommCtrl.h>
 
 /// \brief Thread run.
 ///

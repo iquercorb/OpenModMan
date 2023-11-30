@@ -225,52 +225,27 @@ IDR_MENU MENU
     }
     POPUP "&Edit"
     {
-        POPUP "Mod &Hub", GRAYED
-        {
-          MENUITEM "&Add Mod Channel...", IDM_EDIT_ADD_CHN
-          MENUITEM SEPARATOR
-          MENUITEM "&Properties...", IDM_EDIT_CTX_PROP
-        }
-        MENUITEM SEPARATOR
-        POPUP "Mod &Channel", GRAYED
-        {
-          MENUITEM "&Properties...", IDM_EDIT_CHN_PROP
-        }
-        MENUITEM SEPARATOR
-        POPUP "Mod &Pack", GRAYED
-        {
-            MENUITEM "&Install\tEnter", IDM_EDIT_MOD_INST
-            MENUITEM "&Uninstall\tBackspace", IDM_EDIT_MOD_UINS
-            MENUITEM "&Clean uninstall\tShift+Backspace", IDM_EDIT_MOD_CLNS
-            MENUITEM SEPARATOR
-            MENUITEM "Di&scard backup data\tCtrl+Shift+Backspace", IDM_EDIT_MOD_DISC
-            MENUITEM SEPARATOR
-            MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_MOD_OPEN
-            MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_MOD_TRSH
-            MENUITEM SEPARATOR
-            MENUITEM "Load in &Editor...\tCtrl+S", IDM_EDIT_MOD_EDIT
-            MENUITEM SEPARATOR
-            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_MOD_INFO
-        }
-        POPUP "&Repository Mod Pack", GRAYED
-        {
-            MENUITEM "&Download\tEnter", IDM_EDIT_NET_DNLD
-            MENUITEM "Download &without supersede\tShift+Enter", IDM_EDIT_NET_DNWS
-            MENUITEM SEPARATOR
-            MENUITEM "Stop/Pause download\tCtrl+P", IDM_EDIT_NET_STOP
-            MENUITEM "Revoke partial download\tDelete", IDM_EDIT_NET_RVOK
-            MENUITEM SEPARATOR
-            MENUITEM "Fix de&pendencies\tCtrl+Enter", IDM_EDIT_NET_FIXD
-            MENUITEM SEPARATOR
-            MENUITEM "View &details...\tCtrl+I", IDM_EDIT_NET_INFO
-        }
-        MENUITEM SEPARATOR
-        MENUITEM "&Manager options...", IDM_EDIT_OPTIONS
+        MENUITEM "&Manager options...", IDM_EDIT_MAN_PROP
+    }
+    POPUP "&Hub"
+    {
+      MENUITEM "Add &Channel...", IDM_EDIT_CHN_ADD
+      MENUITEM "Add &Preset...", IDM_EDIT_PST_ADD
+      MENUITEM SEPARATOR
+      MENUITEM "&Properties...", IDM_EDIT_HUB_PROP
+    }
+    POPUP "&Channel"
+    {
+      MENUITEM "&Add Repository...", IDM_EDIT_REP_ADD
+      MENUITEM SEPARATOR
+      MENUITEM "&Query Repositories", IDM_EDIT_REP_QRY
+      MENUITEM SEPARATOR
+      MENUITEM "&Properties...", IDM_EDIT_CHN_PROP
     }
     POPUP "&Tools"
     {
         MENUITEM "&Mod Pack editor...", IDM_TOOLS_EDI_PKG
-        MENUITEM "&Mod Repository editor...", IDM_TOOLS_EDI_REP
+        MENUITEM "&Repository editor...", IDM_TOOLS_EDI_REP
     }
     POPUP "&Help"
     {
@@ -280,17 +255,57 @@ IDR_MENU MENU
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDR_MENU_PST  MENU
+IDR_CONTEXT_MENU MENU
 {
-  POPUP "&Preset"
+  POPUP "Channel"
   {
-    //MENUITEM "&New...", IDM_PRESET_NEW
-    //MENUITEM SEPARATOR
-    MENUITEM "&Launch", IDM_PRESET_EXE
+    MENUITEM "&New...", IDM_EDIT_CHN_ADD
+    MENUITEM "&Delete", IDM_EDIT_CHN_DEL
     MENUITEM SEPARATOR
-    MENUITEM "&Delete", IDM_PRESET_DEL
+    MENUITEM "&Properties...", IDM_EDIT_CHN_PROP
+  }
+  POPUP "Preset"
+  {
+    MENUITEM "&Run", IDM_EDIT_PST_RUN
     MENUITEM SEPARATOR
-    MENUITEM "&Properties...", IDM_PRESET_EDI
+    MENUITEM "&New...", IDM_EDIT_PST_ADD
+    MENUITEM "&Delete", IDM_EDIT_PST_DEL
+    MENUITEM SEPARATOR
+    MENUITEM "&Properties...", IDM_EDIT_PST_PROP
+  }
+  POPUP "Repository"
+  {
+    MENUITEM "&Query", IDM_EDIT_REP_QRY
+    MENUITEM SEPARATOR
+    MENUITEM "&Add...", IDM_EDIT_REP_ADD
+    MENUITEM "&Delete", IDM_EDIT_REP_DEL
+  }
+  POPUP "Local Mod"
+  {
+    MENUITEM "&Install\tEnter", IDM_EDIT_MOD_INST
+    MENUITEM "&Uninstall\tBackspace", IDM_EDIT_MOD_UINS
+    MENUITEM "&Clean uninstall\tShift+Backspace", IDM_EDIT_MOD_CLNS
+    MENUITEM SEPARATOR
+    MENUITEM "Di&scard backup data\tCtrl+Shift+Backspace", IDM_EDIT_MOD_DISC
+    MENUITEM SEPARATOR
+    MENUITEM "&Open in Explorer...\tCtrl+E", IDM_EDIT_MOD_OPEN
+    MENUITEM "Move to &recycle bin\tDelete", IDM_EDIT_MOD_TRSH
+    MENUITEM SEPARATOR
+    MENUITEM "Load in &Editor...\tCtrl+S", IDM_EDIT_MOD_EDIT
+    MENUITEM SEPARATOR
+    MENUITEM "View &details...\tCtrl+I", IDM_EDIT_MOD_INFO
+  }
+  POPUP "Network Mod"
+  {
+    MENUITEM "&Download\tEnter", IDM_EDIT_NET_DNLD
+    MENUITEM "Download &without supersede\tShift+Enter", IDM_EDIT_NET_DNWS
+    MENUITEM SEPARATOR
+    MENUITEM "Stop/Pause download\tCtrl+P", IDM_EDIT_NET_STOP
+    MENUITEM "Revoke partial download\tDelete", IDM_EDIT_NET_RVOK
+    MENUITEM SEPARATOR
+    MENUITEM "Fix de&pendencies\tCtrl+Enter", IDM_EDIT_NET_FIXD
+    MENUITEM SEPARATOR
+    MENUITEM "View &details...\tCtrl+I", IDM_EDIT_NET_INFO
   }
 }
 

@@ -648,6 +648,17 @@ void OmDialog::_createTooltip(unsigned id, const OmWString& text)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDialog::setPopupItemText(HMENU popup, unsigned pos, const OmWString& text)
+{
+  MENUITEMINFOW mIi = {}; mIi.cbSize = sizeof(MENUITEMINFOW);
+  mIi.fMask = MIIM_STRING;
+  mIi.dwTypeData = const_cast<LPWSTR>(text.c_str());
+  SetMenuItemInfoW(popup, pos, true, &mIi);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDialog::_setSafe(bool safe)
 {
   #ifdef DEBUG

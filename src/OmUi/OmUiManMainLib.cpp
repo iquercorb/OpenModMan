@@ -48,6 +48,9 @@
 ///
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
+  _locked_man(false),
+  _locked_hub(false),
+  _locked_chn(false),
   _modops_count(0),
   _modops_abort(false),
   _lv_mod_icons_size(0)
@@ -87,7 +90,7 @@ void OmUiManMainLib::lockMan(bool enable)
   std::cout << "DEBUG => OmUiManMainLib::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
 
-  OM_UNUSED(enable);
+  this->_locked_man = enable;
 }
 
 ///
@@ -98,6 +101,8 @@ void OmUiManMainLib::lockHub(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiManMainLib::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+
+  this->_locked_hub = enable;
 
   // lock Manager
   this->lockMan(enable);
@@ -111,6 +116,8 @@ void OmUiManMainLib::lockChannel(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiManMainLib::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+
+  this->_locked_chn = enable;
 
   // lock Mud Hub
   this->lockHub(enable);
@@ -1033,105 +1040,76 @@ void OmUiManMainLib::_lv_mod_on_resize()
 ///
 void OmUiManMainLib::_lv_mod_on_selchg()
 {
-  // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT);
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  // handle to "Edit > Mod Pack >" sub-menu
-  HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_MOD);
+  // get count of ListView selected item
+  uint32_t lv_nsl = this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT);
 
-  // check count of selected item
-  if(!lv_nsl) {
+  // handle to sub-menu
+  //HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_MOD);
 
-    // disable install, uninstall abort and progress bar
+  if((lv_nsl < 1) || (ModChan == nullptr)) {
+
+    // disable buttons
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
-    this->enableItem(IDC_PB_MOD, false);
 
-    // disable "Edit > Mod Pack" in main menu
-    this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED);
-
-    // disable all menu-item (for right click menu)
-    for(unsigned i = 0; i < 10; ++i)
-      this->_UiMan->setPopupItem(hPopup, i, MF_GRAYED);
-
+    // disable all menu items
+    /*
+    for(uint32_t i = 0; i < 12; ++i)
+      this->setPopupItem(hPopup, i, MF_GRAYED);
+    */
     // show nothing in footer frame
-    this->_UiMan->pUiMgrFoot()->clearItem();
-
-    // return now
-    return;
-  }
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
-
-  // at least one selected, enable "Edit > Mod Pack []" pop-up menu
-  this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_ENABLED);
-
-  // Check whether we have multiple selection
-  if(lv_nsl > 1) {
-
-    // Enable both buttons
-    this->enableItem(IDC_BC_INST, true);
-    this->enableItem(IDC_BC_UNIN, true);
-
-    // enable menu-items from "install" to "Move to recycle bin"
-    for(unsigned i = 0; i < 6; ++i)
-      this->_UiMan->setPopupItem(hPopup, i, MF_ENABLED);
-
-    // disable proper menu-items
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_EDIT, MF_GRAYED); //< "Load in Mod Pack Editor" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_INFO, MF_GRAYED); //< "View detail..." menu-item
-
-    // on multiple selection, we hide Mod description
     this->_UiMan->pUiMgrFoot()->clearItem();
 
   } else {
 
-    // enable menu-items from "Uninstall all" to "View details..."
-    for(unsigned i = 3; i < 10; ++i)
-      this->_UiMan->setPopupItem(hPopup, i, MF_ENABLED);
+    bool can_install = false;
+    bool can_restore = false;
+    bool can_cleanng = false;
 
-    OmModPack* ModPack;
+    OmModPack* ModPack = nullptr;
 
-    // get the selected item id (only one, no need to iterate)
-    int lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    if(lv_sel >= 0) {
+    // scan selection to check what can be done
+    int32_t lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sl != -1) {
 
-      ModPack = ModChan->getModpack(lv_sel);
+      ModPack = ModChan->getModpack(lv_sl);
 
-      // show Mods info in footer frame
-      this->_UiMan->pUiMgrFoot()->selectItem(ModPack);
-
-      // enable proper menu-item and buttons
       if(ModPack->hasBackup()) {
-
-        // Enable and disable proper buttons
-        this->enableItem(IDC_BC_INST, false);
-        this->enableItem(IDC_BC_UNIN, true);
-
-        // enable and disable proper menu-items
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_INST, MF_GRAYED);  //< "Install"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_UINS, MF_ENABLED); //< "Uninstall"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_CLNS, MF_ENABLED); //< "Uninstall tree"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_DISC, MF_ENABLED); //< "Discard Backup data"
-
+        can_restore = true;
+        if(ModPack->dependCount())
+          can_cleanng = true;
       } else {
-
-        // Enable and disable proper buttons
-        this->enableItem(IDC_BC_INST, true);
-        this->enableItem(IDC_BC_UNIN, false);
-
-        // enable and disable proper menu-items
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_INST, MF_ENABLED); //< "Install"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_UINS, MF_GRAYED);  //< "Uninstall"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_CLNS, MF_GRAYED);  //< "Uninstall tree"
-        this->_UiMan->setPopupItem(hPopup, MNU_EDIT_MOD_DISC, MF_GRAYED);  //< "Discard Backup data"
+        can_install = true;
       }
 
+      // next selected item
+      lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+    }
+
+    // if single selection show mod pack overview
+    if(lv_nsl == 1) {
+      this->_UiMan->pUiMgrFoot()->selectItem(ModPack);
     } else {
-      // reset footer frame
       this->_UiMan->pUiMgrFoot()->clearItem();
     }
+
+    // enable / disable buttons
+    this->enableItem(IDC_BC_INST, can_install);
+    this->enableItem(IDC_BC_UNIN, can_restore);
+
+    // enable / disable menu items
+    /*
+    this->setPopupItem(hPopup, MNU_MOD_INST, can_install ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_MOD_UINS, can_restore ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_MOD_CLNS, can_cleanng ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_MOD_DISC, MF_ENABLED);
+    this->setPopupItem(hPopup, MNU_MOD_OPEN, MF_ENABLED);
+    this->setPopupItem(hPopup, MNU_MOD_TRSH, MF_ENABLED);
+    this->setPopupItem(hPopup, MNU_MOD_EDIT, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_MOD_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+    */
   }
 }
 
@@ -1140,17 +1118,61 @@ void OmUiManMainLib::_lv_mod_on_selchg()
 ///
 void OmUiManMainLib::_lv_mod_on_rclick()
 {
-  // Refresh pop-up menu according selection
-  this->_lv_mod_on_selchg();
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  // get handle to "Edit > Mod Pack..." sub-menu
-  HMENU hMenu = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_MOD);
+  // get sub-menu from hidden context menu
+  HMENU hPopup = this->_UiMan->getContextPopup(POP_MOD);
+
+  // get count of ListView selected item
+  uint32_t lv_nsl = this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT);
+
+  // enable or disable menu-items according current state and selection
+  if((lv_nsl < 1) || (ModChan == nullptr)) {
+
+    // disable all menu items
+    for(uint32_t i = 0; i < 12; ++i)
+      this->setPopupItem(hPopup, i, MF_GRAYED);
+
+  } else {
+
+    bool can_install = false;
+    bool can_restore = false;
+    bool can_cleanng = false;
+
+    // scan selection to check what can be done
+    int32_t lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sl != -1) {
+
+      OmModPack* ModPack = ModChan->getModpack(lv_sl);
+
+      if(ModPack->hasBackup()) {
+        can_restore = true;
+        if(ModPack->dependCount())
+          can_cleanng = true;
+      } else {
+        can_install = true;
+      }
+
+      // next selected item
+      lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+    }
+
+    this->setPopupItem(hPopup, POP_MOD_INST, can_install ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_MOD_UINS, can_restore ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_MOD_CLNS, can_cleanng ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_MOD_DISC, MF_ENABLED);
+    this->setPopupItem(hPopup, POP_MOD_OPEN, MF_ENABLED);
+    this->setPopupItem(hPopup, POP_MOD_TRSH, MF_ENABLED);
+    this->setPopupItem(hPopup, POP_MOD_EDIT, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_MOD_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+  }
 
   // get mouse cursor position
   POINT pt;
   GetCursorPos(&pt);
 
-  TrackPopupMenu(hMenu, TPM_TOPALIGN|TPM_LEFTALIGN, pt.x, pt.y, 0, this->_hwnd, nullptr);
+  // display popup menu along mouse cursor
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN|TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
 }
 
 ///
@@ -1318,7 +1340,7 @@ void OmUiManMainLib::_onHide()
   #endif
 
   // disable "Edit > Mod Pack" in main menu
-  this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED);
+  //this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED);
 }
 
 ///

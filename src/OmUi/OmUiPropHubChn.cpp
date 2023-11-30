@@ -393,7 +393,7 @@ void OmUiPropHubChn::_onBcAddModChan()
 
   // open add Mod Channel dialog
   OmUiAddChn* pUiNewLoc = static_cast<OmUiAddChn*>(this->siblingById(IDD_ADD_CHN));
-  pUiNewLoc->ctxSet(pModHub);
+  pUiNewLoc->setModHub(pModHub);
   pUiNewLoc->open(true);
 }
 

@@ -143,7 +143,7 @@ void OmUiMan::lockMan(bool enable)
   // disable/enable menus
   int32_t state = enable ? MF_GRAYED : MF_ENABLED;
 
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_PROPMAN, state);
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_MAN_PROP, state);
 
   // forward to child windows
   this->_UiManMain->lockMan(enable);
@@ -180,7 +180,7 @@ void OmUiMan::lockHub(bool enable)
   this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, state);
   this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state);
 
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_HUB, state);
+  this->setPopupItem(MNU_EDIT, MNU_HUB, state);
 
   // forward to child windows
   this->_UiManMain->lockHub(enable);
@@ -207,7 +207,7 @@ void OmUiMan::lockChannel(bool enable)
   // disable/enable menus
   int32_t state = enable ? MF_GRAYED : MF_ENABLED;
 
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, state);
+  this->setPopupItem(MNU_EDIT, MNU_CHN, state);
 
   // forward to child windows
   this->_UiManMain->lockChannel(enable);
@@ -259,8 +259,8 @@ void OmUiMan::safemode(bool enable)
   this->_UiManMain->safemode(enable);
   this->_UiManFoot->safemode(enable);
 */
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_HUB, enable?MF_GRAYED:MF_ENABLED);
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, enable?MF_GRAYED:MF_ENABLED);
+  this->setPopupItem(MNU_EDIT, MNU_HUB, enable?MF_GRAYED:MF_ENABLED);
+  this->setPopupItem(MNU_EDIT, MNU_CHN, enable?MF_GRAYED:MF_ENABLED);
 }
 
 
@@ -434,8 +434,8 @@ void OmUiMan::selectChannel(int32_t id)
   // stop Library folder monitoring
   this->monitorLibrary(false);
 
-  // disable "Edit > Mod Pack []" in main menu
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED);
+  // disable menus
+  this->setPopupItem(MNU_EDIT, MNU_CHN, MF_GRAYED);
 
   // select the requested Mod Channel
   if(ModHub) {
@@ -454,13 +454,13 @@ void OmUiMan::selectChannel(int32_t id)
         this->monitorLibrary(true);
       }
 
-      // enable the "Edit > Mod Channel properties..." menu
-      this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, MF_ENABLED);
+      // enable the "Edit > Channel []" menu
+      this->setPopupItem(MNU_EDIT, MNU_CHN, MF_ENABLED);
 
     } else {
 
-      // disable the "Edit > Mod Channel properties..." menu
-      this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, MF_GRAYED);
+      // disable the "Edit > Channel []" menu
+      this->setPopupItem(MNU_EDIT, MNU_CHN, MF_GRAYED);
     }
   }
 
@@ -770,22 +770,6 @@ bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWS
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-/*
-void OmUiMan::_psetup_abort()
-{
-  if(this->_psetup_count) {
-
-    OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-    if(!ModHub) return;
-
-    ModHub->abortPresets();
-  }
-}
-*/
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiMan::_psetup_add(OmModPset* ModPset)
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
@@ -802,14 +786,6 @@ void OmUiMan::_psetup_add(OmModPset* ModPset)
   this->_psetup_abort = false;
 
   ModHub->queuePresets(ModPset, OmUiMan::_psetup_begin_fn, OmUiMan::_psetup_progress_fn, OmUiMan::_psetup_result_fn, this);
-
-  // Enable 'Abort' and disable 'Download'
-  /*
-  if(this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT)) {
-    this->enableItem(IDC_BC_INST, false);
-    this->enableItem(IDC_BC_UNIN, false);
-  }
-  */
 }
 
 ///
@@ -1138,11 +1114,11 @@ void OmUiMan::_lv_chn_populate()
                   "empty and have no Mod Channel configured. Do you want "
                   "to add a Mod Channel now ?"))
     {
-      OmUiAddChn* UiAddLoc = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
+      OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
 
-      UiAddLoc->ctxSet(ModHub);
+      UiAddChn->setModHub(ModHub);
 
-      UiAddLoc->open(true);
+      UiAddChn->open(true);
     }
   }
 }
@@ -1166,12 +1142,36 @@ void OmUiMan::_lv_chn_on_resize()
 ///
 void OmUiMan::_lv_chn_on_selchg()
 {
-  // Get ListView unique selection
-  int lv_sel = this->msgItem(IDC_LV_CHN, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-  if(lv_sel < 0)
-    return;
+  // Get ListView single selection
+  int32_t lv_sel = this->msgItem(IDC_LV_CHN, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0) return;
 
   this->selectChannel(lv_sel);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::_lv_chn_on_rclick()
+{
+  // get Popup submenu from hidden context menu
+  HMENU hPopup = this->getContextPopup(POP_CHN);
+  if(!hPopup) return;
+
+  // get ListView selection
+  uint32_t lv_nsl = this->msgItem(IDC_LV_CHN, LVM_GETSELECTEDCOUNT);
+
+  // enable or disable menu-items according current state
+  this->setPopupItem(hPopup, POP_CHN_ADD,  this->_locked_hub?MF_GRAYED:MF_ENABLED);
+  this->setPopupItem(hPopup, POP_CHN_DEL,  (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
+  this->setPopupItem(hPopup, POP_CHN_PROP, (lv_nsl && !this->_locked_chn)?MF_ENABLED:MF_GRAYED);
+
+  // get mouse cursor position
+  POINT pt;
+  GetCursorPos(&pt);
+
+  // display popup menu along mouse cursor
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN|TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
 }
 
 ///
@@ -1261,11 +1261,13 @@ void OmUiMan::_lv_pst_on_resize()
 void OmUiMan::_lv_pst_on_selchg()
 {
   // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
+  uint32_t lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
 
-  this->enableItem(IDC_BC_PSRUN, (lv_nsl > 0));
-  this->enableItem(IDC_BC_PSDEL, (lv_nsl > 0) && !this->_locked_hub);
-  this->enableItem(IDC_BC_PSEDI, (lv_nsl > 0) && !this->_locked_hub);
+
+
+  this->enableItem(IDC_BC_PSRUN, lv_nsl);
+  this->enableItem(IDC_BC_PSDEL, lv_nsl && !this->_locked_hub);
+  this->enableItem(IDC_BC_PSEDI, lv_nsl && !this->_locked_hub);
 }
 
 ///
@@ -1273,36 +1275,25 @@ void OmUiMan::_lv_pst_on_selchg()
 ///
 void OmUiMan::_lv_pst_on_rclick()
 {
-  // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
+  // get Popup submenu from hidden context menu
+  HMENU hPopup = this->getContextPopup(POP_PST);
+  if(!hPopup) return;
 
-  HMENU hMenu;
-  HMENU hPopup;
+  // get ListView selection
+  uint32_t lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
 
-  // Load the menu resource.
-  if((hMenu = LoadMenu(this->hins(), MAKEINTRESOURCE(IDR_MENU_PST))) == nullptr)
-      return;
-
-  // TrackPopupMenu cannot display the menu bar so get
-  // a handle to the first shortcut menu.
-  hPopup = GetSubMenu(hMenu, 0);
-
-  // Disable all menu-item if no item is selected
-  if(!lv_nsl) {
-    for(unsigned i = 0; i < 6; ++i)
-      this->setPopupItem(hPopup, i, MF_GRAYED);
-  }
+  // enable or disable menu-items according current state
+  this->setPopupItem(hPopup, POP_PST_RUN,  lv_nsl?MF_ENABLED:MF_GRAYED);
+  this->setPopupItem(hPopup, POP_PST_ADD,  this->_locked_hub?MF_GRAYED:MF_ENABLED);
+  this->setPopupItem(hPopup, POP_PST_DEL,  (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
+  this->setPopupItem(hPopup, POP_PST_PROP, (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
 
   // get mouse cursor position
   POINT pt;
   GetCursorPos(&pt);
 
-  // Display the shortcut menu. Track the right mouse
-  // button.
-  TrackPopupMenu(hPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
-
-  // Destroy the menu.
-  DestroyMenu(hMenu);
+  // display popup menu along mouse cursor
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN|TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
 }
 
 ///
@@ -1352,9 +1343,12 @@ void OmUiMan::_onInit()
   this->_listview_himl = ImageList_Create(ModMan->iconsSize(), ModMan->iconsSize(), ILC_COLOR32, 0, OM_LISTVIEW_ICON_COUNT);
 
   for(uint32_t i = 0; i < OM_LISTVIEW_ICON_COUNT; ++i)
-    ImageList_Add((HIMAGELIST)this->_listview_himl, Om_getResImage(this->_hins, idb[i]+shift), nullptr);
+    ImageList_Add(this->_listview_himl, Om_getResImage(this->_hins, idb[i]+shift), nullptr);
 
   this->_listview_himl_size =  ModMan->iconsSize();
+
+  // load the context menu ressource
+  this->_context_menu = LoadMenu(this->hins(), MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 
   // load startup Mod Hub files if any
   bool autoload;
@@ -1610,18 +1604,16 @@ void OmUiMan::_onRefresh()
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
   OmModHub* ModHub = ModMan->activeHub();
+  OmModChan* ModChan = ModMan->activeChannel();
 
   // update menus
-  int state = ModHub ? MF_ENABLED : MF_GRAYED;
-  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state); // File > Close
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_HUB, state); // Edit > Mod Hub...
-  if(ModHub) {
-    // Edit > Mod Channel properties...
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, ModHub->activeChannel() ? MF_ENABLED : MF_GRAYED);
-  } else {
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_CHN, MF_GRAYED); // Edit > Mod Channel
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_MOD, MF_GRAYED); // Edit > Package []
-    this->setPopupItem(MNU_EDIT, MNU_EDIT_NET, MF_GRAYED); // Edit > Remote []
+  uint32_t hub_grayed = (ModHub && !this->_locked_hub) ? MF_ENABLED : MF_GRAYED;
+  uint32_t chn_grayed = (ModChan  && !this->_locked_chn) ? MF_ENABLED : MF_GRAYED;
+
+  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, hub_grayed);
+  for(uint32_t i = 0; i < 6; ++i) {
+    this->setPopupItem(MNU_HUB, i, hub_grayed);
+    this->setPopupItem(MNU_CHN, i, chn_grayed);
   }
 
   if(this->_listview_himl_size != ModMan->iconsSize()) {
@@ -1825,7 +1817,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
       case NM_RCLICK:
-        //this->_lv_mod_on_rclick();
+        this->_lv_chn_on_rclick();
         break;
 
       case LVN_ITEMCHANGED:
@@ -1870,6 +1862,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
     OmModHub* ModHub = ModMan->activeHub();
+    OmModChan* ModChan = ModMan->activeChannel();
 
     OmWString item_str;
 
@@ -1933,28 +1926,76 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     // Menu : Edit []
-    case IDM_EDIT_CTX_PROP: {
-      OmUiPropHub* pUiPropHub = static_cast<OmUiPropHub*>(this->childById(IDD_PROP_HUB));
-      pUiPropHub->setModHub(ModHub);
-      pUiPropHub->open();
+    case IDM_EDIT_HUB_PROP: {
+        if(ModHub) {
+          OmUiPropHub* UiPropHub = static_cast<OmUiPropHub*>(this->childById(IDD_PROP_HUB));
+          UiPropHub->setModHub(ModHub);
+          UiPropHub->open();
+        }
       break;
-    }
+      }
 
     case IDM_EDIT_CHN_PROP: {
-      OmUiPropChn* pUiPropLoc = static_cast<OmUiPropChn*>(this->childById(IDD_PROP_CHN));
-      pUiPropLoc->setModChan(ModHub->activeChannel());
-      pUiPropLoc->open();
+        if(ModChan) {
+          OmUiPropChn* UiPropChn = static_cast<OmUiPropChn*>(this->childById(IDD_PROP_CHN));
+          UiPropChn->setModChan(ModChan);
+          UiPropChn->open();
+        }
       break;
-    }
+      }
 
-    case IDM_EDIT_ADD_CHN: {
-      OmUiAddChn* pUiAddLoc = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
-      pUiAddLoc->ctxSet(ModHub);
-      pUiAddLoc->open();
+    case IDM_EDIT_CHN_ADD: {
+        if(ModHub) {
+          OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
+          UiAddChn->setModHub(ModHub);
+          UiAddChn->open();
+        }
       break;
-    }
+      }
 
-    // Menu : Edit > Package > []
+    // Menu : Edit > Preset > []
+    case IDM_EDIT_PST_RUN:
+      this->runPreset();
+      break;
+
+    case IDM_EDIT_PST_ADD: {
+        if(ModHub) {
+          OmUiAddPst* UiAddPst = static_cast<OmUiAddPst*>(this->childById(IDD_ADD_PST));
+          UiAddPst->setModHub(ModHub);
+          UiAddPst->open();
+        }
+      break;
+      }
+
+    case IDM_EDIT_PST_DEL:
+      this->deletePreset();
+      break;
+
+    case IDM_EDIT_PST_PROP:
+      this->presetProperties();
+      break;
+
+
+    // Menu : Edit > Repository > []
+    case IDM_EDIT_REP_QRY:
+      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queryRepositories();
+      break;
+
+    case IDM_EDIT_REP_ADD: {
+        if(ModChan) {
+          OmUiAddRep* UiAddRep = static_cast<OmUiAddRep*>(this->childById(IDD_ADD_REP));
+          UiAddRep->setModChan(ModChan);
+          UiAddRep->open();
+        }
+      break;
+      }
+
+    case IDM_EDIT_REP_DEL:
+      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->deleteRepository();
+      break;
+
+
+    // Menu : Edit > Local Mod > []
     case IDM_EDIT_MOD_INST:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->queueInstalls();
       break;
@@ -1988,7 +2029,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
 
-    // Menu : Edit > Remote > []
+    // Menu : Edit > Network Mod > []
     case IDM_EDIT_NET_DNWS:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queueDownloads(false);
       break;
@@ -2013,25 +2054,8 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->showProperties();
       break;
 
-    case IDM_EDIT_OPTIONS:
+    case IDM_EDIT_MAN_PROP:
       this->childById(IDD_PROP_MGR)->open();
-      break;
-
-    // Presets Pop-Up menu
-    case IDM_PRESET_NEW:
-      this->createPreset();
-      break;
-
-    case IDM_PRESET_DEL:
-      this->deletePreset();
-      break;
-
-    case IDM_PRESET_EXE:
-      this->runPreset();
-      break;
-
-    case IDM_PRESET_EDI:
-      this->presetProperties();
       break;
 
     // Menu : Tools > []

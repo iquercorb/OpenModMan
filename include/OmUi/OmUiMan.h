@@ -40,68 +40,6 @@
 ///
 #define UWM_MAIN_ABORT_REQUEST    (WM_APP+17)
 
-/// \brief Main menu intems indices
-///
-/// Indices for main menu items
-///
-#define MNU_FILE             static_cast<unsigned>(0)
-    #define MNU_FILE_NEW         0
-        #define MNU_FILE_NEW_HUB    0
-    // ------------------------- 1
-    #define MNU_FILE_OPEN        2
-    #define MNU_FILE_RECENT      3
-    // ------------------------- 4
-    #define MNU_FILE_CLOSE       5
-    // ------------------------- 6
-    #define MNU_FILE_QUIT        7
-
-#define MNU_EDIT             1
-    #define MNU_EDIT_HUB         0
-        #define MNU_EDIT_ADDCHN      0
-        // ------------------------- 1
-        #define MNU_EDIT_PROPHUB     2
-
-    // ------------------------- 1
-    #define MNU_EDIT_CHN         2
-        #define MNU_EDIT_PROPCHN     0
-
-    // ------------------------- 3
-    #define MNU_EDIT_MOD         4
-        #define MNU_EDIT_MOD_INST    0
-        #define MNU_EDIT_MOD_UINS    1
-        #define MNU_EDIT_MOD_CLNS    2
-        // ------------------------- 3
-        #define MNU_EDIT_MOD_DISC    4
-        // ------------------------- 5
-        #define MNU_EDIT_MOD_OPEN    6
-        #define MNU_EDIT_MOD_TRSH    7
-        // ------------------------- 8
-        #define MNU_EDIT_MOD_EDIT    9
-        // ------------------------- 10
-        #define MNU_EDIT_MOD_INFO    11
-
-    #define MNU_EDIT_NET         5
-        #define MNU_EDIT_NET_DNLD    0
-        #define MNU_EDIT_NET_DNWS    1
-        // ------------------------- 2
-        #define MNU_EDIT_NET_ABRT    3
-        #define MNU_EDIT_NET_RVOK    4
-        // ------------------------- 5
-        #define MNU_EDIT_NET_FIXD    6
-        // ------------------------- 7
-        #define MNU_EDIT_NET_INFO    8
-    // ------------------------- 6
-    #define MNU_EDIT_PROPMAN     7
-
-#define MNU_TOOL             2
-    #define MNU_TOOL_EDITPKG     0
-    #define MNU_TOOL_EDITREP     1
-
-#define MNU_HELP   3
-    #define MNU_HELP_DEBUG       0
-    #define MNU_HELP_ABOUT       1
-
-
 class OmUiManMain;
 class OmUiManFoot;
 class OmUiManMainLib;
@@ -136,8 +74,6 @@ class OmUiMan : public OmDialog
     /// \return dialog resource id.
     ///
     long id() const;
-
-
 
     /// \brief Set dialog install mode
     ///
@@ -264,9 +200,30 @@ class OmUiMan : public OmDialog
     ///
     /// \return ImagList handle
     ///
-    void* listViewImgList() const {
+    HIMAGELIST listViewImgList() const {
       return this->_listview_himl;
     }
+
+    /// \brief Context menu handle
+    ///
+    /// Handle to hidden menu that hold right-click context popup
+    ///
+    /// \return Menu Handle
+    ///
+    HMENU contextMenu() const {
+      return this->_context_menu;
+    }
+
+    /// \brief Context popup handle
+    ///
+    /// Handle to the specified context popup from the context menu
+    ///
+    /// \return Menu Handle
+    ///
+    HMENU getContextPopup(uint32_t index) const {
+      return GetSubMenu(this->_context_menu, index);
+    }
+
     bool checkTargetWrite(const OmWString& operation);
 
     bool checkLibraryRead(const OmWString& operation);
@@ -321,9 +278,11 @@ class OmUiMan : public OmDialog
     static DWORD WINAPI _lib_monitor_fth(void*);
 
     // common elements
-    void*               _listview_himl;
+    HIMAGELIST          _listview_himl;
 
     uint32_t            _listview_himl_size;
+
+    HMENU               _context_menu;
 
     // Preset setup processing
     int32_t             _psetup_count;
@@ -363,6 +322,8 @@ class OmUiMan : public OmDialog
     void                _lv_chn_on_resize();
 
     void                _lv_chn_on_selchg();
+
+    void                _lv_chn_on_rclick();
 
     // Mod Presets controls
     uint32_t            _lv_pst_icons_size;

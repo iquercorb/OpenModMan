@@ -70,4 +70,85 @@ inline void Om_setupLvIconsDb(unsigned* icon_db)
   icon_db[ICON_REP]     = IDB_REP_16;
 }
 
+
+/// \brief Main menu menu items positions
+///
+/// Positions constants for main menu
+///
+#define MNU_FILE            static_cast<unsigned>(0)
+    #define MNU_FILE_NEW        0
+        #define MNU_FILE_NEW_HUB    0
+    // ------------------------ 1
+    #define MNU_FILE_OPEN       2
+    #define MNU_FILE_RECENT     3
+    // ------------------------ 4
+    #define MNU_FILE_CLOSE      5
+    // ------------------------ 6
+    #define MNU_FILE_QUIT       7
+#define MNU_EDIT            1
+    #define MNU_EDIT_MAN_PROP   0
+#define MNU_HUB             2
+    #define MNU_HUB_ADDCHN      0
+    #define MNU_HUB_ADDPST      1
+    // ------------------------ 2
+    #define MNU_HUB_PROP        3
+#define MNU_CHN             3
+    #define MNU_CHN_ADDREP      0
+    // ------------------------ 1
+    #define MNU_CHN_QRYREP      2
+    // ------------------------ 3
+    #define MNU_CHN_PROP        4
+#define MNU_TOOL            4
+    #define MNU_TOOL_EDITPKG    0
+    #define MNU_TOOL_EDITREP    1
+#define MNU_HELP            5
+    #define MNU_HELP_DEBUG      0
+    #define MNU_HELP_ABOUT      1
+
+/// \brief Context menu items positions
+///
+/// Positions constants for right-click context pop-up menus
+///
+#define POP_CHN             0
+    #define POP_CHN_ADD         0
+    #define POP_CHN_DEL         1
+    // ------------------------ 2
+    #define POP_CHN_PROP        3
+#define POP_PST             1
+    #define POP_PST_RUN         0
+    // ------------------------ 1
+    #define POP_PST_ADD         2
+    #define POP_PST_DEL         3
+    // ------------------------ 4
+    #define POP_PST_PROP        5
+#define POP_REP             2
+    #define POP_REP_QRY         0
+    // ------------------------ 1
+    #define POP_REP_ADD         2
+    #define POP_REP_DEL         3
+#define POP_MOD             3
+    #define POP_MOD_INST        0
+    #define POP_MOD_UINS        1
+    #define POP_MOD_CLNS        2
+    // ------------------------ 3
+    #define POP_MOD_DISC        4
+    // ------------------------ 5
+    #define POP_MOD_OPEN        6
+    #define POP_MOD_TRSH        7
+    // ------------------------ 8
+    #define POP_MOD_EDIT        9
+    // ------------------------ 10
+    #define POP_MOD_INFO        11
+#define POP_NET             4
+    #define POP_NET_DNLD        0
+    #define POP_NET_DNWS        1
+    // ------------------------ 2
+    #define POP_NET_STOP        3
+    #define POP_NET_RVOK        4
+    // ------------------------ 5
+    #define POP_NET_FIXD        6
+    // ------------------------ 7
+    #define POP_NET_INFO        8
+
+
 #endif // OMBASEUI_H

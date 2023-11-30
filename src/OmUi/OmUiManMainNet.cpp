@@ -49,6 +49,9 @@
 ///
 OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
+  _locked_man(false),
+  _locked_hub(false),
+  _locked_chn(false),
   _query_count(0),
   _download_upgrd(false),
   _download_count(0),
@@ -91,7 +94,7 @@ void OmUiManMainNet::lockMan(bool enable)
   std::cout << "DEBUG => OmUiManMainNet::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
 
-  OM_UNUSED(enable);
+  this->_locked_man = enable;
 }
 
 ///
@@ -102,6 +105,8 @@ void OmUiManMainNet::lockHub(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiManMainNet::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+
+  this->_locked_hub = enable;
 
   // lock Manager
   this->lockMan(enable);
@@ -115,6 +120,8 @@ void OmUiManMainNet::lockChannel(bool enable)
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiManMainNet::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
+
+  this->_locked_chn = enable;
 
   // disable/enable Repository ListView & buttons
   this->enableItem(IDC_LV_REP, !enable);
@@ -140,8 +147,8 @@ void OmUiManMainNet::freeze(bool enable)
   this->enableItem(IDC_LV_REP, !enable);
 
   // Repository Buttons
-  this->enableItem(IDC_BC_NEW, !enable);
-  this->enableItem(IDC_BC_DEL, false);
+  this->enableItem(IDC_BC_RPADD, !enable);
+  this->enableItem(IDC_BC_RPDEL, false);
 
   // then, user still can use Remote ListView
   // to watch, add or cancel downloads
@@ -177,6 +184,74 @@ void OmUiManMainNet::refreshLibrary()
   if(ModMan)  //< this should be always the case
     if(ModMan->activeChannel()) //< this should also be always the case
       this->_lv_net_populate();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::queryRepositories()
+{
+  if(this->_query_count) {
+    this->_query_abort();
+    return;
+  }
+
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  OmPNetRepoArray selection;
+
+  // get count of selected item
+  int32_t lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
+
+  if(lv_nsl > 0) {
+
+    // query selected repositories
+    int32_t lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sel != -1) {
+
+      // add to selection
+      selection.push_back(ModChan->getRepository(lv_sel));
+
+      // next selected item
+      lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
+    }
+
+  } else {
+
+    // query all repositories
+
+    for(size_t i = 0; i < ModChan->repositoryCount(); ++i)
+      selection.push_back(ModChan->getRepository(i));
+  }
+
+  this->_query_start(selection);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::deleteRepository()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  int lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  if(lv_sel < 0) return;
+
+  OmNetRepo* NetRepo = ModChan->getRepository(lv_sel);
+
+  OmWString repo_ref = NetRepo->urlBase(); repo_ref += L" -- "; repo_ref += NetRepo->urlName();
+
+  // warns the user before committing the irreparable
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Delete Mod Repository", IDI_QRY, L"Delete Mod Repository",
+                    L"Delete the following Mod Repository from Mod Channel ?", repo_ref))
+    return;
+
+  ModChan->removeRepository(lv_sel);
+
+  // reload the repository ListBox
+  this->_lv_rep_populate();
 }
 
 ///
@@ -797,8 +872,10 @@ void OmUiManMainNet::_lv_rep_populate()
   // restore list-view scroll position from lvRec
   this->msgItem(IDC_LV_REP, LVM_SCROLL, 0, -lvRec.top );
 
-  // enable or disable query button
-  this->enableItem(IDC_BC_RPQRY, (ModChan->repositoryCount() > 0));
+  // enable or disable query button and menu
+  bool can_query = (ModChan->repositoryCount() > 0);
+  this->enableItem(IDC_BC_RPQRY, can_query);
+  this->_UiMan->setPopupItem(MNU_CHN, MNU_CHN_QRYREP, can_query ? MF_ENABLED : MF_GRAYED);
 
   // resize ListView columns adapted to client area
   this->_lv_rep_on_resize();
@@ -826,9 +903,12 @@ void OmUiManMainNet::_lv_rep_on_resize()
 void OmUiManMainNet::_lv_rep_on_selchg()
 {
   // get count of selected item
-  unsigned lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
+  uint32_t lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
 
-  this->enableItem(IDC_BC_DEL, (lv_nsl > 0));
+  this->enableItem(IDC_BC_RPDEL, lv_nsl > 0);
+
+  //HMENU hMnuRep = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_REP);
+  //this->_UiMan->setPopupItem(hMnuRep, MNU_EDIT_REP_DEL, lv_nsl ? MF_ENABLED : MF_GRAYED);
 }
 
 ///
@@ -852,6 +932,31 @@ void OmUiManMainNet::_lv_rep_on_dblclk()
   selection.push_back(ModChan->getRepository(lv_sel));
 
   this->_query_start(selection);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::_lv_rep_on_rclick()
+{
+  // get Popup submenu from hidden context menu
+  HMENU hPopup = this->_UiMan->getContextPopup(POP_REP);
+  if(!hPopup) return;
+
+  // get ListView selection
+  uint32_t lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
+
+  // enable or disable menu-items according current state
+  this->setPopupItemText(hPopup, POP_REP_QRY, this->_query_count ? L"Abort query" : L"Query");
+  this->setPopupItem(hPopup, POP_REP_ADD, (this->_locked_chn)?MF_GRAYED:MF_ENABLED);
+  this->setPopupItem(hPopup, POP_REP_DEL, (lv_nsl && !this->_locked_chn)?MF_ENABLED:MF_GRAYED);
+
+  // get mouse cursor position
+  POINT pt;
+  GetCursorPos(&pt);
+
+  // display popup menu along mouse cursor
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN|TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
 }
 
 ///
@@ -1038,86 +1143,82 @@ void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
 ///
 void OmUiManMainNet::_lv_net_on_selchg()
 {
-  // get count of selected item
-  int32_t lv_nsl = this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT);
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  // handle to "Edit > Remote >" sub-menu
-  HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_NET);
+  // handle to "Edit > Repository []
+  //HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_NET);
 
-  if(!lv_nsl) {
+  // get count of ListView selected item
+  uint32_t lv_nsl = this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT);
+
+  // enable or disable menu-items according current state and selection
+  if((lv_nsl < 1) || (ModChan == nullptr)) {
 
     this->enableItem(IDC_BC_DNLD, false);
     this->enableItem(IDC_BC_STOP, false);
 
-    // disable "Edit > Remote []" pop-up menu
-    this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_NET, MF_GRAYED);
-
-    // disable all menu-item (for right click menu)
-    for(int32_t i = 0; i < 6; ++i)
-      this->_UiMan->setPopupItem(hPopup, i, MF_GRAYED);
+    // disable all menu items
+    /*
+    for(uint32_t i = 0; i < 12; ++i)
+      this->setPopupItem(hPopup, i, MF_GRAYED);
+    */
 
     // show nothing in footer frame
     this->_UiMan->pUiMgrFoot()->clearItem();
 
-    // return now
-    return;
-  }
-
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
-
-  // at least one selected, enable "Edit > Remote []" pop-up menu
-  this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_NET, MF_ENABLED);
-
-  if(lv_nsl > 1) {
-
-    // multiple selection, we allow more than one download at a time
-    this->enableItem(IDC_BC_DNLD, true); //< enable anyway when multiple selection
-
-    // enable and disable "Edit > Remote" menu-items
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_DNLD, MF_ENABLED); //< "Download" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_DNWS, MF_ENABLED); //< "Download without supersede" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_ABRT, MF_ENABLED); //< "Abort/Pause download" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_RVOK, MF_ENABLED); //< "Revoke partial download" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_FIXD, MF_GRAYED); //< "Fix dependencies" menu-item
-    this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_INFO, MF_GRAYED); //< "View detail..." menu-item
-
-    // on multiple selection, we hide package description
-    this->_UiMan->pUiMgrFoot()->clearItem();
-
   } else {
 
-    // enable the "Edit > Remote > .. " menu-item
-    this->_UiMan->setPopupItem(hPopup, 5, MF_ENABLED); //< "View details" menu-item
+    bool can_down = false;
+    bool can_upgd = false;
+    bool can_stop = false;
+    bool can_rvok = false;
+    bool can_fixd = false;
 
-    // get the selected item id (only one, no need to iterate)
-    int32_t lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    if(lv_sel >= 0) {
+    OmNetPack* NetPack = nullptr;
 
-      OmNetPack* NetPack = ModChan->getNetpack(lv_sel);
+    // scan selection to check what can be done
+    int32_t lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sl != -1) {
 
-      // show packages info in footer frame
+      NetPack = ModChan->getNetpack(lv_sl);
+
+      if(NetPack->hasLocal()) {
+        if(NetPack->hasMissingDepend()) can_fixd = true;
+      } else {
+        if(!NetPack->isDownloading()) {
+          can_down = true;
+          if(NetPack->upgradableCount())  can_upgd = true;
+          if(NetPack->isResumable())      can_rvok = true;
+        } else {
+          can_stop = true;
+        }
+      }
+
+      // next selected item
+      lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+    }
+
+    // if single selection show mod pack overview
+    if(lv_nsl == 1) {
       this->_UiMan->pUiMgrFoot()->selectItem(NetPack);
-
-      // get remote package states
-      bool can_download = !NetPack->hasLocal() && !NetPack->isDownloading();
-
-      // enable and disable "Edit > Remote" menu-items
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_DNLD, can_download ? MF_ENABLED : MF_GRAYED); //< "Download" menu-item
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_DNWS, can_download ? MF_ENABLED : MF_GRAYED); //< "Download without supersede" menu-item
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_ABRT, NetPack->isDownloading() ? MF_ENABLED : MF_GRAYED); //< "Abort/Pause download" menu-item
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_RVOK, NetPack->isResumable() ? MF_ENABLED : MF_GRAYED); //< "Revoke partial download" menu-item
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_FIXD, NetPack->hasMissingDepend() ? MF_ENABLED : MF_GRAYED); //< "Fix dependencies" menu-item
-      this->_UiMan->setPopupItem(hPopup, MNU_EDIT_NET_INFO, MF_ENABLED); //< "View detail..." menu-item
-
-      this->enableItem(IDC_BC_DNLD, can_download);
-      this->enableItem(IDC_BC_STOP, NetPack->isDownloading());
-
     } else {
-
-      // reset footer frame
       this->_UiMan->pUiMgrFoot()->clearItem();
     }
+
+    OmWString down_text(can_rvok ? L"Resume" : L"Download");
+
+    this->setItemText(IDC_BC_DNLD, down_text);
+    this->enableItem(IDC_BC_DNLD, can_down);
+    this->enableItem(IDC_BC_STOP, can_stop);
+    /*
+    this->setPopupItemText(hPopup, POP_NET_DNLD, down_text);
+    this->setPopupItem(hPopup, MNU_NET_DNLD, can_down ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_NET_DNWS, can_upgd ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_NET_STOP, can_stop ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_NET_RVOK, can_rvok ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_NET_FIXD, can_fixd ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, MNU_NET_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+    */
   }
 }
 
@@ -1143,6 +1244,73 @@ void OmUiManMainNet::_lv_net_on_dblclk()
   } else {
     this->queueDownloads(true);
   }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::_lv_net_on_rclick()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+
+  // get sub-menu from hidden context menu
+  HMENU hPopup = this->_UiMan->getContextPopup(POP_NET);
+
+  // get count of ListView selected item
+  uint32_t lv_nsl = this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT);
+
+  // enable or disable menu-items according current state and selection
+  if((lv_nsl < 1) || (ModChan == nullptr)) {
+
+    // disable all menu items
+    for(uint32_t i = 0; i < 12; ++i)
+      this->setPopupItem(hPopup, i, MF_GRAYED);
+
+  } else {
+
+    bool can_down = false;
+    bool can_upgd = false;
+    bool can_stop = false;
+    bool can_rvok = false;
+    bool can_fixd = false;
+
+    // scan selection to check what can be done
+    int32_t lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sl != -1) {
+
+      OmNetPack* NetPack = ModChan->getNetpack(lv_sl);
+
+      if(NetPack->hasLocal()) {
+        if(NetPack->hasMissingDepend()) can_fixd = true;
+      } else {
+        if(!NetPack->isDownloading()) {
+          can_down = true;
+          if(NetPack->upgradableCount())  can_upgd = true;
+          if(NetPack->isResumable())      can_rvok = true;
+        } else {
+          can_stop = true;
+        }
+      }
+
+      // next selected item
+      lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+    }
+
+    this->setPopupItemText(hPopup, POP_NET_DNLD, can_rvok ? L"Resume" : L"Download");
+    this->setPopupItem(hPopup, POP_NET_DNLD, can_down ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_DNWS, can_upgd ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_STOP, can_stop ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_RVOK, can_rvok ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_FIXD, can_fixd ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
+  }
+
+  // get mouse cursor position
+  POINT pt;
+  GetCursorPos(&pt);
+
+  // display popup menu along mouse cursor
+  TrackPopupMenu(hPopup, TPM_LEFTALIGN|TPM_RIGHTBUTTON,  pt.x, pt.y, 0, this->_hwnd, nullptr);
 }
 
 ///
@@ -1181,64 +1349,6 @@ int32_t OmUiManMainNet::_lv_net_get_status_icon(const OmNetPack* NetPack)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_lv_net_on_rclick()
-{
-  // get handle to "Edit > Remote..." sub-menu
-  HMENU hMenu = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_NET);
-
-  // get mouse cursor position
-  POINT pt;
-  GetCursorPos(&pt);
-
-  TrackPopupMenu(hMenu, TPM_TOPALIGN|TPM_LEFTALIGN, pt.x, pt.y, 0, this->_hwnd, nullptr);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::_onBcQryRep()
-{
-  if(this->_query_count) {
-    this->_query_abort();
-  } else {
-
-    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan) return;
-
-    OmPNetRepoArray selection;
-
-    // get count of selected item
-    int32_t lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
-
-    if(lv_nsl > 0) {
-
-      // query selected repositories
-
-      int32_t lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-      while(lv_sel != -1) {
-
-        // add to selection
-        selection.push_back(ModChan->getRepository(lv_sel));
-
-        // next selected item
-        lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
-      }
-
-    } else {
-
-      // query all repositories
-
-      for(size_t i = 0; i < ModChan->repositoryCount(); ++i)
-        selection.push_back(ModChan->getRepository(i));
-    }
-
-    this->_query_start(selection);
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiManMainNet::_onBcNewRep()
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
@@ -1249,35 +1359,6 @@ void OmUiManMainNet::_onBcNewRep()
   pUiNewRep->setModChan(ModChan);
 
   pUiNewRep->open(true);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::_onBcDelRep()
-{
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
-
-  int lv_sel = this->msgItem(IDC_LV_REP, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-  if(lv_sel < 0) return;
-
-  OmNetRepo* NetRepo = ModChan->getRepository(lv_sel);
-
-  OmWString repo_name;
-  repo_name.assign(NetRepo->urlBase());
-  repo_name.append(L" -- ");
-  repo_name.append(NetRepo->urlName());
-
-  // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Delete Mod Repository", IDI_QRY, L"Delete Mod Repository",
-                    L"Delete the following Mod Repository from Mod Channel ?", repo_name))
-    return;
-
-  ModChan->removeRepository(lv_sel);
-
-  // reload the repository ListBox
-  this->_lv_rep_populate();
 }
 
 ///
@@ -1439,6 +1520,7 @@ void OmUiManMainNet::_onShow()
 
   // refresh dialog
   //this->_onRefresh();
+  //this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_REP, MF_ENABLED);
 }
 
 ///
@@ -1451,7 +1533,7 @@ void OmUiManMainNet::_onHide()
   #endif
 
   // disable "Edit > Remote" in main menu
-  this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_NET, MF_GRAYED);
+  //this->_UiMan->setPopupItem(MNU_EDIT, MNU_EDIT_REP, MF_GRAYED);
 }
 
 ///
@@ -1497,20 +1579,13 @@ void OmUiManMainNet::_onRefresh()
   // disable the Progress-Bar
   this->enableItem(IDC_PB_MOD, false);
 
-  // reload Repository ListBox
-  this->_lv_rep_populate();
-
   // disable or enable elements depending context
   this->enableItem(IDC_LV_REP, (ModHub != nullptr));
   this->enableItem(IDC_BC_RPADD, (ModHub != nullptr));
-  this->enableItem(IDC_BC_RPDEL, (ModHub != nullptr));
-  this->enableItem(IDC_BC_RPQRY, (ModHub != nullptr));
   this->enableItem(IDC_LV_NET, (ModHub != nullptr));
 
-/*
-  if(ModChan)
-    ModChan->refreshNetLibrary();
-*/
+  this->_lv_rep_populate();
+
   // load or reload theme for ListView custom draw (progress bar)
   if(this->_lv_net_cdraw_htheme)
     CloseThemeData(this->_lv_net_cdraw_htheme);
@@ -1590,18 +1665,10 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
     }
 
-    // if repositories query is running we block all interaction
-    if(this->_query_count)
-      return false;
-
     if(LOWORD(wParam) == IDC_LV_REP) {
 
       switch(reinterpret_cast<NMHDR*>(lParam)->code)
       {
-      case NM_DBLCLK:
-        this->_lv_rep_on_dblclk();
-        break;
-
       case LVN_ITEMCHANGED: {
           NMLISTVIEW* nmLv = reinterpret_cast<NMLISTVIEW*>(lParam);
           // detect only selection changes
@@ -1609,6 +1676,14 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
             this->_lv_rep_on_selchg();
           break;
         }
+
+      case NM_DBLCLK:
+        this->_lv_rep_on_dblclk();
+        break;
+
+      case NM_RCLICK:
+        this->_lv_rep_on_rclick();
+        break;
       }
     }
 
@@ -1669,14 +1744,16 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     if(!this->_UiMan->active())
       return false;
 
+    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+
     #ifdef DEBUG
     std::cout << "DEBUG => OmUiManMainNet::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
 
     switch(LOWORD(wParam))
     {
-    case IDC_BC_RPQRY: //< Repository "Refresh" button
-      this->_onBcQryRep();
+    case IDC_BC_RPQRY: //< Repository "Query" button
+      this->queryRepositories();
       break;
 
     case IDC_BC_RPADD: //< Repository "Add" button
@@ -1684,7 +1761,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_RPDEL: //< Repository "Delete" button
-      this->_onBcDelRep();
+      this->deleteRepository();
       break;
 
     case IDC_BC_DNLD: //< Main "Upgrade" button
@@ -1697,6 +1774,24 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_ABORT: //< Main "Abort all" button
       this->_bc_abort_hit();
+      break;
+
+    // Menu : Edit > Repository > []
+    case IDM_EDIT_REP_QRY:
+      this->queryRepositories();
+      break;
+
+    case IDM_EDIT_REP_ADD: {
+        if(ModChan) {
+          OmUiAddRep* UiAddRep = static_cast<OmUiAddRep*>(this->_UiMan->childById(IDD_ADD_REP));
+          UiAddRep->setModChan(ModChan);
+          UiAddRep->open();
+        }
+      break;
+      }
+
+    case IDM_EDIT_REP_DEL:
+      this->deleteRepository();
       break;
 
     // Menu : Edit > Remote > []
