@@ -52,37 +52,6 @@ class OmUiManMain : public OmDialog
     ///
     long id() const;
 
-    void lockMan(bool enable);
-
-    void lockHub(bool enable);
-
-    void lockChannel(bool enable);
-
-    /// \brief Set dialog install mode
-    ///
-    /// Enable or disable the dialog install mode.
-    ///
-    /// The install mode is a modal-kind emulation for threaded operations,
-    /// it disables (almost) all controls of the dialog and its children
-    /// to prevent user to interact with elements while a threaded process
-    /// is running.
-    ///
-    /// \param[in]  enable  : Enable or disable freeze mode.
-    ///
-    void freeze(bool enable);
-
-    /// \brief Set dialog safe mode
-    ///
-    /// Enables or disable the dialog safe mode.
-    ///
-    /// The safe mode is used to operate modifications on sensitive
-    /// or monitored elements such as deleting or moving Mod Channel in
-    /// order to prevent conflicts or crash during process.
-    ///
-    /// \param[in]  enable  : Enable or disable safe mode.
-    ///
-    void safemode(bool enable);
-
     /// \brief Refresh library
     ///
     /// Public function to refresh Library content. This function is

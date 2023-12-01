@@ -132,7 +132,7 @@ void OmUiProgress::abortSet(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiProgress::_bc_abort_hit()
+void OmUiProgress::_bc_abort_pressed()
 {
   this->_abort = true;
 
@@ -193,7 +193,7 @@ INT_PTR OmUiProgress::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_ABORT:
-      this->_bc_abort_hit();
+      this->_bc_abort_pressed();
       break;
     }
 

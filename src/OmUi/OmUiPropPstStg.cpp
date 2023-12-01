@@ -72,8 +72,8 @@ void OmUiPropPstStg::_onCkBoxIonly()
 void OmUiPropPstStg::_onTabInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Script name, to identify it");
-  this->_createTooltip(IDC_BC_CKBX1,  L"Script will install selected packages without uninstalling others");
+  this->_createTooltip(IDC_EC_INP01,  L"Preset name, to identify it");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Preset will install selected packages without uninstalling others");
 
   this->_onTabRefresh();
 }
@@ -84,7 +84,7 @@ void OmUiPropPstStg::_onTabInit()
 ///
 void OmUiPropPstStg::_onTabResize()
 {
-  // Batch Title Label & EditControl
+  // Preset Title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 50, 25, 240, 9);
   this->_setItemPos(IDC_EC_INP01, 50, 35, this->cliUnitX()-100, 13);
 
@@ -106,11 +106,15 @@ void OmUiPropPstStg::_onTabRefresh()
   if(!ModHub)
     return;
 
-  // batch title
+  // Preset title
   this->setItemText(IDC_EC_INP01, ModPset->title());
 
-  // batch install-only option
+  // Preset install-only option
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModPset->installOnly());
+
+  // enable or disable controls
+  this->enableItem(IDC_EC_INP01, !ModPset->locked());
+  this->enableItem(IDC_BC_CKBX1, !ModPset->locked());
 }
 
 

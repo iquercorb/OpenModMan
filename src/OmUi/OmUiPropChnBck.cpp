@@ -32,23 +32,13 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiPropChnBck.h"
 
-
-/// \brief Custom window Message
-///
-/// Custom window message to notify the dialog window that the backupDcard_fth
-/// thread finished his job.
-///
-#define UWM_BACKDISCARD_DONE     (WM_APP+1)
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropChnBck::OmUiPropChnBck(HINSTANCE hins) : OmDialogPropTab(hins),
-  _delBck_hth(nullptr)
+OmUiPropChnBck::OmUiPropChnBck(HINSTANCE hins) : OmDialogPropTab(hins)
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -58,7 +48,6 @@ OmUiPropChnBck::~OmUiPropChnBck()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -66,7 +55,6 @@ long OmUiPropChnBck::id() const
 {
   return IDD_PROP_CHN_BCK;
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -84,7 +72,6 @@ void OmUiPropChnBck::_onCkBoxBck()
 
   this->setItemText(IDC_EC_INP01, ModChan->backupPath());
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -115,118 +102,6 @@ void OmUiPropChnBck::_onCkBoxZip()
 
   this->paramCheck(CHN_PROP_BCK_COMP_LEVEL);
 }
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnBck::_onBcDelBck()
-{
-  // warns the user before committing the irreparable
-  if(!Om_dlgBox_ca(this->_hwnd, L"Mod Channel properties", IDI_QRY,
-            L"Discard Mod Channel backup data", L"This will permanently "
-            "delete all existing backup data without restoring them (which "
-            "should never be done except in emergency situation)."))
-  {
-    return;
-  }
-
-  // Launch backup discard process
-  this->_delBck_init();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnBck::_delBck_init()
-{
-  // To prevent crash during operation we unselect location in the main dialog
-  static_cast<OmUiMan*>(this->root())->safemode(true);
-
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
-
-  pUiProgress->open(true);
-  pUiProgress->setCaption(L"Mod Channel backup data discard");
-  pUiProgress->setScHeadText(L"Deleting backup data");
-
-  DWORD dwId;
-  this->_delBck_hth = CreateThread(nullptr, 0, this->_delBck_fth, this, 0, &dwId);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnBck::_delBck_stop()
-{
-  DWORD exitCode;
-
-  if(this->_delBck_hth) {
-    WaitForSingleObject(this->_delBck_hth, INFINITE);
-    GetExitCodeThread(this->_delBck_hth, &exitCode);
-    CloseHandle(this->_delBck_hth);
-    this->_delBck_hth = nullptr;
-  }
-
-  // quit the progress dialog
-  static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
-
-  // Back to main dialog window to normal state
-  static_cast<OmUiMan*>(this->root())->safemode(false);
-
-  if(exitCode == 1) {
-    Om_dlgBox_ok(this->_hwnd, L"Mod Channel properties", IDI_PKG_ERR,
-              L"Backup data discard error", L"The Backup data discarding "
-              "process encountered error(s), some backup data may "
-              "had not properly deleted. Please read debug log for details.");
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-DWORD WINAPI OmUiPropChnBck::_delBck_fth(void* arg)
-{
-  OmUiPropChnBck* self = static_cast<OmUiPropChnBck*>(arg);
-
-  OmModChan* ModChan = static_cast<OmUiPropChn*>(self->_parent)->ModChan();
-  if(!ModChan)
-    return 1;
-
-  DWORD exitCode = 0;
-
-  // launch backups data deletion process
-  /* TODO: refaire ça avec la nouvelle API
-  if(!ModChan->discardBackupData(&self->_delBck_progress_cb, self->siblingById(IDD_PROGRESS))) {
-    exitCode = 1;
-  }
-  */
-
-  // sends message to window to inform process ended
-  PostMessage(self->_hwnd, UWM_BACKDISCARD_DONE, 0, 0);
-
-  return exitCode;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropChnBck::_delBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
-{
-  OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
-
-  if(data) {
-    pUiProgress->setScItemText(reinterpret_cast<wchar_t*>(data));
-  }
-  pUiProgress->setPbRange(0, tot);
-  pUiProgress->setPbPos(cur);
-
-  return !pUiProgress->abortGet();
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -262,8 +137,6 @@ void OmUiPropChnBck::_onTabInit()
   this->_onTabRefresh();
 }
 
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -274,9 +147,9 @@ void OmUiPropChnBck::_onTabRefresh()
     return;
 
   this->setItemText(IDC_EC_INP01, ModChan->backupPath());
-  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->hasCustomBackupDir());
-  this->enableItem(IDC_EC_INP01, ModChan->hasCustomBackupDir());
-  this->enableItem(IDC_BC_BRW01, ModChan->hasCustomBackupDir());
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->hasCustBackupPath());
+  this->enableItem(IDC_EC_INP01, ModChan->hasCustBackupPath());
+  this->enableItem(IDC_BC_BRW01, ModChan->hasCustBackupPath());
 
   int32_t comp_level = ModChan->backupCompLevel();
   int32_t comp_method = ModChan->backupCompMethod();
@@ -316,7 +189,6 @@ void OmUiPropChnBck::_onTabRefresh()
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -343,13 +215,7 @@ void OmUiPropChnBck::_onTabResize()
   this->_setItemPos(IDC_CB_ZLV, 140, 80, this->cliUnitX()-180, 14);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ZLV), nullptr, true);
-
-  // Maintenance operations Label
-  this->_setItemPos(IDC_SC_LBL03, 50, 110, 120, 9);
-  // Discard backups Button
-  this->_setItemPos(IDC_BC_DEL, 65, 125, 90, 15);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -357,13 +223,6 @@ void OmUiPropChnBck::_onTabResize()
 INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
-
-  // UWM_BACKDISCARD_DONE is a custom message sent from Mod Channel backups discard thread
-  // function, to notify the progress dialog ended is job.
-  if(uMsg == UWM_BACKDISCARD_DONE) {
-    // end the Mod Channel backups deletion process
-    this->_delBck_stop();
-  }
 
   if(uMsg == WM_COMMAND) {
 
@@ -392,10 +251,6 @@ INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_CB_ZLV: //< Backup compression level ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->paramCheck(CHN_PROP_BCK_COMP_LEVEL);
-      break;
-
-    case IDC_BC_DEL: //< "Discard backups" Button
-      this->_onBcDelBck();
       break;
     }
   }

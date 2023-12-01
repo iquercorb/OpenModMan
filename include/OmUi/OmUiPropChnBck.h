@@ -60,18 +60,6 @@ class OmUiPropChnBck : public OmDialogPropTab
 
     void                _onCkBoxZip();
 
-    void                _onBcDelBck();
-
-    void                _delBck_init();
-
-    void                _delBck_stop();
-
-    void*               _delBck_hth;
-
-    static DWORD WINAPI _delBck_fth(void*);
-
-    static bool         _delBck_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
-
     void                _onTabInit();
 
     void                _onTabResize();

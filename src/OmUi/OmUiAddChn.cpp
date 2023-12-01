@@ -222,6 +222,7 @@ bool OmUiAddChn::_onBcOk()
   // refresh all tree from the main dialog
   this->root()->refresh();
 
+  // FIXME: Le monitoring de la librairie n'est pas lancé lors de la sélection du nouveau canal
   return true;
 }
 

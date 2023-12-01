@@ -142,7 +142,7 @@ class OmUiProgress : public OmDialog
 
     bool                _abort;
 
-    void                _bc_abort_hit();
+    void                _bc_abort_pressed();
 
     void                _onInit();
 

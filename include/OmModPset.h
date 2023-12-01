@@ -15,8 +15,8 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef OMBATCH_H
-#define OMBATCH_H
+#ifndef OMMODPSET_H
+#define OMMODPSET_H
 
 #include "OmBase.h"
 #include "OmXmlConf.h"
@@ -97,9 +97,9 @@ class OmModPset
       return _title;
     }
 
-    /// \brief Get Batch index.
+    /// \brief Get Preset index.
     ///
-    /// Returns Batch ordering index.
+    /// Returns Preset ordering index.
     ///
     /// \return Ordering index number.
     ///
@@ -107,11 +107,11 @@ class OmModPset
       return _index;
     }
 
-    /// \brief Get Batch definition file path.
+    /// \brief Get Preset definition file path.
     ///
-    /// Returns Batch definition file path.
+    /// Returns Preset definition file path.
     ///
-    /// \return Batch definition file path.
+    /// \return Preset definition file path.
     ///
     const OmWString& path() const {
       return _path;
@@ -127,17 +127,17 @@ class OmModPset
       return _installonly;
     }
 
-    /// \brief Set Batch title.
+    /// \brief Set Preset title.
     ///
-    /// Defines and save Batch title.
+    /// Defines and save Preset title.
     ///
     /// \param[in]  title   : Title to defines and save
     ///
     void setTitle(const OmWString& title);
 
-    /// \brief Set Batch index.
+    /// \brief Set Preset index.
     ///
-    /// Defines and save Batch index for ordering.
+    /// Defines and save Preset index for ordering.
     ///
     /// \param[in]  index   : Index number to defines and save
     ///
@@ -258,11 +258,37 @@ class OmModPset
     ///
     bool repair();
 
+    /// \brief Lock instance
+    ///
+    /// Lock this instance so it cannot be modified.
+    ///
+    void lock() {
+      this->_locked = true;
+    }
+
+    /// \brief Unlock instance
+    ///
+    /// Unlock this instance so it can be modified.
+    ///
+    void unlock() {
+      this->_locked = false;
+    }
+
+    /// \brief Check whether instance is locked
+    ///
+    /// Returns whether this instance is locked and cannot be modified
+    ///
+    /// \return True if instance is locked, false otherwise
+    ///
+    bool locked() const {
+      return this->_locked;
+    }
+
     /// \brief Get Mod Hub.
     ///
-    /// Returns Batch related Mod Hub
+    /// Returns Preset related Mod Hub
     ///
-    /// \return Pointer to Batch related Mod Hub.
+    /// \return Pointer to Preset related Mod Hub.
     ///
     OmModHub* ModHub() const {
       return _ModHub;
@@ -293,6 +319,9 @@ class OmModPset
     // XML definition
     OmXmlConf           _xmlconf;
 
+    // contextual properties
+    bool                _locked;
+
     // common properties
     OmWString           _path;
 
@@ -318,4 +347,4 @@ typedef std::vector<OmModPset*> OmPModPsetArray;
 ///
 typedef std::deque<OmModPset*> OmPModPsetQueue;
 
-#endif // OMBATCH_H
+#endif // OMMODPSET_H

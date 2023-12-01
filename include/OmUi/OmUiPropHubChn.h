@@ -53,29 +53,30 @@ class OmUiPropHubChn : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _delChn_init(int id);
+    void*               _chn_delete_hth;
 
-    void                _delChn_stop();
+    void*               _chn_delete_hwo;
 
-    void*               _delChn_hth;
+    int32_t             _chn_delete_chn;
 
-    static DWORD WINAPI _delChn_fth(void*);
+    static DWORD WINAPI _chn_delete_run_fn(void*);
 
-    static bool         _delChn_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
+    static  VOID WINAPI _chn_delete_end_fn(void*,uint8_t);
 
-    int                 _delChn_id;
+    static bool         _chn_delete_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t param);
 
-    void                _onLbLoclsSel();
 
-    void                _onBcUpModChan();
+    void                _lb_chn_on_selchg();
 
-    void                _onBcDnModChan();
+    void                _bc_up_pressed();
 
-    void                _onBcDelModChan();
+    void                _bc_dn_pressed();
 
-    void                _onBcEdiModChan();
+    void                _bc_del_pressed();
 
-    void                _onBcAddModChan();
+    void                _bd_edi_pressed();
+
+    void                _bc_add_pressed();
 
     void                _onTabInit();
 

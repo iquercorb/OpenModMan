@@ -98,7 +98,7 @@ bool OmModMan::init(const char* arg)
   // Load existing configuration or create a new one
   if(!this->_xmlconf.load(this->_home + L"\\config.xml", OM_XMAGIC_APP)) {
 
-    this->_log(OM_LOG_WRN, L"", L"Missing configuration file, create new one");
+    this->_log(OM_LOG_WRN, L"Manager.init", L"missing configuration file, create new one");
 
     this->_xmlconf.init(OM_XMAGIC_APP);
 
@@ -149,7 +149,7 @@ bool OmModMan::init(const char* arg)
     }
   }
 
-  this->_log(OM_LOG_OK, L"", L"Mod Manager successfully initialized");
+  this->_log(OM_LOG_OK, L"Manager.init", L"OK");
 
   return true;
 }
@@ -165,7 +165,7 @@ bool OmModMan::quit()
 
   this->_hub_list.clear();
 
-  this->_log(OM_LOG_OK, L"", L"Mod Man quit");
+  this->_log(OM_LOG_OK, L"Manager.quit", L"goodbye");
 
   return true;
 }
@@ -535,6 +535,10 @@ bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open
 ///
 bool OmModMan::openHub(const OmWString& path, bool select)
 {
+  this->_log(OM_LOG_OK, L"Manager.openHub", path);
+
+  // FIXME: Eviter que les Hub puissent s'ouvrir en double ou trible ou...
+
   // check whether Mod Hub is already opened
   for(size_t i = 0; i < this->_hub_list.size(); ++i)
     if(path == this->_hub_list[i]->path())
@@ -574,6 +578,8 @@ void OmModMan::closeHub(int32_t index)
   }
 
   if(index < static_cast<int>(this->_hub_list.size())) {
+
+    this->_log(OM_LOG_OK, L"Manager.closeHub", this->_hub_list[index]->home());
 
     this->_hub_list[index]->close();
 

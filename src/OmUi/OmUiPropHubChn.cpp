@@ -18,6 +18,9 @@
 
 #include "OmBaseUi.h"
 
+#include "OmBaseWin.h"
+  #include <UxTheme.h>
+
 #include "OmModMan.h"
 
 #include "OmUiMan.h"
@@ -32,24 +35,16 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiPropHubChn.h"
 
-/// \brief Custom window Message
-///
-/// Custom window message to notify the dialog window that the _delChn_fth
-/// thread finished his job.
-///
-#define UWM_BACKPURGE_DONE     (WM_APP+1)
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropHubChn::OmUiPropHubChn(HINSTANCE hins) : OmDialogPropTab(hins),
-  _delChn_hth(nullptr),
-  _delChn_id(-1)
+  _chn_delete_hth(nullptr),
+  _chn_delete_hwo(nullptr),
+  _chn_delete_chn(-1)
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -59,7 +54,6 @@ OmUiPropHubChn::~OmUiPropHubChn()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -68,145 +62,101 @@ long OmUiPropHubChn::id() const
   return IDD_PROP_HUB_CHN;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_delChn_init(int id)
+DWORD WINAPI OmUiPropHubChn::_chn_delete_run_fn(void* ptr)
 {
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!ModHub)
-    return;
+  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
 
-  // store Mod Channel id
-  this->_delChn_id = id;
-  OmModChan* ModChan = ModHub->getChannel(id);
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
+  if(!ModHub) return static_cast<DWORD>(OM_RESULT_ABORT);
 
-  // To prevent crash during operation we unselect location in the main dialog
-  static_cast<OmUiMan*>(this->root())->safemode(true);
+  OmModChan* ModChan = ModHub->getChannel(self->_chn_delete_chn);
+  if(!ModChan) return static_cast<DWORD>(OM_RESULT_ABORT);
 
-  // unselect location
+  // set UI in safe mode
+  static_cast<OmUiMgr*>(this->root())->enableSafeMode(false);
+
+  // unselect Channel
   ModHub->selectChannel(-1);
 
-  // if Mod Channel does not have backup data, we can bypass the purge and
-  // do directly to the end
-  if(ModChan->hasBackupData()) {
+  // Open progress dialog
+  OmUiProgress* UiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
+  UiProgress->open(true);
+  UiProgress->setCaption(L"Delete Mod Channel");
+  UiProgress->setScHeadText(L"Restoring backup data");
 
-    OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS));
+  // delete channel, will purge backup inf necessar
+  OmResult result = ModHub->deleteChannel(self->_chn_delete_chn, OmUiPropHubChn::_chn_delete_progress_cb, self);
 
-    pUiProgress->open(true);
-    pUiProgress->setCaption(L"Delete Mod Channel");
-    pUiProgress->setScHeadText(L"Restoring all backup data");
-
-    DWORD dwId;
-    this->_delChn_hth = CreateThread(nullptr, 0, this->_delChn_fth, this, 0, &dwId);
-
-  } else {
-
-    // directly delete the location
-    this->_delChn_stop();
-  }
+  return static_cast<DWORD>(result);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_delChn_stop()
+bool OmUiPropHubChn::_chn_delete_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
-  DWORD exitCode;
+  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
 
-  if(this->_delChn_hth) {
-    WaitForSingleObject(this->_delChn_hth, INFINITE);
-    GetExitCodeThread(this->_delChn_hth, &exitCode);
-    CloseHandle(this->_delChn_hth);
-    this->_delChn_hth = nullptr;
-  }
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
+  if(!ModHub) return false;
+
+  OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
+
+  OmUiProgress* UiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
+  UiProgress->setScItemText(ModPack->iden());
+  UiProgress->setPbRange(0, tot);
+  UiProgress->setPbPos(cur);
+
+  return !UiProgress->abortGet();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmUiPropHubChn::_chn_delete_end_fn(void* ptr, uint8_t fired)
+{
+  OM_UNUSED(fired);
+
+  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
+
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
+  if(!ModHub) return;
 
   // quit the progress dialog
-  static_cast<OmUiProgress*>(this->siblingById(IDD_PROGRESS))->quit();
+  static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS))->quit();
 
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  DWORD exit_code = Om_threadExitCode(self->_chn_delete_hth);
+  Om_clearThread(self->_chn_delete_hth, self->_chn_delete_hwo);
 
-  OmWString msg;
+  self->_chn_delete_hth = nullptr;
+  self->_chn_delete_hwo = nullptr;
 
-  // check whether purge succeed
-  if(exitCode == 0) {
 
-    // backup data purged, now delete Mod Channel
-    if(!pModHub->deleteChannel(this->_delChn_id)) {
-      Om_dlgBox_ok(this->_hwnd, L"Hub properties", IDI_WRN,
-                L"Channel remove error", L"Channel "
-                "remove process encountered error(s), some file may "
-                "had not properly deleted. Please read debug log for details.");
-    }
+  OmResult result = static_cast<OmResult>(exit_code);
 
-  } else {
-    // an error occurred during backup purge
-    Om_dlgBox_ok(this->_hwnd, L"Hub properties", IDI_WRN,
-                L"Channel backup purge error", L"Channel "
-                "backup purge process encountered error(s), some backup data may "
-                "had not properly restored. Please read debug log for details.");
+  if(result == OM_RESULT_ERROR) {
+      // an error occurred during backup purge
+      Om_dlgBox_okl(self->_hwnd, L"Hub properties", IDI_WRN, L"Delete channel error",
+                    L"Channel deletion encountered error:", ModHub->lastError() );
   }
 
-  // select the first location in list
-  pModHub->selectChannel(0);
+  // Select fist available Channel
+  ModHub->selectChannel(0);
 
-  // Back to main dialog window to normal state
-  static_cast<OmUiMan*>(this->root())->safemode(false);
+  // restore UI interactions
+  static_cast<OmUiMgr*>(this->root())->enableSafeMode(false);
 
   // refresh all dialogs from root
   this->root()->refresh();
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiPropHubChn::_delChn_fth(void* arg)
-{
-  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(arg);
-
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
-  if(!pModHub) return 1;
-  OmModChan* pModChan = pModHub->getChannel(self->_delChn_id);
-  if(!pModChan) return 1;
-
-  DWORD exitCode = 0;
-
-  if(!pModChan->purgeBackupData(&self->_delChn_progress_cb, self->siblingById(IDD_PROGRESS))) {
-    exitCode = 1; //< report error
-  }
-
-  // sends message to window to inform process ended
-  PostMessage(self->_hwnd, UWM_BACKPURGE_DONE, 0, 0);
-
-  return exitCode;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropHubChn::_delChn_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data)
-{
-  OmUiProgress* pUiProgress = reinterpret_cast<OmUiProgress*>(ptr);
-
-  if(data) {
-    pUiProgress->setScItemText(reinterpret_cast<wchar_t*>(data));
-  }
-  pUiProgress->setPbRange(0, tot);
-  pUiProgress->setPbPos(cur);
-
-  return !pUiProgress->abortGet();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropHubChn::_onLbLoclsSel()
+void OmUiPropHubChn::_lb_chn_on_selchg()
 {
   OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
   if(!pModHub) return;
@@ -255,11 +205,10 @@ void OmUiPropHubChn::_onLbLoclsSel()
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onBcUpModChan()
+void OmUiPropHubChn::_bc_up_pressed()
 {
   // get selected item (index)
   int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
@@ -291,7 +240,7 @@ void OmUiPropHubChn::_onBcUpModChan()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onBcDnModChan()
+void OmUiPropHubChn::_bc_dn_pressed()
 {
   // get selected item (index)
   int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
@@ -326,11 +275,10 @@ void OmUiPropHubChn::_onBcDnModChan()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onBcDelModChan()
+void OmUiPropHubChn::_bc_del_pressed()
 {
   OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!ModHub)
-    return;
+  if(!ModHub) return;
 
   int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
   int chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
@@ -340,33 +288,40 @@ void OmUiPropHubChn::_onBcDelModChan()
   OmModChan* ModChan = ModHub->getChannel(chn_id);
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ca(this->_hwnd, L"Mod Hub properties", IDI_QRY,
-            L"Delete Mod Channel", L"The operation will permanently delete "
-            "the Mod Channel \""+ModChan->title()+L"\" and its associated data."))
-  {
+  if(!Om_dlgBox_ca(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Mod Channel",
+                   L"The operation will permanently delete the Mod Channel \""+
+                   ModChan->title()+L"\" and its associated data."))
     return;
-  }
 
-  if(ModChan->hasBackupData()) {
+  // disable all dialog controls
+  this->enableItem(IDC_LB_CHN, true);
 
-    if(!Om_dlgBox_ca(this->_hwnd, L"Mod Hub properties", IDI_QRY,
-              L"Remaining backup data", L"The Mod Channel currently have "
-              "installed packages, the deletion process will uninstall them "
-              "and restore all backup data."))
-    {
-      return;
-    }
-  }
+  this->enableItem(IDC_SC_LBL02, false);
+  this->enableItem(IDC_EC_READ2, false);
+  this->enableItem(IDC_SC_LBL03, false);
+  this->enableItem(IDC_EC_READ3, false);
+  this->enableItem(IDC_SC_LBL04, false);
+  this->enableItem(IDC_EC_READ4, false);
+
+  this->enableItem(IDC_BC_DEL,  false);
+  this->enableItem(IDC_BC_EDI, false);
 
   // here we go for Mod Channel delete
-  this->_delChn_init(chn_id);
+  if(!this->_chn_delete_hth) {
+
+    this->_chn_delete_chn = chn_id;
+
+    // launch thread
+    this->_chn_delete_hth = Om_createThread(OmUiPropHubChn::_chn_delete_run_fn, this);
+    this->_chn_delete_hwo = Om_waitForThread(this->_chn_delete_hth, OmUiPropHubChn::_chn_delete_end_fn, this);
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onBcEdiModChan()
+void OmUiPropHubChn::_bd_edi_pressed()
 {
   OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
   if(!pModHub) return;
@@ -386,7 +341,7 @@ void OmUiPropHubChn::_onBcEdiModChan()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onBcAddModChan()
+void OmUiPropHubChn::_bc_add_pressed()
 {
   OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
   if(!pModHub) return;
@@ -417,6 +372,8 @@ void OmUiPropHubChn::_onTabInit()
   this->_createTooltip(IDC_BC_DEL,  L"Delete Mod Channel and its associated data");
   this->_createTooltip(IDC_BC_ADD,  L"Configure a new Mod Channel for this Mod Hub");
   this->_createTooltip(IDC_BC_EDI,  L"Modify Mod Channel properties");
+
+  SetWindowTheme(this->getItem(IDC_LB_CHN),L"EXPLORER",nullptr);
 
   // Update values
   this->_onTabRefresh();
@@ -459,6 +416,8 @@ void OmUiPropHubChn::_onTabRefresh()
   OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
   if(!pModHub) return;
 
+  this->enableItem(IDC_LB_CHN, true);
+
   this->msgItem(IDC_LB_CHN, LB_RESETCONTENT);
 
   for(unsigned i = 0; i < pModHub->channelCount(); ++i) {
@@ -490,39 +449,33 @@ INT_PTR OmUiPropHubChn::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
-  // UWM_BACKPURGE_DONE is a custom message sent from Mod Channel backups purge thread
-  // function, to notify the progress dialog ended is job.
-  if(uMsg == UWM_BACKPURGE_DONE) {
-    // end the removing Mod Channel process
-    this->_delChn_stop();
-  }
-
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))
     {
     case IDC_LB_CHN: //< Mod Channel(s) list List-Box
-      this->_onLbLoclsSel();
+      if(HIWORD(wParam) == LBN_SELCHANGE)
+        this->_lb_chn_on_selchg();
       break;
 
     case IDC_BC_UP: //< Up Buttn
-      this->_onBcUpModChan();
+      this->_bc_up_pressed();
       break;
 
     case IDC_BC_DN: //< Down Buttn
-      this->_onBcDnModChan();
+      this->_bc_dn_pressed();
       break;
 
     case IDC_BC_DEL: //< "Remove" Button
-      this->_onBcDelModChan();
+      this->_bc_del_pressed();
       break;
 
     case IDC_BC_EDI: //< "Modify" Button
-      this->_onBcEdiModChan();
+      this->_bd_edi_pressed();
       break;
 
     case IDC_BC_ADD: //< "New" Button
-      this->_onBcAddModChan();
+      this->_bc_add_pressed();
       break;
     }
   }

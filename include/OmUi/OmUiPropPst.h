@@ -21,9 +21,9 @@
 
 class OmModPset;
 
-/// \brief Batch Properties parent dialog
+/// \brief Mod Preset Properties parent dialog
 ///
-/// OmDialogProp class derived for Batch Properties parent dialog window.
+/// OmDialogProp class derived for Mod Preset Properties parent dialog window.
 ///
 class OmUiPropPst : public OmDialogProp
 {

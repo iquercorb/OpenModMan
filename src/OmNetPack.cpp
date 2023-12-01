@@ -92,7 +92,7 @@ OmNetPack::OmNetPack(OmModChan* ModChan) :
 ///
 OmNetPack::~OmNetPack()
 {
-
+  this->stopDownload();
 }
 
 ///
@@ -360,8 +360,7 @@ bool OmNetPack::isDownloading() const
 ///
 void OmNetPack::stopDownload()
 {
-  if(this->_dnl_result == OM_RESULT_PENDING)
-    this->_connect.abortRequest();
+  this->_connect.abortRequest();
 }
 
 ///
@@ -369,7 +368,7 @@ void OmNetPack::stopDownload()
 ///
 bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr)
 {
-  if(this->_dnl_result == OM_RESULT_PENDING) {
+  if(this->_connect.isPerforming()) {
     this->_error(L"startDownload", L"download already processing");
     return false;
   }

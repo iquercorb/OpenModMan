@@ -49,9 +49,6 @@
 ///
 OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
-  _locked_man(false),
-  _locked_hub(false),
-  _locked_chn(false),
   _query_count(0),
   _download_upgrd(false),
   _download_count(0),
@@ -83,91 +80,6 @@ OmUiManMainNet::~OmUiManMainNet()
 long OmUiManMainNet::id() const
 {
   return IDD_MGR_MAIN_NET;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::lockMan(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainNet::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_man = enable;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::lockHub(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainNet::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_hub = enable;
-
-  // lock Manager
-  this->lockMan(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::lockChannel(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainNet::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_chn = enable;
-
-  // disable/enable Repository ListView & buttons
-  this->enableItem(IDC_LV_REP, !enable);
-  this->enableItem(IDC_BC_RPQRY, !enable);
-  this->enableItem(IDC_BC_RPADD, !enable);
-  this->enableItem(IDC_BC_RPDEL, !enable);
-
-  // lock Mud Hub
-  this->lockHub(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::freeze(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainNet::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // Repository Label ListBox & buttons
-  this->enableItem(IDC_SC_LBL01, !enable);
-  this->enableItem(IDC_LV_REP, !enable);
-
-  // Repository Buttons
-  this->enableItem(IDC_BC_RPADD, !enable);
-  this->enableItem(IDC_BC_RPDEL, false);
-
-  // then, user still can use Remote ListView
-  // to watch, add or cancel downloads
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainNet::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  if(!enable) {
-    if(this->visible())
-      this->_onRefresh();
-  }
 }
 
 ///
@@ -257,7 +169,7 @@ void OmUiManMainNet::deleteRepository()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::queueDownloads(bool upgrade)
+void OmUiManMainNet::startDownloads(bool upgrade)
 {
   // prevent useless processing
   if(!this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT))
@@ -333,7 +245,7 @@ void OmUiManMainNet::downloadDepends(bool upgrade)
   OmWStringArray missings;    //< missing dependencies lists
 
   // Get remote package depdencies
-  ModChan->getNetpackDepends(NetPack, &depends, &missings);
+  ModChan->getDepends(NetPack, &depends, &missings);
 
   // warn user for missing dependencies
   if(!this->_UiMan->warnMissings(ModChan->warnMissDnld(), L"Download Mods", missings))
@@ -434,7 +346,7 @@ void OmUiManMainNet::_update_processing()
   this->_setSafe(!processing);
 
   // prevent dangerous user interactions
-  this->_UiMan->lockChannel(processing);
+  this->_UiMan->enableLockMode(processing);
 
   // enable 'kill-switch" abort button
   this->enableItem(IDC_BC_ABORT, processing);
@@ -595,7 +507,7 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
   this->_update_processing();
 
   // start or append downloads
-  ModChan->queueDownloads(selection, OmUiManMainNet::_download_download_fn, OmUiManMainNet::_download_result_fn, this);
+  ModChan->startDownloads(selection, OmUiManMainNet::_download_download_fn, OmUiManMainNet::_download_result_fn, this);
 }
 
 ///
@@ -943,13 +855,12 @@ void OmUiManMainNet::_lv_rep_on_rclick()
   HMENU hPopup = this->_UiMan->getContextPopup(POP_REP);
   if(!hPopup) return;
 
-  // get ListView selection
-  uint32_t lv_nsl = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT);
-
-  // enable or disable menu-items according current state
+  // set 'Query' menu item text according current querying state
   this->setPopupItemText(hPopup, POP_REP_QRY, this->_query_count ? L"Abort query" : L"Query");
-  this->setPopupItem(hPopup, POP_REP_ADD, (this->_locked_chn)?MF_GRAYED:MF_ENABLED);
-  this->setPopupItem(hPopup, POP_REP_DEL, (lv_nsl && !this->_locked_chn)?MF_ENABLED:MF_GRAYED);
+
+  // enable or disable menu-items according selection and lock mode
+  uint32_t item_stat = this->msgItem(IDC_LV_REP, LVM_GETSELECTEDCOUNT) ? MF_ENABLED : MF_GRAYED;
+  this->setPopupItem(hPopup, POP_REP_DEL, this->_UiMan->lockMode() ? MF_GRAYED : item_stat);
 
   // get mouse cursor position
   POINT pt;
@@ -1242,7 +1153,7 @@ void OmUiManMainNet::_lv_net_on_dblclk()
   if(ModChan->getNetpack(lv_sel)->isDownloading()) {
     this->stopDownloads();
   } else {
-    this->queueDownloads(true);
+    this->startDownloads(true);
   }
 }
 
@@ -1349,7 +1260,7 @@ int32_t OmUiManMainNet::_lv_net_get_status_icon(const OmNetPack* NetPack)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_onBcNewRep()
+void OmUiManMainNet::_bc_rpadd_pressed()
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
@@ -1376,7 +1287,7 @@ void OmUiManMainNet::_bc_stop_hit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_bc_abort_hit()
+void OmUiManMainNet::_bc_abort_pressed()
 {
   // immediate response to user input
   this->enableItem(IDC_BC_ABORT, false);
@@ -1757,7 +1668,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_RPADD: //< Repository "Add" button
-      this->_onBcNewRep();
+      this->_bc_rpadd_pressed();
       break;
 
     case IDC_BC_RPDEL: //< Repository "Delete" button
@@ -1765,7 +1676,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_DNLD: //< Main "Upgrade" button
-      this->queueDownloads(true);
+      this->startDownloads(true);
       break;
 
     case IDC_BC_STOP: //< Main "Stop" button
@@ -1773,7 +1684,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_ABORT: //< Main "Abort all" button
-      this->_bc_abort_hit();
+      this->_bc_abort_pressed();
       break;
 
     // Menu : Edit > Repository > []
@@ -1796,11 +1707,11 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     // Menu : Edit > Remote > []
     case IDM_EDIT_NET_DNWS:
-      this->queueDownloads(false);
+      this->startDownloads(false);
       break;
 
     case IDM_EDIT_NET_DNLD:
-      this->queueDownloads(true);
+      this->startDownloads(true);
       break;
 
     case IDM_EDIT_NET_STOP:

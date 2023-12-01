@@ -233,7 +233,7 @@ bool OmUiPropHub::applyChanges()
   if(pUiPropHubChn->paramChanged(HUB_PROP_CHN_ORDER)) { // parameter for Mod Channel index order
 
     // To prevent inconsistency we unselect location in the main dialog
-    static_cast<OmUiMan*>(this->root())->safemode(true);
+    static_cast<OmUiMan*>(this->root())->enableLockMode(true);
 
     unsigned n = pUiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
@@ -249,7 +249,7 @@ bool OmUiPropHub::applyChanges()
     this->modHub()->selectChannel(0);
 
     // restore main dialog to normal state
-    static_cast<OmUiMan*>(this->root())->safemode(false);
+    static_cast<OmUiMan*>(this->root())->enableLockMode(false);
 
     // Reset parameter as unmodified
     pUiPropHubChn->paramReset(HUB_PROP_CHN_ORDER);

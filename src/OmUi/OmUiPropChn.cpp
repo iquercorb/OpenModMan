@@ -122,10 +122,10 @@ bool OmUiPropChn::checkChanges()
     different = false;
     if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       pUiPropLocLib->getItemText(IDC_EC_INP01, item_str);
-      if(!Om_namesMatches(this->_ModChan->libraryPath(), item_str) || !this->_ModChan->hasCustomLibraryDir())
+      if(!Om_namesMatches(this->_ModChan->libraryPath(), item_str) || !this->_ModChan->hasCustLibraryPath())
         different = true;
     } else {
-      if(this->_ModChan->hasCustomLibraryDir()) different = true;
+      if(this->_ModChan->hasCustLibraryPath()) different = true;
     }
     if(different) {
       changed = true;
@@ -179,10 +179,10 @@ bool OmUiPropChn::checkChanges()
 
     if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
       pUiPropLocBck->getItemText(IDC_EC_INP01, item_str);
-      if(!Om_namesMatches(this->_ModChan->backupPath(), item_str) || !this->_ModChan->hasCustomBackupDir())
+      if(!Om_namesMatches(this->_ModChan->backupPath(), item_str) || !this->_ModChan->hasCustBackupPath())
         different = true;
     } else {
-      if(this->_ModChan->hasCustomBackupDir()) different = true;
+      if(this->_ModChan->hasCustBackupPath()) different = true;
     }
 
     if(different) {
@@ -277,7 +277,7 @@ bool OmUiPropChn::validChanges()
 
     pUiPropLocStg->getItemText(IDC_EC_INP02, inp_str);
 
-    if(!Om_dlgValidDir(this->_hwnd, L"Target path", inp_str))
+    if(!Om_dlgValidDir(this->_hwnd, L"Target directory", inp_str))
       return false;
   }
 
@@ -290,9 +290,9 @@ bool OmUiPropChn::validChanges()
 
       pUiPropLocLib->getItemText(IDC_EC_INP01, inp_str);
 
-      if(Om_dlgValidPath(this->_hwnd, L"Library folder path", inp_str)) {
+      if(Om_dlgValidPath(this->_hwnd, L"Library directory path", inp_str)) {
 
-        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom Library folder", inp_str))
+        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom library directory", inp_str))
           return false;
 
       } else {
@@ -311,9 +311,9 @@ bool OmUiPropChn::validChanges()
 
       pUiPropLocBck->getItemText(IDC_EC_INP01, inp_str);
 
-      if(Om_dlgValidPath(this->_hwnd, L"Backup folder path", inp_str)) {
+      if(Om_dlgValidPath(this->_hwnd, L"Backup directory path", inp_str)) {
 
-        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom Backup folder", inp_str))
+        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom backup directory", inp_str))
           return false;
 
       } else {
@@ -338,86 +338,99 @@ bool OmUiPropChn::applyChanges()
   OmWString inp_str;
 
   // General Settings Tab
-  OmUiPropChnStg* pUiPropLocStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
+  OmUiPropChnStg* UiPropChnStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Mod Channel title
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Mod Channel title
 
-    pUiPropLocStg->getItemText(IDC_EC_INP01, inp_str);
+    UiPropChnStg->getItemText(IDC_EC_INP01, inp_str);
 
-    // To prevent crash during operation we unselect location in the main dialog
-    static_cast<OmUiMan*>(this->root())->safemode(true);
+    // set UI safe mode, this unselect everything and disable UI controls
+    static_cast<OmUiMan*>(this->root())->enableSafeMode(true);
 
-    //TODO: a tester pour de vrai et voir à améliorer ce système de "safemode"
+    OmResult result = this->_ModChan->rename(inp_str);
 
-    if(!this->_ModChan->rename(inp_str)) {
-      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN,
-                   L"Mod Channel files rename error", L"Mod Channel "
-                   "title changed but folder and definition file rename "
-                   "failed because of the following error:", this->_ModChan->lastError());
+    // back UI to normal state
+    static_cast<OmUiMan*>(this->root())->enableSafeMode(false);
+
+    if(result != OM_RESULT_OK) {
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Channel rename error",
+                   L"Unable to rename Channel:", this->_ModChan->lastError());
+      return false;
     }
 
-    // Back to main dialog window to normal state
-    static_cast<OmUiMan*>(this->root())->safemode(false);
-
     // Reset parameter as unmodified
-    pUiPropLocStg->paramReset(CHN_PROP_STG_TITLE);
+    UiPropChnStg->paramReset(CHN_PROP_STG_TITLE);
   }
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Mod Channel Install path
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Mod Channel Install path
 
-    pUiPropLocStg->getItemText(IDC_EC_INP02, inp_str);
+    UiPropChnStg->getItemText(IDC_EC_INP02, inp_str);
 
-    this->_ModChan->setDstDir(inp_str);
+    OmResult result = this->_ModChan->setTargetPath(inp_str);
+
+    if(result != OM_RESULT_OK) {
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Target directory change error",
+                   L"Unable to change target directory:", this->_ModChan->lastError());
+      return false;
+    }
 
     // Reset parameter as unmodified
-    pUiPropLocStg->paramReset(CHN_PROP_STG_TARGET);
+    UiPropChnStg->paramReset(CHN_PROP_STG_TARGET);
   }
 
   // Mod Library Tab
-  OmUiPropChnLib* pUiPropLocLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
+  OmUiPropChnLib* UiPropChnLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Mod Channel Library path
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Mod Channel Library path
 
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
+    OmResult result;
 
-      pUiPropLocLib->getItemText(IDC_EC_INP01, inp_str);
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
 
-      this->_ModChan->setCustomLibraryDir(inp_str);
+      UiPropChnLib->getItemText(IDC_EC_INP01, inp_str);
+
+      result = this->_ModChan->setCustLibraryPath(inp_str);
 
     } else {
 
-      this->_ModChan->setDefaultLibraryDir();
+      result = this->_ModChan->setDefLibraryPath();
+    }
+
+    if(result != OM_RESULT_OK) {
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Library directory change error",
+                   L"Unable to change library directory:", this->_ModChan->lastError());
+      return false;
     }
 
     // Reset parameter as unmodified
-    pUiPropLocLib->paramReset(CHN_PROP_LIB_CUSTDIR);
+    UiPropChnLib->paramReset(CHN_PROP_LIB_CUSTDIR);
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_DEVMODE)) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_DEVMODE)) {
 
-    this->_ModChan->setLibraryDevmod(pUiPropLocLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+    this->_ModChan->setLibraryDevmod(UiPropChnLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropLocLib->paramReset(CHN_PROP_LIB_DEVMODE);
+    UiPropChnLib->paramReset(CHN_PROP_LIB_DEVMODE);
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_WARNINGS)) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_WARNINGS)) {
 
-    this->_ModChan->setWarnOverlaps(pUiPropLocLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
-    this->_ModChan->setWarnExtraInst(pUiPropLocLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK));
-    this->_ModChan->setWarnMissDeps(pUiPropLocLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK));
-    this->_ModChan->setWarnExtraUnin(pUiPropLocLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK));
+    this->_ModChan->setWarnOverlaps(UiPropChnLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
+    this->_ModChan->setWarnExtraInst(UiPropChnLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK));
+    this->_ModChan->setWarnMissDeps(UiPropChnLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK));
+    this->_ModChan->setWarnExtraUnin(UiPropChnLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropLocLib->paramReset(CHN_PROP_LIB_WARNINGS);
+    UiPropChnLib->paramReset(CHN_PROP_LIB_WARNINGS);
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_SHOWHIDDEN)) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_SHOWHIDDEN)) {
 
-    this->_ModChan->setLibraryShowhidden(pUiPropLocLib->msgItem(IDC_BC_CKBX7, BM_GETCHECK));
+    this->_ModChan->setLibraryShowhidden(UiPropChnLib->msgItem(IDC_BC_CKBX7, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropLocLib->paramReset(CHN_PROP_LIB_SHOWHIDDEN);
+    UiPropChnLib->paramReset(CHN_PROP_LIB_SHOWHIDDEN);
   }
 
   // Data Backup Tab
@@ -425,27 +438,28 @@ bool OmUiPropChn::applyChanges()
 
   if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Mod Channel Library path
 
-    bool has_error = false;
+    OmResult result;
 
     if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
 
       pUiPropLocBck->getItemText(IDC_EC_INP01, inp_str);
 
-      if(!this->_ModChan->setCustomBackupDir(inp_str))
-        has_error = true;
+      result = this->_ModChan->setCustBackupPath(inp_str);
 
     } else {
 
-      if(!this->_ModChan->setDefaultBackupDir())
-        has_error = true;
+      result = this->_ModChan->setDefBackupPath();
     }
 
-    if(has_error) {
-      // an error occurred during backup purge
-      Om_dlgBox_ok(this->_hwnd, L"Mod Channel properties", IDI_WRN,
-                   L"Backup Directory transfer error", L"Mod Channel Backup "
-                   "Data transfer encountered errors, some Backup Data may "
-                   "had not properly transfered to new location.");
+    if(result != OM_RESULT_OK) {
+      if(result == OM_RESULT_ERROR) {
+        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Backup directory change error",
+                     L"Backup data transfer encountered error:", this->_ModChan->lastError());
+      } else {
+        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Backup directory change error",
+                     L"Unable to change backup directory:", this->_ModChan->lastError());
+      }
+      return false;
     }
 
     // Reset parameter as unmodified

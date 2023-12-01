@@ -36,7 +36,11 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmModPset::OmModPset() : _ModHub(nullptr), _index(0), _installonly(false)
+OmModPset::OmModPset() :
+  _ModHub(nullptr),
+  _locked(false),
+  _index(0),
+  _installonly(false)
 {
 
 }
@@ -102,18 +106,18 @@ bool OmModPset::open(const OmWString& path)
 ///
 void OmModPset::setTitle(const OmWString& title)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
+    return;
 
-    if(this->_xmlconf.hasChild(L"title")) {
-      this->_xmlconf.child(L"title").setContent(title);
-    } else {
-      this->_xmlconf.addChild(L"title").setContent(title);
-    }
-
-    this->_xmlconf.save();
-
-    this->_title = title;
+  if(this->_xmlconf.hasChild(L"title")) {
+    this->_xmlconf.child(L"title").setContent(title);
+  } else {
+    this->_xmlconf.addChild(L"title").setContent(title);
   }
+
+  this->_xmlconf.save();
+
+  this->_title = title;
 }
 
 ///
@@ -121,16 +125,16 @@ void OmModPset::setTitle(const OmWString& title)
 ///
 void OmModPset::setIndex(unsigned index)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
+    return;
 
-    if(this->_xmlconf.hasChild(L"title")) {
-      this->_xmlconf.child(L"title").setAttr(L"index", static_cast<int>(index));
-    }
-
-    this->_xmlconf.save();
-
-    this->_index = index;
+  if(this->_xmlconf.hasChild(L"title")) {
+    this->_xmlconf.child(L"title").setAttr(L"index", static_cast<int>(index));
   }
+
+  this->_xmlconf.save();
+
+  this->_index = index;
 }
 
 ///
@@ -138,21 +142,22 @@ void OmModPset::setIndex(unsigned index)
 ///
 void OmModPset::setInstallOnly(bool enable)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
+    return;
 
-    OmXmlNode xml_options;
-    if(this->_xmlconf.hasChild(L"options")) {
-      xml_options = this->_xmlconf.child(L"options");
-    } else {
-      xml_options = this->_xmlconf.addChild(L"options");
-    }
-
-    xml_options.setAttr(L"installonly", static_cast<int>(enable));
-
-    this->_xmlconf.save();
-
-    this->_installonly = enable;
+  OmXmlNode xml_options;
+  if(this->_xmlconf.hasChild(L"options")) {
+    xml_options = this->_xmlconf.child(L"options");
+  } else {
+    xml_options = this->_xmlconf.addChild(L"options");
   }
+
+  xml_options.setAttr(L"installonly", static_cast<int>(enable));
+
+  this->_xmlconf.save();
+
+  this->_installonly = enable;
+
 }
 
 ///
@@ -171,24 +176,24 @@ size_t OmModPset::setupCount()
 ///
 bool OmModPset::discardSetup(const OmWString& uuid)
 {
+  if(this->_locked || !this->_xmlconf.valid())
+    return false;
+
   bool found = false;
 
-  if(this->_xmlconf.valid()) {
+  // get the proper <setup> node.
+  OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", uuid);
 
-    // get the proper <batch> node.
-    OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", uuid);
+  // if <setup> with UUID is found, delete it
+  if(!xml_setup.empty()) {
 
-    // if <batch> with UUID is found, delete it
-    if(!xml_setup.empty()) {
+    this->_xmlconf.remChild(xml_setup);
 
-      this->_xmlconf.remChild(xml_setup);
-
-      found = true;
-    }
-
-    // save definition
-    //this->_xmlconf.save();
+    found = true;
   }
+
+  // save definition
+  //this->_xmlconf.save();
 
   return found;
 }
@@ -198,27 +203,27 @@ bool OmModPset::discardSetup(const OmWString& uuid)
 ///
 void OmModPset::addSetupEntry(const OmModChan* ModChan, const OmModPack* ModPack)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
+    return;
 
-    // get the proper <batch> node.
-    OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
+  // get the proper <setup> node.
+  OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
-    // if no <batch> with UUID was found, create it
-    if(xml_setup.empty()) {
-      xml_setup = this->_xmlconf.addChild(L"setup");
-      xml_setup.setAttr(L"uuid", ModChan->uuid());
-    }
-
-    // add <install> entry if not already exists
-    if(!xml_setup.hasChild(L"install", L"ident", ModPack->iden())) {
-       OmXmlNode xml_ins = xml_setup.addChild(L"install");
-       xml_ins.setAttr(L"ident", ModPack->iden());
-       xml_ins.setAttr(L"hash", ModPack->hash());
-    }
-
-    // save definition
-    //this->_xmlconf.save();
+  // if no <setup> with UUID was found, create it
+  if(xml_setup.empty()) {
+    xml_setup = this->_xmlconf.addChild(L"setup");
+    xml_setup.setAttr(L"uuid", ModChan->uuid());
   }
+
+  // add <install> entry if not already exists
+  if(!xml_setup.hasChild(L"install", L"ident", ModPack->iden())) {
+     OmXmlNode xml_ins = xml_setup.addChild(L"install");
+     xml_ins.setAttr(L"ident", ModPack->iden());
+     xml_ins.setAttr(L"hash", ModPack->hash());
+  }
+
+  // save definition
+  //this->_xmlconf.save();
 }
 
 ///
@@ -226,30 +231,28 @@ void OmModPset::addSetupEntry(const OmModChan* ModChan, const OmModPack* ModPack
 ///
 bool OmModPset::deleteSetupEntry(const OmModChan* ModChan, const OmWString& iden)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
+    return false;
 
-    bool found = false;
+  bool found = false;
 
-    // get the proper <batch> node.
-    OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
+  // get the proper <setup> node.
+  OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
-    // if no <batch> with uuid was found, return
-    if(xml_setup.empty()) {
-      return false;
-    }
-
-    // check for <install> entry and remove it
-    if(xml_setup.hasChild(L"install", L"ident", iden)) {
-      found = xml_setup.remChild(xml_setup.child(L"install", L"ident", iden));
-    }
-
-    // save definition
-    //this->_xmlconf.save();
-
-    return found;
+  // if no <setup> with uuid was found, return
+  if(xml_setup.empty()) {
+    return false;
   }
 
-  return false;
+  // check for <install> entry and remove it
+  if(xml_setup.hasChild(L"install", L"ident", iden)) {
+    found = xml_setup.remChild(xml_setup.child(L"install", L"ident", iden));
+  }
+
+  // save definition
+  //this->_xmlconf.save();
+
+  return found;
 }
 
 ///
@@ -259,7 +262,7 @@ size_t OmModPset::setupEntryCount(const OmModChan* ModChan)
 {
   if(this->_xmlconf.valid()) {
 
-    // get the proper <batch> node.
+    // get the proper <setup> node.
     OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
     // if found, return count of <install> child nodes.
@@ -278,7 +281,7 @@ OmModPack* OmModPset::getSetupEntry(const OmModChan* ModChan, size_t i)
 {
   if(this->_xmlconf.valid()) {
 
-    // get the proper <batch> node.
+    // get the proper <setup> node.
     OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
     // if found, return count of <install> child nodes.
@@ -312,7 +315,7 @@ bool OmModPset::setupHasEntry(const OmModChan* ModChan, OmModPack* ModPack)
 {
   if(this->_xmlconf.valid()) {
 
-    // get the proper <batch> node.
+    // get the proper <setup> node.
     OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
     // if found, return count of <install> child nodes.
@@ -345,7 +348,7 @@ size_t OmModPset::getSetupEntryList(const OmModChan* ModChan, OmPModPackArray* m
 {
   if(this->_xmlconf.valid()) {
 
-    // get the proper <batch> node.
+    // get the proper <setup> node.
     OmXmlNode xml_setup = this->_xmlconf.child(L"setup", L"uuid", ModChan->uuid());
 
     // if found, return count of <install> child nodes.
@@ -389,13 +392,12 @@ bool OmModPset::repair()
     return false;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(this->_locked || !this->_xmlconf.valid())
     return false;
-  }
 
   bool has_change = false;
 
-  // <batch> nodes list
+  // <setup> nodes list
   OmXmlNodeArray xml_setup;
   this->_xmlconf.children(xml_setup, L"setup");
 
@@ -504,8 +506,10 @@ bool OmModPset::repair()
 ///
 void OmModPset::save()
 {
-  if(this->_xmlconf.valid())
-    this->_xmlconf.save();
+  if(this->_locked || !this->_xmlconf.valid())
+    return;
+
+  this->_xmlconf.save();
 }
 
 ///

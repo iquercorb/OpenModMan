@@ -19,6 +19,8 @@
 
 #include "OmBase.h"
 
+#include "OmUtilFs.h"           //< OM_ACCESS_*
+
 #include "OmXmlConf.h"
 #include "OmConnect.h"
 #include "OmModPack.h"
@@ -49,6 +51,12 @@ class OmModChan
     ///
     ~OmModChan();
 
+    /// \brief Close Mod Channel.
+    ///
+    /// Close and empty the current instance.
+    ///
+    void close();
+
     /// \brief Open Mod Channel.
     ///
     /// Load Mod Channel from specified file.
@@ -59,12 +67,6 @@ class OmModChan
     ///
     bool open(const OmWString& path);
 
-    /// \brief Close Mod Channel.
-    ///
-    /// Close and empty the current instance.
-    ///
-    void close();
-
     /// \brief Rename Mod Channel
     ///
     /// Change Mod Channel title and rename its home directory to reflect
@@ -74,7 +76,38 @@ class OmModChan
     ///
     /// \return True if operation succeed, false if error occurred.
     ///
-    bool rename(const OmWString& name);
+    OmResult rename(const OmWString& name);
+
+    /// \brief Verify Target access.
+    ///
+    /// Checks whether the software has access to Target directory.
+    ///
+    /// \param[in] mask  : Bit mask for access type to check
+    ///
+    /// \return True if checked access allowed, false otherwise.
+    ///
+    bool accessesTarget(uint32_t mask = OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE);
+
+    /// \brief Verify Library folder access.
+    ///
+    /// Checks whether the software has access to Library directory.
+    ///
+    /// \param[in]  mask  : Bit mask for access type to check
+    ///
+    /// \return True if checked access allowed, false otherwise.
+    ///
+    bool accessesLibrary(uint32_t mask = OM_ACCESS_DIR_READ);
+
+    /// \brief Verify Backup folder access.
+    ///
+    /// Checks whether the software has access to Backup folder for
+    /// reading or reading & writing.
+    ///
+    /// \param[in]  mask  : Bit mask for access type to check
+    ///
+    /// \return True if checked access allowed, false otherwise.
+    ///
+    bool accessesBackup(uint32_t mask = OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE);
 
     /// \brief Refresh Libraries
     ///
@@ -101,20 +134,24 @@ class OmModChan
     ///
     bool ghostbusterModLibrary();
 
-    /// \brief Refresh Mod Library
+    /// \brief Library Mod Count
     ///
-    /// Refresh the local Mod Library list.
+    /// Return count of Mod Pack in local Library
     ///
     size_t modpackCount() const {
       return this->_modpack_list.size();
     }
 
-    /// \brief Refresh Mod Library
+    /// \brief Get Mod Pack
     ///
-    /// Refresh the local Mod Library list.
+    /// Get local Library Mod Pack object at specified index
     ///
-    OmModPack* getModpack(size_t i) const {
-      return this->_modpack_list[i];
+    /// \param[in] index  : Index of Mod Pack to get.
+    ///
+    /// \return Pointer to Mod Pack object.
+    ///
+    OmModPack* getModpack(size_t index) const {
+      return this->_modpack_list[index];
     }
 
     /// \brief Find Mod in Library
@@ -181,44 +218,208 @@ class OmModChan
     ///
     bool isOverlapped(const OmModPack* ModPack) const;
 
-    void findOverlapped(const OmModPack* ModPack, OmUint64Array* overlaps) const;
+    /// \brief Find overlapped Mods
+    ///
+    /// Get list of current library's Mods which may be overlapped by the
+    /// specified Mod if it is installed.
+    ///
+    /// \param[in] ModPack  : Mod to test overlapping over library's Mods
+    /// \param[in] overlaps : Pointer to array to be filled with hash values
+    ///
+    void findOverlaps(const OmModPack* ModPack, OmUint64Array* overlaps) const;
 
-    void findOverlapped(const OmModPack* ModPack, OmPModPackArray* overlaps) const;
+    /// \brief Find overlapped Mods
+    ///
+    /// Get list of current library's Mods which may be overlapped by the
+    /// specified Mod if it is installed.
+    ///
+    /// \param[in] ModPack  : Mod to test overlapping over library's Mods
+    /// \param[in] overlaps : Pointer to array to be filled with ModPacks objects
+    ///
+    void findOverlaps(const OmModPack* ModPack, OmPModPackArray* overlaps) const;
 
+    /// \brief Get overlapped Mods
+    ///
+    /// Get list of found overlapped Mods as referenced by the specified
+    /// Mod backup definition
+    ///
+    /// \param[in] ModPack  : Mod to get backup overlapped list
+    /// \param[in] overlaps : Pointer to array to be filled with ModPacks objects
+    ///
     void getOverlaps(const OmModPack* ModPack, OmPModPackArray* overlaps) const;
 
+    /// \brief Check whether backup entry exists
+    ///
+    /// Check whether any currently installed Mod have an entry that matches the specified
+    /// parameters in their backup entries list, meaning this entry was already created or
+    /// modified by another Mod.
+    ///
+    /// \param[in] path   : Entry path to test check for.
+    /// \param[in] attr   : Entry associated attributes bits to check for.
+    ///
+    /// \return True if matching entry was found, false otherwise.
+    ///
     bool backupEntryExists(const OmWString& path, int32_t attr) const;
 
+    /// \brief Check whether is dependency
+    ///
+    /// Check whether the specified Mod is a dependency of any other in the current Library
+    ///
+    /// \param[in] ModPack  : Mod to check dependency.
+    ///
+    /// \return True if Mod is a dependency, false otherwise.
+    ///
     bool isDependency(const OmModPack* ModPack) const;
 
+    /// \brief Check for missing dependency
+    ///
+    /// Check whether the specified Mod has at least one missing dependency.
+    ///
+    /// \param[in] ModPack  : Mod to check dependencies.
+    ///
+    /// \return True if at least one dependency is missing, false otherwise.
+    ///
     bool hasMissingDepend(const OmModPack* ModPack) const;
 
+    /// \brief Prepare Mods installation
+    ///
+    /// Performs Mods installation preparation for the given Mods selection. The function
+    /// recursively check dependencies and overlapping over the current library's Mods then fill
+    /// the given arrays with relevant data related to potential installations.
+    ///
+    /// \param[in]  selection     : List of desired Mods for installation.
+    /// \param[out] installs      : Final list of Mods that should be installed, including dependencies
+    /// \param[out] overlaps      : Identity list of overlapped Mods
+    /// \param[out] depends       : Identity list of the supplementary installed dependencies Mods
+    /// \param[out] missings      : Identity list of missing dependencies Mods
+    ///
     void prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings) const;
 
+    /// \brief Prepare Mods backup restoration
+    ///
+    /// Performs Mods backup restoration preparation for the given Mods selection. The function
+    /// recursively check dependencies and overlapping over the current library's Mods then fill
+    /// the given arrays with relevant data related to potential backup restoration.
+    ///
+    /// \param[in]  selection     : List of desired Mods for backup restoration.
+    /// \param[out] restores      : Final list of Mods that should be restored, including dependencies
+    /// \param[out] overlappers   : Identity list of the supplementary restored overlapping Mods
+    /// \param[out] dependents    : Identity list of the supplementary restored dependent Mods
+    ///
+    void prepareRestores(const OmPModPackArray& selection, OmPModPackArray* restores, OmWStringArray* overlappers, OmWStringArray* dependents) const;
+
+    /// \brief Prepare Mods cleaning
+    ///
+    /// Performs Mods cleaning preparation for the given Mods selection. The function
+    /// recursively check dependencies and overlapping over the current library's Mods then fill
+    /// the given arrays with relevant data related to potential cleaning.
+    ///
+    /// The Mod cleaning consist of standard backup restoration but also including the
+    /// no longed used dependency nodes.
+    ///
+    /// \param[in]  selection     : List of desired Mods for backup restoration.
+    /// \param[out] restores      : Final list of Mods that should be restored, including dependencies
+    /// \param[out] depends       : Identity list of the supplementary restored unused dependency Mods
+    /// \param[out] overlappers   : Identity list of the supplementary restored overlapping Mods
+    /// \param[out] dependents    : Identity list of the supplementary restored dependent Mods
+    ///
+    void prepareCleaning(const OmPModPackArray& selection, OmPModPackArray* restores, OmWStringArray* depends, OmWStringArray* overlappers, OmWStringArray* dependents) const;
+
+    /// \brief Add Mods to Mod-Operations queue
+    ///
+    /// Add to Mod-Operations queue the given Mods.
+    /// The Mod-Operations consists of installing or uninstalling (backup restoration) Mods
+    /// to the Channel's Target directory. Mods in the queue are treated sequentially, those
+    /// with backup data are uninstalled, other are installed.
+    ///
+    /// This function act asynchronously and returns immediately.
+    ///
+    /// Within this context, the \c param parameter of each callback functions is a pointer to
+    /// the currently processing Mod Pack object.
+    ///
+    /// \param[in] selection     : List of Mods to add to
+    /// \param[in] begin_cb      : Callback function to be called each operation begin.
+    /// \param[in] progress_cb   : Callback function to be called during operation progression.
+    /// \param[in] result_cb     : Callback function to be called each operation end.
+    /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
+    ///
     void queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Execute Mod-Operations
+    ///
+    /// Execute the Mod-Operations for the given Mods.
+    /// The Mod-Operations consists of installing or uninstalling (backup restoration) Mods
+    /// to the Channel's Target directory. Mods in the queue are treated sequentially, those
+    /// with backup data are uninstalled, other are installed.
+    ///
+    /// This function act synchronously and is blocking until all operations ended.
+    ///
+    /// Within this context, the \c param parameter of each callback functions is a pointer to
+    /// the currently processing Mod Pack object.
+    ///
+    /// \param[in] selection     : List of Mods to add to
+    /// \param[in] begin_cb      : Callback function to be called each operation begin.
+    /// \param[in] progress_cb   : Callback function to be called during operation progression.
+    /// \param[in] result_cb     : Callback function to be called each operation end.
+    /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
+    ///
+    /// \return Result code of the operations:
+    ///         OM_RESULT_OK is returned of all operations succeeds,
+    ///         OM_RESULT_ERROR is returned if an error occurred at some point,
+    ///         OM_RESULT_ABORT is returned if operations aborted by callback or in case of illegal call.
+    ///
     OmResult execModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Abort Mod-Operations
+    ///
+    /// Abort the currently processing Mod-Operations and flush queue
+    ///
     void abortModOps();
 
+    /// \brief Mod-Operations progression
+    ///
+    /// Returns the currently processing Mod-Operations queue global progression in percent.
+    ///
+    /// \return Mod-Operations queue progression in percent
+    ///
     uint32_t modOpsProgress() const {
       return this->_modops_percent;
     }
 
+    /// \brief Mod-Operations queue size
+    ///
+    /// Returns current count of Mods in the Mod-Operations queue
+    ///
+    /// \return Mod-Operations queue size
+    ///
     size_t modOpsQueueSize() const {
       return this->_modops_queue.size();
     }
 
+    /// \brief Check for locked Mod Library
+    ///
+    /// Returns locked state of Mod Library. The Mod Library is locked in case of
+    /// processing Mod-Operations and while this, some other operations are forbidden
+    /// to prevent undefined behaviors.
+    ///
+    /// \return True if Mod library is locked, false otherwise
+    ///
     bool lockedModLibrary() const {
       return this->_locked_mod_library;
     }
 
-    void prepareRestores(const OmPModPackArray& selection, OmPModPackArray* restores, OmWStringArray* overlappers, OmWStringArray* dependents) const;
-
-    void prepareCleaning(const OmPModPackArray& selection, OmPModPackArray* restores, OmWStringArray* depends, OmWStringArray* overlappers, OmWStringArray* dependents) const;
-
+    /// \brief Discard all backup data
+    ///
+    /// Discard all backup data for this channel.
+    ///
+    /// \return True if operation succeed, false otherwise
+    ///
     bool discardBackups(const OmPModPackArray& selection, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Sort local Mod Library
+    ///
+    /// Sort local Mod Library using the current sorting mode
+    ///
     void sortModLibrary();
 
     /// \brief Set Mod Library sorting.
@@ -261,16 +462,46 @@ class OmModChan
     ///
     bool refreshNetLibrary();
 
+    /// \brief Get Net Pack count
+    ///
+    /// Returns network Library Net Pack count.
+    ///
+    /// \return Count of Net Pack in network Library
+    ///
     size_t netpackCount() const {
       return this->_netpack_list.size();
     }
 
-    OmNetPack* getNetpack(size_t i) const {
-      return this->_netpack_list[i];
+    /// \brief Get Net Pack
+    ///
+    /// Get local network Library Net Pack object at specified index
+    ///
+    /// \param[in] index  : Index of Net Pack to get.
+    ///
+    /// \return Pointer to Net Pack object.
+    ///
+    OmNetPack* getNetpack(size_t index) const {
+      return this->_netpack_list[index];
     }
 
+    /// \brief Find Net Pack
+    ///
+    /// Search in the network Library for Net Pack object with the specified hash value.
+    ///
+    /// \param[in] hash   : Hash value to search.
+    ///
+    /// \return Pointer to Net Pack object or nullptr if not found.
+    ///
     OmNetPack* findNetpack(uint64_t hash) const;
 
+    /// \brief Find Net Pack
+    ///
+    /// Search in the network Library for Net Pack object with the specified identity.
+    ///
+    /// \param[in] iden   : Identity string to search.
+    ///
+    /// \return Pointer to Net Pack object or nullptr if not found.
+    ///
     OmNetPack* findNetpack(const OmWString& iden) const;
 
     /// \brief Get Network Mod index
@@ -283,28 +514,111 @@ class OmModChan
     ///
     int32_t indexOfNetpack(const OmNetPack* NetPack) const;
 
-    void getNetpackDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, OmWStringArray* missings) const;
+    /// \brief Get Network Pack Dependencies
+    ///
+    /// Retrieve list of dependencies of the specified Net Pack among those available
+    /// in the network Library.
+    ///
+    /// \param[in]  NetPack   : Pointer to Net Pack object to retrieve dependencies.
+    /// \param[out] depends   : Array to be filled with found dependencies.
+    /// \param[out] missings  : Array to be filled with missing dependencies identity string.
+    ///
+    void getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, OmWStringArray* missings) const;
 
+    /// \brief Prepare Mods downloads
+    ///
+    /// Performs Mods downloads preparation for the given Mods selection. The function
+    /// recursively check dependencies over the current local and network library then fill the
+    /// given arrays with relevant data related to potential downloads.
+    ///
+    /// \param[in]  selection     : List of desired Mods for installation.
+    /// \param[out] downloads     : Final list of Mods that should be downloaded, including dependencies
+    /// \param[out] depends       : Identity list of the supplementary downloaded dependencies
+    /// \param[out] missings      : Identity list of missing dependencies Mods
+    /// \param[out] breaking      : Identity list of dependency-breakable dependents Mods
+    ///
     void prepareDownloads(const OmPNetPackArray& selection, OmPNetPackArray* downloads, OmWStringArray* depends, OmWStringArray* missings, OmWStringArray* breaking) const;
 
-    void queueDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    /// \brief Start Mods download
+    ///
+    /// The the download of Mods in the given selection list.
+    ///
+    /// This function act asynchronously and returns immediately.
+    ///
+    /// Within this context, the \c param parameter of each callback functions is a pointer to
+    /// the currently processing Net Pack object.
+    ///
+    /// \param[in] selection     : List of Mods to add to
+    /// \param[in] progress_cb   : Callback function to be called during download progression.
+    /// \param[in] result_cb     : Callback function to be called each download end.
+    /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
+    ///
+    void startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Stop all downloads
+    ///
+    /// Stops all the currently processing downloads.
+    ///
     void stopDownloads();
 
+    /// \brief Stop Mod download
+    ///
+    /// Stops download of the specified Net Pack at index
+    ///
+    /// \param[in] index  : Index of Net Pack in network Library.
+    ///
     void stopDownload(size_t index);
 
+    /// \brief Downloads progression
+    ///
+    /// Returns the current cumulative downloads progression in percent.
+    ///
+    /// \return Cumulative downloads progression in percent.
+    ///
     uint32_t downloadsProgress() const {
       return this->_download_percent;
     }
 
+    /// \brief Add Mods to Upgrades queue
+    ///
+    /// Add to Upgrades queue the given Mods.
+    ///
+    /// The Upgrades consists of uninstalling (backup restoration) of old-version Mod before
+    /// deleting it (moving to trash), leaving only the new version in the local Library.
+    ///
+    /// This function act asynchronously and returns immediately.
+    ///
+    /// Within this context, the \c param parameter of each callback functions is a pointer to
+    /// the currently processing Mod Pack object.
+    ///
+    /// \param[in] selection     : List of Mods to add to
+    /// \param[in] begin_cb      : Callback function to be called each operation begin.
+    /// \param[in] progress_cb   : Callback function to be called during operation progression.
+    /// \param[in] result_cb     : Callback function to be called each operation end.
+    /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
+    ///
     void queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Stop upgrades
+    ///
+    /// Abort processing upgrade and flush queue.
+    ///
     void abortUpgrades();
 
+    /// \brief Upgrades progression
+    ///
+    /// Returns the current cumulative upgrades progression in percent.
+    ///
+    /// \return Cumulative upgrades progression in percent.
+    ///
     uint32_t upgradesProgress() const {
       return this->_upgrade_percent;
     }
 
+    /// \brief Sort network Mod Library
+    ///
+    /// Sort network Mod Library using the current sorting mode
+    ///
     void sortNetLibrary();
 
     /// \brief Set Net Library sorting.
@@ -315,9 +629,21 @@ class OmModChan
     ///
     void setNetLibrarySort(OmSort sorting);
 
+    /// \brief Add Network Repository
+    ///
+    /// Add new Network Repository parameters in Channel.
+    ///
+    /// \return True if operation succeed, false in case of invalid parameters
+    ///
     bool addRepository(const OmWString& base, const OmWString& name);
 
-    void removeRepository(size_t i);
+    /// \brief Remove Network Repository
+    ///
+    /// Delete the Network Repository at given index.
+    ///
+    /// \param[in] index  : Index of Network Repository in list.
+    ///
+    void removeRepository(size_t index);
 
     /// \brief Get Net Repository count
     ///
@@ -351,9 +677,13 @@ class OmModChan
     ///
     int32_t indexOfRepository(OmNetRepo* NetRepo) const;
 
-    /// \brief Query Net Repository.
+    /// \brief Add Net Repositories to query queue
     ///
-    /// Send request Net repository to refresh parameters and available Mods.
+    /// Adds the given selection of Network Repositories to the Query queue. The
+    /// repositories will be queried sequentially and according their position in queue.
+    ///
+    /// Within this context, the \c param parameter of each callback functions is a pointer to
+    /// the currently processing Net Repo object.
     ///
     /// \param[in] selection  : Selected Repositories list to query
     /// \param[in] begin_cb   : Callback function called for processing begin
@@ -379,39 +709,6 @@ class OmModChan
     uint32_t queriesProgress() const {
       return this->_query_percent;
     }
-
-    /// \brief Verify Target path access.
-    ///
-    /// Checks whether the software has access to Target path for
-    /// reading or reading & writing.
-    ///
-    /// \param[in]  rw  : Also check for write access.
-    ///
-    /// \return True if software has required access, false otherwise.
-    ///
-    bool targetDirAccess(bool rw = true);
-
-    /// \brief Verify Library folder access.
-    ///
-    /// Checks whether the software has access to Library folder for
-    /// reading or reading & writing.
-    ///
-    /// \param[in]  rw  : Also check for write access.
-    ///
-    /// \return True if software has required access, false otherwise.
-    ///
-    bool libraryDirAccess(bool rw = false);
-
-    /// \brief Verify Backup folder access.
-    ///
-    /// Checks whether the software has access to Backup folder for
-    /// reading or reading & writing.
-    ///
-    /// \param[in]  rw  : Also check for write access.
-    ///
-    /// \return True if software has required access, false otherwise.
-    ///
-    bool backupDirAccess(bool rw = true);
 
     /// \brief Check whether is valid.
     ///
@@ -499,6 +796,19 @@ class OmModChan
       return this->_target_path;
     }
 
+    /// \brief Set Mod Channel destination path.
+    ///
+    /// Defines and save Mod Channel installation destination path.
+    ///
+    /// \param[in] path    : Target directory path to set.
+    ///
+    /// \return Operation result code:
+    ///         OM_RESULT_OK if operation succeed,
+    ///         OM_RESULT_ABORT in case of illegal call,
+    ///         OM_RESULT_ERROR if an error occured during backup data transfer.
+    ///
+    OmResult setTargetPath(const OmWString& path);
+
     /// \brief Get Mod Channel library path.
     ///
     /// Returns Mod Channel packages library directory.
@@ -509,6 +819,42 @@ class OmModChan
       return this->_library_path;
     }
 
+    /// \brief Set custom Library directory.
+    ///
+    /// Set a custom Mod Library directory.
+    ///
+    /// \param[in] path    : Custom Library directory path to set.
+    ///
+    /// \return Operation result code:
+    ///         OM_RESULT_OK if operation succeed,
+    ///         OM_RESULT_ABORT in case of illegal call,
+    ///         OM_RESULT_ERROR if an error occured during backup data transfer.
+    ///
+    OmResult setCustLibraryPath(const OmWString& path);
+
+    /// \brief Has custom Library directory.
+    ///
+    /// Checks whether this instance currently has and use a custom
+    /// Library folder path.
+    ///
+    /// \return True if a custom Library path is used, false otherwise.
+    ///
+    bool hasCustLibraryPath() const {
+      return this->_cust_library_path;
+    }
+
+    /// \brief Set default Library directory.
+    ///
+    /// Remove the current custom Library configuration and reset to
+    /// default setting.
+    ///
+    /// \return Operation result code:
+    ///         OM_RESULT_OK if operation succeed,
+    ///         OM_RESULT_ABORT in case of illegal call,
+    ///         OM_RESULT_ERROR if an error occured during backup data transfer.
+    ///
+    OmResult setDefLibraryPath();
+
     /// \brief Get Mod Channel backup path.
     ///
     /// Returns Mod Channel packages installation backup directory.
@@ -518,6 +864,44 @@ class OmModChan
     const OmWString& backupPath() const {
       return this->_backup_path;
     }
+
+    /// \brief Has custom Backup directory
+    ///
+    /// Checks whether this instance currently use a custom
+    /// Backup directory.
+    ///
+    /// \return True if Backup directory is custom, false otherwise.
+    ///
+    bool hasCustBackupPath() const {
+      return this->_cust_backup_path;
+    }
+
+    /// \brief Set custom Backup directory
+    ///
+    /// Set a custum Backup data directory. If Backup data
+    /// directory is not empty, all data is moved to the new location.
+    ///
+    /// \param[in]  path    : Custom Backup directory path to set.
+    ///
+    /// \return Operation result code:
+    ///         OM_RESULT_OK if operation succeed,
+    ///         OM_RESULT_ABORT in case of illegal call,
+    ///         OM_RESULT_ERROR if an error occured during backup data transfer.
+    ///
+    OmResult setCustBackupPath(const OmWString& path);
+
+    /// \brief Set default Backup directory
+    ///
+    /// Remove the current custom Backup configuration and reset to
+    /// default setting. If Backup data directory is not empty, all
+    /// data is moved to the new location.
+    ///
+    /// \return Operation result code:
+    ///         OM_RESULT_OK if operation succeed,
+    ///         OM_RESULT_ABORT in case of illegal call,
+    ///         OM_RESULT_ERROR if an error occured during backup data transfer.
+    ///
+    OmResult setDefBackupPath();
 
     /// \brief Get backup compression method.
     ///
@@ -657,72 +1041,6 @@ class OmModChan
     ///
     void setWarnExtraUnin(bool enable);
 
-    /// \brief Set Mod Channel destination path.
-    ///
-    /// Defines and save Mod Channel installation destination path.
-    ///
-    /// \param[in]  path    : destination path to save.
-    ///
-    void setDstDir(const OmWString& path);
-
-    /// \brief Set custom Library directory.
-    ///
-    /// Set a custom Mod Library directory.
-    ///
-    /// \param[in]  path    : Custom Library folder path to save.
-    ///
-    void setCustomLibraryDir(const OmWString& path);
-
-    /// \brief Has custom Library directory.
-    ///
-    /// Checks whether this instance currently has and use a custom
-    /// Library folder path.
-    ///
-    /// \return True if a custom Library path is used, false otherwise.
-    ///
-    bool hasCustomLibraryDir() const {
-      return this->_library_path_is_cust;
-    }
-
-    /// \brief Set default Library directory.
-    ///
-    /// Remove the current custom Library configuration and reset to
-    /// default setting.
-    ///
-    void setDefaultLibraryDir();
-
-    /// \brief Set custom Backup directory
-    ///
-    /// Set a custum Backup data directory. If Backup data
-    /// directory is not empty, all data is moved to the new location.
-    ///
-    /// \param[in]  path    : Custom Backup folder path to save.
-    ///
-    /// \return True if operation succeed, false if error occurred.
-    ///
-    bool setCustomBackupDir(const OmWString& path);
-
-    /// \brief Has custom Backup directory
-    ///
-    /// Checks whether this instance currently use a custom
-    /// Backup directory.
-    ///
-    /// \return True if Backup directory is custom, false otherwise.
-    ///
-    bool hasCustomBackupDir() const {
-      return this->_backup_path_is_cust;
-    }
-
-    /// \brief Set default Backup directory
-    ///
-    /// Remove the current custom Backup configuration and reset to
-    /// default setting. If Backup data directory is not empty, all
-    /// data is moved to the new location.
-    ///
-    /// \return True if operation succeed, false if error occurred.
-    ///
-    bool setDefaultBackupDir();
-
     /// \brief Get upgrade rename mode.
     ///
     /// Returns defined upgrade by rename mode for remote packages.
@@ -831,13 +1149,11 @@ class OmModChan
 
     OmWString             _lasterr;
 
-    // linking
+    // related objects
     OmModHub*             _Modhub;
 
-    // needed objects
+    // related XML config
     OmXmlConf             _xmlconf;
-
-    OmConnect             _connect;
 
     // mod operations helpers
     void                  _get_modops_depends(const OmModPack*, OmPModPackArray*, OmWStringArray*) const;
@@ -876,13 +1192,14 @@ class OmModChan
 
     int32_t               _index;
 
-    // contextual properties
-    bool                  _valid;
-
     // channel main paths
     OmWString             _target_path;
 
+    bool                  _cust_library_path;
+
     OmWString             _library_path;
+
+    bool                  _cust_backup_path;
 
     OmWString             _backup_path;
 
@@ -1001,7 +1318,7 @@ class OmModChan
     void*                 _query_user_ptr;
 
     // channel options
-    bool                  _library_path_is_cust;
+
 
     bool                  _library_devmode;
 
@@ -1010,8 +1327,6 @@ class OmModChan
     bool                  _warn_overlaps;
 
     bool                  _warn_extra_inst;
-
-    bool                  _backup_path_is_cust;
 
     int32_t               _backup_comp_method;
 

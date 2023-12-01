@@ -48,9 +48,6 @@
 ///
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
-  _locked_man(false),
-  _locked_hub(false),
-  _locked_chn(false),
   _modops_count(0),
   _modops_abort(false),
   _lv_mod_icons_size(0)
@@ -79,81 +76,6 @@ OmUiManMainLib::~OmUiManMainLib()
 long OmUiManMainLib::id() const
 {
   return IDD_MGR_MAIN_LIB;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::lockMan(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_man = enable;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::lockHub(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_hub = enable;
-
-  // lock Manager
-  this->lockMan(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::lockChannel(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  this->_locked_chn = enable;
-
-  // lock Mud Hub
-  this->lockHub(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::freeze(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // Packages ListView & buttons
-  this->enableItem(IDC_LV_MOD, !enable);
-  this->enableItem(IDC_BC_INST, !enable);
-  this->enableItem(IDC_BC_UNIN, !enable);
-
-  // Abort Button
-  this->enableItem(IDC_BC_ABORT, enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  if(!enable) {
-    if(this->visible())
-      this->_onRefresh();
-  }
 }
 
 ///
@@ -676,7 +598,7 @@ void OmUiManMainLib::_update_processing()
   this->_setSafe(!processing);
 
   // prevent dangerous user interactions
-  this->_UiMan->lockChannel(processing);
+  this->_UiMan->enableLockMode(processing);
 
   // enable 'kill-switch" abort button
   this->enableItem(IDC_BC_ABORT, processing);
@@ -918,7 +840,7 @@ void OmUiManMainLib::_ec_lib_populate()
   OmWString item_str;
 
   if(ModChan) {
-    if(ModChan->libraryDirAccess(false)) { //< check only for reading
+    if(ModChan->accessesLibrary(OM_ACCESS_DIR_READ)) { //< check only for reading
       item_str = ModChan->libraryPath();
     } else {
       item_str = L"<folder access error>";

@@ -21,9 +21,9 @@
 
 #define PST_PROP_STG_INSLS  2
 
-/// \brief Batch Properties / Install List tab child
+/// \brief Mod Preset Properties / Install List tab child
 ///
-/// OmDialog class derived for Batch Properties / Install List tab child dialog window
+/// OmDialog class derived for Mod Preset Properties / Install List tab child dialog window
 ///
 class OmUiPropPstLst : public OmDialogPropTab
 {

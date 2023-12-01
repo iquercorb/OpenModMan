@@ -303,13 +303,13 @@ int Om_moveToTrash(const OmWString& path);
 ///
 /// Access mask for directory read/traverse content
 ///
-#define OM_ACCESS_DIR_READ     FILE_LIST_DIRECTORY|FILE_TRAVERSE|FILE_READ_ATTRIBUTES
+#define OM_ACCESS_DIR_READ     (FILE_LIST_DIRECTORY|FILE_TRAVERSE|FILE_READ_ATTRIBUTES)
 
 /// \brief Write into directory access mask
 ///
 /// Access mask for directory write/add content
 ///
-#define OM_ACCESS_DIR_WRITE    FILE_ADD_FILE|FILE_ADD_SUBDIRECTORY|FILE_WRITE_ATTRIBUTES
+#define OM_ACCESS_DIR_WRITE    (FILE_ADD_FILE|FILE_ADD_SUBDIRECTORY|FILE_WRITE_ATTRIBUTES)
 
 /// \brief Execute file access mask
 ///
@@ -321,13 +321,13 @@ int Om_moveToTrash(const OmWString& path);
 ///
 /// Access mask for file read data
 ///
-#define OM_ACCESS_FILE_READ    FILE_READ_DATA|FILE_READ_ATTRIBUTES
+#define OM_ACCESS_FILE_READ    (FILE_READ_DATA|FILE_READ_ATTRIBUTES)
 
 /// \brief Write file access mask
 ///
 /// Access mask for file write/append data
 ///
-#define OM_ACCESS_FILE_WRITE   FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES
+#define OM_ACCESS_FILE_WRITE   (FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_WRITE_ATTRIBUTES)
 
 /// \brief check file or directory permission
 ///

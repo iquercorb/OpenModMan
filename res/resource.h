@@ -348,4 +348,5 @@
 #define IDM_HELP_ABOUT                          40861
 #define IDA_DEBUG_LOCK_MAN                      40890
 #define IDA_DEBUG_LOCK_HUB                      40891
-#define IDA_DEBUG_LOCK_CHN                      40892
+#define IDA_DEBUG_LOCKMODE                      40892
+#define IDA_DEBUG_SAFEMODE                      40893

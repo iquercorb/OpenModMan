@@ -43,6 +43,7 @@
 class OmUiManMain;
 class OmUiManFoot;
 class OmUiManMainLib;
+class OmUiManMainNet;
 class OmModPset;
 
 /// \brief Application Main window
@@ -75,30 +76,17 @@ class OmUiMan : public OmDialog
     ///
     long id() const;
 
-    /// \brief Set dialog install mode
-    ///
-    /// Enable or disable the dialog install mode.
-    ///
-    /// The install mode is a modal-kind emulation for threaded operations,
-    /// it disables (almost) all controls of the dialog and its children
-    /// to prevent user to interact with elements while a threaded process
-    /// is running.
-    ///
-    /// \param[in]  enable  : Enable or disable freeze mode.
-    ///
-    void freeze(bool enable);
+    void enableLockMode(bool enable);
 
-    /// \brief Set dialog safe mode
-    ///
-    /// Enables or disable the dialog safe mode.
-    ///
-    /// The safe mode is used to operate modifications on sensitive
-    /// or monitored elements such as deleting or moving Mod Channel in
-    /// order to prevent conflicts or crash during process.
-    ///
-    /// \param[in]  enable  : Enable or disable safe mode.
-    ///
-    void safemode(bool enable);
+    bool lockMode() const {
+      return this->_lock_mode;
+    }
+
+    void enableSafeMode(bool enable);
+
+    bool safeMode() const {
+      return this->_safe_mode;
+    }
 
     /// \brief Monitor Library
     ///
@@ -107,12 +95,6 @@ class OmUiMan : public OmDialog
     /// \param[in]  enable  : Start or stop monitoring.
     ///
     void monitorLibrary(bool enable);
-
-    void lockMan(bool enable);
-
-    void lockHub(bool enable);
-
-    void lockChannel(bool enable);
 
     /// \brief Open Mod Hub
     ///
@@ -252,16 +234,12 @@ class OmUiMan : public OmDialog
 
     OmUiManMainLib*      _UiManMainLib;
 
+    OmUiManMainNet*      _UiManMainNet;
+
     // freeze and safe mode
-    bool                _freeze_mode;
+    bool                _safe_mode;
 
-    bool                _freeze_quit;
-
-    bool                _locked_man;
-
-    bool                _locked_hub;
-
-    bool                _locked_chn;
+    bool                _lock_mode;
 
     // frame splitter
     bool                _split_curs_hover;
@@ -301,11 +279,12 @@ class OmUiMan : public OmDialog
 
     static void         _psetup_result_fn(void*, OmResult, uint64_t);
 
-
     // main window items
     void                _caption_populate();
 
     void                _menu_recent_populate();
+
+    void                _menu_enable();
 
     // Mod Hub controls
     void                _sb_hub_populate();

@@ -1094,7 +1094,7 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
   // retrieve overlapped Mod list and add to XML config
   OmUint64Array bck_overlap;
 
-  this->_ModChan->findOverlapped(this, &bck_overlap);
+  this->_ModChan->findOverlaps(this, &bck_overlap);
 
   if(bck_overlap.size()) {
 

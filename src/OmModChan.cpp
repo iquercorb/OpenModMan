@@ -42,7 +42,8 @@
 OmModChan::OmModChan(OmModHub* ModHub) :
   _Modhub(ModHub),
   _index(0),
-  _valid(false),
+  _cust_library_path(false),
+  _cust_backup_path(false),
   _modpack_list_sort(OM_SORT_NAME),
   _netpack_list_sort(OM_SORT_NAME),
   _locked_mod_library(false),
@@ -79,12 +80,10 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _query_begin_cb(nullptr),
   _query_result_cb(nullptr),
   _query_user_ptr(nullptr),
-  _library_path_is_cust(false),
   _library_devmode(true),
   _library_showhidden(false),
   _warn_overlaps(true),
   _warn_extra_inst(true),
-  _backup_path_is_cust(false),
   _backup_comp_method(OM_METHOD_ZSTD),
   _backup_comp_level(OM_LEVEL_FAST),
   _warn_extra_unin(true),
@@ -110,9 +109,44 @@ OmModChan::~OmModChan()
 ///
 void OmModChan::close()
 {
+  // stop and clear ModOps thread
+  if(this->_modops_hth) {
+    this->_modops_abort = true;
+    WaitForSingleObject(this->_modops_hth, 1000);
+  }
+
+  Om_clearThread(this->_modops_hth, this->_modops_hwo);
+  this->_modops_hth = nullptr;
+  this->_modops_hwo = nullptr;
+
+  // stop and clear Upgrades thread
+  if(this->_upgrade_hth) {
+    this->_upgrade_abort = true;
+    WaitForSingleObject(this->_upgrade_hth, 1000);
+  }
+  Om_clearThread(this->_upgrade_hth, this->_upgrade_hwo);
+  this->_upgrade_hth = nullptr;
+  this->_upgrade_hwo = nullptr;
+
+  // stop and clear Queries thread
+  if(this->_query_hth) {
+    this->_query_abort = true;
+    WaitForSingleObject(this->_query_hth, 1000);
+  }
+  Om_clearThread(this->_query_hth, this->_query_hwo);
+  this->_query_hth = nullptr;
+  this->_query_hwo = nullptr;
+
+  // stop all downloads
+  if(!this->_download_queue.empty()) {
+    // FIXME : Je ne sais pas si ce truc fonctionne
+    this->stopDownloads();
+    while(this->_download_queue.size())
+      Sleep(50);
+  }
+
   this->_lasterr.clear();
 
-  this->_connect.clear();
   this->_xmlconf.clear();
 
   this->_path.clear();
@@ -120,7 +154,6 @@ void OmModChan::close()
   this->_uuid.clear();
   this->_title.clear();
   this->_index = 0;
-  this->_valid = false;
   this->_target_path.clear();
   this->_library_path.clear();
   this->_backup_path.clear();
@@ -138,9 +171,6 @@ void OmModChan::close()
   this->_locked_net_library = false;
 
   this->_modops_abort = false;
-  Om_clearThread(this->_modops_hth, this->_modops_hwo);
-  this->_modops_hth = nullptr;
-  this->_modops_hwo = nullptr;
   this->_modops_dones = 0;
   this->_modops_percent = 0;
   this->_modops_queue.clear();
@@ -158,9 +188,6 @@ void OmModChan::close()
   this->_download_user_ptr = nullptr;
 
   this->_upgrade_abort = false;
-  Om_clearThread(this->_upgrade_hth, this->_upgrade_hwo);
-  this->_upgrade_hth = nullptr;
-  this->_upgrade_hwo = nullptr;
   this->_upgrade_dones = 0;
   this->_upgrade_percent = 0;
   this->_upgrade_queue.clear();
@@ -170,9 +197,6 @@ void OmModChan::close()
   this->_upgrade_user_ptr = nullptr;
 
   this->_query_abort = false;
-  Om_clearThread(this->_query_hth, this->_query_hwo);
-  this->_query_hth = nullptr;
-  this->_query_hwo = nullptr;
   this->_query_queue.clear();
   this->_query_dones = 0;
   this->_query_percent = 0;
@@ -180,12 +204,12 @@ void OmModChan::close()
   this->_query_result_cb = nullptr;
   this->_query_user_ptr = nullptr;
 
-  this->_library_path_is_cust = false;
+  this->_cust_library_path = false;
   this->_library_devmode = true;
   this->_library_showhidden = false;
   this->_warn_overlaps = true;
   this->_warn_extra_inst = true;
-  this->_backup_path_is_cust = false;
+  this->_cust_backup_path = false;
   this->_backup_comp_method = OM_METHOD_ZSTD;
   this->_backup_comp_level = OM_LEVEL_FAST;
   this->_warn_extra_unin = true;
@@ -241,7 +265,7 @@ bool OmModChan::open(const OmWString& path)
   // check for the presence of <library> entry for custom Library path
   if(this->_xmlconf.hasChild(L"library")) {
 
-    this->_library_path_is_cust = true;
+    this->_cust_library_path = true;
     this->_library_path = this->_xmlconf.child(L"library").content();
 
     if(!Om_isDir(this->_library_path)) {
@@ -265,7 +289,7 @@ bool OmModChan::open(const OmWString& path)
   // check for the presence of <backup> entry for custom Backup path
   if(this->_xmlconf.hasChild(L"backup")) {
 
-    this->_backup_path_is_cust = true;
+    this->_cust_backup_path = true;
     this->_backup_path = this->_xmlconf.child(L"backup").content();
 
     if(!Om_isDir(this->_backup_path)) {
@@ -438,10 +462,7 @@ bool OmModChan::open(const OmWString& path)
     this->setWarnUpgdBrkDeps(this->_warn_upgd_brk_deps);
   }
 
-  this->_log(OM_LOG_OK, L"open", L"succeed");
-
-  // this location is OK and ready
-  this->_valid = true;
+  this->_log(OM_LOG_OK, L"open", L"OK");
 
   // Refresh library
   this->refreshModLibrary();
@@ -452,8 +473,13 @@ bool OmModChan::open(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::rename(const OmWString& title)
+OmResult OmModChan::rename(const OmWString& title)
 {
+  if(this->_locked_mod_library) {
+    this->_error(L"setCustBackupPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
   // 1. change title in configuration
   this->setTitle(title);
 
@@ -488,8 +514,129 @@ bool OmModChan::rename(const OmWString& title)
     this->_log(OM_LOG_OK, L"renameHome", L"successfully renamed to \""+new_home+L"\"");
   }
 
-  return !has_error;
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModChan::accessesTarget(uint32_t mask)
+{
+  // checks whether directory exists
+  if(!Om_isDir(this->_target_path)) {
+    this->_error(L"accessesTarget", Om_errNotDir(L"target directory", this->_target_path));
+    return false;
+  }
+
+  // checks for proper permissions on folder
+  if(!Om_checkAccess(this->_target_path, mask)) {
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_target_path.c_str())) {
+
+      this->_log(OM_LOG_WRN, L"accessesTarget", L"Path is a shared network directory and "
+                 "permissions cannot be properly evaluated");
+
+    } else {
+      // compose proper error according access mask
+      if(OM_HAS_BIT(mask, OM_ACCESS_DIR_WRITE)) {
+        this->_error(L"accessesTarget", Om_errWriteAccess(L"target directory", this->_target_path));
+      } else {
+        this->_error(L"accessesTarget", Om_errReadAccess(L"target directory", this->_target_path));
+      }
+      return false;
+    }
+  }
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModChan::accessesLibrary(uint32_t mask)
+{
+  // checks whether directory exists
+  if(!Om_isDir(this->_library_path)) {
+    if(this->_cust_library_path) {
+      this->_error(L"accessesLibrary", Om_errNotDir(L"library directory", this->_library_path));
+      return false;
+    } else {
+      // try to create it
+      int32_t result = Om_dirCreate(this->_library_path);
+      if(result != 0) {
+        this->_error(L"accessesLibrary", Om_errCreate(L"library directory", this->_library_path, result));
+        return false;
+      }
+    }
+  }
+
+  // checks for proper permissions on folder
+  if(!Om_checkAccess(this->_library_path, mask)) {
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_library_path.c_str())) {
+
+      this->_log(OM_LOG_WRN, L"accessesLibrary", L"Path is a shared network directory and "
+                 "permissions cannot be properly evaluated");
+
+    } else {
+      // compose proper error according access mask
+      if(OM_HAS_BIT(mask, OM_ACCESS_DIR_WRITE)) {
+        this->_error(L"accessesLibrary", Om_errWriteAccess(L"library directory", this->_library_path));
+      } else {
+        this->_error(L"accessesLibrary", Om_errReadAccess(L"library directory", this->_library_path));
+      }
+      return false;
+    }
+  }
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModChan::accessesBackup(uint32_t mask)
+{
+  // checks whether directory exists
+  if(!Om_isDir(this->_backup_path)) {
+    if(this->_cust_backup_path) {
+      this->_error(L"accessesBackup", Om_errNotDir(L"backup directory", this->_backup_path));
+      return false;
+    } else {
+      // try to create it
+      int32_t result = Om_dirCreate(this->_backup_path);
+      if(result != 0) {
+        this->_error(L"accessesBackup", Om_errCreate(L"backup directory", this->_backup_path, result));
+        return false;
+      }
+    }
+  }
+
+    // checks for proper permissions on folder
+  if(!Om_checkAccess(this->_backup_path, mask)) {
+
+    // Check for special case of network folder
+    if(Om_pathIsNetwork(this->_backup_path.c_str())) {
+
+      this->_log(OM_LOG_WRN, L"accessesBackup", L"Path is a shared network directory and "
+                 "permissions cannot be properly evaluated");
+
+    } else {
+      // compose proper error according access mask
+      if(OM_HAS_BIT(mask, OM_ACCESS_DIR_WRITE)) {
+        this->_error(L"accessesBackup", Om_errWriteAccess(L"backup directory", this->_backup_path));
+      } else {
+        this->_error(L"accessesBackup", Om_errReadAccess(L"backup directory", this->_backup_path));
+      }
+      return false;
+    }
+  }
+
+  return true;
+}
+
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -531,7 +678,7 @@ bool OmModChan::clearModLibrary()
 ///
 bool OmModChan::refreshModLibrary()
 {
-  if(!this->libraryDirAccess(false)) { // check for read access
+  if(!this->accessesLibrary(OM_ACCESS_DIR_READ)) { // check for read access
     #ifdef DEBUG
     std::cout << "DEBUG => OmModChan::refreshModLibrary X\n";
     #endif
@@ -901,6 +1048,9 @@ void OmModChan::sortModLibrary()
 ///
 void OmModChan::setModLibrarySort(OmSort sorting)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   // if requested sorting is same as current, reverse order
   if(OM_HAS_BIT(this->_modpack_list_sort, sorting)) {
 
@@ -912,19 +1062,14 @@ void OmModChan::setModLibrarySort(OmSort sorting)
   }
 
   // save the current sorting
-  if(this->_xmlconf.valid()) {
-
-    if(this->_xmlconf.hasChild(L"library_sort")) {
-
-      this->_xmlconf.child(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
-
-    } else {
-
-      this->_xmlconf.addChild(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"library_sort")) {
+    this->_xmlconf.child(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
+  } else {
+    this->_xmlconf.addChild(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
   }
+
+  this->_xmlconf.save();
+
 
   this->sortModLibrary();
 }
@@ -960,7 +1105,7 @@ bool OmModChan::isOverlapped(const OmModPack* ModPack) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::findOverlapped(const OmModPack* ModPack, OmUint64Array* overlaps) const
+void OmModChan::findOverlaps(const OmModPack* ModPack, OmUint64Array* overlaps) const
 {
   for(size_t i = 0; i < this->_modpack_list.size(); ++i)
     if(this->_modpack_list[i]->hasBackup())
@@ -971,7 +1116,7 @@ void OmModChan::findOverlapped(const OmModPack* ModPack, OmUint64Array* overlaps
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::findOverlapped(const OmModPack* ModPack, OmPModPackArray* overlaps) const
+void OmModChan::findOverlaps(const OmModPack* ModPack, OmPModPackArray* overlaps) const
 {
   for(size_t i = 0; i < this->_modpack_list.size(); ++i)
     if(this->_modpack_list[i]->hasBackup())
@@ -1137,115 +1282,6 @@ void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArra
     installs->at(i)->getFootprint(&footprint);
     footprintArray.push_back(footprint);
   }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
-{
-  if(this->_modops_queue.empty()) {
-
-    // another operation is currently processing
-    if(this->_locked_mod_library) {
-
-      this->_log(OM_LOG_WRN, L"queueModOps", L"local library is locked by another operation");
-
-      if(result_cb)  // flush all results with abort
-        for(size_t i = 0; i << selection.size(); ++i)
-          result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
-
-      return;
-    }
-
-    this->_modops_begin_cb = begin_cb;
-    this->_modops_progress_cb = progress_cb;
-    this->_modops_result_cb = result_cb;
-    this->_modops_user_ptr = user_ptr;
-
-    // reset global progression parameters
-    this->_modops_dones = 0;
-    this->_modops_percent = 0;
-
-  } else {
-
-    // emit a warning in case a crazy client starts new download with
-    // different parameters than current
-    if(this->_modops_begin_cb != begin_cb ||
-       this->_modops_progress_cb != progress_cb ||
-       this->_modops_result_cb != result_cb ||
-       this->_modops_user_ptr != user_ptr) {
-      this->_log(OM_LOG_WRN, L"queueModOps", L"changing callbacks for a running thread is not allowed");
-    }
-  }
-
-  // lock the local library to prevent concurrent array manipulation
-  this->_locked_mod_library = true;
-
-  // reset abort flag
-  this->_modops_abort = false;
-
-  for(size_t i = 0; i < selection.size(); ++i)
-    Om_push_backUnique(this->_modops_queue, selection[i]);
-
-  if(!this->_modops_hth) {
-
-    // launch thread
-    this->_modops_hth = Om_createThread(OmModChan::_modops_run_fn, this);
-    this->_modops_hwo = Om_waitForThread(this->_modops_hth, OmModChan::_modops_end_fn, this);
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-OmResult OmModChan::execModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
-{
-  bool invalid_call = false;
-
-  // install queue not empty processing
-  if(!this->_modops_queue.empty()) {
-    this->_log(OM_LOG_WRN, L"execModOps", L"install queue is not empty");
-    invalid_call = true;
-  }
-
-  // another operation is currently processing
-  if(this->_locked_mod_library) {
-    this->_log(OM_LOG_WRN, L"execModOps", L"local library is locked by another operation");
-    invalid_call = true;
-  }
-
-  if(invalid_call) {
-    if(result_cb)  // flush all results with abort
-      for(size_t i = 0; i << selection.size(); ++i)
-        result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
-
-    return OM_RESULT_ABORT;
-  }
-
-  this->_modops_begin_cb = begin_cb;
-  this->_modops_progress_cb = progress_cb;
-  this->_modops_result_cb = result_cb;
-  this->_modops_user_ptr = user_ptr;
-
-  // reset global progression parameters
-  this->_modops_dones = 0;
-  this->_modops_percent = 0;
-
-  // lock the local library to prevent concurrent array manipulation
-  this->_locked_mod_library = true;
-
-  // reset abort flag
-  this->_modops_abort = false;
-
-  for(size_t i = 0; i < selection.size(); ++i)
-    Om_push_backUnique(this->_modops_queue, selection[i]);
-
-  // run install process without thread
-  OmResult result = static_cast<OmResult>(OmModChan::_modops_run_fn(this));
-  OmModChan::_modops_end_fn(this, 0);
-
-  return result;
 }
 
 ///
@@ -1422,6 +1458,115 @@ void OmModChan::prepareCleaning(const OmPModPackArray& selection, OmPModPackArra
 void OmModChan::abortModOps()
 {
   this->_modops_abort = true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+{
+  if(this->_modops_queue.empty()) {
+
+    // another operation is currently processing
+    if(this->_locked_mod_library) {
+
+      this->_log(OM_LOG_WRN, L"queueModOps", L"local library is locked by another operation");
+
+      if(result_cb)  // flush all results with abort
+        for(size_t i = 0; i << selection.size(); ++i)
+          result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
+
+      return;
+    }
+
+    this->_modops_begin_cb = begin_cb;
+    this->_modops_progress_cb = progress_cb;
+    this->_modops_result_cb = result_cb;
+    this->_modops_user_ptr = user_ptr;
+
+    // reset global progression parameters
+    this->_modops_dones = 0;
+    this->_modops_percent = 0;
+
+  } else {
+
+    // emit a warning in case a crazy client starts new download with
+    // different parameters than current
+    if(this->_modops_begin_cb != begin_cb ||
+       this->_modops_progress_cb != progress_cb ||
+       this->_modops_result_cb != result_cb ||
+       this->_modops_user_ptr != user_ptr) {
+      this->_log(OM_LOG_WRN, L"queueModOps", L"changing callbacks for a running thread is not allowed");
+    }
+  }
+
+  // lock the local library to prevent concurrent array manipulation
+  this->_locked_mod_library = true;
+
+  // reset abort flag
+  this->_modops_abort = false;
+
+  for(size_t i = 0; i < selection.size(); ++i)
+    Om_push_backUnique(this->_modops_queue, selection[i]);
+
+  if(!this->_modops_hth) {
+
+    // launch thread
+    this->_modops_hth = Om_createThread(OmModChan::_modops_run_fn, this);
+    this->_modops_hwo = Om_waitForThread(this->_modops_hth, OmModChan::_modops_end_fn, this);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::execModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+{
+  bool invalid_call = false;
+
+  // install queue not empty processing
+  if(!this->_modops_queue.empty()) {
+    this->_log(OM_LOG_WRN, L"execModOps", L"install queue is not empty");
+    invalid_call = true;
+  }
+
+  // another operation is currently processing
+  if(this->_locked_mod_library) {
+    this->_log(OM_LOG_WRN, L"execModOps", L"local library is locked by another operation");
+    invalid_call = true;
+  }
+
+  if(invalid_call) {
+    if(result_cb)  // flush all results with abort
+      for(size_t i = 0; i << selection.size(); ++i)
+        result_cb(user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(selection[i]));
+
+    return OM_RESULT_ABORT;
+  }
+
+  this->_modops_begin_cb = begin_cb;
+  this->_modops_progress_cb = progress_cb;
+  this->_modops_result_cb = result_cb;
+  this->_modops_user_ptr = user_ptr;
+
+  // reset global progression parameters
+  this->_modops_dones = 0;
+  this->_modops_percent = 0;
+
+  // lock the local library to prevent concurrent array manipulation
+  this->_locked_mod_library = true;
+
+  // reset abort flag
+  this->_modops_abort = false;
+
+  for(size_t i = 0; i < selection.size(); ++i)
+    Om_push_backUnique(this->_modops_queue, selection[i]);
+
+  // run install process without thread
+  OmResult result = static_cast<OmResult>(OmModChan::_modops_run_fn(this));
+  OmModChan::_modops_end_fn(this, 0);
+
+  return result;
 }
 
 ///
@@ -1613,12 +1758,12 @@ bool OmModChan::purgeBackupData(Om_progressCb progress_cb, void* user_ptr)
   // TODO: Rrefaire tout ça en utilisant la fille d'attente dans un thread
 
   // checks for access to backup folder
-  if(!this->backupDirAccess(true)) { //< check for read and write
+  if(!this->accessesBackup(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
     this->_error(L"purgeBackupData", L"Backup folder access error.");
     return false;
   }
   // checks for access to Target path
-  if(!this->targetDirAccess(true)) { //< check for read and write
+  if(!this->accessesTarget(true)) { //< check for read and write
     this->_error(L"purgeBackupData", L"Target path access error.");
     return false;
   }
@@ -1807,7 +1952,7 @@ void OmModChan::_get_source_downloads(const OmModPack* ModPack, OmPNetPackArray*
       if(missing_depends.at(i) == this->_netpack_list[n]->iden()) {
 
         // add Mod dependencies
-        this->getNetpackDepends(this->_netpack_list[n], downloads, missings);
+        this->getDepends(this->_netpack_list[n], downloads, missings);
 
         // add Mod itslef
         Om_push_backUnique(*downloads, this->_netpack_list[n]);
@@ -1824,7 +1969,7 @@ void OmModChan::_get_source_downloads(const OmModPack* ModPack, OmPNetPackArray*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::getNetpackDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, OmWStringArray* missings) const
+void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, OmWStringArray* missings) const
 {
   // first check required dependency in local library to
   // gather all missing dependencies, this will add dependencies
@@ -1862,7 +2007,7 @@ void OmModChan::getNetpackDepends(const OmNetPack* NetPack, OmPNetPackArray* dep
       if(NetPack->getDependIden(i) == this->_netpack_list[n]->iden()) {
 
         // add Mod dependencies
-        this->getNetpackDepends(this->_netpack_list[n], depends, missings);
+        this->getDepends(this->_netpack_list[n], depends, missings);
 
         // add Mod itslef
         Om_push_backUnique(*depends, this->_netpack_list[n]);
@@ -1896,7 +2041,7 @@ void OmModChan::prepareDownloads(const OmPNetPackArray& selection, OmPNetPackArr
   // gather dependencies and create missing lists
   OmPNetPackArray found_depends;
   for(size_t i = 0; i < selection.size(); ++i)
-    this->getNetpackDepends(selection[i], &found_depends, missings);
+    this->getDepends(selection[i], &found_depends, missings);
 
   // add extra dependencies to be downloaded
   for(size_t i = 0; i < found_depends.size(); ++i) {
@@ -1928,7 +2073,7 @@ void OmModChan::prepareDownloads(const OmPNetPackArray& selection, OmPNetPackArr
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr)
 {
   if(this->_download_queue.empty()) {
 
@@ -2391,6 +2536,9 @@ void OmModChan::sortNetLibrary()
 ///
 void OmModChan::setNetLibrarySort(OmSort sorting)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   // if requested sorting is same as current, reverse order
 
   if(OM_HAS_BIT(this->_netpack_list_sort, sorting)) {
@@ -2403,16 +2551,13 @@ void OmModChan::setNetLibrarySort(OmSort sorting)
   }
 
   // save the current sorting
-  if(this->_xmlconf.valid()) {
-
-    if(this->_xmlconf.hasChild(L"remotes_sort")) {
-      this->_xmlconf.child(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
-    } else {
-      this->_xmlconf.addChild(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"remotes_sort")) {
+    this->_xmlconf.child(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
+  } else {
+    this->_xmlconf.addChild(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
   }
+
+  this->_xmlconf.save();
 
   this->sortNetLibrary();
 }
@@ -2764,23 +2909,292 @@ VOID WINAPI OmModChan::_query_end_fn(void* ptr, uint8_t fired)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::setLibraryDevmod(bool enable)
+void OmModChan::setTitle(const OmWString& title)
 {
-  this->_library_devmode = enable;
+  if(!this->_xmlconf.valid())
+    return;
 
-  if(this->_xmlconf.valid()) {
+  this->_title = title;
 
-    if(this->_xmlconf.hasChild(L"library_devmode")) {
-      this->_xmlconf.child(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
-    } else {
-      this->_xmlconf.addChild(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"title")) {
+    this->_xmlconf.child(L"title").setContent(title);
+  } else {
+    this->_xmlconf.addChild(L"title").setContent(title);
   }
 
-  // refresh all library for all locations
+  this->_xmlconf.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setIndex(unsigned index)
+{
+  if(!this->_xmlconf.valid())
+    return;
+
+  this->_index = index;
+
+  if(this->_xmlconf.hasChild(L"title")) {
+    this->_xmlconf.child(L"title").setAttr(L"index", static_cast<int>(index));
+  }
+
+  this->_xmlconf.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::setTargetPath(const OmWString& path)
+{
+  if(this->_locked_mod_library) {
+    this->_error(L"setTargetPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!this->_xmlconf.valid()) {
+    this->_error(L"setTargetPath", L"channel is not valid");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!Om_isDir(path)) {
+    this->_error(L"setTargetPath", Om_errNotDir(L"directory", path));
+    return OM_RESULT_ERROR;
+  }
+
+  this->_target_path = path;
+
+  if(this->_xmlconf.hasChild(L"install")) {
+    this->_xmlconf.child(L"install").setContent(path);
+  } else {
+    this->_xmlconf.addChild(L"install").setContent(path);
+  }
+
+  this->_xmlconf.save();
+
+  return OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::setCustLibraryPath(const OmWString& path)
+{
+  if(this->_locked_mod_library) {
+    this->_error(L"setCustLibraryPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!this->_xmlconf.valid()) {
+    this->_error(L"setCustLibraryPath", L"channel is not valid");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!Om_isDir(path)) {
+    this->_error(L"setCustLibraryPath", Om_errNotDir(L"directory", path));
+    return OM_RESULT_ERROR;
+  }
+
+  // empty library
   this->clearModLibrary();
+
+  this->_library_path = path;
+
+  // notify we use a custom Library path
+  this->_cust_library_path = true;
+
+  if(this->_xmlconf.hasChild(L"library")) {
+    this->_xmlconf.child(L"library").setContent(path);
+  } else {
+    this->_xmlconf.addChild(L"library").setContent(path);
+  }
+
+  this->_xmlconf.save();
+
+  // refresh library
+  this->refreshModLibrary();
+
+  return OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::setDefLibraryPath()
+{
+  if(this->_locked_mod_library) {
+    this->_error(L"setDefLibraryPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!this->_xmlconf.valid()) {
+    this->_error(L"setDefLibraryPath", L"channel is not valid");
+    return OM_RESULT_ABORT;
+  }
+
+  // empty library
+  this->clearModLibrary();
+
+  this->_library_path = this->_home + OM_MODCHAN_MODLIB_DIR;
+
+  // notify we use default settings
+  this->_cust_library_path = false;
+
+  if(this->_xmlconf.hasChild(L"library"))
+    this->_xmlconf.remChild(L"library");
+
+  this->_xmlconf.save();
+
+  // refresh library
+  this->refreshModLibrary();
+
+  return OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::setCustBackupPath(const OmWString& path)
+{
+  if(this->_locked_mod_library) {
+    this->_error(L"setCustBackupPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!this->_xmlconf.valid()) {
+    this->_error(L"setCustBackupPath", L"channel is not valid");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!Om_isDir(path)) {
+    this->_error(L"setCustBackupPath", Om_errNotDir(L"directory", path));
+    return OM_RESULT_ERROR;
+  }
+
+  bool has_error = false;
+
+  // clear the mod library
+  this->clearModLibrary();
+
+  if(!Om_namesMatches(this->_backup_path, path)) {
+
+    // move content from old to new backup directory
+    OmWStringArray items;
+    Om_lsAll(&items, this->_backup_path);
+
+    OmWString src_path, dst_path;
+
+    for(size_t i = 0; i < items.size(); ++i) {
+
+      Om_concatPaths(src_path, this->_backup_path, items[i]);
+      Om_concatPaths(dst_path, path, items[i]);
+
+      int32_t result = Om_fileMove(src_path, dst_path);
+      if(result != 0) {
+        this->_error(L"setCustBackupPath", Om_errMove(L"Backup element", src_path, result));
+        has_error = true;
+      }
+    }
+  }
+
+  // change backup path
+  this->_backup_path = path;
+
+  // notify we use a custom Library path
+  this->_cust_backup_path = true;
+
+  if(this->_xmlconf.hasChild(L"backup")) {
+    this->_xmlconf.child(L"backup").setContent(path);
+  } else {
+    this->_xmlconf.addChild(L"backup").setContent(path);
+  }
+
+  this->_xmlconf.save();
+
+  // refresh library content
+  this->refreshModLibrary();
+
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::setDefBackupPath()
+{
+  if(this->_locked_mod_library) {
+    this->_error(L"setDefBackupPath", L"Mod library operation is currently processing");
+    return OM_RESULT_ABORT;
+  }
+
+  if(!this->_xmlconf.valid()) {
+    this->_error(L"setCustBackupPath", L"channel is not valid");
+    return OM_RESULT_ABORT;
+  }
+
+  bool has_error = false;
+
+  this->clearModLibrary();
+
+  OmWString default_path;
+  Om_concatPaths(default_path, this->_home, OM_MODCHAN_BACKUP_DIR);
+
+  if(!Om_namesMatches(this->_backup_path, default_path)) {
+
+    // move content from old to new backup directory
+    OmWStringArray items;
+    Om_lsAll(&items, this->_backup_path);
+
+    OmWString src_path, dst_path;
+
+    for(size_t i = 0; i < items.size(); ++i) {
+
+      Om_concatPaths(src_path, this->_backup_path, items[i]);
+      Om_concatPaths(dst_path, default_path, items[i]);
+
+      int32_t result = Om_fileMove(src_path, dst_path);
+      if(result != 0) {
+        this->_error(L"setCustBackupPath", Om_errMove(L"Backup element", src_path, result));
+        has_error = true;
+      }
+    }
+  }
+
+  this->_backup_path = default_path;
+
+  // notify we use default settings
+  this->_cust_backup_path = false;
+
+  if(this->_xmlconf.hasChild(L"backup"))
+    this->_xmlconf.remChild(L"backup");
+
+  this->_xmlconf.save();
+
+  // refresh library content
+  this->refreshModLibrary();
+
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setLibraryDevmod(bool enable)
+{
+  if(!this->_xmlconf.valid())
+    return;
+
+  this->_library_devmode = enable;
+
+  if(this->_xmlconf.hasChild(L"library_devmode")) {
+    this->_xmlconf.child(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
+  } else {
+    this->_xmlconf.addChild(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
+
+  // refresh library content
   this->refreshModLibrary();
 }
 
@@ -2789,21 +3203,20 @@ void OmModChan::setLibraryDevmod(bool enable)
 ///
 void OmModChan::setLibraryShowhidden(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_library_showhidden = enable;
 
-  if(this->_xmlconf.valid()) {
-
-    if(this->_xmlconf.hasChild(L"library_showhidden")) {
-      this->_xmlconf.child(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
-    } else {
-      this->_xmlconf.addChild(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"library_showhidden")) {
+    this->_xmlconf.child(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
+  } else {
+    this->_xmlconf.addChild(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
   }
 
-  // refresh all library for all locations
-  this->clearModLibrary();
+  this->_xmlconf.save();
+
+  // refresh library content
   this->refreshModLibrary();
 }
 
@@ -2812,26 +3225,26 @@ void OmModChan::setLibraryShowhidden(bool enable)
 ///
 void OmModChan::setWarnOverlaps(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_overlaps = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode warn_options_node;
 
-    OmXmlNode warn_options_node;
-
-    if(this->_xmlconf.hasChild(L"warn_options")) {
-      warn_options_node = this->_xmlconf.child(L"warn_options");
-    } else {
-      warn_options_node = this->_xmlconf.addChild(L"warn_options");
-    }
-
-    if(warn_options_node.hasChild(L"warn_overlaps")) {
-      warn_options_node.child(L"warn_overlaps").setAttr(L"enable", this->_warn_overlaps ? 1 : 0);
-    } else {
-      warn_options_node.addChild(L"warn_overlaps").setAttr(L"enable", this->_warn_overlaps ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"warn_options")) {
+    warn_options_node = this->_xmlconf.child(L"warn_options");
+  } else {
+    warn_options_node = this->_xmlconf.addChild(L"warn_options");
   }
+
+  if(warn_options_node.hasChild(L"warn_overlaps")) {
+    warn_options_node.child(L"warn_overlaps").setAttr(L"enable", this->_warn_overlaps ? 1 : 0);
+  } else {
+    warn_options_node.addChild(L"warn_overlaps").setAttr(L"enable", this->_warn_overlaps ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -2839,26 +3252,26 @@ void OmModChan::setWarnOverlaps(bool enable)
 ///
 void OmModChan::setWarnExtraInst(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_extra_inst = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode warn_options_node;
 
-    OmXmlNode warn_options_node;
-
-    if(this->_xmlconf.hasChild(L"warn_options")) {
-      warn_options_node = this->_xmlconf.child(L"warn_options");
-    } else {
-      warn_options_node = this->_xmlconf.addChild(L"warn_options");
-    }
-
-    if(warn_options_node.hasChild(L"warn_extra_inst")) {
-      warn_options_node.child(L"warn_extra_inst").setAttr(L"enable", this->_warn_extra_inst ? 1 : 0);
-    } else {
-      warn_options_node.addChild(L"warn_extra_inst").setAttr(L"enable", this->_warn_extra_inst ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"warn_options")) {
+    warn_options_node = this->_xmlconf.child(L"warn_options");
+  } else {
+    warn_options_node = this->_xmlconf.addChild(L"warn_options");
   }
+
+  if(warn_options_node.hasChild(L"warn_extra_inst")) {
+    warn_options_node.child(L"warn_extra_inst").setAttr(L"enable", this->_warn_extra_inst ? 1 : 0);
+  } else {
+    warn_options_node.addChild(L"warn_extra_inst").setAttr(L"enable", this->_warn_extra_inst ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -2866,26 +3279,26 @@ void OmModChan::setWarnExtraInst(bool enable)
 ///
 void OmModChan::setWarnMissDeps(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_miss_deps = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode warn_options_node;
 
-    OmXmlNode warn_options_node;
-
-    if(this->_xmlconf.hasChild(L"warn_options")) {
-      warn_options_node = this->_xmlconf.child(L"warn_options");
-    } else {
-      warn_options_node = this->_xmlconf.addChild(L"warn_options");
-    }
-
-    if(warn_options_node.hasChild(L"warn_miss_deps")) {
-      warn_options_node.child(L"warn_miss_deps").setAttr(L"enable", this->_warn_miss_deps ? 1 : 0);
-    } else {
-      warn_options_node.addChild(L"warn_miss_deps").setAttr(L"enable", this->_warn_miss_deps ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"warn_options")) {
+    warn_options_node = this->_xmlconf.child(L"warn_options");
+  } else {
+    warn_options_node = this->_xmlconf.addChild(L"warn_options");
   }
+
+  if(warn_options_node.hasChild(L"warn_miss_deps")) {
+    warn_options_node.child(L"warn_miss_deps").setAttr(L"enable", this->_warn_miss_deps ? 1 : 0);
+  } else {
+    warn_options_node.addChild(L"warn_miss_deps").setAttr(L"enable", this->_warn_miss_deps ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -2893,416 +3306,26 @@ void OmModChan::setWarnMissDeps(bool enable)
 ///
 void OmModChan::setWarnExtraUnin(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_extra_unin = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode warn_options_node;
 
-    OmXmlNode warn_options_node;
-
-    if(this->_xmlconf.hasChild(L"warn_options")) {
-      warn_options_node = this->_xmlconf.child(L"warn_options");
-    } else {
-      warn_options_node = this->_xmlconf.addChild(L"warn_options");
-    }
-
-    if(warn_options_node.hasChild(L"warn_extra_unin")) {
-      warn_options_node.child(L"warn_extra_unin").setAttr(L"enable", this->_warn_extra_unin ? 1 : 0);
-    } else {
-      warn_options_node.addChild(L"warn_extra_unin").setAttr(L"enable", this->_warn_extra_unin ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::targetDirAccess(bool rw)
-{
-  bool access_ok = true;
-
-  // checks whether folder exists
-  if(Om_isDir(this->_target_path)) {
-
-    // checks for proper permissions on folder
-    if(Om_checkAccess(this->_target_path, OM_ACCESS_DIR_READ)) {
-      if(rw) { //< check for writing access
-        if(!Om_checkAccess(this->_target_path, OM_ACCESS_DIR_WRITE)) {
-          this->_error(L"targetDirAccess", Om_errWriteAccess(L"Mod Target", this->_target_path));
-          access_ok = false;
-        }
-      }
-    } else {
-      this->_error(L"targetDirAccess", Om_errReadAccess(L"Mod Target", this->_target_path));
-      access_ok = false;
-    }
+  if(this->_xmlconf.hasChild(L"warn_options")) {
+    warn_options_node = this->_xmlconf.child(L"warn_options");
   } else {
-    this->_error(L"targetDirAccess", Om_errNotDir(L"Mod Target", this->_target_path));
-    access_ok = false;
+    warn_options_node = this->_xmlconf.addChild(L"warn_options");
   }
 
-  if(!access_ok) {
-
-    // Check for special case of network folder
-    if(Om_pathIsNetwork(this->_target_path)) {
-
-      // the Om_checkAccess (AccessCheck) method does not properly handle
-      // permissions for network share that are not public/guest allowed.
-
-      // Proper permissions check would require to implement domain-user login
-      // using LogonUser and ImpersonateLoggedOnUser functions to test against
-      // the given network folder.
-
-      // To avoid wrong permissions issues, we bypass check but emit a warning
-      // in log
-
-      this->_log(OM_LOG_WRN, L"targetDirAccess",
-                L"Access denied ignored because \""+this->_target_path+L"\" is a "
-                "network folder and permissions may not be properly evaluated; "
-                "Please be aware of this in case of file write or read error.");
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::libraryDirAccess(bool rw)
-{
-  bool access_ok = true;
-
-  // checks whether folder exists
-  if(Om_isDir(this->_library_path)) {
-    // checks for proper permissions on folder
-    if(Om_checkAccess(this->_library_path, OM_ACCESS_DIR_READ)) {
-      if(rw) { //< check for writing access
-        if(!Om_checkAccess(this->_library_path, OM_ACCESS_DIR_WRITE)) {
-          this->_error(L"libraryDirAccess", Om_errWriteAccess(L"Mod Library", this->_library_path));
-          access_ok = false;
-        }
-      }
-    } else {
-      this->_error(L"libraryDirAccess", Om_errReadAccess(L"Mod Library", this->_library_path));
-      access_ok = false;
-    }
+  if(warn_options_node.hasChild(L"warn_extra_unin")) {
+    warn_options_node.child(L"warn_extra_unin").setAttr(L"enable", this->_warn_extra_unin ? 1 : 0);
   } else {
-    if(this->_library_path_is_cust) {
-      this->_error(L"libraryDirAccess", Om_errNotDir(L"Mod Library", this->_library_path));
-      access_ok = false;
-    } else {
-      // try to create it
-      int result = Om_dirCreate(this->_library_path);
-      if(result != 0) {
-        this->_error(L"libraryDirAccess", Om_errCreate(L"Mod Library", this->_library_path, result));
-        access_ok = false;
-      }
-    }
+    warn_options_node.addChild(L"warn_extra_unin").setAttr(L"enable", this->_warn_extra_unin ? 1 : 0);
   }
 
-  if(!access_ok) {
-
-    // Check for special case of network folder
-    if(Om_pathIsNetwork(this->_library_path.c_str())) {
-
-      // the Om_checkAccess (AccessCheck) method does not properly handle
-      // permissions for network share that are not public/guest allowed.
-
-      // Proper permissions check would require to implement domain-user login
-      // using LogonUser and ImpersonateLoggedOnUser functions to test against
-      // the given network folder.
-
-      // To avoid wrong permissions issues, we bypass check but emit a warning
-      // in log
-
-      this->_log(OM_LOG_WRN, L"libraryDirAccess",
-                L"Access denied ignored because \""+this->_library_path+L"\" is a "
-                "network folder and permissions may not be properly evaluated; "
-                "Please be aware of this in case of file write or read error.");
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::backupDirAccess(bool rw)
-{
-  bool access_ok = true;
-
-  // checks whether folder exists
-  if(Om_isDir(this->_backup_path)) {
-    // checks for proper permissions on folder
-    if(Om_checkAccess(this->_backup_path, OM_ACCESS_DIR_READ)) {
-      if(rw) { //< check for writing access
-        if(!Om_checkAccess(this->_backup_path, OM_ACCESS_DIR_WRITE)) {
-          this->_error(L"backupDirAccess", Om_errWriteAccess(L"Mod Library", this->_backup_path));
-          access_ok = false;
-        }
-      }
-    } else {
-      this->_error(L"backupDirAccess", Om_errReadAccess(L"Mod Library", this->_backup_path));
-      access_ok = false;
-    }
-  } else {
-    if(this->_backup_path_is_cust) {
-      this->_error(L"backupDirAccess", Om_errNotDir(L"Mod Library", this->_backup_path));
-      access_ok = false;
-    } else {
-      // try to create it
-      int result = Om_dirCreate(this->_backup_path);
-      if(result != 0) {
-        this->_error(L"backupDirAccess", Om_errCreate(L"Mod Library", this->_backup_path, result));
-        access_ok = false;
-      }
-    }
-  }
-
-  if(!access_ok) {
-
-    // Check for special case of network folder
-    if(Om_pathIsNetwork(this->_backup_path.c_str())) {
-
-      // the Om_checkAccess (AccessCheck) method does not properly handle
-      // permissions for network share that are not public/guest allowed.
-
-      // Proper permissions check would require to implement domain-user login
-      // using LogonUser and ImpersonateLoggedOnUser functions to test against
-      // the given network folder.
-
-      // To avoid wrong permissions issues, we bypass check but emit a warning
-      // in log
-
-      this->_log(OM_LOG_WRN, L"backupDirAccess",
-                L"Access denied ignored because \""+this->_backup_path+L"\" is a "
-                "network folder and permissions may not be properly evaluated; "
-                "Please be aware of this in case of file write or read error.");
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::setTitle(const OmWString& title)
-{
-  if(this->_xmlconf.valid()) {
-
-    this->_title = title;
-
-    if(this->_xmlconf.hasChild(L"title")) {
-      this->_xmlconf.child(L"title").setContent(title);
-    } else {
-      this->_xmlconf.addChild(L"title").setContent(title);
-    }
-
-    this->_xmlconf.save();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::setIndex(unsigned index)
-{
-  if(this->_xmlconf.valid()) {
-
-    this->_index = index;
-
-    if(this->_xmlconf.hasChild(L"title")) {
-      this->_xmlconf.child(L"title").setAttr(L"index", static_cast<int>(index));
-    }
-
-    this->_xmlconf.save();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::setDstDir(const OmWString& path)
-{
-  if(this->_xmlconf.valid()) {
-
-    this->_target_path = path;
-
-    if(this->_xmlconf.hasChild(L"install")) {
-      this->_xmlconf.child(L"install").setContent(path);
-    } else {
-      this->_xmlconf.addChild(L"install").setContent(path);
-    }
-
-    this->_xmlconf.save();
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::setCustomLibraryDir(const OmWString& path)
-{
-  if(this->_xmlconf.valid()) {
-
-    this->_library_path = path;
-    // notify we use a custom Library path
-    this->_library_path_is_cust = true;
-
-    if(this->_xmlconf.hasChild(L"library")) {
-      this->_xmlconf.child(L"library").setContent(path);
-    } else {
-      this->_xmlconf.addChild(L"library").setContent(path);
-    }
-
-    this->_xmlconf.save();
-  }
-
-  this->clearModLibrary();
-  this->refreshModLibrary();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::setDefaultLibraryDir()
-{
-  if(this->_xmlconf.valid()) {
-
-    this->_library_path = this->_home + OM_MODCHAN_MODLIB_DIR;
-    // notify we use default settings
-    this->_library_path_is_cust = false;
-
-    if(this->_xmlconf.hasChild(L"library"))
-      this->_xmlconf.remChild(L"library");
-
-    this->_xmlconf.save();
-  }
-
-  this->clearModLibrary();
-  this->refreshModLibrary();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::setCustomBackupDir(const OmWString& path)
-{
-  if(this->_xmlconf.valid()) {
-
-    bool has_error = false;
-
-    // clear the mod library
-    this->clearModLibrary();
-
-    if(!Om_namesMatches(this->_backup_path, path)) {
-
-      // move content from old to new backup directory
-      OmWStringArray items;
-      Om_lsAll(&items, this->_backup_path);
-
-      OmWString src_path, dst_path;
-
-      for(size_t i = 0; i < items.size(); ++i) {
-
-        Om_concatPaths(src_path, this->_backup_path, items[i]);
-        Om_concatPaths(dst_path, path, items[i]);
-
-        int32_t result = Om_fileMove(src_path, dst_path);
-        if(result != 0) {
-          this->_error(L"setCustomBackupDir", Om_errMove(L"Backup element", src_path, result));
-          has_error = true;
-        }
-      }
-    }
-
-    // change backup path
-    this->_backup_path = path;
-
-    // notify we use a custom Library path
-    this->_backup_path_is_cust = true;
-
-    if(this->_xmlconf.hasChild(L"backup")) {
-      this->_xmlconf.child(L"backup").setContent(path);
-    } else {
-      this->_xmlconf.addChild(L"backup").setContent(path);
-    }
-
-    this->_xmlconf.save();
-
-    // rebuild Mod library
-    this->refreshModLibrary();
-
-    return has_error;
-  }
-
-  return false;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::setDefaultBackupDir()
-{
-  if(this->_xmlconf.valid()) {
-
-    bool has_error = false;
-
-    this->clearModLibrary();
-
-    OmWString default_path;
-    Om_concatPaths(default_path, this->_home, OM_MODCHAN_BACKUP_DIR);
-
-    if(!Om_namesMatches(this->_backup_path, default_path)) {
-
-      // move content from old to new backup directory
-      OmWStringArray items;
-      Om_lsAll(&items, this->_backup_path);
-
-      OmWString src_path, dst_path;
-
-      for(size_t i = 0; i < items.size(); ++i) {
-
-        Om_concatPaths(src_path, this->_backup_path, items[i]);
-        Om_concatPaths(dst_path, default_path, items[i]);
-
-        int32_t result = Om_fileMove(src_path, dst_path);
-        if(result != 0) {
-          this->_error(L"setCustomBackupDir", Om_errMove(L"Backup element", src_path, result));
-          has_error = true;
-        }
-      }
-    }
-
-    this->_backup_path = default_path;
-
-    // notify we use default settings
-    this->_backup_path_is_cust = false;
-
-    if(this->_xmlconf.hasChild(L"backup"))
-      this->_xmlconf.remChild(L"backup");
-
-    this->_xmlconf.save();
-
-    this->refreshModLibrary();
-
-    return has_error;
-  }
-
-  return false;
+  this->_xmlconf.save();
 }
 
 ///
@@ -3310,24 +3333,24 @@ bool OmModChan::setDefaultBackupDir()
 ///
 void OmModChan::setBackupComp(int32_t method, int32_t level)
 {
-  if(this->_xmlconf.valid()) {
+  if(!this->_xmlconf.valid())
+    return;
 
-    this->_backup_comp_method = method;
-    this->_backup_comp_level = level;
+  this->_backup_comp_method = method;
+  this->_backup_comp_level = level;
 
-    OmXmlNode backup_comp_node;
+  OmXmlNode backup_comp_node;
 
-    if(this->_xmlconf.hasChild(L"backup_comp")) {
-      backup_comp_node = this->_xmlconf.child(L"backup_comp");
-    } else {
-      backup_comp_node = this->_xmlconf.addChild(L"backup_comp");
-    }
-
-    backup_comp_node.setAttr(L"method", (int)method);
-    backup_comp_node.setAttr(L"level", (int)level);
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"backup_comp")) {
+    backup_comp_node = this->_xmlconf.child(L"backup_comp");
+  } else {
+    backup_comp_node = this->_xmlconf.addChild(L"backup_comp");
   }
+
+  backup_comp_node.setAttr(L"method", (int)method);
+  backup_comp_node.setAttr(L"level", (int)level);
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -3335,22 +3358,22 @@ void OmModChan::setBackupComp(int32_t method, int32_t level)
 ///
 void OmModChan::setUpgdRename(bool enable)
 {
-  if(this->_xmlconf.valid()) {
+  if(!this->_xmlconf.valid())
+    return;
 
-    this->_upgd_rename = enable;
+  this->_upgd_rename = enable;
 
-    OmXmlNode network_node;
+  OmXmlNode network_node;
 
-    if(!this->_xmlconf.hasChild(L"network")) {
-      network_node = this->_xmlconf.addChild(L"network");
-    } else {
-      network_node = this->_xmlconf.child(L"network");
-    }
-
-    network_node.setAttr(L"upgd_rename", static_cast<int>(enable ? 1 : 0));
-
-    this->_xmlconf.save();
+  if(!this->_xmlconf.hasChild(L"network")) {
+    network_node = this->_xmlconf.addChild(L"network");
+  } else {
+    network_node = this->_xmlconf.child(L"network");
   }
+
+  network_node.setAttr(L"upgd_rename", static_cast<int>(enable ? 1 : 0));
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -3358,26 +3381,26 @@ void OmModChan::setUpgdRename(bool enable)
 ///
 void OmModChan::setWarnExtraDnld(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_extra_dnld = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode network_node;
 
-    OmXmlNode network_node;
-
-    if(this->_xmlconf.hasChild(L"network")) {
-      network_node = this->_xmlconf.child(L"network");
-    } else {
-      network_node = this->_xmlconf.addChild(L"network");
-    }
-
-    if(network_node.hasChild(L"warn_extra_dnld")) {
-      network_node.child(L"warn_extra_dnld").setAttr(L"enable", this->_warn_extra_dnld ? 1 : 0);
-    } else {
-      network_node.addChild(L"warn_extra_dnld").setAttr(L"enable", this->_warn_extra_dnld ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"network")) {
+    network_node = this->_xmlconf.child(L"network");
+  } else {
+    network_node = this->_xmlconf.addChild(L"network");
   }
+
+  if(network_node.hasChild(L"warn_extra_dnld")) {
+    network_node.child(L"warn_extra_dnld").setAttr(L"enable", this->_warn_extra_dnld ? 1 : 0);
+  } else {
+    network_node.addChild(L"warn_extra_dnld").setAttr(L"enable", this->_warn_extra_dnld ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -3385,26 +3408,26 @@ void OmModChan::setWarnExtraDnld(bool enable)
 ///
 void OmModChan::setWarnMissDnld(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_miss_dnld = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode network_node;
 
-    OmXmlNode network_node;
-
-    if(this->_xmlconf.hasChild(L"network")) {
-      network_node = this->_xmlconf.child(L"network");
-    } else {
-      network_node = this->_xmlconf.addChild(L"network");
-    }
-
-    if(network_node.hasChild(L"warn_miss_dnld")) {
-      network_node.child(L"warn_miss_dnld").setAttr(L"enable", this->_warn_miss_dnld ? 1 : 0);
-    } else {
-      network_node.addChild(L"warn_miss_dnld").setAttr(L"enable", this->_warn_miss_dnld ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"network")) {
+    network_node = this->_xmlconf.child(L"network");
+  } else {
+    network_node = this->_xmlconf.addChild(L"network");
   }
+
+  if(network_node.hasChild(L"warn_miss_dnld")) {
+    network_node.child(L"warn_miss_dnld").setAttr(L"enable", this->_warn_miss_dnld ? 1 : 0);
+  } else {
+    network_node.addChild(L"warn_miss_dnld").setAttr(L"enable", this->_warn_miss_dnld ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///
@@ -3412,26 +3435,26 @@ void OmModChan::setWarnMissDnld(bool enable)
 ///
 void OmModChan::setWarnUpgdBrkDeps(bool enable)
 {
+  if(!this->_xmlconf.valid())
+    return;
+
   this->_warn_upgd_brk_deps = enable;
 
-  if(this->_xmlconf.valid()) {
+  OmXmlNode network_node;
 
-    OmXmlNode network_node;
-
-    if(this->_xmlconf.hasChild(L"network")) {
-      network_node = this->_xmlconf.child(L"network");
-    } else {
-      network_node = this->_xmlconf.addChild(L"network");
-    }
-
-    if(network_node.hasChild(L"warn_upgd_brk_deps")) {
-      network_node.child(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
-    } else {
-      network_node.addChild(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
-    }
-
-    this->_xmlconf.save();
+  if(this->_xmlconf.hasChild(L"network")) {
+    network_node = this->_xmlconf.child(L"network");
+  } else {
+    network_node = this->_xmlconf.addChild(L"network");
   }
+
+  if(network_node.hasChild(L"warn_upgd_brk_deps")) {
+    network_node.child(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
+  } else {
+    network_node.addChild(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
+  }
+
+  this->_xmlconf.save();
 }
 
 ///

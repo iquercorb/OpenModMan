@@ -64,11 +64,8 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _UiManMain(nullptr),
   _UiManFoot(nullptr),
   _UiManMainLib(nullptr),
-  _freeze_mode(false),
-  _freeze_quit(false),
-  _locked_man(false),
-  _locked_hub(false),
-  _locked_chn(false),
+  _safe_mode(false),
+  _lock_mode(false),
   _split_curs_hover(false),
   _split_curs_dragg(false),
   _split_move_param{},
@@ -132,37 +129,11 @@ long OmUiMan::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::lockMan(bool enable)
+void OmUiMan::enableLockMode(bool enable)
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::lockMan (" << (enable ? "enabled" : "disabled") << ")\n";
+  std::cout << "DEBUG => OmUiMan::enableLockMode (" << (enable ? "enabled" : "disabled") << ")\n";
   #endif
-
-  this->_locked_man = enable;
-
-  // disable/enable menus
-  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
-
-  this->setPopupItem(MNU_EDIT, MNU_EDIT_MAN_PROP, state);
-
-  // forward to child windows
-  this->_UiManMain->lockMan(enable);
-  //this->_UiManFoot->lockMan(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMan::lockHub(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::lockHub (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // lock Manager
-  this->lockMan(enable);
-
-  this->_locked_hub = enable;
 
   // disable/enable Mod Hub ComboBox
   this->enableItem(IDC_CB_HUB, !enable);
@@ -172,97 +143,54 @@ void OmUiMan::lockHub(bool enable)
   this->enableItem(IDC_BC_PSDEL, !enable);
   this->enableItem(IDC_BC_PSEDI, !enable);
 
-  // disable/enable menus
-  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
-
-  this->setPopupItem(MNU_FILE, MNU_FILE_NEW, state);
-  this->setPopupItem(MNU_FILE, MNU_FILE_OPEN, state);
-  this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, state);
-  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, state);
-
-  this->setPopupItem(MNU_EDIT, MNU_HUB, state);
-
-  // forward to child windows
-  this->_UiManMain->lockHub(enable);
-  //this->_UiManFoot->lockHub(enable);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMan::lockChannel(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::lockChannel (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // lock Mud Hub
-  this->lockHub(enable);
-
-  this->_locked_chn = enable;
-
   // disable/enable Mod Channel ListView
   this->enableItem(IDC_LV_CHN, !enable);
 
-  // disable/enable menus
-  int32_t state = enable ? MF_GRAYED : MF_ENABLED;
+  // disable/enable Repository ListView & buttons
+  this->_UiManMainNet->enableItem(IDC_LV_REP, !enable);
+  this->_UiManMainNet->enableItem(IDC_BC_RPQRY, !enable);
+  this->_UiManMainNet->enableItem(IDC_BC_RPADD, !enable);
+  this->_UiManMainNet->enableItem(IDC_BC_RPDEL, !enable);
 
-  this->setPopupItem(MNU_EDIT, MNU_CHN, state);
+  if(enable) {
+    this->setPopupItem(MNU_FILE, MNU_FILE_NEW, MF_GRAYED);
+    this->setPopupItem(MNU_FILE, MNU_FILE_OPEN, MF_GRAYED);
+    this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, MF_GRAYED);
+    this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, MF_GRAYED);
 
-  // forward to child windows
-  this->_UiManMain->lockChannel(enable);
-  //this->_UiManFoot->lockChannel(enable);
+    this->setPopupItem(MNU_EDIT, MNU_EDIT_MANPROP, MF_GRAYED);
+
+    for(uint32_t i = 0; i < 5; ++i) {
+      this->setPopupItem(MNU_HUB, i, MF_GRAYED);
+      this->setPopupItem(MNU_CHN, i, MF_GRAYED);
+    }
+  } else {
+    // disable/enable menu items
+    this->_menu_enable();
+  }
+
+  this->_lock_mode = enable;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::freeze(bool enable)
+void OmUiMan::enableSafeMode(bool enable)
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
+  std::cout << "DEBUG => OmUiMan::enableSafeMode (" << enable << ")\n";
   #endif
 
-  this->_freeze_mode = enable;
+  if(enable) {
+    this->selectChannel(-1);
+  }
 
-  // disable Mod Hub ComboBox
-  this->enableItem(IDC_CB_HUB, !enable);
+  this->monitorLibrary(!enable);
 
-  // disable menus
-  int state = enable ? MF_GRAYED : MF_ENABLED;
-  this->setPopupItem(this->_menu, MNU_FILE, state); //< File menu
-  this->setPopupItem(this->_menu, MNU_EDIT, state); //< Edit menu
-  this->setPopupItem(this->_menu, MNU_TOOL, state); //< Tools menu
+  this->enableLockMode(enable);
 
-  // force menu bar to redraw so enabled/grayed state
-  // is properly visually updated
-  DrawMenuBar(this->_hwnd);
-
-  // passes the message to child tab dialog
-  this->_UiManMain->freeze(enable);
-  this->_UiManFoot->freeze(enable);
+  this->_safe_mode = enable;
 }
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiMan::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-/*
-  if(enable)
-    this->monitorLibrary(false);
-
-  this->_UiManMain->safemode(enable);
-  this->_UiManFoot->safemode(enable);
-*/
-  this->setPopupItem(MNU_EDIT, MNU_HUB, enable?MF_GRAYED:MF_ENABLED);
-  this->setPopupItem(MNU_EDIT, MNU_CHN, enable?MF_GRAYED:MF_ENABLED);
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -447,7 +375,7 @@ void OmUiMan::selectChannel(int32_t id)
     if(ModChan) {
 
       // Check Mod Channel Library folder access
-      if(ModChan->libraryDirAccess(false)) { //< check only for reading
+      if(ModChan->accessesLibrary(OM_ACCESS_DIR_READ)) {
         // force refresh library
         ModChan->refreshModLibrary();
         // start Library folder monitoring
@@ -598,7 +526,7 @@ bool OmUiMan::checkTargetWrite(const OmWString& operation)
   if(!ModChan) return false;
 
   // checks whether we have a valid Target directory
-  if(!ModChan->targetDirAccess(true)) { //< check for read and write
+  if(!ModChan->accessesTarget(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Target directory access error",
                   L"The Target directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
@@ -618,7 +546,7 @@ bool OmUiMan::checkLibraryRead(const OmWString& operation)
   if(!ModChan) return false;
 
   // checks whether we have a valid Library directory
-  if(!ModChan->libraryDirAccess(false)) { //< check only for read
+  if(!ModChan->accessesLibrary(OM_ACCESS_DIR_READ)) { //< check only for read
     Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Library directory access error",
                   L"The Library directory cannot be accessed because it do not exist or have read "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
@@ -638,7 +566,7 @@ bool OmUiMan::checkLibraryWrite(const OmWString& operation)
   if(!ModChan) return false;
 
   // checks whether we have a valid Library directory
-  if(!ModChan->libraryDirAccess(true)) { //< check only for read
+  if(!ModChan->accessesLibrary(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check only for read
     Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Library directory access error",
                   L"The Library directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
@@ -658,7 +586,7 @@ bool OmUiMan::checkBackupWrite(const OmWString& operation)
   if(!ModChan) return false;
 
   // checks whether we have a valid Backup folder
-  if(!ModChan->backupDirAccess(true)) { //< check for read and write
+  if(!ModChan->accessesBackup(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
     Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Backup directory access error",
                   L"The Backup directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel's settings and directory permissions.",
@@ -975,6 +903,29 @@ void OmUiMan::_menu_recent_populate()
   }
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::_menu_enable()
+{
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+
+  this->setPopupItem(MNU_FILE, MNU_FILE_NEW, MF_ENABLED);
+  this->setPopupItem(MNU_FILE, MNU_FILE_OPEN, MF_ENABLED);
+  this->setPopupItem(MNU_FILE, MNU_FILE_RECENT, MF_ENABLED);
+
+  this->setPopupItem(MNU_EDIT, MNU_EDIT_MANPROP, MF_ENABLED);
+
+  uint32_t has_hub_stat = ModMan->activeHub() ? MF_ENABLED : MF_GRAYED;
+  uint32_t has_chn_stat = ModMan->activeChannel() ? MF_ENABLED : MF_GRAYED;
+
+  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, has_hub_stat);
+
+  for(uint32_t i = 0; i < 6; ++i) {
+    this->setPopupItem(MNU_HUB, i, has_hub_stat);
+    this->setPopupItem(MNU_CHN, i, has_chn_stat);
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1158,13 +1109,10 @@ void OmUiMan::_lv_chn_on_rclick()
   HMENU hPopup = this->getContextPopup(POP_CHN);
   if(!hPopup) return;
 
-  // get ListView selection
-  uint32_t lv_nsl = this->msgItem(IDC_LV_CHN, LVM_GETSELECTEDCOUNT);
-
-  // enable or disable menu-items according current state
-  this->setPopupItem(hPopup, POP_CHN_ADD,  this->_locked_hub?MF_GRAYED:MF_ENABLED);
-  this->setPopupItem(hPopup, POP_CHN_DEL,  (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
-  this->setPopupItem(hPopup, POP_CHN_PROP, (lv_nsl && !this->_locked_chn)?MF_ENABLED:MF_GRAYED);
+  // enable or disable menu-items according selection
+  uint32_t item_stat = static_cast<OmModMan*>(this->_data)->activeChannel() ? MF_ENABLED : MF_GRAYED;
+  this->setPopupItem(hPopup, POP_CHN_DEL,  item_stat);
+  this->setPopupItem(hPopup, POP_CHN_PROP, item_stat);
 
   // get mouse cursor position
   POINT pt;
@@ -1260,14 +1208,11 @@ void OmUiMan::_lv_pst_on_resize()
 ///
 void OmUiMan::_lv_pst_on_selchg()
 {
-  // get count of selected item
-  uint32_t lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
-
-
-
-  this->enableItem(IDC_BC_PSRUN, lv_nsl);
-  this->enableItem(IDC_BC_PSDEL, lv_nsl && !this->_locked_hub);
-  this->enableItem(IDC_BC_PSEDI, lv_nsl && !this->_locked_hub);
+  // check for selection
+  bool is_selected = (this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) > 0);
+  this->enableItem(IDC_BC_PSRUN, is_selected);
+  this->enableItem(IDC_BC_PSDEL, (this->_lock_mode) ? false : is_selected);
+  this->enableItem(IDC_BC_PSEDI, (this->_lock_mode) ? false : is_selected);
 }
 
 ///
@@ -1279,14 +1224,11 @@ void OmUiMan::_lv_pst_on_rclick()
   HMENU hPopup = this->getContextPopup(POP_PST);
   if(!hPopup) return;
 
-  // get ListView selection
-  uint32_t lv_nsl = this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT);
-
-  // enable or disable menu-items according current state
-  this->setPopupItem(hPopup, POP_PST_RUN,  lv_nsl?MF_ENABLED:MF_GRAYED);
-  this->setPopupItem(hPopup, POP_PST_ADD,  this->_locked_hub?MF_GRAYED:MF_ENABLED);
-  this->setPopupItem(hPopup, POP_PST_DEL,  (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
-  this->setPopupItem(hPopup, POP_PST_PROP, (lv_nsl && !this->_locked_hub)?MF_ENABLED:MF_GRAYED);
+  // enable or disable menu-items according selection
+  uint32_t item_stat = (this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) > 0) ? MF_ENABLED : MF_GRAYED;
+  this->setPopupItem(hPopup, POP_PST_RUN,  item_stat);
+  this->setPopupItem(hPopup, POP_PST_DEL,  (this->_lock_mode) ? MF_GRAYED : item_stat);
+  this->setPopupItem(hPopup, POP_PST_PROP, (this->_lock_mode) ? MF_GRAYED : item_stat);
 
   // get mouse cursor position
   POINT pt;
@@ -1443,6 +1385,7 @@ void OmUiMan::_onInit()
 
   // get Library dialog, required for Presets
   this->_UiManMainLib = static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB));
+  this->_UiManMainNet = static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET));
 
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMan::_onInit : _UiManMainLib = " << (uint64_t)this->_UiManMainLib << "\n";
@@ -1604,17 +1547,9 @@ void OmUiMan::_onRefresh()
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
   OmModHub* ModHub = ModMan->activeHub();
-  OmModChan* ModChan = ModMan->activeChannel();
 
-  // update menus
-  uint32_t hub_grayed = (ModHub && !this->_locked_hub) ? MF_ENABLED : MF_GRAYED;
-  uint32_t chn_grayed = (ModChan  && !this->_locked_chn) ? MF_ENABLED : MF_GRAYED;
-
-  this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, hub_grayed);
-  for(uint32_t i = 0; i < 6; ++i) {
-    this->setPopupItem(MNU_HUB, i, hub_grayed);
-    this->setPopupItem(MNU_CHN, i, chn_grayed);
-  }
+  // enable or disable menu elements
+  this->_menu_enable();
 
   if(this->_listview_himl_size != ModMan->iconsSize()) {
 
@@ -2031,11 +1966,11 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     // Menu : Edit > Network Mod > []
     case IDM_EDIT_NET_DNWS:
-      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queueDownloads(false);
+      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->startDownloads(false);
       break;
 
     case IDM_EDIT_NET_DNLD:
-      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queueDownloads(true);
+      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->startDownloads(true);
       break;
 
     case IDM_EDIT_NET_STOP:
@@ -2079,19 +2014,14 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     // Debug Shortcut
     #ifdef DEBUG
-    case IDA_DEBUG_LOCK_MAN:
-      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_MAN\n";
-      this->lockMan(!this->_locked_man);
+    case IDA_DEBUG_LOCKMODE:
+      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCKMODE\n";
+      this->enableLockMode(!this->_lock_mode);
       break;
 
-    case IDA_DEBUG_LOCK_HUB:
-      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_HUB\n";
-      this->lockHub(!this->_locked_hub);
-      break;
-
-    case IDA_DEBUG_LOCK_CHN:
-      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_LOCK_CHN\n";
-      this->lockChannel(!this->_locked_chn);
+    case IDA_DEBUG_SAFEMODE:
+      std::wcout << L"DEBUG => OmUiMan::_onMsg : IDA_DEBUG_SAFEMODE\n";
+      this->enableSafeMode(!this->_safe_mode);
       break;
     #endif // DEBUG
     }

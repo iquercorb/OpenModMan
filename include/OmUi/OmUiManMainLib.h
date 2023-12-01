@@ -52,37 +52,6 @@ class OmUiManMainLib : public OmDialog
     ///
     long id() const;
 
-    void lockMan(bool enable);
-
-    void lockHub(bool enable);
-
-    void lockChannel(bool enable);
-
-    /// \brief Set dialog freeze mode
-    ///
-    /// Enable or disable the dialog freeze mode.
-    ///
-    /// The freeze mode is a modal-kind emulation for threaded operations,
-    /// it disables (almost) all controls of the dialog and its children
-    /// to prevent user to interact with elements while a threaded process
-    /// is running.
-    ///
-    /// \param[in]  enable  : Enable or disable freeze mode.
-    ///
-    void freeze(bool enable);
-
-    /// \brief Set dialog safe mode
-    ///
-    /// Enables or disable the dialog safe mode.
-    ///
-    /// The safe mode is used to operate modifications on sensitive
-    /// or monitored elements such as deleting or moving Mod Channel in
-    /// order to prevent conflicts or crash during process.
-    ///
-    /// \param[in]  enable  : Enable or disable safe mode.
-    ///
-    void safemode(bool enable);
-
     /// \brief Refresh library
     ///
     /// Public function to refresh Library content. This function is
@@ -203,12 +172,6 @@ class OmUiManMainLib : public OmDialog
     // thread and UI management
     void                _update_processing();
 
-    bool                _locked_man;
-
-    bool                _locked_hub;
-
-    bool                _locked_chn;
-
     // mods operation (install/uninstall)
     int32_t             _modops_count;
 
@@ -247,7 +210,7 @@ class OmUiManMainLib : public OmDialog
     int32_t             _lv_mod_get_status_icon(const OmModPack* ModPack);
 
 
-    void                _bc_abort_hit();
+    void                _bc_abort_pressed();
 
     void                _onInit();
 

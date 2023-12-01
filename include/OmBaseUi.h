@@ -86,7 +86,7 @@ inline void Om_setupLvIconsDb(unsigned* icon_db)
     // ------------------------ 6
     #define MNU_FILE_QUIT       7
 #define MNU_EDIT            1
-    #define MNU_EDIT_MAN_PROP   0
+    #define MNU_EDIT_MANPROP   0
 #define MNU_HUB             2
     #define MNU_HUB_ADDCHN      0
     #define MNU_HUB_ADDPST      1

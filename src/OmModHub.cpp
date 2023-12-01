@@ -41,6 +41,7 @@ OmModHub::OmModHub(OmModMan* ModMan) :
   _ModMan(ModMan),
   _icon_handle(nullptr),
   _active_channel(-1),
+  _locked_presets(false),
   _psetup_abort(false),
   _psetup_hth(nullptr),
   _psetup_hwo(nullptr),
@@ -68,6 +69,15 @@ OmModHub::~OmModHub()
 ///
 void OmModHub::close()
 {
+  if(this->_psetup_hth) {
+    this->_psetup_abort = true;
+    WaitForSingleObject(this->_psetup_hth, 1000);
+  }
+
+  Om_clearThread(this->_psetup_hth, this->_psetup_hwo);
+  this->_psetup_hth = nullptr;
+  this->_psetup_hwo = nullptr;
+
   this->_xmlconf.clear();
 
   this->_path.clear();
@@ -92,10 +102,9 @@ void OmModHub::close()
 
   this->_preset_list.clear();
 
+  this->_locked_presets = false;
+
   this->_psetup_abort = false;
-  Om_clearThread(this->_psetup_hth, this->_psetup_hwo);
-  this->_psetup_hth = nullptr;
-  this->_psetup_hwo = nullptr;
   this->_psetup_dones = 0;
   this->_psetup_percent = 0;
   this->_psetup_begin_cb = nullptr;
@@ -223,6 +232,8 @@ bool OmModHub::open(const OmWString& path)
   // the first location in list become the default active one
   if(this->_channel_list.size())
     this->selectChannel(0);
+
+  this->_log(OM_LOG_OK, L"open", L"OK");
 
   return true;
 }
@@ -479,19 +490,46 @@ bool OmModHub::createChannel(const OmWString& title, const OmWString& target, co
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModHub::deleteChannel(size_t index)
+OmResult OmModHub::deleteChannel(size_t index, Om_progressCb progress_cb, void* user_ptr)
 {
   if(index >= this->_channel_list.size()) {
     this->_error(L"deleteChannel", L"index out of bound");
-    return false;
+    return OM_RESULT_ABORT;
   }
+
+  bool has_error = false;
+  bool has_abort = false;
 
   OmModChan* ModChan = this->_channel_list[index];
 
-  if(ModChan->hasBackupData()) {
-    this->_error(L"deleteChannel", L"channel still have backup data to be restored");
-    return false;
+  // get list of installed Mod Pack
+  OmPModPackArray selection;
+
+  for(size_t i = 0; i < ModChan->modpackCount(); ++i) {
+
+    OmModPack* ModPack = ModChan->getModpack(i);
+
+    if(ModPack->hasBackup())
+      selection.push_back(ModPack);
   }
+
+  // Uninstall all Mods
+  if(selection.size()) {
+
+    OmResult result = ModChan->execModOps(selection, nullptr, progress_cb, nullptr, user_ptr);
+
+    if(result == OM_RESULT_ABORT)
+      has_abort = true;
+
+    if(result == OM_RESULT_ERROR) {
+      this->_error(L"deleteChannel", L"backup data restoration has encountered error, see logs more details");
+      has_error = true;
+    }
+  }
+
+  // If aborted here, return now
+  if(has_abort)
+    return OM_RESULT_ABORT;
 
   // keep Mod Channel paths
   OmWString channel_title = ModChan->title();
@@ -523,8 +561,6 @@ bool OmModHub::deleteChannel(size_t index)
       this->_log(OM_LOG_WRN, L"deleteChannel", L"Non-empty Library directory was not deleted");
     }
   }
-
-  bool has_error = false;
 
   // remove the definition file
   if(Om_isFile(channel_path)) {
@@ -560,7 +596,7 @@ bool OmModHub::deleteChannel(size_t index)
   this->sortChannels();
   this->selectChannel(0);
 
-  return !has_error;
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
 
 ///
@@ -653,11 +689,16 @@ OmModPset* OmModHub::createPreset(const OmWString& title)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModHub::deletePreset(size_t index)
+OmResult OmModHub::deletePreset(size_t index)
 {
+  if(this->_locked_presets) {
+    this->_error(L"deletePreset", L"presets list and parameters locked by processing");
+    return OM_RESULT_ABORT;
+  }
+
   if(index >= this->_preset_list.size()) {
     this->_error(L"deletePreset", L"index out of bound");
-    return false;
+    return OM_RESULT_ABORT;
   }
 
   OmModPset* ModPset = this->_preset_list[index];
@@ -668,7 +709,7 @@ bool OmModHub::deletePreset(size_t index)
     int32_t result = Om_fileDelete(ModPset->path());
     if(result != 0) {
       this->_error(L"deletePreset", Om_errDelete(L"preset file", ModPset->path(), result));
-      return false;
+      return OM_RESULT_ERROR;
     }
   }
 
@@ -687,17 +728,22 @@ bool OmModHub::deletePreset(size_t index)
   // sort Batches by index
   this->sortPresets();
 
-  return true;
+  return OM_RESULT_OK;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModHub::renamePreset(size_t index, const OmWString& title)
+OmResult OmModHub::renamePreset(size_t index, const OmWString& title)
 {
+  if(this->_locked_presets) {
+    this->_error(L"renamePreset", L"presets list and parameters locked by processing");
+    return OM_RESULT_ABORT;
+  }
+
   if(index >= this->_preset_list.size()) {
     this->_error(L"renamePreset", L"index out of bound");
-    return false;
+    return OM_RESULT_ABORT;
   }
 
   OmModPset* ModPset = this->_preset_list[index];
@@ -727,7 +773,7 @@ bool OmModHub::renamePreset(size_t index, const OmWString& title)
 
   ModPset->open(new_path);
 
-  return !has_error;
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
 
 ///
@@ -773,6 +819,9 @@ void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progress
     this->_psetup_dones = 0;
     this->_psetup_percent = 0;
 
+    // presets list and parameters is locked
+    this->_locked_presets = true;
+
   } else {
 
     // emit a warning in case a crazy client starts new download with
@@ -816,12 +865,16 @@ DWORD WINAPI OmModHub::_psetup_run_fn(void* ptr)
 
     OmModPset* ModPset = self->_psetup_queue.front();
 
+    ModPset->lock(); //< lock preset so it cannot be modified
+
     if(self->_psetup_abort) {
 
       // flush all queue with abort result
 
       if(self->_psetup_result_cb)
         self->_psetup_result_cb(self->_psetup_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(ModPset));
+
+      ModPset->unlock(); //< unlock preset
 
       self->_psetup_queue.pop_front();
 
@@ -885,6 +938,8 @@ DWORD WINAPI OmModHub::_psetup_run_fn(void* ptr)
     if(self->_psetup_result_cb)
       self->_psetup_result_cb(self->_psetup_user_ptr, result, reinterpret_cast<uint64_t>(ModPset));
 
+    ModPset->unlock(); //< unlock preset
+
     self->_psetup_dones++;
     self->_psetup_queue.pop_front();
   }
@@ -922,6 +977,9 @@ VOID WINAPI OmModHub::_psetup_end_fn(void* ptr,uint8_t fired)
   self->_psetup_progress_cb = nullptr;
   self->_psetup_result_cb = nullptr;
   self->_psetup_user_ptr = nullptr;
+
+  // unlock presets list and parameters
+  self->_locked_presets = false;
 }
 
 ///

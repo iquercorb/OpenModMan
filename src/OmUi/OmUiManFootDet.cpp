@@ -72,33 +72,6 @@ long OmUiManFootDet::id() const
   return IDD_MGR_FOOT_DET;
 }
 
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFootDet::freeze(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFootDet::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  OM_UNUSED(enable);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFootDet::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFootDet::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  OM_UNUSED(enable);
-}
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///

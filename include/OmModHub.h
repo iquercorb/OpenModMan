@@ -169,11 +169,13 @@ class OmModHub
     /// Cleanup and removes a Mod Channel. Notice that this operation actually delete
     /// the Mod Channel folder and configuration files.
     ///
-    /// \param[in] index  : Mod Channel index to be removed.
+    /// \param[in] index        : Mod Channel index to be removed.
+    /// \param[in] progress_cb  : Callback function for backup purge progression.
+    /// \param[in] user_ptr     : Custom pointer to be passed to callback function.
     ///
-    /// \return True if operation succeed, false otherwise.
+    /// \return
     ///
-    bool deleteChannel(size_t index);
+    OmResult deleteChannel(size_t index, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Get Mod Channel count.
     ///
@@ -325,9 +327,12 @@ class OmModHub
     ///
     /// \param[in]  index : Mod Preset index to delete.
     ///
-    /// \return True if operation succeed, false otherwise.
+    /// \return Operation result code:
+    ///         OM_RESULT_OK is returned if operation succedd,
+    ///         OM_RESULT_ERROR is returned if an error occurred and
+    ///         OM_RESULT_ABORT is returned in case of invalid call
     ///
-    bool deletePreset(size_t index);
+    OmResult deletePreset(size_t index);
 
     /// \brief Rename Mod Preset.
     ///
@@ -336,9 +341,23 @@ class OmModHub
     /// \param[in]  index : Mod Preset index to rename.
     /// \param[in]  title : New name to set.
     ///
-    /// \return True if operation succeed, false otherwise.
+    /// \return Operation result code:
+    ///         OM_RESULT_OK is returned if operation succedd,
+    ///         OM_RESULT_ERROR is returned if an error occurred and
+    ///         OM_RESULT_ABORT is returned in case of invalid call
     ///
-    bool renamePreset(size_t index, const OmWString& title);
+    OmResult renamePreset(size_t index, const OmWString& title);
+
+    /// \brief Check whether Presets are locked
+    ///
+    /// Returns whether Presets list and parameters are currently
+    /// locked by processing.
+    ///
+    /// \return True if Presets are locked, false otherwise
+    ///
+    bool lockedPresets() const {
+      return this->_locked_presets;
+    }
 
     /// \brief Get batches warning quiet mode.
     ///
@@ -423,6 +442,9 @@ class OmModHub
 
     // Mod Presets
     OmPModPsetArray       _preset_list;
+
+    // threads management
+    bool                  _locked_presets;
 
     // mods install/restore
     bool                  _psetup_abort;

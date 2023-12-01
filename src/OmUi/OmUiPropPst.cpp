@@ -73,7 +73,7 @@ bool OmUiPropPst::checkChanges()
   // General Settings Tab
   OmUiPropPstStg* pUiPropBatStg  = static_cast<OmUiPropPstStg*>(this->childById(IDD_PROP_PST_STG));
 
-  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) {  //< parameter for Batch title
+  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) {
 
     pUiPropBatStg->getItemText(IDC_EC_INP01, item_str);
 
@@ -84,7 +84,7 @@ bool OmUiPropPst::checkChanges()
     }
   }
 
-  if(pUiPropBatStg->paramChanged(PST_PROP_STG_IONLY)) {  //< parameter for Batch title
+  if(pUiPropBatStg->paramChanged(PST_PROP_STG_IONLY)) {
 
     if(pUiPropBatStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModPset->installOnly()) {
       changed = true;
@@ -96,7 +96,7 @@ bool OmUiPropPst::checkChanges()
   // Mods Install List Tab
   OmUiPropPstLst* pUiPropBatLst  = static_cast<OmUiPropPstLst*>(this->childById(IDD_PROP_PST_LST));
 
-  if(pUiPropBatLst->paramChanged(PST_PROP_STG_INSLS)) {  //< parameter for Batch install list
+  if(pUiPropBatLst->paramChanged(PST_PROP_STG_INSLS)) {
 
     different = false;
 
@@ -146,7 +146,7 @@ bool OmUiPropPst::validChanges()
   // General Settings Tab
   OmUiPropPstStg* pUiPropBatStg  = static_cast<OmUiPropPstStg*>(this->childById(IDD_PROP_PST_STG));
 
-  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) { //< parameter for Batch title
+  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) {
 
     OmWString input;
     pUiPropBatStg->getItemText(IDC_EC_INP01, input);
@@ -184,7 +184,7 @@ bool OmUiPropPst::applyChanges()
   // General Settings Tab
   OmUiPropPstStg* pUiPropBatStg  = static_cast<OmUiPropPstStg*>(this->childById(IDD_PROP_PST_STG));
 
-  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) { //< parameter for Mod Hub title
+  if(pUiPropBatStg->paramChanged(PST_PROP_STG_TITLE)) {
 
     OmWString input;
     pUiPropBatStg->getItemText(IDC_EC_INP01, input);
@@ -194,19 +194,27 @@ bool OmUiPropPst::applyChanges()
     // get Mod Preset index in Mod Hub
     int32_t p = ModHub->indexOfPreset(this->_ModPset);
 
-    if(!ModHub->renamePreset(p, input)) { //< rename Batch filename
+    OmResult result = ModHub->renamePreset(p, input);
 
-      Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_WRN,
-                   L"Mod Preset rename error", L"Mod Preset file rename failed:",
-                   ModHub->lastError());
+    if(result != OM_RESULT_OK) { //< rename Preset filename
+
+      if(result == OM_RESULT_ERROR) {
+        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_WRN, L"Preset rename error",
+                      L"Preset file rename failed:", ModHub->lastError());
+      } else {
+        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_WRN, L"Preset rename error",
+                      L"Unable to rename Preset:", ModHub->lastError());
+      }
+
+      return false;
     }
 
     pUiPropBatStg->paramReset(PST_PROP_STG_TITLE);
   }
 
-  if(pUiPropBatStg->paramChanged(PST_PROP_STG_IONLY)) {  //< parameter for Batch title
+  if(pUiPropBatStg->paramChanged(PST_PROP_STG_IONLY)) {
 
-    this->_ModPset->setInstallOnly(pUiPropBatStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK)); //< change option value
+    this->_ModPset->setInstallOnly(pUiPropBatStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
 
     pUiPropBatStg->paramReset(PST_PROP_STG_IONLY);
   }
@@ -214,7 +222,7 @@ bool OmUiPropPst::applyChanges()
   // Mods Install List Tab
   OmUiPropPstLst* pUiPropBatLst  = static_cast<OmUiPropPstLst*>(this->childById(IDD_PROP_PST_LST));
 
-  if(pUiPropBatLst->paramChanged(PST_PROP_STG_INSLS)) {  //< parameter for Batch install list
+  if(pUiPropBatLst->paramChanged(PST_PROP_STG_INSLS)) {
 
     OmModHub* ModHub = this->_ModPset->ModHub();
 

@@ -48,7 +48,6 @@ OmUiManFoot::~OmUiManFoot()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -56,66 +55,6 @@ long OmUiManFoot::id() const
 {
   return IDD_MGR_FOOT;
 }
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFoot::freeze(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFoot::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // disable Tab Control
-  //this->enableItem(IDC_TC_MAIN, !enable);
-
-  // passes the message to child tab dialog
-  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
-
-    // TODO: update this if tab child dialog are added
-
-    switch(this->_tab_dialog[i]->id())
-    {
-    case IDD_MGR_FOOT_OVW:
-      static_cast<OmUiManFootOvw*>(this->_tab_dialog[i])->freeze(enable);
-      break;
-    case IDD_MGR_FOOT_DET:
-      static_cast<OmUiManFootDet*>(this->_tab_dialog[i])->freeze(enable);
-      break;
-    }
-
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFoot::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFoot::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  // passes the message to child tab dialog
-  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
-
-    // TODO: update this if tab child dialog are added
-
-    switch(this->_tab_dialog[i]->id())
-    {
-    case IDD_MGR_FOOT_OVW:
-      static_cast<OmUiManFootOvw*>(this->_tab_dialog[i])->safemode(enable);
-      break;
-    case IDD_MGR_FOOT_DET:
-      static_cast<OmUiManFootDet*>(this->_tab_dialog[i])->safemode(enable);
-      break;
-    }
-
-  }
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

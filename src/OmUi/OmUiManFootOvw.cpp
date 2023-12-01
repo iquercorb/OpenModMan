@@ -73,33 +73,6 @@ long OmUiManFootOvw::id() const
   return IDD_MGR_FOOT_OVW;
 }
 
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFootOvw::freeze(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFootOvw::freeze (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  OM_UNUSED(enable);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManFootOvw::safemode(bool enable)
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManFootOvw::safemode (" << (enable ? "enabled" : "disabled") << ")\n";
-  #endif
-
-  OM_UNUSED(enable);
-}
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///

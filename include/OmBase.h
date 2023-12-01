@@ -39,10 +39,10 @@
 
 //using namespace std;
 
-#define OM_HAS_BIT(a, b)  (b == (a & b))
-#define OM_ADD_BIT(a, b)  (a |= b)
-#define OM_REM_BIT(a, b)  (a &= ~ b)
-#define OM_TOG_BIT(a, b)  (a ^= b)
+#define OM_HAS_BIT(a, b)  ((b) == ((a) & (b)))
+#define OM_ADD_BIT(a, b)  ((a) |= (b))
+#define OM_REM_BIT(a, b)  ((a) &= ~ (b))
+#define OM_TOG_BIT(a, b)  ((a) ^= (b))
 
 /// \brief STL C string
 ///

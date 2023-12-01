@@ -402,8 +402,8 @@ void OmUiPropPstLst::_onTabInit()
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_CHN,    L"Channel to configure");
-  this->_createTooltip(IDC_LB_INC,    L"Packages the Script will install (or leave installed)");
-  this->_createTooltip(IDC_LB_EXC,    L"Packages the Script will uninstall (or leave uninstalled)");
+  this->_createTooltip(IDC_LB_INC,    L"Mods the Preset will install (or leave installed)");
+  this->_createTooltip(IDC_LB_EXC,    L"Mods the Preset will uninstall (or leave uninstalled)");
   this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
   this->_createTooltip(IDC_BC_LEFT,   L"Remove from installed");
   this->_createTooltip(IDC_BC_UP,     L"Move up in list");
@@ -421,7 +421,7 @@ void OmUiPropPstLst::_onTabResize()
   int half_w = this->cliUnitX() * 0.5f;
   int half_h = this->cliUnitY() * 0.5f;
 
-  // Batch Configuration Label
+  // Preset Configuration Label
   this->_setItemPos(IDC_SC_LBL02, 50, 25, 240, 9);
   // Mod Channel list ComboBox
   this->_setItemPos(IDC_CB_CHN, 50, 35, this->cliUnitX()-100, 12);
@@ -483,13 +483,13 @@ void OmUiPropPstLst::_onTabRefresh()
     this->_excluded.push_back(std::vector<int>());
     this->_included.push_back(std::vector<int>());
 
-    // get batch install list Packages
+    // get preset install list of Mods
     OmPModPackArray mod_ls;
     ModPset->getSetupEntryList(ModChan, &mod_ls);
 
     if(mod_ls.size()) {
 
-      // fill the include list ordered as in the batch
+      // fill the include list ordered as in the preset
       for(size_t j = 0; j < mod_ls.size(); ++j) {
         int32_t p = ModChan->indexOfModpack(mod_ls[j]);
         if(p >= 0) this->_included.back().push_back(p);
@@ -512,10 +512,10 @@ void OmUiPropPstLst::_onTabRefresh()
   // Select first Mod Channel by default
   this->msgItem(IDC_CB_CHN, CB_SETCURSEL, 0);
 
-  // Disable ComboBox and ListBoxes
-  this->enableItem(IDC_CB_CHN, true);
-  this->enableItem(IDC_LB_EXC, true);
-  this->enableItem(IDC_LB_INC, true);
+  // enable or disable ComboBox and ListBoxes
+  this->enableItem(IDC_CB_CHN, !ModPset->locked());
+  this->enableItem(IDC_LB_EXC, !ModPset->locked());
+  this->enableItem(IDC_LB_INC, !ModPset->locked());
 
   // fill up each ListBox
   this->_buildLbs();

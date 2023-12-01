@@ -75,13 +75,62 @@ OmConnect::OmConnect() :
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmConnect::~OmConnect()
 {
+  this->abortRequest();
   this->clear();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmConnect::clear()
+{
+  Om_clearThread(this->_perform_hth, this->_perform_hwo);
+  this->_perform_hth = nullptr;
+  this->_perform_hwo = nullptr;
+
+  if(this->_heasy) {
+    if(this->_hmult)
+      curl_multi_remove_handle(reinterpret_cast<CURLM*>(this->_hmult), this->_heasy);
+    curl_easy_cleanup(reinterpret_cast<CURL*>(this->_heasy));
+    this->_heasy = nullptr;
+  }
+
+  if(this->_hmult) {
+    curl_multi_cleanup(reinterpret_cast<CURLM*>(this->_hmult));
+    this->_hmult = nullptr;
+  }
+
+  this->_req_url.clear();
+
+  this->_req_result = 0;
+  this->_req_response = 0;
+  this->_req_user_ptr = nullptr;
+  this->_req_response_cb = nullptr;
+  this->_req_result_cb = nullptr;
+  this->_req_download_cb = nullptr;
+  this->_req_abort = false;
+
+  if(this->_get_data_buf) {
+    Om_free(this->_get_data_buf);
+    this->_get_data_buf = nullptr;
+  }
+  this->_get_data_len = 0;
+  this->_get_data_cap = 0;
+
+  this->_get_file_hnd = nullptr;
+
+  this->_rate_accu = 0;
+  this->_rate_time = 0.0;
+
+  this->_progress_off = 0L;
+  this->_progress_tot = 0L;
+  this->_progress_now = 0L;
+  this->_progress_bps = 0.0;
 }
 
 ///
@@ -163,15 +212,6 @@ OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse)
   }
 
   curl_multi_remove_handle(curl_mult, curl_easy);
-
-
-  /*
-  // launch request
-  this->_req_result = curl_easy_perform(curl_easy);
-
-  curl_easy_getinfo(curl_easy, CURLINFO_RESPONSE_CODE, &this->_req_response);
-  */
-
 
   #ifdef DEBUG
   std::cout << "\n";
@@ -270,9 +310,9 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
   if(this->_perform_hth)
     return false;
 
-  this->clear();
-
   __curl_init();
+
+  this->clear();
 
   DWORD disp = resume ? OPEN_ALWAYS : CREATE_ALWAYS;
 
@@ -361,25 +401,6 @@ void OmConnect::abortRequest()
 
     // wake up curl_multi_poll to exit loop as soon as possible
     curl_multi_wakeup(curl_mult);
-
-    // et short timeout to abort connection attempt
-    //curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, 1);
-    //curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 1);
-
-    // close socket to abort transfert
-    /*
-    curl_socket_t socket;
-    CURLcode result = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &socket);
-    if(result == CURLE_OK) {
-
-      #ifdef DEBUG
-      std::cout << "DEBUG => OmConnect::abortRequest : socket closed\n";
-      #endif // DEBUG
-
-      shutdown(socket, SD_BOTH);
-      closesocket(socket);
-    }
-    */
   }
 }
 
@@ -391,54 +412,6 @@ bool OmConnect::isPerforming() const
   return (this->_perform_hth != nullptr);
 }
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmConnect::clear()
-{
-  if(this->_heasy) {
-    if(this->_hmult)
-      curl_multi_remove_handle(reinterpret_cast<CURLM*>(this->_hmult), this->_heasy);
-    curl_easy_cleanup(reinterpret_cast<CURL*>(this->_heasy));
-    this->_heasy = nullptr;
-  }
-
-  if(this->_hmult) {
-    curl_multi_cleanup(reinterpret_cast<CURLM*>(this->_hmult));
-    this->_hmult = nullptr;
-  }
-
-  this->_req_url.clear();
-
-  this->_req_result = 0;
-  this->_req_response = 0;
-  this->_req_user_ptr = nullptr;
-  this->_req_response_cb = nullptr;
-  this->_req_result_cb = nullptr;
-  this->_req_download_cb = nullptr;
-  this->_req_abort = false;
-
-  if(this->_get_data_buf) {
-    Om_free(this->_get_data_buf);
-    this->_get_data_buf = nullptr;
-  }
-  this->_get_data_len = 0;
-  this->_get_data_cap = 0;
-
-  this->_get_file_hnd = nullptr;
-
-  this->_rate_accu = 0;
-  this->_rate_time = 0.0;
-
-  this->_progress_off = 0L;
-  this->_progress_tot = 0L;
-  this->_progress_now = 0L;
-  this->_progress_bps = 0.0;
-
-  Om_clearThread(this->_perform_hth, this->_perform_hwo);
-  this->_perform_hth = nullptr;
-  this->_perform_hwo = nullptr;
-}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

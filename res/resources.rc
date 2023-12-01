@@ -737,8 +737,6 @@ FONT 8, "Ms Shell Dlg"
     COMBOBOX        IDC_CB_ZLV, 80, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     LTEXT           "Compression level :", IDC_SC_LBL02, 50, 60, 80, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_ZMD, 80, 60, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "Maintenance operations :", IDC_SC_LBL03, 50, 80, 120, 9, SS_LEFT, WS_EX_LEFT
-    PUSHBUTTON      "Discard backup data", IDC_BC_DEL, 50, 90, 80, 15, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                         MOD CHANNEL PROPERTIES
@@ -1280,7 +1278,8 @@ IDR_ACCEL ACCELERATORS
     "D",            IDM_HELP_LOG, VIRTKEY, CONTROL
     "M",            IDA_DEBUG_LOCK_MAN,  VIRTKEY, CONTROL, ALT
     "H",            IDA_DEBUG_LOCK_HUB,  VIRTKEY, CONTROL, ALT
-    "C",            IDA_DEBUG_LOCK_CHN,  VIRTKEY, CONTROL, ALT
+    "C",            IDA_DEBUG_LOCKMODE,  VIRTKEY, CONTROL, ALT
+    "S",            IDA_DEBUG_SAFEMODE,  VIRTKEY, CONTROL, ALT
 }
 
 //

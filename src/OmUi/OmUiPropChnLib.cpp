@@ -146,9 +146,9 @@ void OmUiPropChnLib::_onTabRefresh()
     return;
 
   this->setItemText(IDC_EC_INP01, ModChan->libraryPath());
-  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->hasCustomLibraryDir());
-  this->enableItem(IDC_EC_INP01, ModChan->hasCustomLibraryDir());
-  this->enableItem(IDC_BC_BRW01, ModChan->hasCustomLibraryDir());
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->hasCustLibraryPath());
+  this->enableItem(IDC_EC_INP01, ModChan->hasCustLibraryPath());
+  this->enableItem(IDC_BC_BRW01, ModChan->hasCustLibraryPath());
 
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, ModChan->libraryDevmod());
   this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, ModChan->warnOverlaps());

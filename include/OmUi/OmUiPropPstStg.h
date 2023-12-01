@@ -22,9 +22,9 @@
 #define PST_PROP_STG_TITLE  0
 #define PST_PROP_STG_IONLY  1
 
-/// \brief Batch Properties / Setting tab child
+/// \brief Mod Preset Properties / Setting tab child
 ///
-/// OmDialog class derived for Batch Properties / Settings tab child dialog window
+/// OmDialog class derived for Mod Preset Properties / Settings tab child dialog window
 ///
 class OmUiPropPstStg : public OmDialogPropTab
 {
