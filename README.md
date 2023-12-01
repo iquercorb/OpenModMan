@@ -60,7 +60,7 @@ Open Mod Mananager currently implements the following key features:
 
 ## Want to support Open Mod Manager developper ?
 
-<a href="https://www.patreon.com/bePatron?u=89686595" data-patreon-widget-type="become-patron-button">Become a member!</a><script async src="https://c6.patreon.com/becomePatronButton.bundle.js"></script>
+[Become a Patreon member](https://www.patreon.com/bePatron?u=89686595)
 
 ## Version history
 
