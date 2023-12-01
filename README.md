@@ -58,10 +58,6 @@ Open Mod Mananager currently implements the following key features:
 
 ![Open Mod Mananager Screenshot](screenshot.png)
 
-## Want to support Open Mod Manager developper ?
-
-[Become a Patreon member](https://www.patreon.com/bePatron?u=89686595)
-
 ## Version history
 
 1.1.1 (2023-10-29)
