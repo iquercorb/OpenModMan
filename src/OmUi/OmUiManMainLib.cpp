@@ -48,7 +48,6 @@
 ///
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
-  _modops_count(0),
   _modops_abort(false),
   _lv_mod_icons_size(0)
 {
@@ -76,22 +75,6 @@ OmUiManMainLib::~OmUiManMainLib()
 long OmUiManMainLib::id() const
 {
   return IDD_MGR_MAIN_LIB;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainLib::refreshLibrary()
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMainLib::refreshLibrary\n";
-  #endif
-
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-
-  if(ModMan)  //< this should be always the case
-    if(ModMan->activeChannel()) //< this should also be always the case
-      this->_lv_mod_populate();
 }
 
 ///
@@ -160,7 +143,8 @@ void OmUiManMainLib::deleteSources()
 
   // stop monitory to avoid real-time library refresh while deleting files which
   // can cause access violation to unallocated memory (deleted Package)
-  this->_UiMan->monitorLibrary(false);
+  //this->_UiMan->monitorLibrary(false);
+  // TODO: Implementer une sécurité ici ou vérifier que rien ne peut se casser
 
   for(size_t i = 0; i < selection.size(); ++i) {
 
@@ -186,7 +170,7 @@ void OmUiManMainLib::deleteSources()
   this->enableItem(IDC_PB_MOD, false);
 
   // restart library directory monitor, refresh and repopulate Listview
-  this->_UiMan->monitorLibrary(true);
+  //this->_UiMan->monitorLibrary(true);
 }
 
 ///
@@ -590,22 +574,93 @@ void OmUiManMainLib::abortAll()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::_update_processing()
+void OmUiManMainLib::_modlib_notify_fn(void* ptr, OmNotify notify, uint64_t param)
 {
-  bool processing = this->_modops_count;
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainLib::_modlib_notify_fn\n";
+  #endif
 
-  // dialog is not safe to quit
-  this->_setSafe(!processing);
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
-  // prevent dangerous user interactions
-  this->_UiMan->enableLockMode(processing);
+  if(notify == OM_NOTIFY_ALTERED || notify == OM_NOTIFY_DELETED)
+    self->_lv_mod_alterate(notify, param);
 
-  // enable 'kill-switch" abort button
-  this->enableItem(IDC_BC_ABORT, processing);
+  if(notify == OM_NOTIFY_REBUILD || notify == OM_NOTIFY_CREATED)
+    self->_lv_mod_populate();
+}
 
-  // reset progress bar, then enable or disable
-  this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0, 0);
-  this->enableItem(IDC_PB_MOD, processing);
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::_refresh_processing()
+{
+  OmModMan* ModMan = reinterpret_cast<OmModMan*>(this->_data);
+
+  bool is_safe = true;
+
+  // search in all opened Hubs for all channel
+  for(size_t h = 0; h < ModMan->hubCount(); ++h) {
+
+    OmModHub* ModHub = ModMan->getHub(h);
+
+    for(size_t c = 0; c < ModHub->channelCount(); ++c) {
+
+      bool has_queue = false;
+
+      OmModChan* ModChan = ModHub->getChannel(c);
+
+      if(ModChan->modOpsQueueSize()) {
+        has_queue = true; is_safe = false;
+      }
+
+      // if this is current active channel set controls
+      if(ModChan == ModHub->activeChannel()) {
+
+        // enable 'kill-switch" abort button
+        this->enableItem(IDC_BC_ABORT, has_queue);
+
+        // reset progress bar, then enable or disable
+        this->enableItem(IDC_PB_MOD, has_queue);
+        if(has_queue) {
+          this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+
+          uint32_t progress = ModChan->modOpsProgress();
+
+          this->msgItem(IDC_PB_MOD, PBM_SETPOS, progress + 1); //< this prevent transition
+          this->msgItem(IDC_PB_MOD, PBM_SETPOS, progress);
+
+        } else {
+          this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
+        }
+      }
+    }
+  }
+
+  // set dialog safe to quit
+  this->_setSafe(is_safe);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::_abort_processing()
+{
+  // this function is the "kill switch" for all pending queues and threads
+  // related to this dialog, this will make the dialog safe to quit
+
+  OmModMan* ModMan = reinterpret_cast<OmModMan*>(this->_data);
+
+  for(size_t h = 0; h < ModMan->hubCount(); ++h) {
+
+    OmModHub* ModHub = ModMan->getHub(h);
+
+    for(size_t c = 0; c < ModHub->channelCount(); ++c) {
+
+      OmModChan* ModChan = ModHub->getChannel(c);
+
+      ModChan->abortModOps();
+    }
+  }
 }
 
 ///
@@ -624,22 +679,24 @@ void OmUiManMainLib::_modops_add(const OmPModPackArray& selection)
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
 
-  // increase count of queued mod operations
-  this->_modops_count += selection.size();
-
   // reset abort state
   this->_modops_abort = false;
 
-  // enter processing state
-  this->_update_processing();
+  ModChan->queueModOps(selection,
+                       OmUiManMainLib::_modops_begin_fn,
+                       OmUiManMainLib::_modops_progress_fn,
+                       OmUiManMainLib::_modops_result_fn,
+                       OmUiManMainLib::_modops_ended_fn,
+                       this);
 
-  ModChan->queueModOps(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
-
-  // Enable 'Abort' and disable 'Download'
+  // Disable 'Install' and 'Uninstall'
   if(this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT)) {
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
   }
+
+  // enter processing state
+  this->_refresh_processing();
 }
 
 ///
@@ -664,20 +721,21 @@ OmResult OmUiManMainLib::_modops_exec(const OmPModPackArray& selection)
     this->enableItem(IDC_BC_UNIN, false);
   }
 
-  // increase count of queued mod operations
-  this->_modops_count += selection.size();
-
   // reset abort state
   this->_modops_abort = false;
 
   // enter processing state
-  this->_update_processing();
+  this->_refresh_processing();
 
   // this is the synchronous version of the process
-  OmResult result = ModChan->execModOps(selection, OmUiManMainLib::_modops_begin_fn, OmUiManMainLib::_modops_progress_fn, OmUiManMainLib::_modops_result_fn, this);
+  OmResult result = ModChan->execModOps(selection,
+                                        OmUiManMainLib::_modops_begin_fn,
+                                        OmUiManMainLib::_modops_progress_fn,
+                                        OmUiManMainLib::_modops_result_fn,
+                                        this);
 
   // leaving processing state
-  this->_update_processing();
+  this->_refresh_processing();
 
   return result;
 }
@@ -691,20 +749,10 @@ void OmUiManMainLib::_modops_begin_fn(void* ptr, uint64_t param)
 
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
-  OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
-  if(!ModChan) return;
-
-  // retrieve index of Mod Pack in Mod channel and therefore in ListView
-  int32_t item_id = ModChan->indexOfModpack(ModPack);
-
-  // keep list of overlapped Mods before restoration so we can refresh and
-  // maybe remove their overlapped status after Mod restoration
-  if(ModPack->hasBackup()) {
-    for(size_t i = 0; i < ModPack->overlapCount(); ++i) {
-      OmModPack* OvrPack = ModChan->findModpack(ModPack->getOverlapHash(i));
-      if(OvrPack) self->_modops_ovr_queue.push_back(OvrPack);
-    }
-  }
+  // get ListView item index search using lparam, that is, Mod Pack hash value.
+  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
+  int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  if(item_id < 0) return;
 
   // change status icon
   LVITEMW lvI = {};
@@ -723,11 +771,15 @@ bool OmUiManMainLib::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint
 
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
-  OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
-  if(!ModChan) return false;
+  OmModChan* ModChan = ModPack->ModChan();
 
-  // retrieve index of Mod Pack in Mod channel and therefore in ListView
-  int32_t item_id = ModChan->indexOfModpack(ModPack);
+  // check whether dialog is showing the proper Channel
+  if(ModChan != static_cast<OmModMan*>(self->_data)->activeChannel())
+    return true; //< wrong Channel, do not abort but ignore
+
+  // get ListView item index search using lparam, that is, Mod Pack hash value.
+  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
+  int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
 
   // Invalidate ListView subitem rect to call custom draw (progress bar)
   RECT rect;
@@ -748,59 +800,51 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
 {
   OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
+  OmModMan* ModMan = static_cast<OmModMan*>(self->_data);
+
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
-  OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
-  if(!ModChan) return;
+  OmModChan* ModChan = ModPack->ModChan();
 
-  // retrieve index of Mod Pack in Mod channel and therefore in ListView
-  int32_t item_id = ModChan->indexOfModpack(ModPack);
+  // check whether dialog is showing the proper Channel
+  if(ModChan == ModMan->activeChannel()) {
 
-  // Set 'Install' and 'Uninstall" button if item currently selected
-  if(self->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT) == 1) {
-    if(self->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED) == item_id) {
-      self->enableItem(IDC_BC_UNIN, ModPack->hasBackup());
-      self->enableItem(IDC_BC_INST, ModPack->hasSource());
-    }
-  }
+    // get ListView item index search using lparam, that is, Mod Pack hash value.
+    LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
+    int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
 
-  // change ListView status icon
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
-  self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
-
-  // update overlapping state of other Mods
-  if(ModPack->hasBackup()) {
-    lvI.iImage = ICON_STS_OVR;
-
-    // following Mod install, update new overlapped (if any) mods of this one
-    for(size_t i = 0; i < ModPack->overlapCount(); ++i) {
-
-      lvI.iItem = ModChan->indexOfModpack(ModPack->getOverlapHash(i));
-      if(lvI.iItem >= 0)
-        self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
-    }
-
-  } else {
-    lvI.iImage = ICON_STS_CHK;
-
-    // following Mod restore, update previously overlapped Mods that may no longer been
-    while(self->_modops_ovr_queue.size()) {
-
-      OmModPack* OvrPack = self->_modops_ovr_queue.front();
-
-      if(!ModChan->isOverlapped(OvrPack)) {
-        lvI.iItem = ModChan->indexOfModpack(OvrPack);
-        self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    // Set 'Install' and 'Uninstall" button if item currently selected
+    if(self->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT) == 1) {
+      if(self->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED) == item_id) {
+        self->enableItem(IDC_BC_UNIN, ModPack->hasBackup());
+        self->enableItem(IDC_BC_INST, ModPack->hasSource());
       }
-
-      self->_modops_ovr_queue.pop_front();
     }
+
+    // change ListView status icon
+    LVITEMW lvI = {};
+    lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
+    self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+
+    // Invalidate ListView subitem rect to call custom draw (progress bar)
+    RECT rect;
+    self->getLvSubRect(IDC_LV_MOD, item_id, 4 /* 'Progress' column */, &rect);
+    self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
   }
 
   // show appropriate error message if any
-  if(result == OM_RESULT_ERROR) {
-    if(ModPack->backupHasError() || ModPack->applyHasError()) {
+  if(OM_HAS_BIT(result, OM_RESULT_ERROR)) {
+
+    if(ModChan != ModMan->activeChannel()) {
+      // switch to proper Hub and Channel to show error
+      OmModHub* ModHub = ModChan->ModHub();
+      int32_t hub_id = ModMan->indexOfHub(ModHub);
+      self->_UiMan->selectHub(hub_id);
+      int32_t chn_id = ModHub->indexOfChannel(ModChan);
+      self->_UiMan->selectChannel(chn_id);
+    }
+
+    if(result == OM_RESULT_ERROR_APPLY || result == OM_RESULT_ERROR_BACKP) {
       Om_dlgBox_okl(self->_hwnd, L"Mod installation", IDI_PKG_ERR,
                   L"Mod install error", L"The installation of \""
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
@@ -810,20 +854,18 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
     }
   }
+}
 
-  // clear analytical status about install/restore
-  ModPack->clearAnalytics();
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::_modops_ended_fn(void* ptr, OmNotify notify, uint64_t param)
+{
+  OM_UNUSED(notify);
 
-  // Invalidate ListView subitem rect to call custom draw (progress bar)
-  RECT rect;
-  self->getLvSubRect(IDC_LV_MOD, item_id, 4 /* 'Progress' column */, &rect);
-  self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
-  self->_modops_count--;
-
-  // leaving processing state
-  if(!self->_modops_count)
-      self->_update_processing();
+  self->_refresh_processing();
 }
 
 ///
@@ -850,7 +892,6 @@ void OmUiManMainLib::_ec_lib_populate()
   // set Library Path EditText control
   this->setItemText(IDC_EC_INP01, item_str);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -900,13 +941,11 @@ void OmUiManMainLib::_lv_mod_populate()
     lvI.iItem = static_cast<int>(i);
 
     // the first column, Mod status, here we INSERT the new item
-    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
-    if(ModPack->hasBackup()) {
-      lvI.iImage = ModChan->isOverlapped(i) ? ICON_STS_OVR : ICON_STS_CHK;
-    } else {
-      lvI.iImage = ICON_NONE;
-    }
-    lvI.iItem = this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_PARAM; //< icon and special data
+    lvI.iImage = this->_lv_mod_get_status_icon(ModPack);
+    // notice for later : to work properly the lParam must be defined on the first SubItem (iSubItem = 0)
+    lvI.lParam = static_cast<LPARAM>(ModPack->hash());
+    this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
     // Second column, the Mod name and type, here we set the sub-item
     lvI.iSubItem = 1; lvI.mask = LVIF_TEXT|LVIF_IMAGE;
@@ -943,6 +982,94 @@ void OmUiManMainLib::_lv_mod_populate()
 
   // update Mods ListView selection
   this->_lv_mod_on_selchg();
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::_lv_mod_alterate(OmNotify action, uint64_t param)
+{
+
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  // corresponding ListView item should be retrieved by index, but to be sure
+  // we search using lparam, that is, Mod Pack hash value.
+  LVFINDINFOW lvF = {};
+  lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(param);
+  int32_t item_id = this->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+
+
+  if(action == OM_NOTIFY_DELETED) {
+
+    if(item_id < 0)
+      return;
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiManMainLib::_lv_mod_alterate : DELETE\n";
+    #endif
+
+    // delete item
+    this->msgItem(IDC_LV_MOD, LVM_DELETEITEM, item_id, 0);
+
+  } else {
+
+    // update item data
+    OmModPack* ModPack = ModChan->findModpack(param);
+    if(!ModPack) return; //< what ?!
+
+    LVITEMW lvI = {};
+
+    if(action == OM_NOTIFY_CREATED) {
+
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmUiManMainLib::_lv_mod_alterate : CREATE\n";
+      #endif
+
+      // the first column, Mod status, here we INSERT the new item
+      lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_PARAM; //< icon and special data
+      lvI.iImage = this->_lv_mod_get_status_icon(ModPack);
+      // notice for later : to work properly the lParam must be defined on the first SubItem (iSubItem = 0)
+      lvI.lParam = static_cast<LPARAM>(ModPack->hash());
+      lvI.iItem = this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+
+    } else {
+
+      if(item_id < 0)
+        return;
+
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmUiManMainLib::_lv_mod_alterate : ALTER\n";
+      #endif
+
+      lvI.iItem = item_id;
+      // update status icon
+      lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
+      lvI.iImage = this->_lv_mod_get_status_icon(ModPack);
+      this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    }
+
+    // Second column, the Mod name and type, here we set the sub-item
+    lvI.iSubItem = 1; lvI.mask = LVIF_TEXT|LVIF_IMAGE;
+    if(ModPack->hasSource()) {
+      lvI.iImage = ModPack->sourceIsDir() ? ICON_MOD_DIR : (ModPack->dependCount() ? ICON_MOD_DEP : ICON_MOD_PKG);
+    } else {
+      lvI.iImage = ICON_MOD_ERR;
+    }
+    lvI.pszText = const_cast<LPWSTR>(ModPack->name().c_str());
+    this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+
+    // Third column, the Mod version, we set the sub-item
+    lvI.iSubItem = 2; lvI.mask = LVIF_TEXT;
+    lvI.pszText = const_cast<LPWSTR>(ModPack->version().asString().c_str());
+    this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+
+    // Fourth column, the Mod category, we set the sub-item
+    lvI.iSubItem = 3; lvI.mask = LVIF_TEXT;
+    lvI.pszText = const_cast<LPWSTR>(ModPack->category().c_str());
+    this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+  }
 }
 
 ///
@@ -1152,14 +1279,8 @@ void OmUiManMainLib::_lv_mod_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
 int32_t OmUiManMainLib::_lv_mod_get_status_icon(const OmModPack* ModPack)
 {
   // select proper status icon
-  if(ModPack->hasError()) {
-    return ICON_STS_ERR;
-  } else if(ModPack->hasBackup()) {
-
-    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan) return ICON_NONE;
-
-    if(ModChan->isOverlapped(ModPack)) {
+  if(ModPack->hasBackup()) {
+    if(ModPack->isOverlapped()) {
       return ICON_STS_OVR;
     } else {
       return ICON_STS_CHK;
@@ -1236,6 +1357,9 @@ void OmUiManMainLib::_onInit()
   this->msgItem(IDC_LV_MOD, LVM_SETIMAGELIST, LVSIL_SMALL, himl);
   this->msgItem(IDC_LV_MOD, LVM_SETIMAGELIST, LVSIL_NORMAL, himl);
 
+  // "subscribe" to active channel library directory changes notifications
+  static_cast<OmModMan*>(this->_data)->notifyModLibraryStart(OmUiManMainLib::_modlib_notify_fn, this);
+
   this->_onRefresh();
 }
 
@@ -1250,6 +1374,7 @@ void OmUiManMainLib::_onShow()
 
   // refresh dialog
   //this->_onRefresh();
+  this->_refresh_processing();
 }
 
 ///
@@ -1302,17 +1427,16 @@ void OmUiManMainLib::_onRefresh()
   // disable or enable elements depending context
   this->enableItem(IDC_SC_LBL01, (ModHub != nullptr));
   this->enableItem(IDC_LV_MOD, (ModHub != nullptr));
-/*
-  if(ModChan)
-    ModChan->refreshModLibrary();
-*/
+
   // load or reload theme for ListView custom draw (progress bar)
   if(this->_lv_mod_cdraw_htheme)
     CloseThemeData(this->_lv_mod_cdraw_htheme);
   this->_lv_mod_cdraw_htheme = OpenThemeData(this->_hwnd, L"Progress");
 
+  // library directory path edit control
   this->_ec_lib_populate();
 
+  // local library ListView
   this->_lv_mod_populate();
 
   // Display error dialog AFTER ListView refreshed its content
@@ -1321,6 +1445,8 @@ void OmUiManMainLib::_onRefresh()
     this->_UiMan->checkBackupWrite(L"Mods Library");
     this->_UiMan->checkLibraryRead(L"Mods Library");
   }
+
+  this->_refresh_processing();
 }
 
 ///
@@ -1333,8 +1459,7 @@ void OmUiManMainLib::_onQuit()
   #endif
 
   // abort all running jobs
-  //this->_modops_abort();
-  this->_modops_abort = true;
+  this->_abort_processing();
 }
 
 ///
@@ -1426,7 +1551,6 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           ModChan->setModLibrarySort(OM_SORT_NAME);
           break;
         }
-        this->_lv_mod_populate(); //< rebuild ListView
         break;
       }
     }
@@ -1440,7 +1564,7 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       return false;
 
     #ifdef DEBUG
-    std::cout << "DEBUG => OmUiManMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    //std::cout << "DEBUG => OmUiManMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
 
     switch(LOWORD(wParam))

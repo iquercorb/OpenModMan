@@ -310,6 +310,6 @@ void Om_getAppIconImage(const OmWString& path)
   HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
   //HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE );
 
-  EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
+  //EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
   //LoadImageW(hMod, MAKEINTRESOURCE(3), IMAGE_ICON, 0, 0, 0);
 }

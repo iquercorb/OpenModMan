@@ -118,6 +118,8 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
 
   this->_file.assign(ref_node.attrAsString(L"file"));
   this->_size = ref_node.attrAsUint64(L"bytes");
+  // create formated string
+  Om_formatSizeSysStr(this->_size, &this->_size_str);
 
   if(ref_node.hasAttr(L"xxhsum")) {
 
@@ -262,7 +264,7 @@ bool OmNetPack::hasDepend(const OmWString& ident) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetPack::refreshStatus()
+bool OmNetPack::refreshAnalytics()
 {
   if(!this->_ModChan)
     return false;
@@ -344,7 +346,7 @@ void OmNetPack::revokeDownload()
 
   Om_fileDelete(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"));
 
-  this->refreshStatus();
+  this->refreshAnalytics();
 }
 
 ///
@@ -444,14 +446,15 @@ bool OmNetPack::finalizeDownload()
       this->_has_error = true;
     }
 
+    // wait for changes notifications to propagates
+    Sleep(100);
+
   } else {
 
     Om_fileDelete(this->_dnl_temp);
     this->_error(L"finalizeDownload", L"downloaded data checksum mismatch the reference");
     this->_has_error = true;
   }
-
-  this->refreshStatus();
 
   return !this->_has_error;
 }
@@ -694,7 +697,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   this->_upg_percent = 0;
 
   // clear the replaced list, pointers are now invalid
-  this->refreshStatus();
+  this->_upgrade.clear();
 
   // reset client parameters
   this->_cli_ptr = nullptr;

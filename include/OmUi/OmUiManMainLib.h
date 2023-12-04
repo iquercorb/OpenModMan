@@ -52,14 +52,6 @@ class OmUiManMainLib : public OmDialog
     ///
     long id() const;
 
-    /// \brief Refresh library
-    ///
-    /// Public function to refresh Library content. This function is
-    /// typically called each time Library directory monitor thread
-    /// detect changes in directory.
-    ///
-    void refreshLibrary();
-
     /// \brief Open Mod properties
     ///
     /// Opens currently selected Mod properties window.
@@ -169,14 +161,15 @@ class OmUiManMainLib : public OmDialog
 
     OmUiMan*            _UiMan;
 
+    // library monitor callback
+    static void         _modlib_notify_fn(void*,OmNotify,uint64_t);
+
     // thread and UI management
-    void                _update_processing();
+    void                _refresh_processing();
+
+    void                _abort_processing();
 
     // mods operation (install/uninstall)
-    int32_t             _modops_count;
-
-    OmPModPackQueue     _modops_ovr_queue;
-
     bool                _modops_abort;
 
     void                _modops_add(const OmPModPackArray&);
@@ -189,6 +182,8 @@ class OmUiManMainLib : public OmDialog
 
     static void         _modops_result_fn(void*, OmResult, uint64_t);
 
+    static void         _modops_ended_fn(void*, OmNotify, uint64_t);
+
     // Mod Library Path Edit
     void                _ec_lib_populate();
 
@@ -198,6 +193,8 @@ class OmUiManMainLib : public OmDialog
     void*               _lv_mod_cdraw_htheme;
 
     void                _lv_mod_populate();
+
+    void                _lv_mod_alterate(OmNotify, uint64_t);
 
     void                _lv_mod_on_resize();
 

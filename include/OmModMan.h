@@ -33,6 +33,7 @@
 ///
 typedef bool (*Om_onlogCb)(void* ptr, const OmWString& log);
 
+
 // maximum count of recent file path to store
 #define OM_MANAGER_MAX_RECENT     10
 
@@ -74,6 +75,16 @@ class OmModMan
     /// \return True if operation succeed, false otherwise.
     ///
     bool quit();
+
+    /// \brief Open from argument.
+    ///
+    /// Try to open Mod Hub from argument string, seeking for
+    /// known file type and expected Hub home organization.
+    ///
+    /// \param[in]  arg       : Argument string.
+    /// \param[in]  select    : Select the opened Mod Hub.
+    ///
+    bool openArg(const char* arg, bool select = true);
 
     /// \brief Create new Mod Hub.
     ///
@@ -151,6 +162,14 @@ class OmModMan
       return this->_active_hub;
     }
 
+    /// \brief Get Hub index in list
+    ///
+    /// Returns index of the given Hub object in list.
+    ///
+    /// \return Mod Hub index or -1 if not found.
+    ///
+    int32_t indexOfHub(const OmModHub* ModHub);
+
     /// \brief Get active Mod Channel
     ///
     /// Returns active Mod Channel of the current active Mod Hub
@@ -191,27 +210,37 @@ class OmModMan
     ///
     void loadWindowFoot(int* height);
 
-    /// \brief Save configuration recent file.
+    /// \brief Add path to recent file list.
     ///
-    /// Stores a new recent file path to configuration file.
+    /// Add a new path ot recent file list.
     ///
-    /// \param[in]  path    : Path to file.
+    /// \param[in]  path    : Path to add.
     ///
-    void saveRecentFile(const OmWString& path);
+    void addRecentFile(const OmWString& path);
 
-    /// \brief Load configuration recent files list.
+    /// \brief Load recent file path list.
     ///
-    /// Retrieve recent files path list from configuration file.
+    /// Retrieve saved recent files path list.
     ///
-    /// \param[in]  paths   : Reference to wide string array to get list.
+    /// \param[in]  paths   : Wide string array to be filled.
     ///
-    void loadRecentFiles(OmWStringArray& paths);
+    void getRecentFileList(OmWStringArray& paths);
+
+    /// \brief Remove recent files path
+    ///
+    /// Remove specified path from recent files path list.
+    ///
+    /// \param[in]  path    : Path to search and remove.
+    ///
+    /// \return True if path was removed, false otherwise
+    ///
+    bool removeRecentFile(const OmWString& path);
 
     /// \brief Clear configuration recent files list.
     ///
     /// Deletes all recent files path list from configuration file.
     ///
-    void clearRecentFiles();
+    void clearRecentFileList();
 
     /// \brief Save default working location.
     ///
@@ -230,23 +259,41 @@ class OmModMan
     ///
     void loadDefaultLocation(OmWString& path);
 
-    /// \brief Save configuration startup Mod Hub.
+    /// \brief Save configuration startup Hubs.
     ///
-    /// Stores startup Mod Hub path.
+    /// Stores startup Hub path list.
     ///
     /// \param[in]  enable  : enable auto-load.
     /// \param[in]  path    : startup Mod Hub(s) file path list.
     ///
     void saveStartHubs(bool enable, const OmWStringArray& path);
 
-    /// \brief Load configuration startup Mod Hub(s) path.
+    /// \brief Load configuration startup Hubs.
     ///
-    /// Retrieve path to Mod Hub(s) to be loaded at application start.
+    /// Retrieve path and enabled state of startup Hub list
     ///
     /// \param[in]  path    : Pointer to boolean to get auto-load.
     /// \param[in]  path    : Reference to wide string to get path.
     ///
     void loadStartHubs(bool* enable, OmWStringArray& path);
+
+    /// \brief Remove startup Hub path.
+    ///
+    /// Remove specified path from startup Hub list.
+    ///
+    /// \param[in]  path    : Path to search and remove.
+    ///
+    /// \return True if path was removed, false otherwise
+    ///
+    bool removeStartHub(const OmWString& path);
+
+    /// \brief Add startup Hub path.
+    ///
+    /// Add the specified path to startup Hub list.
+    ///
+    /// \param[in]  path    : Path to add.
+    ///
+    void addStartHub(const OmWString& path);
 
     /// \brief Get icons size option.
     ///
@@ -284,22 +331,52 @@ class OmModMan
     ///
     void setNoMarkdown(bool enable);
 
+    /// \brief Start active Channel Local Library changes notifications
+    ///
+    /// Set parameters and enable active channel Local Library changes notifications
+    ///
+    /// \param[in] notify_cb  : Callback for Local library notifications changes
+    /// \param[in] user_ptr   : Custom pointer passed to callbacks
+    ///
+    void notifyModLibraryStart(Om_notifyCb notify_cb, void* user_ptr = nullptr);
+
+    /// \brief Stop active Channel Local Library changes notifications
+    ///
+    /// Stops active Channel Local Library changes notifications
+    ///
+    void notifyModLibraryStop();
+
+    /// \brief Start active Channel Local Library changes notifications
+    ///
+    /// Set parameters and enable active channel Local Library changes notifications
+    ///
+    /// \param[in] notify_cb  : Callback for Local library notifications changes
+    /// \param[in] user_ptr   : Custom pointer passed to callbacks
+    ///
+    void notifyNetLibraryStart(Om_notifyCb notify_cb, void* user_ptr = nullptr);
+
+    /// \brief Stop active Channel Local Library changes notifications
+    ///
+    /// Stops active Channel Local Library changes notifications
+    ///
+    void notifyNetLibraryStop();
+
     /// \brief Add log callback
     ///
     /// Add callback function to be called when new log is added
     ///
-    /// \param[in] onlog_cb  : Pointer to callback function
+    /// \param[in] notify_cb  : Pointer to callback function
     /// \param[in] user_ptr  : Custom user pointer to be passed to callback
     ///
-    void addLogCallback(Om_onlogCb onlog_cb, void* user_ptr);
+    void addLogNotify(Om_notifyCb notify_cb, void* user_ptr);
 
     /// \brief Remove log callback
     ///
     /// Remove the specified callback function
     ///
-    /// \param[in] onlog_cb  : Pointer to callback function to remove
+    /// \param[in] notify_cb  : Pointer to callback function to remove
     ///
-    void removeLogCallback(Om_onlogCb onlog_cb);
+    void removeLogNotify(Om_notifyCb notify_cb);
 
     /// \brief Add log.
     ///
@@ -324,7 +401,7 @@ class OmModMan
     /// \return Log string.
     ///
     const OmWString& currentLog() const {
-      return this->_applog_str;
+      return this->_log_str;
     }
 
     /// \brief Escalate log.
@@ -337,41 +414,57 @@ class OmModMan
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // logs and errors
-    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
-
-    void                _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString           _lasterr;
-
-    // application log management
-    OmWString           _applog_str;
-
-    void*               _applog_hfile;
-
-    std::vector<Om_onlogCb>  _applog_cli_onlog;
-
-    std::vector<void*>       _applog_cli_ptr;
-
-    // special migration function
-    bool                _migrate();
-
     // required stuff
-    OmXmlConf           _xmlconf;
+    OmXmlConf             _xml;
 
     // general parameters
-    OmWString           _home;
+    OmWString             _home;
 
     // Mod Hubs management
-    OmPModHubArray      _hub_list;
+    OmPModHubArray        _hub_list;
 
-    int32_t             _active_hub;
+    int32_t               _active_hub;
+
+    // active channel libraries monitoring
+    void                  _modlib_notify_enable(bool enable);
+
+    static void           _modlib_notify_fn(void*, OmNotify, uint64_t);
+
+    Om_notifyCb           _modlib_notify_cb;
+
+    void*                 _modlib_notify_ptr;
+
+    void                  _netlib_notify_enable(bool enable);
+
+    static void           _netlib_notify_fn(void*, OmNotify, uint64_t);
+
+    Om_notifyCb           _netlib_notify_cb;
+
+    void*                 _netlib_notify_ptr;
+
+    // application log management
+    OmWString             _log_str;
+
+    void*                 _log_hfile;
+
+    OmNotifyCbArray       _log_notify_cb;
+
+    OmPVoidArray          _log_user_ptr;
 
     // general options
-    unsigned            _icon_size;
+    unsigned              _icon_size;
 
-    bool                _no_markdown;
+    bool                  _no_markdown;
 
+    // logs and errors
+    void                  _log(unsigned level, const OmWString& origin, const OmWString& detail);
+
+    void                  _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString             _lasterr;
+
+    // special function for migration to 1.2.0
+    bool                  _migrate_120();
 };
 
 #endif // OMMANAGER_H

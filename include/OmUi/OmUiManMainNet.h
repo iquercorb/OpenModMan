@@ -51,15 +51,9 @@ class OmUiManMainNet : public OmDialog
     ///
     long id() const;
 
-    /// \brief Refresh library
-    ///
-    /// Public function to refresh Library content. This function is
-    /// typically called each time Library directory monitor thread
-    /// detect changes in directory.
-    ///
-    void refreshLibrary();
-
     void queryRepositories();
+
+    void addRepository();
 
     void deleteRepository();
 
@@ -102,12 +96,15 @@ class OmUiManMainNet : public OmDialog
 
     OmUiMan*            _UiMan;
 
+    // library monitor callback
+    static void         _netlib_notify_fn(void*, OmNotify, uint64_t);
+
     // thread and UI management
-    void                _update_processing();
+    void                _refresh_processing();
+
+    void                _abort_processing();
 
     // repository query stuff
-    int32_t             _query_count;
-
     void                _query_start(const OmPNetRepoArray&);
 
     void                _query_abort();
@@ -116,10 +113,10 @@ class OmUiManMainNet : public OmDialog
 
     static void         _query_result_fn(void*, OmResult, uint64_t);
 
+    static void         _query_ended_fn(void*, OmNotify, uint64_t);
+
     // Mods download stuff
     bool                _download_upgrd;
-
-    int32_t             _download_count;
 
     void                _download_abort();
 
@@ -129,18 +126,20 @@ class OmUiManMainNet : public OmDialog
 
     static void         _download_result_fn(void*, OmResult, uint64_t);
 
-    // Mods upgrade stuff
-    int32_t             _upgrade_count;
+    static void         _download_ended_fn(void*, OmNotify, uint64_t);
 
+    // Mods upgrade stuff
     bool                _upgrade_abort;
 
-    void                _upgrade_start(const OmPNetPackArray&);
+    void                _upgrade_start(OmModChan*, const OmPNetPackArray&);
 
     static void         _upgrade_begin_fn(void*, uint64_t);
 
     static bool         _upgrade_progress_fn(void*, size_t, size_t, uint64_t);
 
     static void         _upgrade_result_fn(void*, OmResult, uint64_t);
+
+    static void         _upgrade_ended_fn(void*, OmNotify, uint64_t);
 
     // repositories ListView
     void                _lv_rep_populate();
@@ -161,6 +160,8 @@ class OmUiManMainNet : public OmDialog
     uint32_t            _lv_net_icons_size;
 
     void                _lv_net_populate();
+
+    void                _lv_net_alterate(OmNotify action, uint64_t param);
 
     void                _lv_net_on_resize();
 

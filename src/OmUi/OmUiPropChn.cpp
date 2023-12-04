@@ -28,7 +28,6 @@
 #include "OmUiPropChnLib.h"
 #include "OmUiPropChnBck.h"
 #include "OmUiPropChnNet.h"
-#include "OmUiProgress.h"
 
 #include "OmUtilFs.h"
 #include "OmUtilDlg.h"
@@ -60,7 +59,6 @@ OmUiPropChn::OmUiPropChn(HINSTANCE hins) : OmDialogProp(hins),
 
   // creates child sub-dialogs
   this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
-  this->addChild(new OmUiProgress(hins));   //< for Mod Channel backup transfer or deletion
 }
 
 

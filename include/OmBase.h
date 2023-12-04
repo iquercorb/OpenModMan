@@ -74,6 +74,12 @@ typedef std::vector<uint64_t> OmUint64Array;
 ///
 typedef std::vector<uint32_t> OmIndexArray;
 
+/// \brief Pointers array
+///
+/// Typedef for an STL vector of void pointer type
+///
+typedef std::vector<void*> OmPVoidArray;
+
 /// \brief Result codes
 ///
 /// Enumerator for result code.
@@ -83,9 +89,12 @@ enum OmResult : int32_t
   OM_RESULT_OK            = 0,
   OM_RESULT_ERROR         = 0x1,
   OM_RESULT_ABORT         = 2,
-  OM_RESULT_ERROR_IO      = 0x3,
-  OM_RESULT_ERROR_ALLOC   = 0x5,
-  OM_RESULT_ERROR_PARSE   = 0x7,
+  OM_RESULT_ERROR_IO      = 0x1 | 0x04,
+  OM_RESULT_ERROR_ALLOC   = 0x1 | 0x08,
+  OM_RESULT_ERROR_PARSE   = 0x1 | 0x10,
+  OM_RESULT_ERROR_APPLY   = 0x1 | 0x20,
+  OM_RESULT_ERROR_BACKP   = 0x1 | 0x40,
+  OM_RESULT_ERROR_RESTO   = 0x1 | 0x80,
   OM_RESULT_UNKNOW        = -1,
   OM_RESULT_PENDING       = -2,
 };
@@ -102,6 +111,20 @@ enum OmSort : int32_t
   OM_SORT_SIZE = 0x08,
   OM_SORT_CATE = 0x10,
   OM_SORT_INVT = 0x100
+};
+
+/// \brief Notify codes
+///
+/// Enumerator for notify code.
+///
+enum OmNotify : int32_t
+{
+  OM_NOTIFY_UNDEFINED = 0,
+  OM_NOTIFY_CREATED = 1,
+  OM_NOTIFY_DELETED = 2,
+  OM_NOTIFY_ALTERED = 3,
+  OM_NOTIFY_REBUILD = 4,
+  OM_NOTIFY_ENDED = 5
 };
 
 /// \brief Progress callback.
@@ -160,6 +183,22 @@ typedef void (*Om_resultCb)(void* ptr, OmResult result, uint64_t param);
 /// \param[in]  param   : Context dependent extra parameter.
 ///
 typedef void (*Om_beginCb)(void* ptr, uint64_t param);
+
+/// \brief Notify callback.
+///
+/// Generic callback function for notification.
+///
+/// \param[in]  ptr     : User data pointer
+/// \param[in]  notify  : Notification message code
+/// \param[in]  param   : Context dependent extra parameter
+///
+typedef void (*Om_notifyCb)(void* ptr, OmNotify notify, uint64_t param);
+
+/// \brief STL Om_notifyCb array
+///
+/// Typedef for an STL vector of Om_notifyCb callback function
+///
+typedef std::vector<Om_notifyCb> OmNotifyCbArray;
 
 /// \brief Memory allocation.
 ///

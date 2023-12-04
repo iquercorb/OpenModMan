@@ -27,7 +27,6 @@
 #include "OmUiAddChn.h"
 #include "OmUiPropHub.h"
 #include "OmUiPropChn.h"
-#include "OmUiProgress.h"
 
 #include "OmUtilDlg.h"
 #include "OmUtilWin.h"         //< Om_getResIcon
@@ -39,9 +38,11 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropHubChn::OmUiPropHubChn(HINSTANCE hins) : OmDialogPropTab(hins),
-  _chn_delete_hth(nullptr),
-  _chn_delete_hwo(nullptr),
-  _chn_delete_chn(-1)
+  _delchan_hth(nullptr),
+  _delchan_hwo(nullptr),
+  _delchan_chn(-1),
+  _delchan_hdlg(nullptr),
+  _delchan_abort(0)
 {
 
 }
@@ -65,30 +66,32 @@ long OmUiPropHubChn::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiPropHubChn::_chn_delete_run_fn(void* ptr)
+DWORD WINAPI OmUiPropHubChn::_delchan_run_fn(void* ptr)
 {
   OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
 
   OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
   if(!ModHub) return static_cast<DWORD>(OM_RESULT_ABORT);
 
-  OmModChan* ModChan = ModHub->getChannel(self->_chn_delete_chn);
+  OmModChan* ModChan = ModHub->getChannel(self->_delchan_chn);
   if(!ModChan) return static_cast<DWORD>(OM_RESULT_ABORT);
 
   // set UI in safe mode
-  static_cast<OmUiMgr*>(this->root())->enableSafeMode(false);
+  static_cast<OmUiMan*>(self->root())->enableSafeMode(true);
 
   // unselect Channel
   ModHub->selectChannel(-1);
 
   // Open progress dialog
-  OmUiProgress* UiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
-  UiProgress->open(true);
-  UiProgress->setCaption(L"Delete Mod Channel");
-  UiProgress->setScHeadText(L"Restoring backup data");
+  self->_delchan_abort = 0;
+  self->_delchan_hdlg = Om_dlgProgress(self->_hins, self->_hwnd, L"Hub properties - Delete Channel", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
 
-  // delete channel, will purge backup inf necessar
-  OmResult result = ModHub->deleteChannel(self->_chn_delete_chn, OmUiPropHubChn::_chn_delete_progress_cb, self);
+  // delete channel, will purge backup if required
+  OmResult result = ModHub->deleteChannel(self->_delchan_chn, OmUiPropHubChn::_delchan_progress_fn, self);
+
+  // quit the progress dialog (dialogs must be opened and closed within the same thread)
+  Om_dlgProgressClose(static_cast<HWND>(self->_delchan_hdlg));
+  self->_delchan_hdlg = nullptr;
 
   return static_cast<DWORD>(result);
 }
@@ -96,7 +99,7 @@ DWORD WINAPI OmUiPropHubChn::_chn_delete_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiPropHubChn::_chn_delete_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmUiPropHubChn::_delchan_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
   OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
 
@@ -105,18 +108,18 @@ bool OmUiPropHubChn::_chn_delete_progress_cb(void* ptr, size_t tot, size_t cur, 
 
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
-  OmUiProgress* UiProgress = static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS));
-  UiProgress->setScItemText(ModPack->iden());
-  UiProgress->setPbRange(0, tot);
-  UiProgress->setPbPos(cur);
+  OmWString progress_text = L"Restores backup data: ";
+  progress_text += ModPack->iden();
 
-  return !UiProgress->abortGet();
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_delchan_hdlg), tot, cur, progress_text.c_str());
+
+  return (self->_delchan_abort == 0);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-VOID WINAPI OmUiPropHubChn::_chn_delete_end_fn(void* ptr, uint8_t fired)
+VOID WINAPI OmUiPropHubChn::_delchan_end_fn(void* ptr, uint8_t fired)
 {
   OM_UNUSED(fired);
 
@@ -125,15 +128,11 @@ VOID WINAPI OmUiPropHubChn::_chn_delete_end_fn(void* ptr, uint8_t fired)
   OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
   if(!ModHub) return;
 
-  // quit the progress dialog
-  static_cast<OmUiProgress*>(self->siblingById(IDD_PROGRESS))->quit();
+  DWORD exit_code = Om_threadExitCode(self->_delchan_hth);
+  Om_clearThread(self->_delchan_hth, self->_delchan_hwo);
 
-  DWORD exit_code = Om_threadExitCode(self->_chn_delete_hth);
-  Om_clearThread(self->_chn_delete_hth, self->_chn_delete_hwo);
-
-  self->_chn_delete_hth = nullptr;
-  self->_chn_delete_hwo = nullptr;
-
+  self->_delchan_hth = nullptr;
+  self->_delchan_hwo = nullptr;
 
   OmResult result = static_cast<OmResult>(exit_code);
 
@@ -143,14 +142,14 @@ VOID WINAPI OmUiPropHubChn::_chn_delete_end_fn(void* ptr, uint8_t fired)
                     L"Channel deletion encountered error:", ModHub->lastError() );
   }
 
+  // restore UI interactions
+  static_cast<OmUiMan*>(self->root())->enableSafeMode(false);
+
   // Select fist available Channel
   ModHub->selectChannel(0);
 
-  // restore UI interactions
-  static_cast<OmUiMgr*>(this->root())->enableSafeMode(false);
-
   // refresh all dialogs from root
-  this->root()->refresh();
+  self->root()->refresh();
 }
 
 ///
@@ -307,13 +306,13 @@ void OmUiPropHubChn::_bc_del_pressed()
   this->enableItem(IDC_BC_EDI, false);
 
   // here we go for Mod Channel delete
-  if(!this->_chn_delete_hth) {
+  if(!this->_delchan_hth) {
 
-    this->_chn_delete_chn = chn_id;
+    this->_delchan_chn = chn_id;
 
     // launch thread
-    this->_chn_delete_hth = Om_createThread(OmUiPropHubChn::_chn_delete_run_fn, this);
-    this->_chn_delete_hwo = Om_waitForThread(this->_chn_delete_hth, OmUiPropHubChn::_chn_delete_end_fn, this);
+    this->_delchan_hth = Om_createThread(OmUiPropHubChn::_delchan_run_fn, this);
+    this->_delchan_hwo = Om_waitForThread(this->_delchan_hth, OmUiPropHubChn::_delchan_end_fn, this);
   }
 }
 

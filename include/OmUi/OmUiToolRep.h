@@ -53,7 +53,8 @@ class OmUiToolRep : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmXmlConf           _xmlconf;
+    // XML definition
+    OmXmlConf           _xml;
 
     OmXmlNode           _rmtCur;
 
@@ -73,15 +74,21 @@ class OmUiToolRep : public OmDialog
 
     int                 _rmtGetDeps(OmWStringArray& miss_list, const OmWString& ident);
 
-    void                _addDir_init(const OmWString& path);
+    // add directory thread stuff
+    void*               _diradd_hth;
 
-    void                _addDir_stop();
+    void*               _diradd_hwo;
 
-    void*               _addDir_hth;
+    static DWORD WINAPI _diradd_run_fn(void*);
 
-    static DWORD WINAPI _addDir_fth(void*);
+    static VOID WINAPI  _diradd_end_fn(void*,uint8_t);
 
-    OmWString           _addDir_path;
+    OmWString           _diradd_path;
+
+    void*               _diradd_hdlg;
+
+    int32_t             _diradd_abort;
+
 
     void                _onLbPkglsSel();
 

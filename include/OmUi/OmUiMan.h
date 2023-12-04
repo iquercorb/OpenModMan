@@ -88,13 +88,25 @@ class OmUiMan : public OmDialog
       return this->_safe_mode;
     }
 
-    /// \brief Monitor Library
+    /// \brief Open File
     ///
-    /// Start or stop Library directory changes monitoring.
+    /// Show Open Mod Hub file dialog then try to open selected file
     ///
-    /// \param[in]  enable  : Start or stop monitoring.
+    void openFile();
+
+    /// \brief Open Recent file
     ///
-    void monitorLibrary(bool enable);
+    /// Open Mod Hub from saved Recent path at index
+    ///
+    /// \param[in] index  : Index in recent path list to open
+    ///
+    void openRecent(int32_t index);
+
+    /// \brief Clear recent list
+    ///
+    /// Delete all path and menu-item from Recent List
+    ///
+    void clearRecents();
 
     /// \brief Open Mod Hub
     ///
@@ -114,17 +126,25 @@ class OmUiMan : public OmDialog
     ///
     /// Select or unselect Mod Hub then refresh dialog.
     ///
-    /// \param[in]  i  Index of Mod Hub to select or -1 to select none.
+    /// \param[in] index  : Index of Mod Hub to select or -1 to select none.
     ///
-    void selectHub(int32_t i);
+    void selectHub(int32_t index);
+
+    void hubProperties();
 
     /// \brief Select Mod Channel
     ///
     /// Select or unselect Mod Channel then refresh dialog.
     ///
-    /// \param[in]  i  Index of Mod Channel to select or -1 to select none.
+    /// \param[in] index  : Index of Mod Channel to select or -1 to select none.
     ///
-    void selectChannel(int32_t id);
+    void selectChannel(int32_t index);
+
+    void createChannel();
+
+    void deleteChannel();
+
+    void channelProperties();
 
     void createPreset();
 
@@ -241,19 +261,14 @@ class OmUiMan : public OmDialog
 
     bool                _lock_mode;
 
+    int32_t             _lock_idch;
+
     // frame splitter
     bool                _split_curs_hover;
 
     bool                _split_curs_dragg;
 
     long                _split_move_param[3];
-
-    // library directory monitor
-    void*               _lib_monitor_hth;
-
-    void*               _lib_monitor_hev[3];
-
-    static DWORD WINAPI _lib_monitor_fth(void*);
 
     // common elements
     HIMAGELIST          _listview_himl;
@@ -265,9 +280,7 @@ class OmUiMan : public OmDialog
     // Preset setup processing
     int32_t             _psetup_count;
 
-    int32_t             _psetup_chan_sel;
-
-    //void                _psetup_abort();
+    int32_t             _psetup_idch;
 
     bool                _psetup_abort;
 
@@ -278,6 +291,23 @@ class OmUiMan : public OmDialog
     static bool         _psetup_progress_fn(void*, size_t, size_t, uint64_t);
 
     static void         _psetup_result_fn(void*, OmResult, uint64_t);
+
+    // Delete channel processing
+    void*               _delchan_hth;
+
+    void*               _delchan_hwo;
+
+    static DWORD WINAPI _delchan_run_fn(void*);
+
+    static  VOID WINAPI _delchan_end_fn(void*,uint8_t);
+
+    static bool         _delchan_progress_fn(void*, size_t, size_t, uint64_t);
+
+    int32_t             _delchan_idch;
+
+    void*               _delchan_hdlg;
+
+    int32_t             _delchan_abort;
 
     // main window items
     void                _caption_populate();

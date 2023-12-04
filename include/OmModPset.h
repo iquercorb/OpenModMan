@@ -306,18 +306,11 @@ class OmModPset
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // management
-    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
-
-    void                _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString           _lasterr;
-
     // linking
     OmModHub*           _ModHub;
 
     // XML definition
-    OmXmlConf           _xmlconf;
+    OmXmlConf           _xml;
 
     // contextual properties
     bool                _locked;
@@ -333,6 +326,13 @@ class OmModPset
 
     // optional properties
     bool                _installonly;
+
+    // logs and errors
+    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
+
+    void                _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString           _lasterr;
 };
 
 /// \brief OmModPset pointer array

@@ -99,7 +99,7 @@ void OmUiPropChnNet::_query_start(size_t i)
   OmPNetRepoArray selection;
   selection.push_back(ModChan->getRepository(i));
 
-  ModChan->queueQueries(selection, nullptr, OmUiPropChnNet::_query_result_fn, this);
+  ModChan->queueQueries(selection, nullptr, OmUiPropChnNet::_query_result_fn, nullptr, this);
 }
 
 ///

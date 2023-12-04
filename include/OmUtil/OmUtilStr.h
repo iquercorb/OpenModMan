@@ -520,11 +520,19 @@ OmWString Om_formatSizeStr(uint64_t bytes, bool octet = false);
 /// Create a formated string of the given size in bytes as system wide standard.
 ///
 /// \param[in]  bytes   : Size in bytes.
-/// \param[in]  kbytes  : Use kilobytes representation.
+/// \param[in]  wstr    : Wide string to be set formated string describing size.
+///
+void Om_formatSizeSysStr(int64_t bytes, OmWString* wstr);
+
+/// \brief Get system formated bytes size string
+///
+/// Create a formated string of the given size in bytes as system wide standard.
+///
+/// \param[in]  bytes   : Size in bytes.
 ///
 /// \return Formated string describing size.
 ///
-OmWString Om_formatSizeSysStr(uint64_t bytes, bool kbytes = true);
+OmWString Om_formatSizeSysStr(int64_t bytes);
 
 /// \brief Check whether is version string
 ///
@@ -591,5 +599,24 @@ OmWString Om_toCRLF(const OmWString& lf);
 ///
 OmWString Om_concatStrings(const OmWStringArray& strings, const OmWString& separator);
 
+/// \brief Replace Spaces by Underscores
+///
+/// Replace all spaces of the given string by underscores
+///
+/// \param[in] spaces     : String with spaces to be replaced
+///
+/// \return String with underscores
+///
+OmWString Om_spacesToUnderscores(const OmWString& spaces);
+
+/// \brief Replace Underscores by Spaces
+///
+/// Replace all underscores of the given string by spaces
+///
+/// \param[in] spaces     : String with underscores to be replaced
+///
+/// \return String with spaces
+///
+OmWString Om_underscoresToSpaces(const OmWString& underscores);
 
 #endif // OMUTILSTR_H

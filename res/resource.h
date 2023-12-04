@@ -311,7 +311,7 @@
 #define IDC_TB_PST                              40781
 #define IDC_TB_REP                              40782
 #define IDM_BASE_ID                             40800
-#define IDM_FILE_NEW_CTX                        40800
+#define IDM_FILE_NEW_HUB                        40800
 #define IDM_FILE_OPEN                           40810
 #define IDM_FILE_CLOSE                          40811
 #define IDM_FILE_CLEAR_HIST                     40812

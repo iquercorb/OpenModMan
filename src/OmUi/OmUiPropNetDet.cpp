@@ -114,7 +114,7 @@ void OmUiPropNetDet::_onTabInit()
   this->setItemText(IDC_EC_READ5, NetPack->fileUrl());
 
   // Size
-  this->setItemText(IDC_EC_READ6, Om_formatSizeSysStr(NetPack->fileSize(), true));
+  this->setItemText(IDC_EC_READ6, NetPack->fileSizeStr());
 
   // Checksum
   if(NetPack->checksumIsMd5()) {

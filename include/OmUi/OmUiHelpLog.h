@@ -51,7 +51,7 @@ class OmUiHelpLog : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    static bool         _logCb(void* ptr, const OmWString& log);
+    static void         _log_notify_cb(void*, OmNotify, uint64_t);
 
     void                _onInit();
 

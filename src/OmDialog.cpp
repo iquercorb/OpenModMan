@@ -177,13 +177,13 @@ void OmDialog::open(bool show)
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
 
     #ifdef DEBUG
-    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open (thread=: "<<GetCurrentThreadId()<<L")\n";
+    //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open (thread=: "<<GetCurrentThreadId()<<L")\n";
     #endif
 
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
+    //std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -218,13 +218,13 @@ void OmDialog::modeless(bool show)
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
 
     #ifdef DEBUG
-    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless (thread=: "<<GetCurrentThreadId()<<L")\n";
+    //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless (thread=: "<<GetCurrentThreadId()<<L")\n";
     #endif
 
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
+    //std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -271,7 +271,7 @@ void OmDialog::registered(const char* classname, bool show)
   }
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered (thread=: "<<GetCurrentThreadId()<<L")\n";
+  //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered (thread=: "<<GetCurrentThreadId()<<L")\n";
   #endif
 }
 
@@ -785,16 +785,16 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       self->_active = (LOWORD(wParam) != WA_INACTIVE);
       #ifdef DEBUG
         if(LOWORD(wParam) == WA_INACTIVE) {
-          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_INACTIVE\n";
+          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_INACTIVE\n";
         } else {
-          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_ACTIVE\n";
+          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_ACTIVE\n";
         }
       #endif
       break; // case WM_ACTIVATE:
 
     case WM_INITDIALOG:
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_INITDIALOG\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_INITDIALOG\n";
       #endif
       self->_init = true;
       return 1; // case WM_INITDIALOG:
@@ -889,7 +889,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     case 736: // WM_DPICHANGED
     case WM_FONTCHANGE:
       #ifdef DEBUG
-        std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DPICHANGED or WM_FONTCHANGE\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DPICHANGED or WM_FONTCHANGE\n";
       #endif
       // I think this will never happen...
       MapDialogRect(hwnd, reinterpret_cast<LPRECT>(&temp));
@@ -916,6 +916,10 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
           EnableWindow(self->_parent->_hwnd, true);
           SetActiveWindow(self->_parent->_hwnd);
           self->_modal = false;
+        } else {
+          #ifdef DEBUG
+          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : DestroyWindow failed\n";
+          #endif // DEBUG
         }
 
         if(!self->_parent)
@@ -925,7 +929,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_DESTROY:
       #ifdef DEBUG
-        std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DESTROY\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DESTROY\n";
       #endif
       return 0;
     }

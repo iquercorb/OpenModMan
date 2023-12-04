@@ -109,26 +109,26 @@ OmResult OmNetRepo::query()
     if(this->_qry_result == OM_RESULT_OK) {
 
       // try to parse received data as repository
-      if(!this->_xmlconf.parse(Om_toUTF16(response), OM_XMAGIC_REP)) {
-        this->_error(L"query", Om_errParse(L"Repository definition", this->_url_full, this->_xmlconf.lastErrorStr()));
+      if(!this->_xml.parse(Om_toUTF16(response), OM_XMAGIC_REP)) {
+        this->_error(L"query", Om_errParse(L"Repository definition", this->_url_full, this->_xml.lastErrorStr()));
         this->_qry_result = OM_RESULT_ERROR_PARSE;
         return this->_qry_result;
       }
 
-      if(!this->_xmlconf.hasChild(L"uuid") || !this->_xmlconf.hasChild(L"title") ||
-         !this->_xmlconf.hasChild(L"downpath") || !this->_xmlconf.hasChild(L"remotes")) {
+      if(!this->_xml.hasChild(L"uuid") || !this->_xml.hasChild(L"title") ||
+         !this->_xml.hasChild(L"downpath") || !this->_xml.hasChild(L"remotes")) {
 
         this->_error(L"query", Om_errParse(L"Repository definition", this->_url_full, L"basic nodes missing"));
         this->_qry_result = OM_RESULT_ERROR_PARSE;
         return this->_qry_result;
       }
 
-      this->_uuid.assign(this->_xmlconf.child(L"uuid").content());
-      this->_title.assign(this->_xmlconf.child(L"title").content());
-      this->_downpath.assign(this->_xmlconf.child(L"downpath").content());
+      this->_uuid.assign(this->_xml.child(L"uuid").content());
+      this->_title.assign(this->_xml.child(L"title").content());
+      this->_downpath.assign(this->_xml.child(L"downpath").content());
 
       // get list of Mod references
-      this->_xmlconf.child(L"remotes").children(this->_reference, L"remote");
+      this->_xml.child(L"remotes").children(this->_reference, L"remote");
 
     } else {
 

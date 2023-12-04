@@ -603,6 +603,7 @@
 		<Unit filename="include/OmDialogProp.h" />
 		<Unit filename="include/OmDialogPropTab.h" />
 		<Unit filename="include/OmDialogWiz.h" />
+		<Unit filename="include/OmDirNotify.h" />
 		<Unit filename="include/OmImage.h" />
 		<Unit filename="include/OmModChan.h" />
 		<Unit filename="include/OmModHub.h" />
@@ -623,7 +624,6 @@
 		<Unit filename="include/OmUi/OmUiManMain.h" />
 		<Unit filename="include/OmUi/OmUiManMainLib.h" />
 		<Unit filename="include/OmUi/OmUiManMainNet.h" />
-		<Unit filename="include/OmUi/OmUiProgress.h" />
 		<Unit filename="include/OmUi/OmUiPropChn.h" />
 		<Unit filename="include/OmUi/OmUiPropChnBck.h" />
 		<Unit filename="include/OmUi/OmUiPropChnLib.h" />
@@ -689,6 +689,7 @@
 		<Unit filename="src/OmDialogProp.cpp" />
 		<Unit filename="src/OmDialogPropTab.cpp" />
 		<Unit filename="src/OmDialogWiz.cpp" />
+		<Unit filename="src/OmDirNotify.cpp" />
 		<Unit filename="src/OmImage.cpp" />
 		<Unit filename="src/OmModChan.cpp" />
 		<Unit filename="src/OmModHub.cpp" />
@@ -710,7 +711,6 @@
 		<Unit filename="src/OmUi/OmUiManMainLib.cpp" />
 		<Unit filename="src/OmUi/OmUiManMainNet.cpp" />
 		<Unit filename="src/OmUi/OmUiPictView.cpp" />
-		<Unit filename="src/OmUi/OmUiProgress.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChn.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnBck.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnLib.cpp" />

@@ -103,12 +103,12 @@ void OmUiAddRep::_qry_reponse_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t
 
     char* str = reinterpret_cast<char*>(buf);
 
-    OmXmlConf xml_def;
+    OmXmlConf repository_cfg;
 
     // try to parse received data as repository
-    if(!xml_def.parse(Om_toUTF16(str), OM_XMAGIC_REP)) {
+    if(!repository_cfg.parse(Om_toUTF16(str), OM_XMAGIC_REP)) {
 
-      log_entry.assign(L"Definition parse error: "); log_entry.append(xml_def.lastErrorStr()); log_entry.append(L"\r\n");
+      log_entry.assign(L"Definition parse error: "); log_entry.append(repository_cfg.lastErrorStr()); log_entry.append(L"\r\n");
       self->_qry_addlog(log_entry);
 
       self->_qry_result = OM_RESULT_ERROR;
@@ -118,7 +118,7 @@ void OmUiAddRep::_qry_reponse_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t
       return;
     }
 
-    if(!xml_def.hasChild(L"remotes")) {
+    if(!repository_cfg.hasChild(L"remotes")) {
 
       log_entry.assign(L"Definition parse error: <remotes> node not found\r\n");
       self->_qry_addlog(log_entry);
@@ -130,7 +130,7 @@ void OmUiAddRep::_qry_reponse_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t
       return;
     }
 
-    size_t mod_count = xml_def.child(L"remotes").attrAsInt(L"count");
+    size_t mod_count = repository_cfg.child(L"remotes").attrAsInt(L"count");
 
     log_entry.assign(L"Definition parse success: "); log_entry.append(std::to_wstring(mod_count)); log_entry.append(L" Mods referenced\r\n");
     self->_qry_addlog(log_entry);

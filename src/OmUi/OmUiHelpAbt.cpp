@@ -68,7 +68,7 @@ void OmUiHelpAbt::_onInit()
   this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
 
   OmWString about = OM_APP_NAME;
-  about.append(L" - version ");
+  about.append(L" - ");
   about.append(std::to_wstring(OM_APP_MAJ));
   about.push_back(L'.');
   about.append(std::to_wstring(OM_APP_MIN));
@@ -76,8 +76,8 @@ void OmUiHelpAbt::_onInit()
   about.push_back(L'.');
   about.append(std::to_wstring(OM_APP_REV));
   #endif
-  about.append(L" ( "); about.append(OM_APP_ARCH); about.append(L" )\n\n");
-  about.append(OM_APP_DATE); about.append(L"  by ");
+  about.append(L" - "); about.append(OM_APP_ARCH); about.append(L"\n\n");
+  about.append(OM_APP_DATE); about.append(L" - ");
   about.append(OM_APP_AUTHOR);
   this->setItemText(IDC_SC_INTRO, about);
 
@@ -85,12 +85,12 @@ void OmUiHelpAbt::_onInit()
   home_url.append(OM_APP_URL); home_url.append(L"\">");
   home_url.append(OM_APP_URL); home_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK01, home_url);
-/*
+
   OmWString repo_url = L"<a href=\"";
-  repo_url.append(OM_APP_GIT); repo_url.append(L"\">");
-  repo_url.append(OM_APP_GIT); repo_url.append(L"</a>");
+  repo_url.append(OM_DON_URL); repo_url.append(L"\">");
+  repo_url.append(OM_DON_URL); repo_url.append(L"</a>");
   this->setItemText(IDC_LM_LNK02, repo_url);
-*/
+
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 

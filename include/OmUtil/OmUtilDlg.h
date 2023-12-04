@@ -24,27 +24,24 @@
 ///
 /// Predefined common files filter string for Open dialog
 ///
-#define OM_PKG_FILES_FILTER      L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
-#define OM_BCK_FILES_FILTER      L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
-#define OM_IMG_FILES_FILTER      L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
-#define OM_XML_FILES_FILTER      L"XML File (*.xml)\0*.XML;\0"
-#define OM_TXT_FILES_FILTER      L"Text file (*.txt)\0*.TXT\0"
-#define OM_ICO_FILES_FILTER      L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0"
+#define OM_PKG_FILES_FILTER       L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
+#define OM_BCK_FILES_FILTER       L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
+#define OM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
+#define OM_XML_FILES_FILTER       L"XML File (*.xml)\0*.XML;\0"
+#define OM_TXT_FILES_FILTER       L"Text file (*.txt)\0*.TXT\0"
+#define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0"
 
-#define OM_CTX_DEF_FILE_FILER    L"Mod Hub definition (*.omc)\0*.OMC;\0"
-#define OM_LOC_DEF_FILE_FILER    L"Mod Channel definition (*.oml)\0*.OML;\0"
-#define OM_PKG_DEF_FILE_FILER    L"Package definition (*.omp)\0*.OMP;\0"
-#define OM_BCK_DEF_FILE_FILER    L"Backup definition (*.omk)\0*.OMK;\0"
-#define OM_BAT_DEF_FILE_FILER    L"Batch definition (*.omb)\0*.OMB;\0"
+#define OM_OMX_FILE_FILER         L"Mod Hub definition (*.omx,*.omc)\0*.OMX;*.OMC;\0"
 
 /// \brief Message box parameters flags.
 ///
 /// Buttons parameters flags for message box.
 ///
-#define OM_DLGBOX_OK        0x0
-#define OM_DLGBOX_OC        0x1
-#define OM_DLGBOX_YN        0x2
-#define OM_DLGBOX_CA        0x4
+#define OM_DLGBOX_OK        0x0   //< OK
+#define OM_DLGBOX_OC        0x1   //< OK - Cancler
+#define OM_DLGBOX_YN        0x2   //< Yes - No
+#define OM_DLGBOX_CA        0x4   //< Continue - Abort
+#define OM_DLGBOX_PROGRESS  0x10  //< Progress dialog
 
 /// \brief Custom message box dialog.
 ///
@@ -63,6 +60,42 @@
 /// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
 ///
 int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, const wchar_t* msg, const wchar_t* lst, unsigned flags);
+
+/// \brief Custom progression dialog.
+///
+/// Create progression dialog according given parameters, parameters with
+/// null value are ignored and not displayed.
+///
+/// \param[in] hins     : Handle to instance.
+/// \param[in] hwnd     : Handle to parent/owner window.
+/// \param[in] cpt      : Window caption.
+/// \param[in] ico      : Optional icon resource ID.
+/// \param[in] hdr      : Optional message header.
+/// \param[out] result  : Integer to be set as dialog quit result (1 if abort).
+///
+/// \return Handle to progression dialog
+///
+HWND Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result = nullptr);
+
+/// \brief Update progression dialog.
+///
+/// Update an existing progression dialog with supplied parameters. Integer parameter
+/// less than 0 and null pointer are ignored and not updated.
+///
+/// \param[in] hwnd     : Handle to existing progress dialog
+/// \param[in] tot      : Progress bar range.
+/// \param[in] cur      : Progress bar current position.
+/// \param[in] msg      : Progression message (item name) to set.
+///
+void Om_dlgProgressUpdate(HWND hwnd, int tot = -1, int cur = -1, const wchar_t* msg = nullptr);
+
+/// \brief Close progression dialog.
+///
+/// Close an existing progression dialog.
+///
+/// \param[in] hwnd     : Handle to existing progress dialog
+///
+void Om_dlgProgressClose(HWND hwnd);
 
 /// \brief OK message box.
 ///

@@ -220,18 +220,11 @@ class OmNetRepo
 
   private:
 
-    // management
-    void                _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
-
-    void                _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString           _lasterr;
-
     // linking
     OmModChan*          _ModChan;
 
-    // internal data
-    OmXmlConf           _xmlconf;
+    // XML definition
+    OmXmlConf           _xml;
 
     // general parameters
 
@@ -254,6 +247,13 @@ class OmNetRepo
     OmConnect           _connect;
 
     OmResult            _qry_result;
+
+    // logs and errors
+    void                _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
+
+    void                _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString           _lasterr;
 };
 
 /// \brief OmNetRepo pointer array

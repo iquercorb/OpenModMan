@@ -27,8 +27,6 @@
 #include "OmModHub.h"
 #include "OmModPack.h"
 
-#include "OmUiProgress.h"
-
 #include "OmUtilFs.h"
 #include "OmUtilDlg.h"
 #include "OmUtilStr.h"
@@ -41,15 +39,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiToolRep.h"
 
-
 #define REPO_DEFAULT_DOWLOAD  L"files/"
-
-/// \brief Custom window Message
-///
-/// Custom window message to notify the dialog window that the _addDir_fth
-/// thread finished his job.
-///
-#define UWM_ADDENTRIES_DONE   (WM_APP+1)
 
 /// \brief Save repository remote package snapshot
 ///
@@ -142,13 +132,15 @@ static inline bool __save_description(OmXmlNode& xml_des, const OmWString& text)
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
-  _xmlconf(),
+  _xml(),
   _rmtCur(),
   _unsaved(false),
-  _addDir_hth(nullptr),
-  _addDir_path()
+  _diradd_hth(nullptr),
+  _diradd_hwo(nullptr),
+  _diradd_hdlg(nullptr),
+  _diradd_abort(0)
 {
-  this->addChild(new OmUiProgress(hins));
+
 }
 
 
@@ -180,13 +172,13 @@ long OmUiToolRep::id() const
 void OmUiToolRep::_repInit()
 {
   // Initialize new Repository definition XML scheme
-  this->_xmlconf.init(OM_XMAGIC_REP);
+  this->_xml.init(OM_XMAGIC_REP);
 
   // Create repository base scheme
-  this->_xmlconf.addChild(L"uuid").setContent(Om_genUUID());
-  this->_xmlconf.addChild(L"title").setContent(L"New Repository");
-  this->_xmlconf.addChild(L"downpath").setContent(REPO_DEFAULT_DOWLOAD);
-  this->_xmlconf.addChild(L"remotes").setAttr(L"count", 0);
+  this->_xml.addChild(L"uuid").setContent(Om_genUUID());
+  this->_xml.addChild(L"title").setContent(L"New Repository");
+  this->_xml.addChild(L"downpath").setContent(REPO_DEFAULT_DOWLOAD);
+  this->_xml.addChild(L"remotes").setAttr(L"count", 0);
 }
 
 
@@ -196,7 +188,7 @@ void OmUiToolRep::_repInit()
 bool OmUiToolRep::_repOpen(const OmWString& path)
 {
   // Initialize new Repository definition XML scheme
-  if(!this->_xmlconf.load(path, OM_XMAGIC_REP)) {
+  if(!this->_xml.load(path, OM_XMAGIC_REP)) {
     Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR,
                  L"Repository definition parse error", L"The specified file is "
                  "not valid Repository definition:", path);
@@ -215,7 +207,7 @@ OmXmlNode OmUiToolRep::_rmtGet(const OmWString& ident)
   OmXmlNode result;
 
   // Get the package list XML node
-  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
+  OmXmlNode xml_rmts = this->_xml.child(L"remotes");
 
   // Get all <remote> children
   OmXmlNodeArray xml_rmt_ls;
@@ -277,7 +269,7 @@ bool OmUiToolRep::_rmtAdd(const OmWString& path)
   } else {
 
     // Get the remote package list XML node
-    xml_rmts = this->_xmlconf.child(L"remotes");
+    xml_rmts = this->_xml.child(L"remotes");
 
     // create new <remote> in repository
     xml_rmt = xml_rmts.addChild(L"remote");
@@ -322,7 +314,7 @@ bool OmUiToolRep::_rmtAdd(const OmWString& path)
 bool OmUiToolRep::_rmtRem(const OmWString& ident)
 {
   // Get the package list XML node
-  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
+  OmXmlNode xml_rmts = this->_xml.child(L"remotes");
 
   // Get all <remote> children
   OmXmlNodeArray xml_rmt_ls;
@@ -382,7 +374,7 @@ bool OmUiToolRep::_rmtSel(const OmWString& ident)
   }
 
   // Get the remote packages list XML node
-  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
+  OmXmlNode xml_rmts = this->_xml.child(L"remotes");
 
   // Get all <remote> children
   OmXmlNodeArray xml_rmt_ls;
@@ -612,96 +604,77 @@ int OmUiToolRep::_rmtGetDeps(OmWStringArray& miss_list, const OmWString& ident)
   return miss;
 }
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiToolRep::_addDir_init(const OmWString& path)
-{
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS));
-
-  pUiProgress->open(true);
-  pUiProgress->setCaption(L"Parse packages");
-  pUiProgress->setScHeadText(L"Computing packages checksum");
-
-  // keep path to folder to scan
-  this->_addDir_path = path;
-
-  // start package building thread
-  DWORD dWid;
-  this->_addDir_hth = CreateThread(nullptr, 0, this->_addDir_fth, this, 0, &dWid);
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_addDir_stop()
+DWORD WINAPI OmUiToolRep::_diradd_run_fn(void* ptr)
 {
-  DWORD exitCode;
-
-  if(this->_addDir_hth) {
-    WaitForSingleObject(this->_addDir_hth, INFINITE);
-    GetExitCodeThread(this->_addDir_hth, &exitCode);
-    CloseHandle(this->_addDir_hth);
-    this->_addDir_hth = nullptr;
-  }
-
-  this->_addDir_path.clear();
-
-  // quit the progress dialog
-  static_cast<OmUiProgress*>(this->childById(IDD_PROGRESS))->quit();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-DWORD WINAPI OmUiToolRep::_addDir_fth(void* arg)
-{
-  OmUiToolRep* self = static_cast<OmUiToolRep*>(arg);
-
-  OmUiProgress* pUiProgress = static_cast<OmUiProgress*>(self->childById(IDD_PROGRESS));
-
-  HWND hPb = pUiProgress->hPb();
-  const bool* abort = pUiProgress->abortPtr();
+  OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
 
   // get all file from given path
-  OmWStringArray ls;
-  Om_lsFile(&ls, self->_addDir_path, true);
+  OmWStringArray files;
+  Om_lsFile(&files, self->_diradd_path, true);
 
-  // initialize the progress bar
-  if(hPb) {
-    SendMessageW(hPb, PBM_SETRANGE, 0, MAKELPARAM(0, ls.size()));
-    SendMessageW(hPb, PBM_SETSTEP, 1, 0);
-    SendMessageW(hPb, PBM_SETPOS, 0, 0);
-  }
+  // Open progress dialog
+  self->_diradd_abort = 0;
+  self->_diradd_hdlg = Om_dlgProgress(self->_hins, self->_hwnd, L"Repository Tool - Parse Mod Packs", IDI_PKG_DEL, L"Parsing Mod Packs", &self->_diradd_abort);
+
+  // Set progress bar range
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_diradd_hdlg), files.size(), -1, nullptr);
+
+  OmWString progress_text;
 
   // try to add each file, silently fail
-  for(size_t i = 0; i < ls.size(); ++i) {
+  for(size_t i = 0; i < files.size(); ++i) {
 
-    // set dialog progress detail text
-    pUiProgress->setScItemText(Om_getFilePart(ls[i]).c_str());
+    OmWString progress_text = L"Computing checksum: ";
+    progress_text += Om_getFilePart(files[i]);
+
+    // update progress text
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_diradd_hdlg), -1, -1, progress_text.c_str());
 
     // proceed this package
-    self->_rmtAdd(ls[i]);
+    self->_rmtAdd(files[i]);
 
-    // step progress bar
-    if(hPb) SendMessageW(hPb, PBM_STEPIT, 0, 0);
+    // update progress bar
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_diradd_hdlg), -1, i, nullptr);
 
     #ifdef DEBUG
     Sleep(50); //< for debug
     #endif
 
-    if(*abort) break;
+    if(self->_diradd_abort != 0)
+      break;
   }
 
-
-  // sends message to window to inform process ended
-  PostMessage(self->_hwnd, UWM_ADDENTRIES_DONE, 0, 0);
+  // quit the progress dialog (dialogs must be opened and closed within the same thread)
+  Om_dlgProgressClose(static_cast<HWND>(self->_diradd_hdlg));
+  self->_diradd_hdlg = nullptr;
 
   return 0;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmUiToolRep::_diradd_end_fn(void* ptr, uint8_t fired)
+{
+  OM_UNUSED(fired);
+
+  OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
+
+  //DWORD exit_code = Om_threadExitCode(self->_diradd_hth);
+  Om_clearThread(self->_diradd_hth, self->_diradd_hwo);
+
+  self->_diradd_hth = nullptr;
+  self->_diradd_hwo = nullptr;
+
+  self->_diradd_path.clear();
+
+  // enable brows button
+  self->enableItem(IDC_BC_BRW03, true);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -726,8 +699,8 @@ void OmUiToolRep::_onBcNew()
   this->msgItem(IDC_LB_PKG, LB_RESETCONTENT, 0, 0);
 
   // Set default title and download path to controls
-  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
+  this->setItemText(IDC_EC_INP01, this->_xml.child(L"title").content());
+  this->setItemText(IDC_EC_INP02, this->_xml.child(L"downpath").content());
 
   // reset unsaved changes
   this->_unsaved = false;
@@ -771,11 +744,11 @@ void OmUiToolRep::_onBcOpen()
     return;
 
   // Get Repository Title
-  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
+  this->setItemText(IDC_EC_INP01, this->_xml.child(L"title").content());
   // Get Download path
-  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
+  this->setItemText(IDC_EC_INP02, this->_xml.child(L"downpath").content());
 
-  OmXmlNode xml_rmts = this->_xmlconf.child(L"remotes");
+  OmXmlNode xml_rmts = this->_xml.child(L"remotes");
 
   // get all <remote> nodes within <remotes>
   OmXmlNodeArray xml_rmt_ls;
@@ -843,7 +816,20 @@ bool OmUiToolRep::_onBcBrwDir()
   // each add need to compute the file checksum, this operation can take
   // long time specially with huge files, to prevent unpleasant freeze of
   // dialog, we proceed through progress dialog within new thread.
-  this->_addDir_init(result);
+  //this->_diradd_init(result);
+  if(!this->_diradd_hth) {
+
+    // disable brows button
+    this->enableItem(IDC_BC_BRW03, false);
+
+    this->_diradd_path = result;
+
+    this->_diradd_abort = 0;
+
+    // launch thread
+    this->_diradd_hth = Om_createThread(OmUiToolRep::_diradd_run_fn, this);
+    this->_diradd_hwo = Om_waitForThread(this->_diradd_hth, OmUiToolRep::_diradd_end_fn, this);
+  }
 
   return true;
 }
@@ -1154,7 +1140,7 @@ void OmUiToolRep::_onBcSave()
   this->getItemText(IDC_EC_INP01, item_str);
 
   // set title
-  this->_xmlconf.child(L"title").setContent(item_str);
+  this->_xml.child(L"title").setContent(item_str);
 
   this->getItemText(IDC_EC_INP02, item_str);
 
@@ -1180,7 +1166,7 @@ void OmUiToolRep::_onBcSave()
   }
 
   // set download path
-  this->_xmlconf.child(L"downpath").setContent(item_str);
+  this->_xml.child(L"downpath").setContent(item_str);
   // echo changes in EditText
   this->setItemText(IDC_EC_INP02, item_str);
 
@@ -1205,9 +1191,9 @@ void OmUiToolRep::_onBcSave()
     return;
   }
 
-  if(!this->_xmlconf.save(result)) {
+  if(!this->_xml.save(result)) {
     Om_dlgSaveError(this->_hwnd, L"Mod Repo Editor", L"Save Mod repo definition",
-                    L"Mod repo definition", this->_xmlconf.lastErrorStr());
+                    L"Mod repo definition", this->_xml.lastErrorStr());
     return;
   }
 
@@ -1297,8 +1283,8 @@ void OmUiToolRep::_onInit()
   this->_repInit();
 
   // Set default title and download path to controls
-  this->setItemText(IDC_EC_INP01, this->_xmlconf.child(L"title").content());
-  this->setItemText(IDC_EC_INP02, this->_xmlconf.child(L"downpath").content());
+  this->setItemText(IDC_EC_INP01, this->_xml.child(L"title").content());
+  this->setItemText(IDC_EC_INP02, this->_xml.child(L"downpath").content());
 
   // reset unsaved changes
   this->_unsaved = false;
@@ -1429,14 +1415,6 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   OM_UNUSED(lParam);
 
   bool has_changed = false;
-
-  // UWM_ADDENTRIES_DONE is a custom message sent from add entries thread
-  // function, to notify the progress dialog ended is job.
-  if(uMsg == UWM_ADDENTRIES_DONE) {
-    // end the Add Entries process
-    this->_addDir_stop();
-    has_changed = true;
-  }
 
   if(uMsg == WM_COMMAND) {
 

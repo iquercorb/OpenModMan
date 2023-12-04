@@ -22,6 +22,14 @@
 
 class OmModMan;
 
+class OmDialog;
+
+/// \brief OmDialog pointer array
+///
+/// Typedef for an STL vector of OmDialog pointer type
+///
+typedef std::vector<OmDialog*> OmPDialogArray;
+
 /// \brief Dialog window.
 ///
 /// Base class for dialog window interface. This object is destined to serve as
@@ -763,7 +771,7 @@ class OmDialog
 
     OmDialog*           _parent;    //< Parent dialog
 
-    std::vector<OmDialog*>   _child;     //< Children dialogs
+    OmPDialogArray      _child;     //< Children dialogs
 
     HACCEL              _accel;     //< Accelerator table handle for dialog
 

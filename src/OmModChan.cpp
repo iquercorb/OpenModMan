@@ -46,6 +46,10 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _cust_backup_path(false),
   _modpack_list_sort(OM_SORT_NAME),
   _netpack_list_sort(OM_SORT_NAME),
+  _modpack_notify_cb(nullptr),
+  _modpack_notify_ptr(nullptr),
+  _netpack_notify_cb(nullptr),
+  _netpack_notify_ptr(nullptr),
   _locked_mod_library(false),
   _locked_net_library(false),
   _modops_abort(false),
@@ -56,12 +60,14 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _modops_begin_cb(nullptr),
   _modops_progress_cb(nullptr),
   _modops_result_cb(nullptr),
+  _modops_notify_cb(nullptr),
   _modops_user_ptr(nullptr),
   _download_abort(false),
   _download_dones(0),
   _download_percent(0),
   _download_download_cb(nullptr),
   _download_result_cb(nullptr),
+  _download_notify_cb(nullptr),
   _download_user_ptr(nullptr),
   _upgrade_abort(false),
   _upgrade_hth(nullptr),
@@ -71,6 +77,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _upgrade_begin_cb(nullptr),
   _upgrade_progress_cb(nullptr),
   _upgrade_result_cb(nullptr),
+  _upgrade_notify_cb(nullptr),
   _upgrade_user_ptr(nullptr),
   _query_abort(false),
   _query_hth(nullptr),
@@ -79,6 +86,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _query_percent(0),
   _query_begin_cb(nullptr),
   _query_result_cb(nullptr),
+  _query_notify_cb(nullptr),
   _query_user_ptr(nullptr),
   _library_devmode(true),
   _library_showhidden(false),
@@ -93,7 +101,8 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _warn_upgd_brk_deps(true),
   _upgd_rename(false)
 {
-
+  // set parameters for library monitor
+  this->_monitor.setCallback(OmModChan::_monitor_notify_fn, this);
 }
 
 ///
@@ -109,6 +118,9 @@ OmModChan::~OmModChan()
 ///
 void OmModChan::close()
 {
+  // stop library monitoring
+  this->_monitor.stopMonitor();
+
   // stop and clear ModOps thread
   if(this->_modops_hth) {
     this->_modops_abort = true;
@@ -147,7 +159,7 @@ void OmModChan::close()
 
   this->_lasterr.clear();
 
-  this->_xmlconf.clear();
+  this->_xml.clear();
 
   this->_path.clear();
   this->_home.clear();
@@ -167,6 +179,12 @@ void OmModChan::close()
     delete this->_repository_list[i];
   this->_repository_list.clear();
 
+  this->_modpack_notify_cb = nullptr;
+  this->_modpack_notify_ptr = nullptr;
+
+  this->_netpack_notify_cb = nullptr;
+  this->_netpack_notify_ptr = nullptr;
+
   this->_locked_mod_library = false;
   this->_locked_net_library = false;
 
@@ -177,6 +195,7 @@ void OmModChan::close()
   this->_modops_begin_cb = nullptr;
   this->_modops_progress_cb = nullptr;
   this->_modops_result_cb = nullptr;
+  this->_modops_notify_cb = nullptr;
   this->_modops_user_ptr = nullptr;
 
   this->_download_abort = false;
@@ -185,6 +204,7 @@ void OmModChan::close()
   this->_download_queue.clear();
   this->_download_download_cb = nullptr;
   this->_download_result_cb = nullptr;
+  this->_download_notify_cb = nullptr;
   this->_download_user_ptr = nullptr;
 
   this->_upgrade_abort = false;
@@ -194,6 +214,7 @@ void OmModChan::close()
   this->_upgrade_begin_cb = nullptr;
   this->_upgrade_progress_cb = nullptr;
   this->_upgrade_result_cb = nullptr;
+  this->_upgrade_notify_cb = nullptr;
   this->_upgrade_user_ptr = nullptr;
 
   this->_query_abort = false;
@@ -202,6 +223,7 @@ void OmModChan::close()
   this->_query_percent = 0;
   this->_query_begin_cb = nullptr;
   this->_query_result_cb = nullptr;
+  this->_query_notify_cb = nullptr;
   this->_query_user_ptr = nullptr;
 
   this->_cust_library_path = false;
@@ -228,13 +250,13 @@ bool OmModChan::open(const OmWString& path)
   this->close();
 
   // try to open and parse the XML file
-  if(!this->_xmlconf.load(path, OM_XMAGIC_CHN)) {
+  if(!this->_xml.load(path, OM_XMAGIC_CHN)) {
     this->_error(L"open", L"XML definition parse error.");
     this->close(); return false;
   }
 
   // check for the presence of <uuid> entry
-  if(!this->_xmlconf.hasChild(L"uuid") || !this->_xmlconf.hasChild(L"title")) {
+  if(!this->_xml.hasChild(L"uuid") || !this->_xml.hasChild(L"title")) {
     this->_error(L"open", L"invalid XML definition: basic nodes missing.");
     this->close(); return false;
   }
@@ -243,16 +265,16 @@ bool OmModChan::open(const OmWString& path)
 
   this->_home = Om_getDirPart(this->_path);
 
-  this->_uuid = this->_xmlconf.child(L"uuid").content();
+  this->_uuid = this->_xml.child(L"uuid").content();
 
-  this->_title = this->_xmlconf.child(L"title").content();
+  this->_title = this->_xml.child(L"title").content();
 
-  this->_index = this->_xmlconf.child(L"title").attrAsInt(L"index");
+  this->_index = this->_xml.child(L"title").attrAsInt(L"index");
 
   // check for the presence of <install> entry
-  if(this->_xmlconf.hasChild(L"install")) {
+  if(this->_xml.hasChild(L"install")) {
 
-    this->_target_path = this->_xmlconf.child(L"install").content();
+    this->_target_path = this->_xml.child(L"install").content();
     if(!Om_isDir(this->_target_path)) {
       this->_log(OM_LOG_WRN, L"open", Om_errNotDir(L"Target directory", this->_target_path));
     }
@@ -263,10 +285,10 @@ bool OmModChan::open(const OmWString& path)
   }
 
   // check for the presence of <library> entry for custom Library path
-  if(this->_xmlconf.hasChild(L"library")) {
+  if(this->_xml.hasChild(L"library")) {
 
     this->_cust_library_path = true;
-    this->_library_path = this->_xmlconf.child(L"library").content();
+    this->_library_path = this->_xml.child(L"library").content();
 
     if(!Om_isDir(this->_library_path)) {
       this->_log(OM_LOG_WRN, L"open", Om_errNotDir(L"custom Library directory", this->_library_path));
@@ -287,10 +309,10 @@ bool OmModChan::open(const OmWString& path)
   }
 
   // check for the presence of <backup> entry for custom Backup path
-  if(this->_xmlconf.hasChild(L"backup")) {
+  if(this->_xml.hasChild(L"backup")) {
 
     this->_cust_backup_path = true;
-    this->_backup_path = this->_xmlconf.child(L"backup").content();
+    this->_backup_path = this->_xml.child(L"backup").content();
 
     if(!Om_isDir(this->_backup_path)) {
       this->_log(OM_LOG_WRN, L"open", Om_errNotDir(L"Custom Backup directory", this->_backup_path));
@@ -310,14 +332,14 @@ bool OmModChan::open(const OmWString& path)
     }
   }
 
-  if(this->_xmlconf.hasChild(L"backup_comp")) {
+  if(this->_xml.hasChild(L"backup_comp")) {
 
-    this->_backup_comp_method = this->_xmlconf.child(L"backup_comp").attrAsInt(L"method");
+    this->_backup_comp_method = this->_xml.child(L"backup_comp").attrAsInt(L"method");
 
     if(this->_backup_comp_method > 95 || this->_backup_comp_method < 0)
       this->_backup_comp_method = -1;
 
-    this->_backup_comp_level = this->_xmlconf.child(L"backup_comp").attrAsInt(L"level");
+    this->_backup_comp_level = this->_xml.child(L"backup_comp").attrAsInt(L"level");
 
     if(this->_backup_comp_level > 9)
       this->_backup_comp_level = 0;
@@ -327,38 +349,38 @@ bool OmModChan::open(const OmWString& path)
     this->setBackupComp(this->_backup_comp_method, this->_backup_comp_level);
   }
 
-  if(this->_xmlconf.hasChild(L"library_sort")) {
-    this->_modpack_list_sort = this->_xmlconf.child(L"library_sort").attrAsInt(L"sort");
+  if(this->_xml.hasChild(L"library_sort")) {
+    this->_modpack_list_sort = this->_xml.child(L"library_sort").attrAsInt(L"sort");
   } else {
     // create default values
     // TODO
   }
 
-  if(this->_xmlconf.hasChild(L"library_devmode")) {
-    this->_library_devmode = this->_xmlconf.child(L"library_devmode").attrAsInt(L"enable");
+  if(this->_xml.hasChild(L"library_devmode")) {
+    this->_library_devmode = this->_xml.child(L"library_devmode").attrAsInt(L"enable");
   } else {
     // create default values
     this->setLibraryDevmod(this->_library_devmode);
   }
 
-  if(this->_xmlconf.hasChild(L"library_showhidden")) {
-    this->_library_showhidden = this->_xmlconf.child(L"library_showhidden").attrAsInt(L"enable");
+  if(this->_xml.hasChild(L"library_showhidden")) {
+    this->_library_showhidden = this->_xml.child(L"library_showhidden").attrAsInt(L"enable");
   } else {
     // create default values
     this->setLibraryShowhidden(this->_library_showhidden); //< create default
   }
 
-  if(this->_xmlconf.hasChild(L"remotes_sort")) {
-    this->_modpack_list_sort = this->_xmlconf.child(L"remotes_sort").attrAsInt(L"sort");
+  if(this->_xml.hasChild(L"remotes_sort")) {
+    this->_modpack_list_sort = this->_xml.child(L"remotes_sort").attrAsInt(L"sort");
   } else {
     // create default values
     // TODO
   }
 
   // Check warnings options
-  if(this->_xmlconf.hasChild(L"warn_options")) {
+  if(this->_xml.hasChild(L"warn_options")) {
 
-    OmXmlNode xml_wrn = this->_xmlconf.child(L"warn_options");
+    OmXmlNode xml_wrn = this->_xml.child(L"warn_options");
 
     if(xml_wrn.hasChild(L"warn_overlaps")) {
       this->_warn_overlaps = xml_wrn.child(L"warn_overlaps").attrAsInt(L"enable");
@@ -387,7 +409,7 @@ bool OmModChan::open(const OmWString& path)
   } else {
 
     // create default
-    this->_xmlconf.addChild(L"warn_options");
+    this->_xml.addChild(L"warn_options");
     this->setWarnOverlaps(this->_warn_overlaps);
     this->setWarnExtraInst(this->_warn_extra_inst);
     this->setWarnMissDeps(this->_warn_miss_deps);
@@ -395,9 +417,9 @@ bool OmModChan::open(const OmWString& path)
   }
 
   // Get network repository list
-  if(this->_xmlconf.hasChild(L"network")) {
+  if(this->_xml.hasChild(L"network")) {
 
-    OmXmlNode xml_net = this->_xmlconf.child(L"network");
+    OmXmlNode xml_net = this->_xml.child(L"network");
 
     if(xml_net.hasAttr(L"upgd_rename")) {
       this->_upgd_rename = xml_net.attrAsInt(L"upgd_rename");
@@ -456,7 +478,7 @@ bool OmModChan::open(const OmWString& path)
 
   } else {
     // create default
-    this->_xmlconf.addChild(L"network");
+    this->_xml.addChild(L"network");
     this->setWarnExtraDnld(this->_warn_extra_dnld);
     this->setWarnMissDnld(this->_warn_miss_dnld);
     this->setWarnUpgdBrkDeps(this->_warn_upgd_brk_deps);
@@ -464,8 +486,12 @@ bool OmModChan::open(const OmWString& path)
 
   this->_log(OM_LOG_OK, L"open", L"OK");
 
-  // Refresh library
-  this->refreshModLibrary();
+  // Load library
+  this->reloadModLibrary();
+
+  // start library monitoring
+  if(this->accessesLibrary(OM_ACCESS_DIR_READ))
+    this->_monitor.startMonitor(this->_library_path);
 
   return true;
 }
@@ -637,28 +663,182 @@ bool OmModChan::accessesBackup(uint32_t mask)
   return true;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::refreshLibraries()
+void OmModChan::notifyModLibraryStart(Om_notifyCb notify_cb, void* user_ptr)
 {
-  bool has_change = false;
-
-  if(this->refreshModLibrary())
-    has_change = true;
-
-  if(this->refreshNetLibrary())
-    has_change = true;
-
-  return has_change;
-
+  this->_modpack_notify_cb = notify_cb;
+  this->_modpack_notify_ptr = user_ptr;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::clearModLibrary()
+void OmModChan::notifyModLibraryStop()
+{
+  this->_modpack_notify_cb = nullptr;
+  this->_modpack_notify_ptr = nullptr;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::notifyNetLibraryStart(Om_notifyCb notify_cb, void* user_ptr)
+{
+  this->_netpack_notify_cb = notify_cb;
+  this->_netpack_notify_ptr = user_ptr;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::notifyNetLibraryStop()
+{
+  this->_netpack_notify_cb = nullptr;
+  this->_netpack_notify_ptr = nullptr;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
+{
+  OmModChan* self = static_cast<OmModChan*>(ptr);
+
+  // path to element related to notify message
+  OmWString path = reinterpret_cast<wchar_t*>(param);
+
+  // ignore directories except in dev mode
+  if(!self->_library_devmode)
+    if(Om_isDir(path))
+      return;
+
+  // ignore hidden file except if required
+  if(!self->_library_showhidden)
+    if(Om_isHidden(path))
+      return;
+
+  // get name hash
+  uint64_t name_hash = Om_getXXHash3(Om_getFilePart(path));
+
+  bool has_changes = false;
+  bool has_created = false;
+
+  if(notify == OM_NOTIFY_DELETED) {
+    // search for Mod Pack to delete
+    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
+      if(name_hash == self->_modpack_list[p]->hash()) {
+        delete self->_modpack_list[p];
+        self->_modpack_list.erase(self->_modpack_list.begin() + p);
+        has_changes = true; break;
+      }
+    }
+
+    #ifdef DEBUG
+    if(has_changes)
+      std::cout << "DEBUG => OmModChan::_mod_library_alter --\n";
+    #endif
+  }
+
+  if(notify == OM_NOTIFY_CREATED) {
+
+    // filter by directory / file extension
+    if(Om_isDir(path) ||
+       Om_extensionMatches(path, L"zip") ||
+       Om_extensionMatches(path, OM_PKG_FILE_EXT)) {
+
+      // check whether this Mod Source matches an existing Backup
+      for(size_t p = 0; p < self->_modpack_list.size(); p++) {
+        if(name_hash == self->_modpack_list[p]->hash()) {
+          self->_modpack_list[p]->parseSource(path);
+          has_changes = true; break;
+        }
+      }
+      // no Backup found for this Mod Source, adding new
+      if(!has_changes) {
+        OmModPack* ModPack = new OmModPack(self);
+        if(ModPack->parseSource(path)) {
+          self->_modpack_list.push_back(ModPack);
+          has_changes = true; has_created = true;
+        } else {
+          delete ModPack;
+        }
+      }
+
+      #ifdef DEBUG
+      if(has_changes)
+        std::cout << "DEBUG => OmModChan::_mod_library_alter ++\n";
+      #endif
+    }
+  }
+
+  if(notify == OM_NOTIFY_ALTERED) {
+    // search for Mod Pack to refresh
+    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
+      if(name_hash == self->_modpack_list[p]->hash()) {
+        self->_modpack_list[p]->refreshSource();
+        has_changes = true; break;
+      }
+    }
+
+    #ifdef DEBUG
+    if(has_changes)
+      std::cout << "DEBUG => OmModChan::_mod_library_alter ~=\n";
+    #endif
+  }
+
+  // at this point, if not changes was made this mean the file is not a
+  // Mod Pack, so we check whether this is an image or text file used
+  // as thumbnail or description for a dev Mod directory
+  if(!has_changes && self->_library_devmode) {
+
+    // get presumed mod 'identity' from file name
+    OmWString iden = Om_getNamePart(path);
+
+    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
+
+      // we ignore non directory Mods
+      if(!self->_modpack_list[p]->sourceIsDir())
+        continue;
+
+      if(Om_namesMatches(iden, self->_modpack_list[p]->iden())) {
+        self->_modpack_list[p]->loadDirDescription();
+        self->_modpack_list[p]->loadDirThumbnail();
+        has_changes = true; break;
+      }
+    }
+
+    #ifdef DEBUG
+    if(has_changes)
+      std::cout << "DEBUG => OmModChan::_mod_library_alter **\n";
+    #endif
+  }
+
+  if(has_changes) {
+
+    // if an element was added to list we need to sort again
+    if(has_created) {
+
+      self->sortModLibrary(); //< this will send rebuild notification
+
+    } else {
+
+      // this is a simple alteration we can optimize changes
+      if(self->_modpack_notify_cb)
+        self->_modpack_notify_cb(self->_modpack_notify_ptr, notify, name_hash);
+    }
+
+    // as changes in local library may change status
+    // in Network library we refresh Network library
+    self->refreshNetLibrary();
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::clearModLibrary()
 {
   if(!this->_modpack_list.empty()) {
 
@@ -666,11 +846,96 @@ bool OmModChan::clearModLibrary()
       delete this->_modpack_list[i];
 
     this->_modpack_list.clear();
+  }
+}
 
-    return true;
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::reloadModLibrary()
+{
+  // clear current library
+  if(!this->_modpack_list.empty()) {
+
+    for(size_t i = 0; i < this->_modpack_list.size(); ++i)
+      delete this->_modpack_list[i];
+
+    this->_modpack_list.clear();
   }
 
-  return false;
+  if(!this->accessesLibrary(OM_ACCESS_DIR_READ)) { // check for read access
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmModChan::reloadModLibrary X\n";
+    #endif
+    return;
+  }
+
+  OmWStringArray paths;
+
+  // get Backup directory content
+  Om_lsFileFiltered(&paths, this->_backup_path, L"*.zip", true, true);
+  Om_lsFileFiltered(&paths, this->_backup_path, L"*." OM_BCK_FILE_EXT, true, true);
+  Om_lsDir(&paths, this->_backup_path, true, true);
+
+  // add all available and valid Backups
+  for(size_t i = 0; i < paths.size(); ++i) {
+
+    OmModPack* ModPack = new OmModPack(this);
+
+    if(ModPack->parseBackup(paths[i])) {
+      this->_modpack_list.push_back(ModPack);
+    } else {
+      delete ModPack;
+    }
+
+  }
+
+  // get Library directory content
+  paths.clear();
+  Om_lsFileFiltered(&paths, this->_library_path, L"*.zip", true, this->_library_showhidden);
+  Om_lsFileFiltered(&paths, this->_library_path, L"*." OM_PKG_FILE_EXT, true, this->_library_showhidden);
+  if(this->_library_devmode)
+    Om_lsDir(&paths, this->_library_path, true, this->_library_showhidden);
+
+  // Link Sources to matching Backup, or add new Sources
+  for(size_t i = 0; i < paths.size(); ++i) {
+
+    uint64_t name_hash = Om_getXXHash3(Om_getFilePart(paths[i]));
+
+    bool found = false;
+
+    // check whether this Mod Source matches an existing Backup
+    for(size_t p = 0; p < this->_modpack_list.size(); p++) {
+      if(name_hash == this->_modpack_list[p]->hash()) {
+        this->_modpack_list[p]->parseSource(paths[i]);
+        found = true; break;
+      }
+    }
+
+    // no Backup found for this Mod Source, adding new
+    if(!found) {
+      OmModPack* ModPack = new OmModPack(this);
+      if(ModPack->parseSource(paths[i])) {
+        this->_modpack_list.push_back(ModPack);
+      } else {
+        delete ModPack;
+      }
+    }
+  }
+
+  // sort library
+  this->sortModLibrary(); //< this will send rebuild notification
+
+  // refresh Mod Packs analytical parameters
+  this->refreshModLibrary();
+
+  // as changes in local library may change status in Network library
+  // we also refresh Network library
+  this->refreshNetLibrary();
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmModChan::reloadModLibrary\n";
+  #endif
 }
 
 ///
@@ -678,183 +943,55 @@ bool OmModChan::clearModLibrary()
 ///
 bool OmModChan::refreshModLibrary()
 {
-  if(!this->accessesLibrary(OM_ACCESS_DIR_READ)) { // check for read access
-    #ifdef DEBUG
-    std::cout << "DEBUG => OmModChan::refreshModLibrary X\n";
-    #endif
-    return this->clearModLibrary();
-  }
+  bool has_change = false;
 
-  uint64_t mod_hash;
-  OmWStringArray path_ls;
-  OmModPack* ModPack;
+  for(size_t i = 0; i < this->_modpack_list.size(); ++i) {
 
+    // refresh Net Pack status
+    if(this->_modpack_list[i]->refreshAnalytics()) {
 
-  // track list changes
-  bool found, has_change = false;
+      // notify changes
+      if(this->_modpack_notify_cb)
+        this->_modpack_notify_cb(this->_modpack_notify_ptr, OM_NOTIFY_ALTERED, this->_modpack_list[i]->hash());
 
-  // our package list is not empty, we will check for added or removed item
-  if(this->_modpack_list.size()) {
-
-    // get content of the package Library folder
-    Om_lsFileFiltered(&path_ls, this->_library_path, L"*.zip", true, this->_library_showhidden);
-    Om_lsFileFiltered(&path_ls, this->_library_path, L"*." OM_PKG_FILE_EXT, true, this->_library_showhidden);
-    if(this->_library_devmode)
-      Om_lsDir(&path_ls, this->_library_path, true, this->_library_showhidden);
-
-    // search for unavailable Sources or ghosts package
-    for(size_t p = 0; p < this->_modpack_list.size(); ++p) {
-
-      found = false;
-
-      // check whether Mod Source still exists in Library directory
-      if(this->_modpack_list[p]->hasSource()) {
-        for(size_t i = 0; i < path_ls.size(); ++i) {
-          if(this->_modpack_list[p]->sourcePath() == path_ls[i]) { //< compare Source paths
-            found = true; break;
-          }
-        }
-      }
-
-      if(found) {
-        // refresh source
-        this->_modpack_list[p]->refreshSource();
-      } else {
-        // check whether this Mod is installed
-        if(this->_modpack_list[p]->hasBackup()) {
-          // keep Mod in library but remove its source side
-          this->_modpack_list[p]->clearSource();
-        } else {
-          // this is a "ghost", delete Mod from library
-          delete this->_modpack_list[p];
-          this->_modpack_list.erase(this->_modpack_list.begin()+p); --p;
-        }
-        has_change = true;
-      }
-    }
-
-    // Search for new Sources
-    for(size_t i = 0; i < path_ls.size(); ++i) {
-
-      found = false;
-
-      mod_hash = Om_getXXHash3(Om_getFilePart(path_ls[i]));
-
-      for(size_t p = 0; p < this->_modpack_list.size(); ++p) {
-
-        if(this->_modpack_list[p]->hasSource()) {
-          if(path_ls[i] == this->_modpack_list[p]->sourcePath()) {
-            found = true; break;
-          }
-        } else {
-          // checks whether Hash values matches
-          if(mod_hash == this->_modpack_list[p]->hash()) {
-            // this Package Source obviously matches to a currently
-            // installed one, since we got a Package with the same Hash but
-            // Source is missing, so we add the Source to this Package Backup
-            this->_modpack_list[p]->parseSource(path_ls[i]);
-            has_change = true;
-            found = true; break;
-          }
-        }
-      }
-      // This is a new Package Source
-      if(!found) {
-        ModPack = new OmModPack(this);
-        if(ModPack->parseSource(path_ls[i])) {
-          has_change = true;
-          this->_modpack_list.push_back(ModPack);
-        } else {
-          delete ModPack;
-        }
-      }
-    }
-
-  } else {
-
-    has_change = true;
-
-    // get Backup directory content
-    Om_lsFileFiltered(&path_ls, this->_backup_path, L"*.zip", true, true);
-    Om_lsFileFiltered(&path_ls, this->_backup_path, L"*." OM_BCK_FILE_EXT, true, true);
-    Om_lsDir(&path_ls, this->_backup_path, true, true);
-
-    // add all available and valid Backups
-    for(size_t i = 0; i < path_ls.size(); ++i) {
-
-      ModPack = new OmModPack(this);
-
-      if(ModPack->parseBackup(path_ls[i])) {
-        this->_modpack_list.push_back(ModPack);
-      } else {
-        delete ModPack;
-      }
-
-    }
-
-    // get Library directory content
-    path_ls.clear();
-    Om_lsFileFiltered(&path_ls, this->_library_path, L"*.zip", true, this->_library_showhidden);
-    Om_lsFileFiltered(&path_ls, this->_library_path, L"*." OM_PKG_FILE_EXT, true, this->_library_showhidden);
-    if(this->_library_devmode)
-      Om_lsDir(&path_ls, this->_library_path, true, this->_library_showhidden);
-
-    // Link Sources to matching Backup, or add new Sources
-    for(size_t i = 0; i < path_ls.size(); ++i) {
-
-      mod_hash = Om_getXXHash3(Om_getFilePart(path_ls[i]));
-
-      found = false;
-
-      // check whether this Mod Source matches an existing Backup
-      for(size_t p = 0; p < this->_modpack_list.size(); p++) {
-        if(mod_hash == this->_modpack_list[p]->hash()) {
-          this->_modpack_list[p]->parseSource(path_ls[i]);
-          found = true; break;
-        }
-      }
-
-      // no Backup found for this Mod Source, adding new
-      if(!found) {
-        ModPack = new OmModPack(this);
-        if(ModPack->parseSource(path_ls[i])) {
-          this->_modpack_list.push_back(ModPack);
-        } else {
-          delete ModPack;
-        }
-      }
+      has_change = true;
     }
   }
-
-  if(has_change)
-    this->sortModLibrary();
 
   #ifdef DEBUG
-  std::cout << "DEBUG => OmModChan::refreshModLibrary " << (has_change ? "+-" : "==") << "\n";
+  std::cout << "DEBUG => OmModChan::refreshModLibrary " << (has_change ? "~=" : "==") << "\n";
   #endif
 
   return has_change;
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 bool OmModChan::ghostbusterModLibrary()
 {
-  OmModPack* ModPack;
   bool has_change = false;
 
   // search for ghost packages
   for(size_t p = 0; p < this->_modpack_list.size(); ++p) {
 
     if(!this->_modpack_list[p]->hasBackup() && !this->_modpack_list[p]->hasSource()) {
-      // The Package has no Backup and Source is no longer available
-      // this is a ghost, we have to remove it
-      has_change = true;
-      ModPack = this->_modpack_list[p];
-      this->_modpack_list.erase(this->_modpack_list.begin()+p); --p;
+
+      // The Package has no Backup and Source is no longer
+      // available, so this is a ghost, we have to remove it
+      OmModPack* ModPack = this->_modpack_list[p];
+
+      // send library changes notifications
+      if(has_change && this->_modpack_notify_cb)
+        this->_modpack_notify_cb(this->_modpack_notify_ptr, OM_NOTIFY_DELETED, ModPack->hash());
+
+      // delete object
       delete ModPack;
+
+      // remove from list
+      this->_modpack_list.erase(this->_modpack_list.begin() + p); --p;
+
+      has_change = true;
     }
   }
 
@@ -1041,6 +1178,9 @@ void OmModChan::sortModLibrary()
   if(OM_HAS_BIT(this->_modpack_list_sort,OM_SORT_INVT)) {
     std::reverse(this->_modpack_list.begin(), this->_modpack_list.end());
   }
+
+  if(this->_modpack_notify_cb)
+    this->_modpack_notify_cb(this->_modpack_notify_ptr, OM_NOTIFY_REBUILD, 0);
 }
 
 ///
@@ -1048,7 +1188,7 @@ void OmModChan::sortModLibrary()
 ///
 void OmModChan::setModLibrarySort(OmSort sorting)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   // if requested sorting is same as current, reverse order
@@ -1062,24 +1202,23 @@ void OmModChan::setModLibrarySort(OmSort sorting)
   }
 
   // save the current sorting
-  if(this->_xmlconf.hasChild(L"library_sort")) {
-    this->_xmlconf.child(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
+  if(this->_xml.hasChild(L"library_sort")) {
+    this->_xml.child(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
   } else {
-    this->_xmlconf.addChild(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
+    this->_xml.addChild(L"library_sort").setAttr(L"sort", this->_modpack_list_sort);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-
-  this->sortModLibrary();
+  this->sortModLibrary(); //< this will send rebuild notification
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::isOverlapped(size_t i) const
+bool OmModChan::isOverlapped(size_t index) const
 {
-  uint64_t mod_hash = this->_modpack_list[i]->hash();
+  uint64_t mod_hash = this->_modpack_list[index]->hash();
 
   for(size_t i = 0; i < this->_modpack_list.size(); ++i)
     if(this->_modpack_list[i]->hasOverlap(mod_hash))
@@ -1457,13 +1596,14 @@ void OmModChan::prepareCleaning(const OmPModPackArray& selection, OmPModPackArra
 ///
 void OmModChan::abortModOps()
 {
-  this->_modops_abort = true;
+  if(this->_modops_queue.size())
+    this->_modops_abort = true;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
   if(this->_modops_queue.empty()) {
 
@@ -1482,6 +1622,7 @@ void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_c
     this->_modops_begin_cb = begin_cb;
     this->_modops_progress_cb = progress_cb;
     this->_modops_result_cb = result_cb;
+    this->_modops_notify_cb = notify_cb;
     this->_modops_user_ptr = user_ptr;
 
     // reset global progression parameters
@@ -1495,6 +1636,7 @@ void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_c
     if(this->_modops_begin_cb != begin_cb ||
        this->_modops_progress_cb != progress_cb ||
        this->_modops_result_cb != result_cb ||
+       this->_modops_notify_cb != notify_cb ||
        this->_modops_user_ptr != user_ptr) {
       this->_log(OM_LOG_WRN, L"queueModOps", L"changing callbacks for a running thread is not allowed");
     }
@@ -1547,6 +1689,7 @@ OmResult OmModChan::execModOps(const OmPModPackArray& selection, Om_beginCb begi
   this->_modops_begin_cb = begin_cb;
   this->_modops_progress_cb = progress_cb;
   this->_modops_result_cb = result_cb;
+  this->_modops_notify_cb = nullptr;
   this->_modops_user_ptr = user_ptr;
 
   // reset global progression parameters
@@ -1609,6 +1752,9 @@ DWORD WINAPI OmModChan::_modops_run_fn(void* ptr)
       // This is a Restore operation
       result = ModPack->restoreData(OmModChan::_modops_progress_fn, self);
 
+      // refresh Mod Packs analytical parameters
+      self->refreshModLibrary();
+
       // call client result callback so it can perform proper operations
       if(self->_modops_result_cb)
         self->_modops_result_cb(self->_modops_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
@@ -1625,6 +1771,9 @@ DWORD WINAPI OmModChan::_modops_run_fn(void* ptr)
       result = ModPack->makeBackup(OmModChan::_modops_progress_fn, self);
       if(result == OM_RESULT_OK)
         result = ModPack->applySource(OmModChan::_modops_progress_fn, self);
+
+      // refresh Mod Packs analytical parameters
+      self->refreshModLibrary();
 
       // call client result callback so it can perform proper operations
       if(self->_modops_result_cb)
@@ -1701,6 +1850,10 @@ VOID WINAPI OmModChan::_modops_end_fn(void* ptr, uint8_t fired)
   //DWORD exit_code = Om_threadExitCode(self->_modops_hth);
   Om_clearThread(self->_modops_hth, self->_modops_hwo);
 
+  // call notify callback
+  if(self->_modops_notify_cb)
+    self->_modops_notify_cb(self->_modops_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
+
   self->_modops_dones = 0;
   self->_modops_percent = 0;
 
@@ -1708,9 +1861,10 @@ VOID WINAPI OmModChan::_modops_end_fn(void* ptr, uint8_t fired)
   self->_modops_hwo = nullptr;
 
   self->_modops_user_ptr = nullptr;
+  self->_modops_begin_cb = nullptr;
   self->_modops_progress_cb = nullptr;
   self->_modops_result_cb = nullptr;
-  self->_modops_begin_cb = nullptr;
+  self->_modops_notify_cb = nullptr;
 }
 
 ///
@@ -1733,6 +1887,7 @@ bool OmModChan::discardBackups(const OmPModPackArray& selection, Om_progressCb p
       progress_cb(user_ptr, selection.size(), i, reinterpret_cast<uint64_t>(selection[i]));
   }
 
+  // refresh Mod Packs analytical parameters
   this->refreshModLibrary();
 
   return !has_error;
@@ -1823,7 +1978,7 @@ bool OmModChan::purgeBackupData(Om_progressCb progress_cb, void* user_ptr)
     #endif
   }
 
-  // refresh library
+  // refresh Mod Packs analytical parameters
   this->refreshModLibrary();
 
   return !has_error;
@@ -1851,15 +2006,18 @@ bool OmModChan::refreshNetLibrary()
   for(size_t i = 0; i < this->_netpack_list.size(); ++i) {
 
     // refresh Net Pack status
-    if(this->_netpack_list[i]->refreshStatus())
+    if(this->_netpack_list[i]->refreshAnalytics()) {
+
+      // notify changes
+      if(this->_netpack_notify_cb)
+        this->_netpack_notify_cb(this->_netpack_notify_ptr, OM_NOTIFY_ALTERED, this->_netpack_list[i]->hash());
+
       has_change = true;
+    }
   }
 
-  if(has_change)
-    this->sortNetLibrary();
-
   #ifdef DEBUG
-  std::cout << "DEBUG => OmModChan::refreshNetLibrary " << (has_change ? "+-" : "==") << "\n";
+  std::cout << "DEBUG => OmModChan::refreshNetLibrary " << (has_change ? "~=" : "==") << "\n";
   #endif
 
   return has_change;
@@ -2073,7 +2231,7 @@ void OmModChan::prepareDownloads(const OmPNetPackArray& selection, OmPNetPackArr
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
   if(this->_download_queue.empty()) {
 
@@ -2092,6 +2250,7 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
     this->_download_user_ptr = user_ptr;
     this->_download_download_cb = download_cb;
     this->_download_result_cb = result_cb;
+    this->_download_notify_cb = notify_cb;
 
     // reset global progression
     this->_download_dones = 0;
@@ -2103,6 +2262,7 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
     // different parameters than current
     if(this->_download_download_cb != download_cb ||
        this->_download_result_cb != result_cb ||
+       this->_download_notify_cb != notify_cb ||
        this->_download_user_ptr != user_ptr) {
       this->_log(OM_LOG_WRN, L"startDownloads", L"subsequent downloads with different parameters");
     }
@@ -2131,14 +2291,16 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
 ///
 void OmModChan::stopDownloads()
 {
-  // we abort all processing downloads
-  this->_download_abort = true;
+  if(this->_download_queue.size()) {
+    // we abort all processing downloads
+    this->_download_abort = true;
 
-  // if abort request was fired, we must stop downloads sequentially to
-  // prevent callback concurrent calls that mess up all process, so we
-  // only stop the last started download, they will be aborted in cascade
-  // through the result callback
-  this->_download_queue.back()->stopDownload();
+    // if abort request was fired, we must stop downloads sequentially to
+    // prevent callback concurrent calls that mess up all process, so we
+    // only stop the last started download, they will be aborted in cascade
+    // through the result callback
+    this->_download_queue.back()->stopDownload();
+  }
 }
 
 ///
@@ -2155,6 +2317,13 @@ void OmModChan::stopDownload(size_t index)
 bool OmModChan::_download_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t rate, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
+
+  // update global progress
+  double queue_percents = self->_download_dones * 100;
+  for(size_t i = 0; i < self->_download_queue.size(); ++i)
+    queue_percents += self->_download_queue[i]->downloadProgress();
+
+  self->_download_percent = queue_percents / (self->_download_dones + self->_download_queue.size());
 
   if(self->_download_download_cb)
     if(!self->_download_download_cb(self->_download_user_ptr, tot, cur, rate, param))
@@ -2191,18 +2360,14 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
     final_result = result;
   }
 
+  // update status and send propers notifications
+  self->refreshNetLibrary();
+
   // remove download from stack
   Om_eraseValue(self->_download_queue, NetPack);
 
   // increase download done count
   self->_download_dones++;
-
-  // update global progress
-  double queue_percents = self->_download_dones * 100;
-  for(size_t i = 0; i < self->_download_queue.size(); ++i)
-    queue_percents += self->_download_queue[i]->downloadProgress();
-
-  self->_download_percent = queue_percents / (self->_download_dones + self->_download_queue.size());
 
   // call client callback
   if(self->_download_result_cb)
@@ -2219,19 +2384,24 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
 
     self->_locked_net_library = false;
 
+    // call notify callback
+    if(self->_download_notify_cb)
+      self->_download_notify_cb(self->_download_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
+
     self->_download_dones = 0;
     self->_download_percent = 0;
 
     self->_download_user_ptr = nullptr;
     self->_download_download_cb = nullptr;
     self->_download_result_cb = nullptr;
+    self->_download_notify_cb = nullptr;
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
   if(this->_upgrade_queue.empty()) {
 
@@ -2250,6 +2420,7 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
     this->_upgrade_begin_cb = begin_cb;
     this->_upgrade_progress_cb = progress_cb;
     this->_upgrade_result_cb = result_cb;
+    this->_upgrade_notify_cb = notify_cb;
     this->_upgrade_user_ptr = user_ptr;
 
     // reset global progress
@@ -2263,6 +2434,7 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
     if(this->_upgrade_begin_cb != begin_cb ||
        this->_upgrade_progress_cb != progress_cb ||
        this->_upgrade_result_cb != result_cb ||
+       this->_upgrade_notify_cb != notify_cb ||
        this->_upgrade_user_ptr != user_ptr) {
       this->_log(OM_LOG_WRN, L"launchUpgrades", L"subsequent upgrade with different parameters");
     }
@@ -2290,7 +2462,8 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
 ///
 void OmModChan::abortUpgrades()
 {
-  this->_upgrade_abort = true;
+  if(this->_upgrade_queue.size())
+    this->_upgrade_abort = true;
 }
 
 ///
@@ -2322,11 +2495,14 @@ DWORD WINAPI OmModChan::_upgrade_run_fn(void* ptr)
       continue;
     }
 
-    // call client result callback so it can perform proper operations
+    // call client begin callback so it can perform proper operations
     if(self->_upgrade_begin_cb)
       self->_upgrade_begin_cb(self->_upgrade_user_ptr, reinterpret_cast<uint64_t>(NetPack));
 
     OmResult result = NetPack->upgradeReplace(OmModChan::_upgrade_progress_fn, self);
+
+    // update status and send propers notifications
+    self->refreshNetLibrary();
 
     if(result == OM_RESULT_ERROR)
       exit_code = 1;
@@ -2390,12 +2566,17 @@ VOID WINAPI OmModChan::_upgrade_end_fn(void* ptr, uint8_t fired)
   self->_upgrade_hth = nullptr;
   self->_upgrade_hwo = nullptr;
 
+  // call notify callback
+  if(self->_upgrade_notify_cb)
+    self->_upgrade_notify_cb(self->_upgrade_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
+
   self->_upgrade_dones = 0;
   self->_upgrade_percent = 0;
 
   self->_upgrade_user_ptr = nullptr;
   self->_upgrade_progress_cb = nullptr;
   self->_upgrade_result_cb = nullptr;
+  self->_upgrade_notify_cb = nullptr;
   self->_upgrade_begin_cb = nullptr;
 }
 
@@ -2438,6 +2619,7 @@ bool OmModChan::_compare_net_name(const OmNetPack* a, const OmNetPack* b)
 ///
 bool OmModChan::_compare_net_stat(const OmNetPack* a, const OmNetPack* b)
 {
+  /*
   if(a->status() == b->status()) {
     return OmModChan::_compare_net_name(a, b);
   } else {
@@ -2446,6 +2628,66 @@ bool OmModChan::_compare_net_stat(const OmNetPack* a, const OmNetPack* b)
     } else {
       return (!a->hasStatus(PACK_NEW) && b->hasStatus(PACK_NEW));
     }
+  }
+  */
+
+  uint16_t a_score = 0;
+  uint16_t b_score = 0;
+
+  // select proper status icon
+  if(a->hasError()) {
+    a_score = 1;
+  } else if(a->hasLocal()) {
+    if(a->isUpgrading()) {
+      a_score = 1;
+    } else if(a->hasMissingDepend()) {
+      a_score = 7;
+    } else {
+      a_score = 8;
+    }
+  } else if(a->isDownloading()) {
+    a_score = 6;
+  } else {
+    if(a->isResumable()) {
+      a_score = 5;
+    } else if(a->upgradableCount()) {
+      a_score = 3;
+    } else if(a->downgradableCount()) {
+      a_score = 2;
+    } else {
+      a_score = 4; // new
+    }
+  }
+
+  // select proper status icon
+  if(b->hasError()) {
+    b_score = 1;
+  } else if(b->hasLocal()) {
+    if(b->isUpgrading()) {
+      b_score = 1;
+    } else if(b->hasMissingDepend()) {
+      b_score = 7;
+    } else {
+      b_score = 8;
+    }
+  } else if(b->isDownloading()) {
+    b_score = 6;
+  } else {
+    if(b->isResumable()) {
+      b_score = 5;
+    } else if(b->upgradableCount()) {
+      b_score = 3;
+    } else if(b->downgradableCount()) {
+      b_score = 2;
+    } else {
+      b_score = 4; // new
+    }
+  }
+
+  if(a_score == b_score) {
+    return OmModChan::_compare_net_name(a, b);
+  } else {
+    return (a_score < b_score);
   }
 }
 
@@ -2528,6 +2770,9 @@ void OmModChan::sortNetLibrary()
   if(OM_HAS_BIT(this->_netpack_list_sort,OM_SORT_INVT)) {
     std::reverse(this->_netpack_list.begin(), this->_netpack_list.end());
   }
+
+  if(this->_netpack_notify_cb)
+    this->_netpack_notify_cb(this->_netpack_notify_ptr, OM_NOTIFY_REBUILD, 0);
 }
 
 
@@ -2536,7 +2781,7 @@ void OmModChan::sortNetLibrary()
 ///
 void OmModChan::setNetLibrarySort(OmSort sorting)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   // if requested sorting is same as current, reverse order
@@ -2551,15 +2796,15 @@ void OmModChan::setNetLibrarySort(OmSort sorting)
   }
 
   // save the current sorting
-  if(this->_xmlconf.hasChild(L"remotes_sort")) {
-    this->_xmlconf.child(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
+  if(this->_xml.hasChild(L"remotes_sort")) {
+    this->_xml.child(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
   } else {
-    this->_xmlconf.addChild(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
+    this->_xml.addChild(L"remotes_sort").setAttr(L"sort", this->_netpack_list_sort);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-  this->sortNetLibrary();
+  this->sortNetLibrary(); //< this will send rebuild notification
 }
 
 ///
@@ -2579,15 +2824,15 @@ int32_t OmModChan::indexOfRepository(OmNetRepo* NetRepo) const
 ///
 bool OmModChan::addRepository(const OmWString& base, const OmWString& name)
 {
-  if(this->_xmlconf.valid()) {
+  if(this->_xml.valid()) {
 
     // get or create <network> node where repositories are listed
     OmXmlNode network_node;
 
-    if(!this->_xmlconf.hasChild(L"network")) {
-      network_node = this->_xmlconf.addChild(L"network");
+    if(!this->_xml.hasChild(L"network")) {
+      network_node = this->_xml.addChild(L"network");
     } else {
-      network_node = this->_xmlconf.child(L"network");
+      network_node = this->_xml.child(L"network");
     }
 
     // check whether repository already exists
@@ -2614,7 +2859,7 @@ bool OmModChan::addRepository(const OmWString& base, const OmWString& name)
     repository_node.setAttr(L"name", name);
 
     // Save configuration
-    this->_xmlconf.save();
+    this->_xml.save();
 
     // add repository in local list
     OmNetRepo* ModRepo = new OmNetRepo(this);
@@ -2642,12 +2887,12 @@ void OmModChan::removeRepository(size_t i)
     return;
 
   // Remove repository entry from configuration
-  if(this->_xmlconf.valid()) {
+  if(this->_xml.valid()) {
 
     OmNetRepo* NetRepo = this->_repository_list[i];
 
     // get <network> node
-    OmXmlNode network_node = this->_xmlconf.child(L"network");
+    OmXmlNode network_node = this->_xml.child(L"network");
     if(!network_node.empty()) {
 
       // retrieve proper <repository> reference then remove node
@@ -2667,7 +2912,7 @@ void OmModChan::removeRepository(size_t i)
     }
 
     // save configuration
-    this->_xmlconf.save();
+    this->_xml.save();
 
     // remove all Remote packages related to this Repository
     size_t i = this->_repository_list.size();
@@ -2693,17 +2938,20 @@ void OmModChan::removeRepository(size_t i)
 ///
 void OmModChan::abortQueries()
 {
-  this->_query_abort = true;
+  if(this->_query_queue.size()) {
 
-  for(size_t i = 0; i < this->_repository_list.size(); ++i) {
-    this->_repository_list[i]->abortQuery();
+    this->_query_abort = true;
+
+    for(size_t i = 0; i < this->_repository_list.size(); ++i) {
+      this->_repository_list[i]->abortQuery();
+    }
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_cb, Om_resultCb result_cb, void* user_ptr)
+void OmModChan::queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
   if(this->_query_queue.empty()) {
 
@@ -2722,6 +2970,7 @@ void OmModChan::queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_
     this->_query_user_ptr = user_ptr;
     this->_query_begin_cb = begin_cb;
     this->_query_result_cb = result_cb;
+    this->_query_notify_cb = notify_cb;
 
     // reset global progress
     this->_query_dones = 0;
@@ -2730,7 +2979,10 @@ void OmModChan::queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_
   } else {
     // emit a warning in case a crazy client starts new download with
     // different parameters than current
-    if(this->_query_begin_cb != begin_cb || this->_query_result_cb != result_cb || this->_query_user_ptr != user_ptr) {
+    if(this->_query_begin_cb != begin_cb ||
+       this->_query_result_cb != result_cb ||
+       this->_query_notify_cb != notify_cb ||
+       this->_query_user_ptr != user_ptr ) {
       this->_log(OM_LOG_WRN, L"queueQueries", L"subsequent query with different parameters");
     }
   }
@@ -2798,7 +3050,7 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
       if(!NetRepo->title().empty()) {
 
         OmXmlNodeArray repository_nodes;
-        self->_xmlconf.child(L"network").children(repository_nodes, L"repository");
+        self->_xml.child(L"network").children(repository_nodes, L"repository");
 
         for(size_t i = 0; i < repository_nodes.size(); ++i) {
           if(repository_nodes[i].attrAsString(L"base") == NetRepo->urlBase()) {
@@ -2808,7 +3060,7 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
           }
         }
 
-        self->_xmlconf.save();
+        self->_xml.save();
       }
 
       // Add or Merge Repository referenced Mods to list
@@ -2838,7 +3090,6 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
 
               delete self->_netpack_list[j]; //< remove previous
               self->_netpack_list[j] = NetPack; //< replace object
-
               is_unique = false; break;
             }
           }
@@ -2852,6 +3103,8 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
           delete NetPack;
         }
       }
+
+      self->sortNetLibrary(); //< this will send rebuild notification
 
       self->refreshNetLibrary();
 
@@ -2896,14 +3149,19 @@ VOID WINAPI OmModChan::_query_end_fn(void* ptr, uint8_t fired)
   self->_query_hth = nullptr;
   self->_query_hwo = nullptr;
 
+  self->_query_queue.clear();
+
+  // call notify callback
+  if(self->_query_notify_cb)
+    self->_query_notify_cb(self->_query_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
+
   self->_query_dones = 0;
   self->_query_percent = 0;
 
   self->_query_begin_cb = nullptr;
   self->_query_result_cb = nullptr;
+  self->_query_notify_cb = nullptr;
   self->_query_user_ptr = nullptr;
-
-  self->_query_queue.clear();
 }
 
 ///
@@ -2911,18 +3169,18 @@ VOID WINAPI OmModChan::_query_end_fn(void* ptr, uint8_t fired)
 ///
 void OmModChan::setTitle(const OmWString& title)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_title = title;
 
-  if(this->_xmlconf.hasChild(L"title")) {
-    this->_xmlconf.child(L"title").setContent(title);
+  if(this->_xml.hasChild(L"title")) {
+    this->_xml.child(L"title").setContent(title);
   } else {
-    this->_xmlconf.addChild(L"title").setContent(title);
+    this->_xml.addChild(L"title").setContent(title);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -2930,16 +3188,16 @@ void OmModChan::setTitle(const OmWString& title)
 ///
 void OmModChan::setIndex(unsigned index)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_index = index;
 
-  if(this->_xmlconf.hasChild(L"title")) {
-    this->_xmlconf.child(L"title").setAttr(L"index", static_cast<int>(index));
+  if(this->_xml.hasChild(L"title")) {
+    this->_xml.child(L"title").setAttr(L"index", static_cast<int>(index));
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -2952,7 +3210,7 @@ OmResult OmModChan::setTargetPath(const OmWString& path)
     return OM_RESULT_ABORT;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(!this->_xml.valid()) {
     this->_error(L"setTargetPath", L"channel is not valid");
     return OM_RESULT_ABORT;
   }
@@ -2964,13 +3222,13 @@ OmResult OmModChan::setTargetPath(const OmWString& path)
 
   this->_target_path = path;
 
-  if(this->_xmlconf.hasChild(L"install")) {
-    this->_xmlconf.child(L"install").setContent(path);
+  if(this->_xml.hasChild(L"install")) {
+    this->_xml.child(L"install").setContent(path);
   } else {
-    this->_xmlconf.addChild(L"install").setContent(path);
+    this->_xml.addChild(L"install").setContent(path);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
   return OM_RESULT_OK;
 }
@@ -2985,7 +3243,7 @@ OmResult OmModChan::setCustLibraryPath(const OmWString& path)
     return OM_RESULT_ABORT;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(!this->_xml.valid()) {
     this->_error(L"setCustLibraryPath", L"channel is not valid");
     return OM_RESULT_ABORT;
   }
@@ -2995,24 +3253,28 @@ OmResult OmModChan::setCustLibraryPath(const OmWString& path)
     return OM_RESULT_ERROR;
   }
 
-  // empty library
-  this->clearModLibrary();
+  // stop monitoring
+  this->_monitor.stopMonitor();
 
   this->_library_path = path;
 
   // notify we use a custom Library path
   this->_cust_library_path = true;
 
-  if(this->_xmlconf.hasChild(L"library")) {
-    this->_xmlconf.child(L"library").setContent(path);
+  if(this->_xml.hasChild(L"library")) {
+    this->_xml.child(L"library").setContent(path);
   } else {
-    this->_xmlconf.addChild(L"library").setContent(path);
+    this->_xml.addChild(L"library").setContent(path);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-  // refresh library
-  this->refreshModLibrary();
+  // reload library
+  this->reloadModLibrary();
+
+  // restart monitoring for the new directory
+  if(this->accessesLibrary(OM_ACCESS_DIR_READ))
+    this->_monitor.startMonitor(this->_library_path);
 
   return OM_RESULT_OK;
 }
@@ -3027,26 +3289,30 @@ OmResult OmModChan::setDefLibraryPath()
     return OM_RESULT_ABORT;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(!this->_xml.valid()) {
     this->_error(L"setDefLibraryPath", L"channel is not valid");
     return OM_RESULT_ABORT;
   }
 
-  // empty library
-  this->clearModLibrary();
+  // stop monitoring
+  this->_monitor.stopMonitor();
 
   this->_library_path = this->_home + OM_MODCHAN_MODLIB_DIR;
 
   // notify we use default settings
   this->_cust_library_path = false;
 
-  if(this->_xmlconf.hasChild(L"library"))
-    this->_xmlconf.remChild(L"library");
+  if(this->_xml.hasChild(L"library"))
+    this->_xml.remChild(L"library");
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-  // refresh library
-  this->refreshModLibrary();
+  // reload library
+  this->reloadModLibrary();
+
+  // restart monitoring for the new directory
+  if(this->accessesLibrary(OM_ACCESS_DIR_READ))
+    this->_monitor.startMonitor(this->_library_path);
 
   return OM_RESULT_OK;
 }
@@ -3061,7 +3327,7 @@ OmResult OmModChan::setCustBackupPath(const OmWString& path)
     return OM_RESULT_ABORT;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(!this->_xml.valid()) {
     this->_error(L"setCustBackupPath", L"channel is not valid");
     return OM_RESULT_ABORT;
   }
@@ -3072,9 +3338,6 @@ OmResult OmModChan::setCustBackupPath(const OmWString& path)
   }
 
   bool has_error = false;
-
-  // clear the mod library
-  this->clearModLibrary();
 
   if(!Om_namesMatches(this->_backup_path, path)) {
 
@@ -3103,16 +3366,16 @@ OmResult OmModChan::setCustBackupPath(const OmWString& path)
   // notify we use a custom Library path
   this->_cust_backup_path = true;
 
-  if(this->_xmlconf.hasChild(L"backup")) {
-    this->_xmlconf.child(L"backup").setContent(path);
+  if(this->_xml.hasChild(L"backup")) {
+    this->_xml.child(L"backup").setContent(path);
   } else {
-    this->_xmlconf.addChild(L"backup").setContent(path);
+    this->_xml.addChild(L"backup").setContent(path);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-  // refresh library content
-  this->refreshModLibrary();
+  // reload library content
+  this->reloadModLibrary();
 
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
@@ -3127,14 +3390,12 @@ OmResult OmModChan::setDefBackupPath()
     return OM_RESULT_ABORT;
   }
 
-  if(!this->_xmlconf.valid()) {
+  if(!this->_xml.valid()) {
     this->_error(L"setCustBackupPath", L"channel is not valid");
     return OM_RESULT_ABORT;
   }
 
   bool has_error = false;
-
-  this->clearModLibrary();
 
   OmWString default_path;
   Om_concatPaths(default_path, this->_home, OM_MODCHAN_BACKUP_DIR);
@@ -3165,13 +3426,13 @@ OmResult OmModChan::setDefBackupPath()
   // notify we use default settings
   this->_cust_backup_path = false;
 
-  if(this->_xmlconf.hasChild(L"backup"))
-    this->_xmlconf.remChild(L"backup");
+  if(this->_xml.hasChild(L"backup"))
+    this->_xml.remChild(L"backup");
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
-  // refresh library content
-  this->refreshModLibrary();
+  // reload library content
+  this->reloadModLibrary();
 
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
@@ -3181,21 +3442,21 @@ OmResult OmModChan::setDefBackupPath()
 ///
 void OmModChan::setLibraryDevmod(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_library_devmode = enable;
 
-  if(this->_xmlconf.hasChild(L"library_devmode")) {
-    this->_xmlconf.child(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
+  if(this->_xml.hasChild(L"library_devmode")) {
+    this->_xml.child(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
   } else {
-    this->_xmlconf.addChild(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
+    this->_xml.addChild(L"library_devmode").setAttr(L"enable", this->_library_devmode ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
   // refresh library content
-  this->refreshModLibrary();
+  this->reloadModLibrary();
 }
 
 ///
@@ -3203,21 +3464,21 @@ void OmModChan::setLibraryDevmod(bool enable)
 ///
 void OmModChan::setLibraryShowhidden(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_library_showhidden = enable;
 
-  if(this->_xmlconf.hasChild(L"library_showhidden")) {
-    this->_xmlconf.child(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
+  if(this->_xml.hasChild(L"library_showhidden")) {
+    this->_xml.child(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
   } else {
-    this->_xmlconf.addChild(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
+    this->_xml.addChild(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 
   // refresh library content
-  this->refreshModLibrary();
+  this->reloadModLibrary();
 }
 
 ///
@@ -3225,17 +3486,17 @@ void OmModChan::setLibraryShowhidden(bool enable)
 ///
 void OmModChan::setWarnOverlaps(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_overlaps = enable;
 
   OmXmlNode warn_options_node;
 
-  if(this->_xmlconf.hasChild(L"warn_options")) {
-    warn_options_node = this->_xmlconf.child(L"warn_options");
+  if(this->_xml.hasChild(L"warn_options")) {
+    warn_options_node = this->_xml.child(L"warn_options");
   } else {
-    warn_options_node = this->_xmlconf.addChild(L"warn_options");
+    warn_options_node = this->_xml.addChild(L"warn_options");
   }
 
   if(warn_options_node.hasChild(L"warn_overlaps")) {
@@ -3244,7 +3505,7 @@ void OmModChan::setWarnOverlaps(bool enable)
     warn_options_node.addChild(L"warn_overlaps").setAttr(L"enable", this->_warn_overlaps ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3252,17 +3513,17 @@ void OmModChan::setWarnOverlaps(bool enable)
 ///
 void OmModChan::setWarnExtraInst(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_extra_inst = enable;
 
   OmXmlNode warn_options_node;
 
-  if(this->_xmlconf.hasChild(L"warn_options")) {
-    warn_options_node = this->_xmlconf.child(L"warn_options");
+  if(this->_xml.hasChild(L"warn_options")) {
+    warn_options_node = this->_xml.child(L"warn_options");
   } else {
-    warn_options_node = this->_xmlconf.addChild(L"warn_options");
+    warn_options_node = this->_xml.addChild(L"warn_options");
   }
 
   if(warn_options_node.hasChild(L"warn_extra_inst")) {
@@ -3271,7 +3532,7 @@ void OmModChan::setWarnExtraInst(bool enable)
     warn_options_node.addChild(L"warn_extra_inst").setAttr(L"enable", this->_warn_extra_inst ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3279,17 +3540,17 @@ void OmModChan::setWarnExtraInst(bool enable)
 ///
 void OmModChan::setWarnMissDeps(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_miss_deps = enable;
 
   OmXmlNode warn_options_node;
 
-  if(this->_xmlconf.hasChild(L"warn_options")) {
-    warn_options_node = this->_xmlconf.child(L"warn_options");
+  if(this->_xml.hasChild(L"warn_options")) {
+    warn_options_node = this->_xml.child(L"warn_options");
   } else {
-    warn_options_node = this->_xmlconf.addChild(L"warn_options");
+    warn_options_node = this->_xml.addChild(L"warn_options");
   }
 
   if(warn_options_node.hasChild(L"warn_miss_deps")) {
@@ -3298,7 +3559,7 @@ void OmModChan::setWarnMissDeps(bool enable)
     warn_options_node.addChild(L"warn_miss_deps").setAttr(L"enable", this->_warn_miss_deps ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3306,17 +3567,17 @@ void OmModChan::setWarnMissDeps(bool enable)
 ///
 void OmModChan::setWarnExtraUnin(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_extra_unin = enable;
 
   OmXmlNode warn_options_node;
 
-  if(this->_xmlconf.hasChild(L"warn_options")) {
-    warn_options_node = this->_xmlconf.child(L"warn_options");
+  if(this->_xml.hasChild(L"warn_options")) {
+    warn_options_node = this->_xml.child(L"warn_options");
   } else {
-    warn_options_node = this->_xmlconf.addChild(L"warn_options");
+    warn_options_node = this->_xml.addChild(L"warn_options");
   }
 
   if(warn_options_node.hasChild(L"warn_extra_unin")) {
@@ -3325,7 +3586,7 @@ void OmModChan::setWarnExtraUnin(bool enable)
     warn_options_node.addChild(L"warn_extra_unin").setAttr(L"enable", this->_warn_extra_unin ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3333,7 +3594,7 @@ void OmModChan::setWarnExtraUnin(bool enable)
 ///
 void OmModChan::setBackupComp(int32_t method, int32_t level)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_backup_comp_method = method;
@@ -3341,16 +3602,16 @@ void OmModChan::setBackupComp(int32_t method, int32_t level)
 
   OmXmlNode backup_comp_node;
 
-  if(this->_xmlconf.hasChild(L"backup_comp")) {
-    backup_comp_node = this->_xmlconf.child(L"backup_comp");
+  if(this->_xml.hasChild(L"backup_comp")) {
+    backup_comp_node = this->_xml.child(L"backup_comp");
   } else {
-    backup_comp_node = this->_xmlconf.addChild(L"backup_comp");
+    backup_comp_node = this->_xml.addChild(L"backup_comp");
   }
 
   backup_comp_node.setAttr(L"method", (int)method);
   backup_comp_node.setAttr(L"level", (int)level);
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3358,22 +3619,22 @@ void OmModChan::setBackupComp(int32_t method, int32_t level)
 ///
 void OmModChan::setUpgdRename(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_upgd_rename = enable;
 
   OmXmlNode network_node;
 
-  if(!this->_xmlconf.hasChild(L"network")) {
-    network_node = this->_xmlconf.addChild(L"network");
+  if(!this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.addChild(L"network");
   } else {
-    network_node = this->_xmlconf.child(L"network");
+    network_node = this->_xml.child(L"network");
   }
 
   network_node.setAttr(L"upgd_rename", static_cast<int>(enable ? 1 : 0));
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3381,17 +3642,17 @@ void OmModChan::setUpgdRename(bool enable)
 ///
 void OmModChan::setWarnExtraDnld(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_extra_dnld = enable;
 
   OmXmlNode network_node;
 
-  if(this->_xmlconf.hasChild(L"network")) {
-    network_node = this->_xmlconf.child(L"network");
+  if(this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.child(L"network");
   } else {
-    network_node = this->_xmlconf.addChild(L"network");
+    network_node = this->_xml.addChild(L"network");
   }
 
   if(network_node.hasChild(L"warn_extra_dnld")) {
@@ -3400,7 +3661,7 @@ void OmModChan::setWarnExtraDnld(bool enable)
     network_node.addChild(L"warn_extra_dnld").setAttr(L"enable", this->_warn_extra_dnld ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3408,17 +3669,17 @@ void OmModChan::setWarnExtraDnld(bool enable)
 ///
 void OmModChan::setWarnMissDnld(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_miss_dnld = enable;
 
   OmXmlNode network_node;
 
-  if(this->_xmlconf.hasChild(L"network")) {
-    network_node = this->_xmlconf.child(L"network");
+  if(this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.child(L"network");
   } else {
-    network_node = this->_xmlconf.addChild(L"network");
+    network_node = this->_xml.addChild(L"network");
   }
 
   if(network_node.hasChild(L"warn_miss_dnld")) {
@@ -3427,7 +3688,7 @@ void OmModChan::setWarnMissDnld(bool enable)
     network_node.addChild(L"warn_miss_dnld").setAttr(L"enable", this->_warn_miss_dnld ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///
@@ -3435,17 +3696,17 @@ void OmModChan::setWarnMissDnld(bool enable)
 ///
 void OmModChan::setWarnUpgdBrkDeps(bool enable)
 {
-  if(!this->_xmlconf.valid())
+  if(!this->_xml.valid())
     return;
 
   this->_warn_upgd_brk_deps = enable;
 
   OmXmlNode network_node;
 
-  if(this->_xmlconf.hasChild(L"network")) {
-    network_node = this->_xmlconf.child(L"network");
+  if(this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.child(L"network");
   } else {
-    network_node = this->_xmlconf.addChild(L"network");
+    network_node = this->_xml.addChild(L"network");
   }
 
   if(network_node.hasChild(L"warn_upgd_brk_deps")) {
@@ -3454,7 +3715,7 @@ void OmModChan::setWarnUpgdBrkDeps(bool enable)
     network_node.addChild(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
   }
 
-  this->_xmlconf.save();
+  this->_xml.save();
 }
 
 ///

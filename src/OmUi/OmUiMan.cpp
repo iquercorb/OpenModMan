@@ -66,15 +66,20 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _UiManMainLib(nullptr),
   _safe_mode(false),
   _lock_mode(false),
+  _lock_idch(-1),
   _split_curs_hover(false),
   _split_curs_dragg(false),
   _split_move_param{},
-  _lib_monitor_hth(nullptr),
   _listview_himl(nullptr),
   _listview_himl_size(0),
   _psetup_count(0),
-  _psetup_chan_sel(0),
+  _psetup_idch(-1),
   _psetup_abort(false),
+  _delchan_hth(nullptr),
+  _delchan_hwo(nullptr),
+  _delchan_idch(-1),
+  _delchan_hdlg(nullptr),
+  _delchan_abort(0),
   _lv_chn_icons_size(0),
   _lv_pst_icons_size(0)
 {
@@ -103,19 +108,14 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
 
   // set the accelerator table for the dialog
   this->setAccel(IDR_ACCEL);
-
-  // elements for real-time directory monitoring thread
-  this->_lib_monitor_hev[0] = CreateEvent(nullptr, true, false, nullptr); //< custom event to notify thread must exit
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiMan::~OmUiMan()
 {
-  // stop Library folder changes monitoring
-  this->monitorLibrary(false);
+
 }
 
 ///
@@ -185,7 +185,7 @@ void OmUiMan::enableSafeMode(bool enable)
     this->selectChannel(-1);
   }
 
-  this->monitorLibrary(!enable);
+  //this->monitorLibrary(!enable);
 
   this->enableLockMode(enable);
 
@@ -195,85 +195,45 @@ void OmUiMan::enableSafeMode(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::monitorLibrary(bool enable)
+void OmUiMan::openFile()
 {
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::monitorLibrary (" << enable << ")\n";
-  #endif
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-  // stops current directory monitoring thread
-  if(this->_lib_monitor_hth) {
+  OmWString result, start;
 
-    // set custom event to request thread quit, then wait for it
-    SetEvent(this->_lib_monitor_hev[0]);
-    WaitForSingleObject(this->_lib_monitor_hth, INFINITE);
-    CloseHandle(this->_lib_monitor_hth);
-    this->_lib_monitor_hth = nullptr;
+  ModMan->loadDefaultLocation(start);
 
-    // reset the "stop" event for further usage
-    ResetEvent(this->_lib_monitor_hev[0]);
+  if(Om_dlgOpenFile(result, this->_hwnd, L"Select Hub definition file", OM_OMX_FILE_FILER, start)) {
 
-    // close previous folder monitor
-    FindCloseChangeNotification(this->_lib_monitor_hev[1]);
-    this->_lib_monitor_hev[1] = nullptr;
-  }
-
-  if(enable) {
-
-    OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-    if(!ModChan) return;
-
-    // create a new folder change notification event
-    DWORD mask =  FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
-                  FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE;
-
-    this->_lib_monitor_hev[1] = FindFirstChangeNotificationW(ModChan->libraryPath().c_str(), false, mask);
-
-    // force initial refresh of libraries
-    if(ModChan->refreshLibraries())
-      this->_UiManMain->refreshLibrary();
-
-    // launch new thread to handle notifications
-    DWORD dwId;
-    this->_lib_monitor_hth = CreateThread(nullptr, 0, OmUiMan::_lib_monitor_fth, this, 0, &dwId);
+    this->openHub(result);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiMan::_lib_monitor_fth(void* arg)
+void OmUiMan::openRecent(int32_t index)
 {
-  OmUiMan* self = static_cast<OmUiMan*>(arg);
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-  DWORD dwObj;
+  OmWStringArray paths;
+  ModMan->getRecentFileList(paths);
 
-  while(true) {
-
-    dwObj = WaitForMultipleObjects(2, self->_lib_monitor_hev, false, INFINITE);
-
-    if(dwObj == 0) //< custom "stop" event
-      break;
-
-    if(dwObj == 1) { //< folder content changed event
-
-      #ifdef DEBUG
-      std::cout << "DEBUG => OmUiMan::_lib_monitor_fth (changes)\n";
-      #endif
-
-      OmModMan* ModMan = static_cast<OmModMan*>(self->_data);
-
-      if(ModMan)
-        if(ModMan->activeChannel()) //< this should be always the case
-          if(ModMan->activeChannel()->refreshLibraries())
-            self->_UiManMain->refreshLibrary();
-
-      FindNextChangeNotification(self->_lib_monitor_hev[1]);
-    }
-  }
-  return 0;
+  if((index >= 0) && (index < paths.size()))
+    this->openHub(paths[index]);
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::clearRecents()
+{
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+
+  ModMan->clearRecentFileList();
+
+  this->_menu_recent_populate();
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -285,21 +245,15 @@ void OmUiMan::openHub(const OmWString& path)
   // Try to open Mod Hub
   if(ModMan->openHub(path)) {
 
-    // enable library monitor
-    this->monitorLibrary(true);
-
     // refresh
     this->refresh();
 
   } else {
 
-    Om_dlgBox_okl(this->_hwnd, L"Open Mod Hub", IDI_ERR,
-                 L"Mod Hub open error", L"Mod Hub "
-                 "loading failed because of the following error:",
-                 ModMan->lastError());
+    Om_dlgBox_okl(this->_hwnd, L"Open Mod Hub", IDI_ERR, L"Mod Hub open error",
+                  L"Unable to open Mod Hub:", ModMan->lastError());
   }
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -315,9 +269,6 @@ void OmUiMan::closeHub()
   // close the current context
   ModMan->closeHub();
 
-  // enable library monitor
-  this->monitorLibrary(true);
-
   // refresh
   this->refresh();
 }
@@ -326,19 +277,16 @@ void OmUiMan::closeHub()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::selectHub(int32_t id)
+void OmUiMan::selectHub(int32_t index)
 {
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::selectHub " << id << "\n";
+  std::cout << "DEBUG => OmUiMan::selectHub " << index << "\n";
   #endif
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
   // select the requested Mod Hub
-  ModMan->selectHub(id);
-
-  // enable library monitor
-  this->monitorLibrary(true);
+  ModMan->selectHub(index);
 
   // refresh all
   this->refresh();
@@ -347,50 +295,39 @@ void OmUiMan::selectHub(int32_t id)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::selectChannel(int32_t id)
+void OmUiMan::hubProperties()
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
-  if(ModHub->activeChannelIndex() == id)
+  OmUiPropHub* UiPropHub = static_cast<OmUiPropHub*>(this->childById(IDD_PROP_HUB));
+
+  UiPropHub->setModHub(ModHub);
+
+  UiPropHub->open(true);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::selectChannel(int32_t index)
+{
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  if(ModHub->activeChannelIndex() == index)
     return;
 
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::selectChannel " << id << "\n";
+  std::cout << "DEBUG => OmUiMan::selectChannel " << index << "\n";
   #endif
-
-  // stop Library folder monitoring
-  this->monitorLibrary(false);
 
   // disable menus
   this->setPopupItem(MNU_EDIT, MNU_CHN, MF_GRAYED);
 
   // select the requested Mod Channel
-  if(ModHub) {
-
-    ModHub->selectChannel(id);
-
-    OmModChan* ModChan = ModHub->activeChannel();
-
-    if(ModChan) {
-
-      // Check Mod Channel Library folder access
-      if(ModChan->accessesLibrary(OM_ACCESS_DIR_READ)) {
-        // force refresh library
-        ModChan->refreshModLibrary();
-        // start Library folder monitoring
-        this->monitorLibrary(true);
-      }
-
-      // enable the "Edit > Channel []" menu
-      this->setPopupItem(MNU_EDIT, MNU_CHN, MF_ENABLED);
-
-    } else {
-
-      // disable the "Edit > Channel []" menu
-      this->setPopupItem(MNU_EDIT, MNU_CHN, MF_GRAYED);
-    }
-  }
+  if(ModHub)
+    ModHub->selectChannel(index);
 
   // update status icons
   LVITEMW lvI = {};
@@ -405,6 +342,75 @@ void OmUiMan::selectChannel(int32_t id)
 
   this->_UiManMain->refresh();
   this->_UiManFoot->refresh();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::createChannel()
+{
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
+
+  UiAddChn->setModHub(ModHub);
+
+  UiAddChn->open(true);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::deleteChannel()
+{
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  // we rely on current active channel since channel may be active but not actually
+  // selected in the ListView control
+
+  OmModChan* ModChan = ModHub->activeChannel();
+  if(!ModChan) return;
+
+  // warns the user before committing the irreparable
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Channel",
+                    L"Delete the following Channel ?", ModChan->title()))
+    return;
+
+  // here we go for Mod Channel delete
+  if(!this->_delchan_hth) {
+
+    this->_delchan_idch = ModHub->activeChannelIndex();
+
+    // launch thread
+    this->_delchan_hth = Om_createThread(OmUiMan::_delchan_run_fn, this);
+    this->_delchan_hwo = Om_waitForThread(this->_delchan_hth, OmUiMan::_delchan_end_fn, this);
+  }
+
+  // reload the Channels ListView
+  this->_lv_chn_populate();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::channelProperties()
+{
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  // we rely on current active channel since channel may be active but not actually
+  // selected in the ListView control
+
+  OmModChan* ModChan = ModHub->activeChannel();
+  if(!ModChan) return;
+
+  OmUiPropChn* UiPropChn = static_cast<OmUiPropChn*>(this->childById(IDD_PROP_CHN));
+
+  UiPropChn->setModChan(ModChan);
+
+  UiPropChn->open(true);
 }
 
 ///
@@ -427,34 +433,27 @@ void OmUiMan::createPreset()
 ///
 void OmUiMan::deletePreset()
 {
-  // prevent useless processing
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  // we ignore multiple selection
   if(this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) != 1)
     return;
 
   // Get ListView unique selection
-  int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  int32_t lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
-  // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
-  this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
-  if(lvI.lParam < 0) return;
-
-  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  if(!ModHub) return;
-
-  OmModPset* ModPset = ModHub->getPreset(lvI.lParam);
+  OmModPset* ModPset = ModHub->getPreset(lv_sel);
 
   // warns the user before committing the irreparable
   if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Preset",
                     L"Delete the following Preset ?", ModPset->title()))
     return;
 
-  if(!ModHub->deletePreset(lvI.lParam)) {
+  if(!ModHub->deletePreset(lv_sel)) {
     // warns the user error occurred
     Om_dlgBox_okl(this->_hwnd, L"Mod Hub properties", IDI_ERR, L"Preset delete error",
                   L"Unable to delete Preset:",ModHub->lastError());
-
     return;
   }
 
@@ -467,23 +466,17 @@ void OmUiMan::deletePreset()
 ///
 void OmUiMan::runPreset()
 {
-  // prevent useless processing
+  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  if(!ModHub) return;
+
+  // we ignore multiple selection
   if(this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) != 1)
     return;
 
   // Get ListView unique selection
-  int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  int32_t lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
-  // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
-  this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
-  if(lvI.lParam < 0) return;
-
-  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
-  if(!ModHub) return;
-
-  this->_psetup_add(ModHub->getPreset(lvI.lParam));
+  this->_psetup_add(ModHub->getPreset(lv_sel));
 }
 
 ///
@@ -491,30 +484,21 @@ void OmUiMan::runPreset()
 ///
 void OmUiMan::presetProperties()
 {
-  // prevent useless processing
-  if(this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) != 1)
-    return;
-
-  // Get ListView unique selection
-  int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-
-  // search for Preset internal Index stored in ListView item lParam
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_PARAM; lvI.iItem = lv_sel; lvI.iSubItem = 0; lvI.lParam = -1;
-  this->msgItem(IDC_LV_PST, LVM_GETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
-  if(lvI.lParam < 0) return;
-
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
+  // we ignore multiple selection
+  if(this->msgItem(IDC_LV_PST, LVM_GETSELECTEDCOUNT) != 1)
+    return;
+
+  // Get ListView single selection
+  int lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
   OmUiPropPst* UiPropPst = static_cast<OmUiPropPst*>(this->childById(IDD_PROP_PST));
 
-  UiPropPst->setModPset(ModHub->getPreset(lvI.lParam));
+  UiPropPst->setModPset(ModHub->getPreset(lv_sel));
 
   UiPropPst->open();
-
-  // reload the Presets ListView
-  this->_lv_pst_populate();
 }
 
 ///
@@ -705,7 +689,7 @@ void OmUiMan::_psetup_add(OmModPset* ModPset)
 
   // if no queued operation, this is global start
   if(!this->_psetup_count)
-    //this->_update_processing();
+    //this->_refresh_processing();
 
   // increase count of queued mod operations
   this->_psetup_count++;
@@ -727,7 +711,7 @@ void OmUiMan::_psetup_begin_fn(void* ptr, uint64_t param)
   if(!ModHub) return;
 
   // store the currently selected channel to restore it after
-  self->_psetup_chan_sel = ModHub->activeChannelIndex();
+  self->_psetup_idch = ModHub->activeChannelIndex();
 
   OmModPset* ModPset = reinterpret_cast<OmModPset*>(param);
 
@@ -804,13 +788,102 @@ void OmUiMan::_psetup_result_fn(void* ptr, OmResult result, uint64_t param)
   self->msgItem(IDC_LV_PST, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // select the initially selected channel
-  self->selectChannel(self->_psetup_chan_sel);
+  self->selectChannel(self->_psetup_idch);
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmUiMan::_psetup_result_fn : _psetup_chan_sel=" << self->_psetup_chan_sel << L"\n";
+  std::wcout << L"DEBUG => OmUiMan::_psetup_result_fn : _psetup_chan_sel=" << self->_psetup_idch << L"\n";
   #endif // DEBUG
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmUiMan::_delchan_run_fn(void* ptr)
+{
+  OmUiMan* self = static_cast<OmUiMan*>(ptr);
+
+  OmModHub* ModHub = static_cast<OmModMan*>(self->_data)->activeHub();
+  if(!ModHub) return static_cast<DWORD>(OM_RESULT_ABORT);
+
+  OmModChan* ModChan = ModHub->getChannel(self->_delchan_idch);
+  if(!ModChan) return static_cast<DWORD>(OM_RESULT_ABORT);
+
+  // set UI in safe mode
+  static_cast<OmUiMan*>(self->root())->enableSafeMode(true);
+
+  // unselect Channel
+  ModHub->selectChannel(-1);
+
+  // Open progress dialog
+  self->_delchan_abort = 0;
+  self->_delchan_hdlg = Om_dlgProgress(self->_hins, self->_hwnd, L"Delete Channel - Backup Purge", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
+
+  // delete channel, will purge backup if required
+  OmResult result = ModHub->deleteChannel(self->_delchan_idch, OmUiMan::_delchan_progress_fn, self);
+
+  // quit the progress dialog (dialogs must be opened and closed within the same thread)
+  Om_dlgProgressClose(static_cast<HWND>(self->_delchan_hdlg));
+  self->_delchan_hdlg = nullptr;
+
+  return static_cast<DWORD>(result);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::_delchan_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+{
+  OmUiMan* self = static_cast<OmUiMan*>(ptr);
+
+  OmModHub* ModHub = static_cast<OmModMan*>(self->_data)->activeHub();
+  if(!ModHub) return false;
+
+  OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
+
+  OmWString progress_text = L"Restores backup data: ";
+  progress_text += ModPack->iden();
+
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_delchan_hdlg), tot, cur, progress_text.c_str());
+
+  return (self->_delchan_abort == 0);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmUiMan::_delchan_end_fn(void* ptr, uint8_t fired)
+{
+  OM_UNUSED(fired);
+
+  OmUiMan* self = static_cast<OmUiMan*>(ptr);
+
+  OmModHub* ModHub = static_cast<OmModMan*>(self->_data)->activeHub();
+  if(!ModHub) return;
+
+  DWORD exit_code = Om_threadExitCode(self->_delchan_hth);
+  Om_clearThread(self->_delchan_hth, self->_delchan_hwo);
+
+  self->_delchan_hth = nullptr;
+  self->_delchan_hwo = nullptr;
+
+  OmResult result = static_cast<OmResult>(exit_code);
+
+  if(result == OM_RESULT_ERROR) {
+      // an error occurred during backup purge
+      Om_dlgBox_okl(self->_hwnd, L"Delete Channel", IDI_WRN, L"Delete channel error",
+                    L"Deletion process encountered error(s):", ModHub->lastError() );
+  }
+
+  // restore UI interactions
+  static_cast<OmUiMan*>(self->root())->enableSafeMode(false);
+
+  // Select fist available Channel
+  ModHub->selectChannel(0);
+
+  // refresh all dialogs from root
+  self->refresh();
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -880,7 +953,7 @@ void OmUiMan::_menu_recent_populate()
 
   // get recent files path list from manager
   OmWStringArray path;
-  ModMan->loadRecentFiles(path);
+  ModMan->getRecentFileList(path);
 
   // add the recent file path or disable popup
   if(path.size()) {
@@ -1268,6 +1341,11 @@ void OmUiMan::_onInit()
   this->setBmIcon(IDC_BC_PSEDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
   this->setBmIcon(IDC_BC_PSDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
 
+  // Set Channels buttons icons
+  this->setBmIcon(IDC_BC_CHADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_CHDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_CHEDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
+
   // new array for the icons res ID
   uint32_t idb[OM_LISTVIEW_ICON_COUNT];
 
@@ -1342,10 +1420,15 @@ void OmUiMan::_onInit()
   this->_createTooltip(IDC_CB_HUB,    L"Select active Mod Hub");
   this->_createTooltip(IDC_CB_CHN,    L"Select active Mod Channel");
 
-  this->_createTooltip(IDC_BC_PSRUN,    L"Run Preset");
-  this->_createTooltip(IDC_BC_PSNEW,    L"New Preset");
-  this->_createTooltip(IDC_BC_PSEDI,    L"Edit Preset");
-  this->_createTooltip(IDC_BC_PSDEL,    L"Delete Preset");
+  this->_createTooltip(IDC_BC_CHADD,  L"Add Channel");
+  this->_createTooltip(IDC_BC_CHDEL,  L"Delete Channel");
+  this->_createTooltip(IDC_BC_CHEDI,  L"Channel properties");
+
+  this->_createTooltip(IDC_BC_PSRUN,  L"Run Preset");
+  this->_createTooltip(IDC_BC_PSNEW,  L"New Preset");
+  this->_createTooltip(IDC_BC_PSEDI,  L"Edit Preset");
+  this->_createTooltip(IDC_BC_PSDEL,  L"Delete Preset");
+
 
   // retrieve saved window rect values
   RECT rec = {0,0,0,0};
@@ -1461,18 +1544,24 @@ void OmUiMan::_onResize()
   if(!this->_split_curs_dragg) {
 
     // Mod Hubs ComboBox
-    this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 28, true);
+    this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 32, true);
     // Mod Hub Icon
     this->_setItemPos(IDC_SB_ICON, this->cliWidth()-37, 1, 32, 32, true);
+
+    // Channel buttons
+    this->_setItemPos(IDC_BC_CHEDI, 4, 34, 22, 22, true);
+    this->_setItemPos(IDC_BC_CHADD, 4, 69, 22, 22, true);
+    this->_setItemPos(IDC_BC_CHDEL, 4, 92, 22, 22, true);
+
     // Mod Channel ListView
-    this->_setItemPos(IDC_LV_CHN, 4, 35, this->cliWidth()-8, 78, true);
+    this->_setItemPos(IDC_LV_CHN, 30, 35, this->cliWidth()-35, 79, true);
     this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
 
     // set Presets buttons Position
-    this->_setItemPos(IDC_BC_PSRUN, this->cliWidth() - 204, 116, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, 116, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, 116, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, 116, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSRUN, this->cliWidth() - 204, 117, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, 117, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, 117, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, 117, 22, 22, true);
 
   } else {
 
@@ -1494,10 +1583,10 @@ void OmUiMan::_onResize()
 
   // resize and move frames
   this->_setChildPos(this->_UiManFoot->hwnd(), 4, y - 4 , this->cliWidth() - 8, h, true);
-  this->_setChildPos(this->_UiManMain->hwnd(), 4, 117, this->cliWidth() - 212, y - 125, true);
+  this->_setChildPos(this->_UiManMain->hwnd(), 4, 118, this->cliWidth() - 212, y - 126, true);
 
   // resize Presets ListView
-  this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, 141, 200, y - 150, true);
+  this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, 142, 200, y - 151, true);
   this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
 
   if(!this->_split_curs_dragg) {
@@ -1546,7 +1635,6 @@ void OmUiMan::_onRefresh()
   #endif
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-  OmModHub* ModHub = ModMan->activeHub();
 
   // enable or disable menu elements
   this->_menu_enable();
@@ -1578,9 +1666,17 @@ void OmUiMan::_onRefresh()
     this->_listview_himl_size = ModMan->iconsSize();
   }
 
-  this->enableItem(IDC_LV_CHN, (ModHub != nullptr));
-  this->enableItem(IDC_LV_PST, (ModHub != nullptr));
-  this->enableItem(IDC_BC_PSNEW, (ModHub != nullptr));
+  bool has_modhub = (ModMan->activeHub() != nullptr);
+
+  this->enableItem(IDC_LV_CHN, has_modhub);
+  this->enableItem(IDC_LV_PST, has_modhub);
+  this->enableItem(IDC_BC_PSNEW, has_modhub);
+  this->enableItem(IDC_BC_CHADD, has_modhub);
+
+  bool has_modchn = (ModMan->activeChannel() != nullptr);
+
+  this->enableItem(IDC_BC_CHDEL, has_modchn);
+  this->enableItem(IDC_BC_CHEDI, has_modchn);
 
   // rebuild the Recent Mod Hub menu
   this->_menu_recent_populate();
@@ -1599,6 +1695,10 @@ void OmUiMan::_onRefresh()
 
   // update Mod Presets ListView
   this->_lv_pst_populate();
+
+  // refresh Library directory monitoring
+  //this->monitorLibrary(true);
+  // TODO: Implementer une sécurité ici ou vérifier que rien ne peut se casser
 }
 
 
@@ -1626,9 +1726,6 @@ void OmUiMan::_onQuit()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMan::_onQuit\n";
   #endif
-
-  // stop Library folder changes monitoring
-  this->monitorLibrary(false);
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
@@ -1787,28 +1884,18 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   if(uMsg == WM_COMMAND) {
 
-    #ifdef DEBUG
-    std::cout << "DEBUG => OmUiMan::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
-    #endif
-
     // Prevent command/shorcut execution when dialog is not active
     if(!this->active())
       return false;
 
-    OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
-    OmModHub* ModHub = ModMan->activeHub();
-    OmModChan* ModChan = ModMan->activeChannel();
-
-    OmWString item_str;
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmUiMan::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    #endif
 
     // handle "File > Recent Files" path click
     if(LOWORD(wParam) >= IDM_FILE_RECENT_PATH) { // recent
-
-      OmWStringArray paths;
-      ModMan->loadRecentFiles(paths);
-
       // subtract Command ID by the base resource ID to get real index
-      this->openHub(paths[LOWORD(wParam) - IDM_FILE_RECENT_PATH]);
+      this->openRecent(LOWORD(wParam) - IDM_FILE_RECENT_PATH);
     }
 
     // Menus and Shortcuts Messages
@@ -1820,31 +1907,41 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->_cb_hub_on_selchange();
       break;
 
-    case IDC_BC_PSRUN: //< Preset Run Button
+    case IDC_BC_CHEDI:  //< Channel 'Prop' button
+      this->channelProperties();
+      break;
+
+    case IDC_BC_CHADD:  //< Channel '+' button
+      this->createChannel();
+      break;
+
+    case IDC_BC_CHDEL:  //< Channel 'x' button
+      this->deleteChannel();
+      break;
+
+    case IDC_BC_PSRUN:  //< Preset 'Run' button
       this->runPreset();
       break;
 
-    case IDC_BC_PSNEW: //< Preset New Button
+    case IDC_BC_PSNEW:  //< Preset '+' button
+      this->createPreset();
+      break;
+
+    case IDC_BC_PSDEL:  //< Preset 'x' button
       this->deletePreset();
       break;
 
-    case IDC_BC_PSDEL: //< Preset Delete Button
-      this->deletePreset();
-      break;
-
-    case IDC_BC_PSEDI: //< Preset Edit Button
+    case IDC_BC_PSEDI:  //< Preset 'Prop' button
       this->presetProperties();
       break;
 
     // Menu : File []
-    case IDM_FILE_NEW_CTX:
+    case IDM_FILE_NEW_HUB:
       this->childById(IDD_WIZ_HUB)->open(); // New Mod Hub Wizard
       break;
 
     case IDM_FILE_OPEN:
-      if(Om_dlgBrowseDir(item_str, this->_hwnd, L"Select Mod Hub home directory to load it", item_str, false, true)) {
-        this->openHub(item_str);
-      }
+      this->openFile();
       break;
 
     case IDM_FILE_CLOSE:
@@ -1852,8 +1949,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_FILE_CLEAR_HIST:
-      ModMan->clearRecentFiles();
-      this->_menu_recent_populate();
+      this->clearRecents();
       break;
 
     case IDM_FILE_QUIT:
@@ -1861,46 +1957,30 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     // Menu : Edit []
-    case IDM_EDIT_HUB_PROP: {
-        if(ModHub) {
-          OmUiPropHub* UiPropHub = static_cast<OmUiPropHub*>(this->childById(IDD_PROP_HUB));
-          UiPropHub->setModHub(ModHub);
-          UiPropHub->open();
-        }
+    case IDM_EDIT_HUB_PROP:
+      this->hubProperties();
       break;
-      }
 
-    case IDM_EDIT_CHN_PROP: {
-        if(ModChan) {
-          OmUiPropChn* UiPropChn = static_cast<OmUiPropChn*>(this->childById(IDD_PROP_CHN));
-          UiPropChn->setModChan(ModChan);
-          UiPropChn->open();
-        }
+    case IDM_EDIT_CHN_ADD:
+      this->createChannel();
       break;
-      }
 
-    case IDM_EDIT_CHN_ADD: {
-        if(ModHub) {
-          OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
-          UiAddChn->setModHub(ModHub);
-          UiAddChn->open();
-        }
+    case IDM_EDIT_CHN_DEL:
+      this->deleteChannel();
       break;
-      }
+
+    case IDM_EDIT_CHN_PROP:
+      this->channelProperties();
+      break;
 
     // Menu : Edit > Preset > []
     case IDM_EDIT_PST_RUN:
       this->runPreset();
       break;
 
-    case IDM_EDIT_PST_ADD: {
-        if(ModHub) {
-          OmUiAddPst* UiAddPst = static_cast<OmUiAddPst*>(this->childById(IDD_ADD_PST));
-          UiAddPst->setModHub(ModHub);
-          UiAddPst->open();
-        }
+    case IDM_EDIT_PST_ADD:
+      this->createPreset();
       break;
-      }
 
     case IDM_EDIT_PST_DEL:
       this->deletePreset();
@@ -1916,19 +1996,13 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queryRepositories();
       break;
 
-    case IDM_EDIT_REP_ADD: {
-        if(ModChan) {
-          OmUiAddRep* UiAddRep = static_cast<OmUiAddRep*>(this->childById(IDD_ADD_REP));
-          UiAddRep->setModChan(ModChan);
-          UiAddRep->open();
-        }
+    case IDM_EDIT_REP_ADD:
+      static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->addRepository();
       break;
-      }
 
     case IDM_EDIT_REP_DEL:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->deleteRepository();
       break;
-
 
     // Menu : Edit > Local Mod > []
     case IDM_EDIT_MOD_INST:

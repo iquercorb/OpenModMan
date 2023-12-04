@@ -23,14 +23,16 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isDirEmpty(const OmWString& path) {
+bool Om_isDirEmpty(const OmWString& path)
+{
   return PathIsDirectoryEmptyW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirCreate(const OmWString& path) {
+int Om_dirCreate(const OmWString& path)
+{
   if(!CreateDirectoryW(path.c_str(), nullptr)) {
     return GetLastError();
   }
@@ -48,7 +50,8 @@ int Om_dirCreateRecursive(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_dirDelete(const OmWString& path) {
+int Om_dirDelete(const OmWString& path)
+{
   if(!RemoveDirectoryW(path.c_str())) {
     return GetLastError();
   }
@@ -58,7 +61,8 @@ int Om_dirDelete(const OmWString& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileCopy(const OmWString& src, const OmWString& dst, bool ow = true) {
+int Om_fileCopy(const OmWString& src, const OmWString& dst, bool ow = true)
+{
   if(!ow) {
     if(GetFileAttributesW(dst.c_str()) != INVALID_FILE_ATTRIBUTES)
       return 0; /* we do not write, but this is not a error */
@@ -72,7 +76,8 @@ int Om_fileCopy(const OmWString& src, const OmWString& dst, bool ow = true) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileMove(const OmWString& src, const OmWString& dst) {
+int Om_fileMove(const OmWString& src, const OmWString& dst)
+{
   if(!MoveFileExW(src.c_str(),dst.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
     return GetLastError();
   }
@@ -82,7 +87,8 @@ int Om_fileMove(const OmWString& src, const OmWString& dst) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-int Om_fileDelete(const OmWString& path){
+int Om_fileDelete(const OmWString& path)
+{
   if(!DeleteFileW(path.c_str())) {
     return GetLastError();
   }
@@ -92,48 +98,65 @@ int Om_fileDelete(const OmWString& path){
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFile(const OmWString& path) {
+bool Om_isFile(const OmWString& path)
+{
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
-    return !(attr&FILE_ATTRIBUTE_DIRECTORY);
+    return !(attr & FILE_ATTRIBUTE_DIRECTORY);
   return false;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isDir(const OmWString& path) {
+bool Om_isDir(const OmWString& path)
+{
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
-    return (attr&FILE_ATTRIBUTE_DIRECTORY);
+    return (attr & FILE_ATTRIBUTE_DIRECTORY);
   return false;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_pathIsNetwork(const OmWString& path) {
+bool Om_isHidden(const OmWString& path)
+{
+  DWORD attr = GetFileAttributesW(path.c_str());
+  if(attr != INVALID_FILE_ATTRIBUTES)
+    return (attr & FILE_ATTRIBUTE_HIDDEN);
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_pathIsNetwork(const OmWString& path)
+{
   return PathIsNetworkPathW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_pathExists(const OmWString& path) {
+bool Om_pathExists(const OmWString& path)
+{
   return PathFileExistsW(path.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_itemSetAttr(const OmWString& path, uint32_t attr) {
+bool Om_itemSetAttr(const OmWString& path, uint32_t attr)
+{
   return SetFileAttributesW(path.c_str(), attr);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_itemHasAttr(const OmWString& path, uint32_t mask) {
+bool Om_itemHasAttr(const OmWString& path, uint32_t mask)
+{
   DWORD attr = GetFileAttributesW(path.c_str());
   if(attr != INVALID_FILE_ATTRIBUTES)
     return ((mask & attr) == mask);

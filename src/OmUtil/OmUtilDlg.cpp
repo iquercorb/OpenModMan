@@ -17,6 +17,7 @@
 #include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 
 #include "OmBaseWin.h"
+#include <commctrl.h>
 #include <ShlObj.h>           //< BROWSEINFOW, etc.
 #include <ShlWApi.h>          //< PathFileExistW, etc.
 
@@ -37,6 +38,7 @@
 #define OM_DLGBOX_SC_HEAD   400
 #define OM_DLGBOX_SC_MESG   401
 #define OM_DLGBOX_SC_LIST   402
+#define OM_DLGBOX_PB_PBAR   403
 
 /// \brief Fonts for custom message box.
 ///
@@ -52,6 +54,8 @@ static HICON __Om_dlgBox_TIcon = nullptr;
 ///
 static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  static int* result_ptr = nullptr;
+
   if(uMsg == WM_INITDIALOG) {
 
     HWND hItem;
@@ -62,8 +66,10 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     HWND hParent = GetParent(hWnd);
     UINT uSwp;
 
+    result_ptr = reinterpret_cast<int*>(lParam);
+
     if(__Om_dlgBox_TIcon == nullptr)
-      __Om_dlgBox_TIcon = Om_getResIcon(reinterpret_cast<HINSTANCE>(lParam), IDI_APP, 1);
+      __Om_dlgBox_TIcon = Om_getResIcon(GetModuleHandle(nullptr), IDI_APP, 1);
 
     // set title bar icon
     SendMessageW(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(__Om_dlgBox_TIcon));
@@ -148,6 +154,16 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       yalign += rect[3] + 10;
     }
 
+    // Static Control - Item List
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_PB_PBAR);
+    if(hItem) {
+      yalign += 15; //< little margin
+      rect[3] = 18;
+      // move and resize control
+      SetWindowPos(hItem, nullptr, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      yalign += rect[3] + 10;
+    }
+
     // we do not need the HDC anymore
     SelectObject(hDc, hOldFont);
     ReleaseDC(hWnd, hDc);
@@ -206,11 +222,13 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     switch(LOWORD(wParam))
     {
     case OM_DLGBOX_BTN1:
+      if(result_ptr) *result_ptr = 1;
       // exit dialog and return 1
       EndDialog(hWnd, 1);
       break;
 
     case OM_DLGBOX_BTN0:
+      if(result_ptr) *result_ptr = 0;
       // exit dialog and return 0
       EndDialog(hWnd, 0);
       break;
@@ -265,7 +283,10 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     bt1 = __Om_dlgBox_str_YE; bt0 = __Om_dlgBox_str_NO;
   } else if(flags & 0x4) { //< OM_DLGBOX_CA: Continue - Abort
     bt1 = __Om_dlgBox_str_CO; bt0 = __Om_dlgBox_str_AB;
+  } else if(flags & 0x10) {
+    bt1 = __Om_dlgBox_str_AB;
   }
+
   bool has_bt0 = bt0 != nullptr;
   bool has_hdr = hdr ? wcslen(hdr) : false;
   bool has_msg = msg ? wcslen(msg) : false;
@@ -280,7 +301,8 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   if(has_bt0) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(bt0);
   if(has_hdr) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(hdr);
   if(has_msg) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(msg);
-  if(has_lst) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(lst);
+  if(flags & 0x10) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(PROGRESS_CLASSW);
+  else if(has_lst) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(lst);
 
   DLGTEMPLATE* dlgt;
   DLGITEMTEMPLATE* itmt;
@@ -396,7 +418,25 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     dlgt->cdit++; //< increment item count
   }
 
-  if(has_lst) {
+  if(flags & 0x10) {
+
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Edit Control for item list
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_DLGBOX_PB_PBAR;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 16; itmt->y = 50; itmt->cx = 255; itmt->cy = 22;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    const wchar_t* clsname = PROGRESS_CLASSW;
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *clsname++)); //< class name
+    *pTpl++ = 0; //< No Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+
+  } else if(has_lst) {
+
     // align to word boundary
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Edit Control for item list
@@ -412,11 +452,176 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     dlgt->cdit++; //< increment item count
   }
 
-  INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, (LPARAM)hins);
+
+  INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, 0);
 
   Om_free(dlgt);
 
   return result;
+}
+
+/// \brief Message dialog box.
+///
+/// Create message dialog box with custom parameters. The function returns
+/// value depending clicked button by user.
+///
+/// \param[in] hins   : Handle to instance.
+/// \param[in] hwnd   : Handle to parent/owner window.
+/// \param[in] cpt    : Caption string
+/// \param[in] ico    : Message icon resource ID.
+/// \param[in] hdr    : Message header/title string.
+/// \param[in] msg    : Message body string.
+/// \param[in] lst    : Optional message list of element.
+/// \param[in] flags  : Parameters flags.
+///
+/// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
+///
+static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
+{
+  // configure buttons according params
+  const wchar_t* fnt = __Om_dlgBox_str_FNT;
+  const wchar_t* bt1 = __Om_dlgBox_str_OK;
+  bt1 = __Om_dlgBox_str_AB;
+
+  bool has_hdr = hdr ? wcslen(hdr) : false;
+
+  // compute template size
+  size_t tplSize = sizeof(DLGTEMPLATE) + 10;
+  tplSize += (3 * sizeof(DLGITEMTEMPLATE)) + 32;
+  tplSize += sizeof(wchar_t) * wcslen(cpt);
+  tplSize += sizeof(wchar_t) * wcslen(fnt);
+  tplSize += sizeof(wchar_t) * wcslen(bt1);
+  if(has_hdr) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(hdr);
+  tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * 2;
+  tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(PROGRESS_CLASSW);
+
+  DLGTEMPLATE* dlgt;
+  DLGITEMTEMPLATE* itmt;
+  uint16_t* pTpl;
+
+  // allocate memory for new template
+  dlgt = reinterpret_cast<DLGTEMPLATE*>(Om_alloc(tplSize));
+  if(!dlgt) return nullptr;
+
+  // main dialog template definition
+  dlgt->style = DS_3DLOOK|DS_MODALFRAME|WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_SETFONT;
+  if(!hwnd) dlgt->style |= DS_CENTER;
+  dlgt->dwExtendedStyle = DS_SHELLFONT;
+  dlgt->cdit = 0; //< item count
+  dlgt->x = 0; dlgt->y = 0; dlgt->cx = 330; dlgt->cy = 150;
+  pTpl = reinterpret_cast<uint16_t*>(dlgt + 1);
+  *pTpl++ = 0; //< MENU
+  *pTpl++ = 0; //< Dialog Class
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *cpt++)); //< Caption string
+  *pTpl++ = 8; //< FONT size
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *fnt++)); //< Font name string
+
+  long xalign = 235; //< first or alone button X position
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Button Control for OK/YES - Return 1
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_DLGBOX_BTN1;
+  itmt->style = WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0080; //< WC_BUTTON
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *bt1++)); //< Btn text
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Static Control for white background
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_DLGBOX_SC_RECT;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_WHITERECT;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 0; itmt->y = 0; itmt->cx = 400; itmt->cy = 50;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+  *pTpl++ = 0; //< No text
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Static Control for icon
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_DLGBOX_SC_ICON;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_ICON;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 16; itmt->y = 12; itmt->cx = 25; itmt->cy = 24;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+  *pTpl++ = 0xFFFF; *pTpl++ = ico; //< Icon resource ID
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  if(has_hdr) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Static Control for title/header
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_DLGBOX_SC_HEAD;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 45; itmt->y = 12; itmt->cx = 267; itmt->cy = 14;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *hdr++));  //< Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+  }
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Static Control main message
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_DLGBOX_SC_MESG;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_ENDELLIPSIS;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 45; itmt->y = 30; itmt->cx = 220; itmt->cy = 0;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+  *pTpl++ = L' '; *pTpl++ = 0; //< Item text, a white space to initialize control height
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  // align to word boundary
+  if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+  // Edit Control for item list
+  itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+  itmt->id = OM_DLGBOX_PB_PBAR;
+  itmt->style = WS_CHILD|WS_VISIBLE;
+  itmt->dwExtendedStyle = WS_EX_LEFT;
+  itmt->x = 16; itmt->y = 50; itmt->cx = 255; itmt->cy = 22;
+  pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+  const wchar_t* clsname = PROGRESS_CLASSW;
+  while((*reinterpret_cast<wchar_t*>(pTpl++) = *clsname++)); //< class name
+  *pTpl++ = 0; //< No Item text
+  *pTpl++ = 0; //< No creation
+  dlgt->cdit++; //< increment item count
+
+  HWND hdlg = CreateDialogIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
+
+  ShowWindow(hdlg, SW_SHOW);
+
+  // mimic modal dialog window
+  if(hwnd) EnableWindow(hwnd, false);
+
+  MSG msg;
+
+  // force all dialog messages to be treated before return
+  while(PeekMessage(&msg, hdlg, 0, 0, PM_REMOVE))
+    if(!IsDialogMessage(hdlg, &msg))
+      DispatchMessage(&msg);
+
+  Om_free(dlgt);
+
+  return hdlg;
 }
 
 
@@ -428,6 +633,57 @@ int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const
   return __Om_dlgBox(hins, hwnd, cpt, ico, hdr, msg, lst, flags);
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HWND Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
+{
+  return __Om_dlgProgress(hins, hwnd, cpt, ico, hdr, result);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text)
+{
+  if(tot >= 0)
+    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETRANGE, 0, MAKELPARAM(0, tot));
+
+  if(cur >= 0)
+    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETPOS, cur, 0);
+
+  if(text)
+    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_SC_MESG), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text));
+
+  MSG msg;
+
+  // force all dialog messages to be treated before return
+  while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
+    if(!IsDialogMessage(hwnd, &msg))
+      DispatchMessage(&msg);
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_dlgProgressClose(HWND hwnd)
+{
+  // get parent Windows to stop 'modal'
+  HWND hparent = GetParent(hwnd);
+
+  if(DestroyWindow(hwnd)) {
+    // stop 'modal'
+    EnableWindow(hparent, true);
+    SetActiveWindow(hparent);
+  } else {
+    #ifdef DEBUG
+    std::cout << "DEBUG => Om_dlgProgressClose : DestroyWindow failed\n";
+    #endif // DEBUG
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

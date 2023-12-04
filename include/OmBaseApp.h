@@ -25,49 +25,54 @@
 #define OM_APP_REV               0
 
 #ifdef _WIN64
-  #define OM_APP_ARCH            L"x64"
+  #define OM_APP_ARCH            L"64-bit"
 #else
-  #define OM_APP_ARCH            L"x86"
+  #define OM_APP_ARCH            L"32-bit"
 #endif
 
-#define OM_APP_DATE              L"" __DATE__
-#define OM_APP_AUTHOR            L"Eric M."
-#define OM_APP_CONTRIB           L""
-#define OM_APP_C_YEAR            L"2023"
-#define OM_APP_GIT               L"https://github.com/sedenion/OpenModMan"
-#define OM_APP_URL               L"https://github.com/sedenion/OpenModMan"
+#define OM_APP_DATE               L"" __DATE__
+#define OM_APP_AUTHOR             L"Eric M."
+#define OM_APP_CONTRIB            L""
+#define OM_APP_C_YEAR             L"2023"
+#define OM_APP_GIT                L"https://github.com/sedenion/OpenModMan"
+#define OM_APP_URL                L"https://github.com/sedenion/OpenModMan"
+#define OM_DON_URL                L"https://www.paypal.com/donate/?hosted_button_id=458U4MNAPB2KL"
 
-#define OM_XMAGIC_APP            L"Open_Mod_Manager_Main"
-#define OM_XMAGIC_HUB            L"Open_Mod_Manager_ModHub"
-#define OM_XMAGIC_CHN            L"Open_Mod_Manager_ModChan"
-#define OM_XMAGIC_SPT            L"Open_Mod_Manager_Script"
-#define OM_XMAGIC_PKG            L"Open_Mod_Manager_Package"
-#define OM_XMAGIC_BCK            L"Open_Mod_Manager_Backup"
+#define OM_XMAGIC_APP             L"Open_Mod_Manager_Main"
+#define OM_XMAGIC_HUB             L"Open_Mod_Manager_Hub"
+#define OM_XMAGIC_CHN             L"Open_Mod_Manager_Channel"
+#define OM_XMAGIC_PST             L"Open_Mod_Manager_Preset"
+#define OM_XMAGIC_PKG             L"Open_Mod_Manager_Package"
+#define OM_XMAGIC_BCK             L"Open_Mod_Manager_Backup"
 
-#define OM_XMAGIC_REP            L"Open_Mod_Manager_Repository"
+#define OM_XMAGIC_REP             L"Open_Mod_Manager_Repository"
 
-#define OM_MODHUB_FILENAME       L"ModHub.xml"
-#define OM_MODCHN_FILENAME       L"ModChan.xml"
+#define OM_XML_DEF_EXT            L"omx"
+#define OM_PKG_FILE_EXT           L"ozp"
+#define OM_BCK_FILE_EXT           L"ozb"
 
-#define OM_MODHUB_MODPSET_DIR    L".Presets"
+#define OM_MODHUB_FILENAME        L"OmModHub.omx"
+#define OM_MODCHN_FILENAME        L"OmModChan.omx"
 
-#define OM_MODCHAN_BACKUP_DIR    L"\\Backup"
-#define OM_MODCHAN_MODLIB_DIR    L"\\Library"
+#define OM_MODHUB_MODPSET_DIR     L".Presets"
 
-#define OM_MODPACK_THUMB_SIZE    128
+#define OM_MODCHAN_BACKUP_DIR     L"\\Backup"
+#define OM_MODCHAN_MODLIB_DIR     L"\\Library"
+
+#define OM_MODPACK_THUMB_SIZE     128
+
 
 // old signatures, used only for migration to new standard
-#define OM_XMAGIC_CTX            L"Open_Mod_Manager_Context"
-#define OM_XMAGIC_LOC            L"Open_Mod_Manager_Location"
-#define OM_XMAGIC_BAT            L"Open_Mod_Manager_Batch"
+#define OM_XMAGIC_CTX             L"Open_Mod_Manager_Context"
+#define OM_XMAGIC_LOC             L"Open_Mod_Manager_Location"
+#define OM_XMAGIC_BAT             L"Open_Mod_Manager_Batch"
 
 // old definition files extension, used only for migration to new standard
-#define OM_CTX_DEF_FILE_EXT      L"omc"
-#define OM_LOC_DEF_FILE_EXT      L"oml"
-#define OM_BAT_DEF_FILE_EXT      L"omb"
-#define OM_PKG_DEF_FILE_EXT      L"omp"
-#define OM_BCK_DEF_FILE_EXT      L"omk"
-#define OM_PKG_FILE_EXT          L"ozp"
-#define OM_BCK_FILE_EXT          L"ozb"
+#define OM_CTX_DEF_FILE_EXT       L"omc"
+#define OM_LOC_DEF_FILE_EXT       L"oml"
+#define OM_BAT_DEF_FILE_EXT       L"omb"
+#define OM_PKG_DEF_FILE_EXT       L"omp"
+#define OM_BCK_DEF_FILE_EXT       L"omk"
+
 
 #endif // OMBASEAPP_H

@@ -28,7 +28,6 @@
 #include "OmUiPropHubStg.h"
 #include "OmUiPropHubChn.h"
 #include "OmUiPropHubBat.h"
-#include "OmUiProgress.h"
 
 #include "OmUtilDlg.h"
 #include "OmUtilStr.h"         //< Om_isValidPath
@@ -52,7 +51,6 @@ OmUiPropHub::OmUiPropHub(HINSTANCE hins) : OmDialogProp(hins),
   this->addChild(new OmUiAddPst(hins));     //< Dialog for Batch creation
   this->addChild(new OmUiPropChn(hins));    //< Dialog for Mod Channel properties
   this->addChild(new OmUiPropPst(hins));    //< Dialog for Mod Channel properties
-  this->addChild(new OmUiProgress(hins));   //< for Mod Channel backup cleaning
 }
 
 

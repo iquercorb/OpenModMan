@@ -207,6 +207,16 @@ class OmNetPack
       return this->_size;
     }
 
+    /// \brief Downloadable file size string
+    ///
+    /// Downloadable Mod file size formated string.
+    ///
+    /// \return file size formated string string.
+    ///
+    const OmWString& fileSizeStr() const {
+      return this->_size_str;
+    }
+
     /// \brief Mod File URL
     ///
     /// Mod File download URL
@@ -237,35 +247,14 @@ class OmNetPack
       return this->_csum_is_md5;
     }
 
-    /// \brief Get status
+    /// \brief Refresh analytical properties
     ///
-    /// Returns status bits that describes this instance situation
-    /// in regard to the current Mod Library and its internal states
+    /// Performs analysis of this instance against the library and current
+    /// internal state to instate proper values.
     ///
-    /// \return Net Pack Status
+    /// \return True if values changed, false otherwise
     ///
-    uint32_t status() const {
-      return this->_stat;
-    }
-
-    /// \brief Check status bit
-    ///
-    /// Checks whether this instance has the specified status bits enabled
-    ///
-    /// \return True if status bits matches, false otherwise
-    ///
-    bool hasStatus(uint32_t stat) const {
-      return OM_HAS_BIT(this->_stat, stat);
-    }
-
-    /// \brief Refresh Net Pack status
-    ///
-    /// Performs analysis of this instance against the Mod Library and
-    /// current internal state to enable or disable proper Status bits.
-    ///
-    /// \return True if status changed, false otherwise
-    ///
-    bool refreshStatus();
+    bool refreshAnalytics();
 
     /// \brief Upgradable Mod count
     ///
@@ -487,13 +476,6 @@ class OmNetPack
 
   private:
 
-    // management
-    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
-
-    void                _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString           _lasterr;
-
     // linking
     OmModChan*          _ModChan;
 
@@ -522,6 +504,8 @@ class OmNetPack
     OmWString           _file;
 
     uint64_t            _size;
+
+    OmWString           _size_str;
 
     OmWString           _csum;
 
@@ -576,6 +560,13 @@ class OmNetPack
     uint32_t            _upg_percent;
 
     static bool         _upg_progress_fn(void*, size_t, size_t, uint64_t);
+
+    // logs and errors
+    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
+
+    void                _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString           _lasterr;
 };
 
 /// \brief OmNetPack pointer array

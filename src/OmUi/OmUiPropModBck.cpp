@@ -131,7 +131,7 @@ void OmUiPropModBck::_onTabInit()
 
     // Total Size
     this->enableItem(IDC_EC_READ4, true);
-    this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->backupPath()), true));
+    this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->backupPath())));
 
     // Installed Files
     if(ModPack->backupEntryCount()) {

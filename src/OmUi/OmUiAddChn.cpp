@@ -173,7 +173,7 @@ void OmUiAddChn::_onBcBrwBck()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiAddChn::_onBcOk()
+bool OmUiAddChn::_bc_ok_pressed()
 {
   if(!this->_ModHub)
     return false;
@@ -348,7 +348,7 @@ INT_PTR OmUiAddChn::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_OK:
-      this->_onBcOk();
+      this->_bc_ok_pressed();
       break;
 
     case IDC_BC_CANCEL:

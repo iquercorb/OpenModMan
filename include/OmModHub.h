@@ -26,6 +26,7 @@
 class OmModMan;
 #include "OmModChan.h"
 #include "OmModPset.h"
+#include "OmDirNotify.h"
 
 /// \brief Mod Hub object.
 ///
@@ -72,7 +73,7 @@ class OmModHub
     /// \return True if this instance is valid, false otherwise.
     ///
     bool valid() const {
-      return this->_xmlconf.valid();
+      return this->_xml.valid();
     }
 
     /// \brief Get Mod Hub file path.
@@ -273,6 +274,36 @@ class OmModHub
       return this->_active_channel;
     }
 
+    /// \brief Start active Channel Local Library changes notifications
+    ///
+    /// Set parameters and enable active channel Local Library changes notifications
+    ///
+    /// \param[in] notify_cb  : Callback for Local library notifications changes
+    /// \param[in] user_ptr   : Custom pointer passed to callbacks
+    ///
+    void notifyModLibraryStart(Om_notifyCb notify_cb, void* user_ptr = nullptr);
+
+    /// \brief Stop active Channel Local Library changes notifications
+    ///
+    /// Stops active Channel Local Library changes notifications
+    ///
+    void notifyModLibraryStop();
+
+    /// \brief Start active Channel Local Library changes notifications
+    ///
+    /// Set parameters and enable active channel Local Library changes notifications
+    ///
+    /// \param[in] notify_cb  : Callback for Local library notifications changes
+    /// \param[in] user_ptr   : Custom pointer passed to callbacks
+    ///
+    void notifyNetLibraryStart(Om_notifyCb notify_cb, void* user_ptr = nullptr);
+
+    /// \brief Stop active Channel Local Library changes notifications
+    ///
+    /// Stops active Channel Local Library changes notifications
+    ///
+    void notifyNetLibraryStop();
+
     /// \brief Get Mod Preset count.
     ///
     /// Returns count of Mod Preset referenced in this instance.
@@ -401,26 +432,16 @@ class OmModHub
 
   private: ///            - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // logs and errors
-    void                  _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
-
-    void                  _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString             _lasterr;
-
     // linking
     OmModMan*             _ModMan;
 
     // needed objects
-    OmXmlConf             _xmlconf;
+    OmXmlConf             _xml;
 
     // sorting comparison functions
     static bool           _compare_chn_index(const OmModChan*, const OmModChan*);
 
     static bool           _compare_pst_index(const OmModPset*, const OmModPset*);
-
-    // special migration function
-    bool                  _migrate(const OmWString& path);
 
     // channel properties
     OmWString             _path;
@@ -434,6 +455,23 @@ class OmModHub
     OmWString             _icon_source;
 
     HICON                 _icon_handle;
+
+    // active channel libraries monitoring
+    void                  _modlib_notify_enable(bool enable);
+
+    static void           _modlib_notify_fn(void*, OmNotify, uint64_t);
+
+    Om_notifyCb           _modlib_notify_cb;
+
+    void*                 _modlib_notify_ptr;
+
+    void                  _netlib_notify_enable(bool enable);
+
+    static void           _netlib_notify_fn(void*, OmNotify, uint64_t);
+
+    Om_notifyCb           _netlib_notify_cb;
+
+    void*                 _netlib_notify_ptr;
 
     // Mod Channels
     OmPModChanArray       _channel_list;
@@ -474,6 +512,16 @@ class OmModHub
 
     // options
     bool                  _presets_quietmode;
+
+    // logs and errors
+    void                  _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
+
+    void                  _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString             _lasterr;
+
+    // special function for migration to 1.2.0
+    bool                  _migrate_120(const OmWString& path, OmWString* omx_path);
 };
 
 /// \brief OmModHub pointer array

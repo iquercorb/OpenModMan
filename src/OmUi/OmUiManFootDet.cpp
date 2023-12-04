@@ -191,8 +191,7 @@ void OmUiManFootDet::setDetails(OmNetPack* NetPack)
     text.append(NetPack->fileUrl());
 
     text.append(L"\r\n  - Size : ", 13);
-    OmWString kbytes = Om_formatSizeSysStr(NetPack->fileSize(), true);
-    text.append(kbytes);
+    text.append(NetPack->fileSizeStr());
 
     if(NetPack->checksumIsMd5()) {
       text.append(L"\r\n  - checksum (md5) : ", 23);

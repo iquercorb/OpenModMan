@@ -209,7 +209,7 @@ IDR_MENU MENU
     {
         POPUP "&New"
         {
-            MENUITEM "Mod &Hub...", IDM_FILE_NEW_CTX
+            MENUITEM "Mod &Hub...", IDM_FILE_NEW_HUB
         }
         MENUITEM SEPARATOR
         MENUITEM "&Open\tCtrl+O", IDM_FILE_OPEN
@@ -329,6 +329,9 @@ FONT 8, "Ms Shell Dlg"
 {
     ICON            "", IDC_SB_ICON, 5, 5, 20, 20, SS_ICON | SS_CENTERIMAGE, WS_EX_LEFT
     COMBOBOX        IDC_CB_HUB, 1, 8, 445, 12, WS_TABSTOP | WS_DISABLED | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "Add...", IDC_BC_CHADD, 2, 14, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Delete", IDC_BC_CHDEL, 2, 28, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
+    PUSHBUTTON      "Properties", IDC_BC_CHEDI, 2, 44, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
     CONTROL         "", IDC_LV_CHN, WC_LISTVIEW, WS_DISABLED|WS_TABSTOP|LVS_ALIGNLEFT|LVS_SHOWSELALWAYS|LVS_REPORT|LVS_SINGLESEL|LVS_SHAREIMAGELISTS|LVS_NOSORTHEADER, 1, 16, 480, 46, WS_EX_STATICEDGE
     PUSHBUTTON      "Run", IDC_BC_PSRUN, 380, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
     PUSHBUTTON      "New...", IDC_BC_PSNEW, 395, 64, 15, 14, WS_DISABLED | BS_BITMAP | BS_FLAT, WS_EX_LEFT
@@ -663,7 +666,7 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Delete", IDC_BC_DEL, 70, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "Modify...", IDC_BC_EDI, 122, 110, 50, 14, WS_DISABLED, WS_EX_LEFT
     PUSHBUTTON      "New...", IDC_BC_ADD, 235, 110, 50, 14, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Apply in Quiet Mode (ignore warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Presets executes in Quiet Mode (no warning messages)", IDC_BC_CKBX1, 70, 115, 180, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -1199,9 +1202,9 @@ CAPTION "About"
 FONT 8, "Ms Shell Dlg"
 {
     CTEXT           "Static", IDC_SC_INTRO, 10, 10, 330, 40, SS_CENTER, WS_EX_LEFT
-    RTEXT           "Home page:", IDC_SC_LBL01, 10, 20, 60, 9, SS_RIGHT, WS_EX_LEFT
+    RTEXT           "Source repository:", IDC_SC_LBL01, 10, 20, 60, 9, SS_RIGHT, WS_EX_LEFT
     CONTROL         "<a>https://</a>", IDC_LM_LNK01, WC_LINK, WS_TABSTOP, 67, 20, 120, 9
-    RTEXT           "Source repository:", IDC_SC_LBL02, 200, 20, 50, 9, SS_RIGHT, WS_EX_LEFT
+    RTEXT           "Support Open Mod Manager:", IDC_SC_LBL02, 200, 20, 50, 9, SS_RIGHT, WS_EX_LEFT
     CONTROL         "<a>https://</a>", IDC_LM_LNK02, WC_LINK, WS_TABSTOP, 250, 20, 120, 9
     EDITTEXT        IDC_EC_RESUL, 10, 61, 330, 60, WS_VSCROLL | NOT WS_TABSTOP | ES_CENTER | ES_MULTILINE | ES_READONLY, 0
     CONTROL         "-----------", IDC_SC_SEPAR, WC_STATIC, SS_ETCHEDHORZ, 4, 295, 479, 1, WS_EX_LEFT

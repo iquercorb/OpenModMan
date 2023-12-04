@@ -577,7 +577,11 @@ bool Om_namesMatches(const OmWString& left, const OmWString& right)
   if(left.size() != right.size())
     return false;
 
-  for(size_t i = 0; i < left.size(); ++i) {
+  // test from end of string because this function is mainly used to compare
+  // paths, so the first part of string is often exactly the same.
+
+  size_t i = left.size();
+  while(i--) {
     if(towupper(left[i]) != towupper(right[i]))
       return false;
   }
@@ -593,7 +597,11 @@ bool Om_namesMatches(const OmWString& left, const wchar_t* right)
   if(left.size() != wcslen(right))
     return false;
 
-  for(size_t i = 0; i < left.size(); ++i) {
+  // test from end of string because this function is mainly used to compare
+  // paths, so the first part of string is often exactly the same.
+
+  size_t i = left.size();
+  while(i--) {
     if(towupper(left[i]) != towupper(right[i]))
       return false;
   }
@@ -1043,17 +1051,29 @@ OmWString Om_formatSizeStr(uint64_t bytes, bool octet)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmWString Om_formatSizeSysStr(uint64_t bytes, bool kbytes)
+void Om_formatSizeSysStr(int64_t bytes, OmWString* wstrs)
 {
-  wchar_t buf[64];
+  wchar_t buf[32];
 
-  if(kbytes) {
-    StrFormatKBSizeW(bytes, buf, 64);
-  } else {
-    StrFormatByteSizeW(bytes, buf, 64);
+  if(StrFormatKBSizeW(bytes, buf, 32)) {
+    wstrs->assign(buf);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_formatSizeSysStr(int64_t bytes)
+{
+  OmWString result;
+
+  wchar_t buf[32];
+
+  if(StrFormatKBSizeW(bytes, buf, 32)) {
+    result.assign(buf);
   }
 
-  return OmWString(buf);
+  return result;
 }
 
 ///
@@ -1189,4 +1209,30 @@ OmWString Om_concatStrings(const OmWStringArray& strings, const OmWString& separ
   concat += strings[i];
 
   return concat;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_spacesToUnderscores(const OmWString& spaces)
+{
+  OmWString result;
+
+  result.assign(spaces);
+  std::replace(result.begin(), result.end(), ' ', '_');
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_underscoresToSpaces(const OmWString& spaces)
+{
+  OmWString result;
+
+  result.assign(spaces);
+  std::replace(result.begin(), result.end(), '_', ' ');
+
+  return result;
 }

@@ -71,33 +71,6 @@ long OmUiManMain::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMain::refreshLibrary()
-{
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiManMain::refreshLibrary\n";
-  #endif
-
-  // passes the message to child tab dialog
-  for(size_t i = 0; i < this->_tab_dialog.size(); ++i) {
-
-    // TODO: update this if tab child dialog are added
-
-    switch(this->_tab_dialog[i]->id())
-    {
-    case IDD_MGR_MAIN_LIB:
-      static_cast<OmUiManMainLib*>(this->_tab_dialog[i])->refreshLibrary();
-      break;
-    case IDD_MGR_MAIN_NET:
-      static_cast<OmUiManMainNet*>(this->_tab_dialog[i])->refreshLibrary();
-      break;
-    }
-
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiManMain::_tab_add_dialog(const OmWString& title, OmDialog* dialog)
 {
   this->addChild(dialog);

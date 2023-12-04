@@ -21,6 +21,8 @@
 
 #include "OmUtilFs.h"           //< OM_ACCESS_*
 
+#include "OmDirNotify.h"
+
 #include "OmXmlConf.h"
 #include "OmConnect.h"
 #include "OmModPack.h"
@@ -109,21 +111,57 @@ class OmModChan
     ///
     bool accessesBackup(uint32_t mask = OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE);
 
-    /// \brief Refresh Libraries
+    /// \brief Start Local Library changes notifications
     ///
-    /// Refresh both local Mod library then network Mod library
+    /// Set parameters and enable Local Library changes notifications.
     ///
-    bool refreshLibraries();
+    /// Within this context, the \c param parameter of callback function, if relevant
+    /// according notification type, is the hash value of the concerned Mod Pack object.
+    ///
+    /// \param[in] notify_cb  : Callback to receive changes notifications
+    /// \param[in] user_ptr   : Custom pointer to be passed to callback
+    ///
+    void notifyModLibraryStart(Om_notifyCb notify_cb, void* user_ptr);
+
+    /// \brief Stop Local Library changes notifications
+    ///
+    /// Stops Local Library changes notifications emission.
+    ///
+    void notifyModLibraryStop();
+
+    /// \brief Start Network Library changes notifications
+    ///
+    /// Set parameters and enable Network Library changes notifications.
+    ///
+    /// Within this context, the \c param parameter of callback function, if relevant
+    /// according notification type, is the hash value of the concerned Network Pack object.
+    ///
+    /// \param[in] notify_cb  : Callback to receive changes notifications
+    /// \param[in] user_ptr   : Custom pointer to be passed to callback
+    ///
+    void notifyNetLibraryStart(Om_notifyCb notify_cb, void* user_ptr);
+
+    /// \brief Stop Network Library changes notifications
+    ///
+    /// Stops Network Library changes notifications emission.
+    ///
+    void notifyNetLibraryStop();
 
     /// \brief Clear Mod Library
     ///
     /// Clear the local Mod Library list.
     ///
-    bool clearModLibrary();
+    void clearModLibrary();
+
+    /// \brief Reload Mod Library
+    ///
+    /// Clear then load or reload Mod Library from current directory content.
+    ///
+    void reloadModLibrary();
 
     /// \brief Refresh Mod Library
     ///
-    /// Refresh the local Mod Library list.
+    /// Refresh Mod Pack list analytical parameters
     ///
     bool refreshModLibrary();
 
@@ -341,9 +379,10 @@ class OmModChan
     /// \param[in] begin_cb      : Callback function to be called each operation begin.
     /// \param[in] progress_cb   : Callback function to be called during operation progression.
     /// \param[in] result_cb     : Callback function to be called each operation end.
+    /// \param[in] notify_cb     : Callback function to be called once Mod-Operations queue is empty
     /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
     ///
-    void queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    void queueModOps(const OmPModPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Execute Mod-Operations
     ///
@@ -551,9 +590,10 @@ class OmModChan
     /// \param[in] selection     : List of Mods to add to
     /// \param[in] progress_cb   : Callback function to be called during download progression.
     /// \param[in] result_cb     : Callback function to be called each download end.
+    /// \param[in] notify_cb     : Callback function to be called once downloads queue is empty
     /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
     ///
-    void startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    void startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Stop all downloads
     ///
@@ -579,6 +619,17 @@ class OmModChan
       return this->_download_percent;
     }
 
+    /// \brief Downloads queue size
+    ///
+    /// Returns the current download queue size, that is, count of
+    /// concurrent running downloads
+    ///
+    /// \return Download queue size
+    ///
+    size_t downloadQueueSize() const {
+      return this->_download_queue.size();
+    }
+
     /// \brief Add Mods to Upgrades queue
     ///
     /// Add to Upgrades queue the given Mods.
@@ -592,12 +643,13 @@ class OmModChan
     /// the currently processing Mod Pack object.
     ///
     /// \param[in] selection     : List of Mods to add to
-    /// \param[in] begin_cb      : Callback function to be called each operation begin.
-    /// \param[in] progress_cb   : Callback function to be called during operation progression.
-    /// \param[in] result_cb     : Callback function to be called each operation end.
+    /// \param[in] begin_cb      : Callback function to be called each upgrade begin.
+    /// \param[in] progress_cb   : Callback function to be called during upgrade progression.
+    /// \param[in] result_cb     : Callback function to be called each upgrade end.
+    /// \param[in] notify_cb     : Callback function to be called once upgrades queue is empty
     /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
     ///
-    void queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    void queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Stop upgrades
     ///
@@ -615,6 +667,17 @@ class OmModChan
       return this->_upgrade_percent;
     }
 
+    /// \brief Upgrades queue size
+    ///
+    /// Returns the current upgrades queue size, that is, count of remaining
+    /// upgrades to be performed.
+    ///
+    /// \return Upgrades queue size
+    ///
+    size_t upgradesQueueSize() const {
+      return this->_upgrade_queue.size();
+    }
+
     /// \brief Sort network Mod Library
     ///
     /// Sort network Mod Library using the current sorting mode
@@ -628,6 +691,17 @@ class OmModChan
     /// \param[in]  sorting : Attribute to sort Net library.
     ///
     void setNetLibrarySort(OmSort sorting);
+
+    /// \brief Check for locked Network Library
+    ///
+    /// Returns locked state of Network Library. The Network Library is locked in case of
+    /// processing Downloads and repository queries to prevent concurrent data updates.
+    ///
+    /// \return True if Network library is locked, false otherwise
+    ///
+    bool lockedNetLibrary() const {
+      return this->_locked_net_library;
+    }
 
     /// \brief Add Network Repository
     ///
@@ -686,13 +760,14 @@ class OmModChan
     /// the currently processing Net Repo object.
     ///
     /// \param[in] selection  : Selected Repositories list to query
-    /// \param[in] begin_cb   : Callback function called for processing begin
-    /// \param[in] result_cb  : Callback function called for processing result
+    /// \param[in] begin_cb   : Callback function called each query begin
+    /// \param[in] result_cb  : Callback function called each query result
+    /// \param[in] notify_cb  : Callback function called once queue is empty
     /// \param[in] user_ptr   : User pointer to pass to result callback
     ///
     /// \return True if request was sent, false if query already processing.
     ///
-    void queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    void queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Abort Net Repository query.
     ///
@@ -700,7 +775,7 @@ class OmModChan
     ///
     void abortQueries();
 
-    /// \brief Respository queries progression
+    /// \brief Repository queries progression
     ///
     /// Returns repository queries queue progression in percent
     ///
@@ -710,6 +785,17 @@ class OmModChan
       return this->_query_percent;
     }
 
+    /// \brief Repository queries queue size
+    ///
+    /// Returns the current repository queries queue size, that is, count of
+    /// remaining repository queries to be performed.
+    ///
+    /// \return Repository queries queue size
+    ///
+    size_t queriesQueueSize() const {
+      return this->_query_queue.size();
+    }
+
     /// \brief Check whether is valid.
     ///
     /// Checks whether this instance is correctly loaded a ready to use.
@@ -717,7 +803,7 @@ class OmModChan
     /// \return True if this instance is valid, false otherwise.
     ///
     bool valid() const {
-      return this->_xmlconf.valid();
+      return this->_xml.valid();
     }
 
     /// \brief Get Mod Channel UUID.
@@ -1142,44 +1228,11 @@ class OmModChan
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // logs and errors
-    void                  _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
-
-    void                  _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString             _lasterr;
-
     // related objects
     OmModHub*             _Modhub;
 
-    // related XML config
-    OmXmlConf             _xmlconf;
-
-    // mod operations helpers
-    void                  _get_modops_depends(const OmModPack*, OmPModPackArray*, OmWStringArray*) const;
-
-    void                  _get_backup_relations(const OmModPack*, OmPModPackArray*, OmWStringArray*, OmWStringArray*) const;
-
-    void                  _get_cleaning_depends(const OmModPack*, const OmPModPackArray&, OmPModPackArray*) const;
-
-    void                  _get_cleaning_relations(const OmModPack*, const OmPModPackArray&, OmPModPackArray*, OmWStringArray*) const;
-
-    void                  _get_missing_depends(const OmModPack*, OmWStringArray*) const;
-
-    void                  _get_source_downloads(const OmModPack*, OmPNetPackArray*, OmWStringArray*) const;
-
-    void                  _get_replace_breaking(const OmNetPack*, OmWStringArray*) const;
-
-    // sorting comparison functions
-    static bool           _compare_mod_name(const OmModPack* a, const OmModPack* b);
-    static bool           _compare_mod_stat(const OmModPack* a, const OmModPack* b);
-    static bool           _compare_mod_vers(const OmModPack* a, const OmModPack* b);
-    static bool           _compare_mod_cate(const OmModPack* a, const OmModPack* b);
-    static bool           _compare_net_name(const OmNetPack* a, const OmNetPack* b);
-    static bool           _compare_net_stat(const OmNetPack* a, const OmNetPack* b);
-    static bool           _compare_net_vers(const OmNetPack* a, const OmNetPack* b);
-    static bool           _compare_net_cate(const OmNetPack* a, const OmNetPack* b);
-    static bool           _compare_net_size(const OmNetPack* a, const OmNetPack* b);
+    // XML definition
+    OmXmlConf             _xml;
 
     // channel properties
     OmWString             _path;
@@ -1216,6 +1269,34 @@ class OmModChan
     // repositories
     OmPNetRepoArray       _repository_list;
 
+    // library monitoring
+    OmDirNotify           _monitor;
+
+    static void           _monitor_notify_fn(void*, OmNotify, uint64_t);
+
+    Om_notifyCb           _modpack_notify_cb;
+
+    void*                 _modpack_notify_ptr;
+
+    Om_notifyCb           _netpack_notify_cb;
+
+    void*                 _netpack_notify_ptr;
+
+    // mod-operations helper functions
+    void                  _get_modops_depends(const OmModPack*, OmPModPackArray*, OmWStringArray*) const;
+
+    void                  _get_backup_relations(const OmModPack*, OmPModPackArray*, OmWStringArray*, OmWStringArray*) const;
+
+    void                  _get_cleaning_depends(const OmModPack*, const OmPModPackArray&, OmPModPackArray*) const;
+
+    void                  _get_cleaning_relations(const OmModPack*, const OmPModPackArray&, OmPModPackArray*, OmWStringArray*) const;
+
+    void                  _get_missing_depends(const OmModPack*, OmWStringArray*) const;
+
+    void                  _get_source_downloads(const OmModPack*, OmPNetPackArray*, OmWStringArray*) const;
+
+    void                  _get_replace_breaking(const OmNetPack*, OmWStringArray*) const;
+
     // threads management
     bool                  _locked_mod_library;
 
@@ -1246,6 +1327,8 @@ class OmModChan
 
     Om_resultCb           _modops_result_cb;
 
+    Om_notifyCb           _modops_notify_cb;
+
     void*                 _modops_user_ptr;
 
     // mods download stuff
@@ -1264,6 +1347,8 @@ class OmModChan
     Om_downloadCb         _download_download_cb;
 
     Om_resultCb           _download_result_cb;
+
+    Om_notifyCb           _download_notify_cb;
 
     void*                 _download_user_ptr;
 
@@ -1292,6 +1377,8 @@ class OmModChan
 
     Om_resultCb           _upgrade_result_cb;
 
+    Om_notifyCb           _upgrade_notify_cb;
+
     void*                 _upgrade_user_ptr;
 
     // repositories query stuff
@@ -1315,11 +1402,11 @@ class OmModChan
 
     Om_resultCb           _query_result_cb;
 
+    Om_notifyCb           _query_notify_cb;
+
     void*                 _query_user_ptr;
 
     // channel options
-
-
     bool                  _library_devmode;
 
     bool                  _library_showhidden;
@@ -1343,6 +1430,24 @@ class OmModChan
     bool                  _warn_upgd_brk_deps;
 
     bool                  _upgd_rename;
+
+    // sorting comparison functions
+    static bool           _compare_mod_name(const OmModPack* a, const OmModPack* b);
+    static bool           _compare_mod_stat(const OmModPack* a, const OmModPack* b);
+    static bool           _compare_mod_vers(const OmModPack* a, const OmModPack* b);
+    static bool           _compare_mod_cate(const OmModPack* a, const OmModPack* b);
+    static bool           _compare_net_name(const OmNetPack* a, const OmNetPack* b);
+    static bool           _compare_net_stat(const OmNetPack* a, const OmNetPack* b);
+    static bool           _compare_net_vers(const OmNetPack* a, const OmNetPack* b);
+    static bool           _compare_net_cate(const OmNetPack* a, const OmNetPack* b);
+    static bool           _compare_net_size(const OmNetPack* a, const OmNetPack* b);
+
+    // logs and errors
+    void                  _log(unsigned level, const OmWString& origin, const OmWString& detail) const;
+
+    void                  _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString             _lasterr;
 };
 
 /// \brief OmModChan pointer array

@@ -115,7 +115,7 @@ void OmUiPropModSrc::_onTabInit()
 
     // Total Size
     this->enableItem(IDC_EC_READ4, true);
-    this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->sourcePath()), true));
+    this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->sourcePath())));
 
     // Source Files
     if(ModPack->sourceEntryCount()) {

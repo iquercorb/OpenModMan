@@ -56,17 +56,15 @@ long OmUiHelpLog::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiHelpLog::_logCb(void* ptr, const OmWString& log)
+void OmUiHelpLog::_log_notify_cb(void* ptr, OmNotify notify, uint64_t param)
 {
   OmUiHelpLog* self = reinterpret_cast<OmUiHelpLog*>(ptr);
 
   size_t len = self->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
   self->msgItem(IDC_EC_RESUL, EM_SETSEL, len, len);
-  self->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(log.c_str()));
+  self->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, static_cast<LPARAM>(param));
   self->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_BOTTOM, 0);
   self->msgItem(IDC_EC_RESUL, 0, 0, RDW_ERASE|RDW_INVALIDATE);
-
-  return true;
 }
 
 
@@ -90,7 +88,7 @@ void OmUiHelpLog::_onInit()
   this->msgItem(IDC_EC_RESUL, EM_SETLIMITTEXT, 0, 0);
   this->msgItem(IDC_EC_RESUL, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(ModMan->currentLog().c_str()));
 
-  ModMan->addLogCallback(OmUiHelpLog::_logCb, this);
+  ModMan->addLogNotify(OmUiHelpLog::_log_notify_cb, this);
 }
 
 
@@ -118,7 +116,7 @@ void OmUiHelpLog::_onQuit()
   OmModMan* ModMan = reinterpret_cast<OmModMan*>(this->_data);
   if(!ModMan) return;
 
-  ModMan->removeLogCallback(OmUiHelpLog::_logCb);
+  ModMan->removeLogNotify(OmUiHelpLog::_log_notify_cb);
 }
 
 ///

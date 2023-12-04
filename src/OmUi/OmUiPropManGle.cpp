@@ -176,7 +176,7 @@ void OmUiPropManGle::_onBcBrwStr()
 
   this->getItemText(IDC_EC_INP01, start);
 
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Mod Hub file", OM_CTX_DEF_FILE_FILER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Mod Hub definition file", OM_OMX_FILE_FILER, start))
     return;
 
   // add file path to startup context list

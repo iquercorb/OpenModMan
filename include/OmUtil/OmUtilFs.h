@@ -108,8 +108,7 @@ int Om_fileDelete(const OmWString& path);
 ///
 /// \param[in]  path   : Path to item to check.
 ///
-/// \return True if item is actually a file, false if it does not exists or
-///         is a folder.
+/// \return True if item exists and is a file, false otherwise
 ///
 bool Om_isFile(const OmWString& path);
 
@@ -119,10 +118,19 @@ bool Om_isFile(const OmWString& path);
 ///
 /// \param[in]  path   : Path to item to check.
 ///
-/// \return True if item is actually a folder, false if it does not exists or
-///         is a file.
+/// \return True if item exists and is a directory, false otherwise
 ///
 bool Om_isDir(const OmWString& path);
+
+/// \brief Check hidden attribute
+///
+/// Checks whether the specified item has hidden attribute
+///
+/// \param[in]  path   : Path to item to check.
+///
+/// \return True if item exists and has hidden attribute, false otherwise
+///
+bool Om_isHidden(const OmWString& path);
 
 /// \brief Check existing item
 ///

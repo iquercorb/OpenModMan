@@ -109,12 +109,14 @@ class OmModPack
     ///
     void clearAll();
 
-    /// \brief Clear analytical properties
+    /// \brief Refresh analytical properties
     ///
-    /// Clear status and analytical properties related to previous operation
-    /// such as install or restoration
+    /// Performs analysis of this instance against the library and current
+    /// internal state to instate proper values.
     ///
-    void clearAnalytics();
+    /// \return True if values changed, false otherwise
+    ///
+    bool refreshAnalytics();
 
     /// \brief Parse Mod Source
     ///
@@ -592,44 +594,14 @@ class OmModPack
     ///
     bool saveAs(const OmWString& path, int32_t method = 93, int32_t level = 6, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
-    /// \brief Check for error
+    /// \brief Check overlapped
     ///
-    /// Checks whether this instance has encountered error during last operation
+    /// Returns whether this instance is currently overlapped by another
     ///
-    /// \return True if has error, false otherwise
+    /// \return True if is overlapped, false otherwise
     ///
-    bool hasError() const {
-      return this->_error_backup || this->_error_restore || this->_error_apply;
-    }
-
-    /// \brief Check for backup error
-    ///
-    /// Checks whether this instance has encountered error during last backup operation
-    ///
-    /// \return True if has backup error, false otherwise
-    ///
-    bool backupHasError() const {
-      return this->_error_backup;
-    }
-
-    /// \brief Check for data restore error
-    ///
-    /// Checks whether this instance has encountered error during last data restore operation
-    ///
-    /// \return True if has data restore error, false otherwise
-    ///
-    bool restoreHasError() const {
-      return this->_error_backup;
-    }
-
-    /// \brief Check for apply error
-    ///
-    /// Checks whether this instance has encountered error during last apply operation
-    ///
-    /// \return True if has apply error, false otherwise
-    ///
-    bool applyHasError() const {
-      return this->_error_apply;
+    bool isOverlapped() const {
+      return this->_is_overlapped;
     }
 
     /// \brief Check whether in backup operation
@@ -694,13 +666,6 @@ class OmModPack
 
   private:
 
-    // management
-    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
-
-    void                _error(const OmWString& origin, const OmWString& detail);
-
-    OmWString           _lasterr;
-
     // linking
     OmModChan*          _ModChan;
 
@@ -725,6 +690,9 @@ class OmModPack
     OmImage             _thumbnail;
 
     time_t              _thumbnail_time;
+
+    // source parse helper
+    static void         _src_parse_dir(OmModEntryArray*, const OmWString&, const OmWString&);
 
     // pack source properties
     bool                _has_src;
@@ -757,11 +725,7 @@ class OmModPack
     OmUint64Array       _bck_overlap;
 
     // analytical properties
-    bool                _error_backup;
-
-    bool                _error_restore;
-
-    bool                _error_apply;
+    bool                _is_overlapped;
 
     bool                _op_backup;
 
@@ -770,6 +734,13 @@ class OmModPack
     bool                _op_apply;
 
     uint32_t            _op_progress;
+
+    // logs and errors
+    void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
+
+    void                _error(const OmWString& origin, const OmWString& detail);
+
+    OmWString           _lasterr;
 };
 
 /// \brief OmModPack pointer array

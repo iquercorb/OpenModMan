@@ -24,7 +24,6 @@
 
 #include "OmUiMan.h"
 #include "OmUiPropChn.h"
-#include "OmUiProgress.h"
 
 #include "OmUtilDlg.h"
 #include "OmUtilWin.h"

@@ -52,22 +52,14 @@ class OmUiManMain : public OmDialog
     ///
     long id() const;
 
-    /// \brief Refresh library
-    ///
-    /// Public function to refresh Library content. This function is
-    /// typically called each time Library directory monitor thread
-    /// detect changes in directory.
-    ///
-    void refreshLibrary();
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMan*            _UiMan;
 
     // child tabs
-    OmWStringArray     _tab_name;
+    OmWStringArray      _tab_name;
 
-    std::vector<OmDialog*>   _tab_dialog;
+    OmPDialogArray      _tab_dialog;
 
     void                _tab_add_dialog(const OmWString& name, OmDialog* dialog);
 

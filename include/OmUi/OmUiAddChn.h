@@ -91,7 +91,7 @@ class OmUiAddChn : public OmDialog
 
     void                      _onBcBrwBck();
 
-    bool                      _onBcOk();
+    bool                      _bc_ok_pressed();
 
     void                      _onInit();
 

@@ -95,9 +95,7 @@ OmModPack::OmModPack() :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
-  _error_backup(false),
-  _error_restore(false),
-  _error_apply(false),
+  _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
   _op_apply(false),
@@ -116,9 +114,7 @@ OmModPack::OmModPack(OmModChan* ModChan) :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
-  _error_backup(false),
-  _error_restore(false),
-  _error_apply(false),
+  _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
   _op_apply(false),
@@ -151,9 +147,6 @@ void OmModPack::clearAll()
   this->_name.clear();
   this->_version.clear();
 
-  this->_error_backup = false;
-  this->_error_restore = false;
-  this->_error_apply = false;
   this->_op_backup = false;
   this->_op_restore = false;
   this->_op_apply = false;
@@ -163,15 +156,28 @@ void OmModPack::clearAll()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModPack::clearAnalytics()
+bool OmModPack::refreshAnalytics()
 {
-  this->_error_backup = false;
-  this->_error_restore = false;
-  this->_error_apply = false;
-  this->_op_backup = false;
-  this->_op_restore = false;
-  this->_op_apply = false;
-  this->_op_progress = 0;
+  bool has_changes = false;
+
+  // check for overlapping
+  if(!this->_ModChan)
+    return false;
+
+  bool is_overlapped = false;
+
+  for(size_t i = 0; i < this->_ModChan->modpackCount(); ++i) {
+    if(this->_ModChan->getModpack(i)->hasOverlap(this->_hash)) {
+      is_overlapped = true; break;
+    }
+  }
+
+  if(is_overlapped != this->_is_overlapped)
+    has_changes = true;
+
+  this->_is_overlapped = is_overlapped;
+
+  return has_changes;
 }
 
 ///
@@ -194,6 +200,47 @@ void OmModPack::clearSource()
   this->_description_time = 0;
   this->_thumbnail.clear();
   this->_thumbnail_time = 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModPack::_src_parse_dir(OmModEntryArray* entries, const OmWString& orig, const OmWString& from)
+{
+  OmWString item;
+  OmWString root;
+
+  OmModEntry_t entry;
+  entry.cdid = -1;
+
+  OmWString srch(orig);
+  srch += L"\\*";
+
+  WIN32_FIND_DATAW fd;
+  HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
+  if(hnd != INVALID_HANDLE_VALUE) {
+    do {
+      // skip this and parent folder
+      if(!wcscmp(fd.cFileName, L".")) continue;
+      if(!wcscmp(fd.cFileName, L"..")) continue;
+
+      item = from + L"\\"; item += fd.cFileName;
+
+      entry.path = item;
+
+      if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        entry.attr = OM_MODENTRY_DIR;
+        entries->push_back(entry);
+        // go deep in tree
+        root = orig + L"\\"; root += fd.cFileName;
+        OmModPack::_src_parse_dir(entries, root, item);
+      } else {
+        entry.attr = 0;
+        entries->push_back(entry);
+      }
+    } while(FindNextFileW(hnd, &fd));
+  }
+  FindClose(hnd);
 }
 
 ///
@@ -889,18 +936,18 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
 
   if(!this->_ModChan) {
     this->_error(L"makeBackup", L"no Mod Channel");
-    this->_op_backup = false; this->_error_backup = true;
+    this->_op_backup = false;
     return OM_RESULT_ABORT;
   }
 
   if(!this->_has_src) {
     this->_error(L"makeBackup", L"Source data missing");
-    this->_op_backup = false; this->_error_backup = true;
+    this->_op_backup = false;
     return OM_RESULT_ABORT;
   }
 
   // start backup operation
-  this->_op_backup = true; this->_error_backup = false;
+  this->_op_backup = true;
 
   // initialize chrono
   clock_t time = clock();
@@ -935,7 +982,7 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
     int32_t result = Om_dirCreateRecursive(bck_root);
     if(result != 0) {
       this->_error(L"makeBackup", Om_errCreate(L"initial Backup directories", bck_root, result));
-      this->_op_backup = false; this->_error_backup = true;
+      this->_op_backup = false;
       return OM_RESULT_ERROR;
     }
 
@@ -949,7 +996,7 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
     // initialize zip archive
     if(!backup_zip.write(bck_path, this->_ModChan->backupCompMethod(), this->_ModChan->backupCompLevel())) {
       this->_error(L"makeBackup", Om_errInit(L"Backup archive file", bck_path, backup_zip.lastErrorStr()));
-      this->_op_backup = false; this->_error_backup = true;
+      this->_op_backup = false;
       return OM_RESULT_ERROR;
     }
   }
@@ -1087,8 +1134,8 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
 
   // process aborted, either by user or encountered error
   if(has_abort || has_error) {
-    this->_op_backup = false; this->_error_backup = has_error;
-    return has_error ? OM_RESULT_ERROR : OM_RESULT_ABORT;
+    this->_op_backup = false;
+    return has_error ? OM_RESULT_ERROR_BACKP : OM_RESULT_ABORT;
   }
 
   // retrieve overlapped Mod list and add to XML config
@@ -1132,10 +1179,10 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
   this->_has_bck = true;
 
   // end backup operation
-  this->_op_backup = false; this->_error_backup = has_error;
+  this->_op_backup = false;
 
   if(has_error) {
-    return OM_RESULT_ERROR; //< must undo
+    return OM_RESULT_ERROR_BACKP; //< must undo
   }
 
   // making report
@@ -1154,18 +1201,18 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
 {
   if(!this->_ModChan) {
     this->_error(L"restoreData", L"no Mod Channel.");
-    this->_op_restore = false; this->_error_restore = true;
+    this->_op_restore = false;
     return OM_RESULT_ABORT;
   }
 
   if(!this->_has_bck) {
     if(!isundo) this->_error(L"restoreData", L"Backup data missing.");
-    this->_op_restore = false; this->_error_restore = true;
+    this->_op_restore = false;
     return OM_RESULT_ABORT;
   }
 
   // start restore operation
-  this->_op_restore = true; this->_error_restore = false;
+  this->_op_restore = true;
 
   // initialize chrono
   clock_t time = clock();
@@ -1182,7 +1229,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     }
     this->_op_progress =((double)progress_cur / progress_tot) * 100;
     if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(this))) {
-      this->_op_restore = false; this->_error_restore = false;
+      this->_op_restore = false;
       return OM_RESULT_ABORT;
     }
   }
@@ -1193,13 +1240,13 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
   if(this->_bck_isdir) {
     if(!Om_isDir(this->_bck_root)) {
       this->_error(L"restoreData", Om_errNotDir(L"Backup root directory", this->_bck_root));
-      this->_op_restore = false; this->_error_restore = true;
+      this->_op_restore = false;
       return OM_RESULT_ERROR;
     }
   } else {
     if(!backup_zip.read(this->_bck_path)) {
       this->_error(L"restoreData", Om_errLoad(L"Backup archive file", this->_bck_path, backup_zip.lastErrorStr()));
-      this->_op_restore = false; this->_error_restore = true;
+      this->_op_restore = false;
       return OM_RESULT_ERROR;
     }
   }
@@ -1332,13 +1379,13 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
   this->_log(OM_LOG_OK, L"restoreData", done_str);
 
   // end restore operation
-  this->_op_restore = false; this->_error_restore = has_error;
+  this->_op_restore = false;
 
   if(has_abort)
     return OM_RESULT_ABORT;
 
   if(has_error)
-    return OM_RESULT_ERROR;
+    return OM_RESULT_ERROR_RESTO;
 
   return OM_RESULT_OK;
 }
@@ -1350,12 +1397,12 @@ OmResult OmModPack::applySource(Om_progressCb progress_cb, void* user_ptr)
 {
   if(!this->_ModChan) {
     this->_error(L"applySource", L"no Mod Channel.");
-    this->_op_apply = false; this->_error_apply = true;
+    this->_op_apply = false;
     return OM_RESULT_ABORT;
   }
 
   // start install operation
-  this->_op_apply = true; this->_error_apply = false;
+  this->_op_apply = true;
 
   // initialize chrono
   clock_t time = clock();
@@ -1377,13 +1424,13 @@ OmResult OmModPack::applySource(Om_progressCb progress_cb, void* user_ptr)
   if(this->_src_isdir) {
     if(!Om_isDir(this->_src_root)) {
       this->_error(L"applySource", Om_errNotDir(L"Source directory", this->_src_root));
-      this->_op_apply = false; this->_error_apply = true;
+      this->_op_apply = false;
       return OM_RESULT_ERROR;
     }
   } else {
     if(!source_zip.read(this->_src_path)) {
       this->_error(L"applySource", Om_errLoad(L"Source archive file", this->_src_path, source_zip.lastErrorStr()));
-      this->_op_apply = false; this->_error_apply = true;
+      this->_op_apply = false;
       return OM_RESULT_ERROR;
     }
   }
@@ -1452,10 +1499,10 @@ OmResult OmModPack::applySource(Om_progressCb progress_cb, void* user_ptr)
   if(!this->_src_isdir) source_zip.close();
 
   // end install operation
-  this->_op_apply = false; this->_error_apply = has_error;
+  this->_op_apply = false;
 
   if(has_abort || has_error) {
-    return has_error ? OM_RESULT_ERROR : OM_RESULT_ABORT; //< must undo
+    return has_error ? OM_RESULT_ERROR_APPLY : OM_RESULT_ABORT; //< must undo
   }
 
   // making report
