@@ -57,25 +57,21 @@ class OmUiPropChnNet : public OmDialogPropTab
 
     static void         _query_result_fn(void*, OmResult, uint64_t);
 
-    void                _onLbReplsSel();
+    void                _lb_rep_on_selchg();
 
-    void                _onBcAddRepo();
+    void                _bc_rpadd_pressed();
 
-    void                _onBcQryRepo();
+    void                _bc_rpqry_pressed();
 
-    void                _onBcDelRepo();
+    void                _bc_rpdel_pressed();
 
-    void                _onBcRadUpg();
+    void                _onTbInit();
 
-    void                _onCkBoxWrn();
+    void                _onTbResize();
 
-    void                _onTabInit();
+    void                _onTbRefresh();
 
-    void                _onTabResize();
-
-    void                _onTabRefresh();
-
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPCHNNET_H

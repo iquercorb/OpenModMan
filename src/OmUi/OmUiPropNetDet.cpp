@@ -62,7 +62,7 @@ long OmUiPropNetDet::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropNetDet::_onTabInit()
+void OmUiPropNetDet::_onTbInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14,400,L"Consolas");
@@ -111,7 +111,7 @@ void OmUiPropNetDet::_onTabInit()
 
   // Urls
   this->enableItem(IDC_EC_READ5, true);
-  this->setItemText(IDC_EC_READ5, NetPack->fileUrl());
+  this->setItemText(IDC_EC_READ5, NetPack->downloadUrl());
 
   // Size
   this->setItemText(IDC_EC_READ6, NetPack->fileSizeStr());
@@ -176,7 +176,7 @@ void OmUiPropNetDet::_onTabInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropNetDet::_onTabResize()
+void OmUiPropNetDet::_onTbResize()
 {
   // Identity Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 5, 64, 9);

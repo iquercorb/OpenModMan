@@ -157,6 +157,14 @@ OmWString Om_errExists(const OmWString& item, const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmWString Om_errParam(const OmWString& value, const OmWString& type)
+{
+  return L"invalid parameter: \"" + value + L"\" is not a valid " + type;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 OmWString Om_errBadAlloc(const OmWString& subject, const OmWString& name)
 {
   return subject + L" \"" + name + L"\" error: out of memory.";

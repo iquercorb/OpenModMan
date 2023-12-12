@@ -59,7 +59,7 @@ long OmUiPropHubStg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubStg::_onBcBrwIcon()
+void OmUiPropHubStg::_browse_hub_icon()
 {
   OmWString start, result;
 
@@ -73,7 +73,7 @@ void OmUiPropHubStg::_onBcBrwIcon()
   HICON hIc = nullptr;
 
   // check if the path to icon is non empty
-  if(Om_isValidPath(result))
+  if(Om_hasLegalPathChar(result))
     ExtractIconExW(result.c_str(), 0, &hIc, nullptr, 1);
 
   if(hIc) {
@@ -84,7 +84,7 @@ void OmUiPropHubStg::_onBcBrwIcon()
   }
 
   // refresh icon
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 
   // user modified parameter, notify it
   this->paramCheck(HUB_PROP_STG_ICON);
@@ -94,12 +94,12 @@ void OmUiPropHubStg::_onBcBrwIcon()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubStg::_onBcDelIcon()
+void OmUiPropHubStg::_delete_hub_icon()
 {
   this->setItemText(IDC_EC_INP04, L""); //< set invalid path
 
   // refresh icon
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 
   // user modified parameter, notify it
   this->paramCheck(HUB_PROP_STG_ICON);
@@ -109,65 +109,68 @@ void OmUiPropHubStg::_onBcDelIcon()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubStg::_onTabInit()
+void OmUiPropHubStg::_onTbInit()
 {
   // add icon to buttons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_OPN));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Mod Hub home folder path");
-  this->_createTooltip(IDC_EC_INP03,  L"Mod Hub name, to identify it");
-  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select an icon to associate with Mod Hub");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove the associated icon");
+  this->_createTooltip(IDC_EC_INP01,  L"Hub home directory path");
+  this->_createTooltip(IDC_EC_INP03,  L"Hub title");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select icon or application");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove icon");
 
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
 
-  this->setItemText(IDC_EC_INP01, pModHub->home());
-  this->setItemText(IDC_EC_INP02, pModHub->uuid());
-  this->setItemText(IDC_EC_INP03, pModHub->title());
-
-  this->setItemText(IDC_EC_INP04, pModHub->iconSource()); //< hidden icon path
+  this->setItemText(IDC_EC_INP01, ModHub->home());
+  this->setItemText(IDC_EC_INP03, ModHub->title());
+  this->setItemText(IDC_EC_INP04, ModHub->iconSource()); //< hidden icon path
 
   // refresh with default values
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubStg::_onTabResize()
+void OmUiPropHubStg::_onTbResize()
 {
+  int32_t y_base = 30;
+
   // home location Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 50, 15, 180, 9);
-  this->_setItemPos(IDC_EC_INP01, 50, 25, this->cliUnitX()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 300, 16, true);
+  this->_setItemPos(IDC_EC_INP01, 50, y_base+20, this->cliWidth()-80, 21, true);
   // Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 50, 50, 180, 9);
-  this->_setItemPos(IDC_EC_INP03, 50, 60, this->cliUnitX()-90, 13);
-  // Icon Label & placeholder
-  this->_setItemPos(IDC_SC_LBL04, 50, 90, 180, 9);
-  this->_setItemPos(IDC_EC_INP04, 190, 90, 50, 13); //< hidden field
-  this->_setItemPos(IDC_SB_ICON, 50, 100, 30, 30);
+  this->_setItemPos(IDC_SC_LBL03, 50, y_base+50, 300, 16, true);
+  this->_setItemPos(IDC_EC_INP03, 50, y_base+70, this->cliWidth()-80, 21, true);
+
+  // Icon Label
+  this->_setItemPos(IDC_SC_LBL04, 50, y_base+110, 300, 16, true);
+  // Icon path (hidden)
+  this->_setItemPos(IDC_EC_INP04, 350, y_base+110, 50, 21, true); //< hidden field
+  // Icon image
+  this->_setItemPos(IDC_SB_ICON, 75, y_base+130, 96, 96, true);
 
   // Select & Remove Buttons
-  this->_setItemPos(IDC_BC_BRW01, 85, 100, 16, 14);
-  this->_setItemPos(IDC_BC_DEL, 85, 115, 16, 14);
+  this->_setItemPos(IDC_BC_BRW01, 50, y_base+130, 22, 22, true);
+  this->_setItemPos(IDC_BC_DEL, 50, y_base+153, 22, 22, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubStg::_onTabRefresh()
+void OmUiPropHubStg::_onTbRefresh()
 {
   OmWString icon_src;
   HICON hIc = nullptr;
 
   // check if the path to icon is valid
   this->getItemText(IDC_EC_INP04, icon_src);
-  if(Om_isValidPath(icon_src)) {
+  if(Om_hasLegalPathChar(icon_src)) {
     ExtractIconExW(icon_src.c_str(), 0, &hIc, nullptr, 1); //< large icon
   } else {
     hIc = Om_getShellIcon(SIID_APPLICATION, true);
@@ -186,27 +189,27 @@ void OmUiPropHubStg::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropHubStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropHubStg::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
   if(uMsg == WM_COMMAND) {
 
-    OmWString item_str, brow_str;
-
     switch(LOWORD(wParam))
     {
-    case IDC_EC_INP03: //< Entry for Mod Hub title
-      // user modified parameter, notify it
+    case IDC_EC_INP03:  //< Entry: title
+      // notify parameter changes
       this->paramCheck(HUB_PROP_STG_TITLE);
       break;
 
-    case IDC_BC_BRW01: //< Brows Button for Mod Hub icon
-      this->_onBcBrwIcon();
+    case IDC_BC_BRW01:  //< Button: Browse to select Icon/Application
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_hub_icon();
       break;
 
-    case IDC_BC_DEL: //< Remove Button for Mod Hub icon
-      this->_onBcDelIcon();
+    case IDC_BC_DEL:    //< Button: Remove icon
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_delete_hub_icon();
       break;
     }
   }

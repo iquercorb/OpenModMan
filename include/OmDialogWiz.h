@@ -20,7 +20,7 @@
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
-#include "OmDialog.h"
+#include "OmDialogWizPage.h"
 
 /// \brief Wizard Dialog window.
 ///
@@ -46,27 +46,28 @@ class OmDialogWiz : public OmDialog
     ///
     virtual ~OmDialogWiz();
 
-    /// \brief Enable Next button
+    /// \brief Checks whether next is allowed
     ///
-    /// Enables or disables the dialog wizard Next button
+    /// Checks current page fields and parameter to enable or disable
+    /// the 'Next' button accordingly.
     ///
-    /// \param[in]  allow  : Boolean to enable or disable the Next button
-    ///
-    void setNextAllowed(bool allow);
+    void checkNextAllowed();
 
   protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    std::vector<OmDialog*>   _pageDial;
-
-    void                _addPage(OmDialog* dialog);
-
-    void                _pagesOnCmd(int bc_back, int bc_next, WPARAM wParam);
-
-    int                 _currPage;
+    void                _addPage(OmDialogWizPage* dialog);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    HBITMAP             _hBmSplash;
+    OmPWizPageArray     _pageDial;
+
+    int32_t             _currPage;
+
+    void                _changePage(int32_t index);
+
+    void                _onNext();
+
+    void                _onBack();
 
     void                _onInit();
 

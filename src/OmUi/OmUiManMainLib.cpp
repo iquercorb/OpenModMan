@@ -48,6 +48,10 @@
 ///
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
+  _import_abort(false),
+  _import_hdp(nullptr),
+  _import_hth(nullptr),
+  _import_hwo(nullptr),
   _modops_abort(false),
   _lv_mod_icons_size(0)
 {
@@ -75,6 +79,28 @@ OmUiManMainLib::~OmUiManMainLib()
 long OmUiManMainLib::id() const
 {
   return IDD_MGR_MAIN_LIB;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::importMods()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  if(this->_import_hth)
+    return;
+
+  OmWString start;
+
+  // new dialog to open file (allow multiple selection)
+  this->_import_array.clear();
+  if(!Om_dlgOpenFileMultiple(this->_import_array, this->_hwnd, L"Open Mod package", OM_PKG_FILES_FILTER, start))
+    return;
+
+  this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
+  this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
 }
 
 ///
@@ -666,6 +692,69 @@ void OmUiManMainLib::_abort_processing()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+DWORD WINAPI OmUiManMainLib::_import_run_fn(void* ptr)
+{
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
+
+  OmModChan* ModChan = static_cast<OmModMan*>(self->_data)->activeChannel();
+
+  // reset abort
+  self->_import_abort = 0;
+
+  // Open progress dialog
+  HWND hParent = self->root()->hwnd(); //< we must provide main dialog handle or things goes wrong
+  self->_import_hdp = Om_dlgProgress(hParent, L"Import Mods", IDI_PKG_ADD, L"Importing Mods", &self->_import_abort);
+
+  OmResult result = ModChan->importMods(self->_import_array, OmUiManMainLib::_import_progress_fn, self);
+
+  // quit the progress dialog (dialogs must be opened and closed within the same thread)
+  Om_dlgProgressClose(static_cast<HWND>(self->_import_hdp));
+  self->_import_hdp = nullptr;
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiManMainLib::_import_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+{
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
+
+  // update progress text
+  OmWString progress_text = L"Copying Mod package: ";
+  progress_text += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_import_hdp), tot, cur, progress_text.c_str());
+
+  return (self->_import_abort != 1);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmUiManMainLib::_import_end_fn(void* ptr, uint8_t fired)
+{
+  OM_UNUSED(fired);
+
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
+
+  OmResult result = static_cast<OmResult>(Om_threadExitCode(self->_import_hth));
+  Om_clearThread(self->_import_hth, self->_import_hwo);
+
+  self->_import_hth = nullptr;
+  self->_import_hwo = nullptr;
+
+  self->_import_array.clear();
+
+  if(result == OM_RESULT_ERROR) {
+    Om_dlgBox_ok(self->_hwnd, L"Import Mods", IDI_WRN, L"Mod importation error",
+                L"One or more error occurred during Mod importation, see log for details.");
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiManMainLib::_modops_add(const OmPModPackArray& selection)
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
@@ -750,13 +839,13 @@ void OmUiManMainLib::_modops_begin_fn(void* ptr, uint64_t param)
   OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
 
   // get ListView item index search using lparam, that is, Mod Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
-  int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  int32_t item_id = self->findLvParam(IDC_LV_MOD, ModPack->hash());
   if(item_id < 0) return;
 
+  // update ListView item
+  LVITEMW lvI = {}; lvI.iItem = item_id;
   // change status icon
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0;  lvI.iImage = ICON_STS_WIP;
+  lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -778,8 +867,7 @@ bool OmUiManMainLib::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint
     return true; //< wrong Channel, do not abort but ignore
 
   // get ListView item index search using lparam, that is, Mod Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
-  int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  int32_t item_id = self->findLvParam(IDC_LV_MOD, ModPack->hash());
 
   // Invalidate ListView subitem rect to call custom draw (progress bar)
   RECT rect;
@@ -810,8 +898,7 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
   if(ModChan == ModMan->activeChannel()) {
 
     // get ListView item index search using lparam, that is, Mod Pack hash value.
-    LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(ModPack->hash());
-    int32_t item_id = self->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+    int32_t item_id = self->findLvParam(IDC_LV_MOD, ModPack->hash());
 
     // Set 'Install' and 'Uninstall" button if item currently selected
     if(self->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT) == 1) {
@@ -821,9 +908,10 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
       }
     }
 
-    // change ListView status icon
-    LVITEMW lvI = {};
-    lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
+    // update ListView item
+    LVITEMW lvI = {}; lvI.iItem = item_id;
+    // change status icon
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = self->_lv_mod_get_status_icon(ModPack);
     self->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
     // Invalidate ListView subitem rect to call custom draw (progress bar)
@@ -861,7 +949,7 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
 ///
 void OmUiManMainLib::_modops_ended_fn(void* ptr, OmNotify notify, uint64_t param)
 {
-  OM_UNUSED(notify);
+  OM_UNUSED(notify); OM_UNUSED(param);
 
   OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
@@ -996,10 +1084,7 @@ void OmUiManMainLib::_lv_mod_alterate(OmNotify action, uint64_t param)
 
   // corresponding ListView item should be retrieved by index, but to be sure
   // we search using lparam, that is, Mod Pack hash value.
-  LVFINDINFOW lvF = {};
-  lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(param);
-  int32_t item_id = this->msgItem(IDC_LV_MOD, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
-
+  int32_t item_id = this->findLvParam(IDC_LV_MOD, param);
 
   if(action == OM_NOTIFY_DELETED) {
 
@@ -1302,6 +1387,9 @@ void OmUiManMainLib::_onInit()
   // retrieve main dialog
   this->_UiMan = static_cast<OmUiMan*>(this->root());
 
+// Set Presets buttons icons
+  this->setBmIcon(IDC_BC_IMPORT, Om_getResIcon(IDI_BT_IMP));
+
   // define controls tool-tips
   this->_createTooltip(IDC_BC_INST,   L"Install selected Mod(s)");
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected Mod(s)");
@@ -1396,7 +1484,9 @@ void OmUiManMainLib::_onHide()
 void OmUiManMainLib::_onResize()
 {
   // Library path EditControl
-  this->_setItemPos(IDC_EC_INP01, 2, 0, this->cliWidth()-3, 21, true);
+  this->_setItemPos(IDC_EC_INP01, 2, 0, this->cliWidth()-28, 21, true);
+  // Import button
+  this->_setItemPos(IDC_BC_IMPORT, this->cliWidth()-24, -1, 24, 23, true);
   // Mods Library ListView
   this->_setItemPos(IDC_LV_MOD, 2, 24, this->cliWidth()-3, this->cliHeight()-50, true);
   this->_lv_mod_on_resize(); //< Resize the Mods ListView column
@@ -1418,15 +1508,16 @@ void OmUiManMainLib::_onRefresh()
   std::cout << "DEBUG => OmUiManMainLib::_onRefresh\n";
   #endif
 
-  OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+  //OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
   // disable abort button
   this->enableItem(IDC_BC_ABORT, false);
 
   // disable or enable elements depending context
-  this->enableItem(IDC_SC_LBL01, (ModHub != nullptr));
-  this->enableItem(IDC_LV_MOD, (ModHub != nullptr));
+  this->enableItem(IDC_SC_LBL01, (ModChan != nullptr));
+  this->enableItem(IDC_LV_MOD, (ModChan != nullptr));
+  this->enableItem(IDC_BC_IMPORT, (ModChan != nullptr));
 
   // load or reload theme for ListView custom draw (progress bar)
   if(this->_lv_mod_cdraw_htheme)
@@ -1569,47 +1660,55 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
+    case IDC_BC_IMPORT:
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->importMods();
+      break;
+
     case IDC_BC_INST:
-      this->queueInstalls();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->queueInstalls();
       break;
 
     case IDC_BC_UNIN:
-      this->queueRestores();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->queueRestores();
       break;
 
     case IDC_BC_ABORT:
-      this->abortAll();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->abortAll();
       break;
 
-    case IDM_EDIT_MOD_INST:
+    case IDM_MOD_INST:
       this->queueInstalls();
       break;
 
-    case IDM_EDIT_MOD_UINS:
+    case IDM_MOD_UINS:
       this->queueRestores();
       break;
 
-    case IDM_EDIT_MOD_CLNS:
+    case IDM_MOD_CLNS:
       this->queueCleaning();
       break;
 
-    case IDM_EDIT_MOD_TRSH:
+    case IDM_MOD_TRSH:
       this->deleteSources();
       break;
 
-    case IDM_EDIT_MOD_DISC:
+    case IDM_MOD_DISC:
       this->discardBackups();
       break;
 
-    case IDM_EDIT_MOD_OPEN:
+    case IDM_MOD_OPEN:
       this->exploreSources();
       break;
 
-    case IDM_EDIT_MOD_EDIT:
+    case IDM_MOD_EDIT:
       this->editSource();
       break;
 
-    case IDM_EDIT_MOD_INFO:
+    case IDM_MOD_INFO:
       this->showProperties();
       break;
     }

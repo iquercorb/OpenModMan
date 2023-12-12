@@ -64,7 +64,7 @@ void OmUiAddChn::_onTitleChange()
 
   this->getItemText(IDC_EC_INP01, title);
 
-  if(!Om_isValidName(title))
+  if(!Om_hasLegalSysChar(title))
     title = L"<invalid path>";
 
   if(!this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
@@ -79,13 +79,13 @@ void OmUiAddChn::_onTitleChange()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiAddChn::_onBcBrwDst()
+void OmUiAddChn::_browse_dir_target()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be applied.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be applied.", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -106,7 +106,7 @@ void OmUiAddChn::_onCkBoxLib()
 
   if(!bm_chk) {
     this->getItemText(IDC_EC_INP01, title);
-    if(!Om_isValidName(title)) {
+    if(!Om_hasLegalSysChar(title)) {
       title = L"<invalid path>";
     }
   }
@@ -124,7 +124,7 @@ void OmUiAddChn::_onBcBrwLib()
 
   this->getItemText(IDC_EC_INP03, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP03, result);
@@ -145,7 +145,7 @@ void OmUiAddChn::_onCkBoxBck()
 
   if(!bm_chk) {
     this->getItemText(IDC_EC_INP01, title);
-    if(!Om_isValidName(title)) {
+    if(!Om_hasLegalSysChar(title)) {
       title = L"<invalid path>";
     }
   }
@@ -163,7 +163,7 @@ void OmUiAddChn::_onBcBrwBck()
 
   this->getItemText(IDC_EC_INP04, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Backup folder, where backup data will be stored.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Backup folder, where backup data will be stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP04, result);
@@ -233,7 +233,7 @@ bool OmUiAddChn::_bc_ok_pressed()
 void OmUiAddChn::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Mod Channel name, to identify it and create folder");
@@ -313,15 +313,15 @@ INT_PTR OmUiAddChn::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_EC_INP01: // Title
+    case IDC_EC_INP01: // title entry
       if(HIWORD(wParam) == EN_CHANGE) {
         this->_onTitleChange();
         has_changed = true;
       }
       break;
 
-    case IDC_BC_BRW02: // browse destination
-      this->_onBcBrwDst();
+    case IDC_BC_BRW02: // browse target directory
+      this->_browse_dir_target();
       break;
 
     case IDC_BC_CKBX1: //< Custom Library Checkbox

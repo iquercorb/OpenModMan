@@ -17,8 +17,8 @@
 #ifndef OMBASEWIN_H
 #define OMBASEWIN_H
 
-#define WINVER          0x0600  //< _WIN32_WINNT_VISTA
-#define NTDDI_VERSION   0x6000000  //< NTDDI_VISTA
+#define WINVER          0x0601  //< _WIN32_WINNT_WIN7
+#define NTDDI_VERSION   0x06010000  //< NTDDI_WIN7
 
 #include <Windows.h>
 #include <CommCtrl.h>

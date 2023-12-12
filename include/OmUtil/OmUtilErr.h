@@ -219,6 +219,17 @@ OmWString Om_errZipExtr(const OmWString& item, const OmWString& path, const OmWS
 ///
 OmWString Om_errExists(const OmWString& item, const OmWString& path);
 
+/// \brief Invalid parameter error message.
+///
+/// Compose error string for invalid parameter item.
+///
+/// \param[in]  value   : Formated message parameter value
+/// \param[in]  type    : Formated message parameter type
+///
+/// \return Formated error log message.
+///
+OmWString Om_errParam(const OmWString& value, const OmWString& type);
+
 /// \brief Bad Alloc error message.
 ///
 /// Compose error string for unable to allocate memory.

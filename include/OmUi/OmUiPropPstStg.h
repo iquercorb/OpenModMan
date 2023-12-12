@@ -54,15 +54,13 @@ class OmUiPropPstStg : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onCkBoxIonly();
+    void                _onTbInit();
 
-    void                _onTabInit();
+    void                _onTbResize();
 
-    void                _onTabResize();
+    void                _onTbRefresh();
 
-    void                _onTabRefresh();
-
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPPSTSTG_H

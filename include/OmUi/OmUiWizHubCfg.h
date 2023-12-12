@@ -17,13 +17,13 @@
 #ifndef OMUIWIZHUBCFG_H
 #define OMUIWIZHUBCFG_H
 
-#include "OmDialog.h"
+#include "OmDialogWizPage.h"
 
 /// \brief New Mod Hub Wizard / Configuration page child
 ///
 /// OmDialog class derived for New Mod Hub Wizard / Configuration page child dialog window
 ///
-class OmUiWizHubCfg : public OmDialog
+class OmUiWizHubCfg : public OmDialogWizPage
 {
   public:
 
@@ -49,32 +49,35 @@ class OmUiWizHubCfg : public OmDialog
     ///
     long id() const;
 
+    /// \brief Check valid fields.
+    ///
+    /// Checks whether the page has proper fields filled, that is, the
+    /// next button can be enabled.
+    ///
+    /// \return True if propers fields are filled, false otherwise.
+    ///
+    bool validFields() const;
+
     /// \brief Check valid parameters.
     ///
-    /// Checks whether the dialog actually contain valid
-    /// parameters set by user.
+    /// Checks whether the page has valid parameters, that is, going to
+    /// the next page is allowed.
     ///
-    /// \return True parameters set by user are valid, false otherwise.
+    /// \return True if parameters are valid, false otherwise.
     ///
-    bool hasValidParams() const;
+    bool validParams() const;
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onPathChange();
+    void                _update_hub_path();
 
-    void                _onBcBrwHome();
+    void                _browse_dir_home();
 
-    void                _onInit();
+    void                _onPgInit();
 
-    void                _onShow();
+    void                _onPgResize();
 
-    void                _onResize();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onPgMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIWIZHUBCFG_H

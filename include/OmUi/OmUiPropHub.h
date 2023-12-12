@@ -57,8 +57,8 @@ class OmUiPropHub : public OmDialogProp
     ///
     /// \return Associated Mod Hub or nullptr if none.
     ///
-    OmModHub* modHub() const {
-      return _modHub;
+    OmModHub* ModHub() const {
+      return this->_ModHub;
     }
 
     /// \brief Set associated Mod Hub.
@@ -67,10 +67,10 @@ class OmUiPropHub : public OmDialogProp
     /// work with and on. A valid Mod Hub must be set in order before
     /// opening the dialog.
     ///
-    /// \param[in]  pModHub  : Mod Hub object to associate.
+    /// \param[in]  ModHub  : Mod Hub object to associate.
     ///
-    void setModHub(OmModHub* pModHub) {
-      _modHub = pModHub;
+    void setModHub(OmModHub* ModHub) {
+      this->_ModHub = ModHub;
     }
 
     /// \brief Check for properties changes
@@ -95,7 +95,7 @@ class OmUiPropHub : public OmDialogProp
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmModHub*           _modHub;
+    OmModHub*           _ModHub;
 };
 
 #endif // OMUIPROPHUB_H

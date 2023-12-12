@@ -56,27 +56,25 @@ class OmUiPropManGle : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onCkBoxRaw();
+    void                _starthub_toggle();
 
-    void                _onCkBoxStr();
+    void                _lb_path_on_selchg();
 
-    void                _onLbStrlsSel();
+    void                _starthub_list_up();
 
-    void                _onBcUpStr();
+    void                _starthub_list_dn();
 
-    void                _onBcDnStr();
+    void                _starthub_delete();
 
-    void                _onBcBrwStr();
+    void                _browse_hub_file();
 
-    void                _onBcRemStr();
+    void                _onTbInit();
 
-    void                _onTabInit();
+    void                _onTbResize();
 
-    void                _onTabResize();
+    void                _onTbRefresh();
 
-    void                _onTabRefresh();
-
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPMANGLE_H

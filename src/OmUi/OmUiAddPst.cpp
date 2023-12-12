@@ -473,11 +473,11 @@ bool OmUiAddPst::_onBcOk()
 void OmUiAddPst::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
   // Set icons for Up and Down buttons
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(IDI_BT_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Preset name, to identify it");

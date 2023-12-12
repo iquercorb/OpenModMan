@@ -59,21 +59,19 @@ long OmUiPropPstLst::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_buildLbs()
+void OmUiPropPstLst::_lb_populate()
 {
   // reset List-Box control
   this->msgItem(IDC_LB_EXC, LB_RESETCONTENT);
 
   OmModPset* ModPset = static_cast<OmUiPropPst*>(this->_parent)->ModPset();
-  if(!ModPset)
-    return;
+  if(!ModPset) return;
 
   OmModHub* ModHub = ModPset->ModHub();
-  if(!ModHub)
-    return;
+  if(!ModHub) return;
 
   // get current ComboBox selection first Mod Channel by default
-  int cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
+  int32_t cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
   if(cb_sel < 0) return;
 
   // get Mod Channel corresponding to current selection
@@ -111,7 +109,7 @@ void OmUiPropPstLst::_buildLbs()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_includePkg()
+void OmUiPropPstLst::_install_include()
 {
   // get current ComboBox selection first Mod Channel by default
   int32_t cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
@@ -174,7 +172,7 @@ void OmUiPropPstLst::_includePkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_excludePkg()
+void OmUiPropPstLst::_install_exclude()
 {
   // get current ComboBox selection first Mod Channel by default
   int32_t cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
@@ -240,26 +238,25 @@ void OmUiPropPstLst::_excludePkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onLbExclsSel()
+void OmUiPropPstLst::_lb_exc_on_selchg()
 {
   int32_t sel_cnt = this->msgItem(IDC_LB_EXC, LB_GETSELCOUNT);
+  bool has_select = (sel_cnt > 0);
 
-  if(sel_cnt > 0) {
-    // unselect all from the other ListBox, this is less confusing
-    this->msgItem(IDC_LB_INC, LB_SETSEL, false, -1);
+  // unselect all from the other ListBox, this is less confusing
+  this->msgItem(IDC_LB_INC, LB_SETSEL, !has_select, -1);
 
-    this->enableItem(IDC_BC_RIGH, true);
-    this->enableItem(IDC_BC_LEFT, false);
-    this->enableItem(IDC_BC_UP, false);
-    this->enableItem(IDC_BC_DN, false);
-  }
+  this->enableItem(IDC_BC_RIGH, has_select);
+  this->enableItem(IDC_BC_LEFT, !has_select);
+  this->enableItem(IDC_BC_UP, !has_select);
+  this->enableItem(IDC_BC_DN, !has_select);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onLbInclsSel()
+void OmUiPropPstLst::_lb_inc_on_selchg()
 {
   int32_t sel_cnt = this->msgItem(IDC_LB_INC, LB_GETSELCOUNT);
 
@@ -290,7 +287,7 @@ void OmUiPropPstLst::_onLbInclsSel()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onBcUpPkg()
+void OmUiPropPstLst::_install_list_up()
 {
   // get current ComboBox selection first Mod Channel by default
   int32_t cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
@@ -339,7 +336,7 @@ void OmUiPropPstLst::_onBcUpPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onBcDnPkg()
+void OmUiPropPstLst::_install_list_dn()
 {
   // get current ComboBox selection first Mod Channel by default
   int32_t cb_sel = this->msgItem(IDC_CB_CHN, CB_GETCURSEL);
@@ -394,62 +391,64 @@ void OmUiPropPstLst::_onBcDnPkg()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onTabInit()
+void OmUiPropPstLst::_onTbInit()
 {
   // Set icons for Up and Down buttons
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(IDI_BT_DN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_CB_CHN,    L"Channel to configure");
   this->_createTooltip(IDC_LB_INC,    L"Mods the Preset will install (or leave installed)");
   this->_createTooltip(IDC_LB_EXC,    L"Mods the Preset will uninstall (or leave uninstalled)");
-  this->_createTooltip(IDC_BC_RIGH,   L"Add to installed");
-  this->_createTooltip(IDC_BC_LEFT,   L"Remove from installed");
-  this->_createTooltip(IDC_BC_UP,     L"Move up in list");
-  this->_createTooltip(IDC_BC_DN,     L"Move down in list");
+  this->_createTooltip(IDC_BC_RIGH,   L"Include to be installed");
+  this->_createTooltip(IDC_BC_LEFT,   L"Set to be uninstalled (or ignored)");
+  this->_createTooltip(IDC_BC_UP,     L"Move up");
+  this->_createTooltip(IDC_BC_DN,     L"Move down");
 
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onTabResize()
+void OmUiPropPstLst::_onTbResize()
 {
-  int half_w = this->cliUnitX() * 0.5f;
-  int half_h = this->cliUnitY() * 0.5f;
+  int32_t y_base = 30;
+
+  int32_t half_w = this->cliWidth() * 0.5f;
+  int32_t half_h = this->cliHeight() * 0.5f;
 
   // Preset Configuration Label
-  this->_setItemPos(IDC_SC_LBL02, 50, 25, 240, 9);
+  this->_setItemPos(IDC_SC_LBL02, 50, y_base, 240, 16, true);
   // Mod Channel list ComboBox
-  this->_setItemPos(IDC_CB_CHN, 50, 35, this->cliUnitX()-100, 12);
+  this->_setItemPos(IDC_CB_CHN, 50, y_base+20, this->cliWidth()-100, 21, true);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_CHN), nullptr, true);
 
   // Not-Installed label
-  this->_setItemPos(IDC_SC_LBL03, 50, 55, 150, 9);
+  this->_setItemPos(IDC_SC_LBL03, 50, y_base+50, 150, 16, true);
   // Not-Installed ListBox
-  this->_setItemPos(IDC_LB_EXC, 50, 65, half_w-70, this->cliUnitY()-95);
+  this->_setItemPos(IDC_LB_EXC, 50, y_base+70, half_w-75, this->cliHeight()-140, true);
   // Add and Rem buttons
-  this->_setItemPos(IDC_BC_RIGH, half_w-18, half_h, 16, 15);
-  this->_setItemPos(IDC_BC_LEFT, half_w-18, half_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_RIGH, half_w-23, half_h, 22, 22, true);
+  this->_setItemPos(IDC_BC_LEFT, half_w-23, half_h+23, 22, 22, true);
 
   // Installed label
-  this->_setItemPos(IDC_SC_LBL04, half_w, 55, 150, 9);
+  this->_setItemPos(IDC_SC_LBL04, half_w+1, y_base+50, 150, 16, true);
   // Installed ListBox
-  this->_setItemPos(IDC_LB_INC, half_w, 65, half_w-70, this->cliUnitY()-95);
+  this->_setItemPos(IDC_LB_INC, half_w+1, y_base+70, half_w-75, this->cliHeight()-140, true);
   // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->cliUnitX()-68, half_h, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->cliUnitX()-68, half_h+15, 16, 15);
+  this->_setItemPos(IDC_BC_UP, this->cliWidth()-73, half_h, 22, 22, true);
+  this->_setItemPos(IDC_BC_DN, this->cliWidth()-73, half_h+23, 22, 22, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstLst::_onTabRefresh()
+void OmUiPropPstLst::_onTbRefresh()
 {
   OmModPset* ModPset = static_cast<OmUiPropPst*>(this->_parent)->ModPset();
   if(!ModPset)
@@ -473,10 +472,11 @@ void OmUiPropPstLst::_onTabRefresh()
     OmModChan* ModChan = ModHub->getChannel(i);
 
     cb_entry = ModChan->title();
+    /*
     cb_entry += L" [";
     cb_entry += ModChan->home();
     cb_entry += L"]";
-
+    */
     this->msgItem(IDC_CB_CHN, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(cb_entry.c_str()));
 
     // initialize new lists for this Mod Channel
@@ -518,14 +518,14 @@ void OmUiPropPstLst::_onTabRefresh()
   this->enableItem(IDC_LB_INC, !ModPset->locked());
 
   // fill up each ListBox
-  this->_buildLbs();
+  this->_lb_populate();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropPstLst::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropPstLst::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -536,33 +536,47 @@ INT_PTR OmUiPropPstLst::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_CB_CHN:  //< Mod Channel ComboBox
       if(HIWORD(wParam) == CBN_SELCHANGE)
-        this->_buildLbs();
+        this->_lb_populate();
       break;
 
     case IDC_LB_EXC: // Uninstall (Exclude) ListBox
-      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbExclsSel();
-      if(HIWORD(wParam) == LBN_DBLCLK) this->_includePkg();
+
+      if(HIWORD(wParam) == LBN_SELCHANGE)
+        this->_lb_exc_on_selchg();
+
+      if(HIWORD(wParam) == LBN_DBLCLK)
+        this->_install_include();
+
       break;
 
     case IDC_LB_INC: // Install (Include) ListBox
-      if(HIWORD(wParam) == LBN_SELCHANGE) this->_onLbInclsSel();
-      if(HIWORD(wParam) == LBN_DBLCLK) this->_excludePkg();
+
+      if(HIWORD(wParam) == LBN_SELCHANGE)
+        this->_lb_inc_on_selchg();
+
+      if(HIWORD(wParam) == LBN_DBLCLK)
+        this->_install_exclude();
+
       break;
 
     case IDC_BC_RIGH: //< ">" Button
-      this->_includePkg();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_install_include();
       break;
 
     case IDC_BC_LEFT: //< "<" Button
-      this->_excludePkg();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_install_exclude();
       break;
 
     case IDC_BC_UP: //< Up Button
-      this->_onBcUpPkg();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_install_list_up();
       break;
 
     case IDC_BC_DN: //< Down Button
-      this->_onBcDnPkg();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_install_list_dn();
       break;
     }
   }

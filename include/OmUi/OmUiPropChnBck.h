@@ -54,19 +54,19 @@ class OmUiPropChnBck : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onCkBoxBck();
+    void                _cust_backup_toggle();
 
-    void                _onBcBrwBck();
+    void                _browse_dir_backup();
 
-    void                _onCkBoxZip();
+    void                _comp_backup_toggle();
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 
-    void                _onTabRefresh();
+    void                _onTbRefresh();
 
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPCHNBCK_H

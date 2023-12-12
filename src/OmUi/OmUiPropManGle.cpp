@@ -58,19 +58,9 @@ long OmUiPropManGle::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onCkBoxRaw()
+void OmUiPropManGle::_starthub_toggle()
 {
-  // user modified parameter, notify it
-  this->paramCheck(MAN_PROP_GLE_NO_MDPARSE);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropManGle::_onCkBoxStr()
-{
-  int bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
+  int32_t bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
 
   this->enableItem(IDC_LB_PATH, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
@@ -83,37 +73,32 @@ void OmUiPropManGle::_onCkBoxStr()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onLbStrlsSel()
+void OmUiPropManGle::_lb_path_on_selchg()
 {
-  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  int32_t lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
-  if(lb_sel >= 0) {
-    this->enableItem(IDC_BC_DEL, true);
-    this->enableItem(IDC_BC_UP, (lb_sel > 0));
-    int lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
-    this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
-  } else {
-    this->enableItem(IDC_BC_DEL, false);
-    this->enableItem(IDC_BC_UP, false);
-    this->enableItem(IDC_BC_DN, false);
-  }
+  this->enableItem(IDC_BC_DEL, (lb_sel >= 0));
+
+  int32_t lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
+  this->enableItem(IDC_BC_UP, (lb_sel > 0));
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcUpStr()
+void OmUiPropManGle::_starthub_list_up()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  int32_t lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
 
   // check whether we can move up
   if(lb_sel == 0)
     return;
 
   wchar_t item_buf[OM_MAX_ITEM];
-  int idx;
+  int32_t idx;
 
   // retrieve the package List-Box label
   this->msgItem(IDC_LB_PATH, LB_GETTEXT, lb_sel - 1, reinterpret_cast<LPARAM>(item_buf));
@@ -135,19 +120,19 @@ void OmUiPropManGle::_onBcUpStr()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcDnStr()
+void OmUiPropManGle::_starthub_list_dn()
 {
   // get selected item (index)
-  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  int32_t lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
   // get count of item in List-Box as index to for insertion
-  int lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
+  int32_t lb_max = this->msgItem(IDC_LB_PATH, LB_GETCOUNT) - 1;
 
   // check whether we can move down
   if(lb_sel == lb_max)
     return;
 
   wchar_t item_buf[OM_MAX_ITEM];
-  int idx;
+  int32_t idx;
 
   this->msgItem(IDC_LB_PATH, LB_GETTEXT, lb_sel, reinterpret_cast<LPARAM>(item_buf));
   idx = this->msgItem(IDC_LB_PATH, LB_GETITEMDATA, lb_sel);
@@ -170,13 +155,13 @@ void OmUiPropManGle::_onBcDnStr()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcBrwStr()
+void OmUiPropManGle::_browse_hub_file()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP01, start);
 
-  if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Mod Hub definition file", OM_OMX_FILE_FILER, start))
+  if(!Om_dlgOpenFile(result, this->_hwnd, L"Select Mod Hub file", OM_OMX_FILES_FILTER, start))
     return;
 
   // add file path to startup context list
@@ -190,79 +175,84 @@ void OmUiPropManGle::_onBcBrwStr()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onBcRemStr()
+void OmUiPropManGle::_starthub_delete()
 {
-  int lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  int32_t lb_sel = this->msgItem(IDC_LB_PATH, LB_GETCURSEL);
+  if(lb_sel < 0) return;
 
-  if(lb_sel >= 0) {
-    this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
-    // user modified parameter, notify it
-    this->paramCheck(MAN_PROP_GLE_START_LIST);
-  }
+  this->msgItem(IDC_LB_PATH, LB_DELETESTRING, lb_sel);
+
+  // user modified parameter, notify it
+  this->paramCheck(MAN_PROP_GLE_START_LIST);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onTabInit()
+void OmUiPropManGle::_onTbInit()
 {
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(IDI_BT_DN));
+
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_REM));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_CB_ICS,    L"Size of icons in packages lists");
+  this->_createTooltip(IDC_CB_ICS,    L"Size of icons in interface List Views");
 
   this->_createTooltip(IDC_BC_CKBX2,  L"Disables Markdown parsing and display descriptions as raw text");
   this->_createTooltip(IDC_BC_CKBX2,  L"Automatically opens Mod Hub files at application startup");
-  this->_createTooltip(IDC_LB_PATH,   L"Mod Hub files to be opened at application startup");
-  this->_createTooltip(IDC_BC_UP,     L"Move up in list");
-  this->_createTooltip(IDC_BC_DN,     L"Move down in list");
-  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a Mod Hub file to add");
-  this->_createTooltip(IDC_BC_DEL,    L"Remove the selected entry");
+  this->_createTooltip(IDC_LB_PATH,   L"Path to Mod Hub files");
+  this->_createTooltip(IDC_BC_UP,     L"Move up");
+  this->_createTooltip(IDC_BC_DN,     L"Move down");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select a Mod Hub file");
+  this->_createTooltip(IDC_BC_DEL,    L"Delete entry");
 
   // add items to Icon Size ComboBox
-  this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Small"));
+  this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal"));
   this->msgItem(IDC_CB_ICS, CB_ADDSTRING, 1, reinterpret_cast<LPARAM>(L"Large"));
 
   // Update values
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onTabResize()
+void OmUiPropManGle::_onTbResize()
 {
+  int32_t y_base = 30;
+
   // Icon size Label & ComboBox
-  this->_setItemPos(IDC_SC_LBL01, 50, 20, 100, 9);
-  this->_setItemPos(IDC_CB_ICS, 50, 30, this->cliUnitX()-100, 14);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 300, 16, true);
+  this->_setItemPos(IDC_CB_ICS, 50, y_base+20, this->cliWidth()-100, 21, true);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
 
   // No Markdown checkbox
-  this->_setItemPos(IDC_BC_CKBX1, 50, 55, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, y_base+70, 300, 16, true);
+
+  // Startup Mod Hub list Actions buttons
+  this->_setItemPos(IDC_BC_BRW01, 50, y_base+130, 22, 22, true);
+  this->_setItemPos(IDC_BC_DEL, 50, y_base+153, 22, 22, true);
 
   // Startup Mod Hub list CheckBox & ListBox
-  this->_setItemPos(IDC_BC_CKBX2, 50, 79, 100, 9);
-  this->_setItemPos(IDC_LB_PATH, 50, 90, this->cliUnitX()-100, this->cliUnitY()-130);
+  this->_setItemPos(IDC_BC_CKBX2, 50, y_base+110, 300, 16, true);
+  this->_setItemPos(IDC_LB_PATH, 75, y_base+131, this->cliWidth()-150, 64, true);
 
   // Startup Mod Hub list Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->cliUnitX()-48, 105, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->cliUnitX()-48, 120, 16, 15);
-
-  // Startup Mod Hub list Add and Remove... buttons
-  this->_setItemPos(IDC_BC_BRW01, 50, this->cliUnitY()-38, 50, 14);
-  this->_setItemPos(IDC_BC_DEL, 102, this->cliUnitY()-38, 50, 14);
+  this->_setItemPos(IDC_BC_UP, this->cliWidth()-73, y_base+130, 22, 22, true);
+  this->_setItemPos(IDC_BC_DN, this->cliWidth()-73, y_base+174, 22, 22, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropManGle::_onTabRefresh()
+void OmUiPropManGle::_onTbRefresh()
 {
   OmModMan* pMgr = static_cast<OmModMan*>(this->_data);
 
@@ -285,7 +275,7 @@ void OmUiPropManGle::_onTabRefresh()
   OmWStringArray path_ls;
 
   // set Load at Startup CheckBox
-  pMgr->loadStartHubs(&auto_open, path_ls);
+  pMgr->getStartHubs(&auto_open, path_ls);
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, auto_open);
 
   // Enable or disable Browse button and ListBox
@@ -308,7 +298,7 @@ void OmUiPropManGle::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropManGle::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropManGle::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -322,33 +312,40 @@ INT_PTR OmUiPropManGle::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->paramCheck(MAN_PROP_GLE_ICON_SIZE);
       break;
 
-    case IDC_BC_CKBX1: //< CheckBox for Display as raw text
-      this->_onCkBoxRaw();
+    case IDC_BC_CKBX1: //< CheckBox: Disable Markdown parsing
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(MAN_PROP_GLE_NO_MDPARSE);
       break;
 
     case IDC_BC_CKBX2: //< CheckBox for Open Mod Hub(s) at startup
-      this->_onCkBoxStr();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_starthub_toggle();
       break;
 
     case IDC_LB_PATH: //< ListBox for startup Mod Hub(s) list
       if(HIWORD(wParam) == LBN_SELCHANGE)
-        this->_onLbStrlsSel();
+        this->_lb_path_on_selchg();
       break;
 
     case IDC_BC_UP: //< Up Buttn
-      this->_onBcUpStr();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_starthub_list_up();
       break;
 
     case IDC_BC_DN: //< Down Buttn
-      this->_onBcDnStr();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_starthub_list_dn();
       break;
 
-    case IDC_BC_BRW01: //< Startup Mod Hub list "Add.." Button
-      this->_onBcBrwStr();
+    case IDC_BC_BRW01: //< Button: Browse to select Mod Hub
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_hub_file();
       break;
 
-    case IDC_BC_DEL: //< Startup Mod Hub list "Remove" Button
-      this->_onBcRemStr();
+    case IDC_BC_DEL:  //< Startup Mod Hub list "Remove" Button
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_starthub_delete();
       break;
     }
   }

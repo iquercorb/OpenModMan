@@ -17,8 +17,7 @@
 #include "OmBase.h"
 
 #include "OmBaseUi.h"
-
-#include "OmModMan.h"
+#include "OmUtilWin.h"
 
 #include "OmUiWizHub.h"
 
@@ -29,11 +28,10 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiWizHubBeg::OmUiWizHubBeg(HINSTANCE hins) : OmDialog(hins)
+OmUiWizHubBeg::OmUiWizHubBeg(HINSTANCE hins) : OmDialogWizPage(hins)
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -43,7 +41,6 @@ OmUiWizHubBeg::~OmUiWizHubBeg()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -52,58 +49,48 @@ long OmUiWizHubBeg::id() const
   return IDD_WIZ_HUB_BEG;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubBeg::_onInit()
+bool OmUiWizHubBeg::validFields() const
 {
-
+  return true;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubBeg::_onShow()
+bool OmUiWizHubBeg::validParams() const
 {
-  // enable the Wizard Next button
-  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(true);
+  return true;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubBeg::_onResize()
+void OmUiWizHubBeg::_onPgInit()
 {
-  // Intro paragraph
-  this->_setItemPos(IDC_SC_INTRO, 10, 5, 190, 60);
+  // Defines fonts for Mod Hub ComboBox
+  HFONT hFt = Om_createFont(16, 700, L"Arial");
+  this->msgItem(IDC_SC_HEAD, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubBeg::_onRefresh()
+void OmUiWizHubBeg::_onPgResize()
 {
+  // Title
+  this->_setItemPos(IDC_SC_HEAD, 0, 0, this->cliWidth(), 20, true);
 
+  // Help paragraph
+  this->_setItemPos(IDC_SC_HELP, 0, 40, this->cliWidth(), this->cliHeight()-40, true);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubBeg::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-INT_PTR OmUiWizHubBeg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiWizHubBeg::_onPgMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(uMsg); OM_UNUSED(wParam); OM_UNUSED(lParam);
 

@@ -188,7 +188,7 @@ void OmUiManFootDet::setDetails(OmNetPack* NetPack)
     text.append(L"\r\n\r\n#### Download\r\n", 19);
 
     text.append(L"\r\n  - URL : ", 12);
-    text.append(NetPack->fileUrl());
+    text.append(NetPack->downloadUrl());
 
     text.append(L"\r\n  - Size : ", 13);
     text.append(NetPack->fileSizeStr());

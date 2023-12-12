@@ -54,17 +54,17 @@ class OmUiPropHubStg : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onBcBrwIcon();
+    void                _browse_hub_icon();
 
-    void                _onBcDelIcon();
+    void                _delete_hub_icon();
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 
-    void                _onTabRefresh();
+    void                _onTbRefresh();
 
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPHUBSETG_H

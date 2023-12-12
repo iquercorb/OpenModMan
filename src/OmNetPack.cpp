@@ -138,38 +138,33 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
     this->_has_part = Om_isFile(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"));
   }
 
-  OmWString down_url;
-
   // check for custom URL or download path
   if(ref_node.hasChild(L"url")) {
 
-    // get custom path
-    OmWString cust_url(ref_node.child(L"url").content());
+    // get custom URL/Path
+    this->_cust_url = ref_node.child(L"url").content();
 
     // check whether the supplied custom path is a full URL
-    if(Om_isValidUrl(cust_url)) {
+    if(Om_isUrl(this->_cust_url)) {
       // set dwonload URL as supplied custom path
-      down_url = cust_url;
+      this->_down_url = this->_cust_url;
     } else {
       // compose basic download URL with custom path
-      Om_concatURLs(down_url, this->_NetRepo->urlBase(), cust_url);
+      Om_concatURLs(this->_down_url, this->_NetRepo->base(), this->_cust_url);
     }
   } else {
     // compose download URL from common default parameters
-    Om_concatURLs(down_url, this->_NetRepo->urlBase(), this->_NetRepo->downpath());
+    Om_concatURLs(this->_down_url, this->_NetRepo->base(), this->_NetRepo->downpath());
   }
 
   // if download path is not already a full URL to file, add file
-  if(!Om_isValidFileUrl(down_url)) {
+  if(!Om_isFileUrl(this->_down_url)) {
     // finally add file to this URL
-    Om_concatURLs(down_url, down_url, this->_file);
+    Om_concatURLs(this->_down_url, this->_down_url, this->_file);
   }
 
   // add download URL to list
-  this->_url.assign(down_url);
-
-  this->_iden.assign(ref_node.attrAsString(L"ident"));
-
+  this->_iden = ref_node.attrAsString(L"ident");
   this->_hash = Om_getXXHash3(this->_file);
 
   // parse other Mod common infos from identity
@@ -192,7 +187,7 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
     }
   }
 
-  // check for entry snapshot
+  // check for thumbnail
   if(ref_node.hasChild(L"picture")) {
 
     // decode the DataURI
@@ -203,6 +198,7 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
     // load Jpeg image
     if(jpg_data) {
       this->_thumbnail.loadThumbnail(jpg_data, jpg_size, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL);
+      Om_free(jpg_data);
     } else {
       this->_log(OM_LOG_WRN, L"parseReference", L"thumbnail DataURI decoding error");
     }
@@ -215,17 +211,17 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
     if(description_node.hasAttr(L"bytes")) {
 
       // decode the DataURI
-      size_t zip_size;
+      size_t dfl_size;
       OmWString mimetype, charset;
-      uint8_t* zip_data = Om_decodeDataUri(&zip_size, mimetype, charset, description_node.content());
+      uint8_t* dfl_data = Om_decodeDataUri(&dfl_size, mimetype, charset, description_node.content());
 
-      if(zip_data) {
+      if(dfl_data) {
 
         size_t txt_size = description_node.attrAsInt(L"bytes");
 
-        uint8_t* txt_data = Om_zInflate(zip_data, zip_size, txt_size);
+        uint8_t* txt_data = Om_zInflate(dfl_data, dfl_size, txt_size);
 
-        Om_free(zip_data);
+        Om_free(dfl_data);
 
         if(txt_data) {
 
@@ -395,7 +391,7 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
 
   this->_dnl_percent = 0.0;
 
-  if(!this->_connect.requestHttpGet(this->_url, this->_dnl_temp, true, OmNetPack::_dnl_result_fn, OmNetPack::_dnl_download_fn, this)) {
+  if(!this->_connect.requestHttpGet(this->_down_url, this->_dnl_temp, true, OmNetPack::_dnl_result_fn, OmNetPack::_dnl_download_fn, this)) {
     this->_error(L"startDownload", this->_connect.lastError());
     this->_has_error = true;
     return false;

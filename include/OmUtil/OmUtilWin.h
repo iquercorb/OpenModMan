@@ -57,25 +57,52 @@ HBITMAP Om_loadShellBitmap(unsigned id, bool large = false);
 /// Return internal resource image as HBITMAP, created handle does not
 /// have to be deleted.
 ///
-/// \param[in] hins    : Handle instance to get internal resource.
 /// \param[in] id      : Image internal resource id.
+/// \param[in] hins    : Handle instance to get internal resource.
 ///
 /// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
 ///
-HBITMAP Om_getResImage(HINSTANCE hins, unsigned id);
+HBITMAP Om_getResImage(unsigned id, HINSTANCE hins = nullptr);
+
+/// \brief Get internal resource image as premultiplied alpha
+///
+/// Return internal resource image as HBITMAP but with pixels data
+/// converted to premultiplied alpha, created handle does not
+/// have to be deleted.
+///
+/// \param[in] id      : Image internal resource id.
+/// \param[in] hins    : Handle instance to get internal resource.
+///
+/// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
+///
+HBITMAP Om_getResImagePremult(unsigned id, HINSTANCE hins = nullptr);
 
 /// \brief Get internal resource icon
 ///
 /// Return internal resource icon as HICON, created handle does not
 /// have to be deleted.
 ///
-/// \param[in] hins    : Handle instance to get internal resource.
 /// \param[in] id      : Icon internal resource id.
 /// \param[in] size    : Icon size to get.
+/// \param[in] hins    : Handle instance to get internal resource.
+///
+/// \return Icon handle (HICON) of the internal image or nullptr.
+///
+HICON Om_getResIcon(unsigned id, unsigned size = 0, HINSTANCE hins = nullptr);
+
+/// \brief Get internal resource icon as premultiplied alpha bitmap
+///
+/// Return internal resource icon as HBITMAP with pixels data
+/// converted to premultiplied alpha, created handle does not
+/// have to be deleted.
+///
+/// \param[in] id      : Icon internal resource id.
+/// \param[in] size    : Icon size to get.
+/// \param[in] hins    : Handle instance to get internal resource.
 ///
 /// \return Bitmap handle (HBITMAP) of the internal image or nullptr.
 ///
-HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size = 0);
+HBITMAP Om_getResIconPremult(unsigned id, unsigned size = 0, HINSTANCE hins = nullptr);
 
 /// \brief Create font object
 ///
@@ -90,7 +117,22 @@ HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size = 0);
 ///
 HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name);
 
-void Om_getAppIconInfos(const OmWString& path, int16_t res_id);
-void Om_getAppIconImage(const OmWString& path);
+//void Om_getAppIconInfos(const OmWString& path, int16_t res_id);
+HBITMAP Om_getAppIconImage(const OmWString& path, int32_t size);
+/*
+void Create32BitHBITMAP(const SIZE *psize, void **ppvBits, HBITMAP* phBmp)
+{
+    *phBmp = NULL;
 
+    BITMAPINFO bmi;
+    InitBitmapInfo(&bmi, sizeof(bmi), psize->cx, psize->cy, 32);
+
+    HDC hdcUsed = GetDC(NULL);
+    *phBmp = CreateDIBSection(hdcUsed, &bmi, DIB_RGB_COLORS, ppvBits, NULL, 0);
+    if (hdc != hdcUsed)
+    {
+        ReleaseDC(NULL, hdcUsed);
+    }
+}
+*/
 #endif // OMUTILWIN_H

@@ -62,6 +62,12 @@ typedef std::wstring OmWString;
 ///
 typedef std::vector<OmWString> OmWStringArray;
 
+/// \brief STL wstring queue
+///
+/// Typedef for an STL deque of STL wide char string type
+///
+typedef std::deque<OmWString> OmWStringQueue;
+
 /// \brief uint64_t array
 ///
 /// Typedef for an STL vector of uint64_t type

@@ -60,7 +60,7 @@ long OmUiPropModCmn::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropModCmn::_onTabInit()
+void OmUiPropModCmn::_onTbInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14,400,L"Consolas");
@@ -113,7 +113,7 @@ void OmUiPropModCmn::_onTabInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropModCmn::_onTabResize()
+void OmUiPropModCmn::_onTbResize()
 {
   // Name Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);

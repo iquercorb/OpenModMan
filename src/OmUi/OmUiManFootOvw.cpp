@@ -143,7 +143,7 @@ void OmUiManFootOvw::_overview_populate(const OmWString& name, const OmVersion& 
   if(snap.hbmp()) {
     hBm = snap.hbmp();
   } else {
-    hBm = Om_getResImage(this->_hins, dir ? IDB_SNAP_DIR : IDB_SNAP_PKG);
+    hBm = Om_getResImage(dir ? IDB_SNAP_DIR : IDB_SNAP_PKG);
   }
 
   // Update the selected picture
@@ -151,8 +151,8 @@ void OmUiManFootOvw::_overview_populate(const OmWString& name, const OmVersion& 
 
   // Properly delete unused image
   if(hBm) {
-    if(hBm != Om_getResImage(this->_hins, IDB_SNAP_DIR) &&
-       hBm != Om_getResImage(this->_hins, IDB_SNAP_PKG)) DeleteObject(hBm);
+    if(hBm != Om_getResImage(IDB_SNAP_DIR) &&
+       hBm != Om_getResImage(IDB_SNAP_PKG)) DeleteObject(hBm);
   }
 }
 

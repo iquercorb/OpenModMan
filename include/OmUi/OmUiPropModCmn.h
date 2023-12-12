@@ -52,9 +52,9 @@ class OmUiPropModCmn : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 };
 
 #endif // OMUIPROPMODCMN_H

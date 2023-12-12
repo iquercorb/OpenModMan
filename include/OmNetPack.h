@@ -217,16 +217,6 @@ class OmNetPack
       return this->_size_str;
     }
 
-    /// \brief Mod File URL
-    ///
-    /// Mod File download URL
-    ///
-    /// \return Wide string
-    ///
-    const OmWString& fileUrl() const {
-      return this->_url;
-    }
-
     /// \brief Mod File Checksum
     ///
     /// Mod File Checksum string
@@ -245,6 +235,26 @@ class OmNetPack
     ///
     bool checksumIsMd5() const {
       return this->_csum_is_md5;
+    }
+
+    /// \brief Reference custom URL/Path
+    ///
+    /// Raw custom URL/Path as defined in reference
+    ///
+    /// \return Wide string
+    ///
+    const OmWString& customUrl() const {
+      return this->_cust_url;
+    }
+
+    /// \brief File download URL
+    ///
+    /// Mod File download URL as composed using internal rules
+    ///
+    /// \return Wide string
+    ///
+    const OmWString& downloadUrl() const {
+      return this->_down_url;
     }
 
     /// \brief Refresh analytical properties
@@ -511,7 +521,9 @@ class OmNetPack
 
     bool                _csum_is_md5;
 
-    OmWString           _url;
+    OmWString           _cust_url;
+
+    OmWString           _down_url;
 
     // analytical properties
     OmPModPackArray     _upgrade;

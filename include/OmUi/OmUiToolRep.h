@@ -18,8 +18,10 @@
 #define OMUITOOLREP_H
 
 #include "OmDialog.h"
-#include "OmImage.h"
+//#include "OmImage.h"
 #include "OmXmlConf.h"
+
+class OmNetRepo;
 
 /// \brief Repository Editor tool dialog
 ///
@@ -56,67 +58,83 @@ class OmUiToolRep : public OmDialog
     // XML definition
     OmXmlConf           _xml;
 
-    OmXmlNode           _rmtCur;
+    OmNetRepo*          _NetRepo;
 
-    bool                _unsaved;
 
-    void                _repInit();
+    OmWString           _path;
 
-    bool                _repOpen(const OmWString& path);
+    //
+    void                _repo_init();
 
-    OmXmlNode           _rmtGet(const OmWString& ident);
+    void                _repo_open();
 
-    bool                _rmtAdd(const OmWString& path);
+    void                _repo_close();
 
-    bool                _rmtRem(const OmWString& ident);
+    void                _repo_save();
 
-    bool                _rmtSel(const OmWString& ident);
+    void                _repo_save_as();
 
-    int                 _rmtGetDeps(OmWStringArray& miss_list, const OmWString& ident);
+    void                _repo_save_title();
+
+    void                _repo_save_downpath();
+
+    bool                _repo_add_ref(const OmWString& path, bool select = false);
+
+    bool                _repo_del_ref();
+
+    void                _ref_selected();
+
+    void                _ref_url_save();
+
+    void                _ref_desc_load();
+
+    void                _ref_desc_save();
+
+    void                _ref_thumb_set();
+
+    void                _ref_thumb_del();
+
+    void                _ref_depends_get(const OmWString&, OmWStringArray*);
+
+    void                _ref_depends_check();
+
+
+    void                _status_update_filename();
+
+    void                _status_update_references();
+
+
+    void                _browse_add_files();
+
+    void                _browse_add_directory();
+
+
+    void                _set_unsaved(bool enable);
+
+    int32_t             _ask_unsaved();
+
+    bool                _has_unsaved;
+
 
     // add directory thread stuff
-    void*               _diradd_hth;
+    OmWStringQueue      _repo_addlist_queue;
 
-    void*               _diradd_hwo;
+    int32_t             _repo_addlist_abort;
 
-    static DWORD WINAPI _diradd_run_fn(void*);
+    void*               _repo_addlist_hth;
 
-    static VOID WINAPI  _diradd_end_fn(void*,uint8_t);
+    void*               _repo_addlist_hwo;
 
-    OmWString           _diradd_path;
+    void                _repo_addlist_start(const OmWStringArray&);
 
-    void*               _diradd_hdlg;
+    void*               _repo_addlist_hpd;
 
-    int32_t             _diradd_abort;
+    static DWORD WINAPI _repo_addlist_run_fn(void*);
+
+    static VOID WINAPI  _repo_addlist_end_fn(void*,uint8_t);
 
 
-    void                _onLbPkglsSel();
-
-    void                _onBcNew();
-
-    void                _onBcOpen();
-
-    bool                _onBcBrwPkg();
-
-    bool                _onBcBrwDir();
-
-    void                _onBcRemPkg();
-
-    void                _onBcSavUrl();
-
-    void                _onBcChkDeps();
-
-    bool                _onBcBrwSnap();
-
-    void                _onBcDelSnap();
-
-    void                _onBcBrwDesc();
-
-    void                _onBcSavDesc();
-
-    void                _onBcSave();
-
-    void                _onBcClose();
+    void                _onClose();
 
     void                _onInit();
 

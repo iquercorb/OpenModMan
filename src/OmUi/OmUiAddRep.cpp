@@ -166,7 +166,7 @@ void OmUiAddRep::_onBcChk()
   url_full.append(url_name);
   url_full.append(L".xml");
 
-  if(!Om_isValidFileUrl(url_full)) {
+  if(!Om_isFileUrl(url_full)) {
     Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
                   L"Invalid Mod Repository parameters", L"The specified "
                   "base address and definition name combination cannot make "
@@ -191,7 +191,6 @@ bool OmUiAddRep::_onBcOk()
     return false;
 
   if(this->_qry_result == OM_RESULT_UNKNOW) {
-
 
     if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_ERR,
                   L"Mod Repository not tested", L"You did not query the "
@@ -221,7 +220,7 @@ bool OmUiAddRep::_onBcOk()
   url_full.append(url_name);
   url_full.append(L".xml");
 
-  if(!Om_isValidFileUrl(url_full)) {
+  if(!Om_isFileUrl(url_full)) {
 
     Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
                   L"Invalid Mod Repository parameters", L"The specified "
@@ -254,7 +253,7 @@ bool OmUiAddRep::_onBcOk()
 void OmUiAddRep::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
   HFONT hFt;
   // set specific fonts

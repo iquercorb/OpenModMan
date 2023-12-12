@@ -34,6 +34,7 @@
 #include "OmUiManFoot.h"
 #include "OmUiAddChn.h"
 #include "OmUiAddRep.h"
+#include "OmUiWizRep.h"
 #include "OmUiPropNet.h"
 
 #include "OmUtilFs.h"
@@ -90,11 +91,11 @@ void OmUiManMainNet::addRepository()
   if(ModChan->queriesQueueSize())
     return;
 
-  OmUiAddRep* UiAddRep = static_cast<OmUiAddRep*>(this->_UiMan->childById(IDD_ADD_REP));
+  OmUiWizRep* UiWizRep = static_cast<OmUiWizRep*>(this->root()->childById(IDD_WIZ_REP));
 
-  UiAddRep->setModChan(ModChan);
+  UiWizRep->setModChan(ModChan);
 
-  UiAddRep->open(true);
+  UiWizRep->open(true);
 }
 
 ///
@@ -156,7 +157,10 @@ void OmUiManMainNet::deleteRepository()
 
   OmNetRepo* NetRepo = ModChan->getRepository(lv_sel);
 
-  OmWString repo_ref = NetRepo->urlBase(); repo_ref += L" -- "; repo_ref += NetRepo->urlName();
+  OmWString repo_ref = NetRepo->base();
+  if(!NetRepo->name().empty()) {
+    repo_ref += L" -- "; repo_ref += NetRepo->name();
+  }
 
   // warns the user before committing the irreparable
   if(!Om_dlgBox_ynl(this->_hwnd, L"Delete Mod Repository", IDI_QRY, L"Delete Mod Repository",
@@ -398,7 +402,7 @@ void OmUiManMainNet::_refresh_processing()
 
           if(ModChan->queriesQueueSize()) {
             progress = ModChan->queriesProgress();
-            this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_NOT));
+            this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_NOT));
           }
 
           if(ModChan->downloadQueueSize())
@@ -409,7 +413,7 @@ void OmUiManMainNet::_refresh_processing()
 
         } else {
           this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
-          this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_REF));
+          this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_REF));
         }
       }
     }
@@ -465,7 +469,7 @@ void OmUiManMainNet::_query_start(const OmPNetRepoArray& selection)
   if(!ModChan) return;
 
   // change button image from refresh to stop
-  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_NOT));
+  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_NOT));
 
   // change status icon
   LVITEMW lvI = {};
@@ -501,9 +505,10 @@ void OmUiManMainNet::_query_begin_fn(void* ptr, uint64_t param)
   if(ModChan != static_cast<OmModMan*>(self->_data)->activeChannel())
     return;
 
-  // change status icon
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_IMAGE; lvI.iItem = ModChan->indexOfRepository(NetRepo); lvI.iSubItem = 0; lvI.iImage = ICON_STS_WIP;
+  // update repository ListView item
+  LVITEMW lvI = {}; lvI.iItem = ModChan->indexOfRepository(NetRepo);
+  // change status image
+  lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -524,9 +529,15 @@ void OmUiManMainNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
   if(ModChan != static_cast<OmModMan*>(self->_data)->activeChannel())
     return;
 
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_IMAGE; lvI.iItem = ModChan->indexOfRepository(NetRepo); lvI.iSubItem = 0;
+  // update repository ListView item
+  LVITEMW lvI = {}; lvI.iItem = ModChan->indexOfRepository(NetRepo);
+  // change status image
+  lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE;
   lvI.iImage = self->_lv_rep_get_status_icon(NetRepo);
+  self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+  // set or update title
+  lvI.iSubItem = 2; lvI.mask = LVIF_TEXT;
+  lvI.pszText = const_cast<LPWSTR>(NetRepo->title().c_str());
   self->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // update progression bar
@@ -539,12 +550,12 @@ void OmUiManMainNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
 ///
 void OmUiManMainNet::_query_ended_fn(void* ptr, OmNotify notify, uint64_t param)
 {
-  OM_UNUSED(notify);
+  OM_UNUSED(notify); OM_UNUSED(param);
 
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
   // change button image from stop to refresh
-  self->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(self->_hins, IDI_BT_REF));
+  self->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_REF));
 
   // leaving processing
   self->_refresh_processing();
@@ -572,8 +583,9 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
   // do (or do not) upgrade at download end
   this->_download_upgrd = upgrade;
 
-  // change status icon
+  // update selected Net Pack ListView items
   LVITEMW lvI = {};
+  // change status icon
   lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_DNL;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfNetpack(selection[i]);
@@ -615,9 +627,7 @@ bool OmUiManMainNet::_download_download_fn(void* ptr, int64_t tot, int64_t cur, 
     return true; //< wrong Channel, do not abort but ignore
 
   // get ListView item index search using lparam, that is, Net Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(NetPack->hash());
-  int32_t item_id = self->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
-  if(item_id < 0) return true; //< don't abort, but nothing to do here
+  int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
 
   // Invalidate ListView subitem rect to call custom draw (progress bar)
   RECT rect = {};
@@ -650,8 +660,7 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
   if(ModChan == ModMan->activeChannel()) {
 
     // get ListView item index search using lparam, that is, Net Pack hash value.
-    LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(NetPack->hash());
-    int32_t item_id = self->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+    int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
 
     // Set 'Sotp' and 'Download" buttons if item currently selected
     if(self->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT) == 1) {
@@ -661,9 +670,10 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
       }
     }
 
+    // update ListView item
+    LVITEMW lvI = {}; lvI.iItem = item_id;
     // change status icon
-    LVITEMW lvI = {};
-    lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = self->_lv_net_get_status_icon(NetPack);
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = self->_lv_net_get_status_icon(NetPack);
     self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
     // Invalidate ListView subitem rect to call custom draw (progress bar)
@@ -701,7 +711,7 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
 ///
 void OmUiManMainNet::_download_ended_fn(void* ptr, OmNotify notify, uint64_t param)
 {
-  OM_UNUSED(notify);
+  OM_UNUSED(notify); OM_UNUSED(param);
 
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
@@ -741,13 +751,13 @@ void OmUiManMainNet::_upgrade_begin_fn(void* ptr, uint64_t param)
   OmNetPack* NetPack = reinterpret_cast<OmNetPack*>(param);
 
   // get ListView item index search using lparam, that is, Net Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(NetPack->hash());
-  int32_t item_id = self->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
   if(item_id < 0) return;
 
+  // update ListView item
+  LVITEMW lvI = {}; lvI.iItem = item_id;
   // change status icon
-  LVITEMW lvI = {};
-  lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0; lvI.iImage = ICON_STS_WIP;
+  lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = ICON_STS_WIP;
   self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
@@ -769,8 +779,7 @@ bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uin
     return true; //< wrong Channel, do not abort but ignore
 
   // get ListView item index search using lparam, that is, Net Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(NetPack->hash());
-  int32_t item_id = self->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
 
   // Invalidate ListView subitem rect to call custom draw (progress bar)
   RECT rect;
@@ -803,13 +812,12 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
   if(ModChan == ModMan->activeChannel()) {
 
     // get ListView item index search using lparam, that is, Net Pack hash value.
-    LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(NetPack->hash());
-    int32_t item_id = self->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+    int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
 
-    // structure for ListView update
-    LVITEMW lvI = {};
-    lvI.mask = LVIF_IMAGE; lvI.iItem = item_id; lvI.iSubItem = 0;
-    lvI.iImage = self->_lv_net_get_status_icon(NetPack);
+    // update ListView item
+    LVITEMW lvI = {}; lvI.iItem = item_id;
+    // change status icon
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = self->_lv_net_get_status_icon(NetPack);
     self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
     // Invalidate ListView subitem rect to call custom draw (progress bar)
@@ -841,7 +849,7 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
 ///
 void OmUiManMainNet::_upgrade_ended_fn(void* ptr, OmNotify notify, uint64_t param)
 {
-  OM_UNUSED(notify);
+  OM_UNUSED(notify); OM_UNUSED(param);
 
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
@@ -907,7 +915,10 @@ void OmUiManMainNet::_lv_rep_populate()
     lvI.iSubItem = 1; lvI.mask = LVIF_TEXT|LVIF_IMAGE;
     lvI.iImage = ICON_REP;
 
-    lv_entry = NetRepo->urlBase(); lv_entry += L" -- "; lv_entry += NetRepo->urlName();
+    lv_entry = NetRepo->base();
+    if(!NetRepo->name().empty()) {
+      lv_entry += L" -- "; lv_entry += NetRepo->name();
+    }
 
     lvI.pszText = const_cast<LPWSTR>(lv_entry.c_str());
     this->msgItem(IDC_LV_REP, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
@@ -1132,8 +1143,7 @@ void OmUiManMainNet::_lv_net_alterate(OmNotify action, uint64_t param)
   if(!ModChan) return;
 
   // get ListView item index search using lparam, that is, Mod Pack hash value.
-  LVFINDINFOW lvF = {}; lvF.flags = LVFI_PARAM; lvF.lParam = static_cast<LPARAM>(param);
-  int32_t item_id = this->msgItem(IDC_LV_NET, LVM_FINDITEMW, -1, reinterpret_cast<LPARAM>(&lvF));
+  int32_t item_id = this->findLvParam(IDC_LV_NET, param);
 
   if(action == OM_NOTIFY_DELETED) {
 
@@ -1486,22 +1496,7 @@ int32_t OmUiManMainNet::_lv_net_get_status_icon(const OmNetPack* NetPack)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_bc_rpadd_pressed()
-{
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(!ModChan) return;
-
-  OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->_UiMan->childById(IDD_ADD_REP));
-
-  pUiNewRep->setModChan(ModChan);
-
-  pUiNewRep->open(true);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiManMainNet::_bc_stop_hit()
+void OmUiManMainNet::_bc_stop_clicked()
 {
   // immediate response to user input
   this->enableItem(IDC_BC_STOP, false);
@@ -1513,7 +1508,7 @@ void OmUiManMainNet::_bc_stop_hit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_bc_abort_pressed()
+void OmUiManMainNet::_bc_abort_clicked()
 {
   // immediate response to user input
   this->enableItem(IDC_BC_ABORT, false);
@@ -1537,9 +1532,9 @@ void OmUiManMainNet::_onInit()
   this->_UiMan = static_cast<OmUiMan*>(this->root());
 
   // Set batches New and Delete buttons icons
-  this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_RPDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(this->_hins, IDI_BT_REF));
+  this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_RPDEL, Om_getResIcon(IDI_BT_REM));
+  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_REF));
 
   SetWindowTheme(this->getItem(IDC_BC_RPADD),L"EXPLORER",nullptr);
   SetWindowTheme(this->getItem(IDC_BC_RPDEL),L"EXPLORER",nullptr);
@@ -1891,64 +1886,70 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_RPQRY: //< Repository "Query" button
-      this->queryRepositories();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->queryRepositories();
       break;
 
     case IDC_BC_RPADD: //< Repository "Add" button
-      this->_bc_rpadd_pressed();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->addRepository();
       break;
 
     case IDC_BC_RPDEL: //< Repository "Delete" button
-      this->deleteRepository();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->deleteRepository();
       break;
 
     case IDC_BC_DNLD: //< Main "Upgrade" button
-      this->startDownloads(true);
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->startDownloads(true);
       break;
 
     case IDC_BC_STOP: //< Main "Stop" button
-      this->_bc_stop_hit();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_bc_stop_clicked();
       break;
 
     case IDC_BC_ABORT: //< Main "Abort all" button
-      this->_bc_abort_pressed();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_bc_abort_clicked();
       break;
 
     // Menu : Edit > Repository > []
-    case IDM_EDIT_REP_QRY:
+    case IDM_REP_QRY:
       this->queryRepositories();
       break;
 
-    case IDM_EDIT_REP_ADD:
+    case IDM_REP_ADD:
       this->addRepository();
       break;
 
-    case IDM_EDIT_REP_DEL:
+    case IDM_REP_DEL:
       this->deleteRepository();
       break;
 
     // Menu : Edit > Remote > []
-    case IDM_EDIT_NET_DNWS:
+    case IDM_NET_DNWS:
       this->startDownloads(false);
       break;
 
-    case IDM_EDIT_NET_DNLD:
+    case IDM_NET_DNLD:
       this->startDownloads(true);
       break;
 
-    case IDM_EDIT_NET_STOP:
+    case IDM_NET_STOP:
       this->stopDownloads();
       break;
 
-    case IDM_EDIT_NET_RVOK:
+    case IDM_NET_RVOK:
       this->revokeDownloads();
       break;
 
-    case IDM_EDIT_NET_FIXD:
+    case IDM_NET_FIXD:
       this->downloadDepends(false);
       break;
 
-    case IDM_EDIT_NET_INFO:
+    case IDM_NET_INFO:
       this->showProperties();
       break;
     }

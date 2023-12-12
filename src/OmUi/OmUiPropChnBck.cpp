@@ -58,7 +58,7 @@ long OmUiPropChnBck::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onCkBoxBck()
+void OmUiPropChnBck::_cust_backup_toggle()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan)
@@ -75,13 +75,13 @@ void OmUiPropChnBck::_onCkBoxBck()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onBcBrwBck()
+void OmUiPropChnBck::_browse_dir_backup()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP01, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Backup folder, where backup data will be stored.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Backup data directory, where Backup data will be stored", start))
     return;
 
   this->setItemText(IDC_EC_INP01, result);
@@ -90,7 +90,7 @@ void OmUiPropChnBck::_onBcBrwBck()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onCkBoxZip()
+void OmUiPropChnBck::_comp_backup_toggle()
 {
   bool bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
 
@@ -105,20 +105,19 @@ void OmUiPropChnBck::_onCkBoxZip()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onTabInit()
+void OmUiPropChnBck::_onTbInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_CKBX1,  L"Use a custom Backup folder instead of default one");
-  this->_createTooltip(IDC_EC_INP01,  L"Backup folder path, where backup data will be stored");
-  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a custom Backup folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom directory for Backup data storage");
+  this->_createTooltip(IDC_EC_INP01,  L"Backup data directory, where Backup data will be stored");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select custom Backup data directory");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Store backup data as zip archives");
-  this->_createTooltip(IDC_CB_ZMD,    L"Compression method for backup zip archives");
-  this->_createTooltip(IDC_CB_ZLV,    L"Compression level for backup zip archives");
-  this->_createTooltip(IDC_BC_DEL,    L"Delete all backup data without restoring it (emergency use only)");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Use compressed archive instead of directories trees");
+  this->_createTooltip(IDC_CB_ZMD,    L"Compression method for backup archives");
+  this->_createTooltip(IDC_CB_ZLV,    L"Compression level for backup archives");
 
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_WRN));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_WRN));
 
   // add items to Compression Method ComboBox
   this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
@@ -133,13 +132,13 @@ void OmUiPropChnBck::_onTabInit()
   this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal"));
   this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best"));
 
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onTabRefresh()
+void OmUiPropChnBck::_onTbRefresh()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan)
@@ -191,27 +190,29 @@ void OmUiPropChnBck::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnBck::_onTabResize()
+void OmUiPropChnBck::_onTbResize()
 {
+  int32_t y_base = 30;
 
   // Custom Backup CheckBox
-  this->_setItemPos(IDC_BC_CKBX1, 50, 15, 240, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, y_base, 240, 16, true);
+
   // Mod Channel Backup Label, EditControl and Browse button
-  this->_setItemPos(IDC_EC_INP01, 50, 25, this->cliUnitX()-108, 13);
-  this->_setItemPos(IDC_BC_BRW01, this->cliUnitX()-55, 25, 16, 13);
+  this->_setItemPos(IDC_EC_INP01, 50, y_base+20, this->cliWidth()-130, 20, true);
+  this->_setItemPos(IDC_BC_BRW01, this->cliWidth()-75, y_base+19, 25, 22, true);
 
   // Compressed Backup CheckBox
-  this->_setItemPos(IDC_BC_CKBX2, 50, 50, 140, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 50, y_base+80, 300, 16, true);
 
   // Compression Method label & ComboBox
-  this->_setItemPos(IDC_SC_LBL01, 65, 67, 70, 9);
-  this->_setItemPos(IDC_CB_ZMD, 140, 65, this->cliUnitX()-180, 14);
+  this->_setItemPos(IDC_SC_LBL01, 75, y_base+113, 110, 16, true);
+  this->_setItemPos(IDC_CB_ZMD, 190, y_base+110, this->cliWidth()-270, 21, true);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ZMD), nullptr, true);
 
   // Compression Level label & ComboBox
-  this->_setItemPos(IDC_SC_LBL02, 65, 82, 70, 9);
-  this->_setItemPos(IDC_CB_ZLV, 140, 80, this->cliUnitX()-180, 14);
+  this->_setItemPos(IDC_SC_LBL02, 75, y_base+138, 110, 16, true);
+  this->_setItemPos(IDC_CB_ZLV, 190, y_base+135, this->cliWidth()-270, 21, true);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ZLV), nullptr, true);
 }
@@ -219,7 +220,7 @@ void OmUiPropChnBck::_onTabResize()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropChnBck::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -228,12 +229,14 @@ INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
 
-    case IDC_BC_CKBX1: //< Check Box for custom Backup path
-      this->_onCkBoxBck();
+    case IDC_BC_CKBX1: //< CheckBox: use custom backup dir
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_cust_backup_toggle();
       break;
 
-    case IDC_BC_BRW01: //< Custom Backup "..." (browse) Button
-      this->_onBcBrwBck();
+    case IDC_BC_BRW01: //< Button: Browse backup directory
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_dir_backup();
       break;
 
     case IDC_EC_INP01: //< Backup EditText
@@ -242,12 +245,13 @@ INT_PTR OmUiPropChnBck::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->paramCheck(CHN_PROP_BCK_CUSTDIR);
       break;
 
-    case IDC_BC_CKBX2: //< Compress backup data CheckBox
-      this->_onCkBoxZip();
+    case IDC_BC_CKBX2: //< CheckBox: compress backup data
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_comp_backup_toggle();
       break;
 
-    case IDC_CB_ZMD: //< Backup compression Method ComboBox
-    case IDC_CB_ZLV: //< Backup compression level ComboBox
+    case IDC_CB_ZMD: //< ComboBox: compression Method
+    case IDC_CB_ZLV: //< ComboBox: compression level
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->paramCheck(CHN_PROP_BCK_COMP_LEVEL);
       break;

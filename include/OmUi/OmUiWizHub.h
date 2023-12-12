@@ -51,8 +51,6 @@ class OmUiWizHub : public OmDialogWiz
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    bool                _onWizNext();
-
     void                _onWizFinish();
 
     void                _onWizInit();

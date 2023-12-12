@@ -56,23 +56,17 @@ class OmUiPropChnLib : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onCkBoxLib();
+    void                _cust_library_toggle();
 
-    void                _onBcBrwLib();
+    void                _browse_dir_library();
 
-    void                _onCkBoxDev();
+    void                _onTbInit();
 
-    void                _onCkBoxWrn();
+    void                _onTbResize();
 
-    void                _onCkBoxHid();
+    void                _onTbRefresh();
 
-    void                _onTabInit();
-
-    void                _onTabResize();
-
-    void                _onTabRefresh();
-
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPCHNLIB_H

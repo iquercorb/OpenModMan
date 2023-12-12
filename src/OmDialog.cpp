@@ -135,11 +135,20 @@ OmDialog* OmDialog::siblingById(long id) const
 ///
 OmDialog* OmDialog::root()
 {
+  OmDialog* root;
+
   if(this->_parent) {
-    return this->_parent->root();
+
+    root = this->_parent;
+
+    while(root->_parent)
+      root = root->_parent;
+
   } else {
-    return this;
+    root = this;
   }
+
+  return root;
 }
 
 
@@ -183,7 +192,7 @@ void OmDialog::open(bool show)
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    //std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
+    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -224,7 +233,7 @@ void OmDialog::modeless(bool show)
   } else {
     #ifdef DEBUG
     int err = GetLastError();
-    //std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
+    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -653,6 +662,17 @@ void OmDialog::setPopupItemText(HMENU popup, unsigned pos, const OmWString& text
   MENUITEMINFOW mIi = {}; mIi.cbSize = sizeof(MENUITEMINFOW);
   mIi.fMask = MIIM_STRING;
   mIi.dwTypeData = const_cast<LPWSTR>(text.c_str());
+  SetMenuItemInfoW(popup, pos, true, &mIi);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::setPopupItemIcon(HMENU popup, unsigned pos, HBITMAP image)
+{
+  MENUITEMINFOW mIi = {}; mIi.cbSize = sizeof(MENUITEMINFOW);
+  mIi.fMask = MIIM_BITMAP;
+  mIi.hbmpItem = image;
   SetMenuItemInfoW(popup, pos, true, &mIi);
 }
 

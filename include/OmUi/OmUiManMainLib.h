@@ -52,6 +52,12 @@ class OmUiManMainLib : public OmDialog
     ///
     long id() const;
 
+    /// \brief Import Mods
+    ///
+    /// Open file selector to import Mods in library
+    ///
+    void importMods();
+
     /// \brief Open Mod properties
     ///
     /// Opens currently selected Mod properties window.
@@ -169,6 +175,24 @@ class OmUiManMainLib : public OmDialog
 
     void                _abort_processing();
 
+    // mods import
+    OmWStringArray      _import_array;
+
+    int32_t             _import_abort;
+
+    HWND                _import_hdp;
+
+    void*               _import_hth;
+
+    void*               _import_hwo;
+
+    static DWORD WINAPI _import_run_fn(void*);
+
+    static bool         _import_progress_fn(void*, size_t, size_t, uint64_t);
+
+    static VOID WINAPI  _import_end_fn(void*,uint8_t);
+
+
     // mods operation (install/uninstall)
     bool                _modops_abort;
 
@@ -207,7 +231,7 @@ class OmUiManMainLib : public OmDialog
     int32_t             _lv_mod_get_status_icon(const OmModPack* ModPack);
 
 
-    void                _bc_abort_pressed();
+    void                _bc_abort_clicked();
 
     void                _onInit();
 

@@ -54,11 +54,8 @@ OmUiPropChn::OmUiPropChn(HINSTANCE hins) : OmDialogProp(hins),
   // create tab dialogs
   this->_addPage(L"General Settings", new OmUiPropChnStg(hins));
   this->_addPage(L"Mod Library", new OmUiPropChnLib(hins));
-  this->_addPage(L"Data Backup", new OmUiPropChnBck(hins));
-  this->_addPage(L"Mod Repositories", new OmUiPropChnNet(hins));
-
-  // creates child sub-dialogs
-  this->addChild(new OmUiAddRep(hins));     //< Dialog for new Repository
+  this->_addPage(L"Backup storage", new OmUiPropChnBck(hins));
+  this->_addPage(L"Network Repositories", new OmUiPropChnNet(hins));
 }
 
 
@@ -93,92 +90,113 @@ bool OmUiPropChn::checkChanges()
   OmWString item_str;
 
   // General Settings Tab
-  OmUiPropChnStg* pUiPropLocStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
+  OmUiPropChnStg* UiPropChnStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Mod Channel title
-    pUiPropLocStg->getItemText(IDC_EC_INP01, item_str);
-    if(this->_ModChan->title() != item_str) {
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Mod Channel title
+
+    OmWString ec_entry;
+
+    UiPropChnStg->getItemText(IDC_EC_INP01, ec_entry);
+
+    if(this->_ModChan->title() != ec_entry) {
       changed = true;
     } else {
-      pUiPropLocStg->paramReset(CHN_PROP_STG_TITLE);
+      UiPropChnStg->paramReset(CHN_PROP_STG_TITLE);
     }
   }
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Target path
-    pUiPropLocStg->getItemText(IDC_EC_INP02, item_str);
-    if(!Om_namesMatches(this->_ModChan->targetPath(),item_str)) {
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Target path
+
+    OmWString ec_entry;
+
+    UiPropChnStg->getItemText(IDC_EC_INP02, ec_entry);
+
+    if(!Om_namesMatches(this->_ModChan->targetPath(),ec_entry)) {
       changed = true;
     } else {
-      pUiPropLocStg->paramReset(CHN_PROP_STG_TARGET);
+      UiPropChnStg->paramReset(CHN_PROP_STG_TARGET);
     }
   }
 
   // Mods Library Tab
-  OmUiPropChnLib* pUiPropLocLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
+  OmUiPropChnLib* UiPropChnLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Library path
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Library path
+
     different = false;
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
-      pUiPropLocLib->getItemText(IDC_EC_INP01, item_str);
-      if(!Om_namesMatches(this->_ModChan->libraryPath(), item_str) || !this->_ModChan->hasCustLibraryPath())
+
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
+
+      OmWString ec_entry;
+
+      UiPropChnLib->getItemText(IDC_EC_INP01, ec_entry);
+
+      if(!Om_namesMatches(this->_ModChan->libraryPath(), ec_entry) || !this->_ModChan->hasCustLibraryPath())
         different = true;
+
     } else {
       if(this->_ModChan->hasCustLibraryPath()) different = true;
     }
+
     if(different) {
       changed = true;
     } else {
-      pUiPropLocLib->paramReset(CHN_PROP_LIB_CUSTDIR);
+      UiPropChnLib->paramReset(CHN_PROP_LIB_CUSTDIR);
     }
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_DEVMODE)) {
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->libraryDevmod()) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_DEVMODE)) {
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->libraryDevmod()) {
       changed = true;
     } else {
-      pUiPropLocLib->paramReset(CHN_PROP_LIB_DEVMODE);
+      UiPropChnLib->paramReset(CHN_PROP_LIB_DEVMODE);
     }
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_WARNINGS)) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_WARNINGS)) {
 
     different = false;
 
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnOverlaps())
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnOverlaps())
       different = true;
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK) != this->_ModChan->warnExtraInst())
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX4, BM_GETCHECK) != this->_ModChan->warnExtraInst())
       different = true;
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK) != this->_ModChan->warnMissDeps())
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX5, BM_GETCHECK) != this->_ModChan->warnMissDeps())
       different = true;
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK) != this->_ModChan->warnExtraUnin())
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX6, BM_GETCHECK) != this->_ModChan->warnExtraUnin())
       different = true;
 
     if(different) {
       changed = true;
     } else {
-      pUiPropLocLib->paramReset(CHN_PROP_LIB_WARNINGS);
+      UiPropChnLib->paramReset(CHN_PROP_LIB_WARNINGS);
     }
   }
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_SHOWHIDDEN)) {
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX7, BM_GETCHECK) != this->_ModChan->libraryShowhidden()) {
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_SHOWHIDDEN)) {
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX7, BM_GETCHECK) != this->_ModChan->libraryShowhidden()) {
       changed = true;
     } else {
-      pUiPropLocLib->paramReset(CHN_PROP_LIB_SHOWHIDDEN);
+      UiPropChnLib->paramReset(CHN_PROP_LIB_SHOWHIDDEN);
     }
   }
 
   // Data backup Tab
-  OmUiPropChnBck* pUiPropLocBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
+  OmUiPropChnBck* UiPropChnBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
 
-  if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Backup path
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Backup path
 
     different = false;
 
-    if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
-      pUiPropLocBck->getItemText(IDC_EC_INP01, item_str);
-      if(!Om_namesMatches(this->_ModChan->backupPath(), item_str) || !this->_ModChan->hasCustBackupPath())
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
+
+      OmWString ec_entry;
+
+      UiPropChnBck->getItemText(IDC_EC_INP01, ec_entry);
+
+      if(!Om_namesMatches(this->_ModChan->backupPath(), ec_entry) || !this->_ModChan->hasCustBackupPath())
         different = true;
+
     } else {
       if(this->_ModChan->hasCustBackupPath()) different = true;
     }
@@ -186,60 +204,78 @@ bool OmUiPropChn::checkChanges()
     if(different) {
       changed = true;
     } else {
-      pUiPropLocBck->paramReset(CHN_PROP_LIB_CUSTDIR);
+      UiPropChnBck->paramReset(CHN_PROP_LIB_CUSTDIR);
     }
   }
 
-  if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
 
     different = false;
 
-    if(pUiPropLocBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
 
-      if(this->_ModChan->backupCompMethod() != pUiPropLocBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL))
+      int32_t comp_method, comp_level;
+
+      switch(UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
+      case 1:   comp_method = OM_METHOD_DEFLATE; break; //< MZ_COMPRESS_METHOD_DEFLATE
+      case 2:   comp_method = OM_METHOD_LZMA; break;    //< MZ_COMPRESS_METHOD_LZMA
+      case 3:   comp_method = OM_METHOD_LZMA2; break;   //< MZ_COMPRESS_METHOD_XZ
+      case 4:   comp_method = OM_METHOD_ZSTD; break;    //< MZ_COMPRESS_METHOD_ZSTD
+      default:  comp_method = OM_METHOD_STORE; break;   //< MZ_COMPRESS_METHOD_STORE
+      }
+
+      switch(UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
+      case 1:   comp_level = OM_LEVEL_FAST; break; //< MZ_COMPRESS_LEVEL_FAST
+      case 2:   comp_level = OM_LEVEL_SLOW; break; //< MZ_COMPRESS_LEVEL_NORMAL
+      case 3:   comp_level = OM_LEVEL_BEST; break; //< MZ_COMPRESS_LEVEL_BEST
+      default:  comp_level = OM_LEVEL_NONE; break;
+      }
+
+      if(this->_ModChan->backupCompMethod() != comp_method)
         different = true;
 
-      if(this->_ModChan->backupCompLevel() != pUiPropLocBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL))
+      if(this->_ModChan->backupCompLevel() != comp_level)
         different = true;
 
     } else {
-      if(this->_ModChan->backupCompMethod() != -1) different = true;
+      if(this->_ModChan->backupCompMethod() != -1)
+        different = true;
     }
 
     if(different) {
       changed = true;
     } else {
-      pUiPropLocBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
+      UiPropChnBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
     }
 
   }
 
   // Mods Repositories Tab
-  OmUiPropChnNet* pUiPropLocNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
+  OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
 
-  if(pUiPropLocNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
+  if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
 
      different = false;
 
-    if(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModChan->warnExtraDnld())
+    if(UiPropChnNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModChan->warnExtraDnld())
       different = true;
-    if(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->warnMissDnld())
+    if(UiPropChnNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->warnMissDnld())
       different = true;
-    if(pUiPropLocNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnUpgdBrkDeps())
+    if(UiPropChnNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnUpgdBrkDeps())
       different = true;
 
     if(different) {
       changed = true;
     } else {
-      pUiPropLocNet->paramReset(CHN_PROP_NET_WARNINGS);
+      UiPropChnNet->paramReset(CHN_PROP_NET_WARNINGS);
     }
   }
 
-  if(pUiPropLocNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
-    if(pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK) != this->_ModChan->upgdRename()) {
+  if(UiPropChnNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
+    if(UiPropChnNet->msgItem(IDC_BC_RAD02, BM_GETCHECK) != this->_ModChan->upgdRename()) {
       changed = true;
     } else {
-      pUiPropLocNet->paramReset(CHN_PROP_NET_ONUPGRADE);
+      UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
     }
   }
 
@@ -258,39 +294,43 @@ bool OmUiPropChn::validChanges()
   if(!this->_ModChan)
     return true;
 
-  OmWString inp_str;
-
   // General Settings Tab
-  OmUiPropChnStg* pUiPropLocStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
+  OmUiPropChnStg* UiPropChnStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Channel name
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Channel name
 
-    pUiPropLocStg->getItemText(IDC_EC_INP01, inp_str);
+    OmWString ec_entry;
 
-    if(!Om_dlgValidName(this->_hwnd, L"Channel name", inp_str))
+    UiPropChnStg->getItemText(IDC_EC_INP01, ec_entry);
+
+    if(!Om_dlgValidName(this->_hwnd, L"Channel name", ec_entry))
       return false;
   }
 
-  if(pUiPropLocStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Target path
+  if(UiPropChnStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Target path
 
-    pUiPropLocStg->getItemText(IDC_EC_INP02, inp_str);
+    OmWString ec_entry;
 
-    if(!Om_dlgValidDir(this->_hwnd, L"Target directory", inp_str))
+    UiPropChnStg->getItemText(IDC_EC_INP02, ec_entry);
+
+    if(!Om_dlgValidDir(this->_hwnd, L"Target directory", ec_entry))
       return false;
   }
 
   // Mods Library Tab
-  OmUiPropChnLib* pUiPropLocLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
+  OmUiPropChnLib* UiPropChnLib  = static_cast<OmUiPropChnLib*>(this->childById(IDD_PROP_CHN_LIB));
 
-  if(pUiPropLocLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Library path
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_CUSTDIR)) { //< parameter for Library path
 
-    if(pUiPropLocLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Library folder Check-Box checked
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Library folder Check-Box checked
 
-      pUiPropLocLib->getItemText(IDC_EC_INP01, inp_str);
+      OmWString ec_entry;
 
-      if(Om_dlgValidPath(this->_hwnd, L"Library directory path", inp_str)) {
+      UiPropChnLib->getItemText(IDC_EC_INP01, ec_entry);
 
-        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom library directory", inp_str))
+      if(Om_dlgValidPath(this->_hwnd, L"Library directory path", ec_entry)) {
+
+        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom library directory", ec_entry))
           return false;
 
       } else {
@@ -301,17 +341,19 @@ bool OmUiPropChn::validChanges()
   }
 
   // Data backup Tab
-  OmUiPropChnBck* pUiPropLocBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
+  OmUiPropChnBck* UiPropChnBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
 
-  if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Backup path
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Backup path
 
-    if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Backup folder Check-Box checked
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) { //< Custom Backup folder Check-Box checked
 
-      pUiPropLocBck->getItemText(IDC_EC_INP01, inp_str);
+      OmWString ec_entry;
 
-      if(Om_dlgValidPath(this->_hwnd, L"Backup directory path", inp_str)) {
+      UiPropChnBck->getItemText(IDC_EC_INP01, ec_entry);
 
-        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom backup directory", inp_str))
+      if(Om_dlgValidPath(this->_hwnd, L"Backup directory path", ec_entry)) {
+
+        if(!Om_dlgCreateFolder(this->_hwnd, L"Custom backup directory", ec_entry))
           return false;
 
       } else {
@@ -333,19 +375,19 @@ bool OmUiPropChn::applyChanges()
   if(!this->_ModChan)
     return true;
 
-  OmWString inp_str;
-
   // General Settings Tab
   OmUiPropChnStg* UiPropChnStg  = static_cast<OmUiPropChnStg*>(this->childById(IDD_PROP_CHN_STG));
 
   if(UiPropChnStg->paramChanged(CHN_PROP_STG_TITLE)) { //< parameter for Mod Channel title
 
-    UiPropChnStg->getItemText(IDC_EC_INP01, inp_str);
+    OmWString ec_entry;
+
+    UiPropChnStg->getItemText(IDC_EC_INP01, ec_entry);
 
     // set UI safe mode, this unselect everything and disable UI controls
     static_cast<OmUiMan*>(this->root())->enableSafeMode(true);
 
-    OmResult result = this->_ModChan->rename(inp_str);
+    OmResult result = this->_ModChan->rename(ec_entry);
 
     // back UI to normal state
     static_cast<OmUiMan*>(this->root())->enableSafeMode(false);
@@ -362,9 +404,11 @@ bool OmUiPropChn::applyChanges()
 
   if(UiPropChnStg->paramChanged(CHN_PROP_STG_TARGET)) { //< parameter for Mod Channel Install path
 
-    UiPropChnStg->getItemText(IDC_EC_INP02, inp_str);
+    OmWString ec_entry;
 
-    OmResult result = this->_ModChan->setTargetPath(inp_str);
+    UiPropChnStg->getItemText(IDC_EC_INP02, ec_entry);
+
+    OmResult result = this->_ModChan->setTargetPath(ec_entry);
 
     if(result != OM_RESULT_OK) {
       Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Target directory change error",
@@ -385,9 +429,11 @@ bool OmUiPropChn::applyChanges()
 
     if(UiPropChnLib->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
 
-      UiPropChnLib->getItemText(IDC_EC_INP01, inp_str);
+      OmWString ec_entry;
 
-      result = this->_ModChan->setCustLibraryPath(inp_str);
+      UiPropChnLib->getItemText(IDC_EC_INP01, ec_entry);
+
+      result = this->_ModChan->setCustLibraryPath(ec_entry);
 
     } else {
 
@@ -432,17 +478,19 @@ bool OmUiPropChn::applyChanges()
   }
 
   // Data Backup Tab
-  OmUiPropChnBck* pUiPropLocBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
+  OmUiPropChnBck* UiPropChnBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
 
-  if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Mod Channel Library path
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_CUSTDIR)) { //< parameter for Mod Channel Library path
 
     OmResult result;
 
-    if(pUiPropLocBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
 
-      pUiPropLocBck->getItemText(IDC_EC_INP01, inp_str);
+      OmWString ec_entry;
 
-      result = this->_ModChan->setCustBackupPath(inp_str);
+      UiPropChnBck->getItemText(IDC_EC_INP01, ec_entry);
+
+      result = this->_ModChan->setCustBackupPath(ec_entry);
 
     } else {
 
@@ -461,16 +509,16 @@ bool OmUiPropChn::applyChanges()
     }
 
     // Reset parameter as unmodified
-    pUiPropLocBck->paramReset(CHN_PROP_BCK_CUSTDIR);
+    UiPropChnBck->paramReset(CHN_PROP_BCK_CUSTDIR);
   }
 
-  if(pUiPropLocBck->paramChanged(CHN_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_COMP_LEVEL)) { //< parameter for Backup compression level
 
-    if(pUiPropLocBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
 
       int32_t comp_method, comp_level;
 
-      switch(pUiPropLocBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
+      switch(UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
       case 1:   comp_method = OM_METHOD_DEFLATE; break; //< MZ_COMPRESS_METHOD_DEFLATE
       case 2:   comp_method = OM_METHOD_LZMA; break;    //< MZ_COMPRESS_METHOD_LZMA
       case 3:   comp_method = OM_METHOD_LZMA2; break;   //< MZ_COMPRESS_METHOD_XZ
@@ -478,7 +526,7 @@ bool OmUiPropChn::applyChanges()
       default:  comp_method = OM_METHOD_STORE; break;   //< MZ_COMPRESS_METHOD_STORE
       }
 
-      switch(pUiPropLocBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
+      switch(UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
       case 1:   comp_level = OM_LEVEL_FAST; break; //< MZ_COMPRESS_LEVEL_FAST
       case 2:   comp_level = OM_LEVEL_SLOW; break; //< MZ_COMPRESS_LEVEL_NORMAL
       case 3:   comp_level = OM_LEVEL_BEST; break; //< MZ_COMPRESS_LEVEL_BEST
@@ -495,28 +543,28 @@ bool OmUiPropChn::applyChanges()
     }
 
     // Reset parameter as unmodified
-    pUiPropLocBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
+    UiPropChnBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
   }
 
   // Mods Repositories Tab
-  OmUiPropChnNet* pUiPropLocNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
+  OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
 
-  if(pUiPropLocNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
+  if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
 
-    this->_ModChan->setWarnExtraDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
-    this->_ModChan->setWarnMissDnld(pUiPropLocNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
-    this->_ModChan->setWarnUpgdBrkDeps(pUiPropLocNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
+    this->_ModChan->setWarnExtraDnld(UiPropChnNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    this->_ModChan->setWarnMissDnld(UiPropChnNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+    this->_ModChan->setWarnUpgdBrkDeps(UiPropChnNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropLocNet->paramReset(CHN_PROP_NET_WARNINGS);
+    UiPropChnNet->paramReset(CHN_PROP_NET_WARNINGS);
   }
 
-  if(pUiPropLocNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
+  if(UiPropChnNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
 
-    this->_ModChan->setUpgdRename(pUiPropLocNet->msgItem(IDC_BC_RAD02, BM_GETCHECK));
+    this->_ModChan->setUpgdRename(UiPropChnNet->msgItem(IDC_BC_RAD02, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropLocNet->paramReset(CHN_PROP_NET_ONUPGRADE);
+    UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
   }
 
   // disable Apply button

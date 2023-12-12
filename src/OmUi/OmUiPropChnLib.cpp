@@ -32,7 +32,6 @@ OmUiPropChnLib::OmUiPropChnLib(HINSTANCE hins) : OmDialogPropTab(hins)
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -40,7 +39,6 @@ OmUiPropChnLib::~OmUiPropChnLib()
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -50,11 +48,10 @@ long OmUiPropChnLib::id() const
   return IDD_PROP_CHN_LIB;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnLib::_onCkBoxLib()
+void OmUiPropChnLib::_cust_library_toggle()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan)
@@ -68,78 +65,48 @@ void OmUiPropChnLib::_onCkBoxLib()
   this->setItemText(IDC_EC_INP01, ModChan->libraryPath());
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnLib::_onBcBrwLib()
+void OmUiPropChnLib::_browse_dir_library()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP01, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Library folder, where Mods/Packages are stored.", start))
     return;
 
   this->setItemText(IDC_EC_INP01, result);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnLib::_onCkBoxDev()
-{
-  // user modified parameter, notify it
-  this->paramCheck(CHN_PROP_LIB_DEVMODE);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnLib::_onCkBoxWrn()
-{
-  // user modified parameter, notify it
-  this->paramCheck(CHN_PROP_LIB_WARNINGS);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnLib::_onCkBoxHid()
-{
-  // user modified parameter, notify it
-  this->paramCheck(CHN_PROP_LIB_SHOWHIDDEN);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnLib::_onTabInit()
+void OmUiPropChnLib::_onTbInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_BC_CKBX1,  L"Use a custom Library folder instead of default one");
-  this->_createTooltip(IDC_EC_INP01,  L"Library folder path, where Mods/Packages are stored");
-  this->_createTooltip(IDC_BC_BRW01,  L"Browse to select a custom Library folder");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Use custom directory as Mod Library");
+  this->_createTooltip(IDC_EC_INP01,  L"Mod Library directory, where Mods are stored");
+  this->_createTooltip(IDC_BC_BRW01,  L"Select custom Mod Library directory");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Parse library subfolders as mod packages for development purpose or legacy support");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Parse Library's sub-directories as Mods for development purpose or legacy support");
 
-  this->_createTooltip(IDC_BC_CKBX3,  L"Warn when packages install will overlap any previously installed");
-  this->_createTooltip(IDC_BC_CKBX4,  L"Warn when packages install require additional dependencies installation");
-  this->_createTooltip(IDC_BC_CKBX5,  L"Warn when packages dependencies are missing");
-  this->_createTooltip(IDC_BC_CKBX6,  L"Warn when packages uninstall require additional uninstallations");
-  this->_createTooltip(IDC_BC_CKBX7,  L"Parse and show library hidden files and subfolders");
+  this->_createTooltip(IDC_BC_CKBX7,  L"Parse and show Library's hidden files and sub-directories");
 
-  this->_onTabRefresh();
+  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if Mod installation will overlap any previously installed");
+  this->_createTooltip(IDC_BC_CKBX4,  L"Warn if Mod install require additional dependencies installation");
+  this->_createTooltip(IDC_BC_CKBX5,  L"Warn if Mod dependencies are missing");
+  this->_createTooltip(IDC_BC_CKBX6,  L"Warn if Mod uninstall require additional uninstallations");
+
+
+  this->_onTbRefresh();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnLib::_onTabRefresh()
+void OmUiPropChnLib::_onTbRefresh()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan)
@@ -162,35 +129,37 @@ void OmUiPropChnLib::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnLib::_onTabResize()
+void OmUiPropChnLib::_onTbResize()
 {
+  int32_t y_base = 30;
+
   // Custom Library CheckBox
-  this->_setItemPos(IDC_BC_CKBX1, 50, 15, 240, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 50, y_base, 240, 16, true);
   // Mod Channel Library Label, EditControl and Browse button
-  this->_setItemPos(IDC_EC_INP01, 50, 25, this->cliUnitX()-108, 13);
-  this->_setItemPos(IDC_BC_BRW01, this->cliUnitX()-55, 25, 16, 13);
+  this->_setItemPos(IDC_EC_INP01, 50, y_base+20, this->cliWidth()-130, 20, true);
+  this->_setItemPos(IDC_BC_BRW01, this->cliWidth()-75, y_base+19, 25, 22, true);
 
   // Library Dev Mode CheckBox
-  this->_setItemPos(IDC_BC_CKBX2, 50, 50, 200, 9);
-
-  // Enable warnings Label
-  this->_setItemPos(IDC_SC_LBL01, 50, 70, 200, 9);
-
-  // Enable warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX3, 65, 80, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX4, 65, 90, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX5, 65, 100, 200, 9);
-  this->_setItemPos(IDC_BC_CKBX6, 65, 110, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX2, 50, y_base+60, 300, 16, true);
 
   // Show Hidden CheckBox
-  this->_setItemPos(IDC_BC_CKBX7, 50, 130, 200, 9);
+  this->_setItemPos(IDC_BC_CKBX7, 50, y_base+100, 300, 16, true);
+
+  // Enable warnings Label
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base+140, 300, 16, true);
+
+  // Enable warnings CheckBoxes
+  this->_setItemPos(IDC_BC_CKBX3, 75, y_base+160, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX4, 75, y_base+180, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX5, 75, y_base+200, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX6, 75, y_base+220, 300, 16, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropChnLib::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropChnLib::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -198,8 +167,9 @@ INT_PTR OmUiPropChnLib::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
-    case IDC_BC_CKBX1: //< Check Box for custom Library path
-      this->_onCkBoxLib();
+    case IDC_BC_CKBX1: //< CheckBox: use custom library
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_cust_library_toggle();
       break;
 
     case IDC_EC_INP01: //< Library EditText
@@ -208,23 +178,29 @@ INT_PTR OmUiPropChnLib::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->paramCheck(CHN_PROP_LIB_CUSTDIR);
       break;
 
-    case IDC_BC_BRW01: //< Custom Library "..." (browse) Button
-      this->_onBcBrwLib();
+    case IDC_BC_BRW01: //< Button: Browse library directory
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_dir_library();
       break;
 
-    case IDC_BC_CKBX2: //< Check box for Package legacy (folders) support
-      this->_onCkBoxDev();
+    case IDC_BC_CKBX2: //< CheckBox: development mode
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(CHN_PROP_LIB_DEVMODE);
       break;
 
-    case IDC_BC_CKBX3: //< Check box for Warn at Installation overlaps
-    case IDC_BC_CKBX4: //< Check box for Warn at Additional installation due to dependencies
-    case IDC_BC_CKBX5: //< Check box for Warn at Installation dependencies missing
-    case IDC_BC_CKBX6: //< Check box for Warn at Additional restoration due to overlaps
-      this->_onCkBoxWrn();
+    case IDC_BC_CKBX7: //< CheckBox : show hidden files/directories
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(CHN_PROP_LIB_SHOWHIDDEN);
       break;
 
-    case IDC_BC_CKBX7: //< Check box for Show hidden files/folders
-      this->_onCkBoxHid();
+    case IDC_BC_CKBX3: //< CheckBox : Warn overlapping
+    case IDC_BC_CKBX4: //< CheckBox : Warn extra installs
+    case IDC_BC_CKBX5: //< CheckBox : Warn missing dependency
+    case IDC_BC_CKBX6: //< CheckBox : Warn extra uninstalls
+      // notify parameter changes
+      this->paramCheck(CHN_PROP_LIB_WARNINGS);
       break;
     }
   }

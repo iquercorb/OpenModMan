@@ -18,10 +18,6 @@
 
 #include "OmBaseUi.h"
 
-#include "OmModMan.h"
-
-#include "OmUiWizHub.h"
-
 #include "OmUtilDlg.h"
 #include "OmUtilStr.h"
 
@@ -32,7 +28,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiWizHubCfg::OmUiWizHubCfg(HINSTANCE hins) : OmDialog(hins)
+OmUiWizHubCfg::OmUiWizHubCfg(HINSTANCE hins) : OmDialogWizPage(hins)
 {
 
 }
@@ -55,41 +51,60 @@ long OmUiWizHubCfg::id() const
   return IDD_WIZ_HUB_CFG;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiWizHubCfg::hasValidParams() const
+bool OmUiWizHubCfg::validFields() const
 {
-  OmWString item_str;
+  OmWString ec_entry;
 
-  this->getItemText(IDC_EC_INP01, item_str);
-  if(!Om_dlgValidName(this->_hwnd, L"Mod Hub name", item_str))
+  this->getItemText(IDC_EC_INP01, ec_entry);
+  if(ec_entry.empty())
     return false;
 
-  this->getItemText(IDC_EC_INP02, item_str);
-  if(Om_dlgValidPath(this->_hwnd, L"Mod Hub path", item_str)) {
-    if(!Om_dlgCreateFolder(this->_hwnd, L"Mod Hub path", item_str))
-      return false;
-  } else {
+  this->getItemText(IDC_EC_INP02, ec_entry);
+  if(ec_entry.empty())
     return false;
-  }
+
+  this->getItemText(IDC_EC_INP03, ec_entry);
+  if(!Om_hasLegalPathChar(ec_entry))
+    return false;
 
   return true;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiWizHubCfg::validParams() const
+{
+  OmWString ec_entry;
+
+  this->getItemText(IDC_EC_INP01, ec_entry);
+  if(!Om_dlgValidName(this->_hwnd, L"Hub name", ec_entry))
+    return false;
+
+  this->getItemText(IDC_EC_INP02, ec_entry);
+  if(!Om_dlgValidPath(this->_hwnd, L"Home directory", ec_entry))
+    return false;
+
+  if(!Om_dlgCreateFolder(this->_hwnd, L"Home directory", ec_entry))
+    return false;
+
+  return true;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubCfg::_onPathChange()
+void OmUiWizHubCfg::_update_hub_path()
 {
   OmWString name, path;
 
   this->getItemText(IDC_EC_INP01, name);
   this->getItemText(IDC_EC_INP02, path);
 
-  if(!Om_isValidName(name) || !Om_isValidPath(path)) {
+  if(!Om_hasLegalSysChar(name) || !Om_hasLegalPathChar(path)) {
     this->setItemText(IDC_EC_INP03, L"<invalid path>");
     return;
   }
@@ -98,123 +113,70 @@ void OmUiWizHubCfg::_onPathChange()
   this->setItemText(IDC_EC_INP03, path);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubCfg::_onBcBrwHome()
+void OmUiWizHubCfg::_browse_dir_home()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Mod Hub path, where to create the Mod Hub home folder", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Mod Hub home location, where to create Hub home directory", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubCfg::_onInit()
+void OmUiWizHubCfg::_onPgInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Mod Hub name, both to identify it and create home folder");
+  this->_createTooltip(IDC_EC_INP01,  L"Hub name, both to identify it and create home directory");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Mod Hub path, where to create the Mod Hub home folder");
-  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select Hub path");
+  this->_createTooltip(IDC_EC_INP02,  L"Hub home location, where to create Hub home directory");
+  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select Hub home location");
 
   // set default start values
   this->setItemText(IDC_EC_INP01, L"New Mod Hub");
   this->setItemText(IDC_EC_INP02, L"");
   this->setItemText(IDC_EC_INP03, L"<invalid path>");
-
-  // disable "next" button
-  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(false);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubCfg::_onShow()
+void OmUiWizHubCfg::_onPgResize()
 {
-  OmWString item_str;
+  int32_t y_base = 90;
 
-  // enable or disable "next" button according values
-  bool allow = true;
-
-  this->getItemText(IDC_EC_INP01, item_str);
-  if(!item_str.empty()) {
-
-    this->getItemText(IDC_EC_INP02, item_str);
-    if(!item_str.empty()) {
-
-      this->getItemText(IDC_EC_INP03, item_str);
-      if(!Om_isValidPath(item_str)) allow = false;
-
-    } else {
-      allow = false;
-    }
-
-  } else {
-    allow = false;
-  }
-
-  static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiWizHubCfg::_onResize()
-{
   // Introduction text
-  this->_setItemPos(IDC_SC_INTRO, 10, 5, 190, 25);
+  this->_setItemPos(IDC_SC_HELP, 0, 0, this->cliWidth(), 70, true);
+
   // Mod Hub title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 10, 40, this->cliUnitX()-25, 9);
-  this->_setItemPos(IDC_EC_INP01, 10, 50, this->cliUnitX()-25, 13);
+  this->_setItemPos(IDC_SC_LBL01, 0, y_base, this->cliWidth()-10, 16, true);
+  this->_setItemPos(IDC_EC_INP01, 0, y_base+20, this->cliWidth()-10, 21, true);
+
   // Mod Hub location Label & EditControl & Browse button
-  this->_setItemPos(IDC_SC_LBL02, 10, 80, this->cliUnitX()-25, 9);
-  this->_setItemPos(IDC_EC_INP02, 10, 90, this->cliUnitX()-45, 13);
-  this->_setItemPos(IDC_BC_BRW02, this->cliUnitX()-31, 90, 16, 13);
+  this->_setItemPos(IDC_SC_LBL02, 0, y_base+60, this->cliWidth()-10, 16, true);
+  this->_setItemPos(IDC_EC_INP02, 0, y_base+80, this->cliWidth()-35, 21, true);
+  this->_setItemPos(IDC_BC_BRW02, this->cliWidth()-30, y_base+80, 22, 22, true);
+
   // Result path Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 10, 150, this->cliUnitX()-25, 9);
-  this->_setItemPos(IDC_EC_INP03, 10, 160, this->cliUnitX()-25, 13);
+  this->_setItemPos(IDC_SC_LBL03, 0, y_base+140, this->cliWidth()-10, 16, true);
+  this->_setItemPos(IDC_EC_INP03, 0, y_base+160, this->cliWidth()-10, 21, true);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizHubCfg::_onRefresh()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiWizHubCfg::_onQuit()
-{
-
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-INT_PTR OmUiWizHubCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiWizHubCfg::_onPgMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
   if(uMsg == WM_COMMAND) {
-
-    bool has_changed = false;
 
     switch(LOWORD(wParam))
     {
@@ -222,43 +184,18 @@ INT_PTR OmUiWizHubCfg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_EC_INP02: // Mod Hub path
       // check for content changes
       if(HIWORD(wParam) == EN_CHANGE)
-        this->_onPathChange();
+        this->_update_hub_path();
       break;
 
     case IDC_BC_BRW02:
-      this->_onBcBrwHome();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_dir_home();
       break;
 
     case IDC_EC_INP03: // Resulting Mod Hub home path
       if(HIWORD(wParam) == EN_CHANGE)
-        has_changed = true;
+        this->fieldsChanged();
       break;
-    }
-    // enable or disable "next" button according values
-    if(has_changed) {
-      bool allow = true;
-
-      OmWString item_str;
-
-      this->getItemText(IDC_EC_INP01, item_str);
-      if(!item_str.empty()) {
-
-        this->getItemText(IDC_EC_INP02, item_str);
-        if(!item_str.empty()) {
-
-          this->getItemText(IDC_EC_INP03, item_str);
-          if(!Om_isValidPath(item_str))
-            allow = false;
-
-        } else {
-          allow = false;
-        }
-
-      } else {
-        allow = false;
-      }
-
-      static_cast<OmDialogWiz*>(this->_parent)->setNextAllowed(allow);
     }
   }
 

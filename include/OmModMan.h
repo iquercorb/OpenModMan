@@ -275,7 +275,7 @@ class OmModMan
     /// \param[in]  path    : Pointer to boolean to get auto-load.
     /// \param[in]  path    : Reference to wide string to get path.
     ///
-    void loadStartHubs(bool* enable, OmWStringArray& path);
+    void getStartHubs(bool* enable, OmWStringArray& path);
 
     /// \brief Remove startup Hub path.
     ///

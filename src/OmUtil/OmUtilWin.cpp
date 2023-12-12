@@ -166,18 +166,80 @@ static HBITMAP __internal_bmp[200] = {nullptr};
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HBITMAP Om_getResImage(HINSTANCE hins, unsigned id)
+HBITMAP Om_getResImage(unsigned id, HINSTANCE hins)
 {
   unsigned db_id = id - RES_IDB_BASE;
 
   if(__internal_bmp[db_id] == nullptr) {
-    HBITMAP hBm = static_cast<HBITMAP>(LoadImage(hins,MAKEINTRESOURCE(id),IMAGE_BITMAP,0,0,0));
+    HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
+    HBITMAP hBm = static_cast<HBITMAP>(LoadImageW(hInstance,MAKEINTRESOURCEW(id),IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
     __internal_bmp[db_id] = hBm;
   }
 
   return __internal_bmp[db_id];
 }
 
+
+/// \brief Loaded internal image
+///
+/// Array of loaded internal resource image.
+///
+static HBITMAP __internal_pabmp[200] = {nullptr};
+
+
+/// Base index for image resource
+///
+#define RES_IDB_BASE   800
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HBITMAP Om_getResImagePremult(unsigned id, HINSTANCE hins)
+{
+  unsigned db_id = id - RES_IDB_BASE;
+  if(__internal_pabmp[db_id] == nullptr) {
+
+    HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
+    HBITMAP hBm = static_cast<HBITMAP>(LoadImageW(hInstance,MAKEINTRESOURCEW(id),IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
+
+    uint8_t* bgra = nullptr;
+    HBITMAP hBmPa = (HBITMAP)CopyImage(hBm, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    // delete source Bitmap
+    DeleteObject(hBm);
+
+    // convert pixel data to premultiplied alpha
+    HDC hDc = CreateCompatibleDC(nullptr);
+    BITMAPINFO BmInfo = {}; BmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+    // 1. get Bitmap Info
+    GetDIBits(hDc, hBmPa, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
+    bgra = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
+    GetDIBits(hDc, hBmPa, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+
+    // treat only 32 bpp images
+    if(BmInfo.bmiHeader.biBitCount == 32) {
+      if(bgra) {
+        // Convert to premultiplied alpha
+        for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
+          bgra[i+0] = static_cast<uint8_t>(bgra[i+0] * bgra[i+3] / 255);
+          bgra[i+1] = static_cast<uint8_t>(bgra[i+1] * bgra[i+3] / 255);
+          bgra[i+2] = static_cast<uint8_t>(bgra[i+2] * bgra[i+3] / 255);
+        }
+        // 3. set replace pixels data into Bitmap
+        SetDIBits(hDc, hBmPa, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+      }
+    }
+
+    // free pixel buffer
+    if(bgra) free(bgra);
+
+    ReleaseDC(nullptr, hDc);
+    __internal_pabmp[db_id] = hBmPa;
+  }
+
+  return __internal_pabmp[db_id];
+}
 
 /// \brief Loaded internal icon
 ///
@@ -189,20 +251,93 @@ static HICON __internal_ico[100][3] = {nullptr};
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HICON Om_getResIcon(HINSTANCE hins, unsigned id, unsigned size)
+HICON Om_getResIcon(unsigned id, unsigned size, HINSTANCE hins)
 {
   unsigned db_id = id - RES_IDB_BASE;
 
   unsigned w = (size == 0) ? 16 : (size == 1) ? 24 : 32;
 
   if(__internal_ico[db_id][size] == nullptr) {
-    HICON hIc = static_cast<HICON>(LoadImage(hins,MAKEINTRESOURCE(id),IMAGE_ICON,w,w,0));
+    HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
+    HICON hIc = static_cast<HICON>(LoadImage(hInstance,MAKEINTRESOURCE(id),IMAGE_ICON,w,w,0));
     __internal_ico[db_id][size] = hIc;
   }
 
   return __internal_ico[db_id][size];
 }
 
+
+/// \brief Loaded internal icon
+///
+/// Array of loaded internal resource icon.
+///
+static HBITMAP __internal_paico[100][3] = {nullptr};
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HBITMAP Om_getResIconPremult(unsigned id, unsigned size, HINSTANCE hins)
+{
+  unsigned db_id = id - RES_IDB_BASE;
+
+  unsigned w = (size == 0) ? 16 : (size == 1) ? 24 : 32;
+
+  if(__internal_paico[db_id][size] == nullptr) {
+    HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
+    HICON hIc = static_cast<HICON>(LoadImage(hInstance,MAKEINTRESOURCE(id),IMAGE_ICON,w,w,0));
+    ICONINFO IconInfo;
+    GetIconInfo(hIc, &IconInfo);
+
+    uint8_t* bgra = nullptr;
+    uint8_t* mask = nullptr;
+
+    HBITMAP hBmRgb = (HBITMAP)CopyImage(IconInfo.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    HBITMAP hBmMsk = (HBITMAP)CopyImage(IconInfo.hbmMask, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    DeleteObject(hIc);
+    // convert pixel data to premultiplied alpha
+    HDC hDc = CreateCompatibleDC(nullptr);
+    BITMAPINFO BmInfo = {}; BmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+    // 1. get Bitmap Info
+    GetDIBits(hDc, hBmRgb, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
+    bgra = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
+    GetDIBits(hDc, hBmRgb, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+
+    // 1. get Bitmap Info
+    GetDIBits(hDc, hBmMsk, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
+    mask = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
+    GetDIBits(hDc, hBmMsk, 0, BmInfo.bmiHeader.biHeight, mask, &BmInfo, DIB_RGB_COLORS);
+
+    // treat only 32 bpp images
+    if(BmInfo.bmiHeader.biBitCount == 32) {
+      if(bgra && mask) {
+        // Convert to premultiplied alpha
+        for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
+          bgra[i+3] = (bgra[i+3] ^ mask[i]) ? bgra[i+3] : ~mask[i];
+          bgra[i+0] = static_cast<uint8_t>(bgra[i+0] * bgra[i+3] / 255);
+          bgra[i+1] = static_cast<uint8_t>(bgra[i+1] * bgra[i+3] / 255);
+          bgra[i+2] = static_cast<uint8_t>(bgra[i+2] * bgra[i+3] / 255);
+        }
+        // 3. set replace pixels data into Bitmap
+        SetDIBits(hDc, hBmRgb, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+      }
+    }
+
+    // free pixel buffer
+    if(bgra) Om_free(bgra);
+    if(mask) Om_free(mask);
+
+    // free unused mask buffer
+    DeleteObject(hBmMsk);
+
+    ReleaseDC(nullptr, hDc);
+    __internal_paico[db_id][size] = hBmRgb;
+  }
+
+  return __internal_paico[db_id][size];
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -216,20 +351,18 @@ HFONT Om_createFont(unsigned pt, unsigned weight, const wchar_t* name)
                       name);
 }
 
-#include <list>
-
 #pragma pack( push )
 #pragma pack( 2 )
 typedef struct
 {
-    BYTE   bWidth;               // Width, in pixels, of the image
-    BYTE   bHeight;              // Height, in pixels, of the image
-    BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-    BYTE   bReserved;            // Reserved
-    WORD   wPlanes;              // Color Planes
-    WORD   wBitCount;            // Bits per pixel
-    DWORD  dwBytesInRes;         // how many bytes in this resource?
-    WORD   nID;                  // the ID
+   BYTE   bWidth;               // Width, in pixels, of the image
+   BYTE   bHeight;              // Height, in pixels, of the image
+   BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
+   BYTE   bReserved;            // Reserved
+   WORD   wPlanes;              // Color Planes
+   WORD   wBitCount;            // Bits per pixel
+   DWORD   dwBytesInRes;         // how many bytes in this resource?
+   WORD   nID;                  // the ID
 } GRPICONDIRENTRY, *LPGRPICONDIRENTRY;
 #pragma pack( pop )
 
@@ -237,28 +370,32 @@ typedef struct
 #pragma pack( 2 )
 typedef struct
 {
-    WORD            idReserved;   // Reserved (must be 0)
-    WORD            idType;       // Resource type (1 for icons)
-    WORD            idCount;      // How many images?
-    GRPICONDIRENTRY idEntries[1]; // The entries for each image
+   WORD            idReserved;   // Reserved (must be 0)
+   WORD            idType;       // Resource type (1 for icons)
+   WORD            idCount;      // How many images?
+   GRPICONDIRENTRY   idEntries[1]; // The entries for each image
 } GRPICONDIR, *LPGRPICONDIR;
 #pragma pack( pop )
+/*
+#include <list>
 
-typedef std::list<GRPICONDIRENTRY> IconDirectory;
+typedef std::list<ICONDIRENTRY> IconDirectory;
 
-IconDirectory GetIconDirectory( HMODULE hMod, WORD Id ) {
-    HRSRC hRsrc = FindResource( hMod, MAKEINTRESOURCE( Id ), RT_GROUP_ICON );
-    HGLOBAL hGlobal = LoadResource( hMod, hRsrc );
-    GRPICONDIR* lpGrpIconDir = (GRPICONDIR*)LockResource( hGlobal );
+IconDirectory GetIconDirectory( HMODULE hMod, WORD Id )
+{
+    HRSRC hRsrc = FindResource(hMod, MAKEINTRESOURCE(Id), RT_GROUP_ICON);
+    HGLOBAL hGlobal = LoadResource(hMod, hRsrc);
+    ICONDIR* lpGrpIconDir = (ICONDIR*)LockResource(hGlobal);
 
     IconDirectory dir;
     for ( size_t i = 0; i < lpGrpIconDir->idCount; ++i ) {
-        dir.push_back( lpGrpIconDir->idEntries[ i ] );
+        dir.push_back( lpGrpIconDir->idEntries[i] );
     }
     return dir;
 }
 
-HICON LoadSpecificIcon( HMODULE hMod, WORD Id ) {
+HICON LoadSpecificIcon( HMODULE hMod, WORD Id )
+{
     HRSRC hRsrc = FindResource( hMod, MAKEINTRESOURCE( Id ), RT_ICON );
     HGLOBAL hGlobal = LoadResource( hMod, hRsrc );
     BYTE* lpData = (BYTE*)LockResource( hGlobal );
@@ -268,7 +405,8 @@ HICON LoadSpecificIcon( HMODULE hMod, WORD Id ) {
                                             0, 0, LR_DEFAULTCOLOR );
     return hIcon;
 }
-void PrintIconDirEntry( const GRPICONDIRENTRY& DirEntry ) {
+
+void PrintIconDirEntry( const ICONDIRENTRY& DirEntry ) {
     _wprintf_p( L"ID: %04d; width=%02d; height=%02d; bpp=%02d\n",
                 DirEntry.nID,
                 DirEntry.bWidth, DirEntry.bHeight, DirEntry.wBitCount );
@@ -280,36 +418,97 @@ void PrintIconInfo( HICON hIcon ) {
     _wprintf_p( L"xHotspot=%02d; yHotspot=%02d\n", ii.xHotspot, ii.yHotspot );
 }
 
-typedef std::list<GRPICONDIRENTRY>::const_iterator IconDirectoryCIt;
+typedef std::list<ICONDIRENTRY>::const_iterator IconDirectoryCIt;
 
 
 void Om_getAppIconInfos(const OmWString& path, int16_t res_id)
 {
   HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
+
   IconDirectory dir = GetIconDirectory( hMod, res_id );
-  for( IconDirectoryCIt it = dir.begin(); it != dir.end(); ++it ) {
+
+  for(IconDirectoryCIt it = dir.begin(); it != dir.end(); ++it ) {
     PrintIconDirEntry( *it );
     HICON hIcon = LoadSpecificIcon( hMod, it->nID );
     PrintIconInfo( hIcon );
     DestroyIcon( hIcon );
   }
 }
+*/
+static uint64_t __Enumresname_type = 0;
+static uint64_t __Enumresname_id = 0;
+static wchar_t  __Enumresname_name[OM_MAX_ITEM];
 
-BOOL Enumresnameprocw(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+BOOL WINAPI Enumresnameprocw(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
 {
-  OM_UNUSED(hModule); OM_UNUSED(lpType); OM_UNUSED(lpName); OM_UNUSED(lParam);
-  #ifdef DEBUG
-  std::wcout << L"DEBUG => Enumresnameprocw - lpType: " << std::to_wstring((int64_t)lpType) << L"    lpName: " << std::to_wstring((int64_t)lpName) << L"\n";
-  #endif
+  OM_UNUSED(hModule); OM_UNUSED(lParam);
 
-  return true;
+  __Enumresname_type = reinterpret_cast<int64_t>(lpType);
+  __Enumresname_id = reinterpret_cast<int64_t>(lpName);
+
+  if(!IS_INTRESOURCE(lpName)) {
+    wcscpy(__Enumresname_name, lpName);
+  }
+
+  return false;
 }
 
-void Om_getAppIconImage(const OmWString& path)
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+HBITMAP Om_getAppIconImage(const OmWString& path, int32_t size)
 {
   HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_IMAGE_RESOURCE );
-  //HMODULE hMod = LoadLibraryExW( path.c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE );
 
-  //EnumResourceNamesW(hMod, (LPCWSTR)RT_ICON, Enumresnameprocw, 0);
-  //LoadImageW(hMod, MAKEINTRESOURCE(3), IMAGE_ICON, 0, 0, 0);
+  __Enumresname_id = 0;
+  __Enumresname_type = 0;
+  __Enumresname_name[0] = 0;
+
+  EnumResourceNamesW(hMod, (LPCWSTR)RT_GROUP_ICON, Enumresnameprocw, 0);
+
+  if(__Enumresname_type) {
+
+    HRSRC hRsrc;
+    HGLOBAL hGlobal;
+
+    if(IS_INTRESOURCE(__Enumresname_id)) {
+      hRsrc = FindResourceW(hMod, MAKEINTRESOURCEW(__Enumresname_id), (LPCWSTR)RT_GROUP_ICON);
+    } else {
+      hRsrc = FindResourceW(hMod, __Enumresname_name, (LPCWSTR)RT_GROUP_ICON);
+    }
+
+    hGlobal = LoadResource(hMod, hRsrc);
+    GRPICONDIR* GrpIconDir = static_cast<GRPICONDIR*>(LockResource(hGlobal));
+
+    // select icon with the size closest to the requested size
+    WORD s = 0;
+
+    for(size_t i = 1; i < GrpIconDir->idCount; ++i) {
+
+      int32_t s_with = GrpIconDir->idEntries[s].bWidth;
+      int32_t i_with = GrpIconDir->idEntries[i].bWidth;
+
+      if(abs(size - s_with) > abs(size - i_with))
+        s = i;
+    }
+
+    hRsrc = FindResource(hMod, MAKEINTRESOURCE(GrpIconDir->idEntries[s].nID), RT_ICON);
+    hGlobal = LoadResource(hMod, hRsrc);
+    BYTE* lpData = (BYTE*)LockResource(hGlobal);
+    DWORD dwSize = SizeofResource(hMod, hRsrc);
+
+    HICON hIcon = CreateIconFromResourceEx(lpData,dwSize,true,0x00030000,0,0,LR_DEFAULTCOLOR);
+
+    ICONINFO IconInfo;
+    GetIconInfo(hIcon, &IconInfo);
+
+    HBITMAP hBmp = (HBITMAP)CopyImage(IconInfo.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    return hBmp;
+  }
+
+  return nullptr;
 }

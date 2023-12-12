@@ -44,7 +44,7 @@ OmUiPropMan::OmUiPropMan(HINSTANCE hins) : OmDialogProp(hins)
 ///
 OmUiPropMan::~OmUiPropMan()
 {
-  //dtor
+
 }
 
 
@@ -62,63 +62,69 @@ long OmUiPropMan::id() const
 ///
 bool OmUiPropMan::checkChanges()
 {
-  OmModMan* pMgr = static_cast<OmModMan*>(this->_data);
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-  OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MGR_GLE));
+  OmUiPropManGle* UiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MGR_GLE));
 
   bool different, changed = false;
 
-  OmWString itm_str;
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_ICON_SIZE)) {
 
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_ICON_SIZE)) {
+    different = false;
 
-    bool diff = false;
-
-    switch(pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL))
+    switch(UiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL))
     {
-    case 0:   diff = (pMgr->iconsSize() != 16); break;
-    case 2:   diff = (pMgr->iconsSize() != 32); break;
-    default:  diff = (pMgr->iconsSize() != 24); break;
+    case 0:
+      different = (ModMan->iconsSize() != 16);
+      break;
+
+    default:
+      different = (ModMan->iconsSize() != 24);
+      break;
     }
 
-    if(diff) {
+    if(different) {
       changed = true;
     } else {
-      pUiPropManGle->paramReset(MAN_PROP_GLE_ICON_SIZE);
+      UiPropManGle->paramReset(MAN_PROP_GLE_ICON_SIZE);
     }
   }
 
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_NO_MDPARSE)) {
-    if(pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != pMgr->noMarkdown()) {
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_NO_MDPARSE)) {
+    if(UiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != ModMan->noMarkdown()) {
       changed = true;
     } else {
-      pUiPropManGle->paramReset(MAN_PROP_GLE_NO_MDPARSE);
+      UiPropManGle->paramReset(MAN_PROP_GLE_NO_MDPARSE);
     }
   }
 
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
 
     different = false;
 
     bool autoload;
-    OmWStringArray path_ls;
+    OmWStringArray paths;
 
-    pMgr->loadStartHubs(&autoload, path_ls);
+    ModMan->getStartHubs(&autoload, paths);
 
-    if(pUiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != autoload) {
+    if(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != autoload)
       different = true;
-    }
 
     if(!different) {
-      size_t lb_cnt = pUiPropManGle->msgItem(IDC_LB_PATH, LB_GETCOUNT);
-      if(lb_cnt == path_ls.size()) {
+
+      size_t lb_cnt = UiPropManGle->msgItem(IDC_LB_PATH, LB_GETCOUNT);
+
+      if(lb_cnt == paths.size()) {
+
+          OmWString lb_entry;
+
           for(size_t i = 0; i < lb_cnt; ++i) {
-            pUiPropManGle->getLbText(IDC_LB_PATH, i, itm_str);
-            if(!Om_namesMatches(path_ls[i], itm_str)) {
-              different = true;
-              break;
+            UiPropManGle->getLbText(IDC_LB_PATH, i, lb_entry);
+            if(!Om_namesMatches(paths[i], lb_entry)) {
+              different = true; break;
             }
           }
+
       } else {
         different = true;
       }
@@ -127,7 +133,7 @@ bool OmUiPropMan::checkChanges()
     if(different) {
       changed = true;
     } else {
-      pUiPropManGle->paramReset(MAN_PROP_GLE_START_LIST);
+      UiPropManGle->paramReset(MAN_PROP_GLE_START_LIST);
     }
   }
 
@@ -152,53 +158,53 @@ bool OmUiPropMan::validChanges()
 ///
 bool OmUiPropMan::applyChanges()
 {
-  OmModMan* pMgr = static_cast<OmModMan*>(this->_data);
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-  OmWString itm_str;
-
-  OmUiPropManGle* pUiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MGR_GLE));
+  OmUiPropManGle* UiPropManGle  = static_cast<OmUiPropManGle*>(this->childById(IDD_PROP_MGR_GLE));
 
   // Parameter: Icons size for packages List-View
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_ICON_SIZE)) {
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_ICON_SIZE)) {
 
-    switch(pUiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL))
+    switch(UiPropManGle->msgItem(IDC_CB_ICS, CB_GETCURSEL))
     {
-    case 0:   pMgr->setIconsSize(16); break;
-    default:  pMgr->setIconsSize(24); break;
+    case 0:
+      ModMan->setIconsSize(16);
+      break;
+
+    default:
+      ModMan->setIconsSize(24);
+      break;
     }
 
     // Reset parameter as unmodified
-    pUiPropManGle->paramReset(MAN_PROP_GLE_ICON_SIZE);
+    UiPropManGle->paramReset(MAN_PROP_GLE_ICON_SIZE);
   }
 
   // Parameter No markdown parsing
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_NO_MDPARSE)) {
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_NO_MDPARSE)) {
 
-    pMgr->setNoMarkdown(pUiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    ModMan->setNoMarkdown(UiPropManGle->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropManGle->paramReset(MAN_PROP_GLE_NO_MDPARSE);
+    UiPropManGle->paramReset(MAN_PROP_GLE_NO_MDPARSE);
   }
 
   // Parameter: Open Mod Hub(s) at startup
-  if(pUiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
 
-    OmWStringArray path_ls;
+    OmWString lb_entry;
+    OmWStringArray paths;
 
-    int lb_cnt =  pUiPropManGle->msgItem(IDC_LB_PATH, LB_GETCOUNT);
-
-    if(lb_cnt > 0) {
-
-      for(int i = 0; i < lb_cnt; ++i) {
-        pUiPropManGle->getLbText(IDC_LB_PATH, i, itm_str);
-        path_ls.push_back(itm_str);
-      }
+    int32_t lb_cnt = UiPropManGle->msgItem(IDC_LB_PATH, LB_GETCOUNT);
+    for(int32_t i = 0; i < lb_cnt; ++i) {
+      UiPropManGle->getLbText(IDC_LB_PATH, i, lb_entry);
+      paths.push_back(lb_entry);
     }
 
-    pMgr->saveStartHubs(pUiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK), path_ls);
+    ModMan->saveStartHubs(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK), paths);
 
     // Reset parameter as unmodified
-    pUiPropManGle->paramReset(MAN_PROP_GLE_START_LIST);
+    UiPropManGle->paramReset(MAN_PROP_GLE_START_LIST);
   }
 
   // disable Apply button

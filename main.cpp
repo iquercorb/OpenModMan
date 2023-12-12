@@ -19,26 +19,12 @@
 
 #include "OmUtilWin.h"
 
-#include "OmDirNotify.h"
-
-
-void my_notify_fn(void* ptr, OmNotify notify, uint64_t param)
-{
-  #ifdef DEBUG
-  std::wcout << L"my_notify_fn\n";
-  #endif // DEBUG
-}
-
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShowCmd)
 {
   OM_UNUSED(hPrevInst); OM_UNUSED(nShowCmd);
 
-  //Om_getAppIconImage(L"D:\\Programmes\\Jeux\\DCS World\\bin-mt\\DCS.exe");
-/*
-  OmDirNotify dir_notify;
-  dir_notify.setCallback(my_notify_fn, nullptr);
-  dir_notify.startMonitor(L"C:\\Users\\Eric\\Documents\\Test_Notify");
-*/
+  //TODO: verifier l'ouverture de fichier par ligne de commande
+
   // Check if another instance already running
   HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Mutex");
   if(hMutex) {

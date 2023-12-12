@@ -671,8 +671,6 @@ class OmDialog
     /// \param[in]  pos     : Zero based menu-item position within the pop-up.
     /// \param[in]  enable  : Enable flags to set.
     ///
-    /// \return Menu handle.
-    ///
     void setPopupItem(unsigned popup, unsigned pos, int enable) const {
       EnableMenuItem(GetSubMenu(_menu, popup), pos, MF_BYPOSITION|enable);
     }
@@ -684,8 +682,6 @@ class OmDialog
     /// \param[in]  popup   : Menu pop-up handle to get menu-item from.
     /// \param[in]  pos     : Zero based menu-item position within the pop-up.
     /// \param[in]  enable  : Enable flags to set.
-    ///
-    /// \return Menu handle.
     ///
     void setPopupItem(HMENU popup, unsigned pos, int enable) const {
       EnableMenuItem(popup, pos, MF_BYPOSITION|enable);
@@ -699,9 +695,17 @@ class OmDialog
     /// \param[in]  pos     : Zero based menu-item position within the pop-up.
     /// \param[in]  text    : Text to set.
     ///
-    /// \return Menu handle.
-    ///
     void setPopupItemText(HMENU popup, unsigned pos, const OmWString& text);
+
+    /// \brief Set pop-up menu-item icon
+    ///
+    /// Set pop-up menu-item icon
+    ///
+    /// \param[in]  popup   : Menu pop-up handle to get menu-item from.
+    /// \param[in]  pos     : Zero based menu-item position within the pop-up.
+    /// \param[in]  image   : Image to set.
+    ///
+    void setPopupItemIcon(HMENU popup, unsigned pos, HBITMAP image);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

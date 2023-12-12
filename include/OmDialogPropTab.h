@@ -28,6 +28,7 @@
 /// \brief Property Dialog Tab.
 ///
 /// Base class for Property dialog tab and child window.
+///
 /// This class inherit from OmDialog and is used as base class to create
 /// specific dialog properties tab window to be integrated as properties
 /// Tab child dialogs within a main Dialog properties window (OmDialogProp).
@@ -51,6 +52,7 @@ class OmDialogPropTab : public OmDialog
     /// Default destructor.
     ///
     virtual ~OmDialogPropTab();
+
     /// \brief Check changed parameter
     ///
     /// Checks whether the specified dialog related parameter has been
@@ -82,13 +84,13 @@ class OmDialogPropTab : public OmDialog
     ///
     void paramReset(unsigned i);
 
-  protected:
-
-    bool                _chParam[OMDIALOGPROP_MAX_PARAM];
+  protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     void                _paramResetAll();
 
-  private:
+  private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool                _chParam[OMDIALOGPROP_MAX_PARAM];
 
     void                _onInit();
 
@@ -102,17 +104,23 @@ class OmDialogPropTab : public OmDialog
 
     INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    virtual void        _onTabInit();
+    virtual void        _onTbInit();
 
-    virtual void        _onTabShow();
+    virtual void        _onTbShow();
 
-    virtual void        _onTabResize();
+    virtual void        _onTbResize();
 
-    virtual void        _onTabRefresh();
+    virtual void        _onTbRefresh();
 
-    virtual void        _onTabQuit();
+    virtual void        _onTbQuit();
 
-    virtual INT_PTR     _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR     _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
+
+/// \brief OmDialogPropTab pointer array
+///
+/// Typedef for an STL vector of OmDialogPropTab pointer type
+///
+typedef std::vector<OmDialogPropTab*> OmPPropTabArray;
 
 #endif // OMDIALOGPROPTAB_H

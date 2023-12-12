@@ -233,6 +233,7 @@
 			<Add library="uuid" />
 			<Add library="oleaut32" />
 			<Add library="ws2_32" />
+			<Add library="Msimg32" />
 		</Linker>
 		<Unit filename="3rdparty/curl/curl.h" />
 		<Unit filename="3rdparty/curl/curlver.h" />
@@ -603,6 +604,7 @@
 		<Unit filename="include/OmDialogProp.h" />
 		<Unit filename="include/OmDialogPropTab.h" />
 		<Unit filename="include/OmDialogWiz.h" />
+		<Unit filename="include/OmDialogWizPage.h" />
 		<Unit filename="include/OmDirNotify.h" />
 		<Unit filename="include/OmImage.h" />
 		<Unit filename="include/OmModChan.h" />
@@ -630,8 +632,8 @@
 		<Unit filename="include/OmUi/OmUiPropChnNet.h" />
 		<Unit filename="include/OmUi/OmUiPropChnStg.h" />
 		<Unit filename="include/OmUi/OmUiPropHub.h" />
-		<Unit filename="include/OmUi/OmUiPropHubBat.h" />
 		<Unit filename="include/OmUi/OmUiPropHubChn.h" />
+		<Unit filename="include/OmUi/OmUiPropHubPst.h" />
 		<Unit filename="include/OmUi/OmUiPropHubStg.h" />
 		<Unit filename="include/OmUi/OmUiPropMan.h" />
 		<Unit filename="include/OmUi/OmUiPropManGle.h" />
@@ -646,10 +648,17 @@
 		<Unit filename="include/OmUi/OmUiPropPstStg.h" />
 		<Unit filename="include/OmUi/OmUiToolPkg.h" />
 		<Unit filename="include/OmUi/OmUiToolRep.h" />
+		<Unit filename="include/OmUi/OmUiWizChn.h" />
+		<Unit filename="include/OmUi/OmUiWizChnBeg.h" />
+		<Unit filename="include/OmUi/OmUiWizChnCus.h" />
+		<Unit filename="include/OmUi/OmUiWizChnTgt.h" />
 		<Unit filename="include/OmUi/OmUiWizHub.h" />
 		<Unit filename="include/OmUi/OmUiWizHubBeg.h" />
 		<Unit filename="include/OmUi/OmUiWizHubCfg.h" />
-		<Unit filename="include/OmUi/OmUiWizHubChn.h" />
+		<Unit filename="include/OmUi/OmUiWizRep.h" />
+		<Unit filename="include/OmUi/OmUiWizRepBeg.h" />
+		<Unit filename="include/OmUi/OmUiWizRepCfg.h" />
+		<Unit filename="include/OmUi/OmUiWizRepQry.h" />
 		<Unit filename="include/OmUtil/OmUtilAlg.h" />
 		<Unit filename="include/OmUtil/OmUtilB64.h" />
 		<Unit filename="include/OmUtil/OmUtilDlg.h" />
@@ -689,6 +698,7 @@
 		<Unit filename="src/OmDialogProp.cpp" />
 		<Unit filename="src/OmDialogPropTab.cpp" />
 		<Unit filename="src/OmDialogWiz.cpp" />
+		<Unit filename="src/OmDialogWizPage.cpp" />
 		<Unit filename="src/OmDirNotify.cpp" />
 		<Unit filename="src/OmImage.cpp" />
 		<Unit filename="src/OmModChan.cpp" />
@@ -717,8 +727,8 @@
 		<Unit filename="src/OmUi/OmUiPropChnNet.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnStg.cpp" />
 		<Unit filename="src/OmUi/OmUiPropHub.cpp" />
-		<Unit filename="src/OmUi/OmUiPropHubBat.cpp" />
 		<Unit filename="src/OmUi/OmUiPropHubChn.cpp" />
+		<Unit filename="src/OmUi/OmUiPropHubPst.cpp" />
 		<Unit filename="src/OmUi/OmUiPropHubStg.cpp" />
 		<Unit filename="src/OmUi/OmUiPropMan.cpp" />
 		<Unit filename="src/OmUi/OmUiPropManGle.cpp" />
@@ -733,10 +743,17 @@
 		<Unit filename="src/OmUi/OmUiPropPstStg.cpp" />
 		<Unit filename="src/OmUi/OmUiToolPkg.cpp" />
 		<Unit filename="src/OmUi/OmUiToolRep.cpp" />
+		<Unit filename="src/OmUi/OmUiWizChn.cpp" />
+		<Unit filename="src/OmUi/OmUiWizChnBeg.cpp" />
+		<Unit filename="src/OmUi/OmUiWizChnCus.cpp" />
+		<Unit filename="src/OmUi/OmUiWizChnTgt.cpp" />
 		<Unit filename="src/OmUi/OmUiWizHub.cpp" />
 		<Unit filename="src/OmUi/OmUiWizHubBeg.cpp" />
 		<Unit filename="src/OmUi/OmUiWizHubCfg.cpp" />
-		<Unit filename="src/OmUi/OmUiWizHubChn.cpp" />
+		<Unit filename="src/OmUi/OmUiWizRep.cpp" />
+		<Unit filename="src/OmUi/OmUiWizRepBeg.cpp" />
+		<Unit filename="src/OmUi/OmUiWizRepCfg.cpp" />
+		<Unit filename="src/OmUi/OmUiWizRepQry.cpp" />
 		<Unit filename="src/OmUtil/OmUtilAlg.cpp" />
 		<Unit filename="src/OmUtil/OmUtilB64.cpp" />
 		<Unit filename="src/OmUtil/OmUtilDlg.cpp" />

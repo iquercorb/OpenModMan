@@ -63,7 +63,7 @@ long OmUiPropModBck::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropModBck::_onTabInit()
+void OmUiPropModBck::_onTbInit()
 {
   // defines fonts for package description, title, and log output
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
@@ -185,7 +185,7 @@ void OmUiPropModBck::_onTabInit()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropModBck::_onTabResize()
+void OmUiPropModBck::_onTbResize()
 {
   // Package Backup Type Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);

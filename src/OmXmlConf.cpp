@@ -911,7 +911,7 @@ OmWString OmXmlDoc::lastErrorStr() const
 
   if(_ercode > 4) {
     result += L" at ";
-    result += _erpoff;
+    result += std::to_wstring(this->_erpoff);
   }
 
   return result;
@@ -1397,7 +1397,7 @@ OmWString OmXmlConf::lastErrorStr() const
 
   if(_ercode > 4) {
     result += L" at ";
-    result += _erpoff;
+    result += std::to_wstring(this->_erpoff);
   }
 
   return result;

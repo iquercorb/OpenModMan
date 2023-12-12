@@ -526,7 +526,7 @@ void OmModMan::saveStartHubs(bool enable, const OmWStringArray& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModMan::loadStartHubs(bool* enable, OmWStringArray& paths)
+void OmModMan::getStartHubs(bool* enable, OmWStringArray& paths)
 {
   paths.clear();
 
@@ -678,7 +678,7 @@ bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open
 {
   // check whether install path exists
   if(!Om_isDir(path)) {
-    this->_error(L"createHub", Om_errNotDir(L"Home location", path));
+    this->_error(L"createHub", Om_errNotDir(L"home location", path));
     return false;
   }
 
@@ -686,10 +686,19 @@ bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open
   OmWString hub_home = Om_concatPaths(path, name);
 
   // create Mod Hub home folder
-  int32_t result = Om_dirCreate(hub_home);
-  if(result != 0) {
-    this->_error(L"createHub", Om_errCreate(L"Home directory", hub_home, result));
-    return false;
+  if(!Om_isDir(hub_home)) {
+    int32_t result = Om_dirCreate(hub_home);
+    if(result != 0) {
+      this->_error(L"createHub", Om_errCreate(L"home directory", hub_home, result));
+      return false;
+    }
+  } else {
+    if(Om_isDirEmpty(hub_home)) {
+      this->_log(OM_LOG_WRN, L"createHub", L"chosen home directory already exists");
+    } else {
+      this->_error(L"createHub", L"chosen home directory already exists and is not empty");
+      return false;
+    }
   }
 
   // initialize Mod Hub definition file
@@ -797,6 +806,10 @@ void OmModMan::selectHub(int32_t index)
     this->_netlib_notify_enable(true);
 
   } else {
+
+    // disable library notifications from previous hub
+    this->_modlib_notify_enable(false);
+    this->_netlib_notify_enable(false);
 
     this->_active_hub = -1;
 

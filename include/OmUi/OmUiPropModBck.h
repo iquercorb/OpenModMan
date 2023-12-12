@@ -52,9 +52,9 @@ class OmUiPropModBck : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 };
 
 #endif // OMUIPROPMODBCK_H

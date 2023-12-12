@@ -20,7 +20,7 @@
 #include "OmBase.h"
 #include "OmBaseWin.h"
 
-#include "OmDialog.h"
+#include "OmDialogPropTab.h"
 
 /// \brief Property Dialog main frame.
 ///
@@ -69,28 +69,21 @@ class OmDialogProp : public OmDialog
     ///
     virtual bool applyChanges();
 
-
   protected: ///        - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmWStringArray     _pageName;
-
-    std::vector<OmDialog*>   _pageDial;
-
-    void                _addPage(const OmWString& name, OmDialog* dialog);
+    void                _addPage(const OmWString& name, OmDialogPropTab* dialog);
 
     void                _setNoChange(bool enable);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    OmWStringArray      _pageName;
+
+    OmPPropTabArray     _pageDial;
+
     bool                _noChanges;
 
     HWND                _hTab;
-
-    HWND                _hBcOk;
-
-    HWND                _hBcApply;
-
-    HWND                _hBcCancel;
 
     void                _onInit();
 

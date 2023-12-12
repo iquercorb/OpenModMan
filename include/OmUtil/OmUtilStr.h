@@ -254,7 +254,7 @@ bool Om_namesMatches(const OmWString& left, const wchar_t* right);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidUrl(const wchar_t* url);
+bool Om_isUrl(const wchar_t* url);
 
 /// \brief Check URL validity
 ///
@@ -264,7 +264,7 @@ bool Om_isValidUrl(const wchar_t* url);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidUrl(const OmWString& url);
+bool Om_isUrl(const OmWString& url);
 
 /// \brief Check file URL validity
 ///
@@ -275,7 +275,7 @@ bool Om_isValidUrl(const OmWString& url);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidFileUrl(const wchar_t* url);
+bool Om_isFileUrl(const wchar_t* url);
 
 /// \brief Check file URL validity
 ///
@@ -286,7 +286,7 @@ bool Om_isValidFileUrl(const wchar_t* url);
 ///
 /// \return True if the given string is a valid URL, false otherwise.
 ///
-bool Om_isValidFileUrl(const OmWString& url);
+bool Om_isFileUrl(const OmWString& url);
 
 /// \brief Check URL path validity
 ///
@@ -296,7 +296,7 @@ bool Om_isValidFileUrl(const OmWString& url);
 ///
 /// \return True if the given string is a valid URL path, false otherwise.
 ///
-bool Om_isValidUrlPath(const wchar_t* path);
+bool Om_hasLegalUrlChar(const wchar_t* path);
 
 /// \brief Check URL path validity
 ///
@@ -306,7 +306,7 @@ bool Om_isValidUrlPath(const wchar_t* path);
 ///
 /// \return True if the given string is a valid URL path, false otherwise.
 ///
-bool Om_isValidUrlPath(const OmWString& path);
+bool Om_hasLegalUrlChar(const OmWString& path);
 
 /// \brief Check file name validity
 ///
@@ -317,7 +317,7 @@ bool Om_isValidUrlPath(const OmWString& path);
 ///
 /// \return True if the given string is suitable for file name, false otherwise.
 ///
-bool Om_isValidName(const wchar_t* name);
+bool Om_hasLegalSysChar(const wchar_t* name);
 
 /// \brief Check file name validity
 ///
@@ -328,7 +328,7 @@ bool Om_isValidName(const wchar_t* name);
 ///
 /// \return True if the given string is suitable for file name, false otherwise.
 ///
-bool Om_isValidName(const OmWString& name);
+bool Om_hasLegalSysChar(const OmWString& name);
 
 /// \brief Check file path validity
 ///
@@ -339,7 +339,7 @@ bool Om_isValidName(const OmWString& name);
 ///
 /// \return True if the given string is suitable for file path, false otherwise.
 ///
-bool Om_isValidPath(const wchar_t* path);
+bool Om_hasLegalPathChar(const wchar_t* path);
 
 /// \brief Check file path validity
 ///
@@ -350,7 +350,7 @@ bool Om_isValidPath(const wchar_t* path);
 ///
 /// \return True if the given string is suitable for file path, false otherwise.
 ///
-bool Om_isValidPath(const OmWString& path);
+bool Om_hasLegalPathChar(const OmWString& path);
 
 /// \brief Extract file extension from path
 ///
@@ -587,6 +587,27 @@ void Om_toCRLF(OmWString* crlf, const OmWString& lf);
 ///
 OmWString Om_toCRLF(const OmWString& lf);
 
+/// \brief Convert to CRLF text
+///
+/// Convert the LF end of line formated text to CRLF end of lines.
+///
+/// \param[in] crlf      : Pointer to string to be set as result
+/// \param[in] lf        : LF string to convert
+///
+/// \return Length of escaped string
+///
+void Om_toCRLF(OmCString* crlf, const OmCString& lf);
+
+/// \brief Convert to CRLF text
+///
+/// Convert the LF end of line formated text to CRLF end of lines.
+///
+/// \param[in] lf        : LF string to convert
+///
+/// \return Resulting CRLF string
+///
+OmCString Om_toCRLF(const OmCString& lf);
+
 /// \brief Concatenate strings
 ///
 /// Concatenate strings from given array of string separated
@@ -618,5 +639,24 @@ OmWString Om_spacesToUnderscores(const OmWString& spaces);
 /// \return String with spaces
 ///
 OmWString Om_underscoresToSpaces(const OmWString& underscores);
+
+/// \brief Trim string
+///
+/// Removes all leading and trailing white-space characters from the given string
+///
+/// \param[in] wstr     : Pointer to string to trim
+///
+void Om_trim(OmWString* wstr);
+
+/// \brief Trim string
+///
+/// Return trimed version of the given string, with all leading and
+/// trailing white-space characters removed
+///
+/// \param[in] wstr     : Pointer to string to trim
+///
+/// \return Trimed string
+///
+OmWString Om_trimed(const OmWString& wstr);
 
 #endif // OMUTILSTR_H

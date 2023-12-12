@@ -81,7 +81,7 @@ class OmUiAddChn : public OmDialog
 
     void                      _onTitleChange();
 
-    void                      _onBcBrwDst();
+    void                      _browse_dir_target();
 
     void                      _onCkBoxLib();
 

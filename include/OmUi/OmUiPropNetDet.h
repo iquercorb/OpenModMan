@@ -52,9 +52,9 @@ class OmUiPropNetDet : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 };
 
 #endif // OMUIPROPNETDET_H

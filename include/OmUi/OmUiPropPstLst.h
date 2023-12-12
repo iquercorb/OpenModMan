@@ -78,27 +78,27 @@ class OmUiPropPstLst : public OmDialogPropTab
 
     std::vector<std::vector<int>> _included;
 
-    void                _includePkg();
+    void                _install_include();
 
-    void                _excludePkg();
+    void                _install_exclude();
 
-    void                _buildLbs();
+    void                _lb_populate();
 
-    void                _onLbExclsSel();
+    void                _lb_exc_on_selchg();
 
-    void                _onLbInclsSel();
+    void                _lb_inc_on_selchg();
 
-    void                _onBcUpPkg();
+    void                _install_list_up();
 
-    void                _onBcDnPkg();
+    void                _install_list_dn();
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 
-    void                _onTabRefresh();
+    void                _onTbRefresh();
 
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPPSTLST_H

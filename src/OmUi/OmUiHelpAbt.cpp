@@ -26,6 +26,7 @@
 #include "OmModMan.h"
 
 #include "OmUtilWin.h"
+#include "OmUtilStr.h"
 #include "OmUtilFs.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -47,6 +48,8 @@ OmUiHelpAbt::~OmUiHelpAbt()
 {
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_RESUL, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_VERS, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -65,39 +68,40 @@ long OmUiHelpAbt::id() const
 void OmUiHelpAbt::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
-  OmWString about = OM_APP_NAME;
-  about.append(L" - ");
-  about.append(std::to_wstring(OM_APP_MAJ));
-  about.push_back(L'.');
-  about.append(std::to_wstring(OM_APP_MIN));
+  HFONT hFt = Om_createFont(18, 700, L"Arial");
+  this->msgItem(IDC_SC_VERS, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+
+  OmWString vers = OM_APP_NAME L" - ";
+  vers += std::to_wstring(OM_APP_MAJ);
+  vers += L'.'; vers += std::to_wstring(OM_APP_MIN);
   #if (OM_APP_REV > 0)
-  about.push_back(L'.');
-  about.append(std::to_wstring(OM_APP_REV));
+  vers += L'.'; vers += std::to_wstring(OM_APP_REV);
   #endif
-  about.append(L" - "); about.append(OM_APP_ARCH); about.append(L"\n\n");
-  about.append(OM_APP_DATE); about.append(L" - ");
-  about.append(OM_APP_AUTHOR);
-  this->setItemText(IDC_SC_INTRO, about);
+  vers += L" - " OM_APP_ARCH;
+  this->setItemText(IDC_SC_VERS, vers);
 
-  OmWString home_url = L"<a href=\"";
-  home_url.append(OM_APP_URL); home_url.append(L"\">");
-  home_url.append(OM_APP_URL); home_url.append(L"</a>");
-  this->setItemText(IDC_LM_LNK01, home_url);
+  OmWString date_auth = OM_APP_DATE L" - " OM_APP_AUTHOR;
+  this->setItemText(IDC_SC_DATE, date_auth);
 
-  OmWString repo_url = L"<a href=\"";
-  repo_url.append(OM_DON_URL); repo_url.append(L"\">");
-  repo_url.append(OM_DON_URL); repo_url.append(L"</a>");
-  this->setItemText(IDC_LM_LNK02, repo_url);
+  OmWString repo_url = L"<a href=\"" OM_APP_URL L"\">" OM_APP_URL L"</a>";
+  this->setItemText(IDC_LM_LNK01, repo_url);
 
-  HFONT hFt = Om_createFont(14, 400, L"Consolas");
+  hFt = Om_createFont(14, 300, L"Consolas");
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  OmCString txt;
-  if(Om_loadPlainText(&txt, L"CREDITS")) {
-    SetDlgItemText(this->_hwnd, IDC_EC_RESUL, txt.c_str());
+  OmCString credits;
+  #ifdef DEBUG
+  if(Om_loadPlainText(&credits, L"..\\..\\CREDITS")) {
+  #else
+  if(Om_loadPlainText(&credits, L"CREDITS")) {
+  #endif // DEBUG
+    SetDlgItemText(this->_hwnd, IDC_EC_RESUL, Om_toCRLF(credits).c_str());
   }
+
+  // subclass window button
+  SetWindowSubclass(GetDlgItem(this->_hwnd, IDC_BC_DONATE), OmUiHelpAbt::_donate_subclass_proc, 0, reinterpret_cast<DWORD_PTR>(this));
 }
 
 
@@ -106,30 +110,124 @@ void OmUiHelpAbt::_onInit()
 ///
 void OmUiHelpAbt::_onResize()
 {
-  unsigned half_width = static_cast<unsigned>(this->cliUnitX() * 0.5f);
+  int32_t half_w = static_cast<int32_t>(this->cliWidth() * 0.5f);
+  int32_t base_y = 0;
 
-  this->_setItemPos(IDC_SC_INTRO, 5, 5, this->cliUnitX()-10, 25);
+  // the white background
+  this->_setItemPos(IDC_SC_WHITE, 0, 0, this->cliWidth(), this->cliHeight()-40, true);
 
-  this->_setItemPos(IDC_SC_LBL01, half_width - 100, 35, 60, 9);
-  this->_setItemPos(IDC_LM_LNK01, half_width - 35, 35, 200, 9);
+  // App name - Version
+  this->_setItemPos(IDC_SC_VERS, 10, base_y, this->cliWidth()-20, 16, true);
 
-  this->_setItemPos(IDC_SC_LBL02, half_width - 100, 50, 60, 9);
-  this->_setItemPos(IDC_LM_LNK02, half_width - 35, 50, 200, 9);
+  // date - author
+  this->_setItemPos(IDC_SC_DATE, 10, base_y+20, this->cliWidth()-20, 16, true);
 
-  this->_setItemPos(IDC_EC_RESUL, 5, 65, this->cliUnitX()-10, this->cliUnitY()-100);
+  // github URL
+  // Why Microsoft made such simple thing as "Centered" always so complicated ?
+  HDC hDc = CreateCompatibleDC(nullptr);
+  // set font to measure Link size
+  HFONT hOldFnt = (HFONT)SelectObject(hDc, Om_createFont(12, 200, L"Ms Shell Dlg"));
+  DeleteObject(hOldFnt);
+  // get lint text width
+  SIZE Size;
+  GetTextExtentPoint32W(hDc, OM_APP_URL, wcslen(OM_APP_URL), &Size);
+  this->_setItemPos(IDC_LM_LNK01, half_w - (Size.cx / 2), base_y+50, Size.cx, 16, true);
+  // free DC
+  ReleaseDC(nullptr, hDc);
 
-  // force buttons to redraw
-  InvalidateRect(this->getItem(IDC_SC_INTRO), nullptr, true);
+  // donate button
+  int32_t btn_w = 116;
+  this->_setItemPos(IDC_BC_DONATE, half_w - (btn_w / 2), base_y+75, btn_w, 23, true);
+
+  this->_setItemPos(IDC_EC_RESUL, 10, base_y+120, this->cliWidth()-20, this->cliHeight()-170, true);
 
   // ---- separator
-  this->_setItemPos(IDC_SC_SEPAR, 5, this->cliUnitY()-25, this->cliUnitX()-10, 1);
+  this->_setItemPos(IDC_SC_SEPAR, 8, this->cliHeight()-40, this->cliWidth()-16, 1, true);
   // Close button
-  this->_setItemPos(IDC_BC_CLOSE, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CLOSE, this->cliWidth()-85, this->cliHeight()-30, 78, 23, true);
 
   // redraw the window
   RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+LRESULT WINAPI OmUiHelpAbt::_donate_subclass_proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+  OM_UNUSED(uIdSubclass);  OM_UNUSED(dwRefData);
+
+  static bool MouseHover = false;
+
+  if(uMsg == WM_MOUSEMOVE) {
+    if(!MouseHover) {
+      MouseHover = true;
+      TRACKMOUSEEVENT EventTrack = {};
+      EventTrack.cbSize = sizeof(TRACKMOUSEEVENT);
+      EventTrack.dwFlags = TME_LEAVE;
+      EventTrack.hwndTrack = hWnd;
+      TrackMouseEvent(&EventTrack);
+      RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE);
+    }
+  }
+
+  if(uMsg == WM_MOUSELEAVE) {
+    MouseHover = false;
+    RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE);
+  }
+
+  if(uMsg == WM_SETCURSOR) {
+    // check whether cursor is hovering button
+    if(MouseHover) {
+      SetCursor(LoadCursor(0,IDC_HAND));
+      return 1; //< bypass default process
+    }
+  }
+
+  if(uMsg == WM_LBUTTONUP) {
+    if(MouseHover) {
+      SetCursor(LoadCursor(0,IDC_HAND));
+      ShellExecuteW(0, 0, OM_DON_URL, 0, 0 , SW_SHOW );
+      return 1;
+    }
+  }
+
+  if(uMsg == WM_PAINT) {
+    PAINTSTRUCT ps;
+    HDC hDc = BeginPaint(hWnd, &ps);
+
+    // draw white background
+    HBRUSH hBrush = CreateSolidBrush(0x00FFFFFF);
+    FillRect(hDc, &ps.rcPaint, hBrush);
+    DeleteObject(hBrush);
+
+    // select HBITMAP to be drawn
+    HBITMAP hBm;
+    if(MouseHover) {
+      hBm = Om_getResImagePremult(IDB_DON_PP_HOV);
+    } else {
+      hBm = Om_getResImagePremult(IDB_DON_PP);
+    }
+
+    // get bitmap to get image size
+    BITMAP bm;
+    GetObject(hBm, sizeof(BITMAP), &bm);
+
+    // create DC and select bitmap to be drawn
+    HDC hDcMem = CreateCompatibleDC(hDc);
+    SelectObject(hDcMem, hBm);
+
+    BLENDFUNCTION BlendFunc = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+    AlphaBlend(hDc, ps.rcPaint.left, ps.rcPaint.top, bm.bmWidth, bm.bmHeight, hDcMem,
+                0, 0, bm.bmWidth, bm.bmHeight, BlendFunc);
+
+    DeleteDC(hDcMem);
+
+    EndPaint(hWnd, &ps);
+  }
+
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -142,6 +240,10 @@ INT_PTR OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(LOWORD(wParam))
     {
+    case IDC_BC_DONATE:
+
+      break;
+
     case IDC_LM_LNK01:
     case IDC_LM_LNK02:
       if(pNmhdr->code == NM_CLICK) {
@@ -159,6 +261,13 @@ INT_PTR OmUiHelpAbt::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->quit();
       break;
     }
+  }
+
+  if(uMsg == WM_CTLCOLORSTATIC) {
+    // set white background for static controls
+    SetBkMode(reinterpret_cast<HDC>(wParam),TRANSPARENT);
+    SetBkColor(reinterpret_cast<HDC>(wParam), 0x00FFFFFF);
+    return (INT_PTR)GetStockObject(WHITE_BRUSH);
   }
 
   return false;

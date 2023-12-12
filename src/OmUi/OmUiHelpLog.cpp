@@ -58,6 +58,8 @@ long OmUiHelpLog::id() const
 ///
 void OmUiHelpLog::_log_notify_cb(void* ptr, OmNotify notify, uint64_t param)
 {
+  OM_UNUSED(notify);
+
   OmUiHelpLog* self = reinterpret_cast<OmUiHelpLog*>(ptr);
 
   size_t len = self->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
@@ -74,7 +76,7 @@ void OmUiHelpLog::_log_notify_cb(void* ptr, OmNotify notify, uint64_t param)
 void OmUiHelpLog::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Debug log ");

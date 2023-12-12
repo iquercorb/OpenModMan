@@ -21,16 +21,12 @@
 #include "OmModMan.h"
 
 #include "OmUiMan.h"
-#include "OmUiAddChn.h"
-#include "OmUiPropChn.h"
-#include "OmUiAddPst.h"
-#include "OmUiPropPst.h"
 #include "OmUiPropHubStg.h"
 #include "OmUiPropHubChn.h"
-#include "OmUiPropHubBat.h"
+#include "OmUiPropHubPst.h"
 
 #include "OmUtilDlg.h"
-#include "OmUtilStr.h"         //< Om_isValidPath
+#include "OmUtilStr.h"         //< Om_hasLegalPathChar
 #include "OmUtilWin.h"         //< Om_getResIcon
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -40,19 +36,13 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiPropHub::OmUiPropHub(HINSTANCE hins) : OmDialogProp(hins),
-  _modHub(nullptr)
+  _ModHub(nullptr)
 {
   // create child tab dialogs
   this->_addPage(L"General Settings", new OmUiPropHubStg(hins));
-  this->_addPage(L"Mod Channels", new OmUiPropHubChn(hins));
-  this->_addPage(L"Mod Presets", new OmUiPropHubBat(hins));
-
-  this->addChild(new OmUiAddChn(hins));     //< Dialog for Mod Channel creation
-  this->addChild(new OmUiAddPst(hins));     //< Dialog for Batch creation
-  this->addChild(new OmUiPropChn(hins));    //< Dialog for Mod Channel properties
-  this->addChild(new OmUiPropPst(hins));    //< Dialog for Mod Channel properties
+  this->_addPage(L"Channels", new OmUiPropHubChn(hins));
+  this->_addPage(L"Presets", new OmUiPropHubPst(hins));
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -61,7 +51,6 @@ OmUiPropHub::~OmUiPropHub()
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -77,48 +66,50 @@ long OmUiPropHub::id() const
 ///
 bool OmUiPropHub::checkChanges()
 {
-  if(!this->modHub())
+  if(!this->_ModHub)
     return false;
 
   bool different, changed = false;
 
-  OmWString inp_str;
-
   // General Settings Tab
-  OmUiPropHubStg* pUiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
+  OmUiPropHubStg* UiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
 
-  if(pUiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) {  //< parameter for Mod Hub title
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) {  //< parameter for Mod Hub title
 
-    pUiPropHubStg->getItemText(IDC_EC_INP03, inp_str);
+    OmWString ec_entry;
 
-    if(this->modHub()->title() != inp_str) {
+    UiPropHubStg->getItemText(IDC_EC_INP03, ec_entry);
+
+    if(this->_ModHub->title() != ec_entry) {
       changed = true;
     } else {
-      pUiPropHubStg->paramReset(HUB_PROP_STG_TITLE);
+      UiPropHubStg->paramReset(HUB_PROP_STG_TITLE);
     }
   }
 
-  if(pUiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
 
-    pUiPropHubStg->getItemText(IDC_EC_INP04, inp_str);
+    OmWString ec_entry;
 
-    if(!Om_namesMatches(this->modHub()->iconSource(), inp_str)) {
+    UiPropHubStg->getItemText(IDC_EC_INP04, ec_entry);
+
+    if(!Om_namesMatches(this->_ModHub->iconSource(), ec_entry)) {
       changed = true;
     } else {
-      pUiPropHubStg->paramReset(HUB_PROP_STG_ICON);
+      UiPropHubStg->paramReset(HUB_PROP_STG_ICON);
     }
   }
 
   // Mod Channels Tab
-  OmUiPropHubChn* pUiPropHubChn  = static_cast<OmUiPropHubChn*>(this->childById(IDD_PROP_HUB_CHN));
+  OmUiPropHubChn* UiPropHubChn  = static_cast<OmUiPropHubChn*>(this->childById(IDD_PROP_HUB_CHN));
 
-  if(pUiPropHubChn->paramChanged(HUB_PROP_CHN_ORDER)) { // parameter for Mod Channel index order
+  if(UiPropHubChn->paramChanged(HUB_PROP_CHN_ORDER)) { // parameter for Mod Channel index order
 
     different = false;
 
-    unsigned n = pUiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
+    unsigned n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
-      if(pUiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i) != i) {
+      if(UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i) != i) {
         different = true; break;
       }
     }
@@ -126,20 +117,20 @@ bool OmUiPropHub::checkChanges()
     if(different) {
       changed = true;
     } else {
-      pUiPropHubChn->paramReset(HUB_PROP_CHN_ORDER);
+      UiPropHubChn->paramReset(HUB_PROP_CHN_ORDER);
     }
   }
 
   // Mod Presets Tab
-  OmUiPropHubBat* pUiPropHubBat  = static_cast<OmUiPropHubBat*>(this->childById(IDD_PROP_HUB_BAT));
+  OmUiPropHubPst* UiPropHubPst  = static_cast<OmUiPropHubPst*>(this->childById(IDD_PROP_HUB_PST));
 
-  if(pUiPropHubBat->paramChanged(HUB_PROP_BAT_ORDER)) { // parameter for Batches index order
+  if(UiPropHubPst->paramChanged(HUB_PROP_BAT_ORDER)) { // parameter for Batches index order
 
     different = false;
 
-    unsigned n = pUiPropHubBat->msgItem(IDC_LB_PST, LB_GETCOUNT);
+    unsigned n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
-      if(pUiPropHubBat->msgItem(IDC_LB_PST, LB_GETITEMDATA, i) != i) {
+      if(UiPropHubPst->msgItem(IDC_LB_PST, LB_GETITEMDATA, i) != i) {
         different = true; break;
       }
     }
@@ -147,15 +138,15 @@ bool OmUiPropHub::checkChanges()
     if(different) {
       changed = true;
     } else {
-      pUiPropHubBat->paramReset(HUB_PROP_BAT_ORDER);
+      UiPropHubPst->paramReset(HUB_PROP_BAT_ORDER);
     }
   }
 
-  if(pUiPropHubBat->paramChanged(HUB_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
-    if(pUiPropHubBat->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->modHub()->presetQuietMode()) {
+  if(UiPropHubPst->paramChanged(HUB_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
+    if(UiPropHubPst->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModHub->presetQuietMode()) {
       changed = true;
     } else {
-      pUiPropHubBat->paramReset(HUB_PROP_BAT_QUIETMODE);
+      UiPropHubPst->paramReset(HUB_PROP_BAT_QUIETMODE);
     }
   }
 
@@ -171,17 +162,19 @@ bool OmUiPropHub::checkChanges()
 ///
 bool OmUiPropHub::validChanges()
 {
-  if(!this->modHub())
+  if(!this->_ModHub)
     return true;
 
-  OmWString inp_str;
-
   // General Settings Tab
-  OmUiPropHubStg* pUiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
+  OmUiPropHubStg* UiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
 
-  if(pUiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) { //< parameter for Mod Hub title
-    pUiPropHubStg->getItemText(IDC_EC_INP03, inp_str);
-    if(!Om_dlgValidName(this->_hwnd, L"Mod Hub name", inp_str))
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) { //< parameter for Mod Hub title
+
+    OmWString ec_entry;
+
+    UiPropHubStg->getItemText(IDC_EC_INP03, ec_entry);
+
+    if(!Om_dlgValidName(this->_hwnd, L"Mod Hub name", ec_entry))
       return false;
   }
 
@@ -194,89 +187,91 @@ bool OmUiPropHub::validChanges()
 ///
 bool OmUiPropHub::applyChanges()
 {
-  if(!this->modHub())
+  if(!this->_ModHub)
     return true;
 
-  OmWString inp_str;
-
   // Mod Settings Tab
-  OmUiPropHubStg* pUiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
+  OmUiPropHubStg* UiPropHubStg  = static_cast<OmUiPropHubStg*>(this->childById(IDD_PROP_HUB_STG));
 
-  if(pUiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) { //< parameter for Mod Hub title
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_TITLE)) { //< parameter for Mod Hub title
 
-    pUiPropHubStg->getItemText(IDC_EC_INP03, inp_str);
+    OmWString ec_entry;
 
-    this->modHub()->setTitle(inp_str);
+    UiPropHubStg->getItemText(IDC_EC_INP03, ec_entry);
+
+    this->_ModHub->setTitle(ec_entry);
     // Reset parameter as unmodified
-    pUiPropHubStg->paramReset(HUB_PROP_STG_TITLE);
+    UiPropHubStg->paramReset(HUB_PROP_STG_TITLE);
   }
 
-  if(pUiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
 
-    pUiPropHubStg->getItemText(IDC_EC_INP04, inp_str);
+    OmWString ec_entry;
 
-    if(Om_isValidPath(inp_str)) {
-      this->modHub()->setIcon(inp_str);
+    UiPropHubStg->getItemText(IDC_EC_INP04, ec_entry);
+
+    if(Om_hasLegalPathChar(ec_entry)) {
+      this->_ModHub->setIcon(ec_entry);
     } else {
-      this->modHub()->setIcon(L""); //< remove current icon
+      this->_ModHub->setIcon(L""); //< remove current icon
     }
 
     // Reset parameter as unmodified
-    pUiPropHubStg->paramReset(HUB_PROP_STG_ICON);
+    UiPropHubStg->paramReset(HUB_PROP_STG_ICON);
   }
 
   // Mod Channels Tab
-  OmUiPropHubChn* pUiPropHubChn  = static_cast<OmUiPropHubChn*>(this->childById(IDD_PROP_HUB_CHN));
+  OmUiPropHubChn* UiPropHubChn  = static_cast<OmUiPropHubChn*>(this->childById(IDD_PROP_HUB_CHN));
 
-  if(pUiPropHubChn->paramChanged(HUB_PROP_CHN_ORDER)) { // parameter for Mod Channel index order
+  if(UiPropHubChn->paramChanged(HUB_PROP_CHN_ORDER)) { // parameter for Mod Channel index order
 
     // To prevent inconsistency we unselect location in the main dialog
     static_cast<OmUiMan*>(this->root())->enableLockMode(true);
 
-    unsigned n = pUiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
+    unsigned n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Mod Channel according current List-Box order
-      this->modHub()->getChannel(pUiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i))->setIndex(i);
+      this->_ModHub->getChannel(UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i))->setIndex(i);
     }
 
     // unselect Mod Channel in context
-    this->modHub()->selectChannel(-1);
+    this->_ModHub->selectChannel(-1);
     // sort Mod Channel list
-    this->modHub()->sortChannels();
+    this->_ModHub->sortChannels();
     // select the first location in list
-    this->modHub()->selectChannel(0);
+    this->_ModHub->selectChannel(0);
 
     // restore main dialog to normal state
     static_cast<OmUiMan*>(this->root())->enableLockMode(false);
 
     // Reset parameter as unmodified
-    pUiPropHubChn->paramReset(HUB_PROP_CHN_ORDER);
+    UiPropHubChn->paramReset(HUB_PROP_CHN_ORDER);
   }
 
   // Mod Presets Tab
-  OmUiPropHubBat* pUiPropHubBat  = static_cast<OmUiPropHubBat*>(this->childById(IDD_PROP_HUB_BAT));
+  OmUiPropHubPst* UiPropHubPst  = static_cast<OmUiPropHubPst*>(this->childById(IDD_PROP_HUB_PST));
 
-  if(pUiPropHubBat->paramChanged(HUB_PROP_BAT_ORDER)) { // parameter for Batches index order
+  if(UiPropHubPst->paramChanged(HUB_PROP_BAT_ORDER)) { // parameter for Batches index order
 
-    unsigned n = pUiPropHubBat->msgItem(IDC_LB_PST, LB_GETCOUNT);
+    unsigned n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
     for(unsigned i = 0; i < n; ++i) {
       // set new index number of Mod Channel according current List-Box order
-      this->modHub()->getPreset(pUiPropHubBat->msgItem(IDC_LB_PST, LB_GETITEMDATA,i))->setIndex(i);
+      this->_ModHub->getPreset(UiPropHubPst->msgItem(IDC_LB_PST, LB_GETITEMDATA,i))->setIndex(i);
     }
 
     // sort Mod Channel list
-    this->modHub()->sortPresets();
+    this->_ModHub->sortPresets();
 
     // Reset parameter as unmodified
-    pUiPropHubBat->paramReset(HUB_PROP_CHN_ORDER);
+    UiPropHubPst->paramReset(HUB_PROP_CHN_ORDER);
   }
 
-  if(pUiPropHubBat->paramChanged(HUB_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
+  if(UiPropHubPst->paramChanged(HUB_PROP_BAT_QUIETMODE)) { // parameter for Batch Quiet Mode
 
-    this->modHub()->setPresetQuietMode(pUiPropHubBat->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    this->_ModHub->setPresetQuietMode(UiPropHubPst->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
 
     // Reset parameter as unmodified
-    pUiPropHubBat->paramReset(HUB_PROP_BAT_QUIETMODE);
+    UiPropHubPst->paramReset(HUB_PROP_BAT_QUIETMODE);
   }
 
   // disable Apply button

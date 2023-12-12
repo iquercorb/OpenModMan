@@ -23,9 +23,9 @@
 
 #include "OmModMan.h"
 
-#include "OmUiMan.h"
-#include "OmUiAddChn.h"
 #include "OmUiPropHub.h"
+#include "OmUiMan.h"
+#include "OmUiWizChn.h"
 #include "OmUiPropChn.h"
 
 #include "OmUtilDlg.h"
@@ -37,12 +37,7 @@
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmUiPropHubChn::OmUiPropHubChn(HINSTANCE hins) : OmDialogPropTab(hins),
-  _delchan_hth(nullptr),
-  _delchan_hwo(nullptr),
-  _delchan_chn(-1),
-  _delchan_hdlg(nullptr),
-  _delchan_abort(0)
+OmUiPropHubChn::OmUiPropHubChn(HINSTANCE hins) : OmDialogPropTab(hins)
 {
 
 }
@@ -66,148 +61,49 @@ long OmUiPropHubChn::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiPropHubChn::_delchan_run_fn(void* ptr)
-{
-  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
-
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
-  if(!ModHub) return static_cast<DWORD>(OM_RESULT_ABORT);
-
-  OmModChan* ModChan = ModHub->getChannel(self->_delchan_chn);
-  if(!ModChan) return static_cast<DWORD>(OM_RESULT_ABORT);
-
-  // set UI in safe mode
-  static_cast<OmUiMan*>(self->root())->enableSafeMode(true);
-
-  // unselect Channel
-  ModHub->selectChannel(-1);
-
-  // Open progress dialog
-  self->_delchan_abort = 0;
-  self->_delchan_hdlg = Om_dlgProgress(self->_hins, self->_hwnd, L"Hub properties - Delete Channel", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
-
-  // delete channel, will purge backup if required
-  OmResult result = ModHub->deleteChannel(self->_delchan_chn, OmUiPropHubChn::_delchan_progress_fn, self);
-
-  // quit the progress dialog (dialogs must be opened and closed within the same thread)
-  Om_dlgProgressClose(static_cast<HWND>(self->_delchan_hdlg));
-  self->_delchan_hdlg = nullptr;
-
-  return static_cast<DWORD>(result);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiPropHubChn::_delchan_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
-{
-  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
-
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
-  if(!ModHub) return false;
-
-  OmModPack* ModPack = reinterpret_cast<OmModPack*>(param);
-
-  OmWString progress_text = L"Restores backup data: ";
-  progress_text += ModPack->iden();
-
-  Om_dlgProgressUpdate(static_cast<HWND>(self->_delchan_hdlg), tot, cur, progress_text.c_str());
-
-  return (self->_delchan_abort == 0);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-VOID WINAPI OmUiPropHubChn::_delchan_end_fn(void* ptr, uint8_t fired)
-{
-  OM_UNUSED(fired);
-
-  OmUiPropHubChn* self = static_cast<OmUiPropHubChn*>(ptr);
-
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(self->_parent)->modHub();
-  if(!ModHub) return;
-
-  DWORD exit_code = Om_threadExitCode(self->_delchan_hth);
-  Om_clearThread(self->_delchan_hth, self->_delchan_hwo);
-
-  self->_delchan_hth = nullptr;
-  self->_delchan_hwo = nullptr;
-
-  OmResult result = static_cast<OmResult>(exit_code);
-
-  if(result == OM_RESULT_ERROR) {
-      // an error occurred during backup purge
-      Om_dlgBox_okl(self->_hwnd, L"Hub properties", IDI_WRN, L"Delete channel error",
-                    L"Channel deletion encountered error:", ModHub->lastError() );
-  }
-
-  // restore UI interactions
-  static_cast<OmUiMan*>(self->root())->enableSafeMode(false);
-
-  // Select fist available Channel
-  ModHub->selectChannel(0);
-
-  // refresh all dialogs from root
-  self->root()->refresh();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiPropHubChn::_lb_chn_on_selchg()
 {
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
 
-  int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
-  int chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
+  int32_t lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
 
-  if(chn_id >= 0) {
+  bool has_select = (lb_sel >= 0);
 
-    OmModChan* pModChan = pModHub->getChannel(chn_id);
+  this->enableItem(IDC_SC_LBL02, has_select);
+  this->enableItem(IDC_SC_LBL03, has_select);
+  this->enableItem(IDC_SC_LBL04, has_select);
 
-    this->setItemText(IDC_EC_READ2, pModChan->targetPath());
-    this->setItemText(IDC_EC_READ3, pModChan->libraryPath());
-    this->setItemText(IDC_EC_READ4, pModChan->backupPath());
+  this->enableItem(IDC_BC_CHDEL, has_select);
+  this->enableItem(IDC_BC_CHEDI, has_select);
 
-    this->enableItem(IDC_SC_LBL02, true);
-    this->enableItem(IDC_EC_READ2, true);
-    this->enableItem(IDC_SC_LBL03, true);
-    this->enableItem(IDC_EC_READ3, true);
-    this->enableItem(IDC_SC_LBL04, true);
-    this->enableItem(IDC_EC_READ4, true);
+  int lb_max = this->msgItem(IDC_LB_CHN, LB_GETCOUNT) - 1;
+  this->enableItem(IDC_BC_UP, (lb_sel > 0));
+  this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
 
-    this->enableItem(IDC_BC_DEL, true);
-    this->enableItem(IDC_BC_EDI, true);
+  if(!has_select) {
+    this->setItemText(IDC_EC_READ2, L"no selection");
+    this->setItemText(IDC_EC_READ3, L"no selection");
+    this->setItemText(IDC_EC_READ4, L"no selection");
+    return;
+  }
 
-    this->enableItem(IDC_BC_UP, (lb_sel > 0));
-    int lb_max = this->msgItem(IDC_LB_CHN, LB_GETCOUNT) - 1;
-    this->enableItem(IDC_BC_DN, (lb_sel < lb_max));
-  } else {
-    this->setItemText(IDC_EC_READ2, L"<no selection>");
-    this->setItemText(IDC_EC_READ3, L"<no selection>");
-    this->setItemText(IDC_EC_READ4, L"<no selection>");
+  // get real channel index from item data
+  int32_t chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
 
-    this->enableItem(IDC_SC_LBL02, false);
-    this->enableItem(IDC_EC_READ2, false);
-    this->enableItem(IDC_SC_LBL03, false);
-    this->enableItem(IDC_EC_READ3, false);
-    this->enableItem(IDC_SC_LBL04, false);
-    this->enableItem(IDC_EC_READ4, false);
+  OmModChan* ModChan = ModHub->getChannel(chn_id);
 
-    this->enableItem(IDC_BC_DEL, false);
-    this->enableItem(IDC_BC_EDI, false);
-
-    this->enableItem(IDC_BC_UP, false);
-    this->enableItem(IDC_BC_DN, false);
+  if(ModChan) {
+    this->setItemText(IDC_EC_READ2, ModChan->targetPath());
+    this->setItemText(IDC_EC_READ3, ModChan->libraryPath());
+    this->setItemText(IDC_EC_READ4, ModChan->backupPath());
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_bc_up_pressed()
+void OmUiPropHubChn::_channel_list_up()
 {
   // get selected item (index)
   int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
@@ -235,11 +131,10 @@ void OmUiPropHubChn::_bc_up_pressed()
   this->paramCheck(HUB_PROP_CHN_ORDER);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_bc_dn_pressed()
+void OmUiPropHubChn::_channel_list_dn()
 {
   // get selected item (index)
   int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
@@ -270,181 +165,159 @@ void OmUiPropHubChn::_bc_dn_pressed()
   this->paramCheck(HUB_PROP_CHN_ORDER);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_bc_del_pressed()
+void OmUiPropHubChn::_channel_delete()
 {
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
   if(!ModHub) return;
 
-  int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
-  int chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
+  int32_t lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
+  if(lb_sel < 0) return;
 
+  int32_t chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
   if(chn_id < 0) return;
-
-  OmModChan* ModChan = ModHub->getChannel(chn_id);
-
-  // warns the user before committing the irreparable
-  if(!Om_dlgBox_ca(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Mod Channel",
-                   L"The operation will permanently delete the Mod Channel \""+
-                   ModChan->title()+L"\" and its associated data."))
-    return;
 
   // disable all dialog controls
   this->enableItem(IDC_LB_CHN, true);
 
   this->enableItem(IDC_SC_LBL02, false);
-  this->enableItem(IDC_EC_READ2, false);
   this->enableItem(IDC_SC_LBL03, false);
-  this->enableItem(IDC_EC_READ3, false);
   this->enableItem(IDC_SC_LBL04, false);
-  this->enableItem(IDC_EC_READ4, false);
 
-  this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_EDI, false);
+  this->enableItem(IDC_BC_CHDEL, false);
+  this->enableItem(IDC_BC_CHEDI, false);
 
-  // here we go for Mod Channel delete
-  if(!this->_delchan_hth) {
-
-    this->_delchan_chn = chn_id;
-
-    // launch thread
-    this->_delchan_hth = Om_createThread(OmUiPropHubChn::_delchan_run_fn, this);
-    this->_delchan_hwo = Om_waitForThread(this->_delchan_hth, OmUiPropHubChn::_delchan_end_fn, this);
-  }
+  static_cast<OmUiMan*>(this->root())->deleteChannel(chn_id);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_bd_edi_pressed()
+void OmUiPropHubChn::_channel_dialog_prop()
 {
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
 
-  int lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
-  int chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
+  int32_t lb_sel = this->msgItem(IDC_LB_CHN, LB_GETCURSEL);
+  if(lb_sel < 0) return;
 
-  if(chn_id >= 0) {
-    // open the Mod Channel Properties dialog
-    OmUiPropChn* pUiPropLoc = static_cast<OmUiPropChn*>(this->siblingById(IDD_PROP_CHN));
-    pUiPropLoc->setModChan(pModHub->getChannel(chn_id));
-    pUiPropLoc->open();
-  }
+  // get real channel index from item data
+  int32_t chn_id = this->msgItem(IDC_LB_CHN, LB_GETITEMDATA, lb_sel);
+
+  OmModChan* ModChan = ModHub->getChannel(chn_id);
+  if(!ModChan) return;
+
+  // open the Mod Channel Properties dialog
+  OmUiPropChn* UiPropChn = static_cast<OmUiPropChn*>(this->root()->childById(IDD_PROP_CHN));
+
+  UiPropChn->setModChan(ModChan);
+
+  UiPropChn->open(true);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_bc_add_pressed()
+void OmUiPropHubChn::_channel_dialog_add()
 {
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
 
   // open add Mod Channel dialog
-  OmUiAddChn* pUiNewLoc = static_cast<OmUiAddChn*>(this->siblingById(IDD_ADD_CHN));
-  pUiNewLoc->setModHub(pModHub);
-  pUiNewLoc->open(true);
-}
+  OmUiWizChn* UiWizChn = static_cast<OmUiWizChn*>(this->root()->childById(IDD_WIZ_CHN));
 
+  UiWizChn->setModHub(ModHub);
+
+  UiWizChn->open(true);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onTabInit()
+void OmUiPropHubChn::_onTbInit()
 {
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_EDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
-  this->setBmIcon(IDC_BC_UP, Om_getResIcon(this->_hins, IDI_BT_UP));
-  this->setBmIcon(IDC_BC_DN, Om_getResIcon(this->_hins, IDI_BT_DN));
+  this->setBmIcon(IDC_BC_CHADD, Om_getResIcon(IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_CHDEL, Om_getResIcon(IDI_BT_REM));
+  this->setBmIcon(IDC_BC_CHEDI, Om_getResIcon(IDI_BT_EDI));
+  this->setBmIcon(IDC_BC_UP, Om_getResIcon(IDI_BT_UP));
+  this->setBmIcon(IDC_BC_DN, Om_getResIcon(IDI_BT_DN));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_CHN,  L"Mod Channels list");
-  this->_createTooltip(IDC_BC_UP,   L"Move up in list");
-  this->_createTooltip(IDC_BC_DN,   L"Move down in list");
-  this->_createTooltip(IDC_BC_DEL,  L"Delete Mod Channel and its associated data");
-  this->_createTooltip(IDC_BC_ADD,  L"Configure a new Mod Channel for this Mod Hub");
-  this->_createTooltip(IDC_BC_EDI,  L"Modify Mod Channel properties");
+  this->_createTooltip(IDC_LB_CHN,    L"Channels list");
+  this->_createTooltip(IDC_BC_UP,     L"Move up");
+  this->_createTooltip(IDC_BC_DN,     L"Move down");
+  this->_createTooltip(IDC_BC_CHDEL,  L"Delete Channel");
+  this->_createTooltip(IDC_BC_CHADD,  L"Create Channel");
+  this->_createTooltip(IDC_BC_CHEDI,  L"Channel properties");
 
   SetWindowTheme(this->getItem(IDC_LB_CHN),L"EXPLORER",nullptr);
 
   // Update values
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onTabResize()
+void OmUiPropHubChn::_onTbResize()
 {
-  // Mod Channel list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 50, 15, 64, 9);
-  this->_setItemPos(IDC_LB_CHN, 50, 25, this->cliUnitX()-107, 30);
-  // Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->cliUnitX()-55, 25, 16, 15);
-  this->_setItemPos(IDC_BC_DN, this->cliUnitX()-55, 40, 16, 15);
-  // Remove & Modify Buttons
-  this->_setItemPos(IDC_BC_DEL, 50, 57, 50, 14);
-  this->_setItemPos(IDC_BC_EDI, 105, 57, 50, 14);
-  // Add button
-  this->_setItemPos(IDC_BC_ADD, this->cliUnitX()-108, 57, 50, 14);
+  int32_t y_base = 30;
+
+  // Channel list Label
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 300, 16, true);
+
+  // Channel actions Buttons
+  this->_setItemPos(IDC_BC_CHADD, 50, y_base+20, 22, 22, true);
+  this->_setItemPos(IDC_BC_CHDEL, 50, y_base+42, 22, 22, true);
+  this->_setItemPos(IDC_BC_CHEDI, 50, y_base+64, 22, 22, true);
+
+  // Channel ListBox
+  this->_setItemPos(IDC_LB_CHN, 75, y_base+21, this->cliWidth()-150, 64, true);
+
+  // Channel Up and Down buttons
+  this->_setItemPos(IDC_BC_UP, this->cliWidth()-73, y_base+20, 22, 22, true);
+  this->_setItemPos(IDC_BC_DN, this->cliWidth()-73, y_base+64, 22, 22, true);
+
   // Target path Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, 50, 75, 110, 9);
-  this->_setItemPos(IDC_EC_READ2, 115, 75, this->cliUnitX()-155, 13);
-  // Mods Library Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 50, 87, 110, 9);
-  this->_setItemPos(IDC_EC_READ3, 115, 87, this->cliUnitX()-155, 13);
-  // Mods Backup Label & EditControl
-  this->_setItemPos(IDC_SC_LBL04, 50, 99, 110, 9);
-  this->_setItemPos(IDC_EC_READ4, 115, 99, this->cliUnitX()-155, 13);
-}
+  this->_setItemPos(IDC_SC_LBL02, 75, y_base+100, 200, 16, true);
+  this->_setItemPos(IDC_EC_READ2, 80, y_base+120, this->cliWidth()-80, 21, true);
 
+  // Mods Library Label & EditControl
+  this->_setItemPos(IDC_SC_LBL03, 75, y_base+150, 200, 16, true);
+  this->_setItemPos(IDC_EC_READ3, 80, y_base+170, this->cliWidth()-80, 21, true);
+
+  // Mods Backup Label & EditControl
+  this->_setItemPos(IDC_SC_LBL04, 75, y_base+200, 200, 16, true);
+  this->_setItemPos(IDC_EC_READ4, 80, y_base+220, this->cliWidth()-80, 21, true);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropHubChn::_onTabRefresh()
+void OmUiPropHubChn::_onTbRefresh()
 {
-  OmModHub* pModHub = static_cast<OmUiPropHub*>(this->_parent)->modHub();
-  if(!pModHub) return;
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
 
   this->enableItem(IDC_LB_CHN, true);
 
   this->msgItem(IDC_LB_CHN, LB_RESETCONTENT);
 
-  for(unsigned i = 0; i < pModHub->channelCount(); ++i) {
-    this->msgItem(IDC_LB_CHN, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(pModHub->getChannel(i)->title().c_str()));
+  for(unsigned i = 0; i < ModHub->channelCount(); ++i) {
+    this->msgItem(IDC_LB_CHN, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(ModHub->getChannel(i)->title().c_str()));
     this->msgItem(IDC_LB_CHN, LB_SETITEMDATA, i, i); // for Mod Channel index reordering
   }
 
-  // Set controls default states and parameters
-  this->setItemText(IDC_EC_READ2, L"<no selection>");
-  this->setItemText(IDC_EC_READ3, L"<no selection>");
-  this->setItemText(IDC_EC_READ4, L"<no selection>");
-
-  this->enableItem(IDC_SC_LBL02, false);
-  this->enableItem(IDC_EC_READ2, false);
-  this->enableItem(IDC_SC_LBL03, false);
-  this->enableItem(IDC_EC_READ3, false);
-  this->enableItem(IDC_SC_LBL04, false);
-  this->enableItem(IDC_EC_READ4, false);
-
-  this->enableItem(IDC_BC_DEL,  false);
-  this->enableItem(IDC_BC_EDI, false);
+  this->_lb_chn_on_selchg();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropHubChn::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropHubChn::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -458,23 +331,28 @@ INT_PTR OmUiPropHubChn::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_UP: //< Up Buttn
-      this->_bc_up_pressed();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_channel_list_up();
       break;
 
     case IDC_BC_DN: //< Down Buttn
-      this->_bc_dn_pressed();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_channel_list_dn();
       break;
 
-    case IDC_BC_DEL: //< "Remove" Button
-      this->_bc_del_pressed();
+    case IDC_BC_CHADD: //< Button : Add
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_channel_dialog_add();
       break;
 
-    case IDC_BC_EDI: //< "Modify" Button
-      this->_bd_edi_pressed();
+    case IDC_BC_CHDEL: //< Button : Delete
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_channel_delete();
       break;
 
-    case IDC_BC_ADD: //< "New" Button
-      this->_bc_add_pressed();
+    case IDC_BC_CHEDI: //< Button : Properties
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_channel_dialog_prop();
       break;
     }
   }

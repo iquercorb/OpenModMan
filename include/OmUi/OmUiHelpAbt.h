@@ -51,6 +51,8 @@ class OmUiHelpAbt : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    static LRESULT WINAPI _donate_subclass_proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
     void                _onInit();
 
     void                _onResize();

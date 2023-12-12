@@ -53,42 +53,25 @@ class OmUiPropHubChn : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void*               _delchan_hth;
-
-    void*               _delchan_hwo;
-
-    static DWORD WINAPI _delchan_run_fn(void*);
-
-    static  VOID WINAPI _delchan_end_fn(void*,uint8_t);
-
-    static bool         _delchan_progress_fn(void*, size_t, size_t, uint64_t);
-
-    int32_t             _delchan_chn;
-
-    void*               _delchan_hdlg;
-
-    int32_t             _delchan_abort;
-
-
     void                _lb_chn_on_selchg();
 
-    void                _bc_up_pressed();
+    void                _channel_list_up();
 
-    void                _bc_dn_pressed();
+    void                _channel_list_dn();
 
-    void                _bc_del_pressed();
+    void                _channel_delete();
 
-    void                _bd_edi_pressed();
+    void                _channel_dialog_prop();
 
-    void                _bc_add_pressed();
+    void                _channel_dialog_add();
 
-    void                _onTabInit();
+    void                _onTbInit();
 
-    void                _onTabResize();
+    void                _onTbResize();
 
-    void                _onTabRefresh();
+    void                _onTbRefresh();
 
-    INT_PTR             _onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPHUBCHN_H

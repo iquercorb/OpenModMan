@@ -25,7 +25,7 @@
 #include "OmBaseApp.h"        //< OM_APP_NAME, etc.
 
 #include "OmUtilWin.h"   //< Om_getErrorStr
-#include "OmUtilStr.h"   //< Om_isValidName, etc.
+#include "OmUtilStr.h"   //< Om_hasLegalSysChar, etc.
 
 /// \brief IDs for message box.
 ///
@@ -33,6 +33,7 @@
 ///
 #define OM_DLGBOX_BTN0      200
 #define OM_DLGBOX_BTN1      201
+#define OM_DLGBOX_BTNX      202
 #define OM_DLGBOX_SC_RECT   300
 #define OM_DLGBOX_SC_ICON   301
 #define OM_DLGBOX_SC_HEAD   400
@@ -69,7 +70,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     result_ptr = reinterpret_cast<int*>(lParam);
 
     if(__Om_dlgBox_TIcon == nullptr)
-      __Om_dlgBox_TIcon = Om_getResIcon(GetModuleHandle(nullptr), IDI_APP, 1);
+      __Om_dlgBox_TIcon = Om_getResIcon(IDI_APP, 1);
 
     // set title bar icon
     SendMessageW(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(__Om_dlgBox_TIcon));
@@ -175,7 +176,14 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
     // button initial position
     yalign += 11;
-    xalign = 394;
+    xalign = 394; // alignment for 2 buttons
+
+    // if present, move the No/Cancel button to the left of dialog
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_BTNX);
+    if(hItem) {
+      SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+      xalign -= 95; // shift position for the next button
+    }
 
     // if present, move the No/Cancel button to the left of dialog
     hItem = GetDlgItem(hWnd, OM_DLGBOX_BTN0);
@@ -232,6 +240,12 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       // exit dialog and return 0
       EndDialog(hWnd, 0);
       break;
+
+    case OM_DLGBOX_BTNX:
+      if(result_ptr) *result_ptr = -1;
+      // exit dialog and return -1
+      EndDialog(hWnd, -1);
+      break;
     }
   }
 
@@ -277,17 +291,19 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   const wchar_t* fnt = __Om_dlgBox_str_FNT;
   const wchar_t* bt1 = __Om_dlgBox_str_OK;
   const wchar_t* bt0 = nullptr;
+  const wchar_t* btX = nullptr;
   if(flags & 0x1) { //< OM_DLGBOX_OC: OK - Cancel
     bt0 = __Om_dlgBox_str_CA;
   } else if(flags & 0x2) { //< OM_DLGBOX_YN: Yes - No
     bt1 = __Om_dlgBox_str_YE; bt0 = __Om_dlgBox_str_NO;
   } else if(flags & 0x4) { //< OM_DLGBOX_CA: Continue - Abort
     bt1 = __Om_dlgBox_str_CO; bt0 = __Om_dlgBox_str_AB;
-  } else if(flags & 0x10) {
-    bt1 = __Om_dlgBox_str_AB;
+  } else if(flags & 0x8) {
+    bt1 = __Om_dlgBox_str_YE; bt0 = __Om_dlgBox_str_NO; btX = __Om_dlgBox_str_CA;
   }
 
   bool has_bt0 = bt0 != nullptr;
+  bool has_btX = btX != nullptr;
   bool has_hdr = hdr ? wcslen(hdr) : false;
   bool has_msg = msg ? wcslen(msg) : false;
   bool has_lst = lst ? wcslen(lst) : false;
@@ -299,6 +315,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
   tplSize += sizeof(wchar_t) * wcslen(fnt);
   tplSize += sizeof(wchar_t) * wcslen(bt1);
   if(has_bt0) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(bt0);
+  if(has_btX) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(btX);
   if(has_hdr) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(hdr);
   if(has_msg) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(msg);
   if(flags & 0x10) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(PROGRESS_CLASSW);
@@ -339,6 +356,23 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
     *pTpl++ = 0xFFFF; *pTpl++ = 0x0080; //< WC_BUTTON
     while((*reinterpret_cast<wchar_t*>(pTpl++) = *bt0++)); //< Btn text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+    xalign -= 64; //< shift X position for second button
+  }
+
+  if(has_btX) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Button Control for Cancel/No - Return 0
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_DLGBOX_BTNX;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = xalign; itmt->y = 80; itmt->cx = 58; itmt->cy = 15;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    *pTpl++ = 0xFFFF; *pTpl++ = 0x0080; //< WC_BUTTON
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *btX++)); //< Btn text
     *pTpl++ = 0; //< No creation
     dlgt->cdit++; //< increment item count
     xalign -= 64; //< shift X position for second button
@@ -606,11 +640,12 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   dlgt->cdit++; //< increment item count
 
   HWND hdlg = CreateDialogIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
-
-  ShowWindow(hdlg, SW_SHOW);
+  Om_free(dlgt);
 
   // mimic modal dialog window
   if(hwnd) EnableWindow(hwnd, false);
+
+  ShowWindow(hdlg, SW_SHOW);
 
   MSG msg;
 
@@ -618,8 +653,6 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   while(PeekMessage(&msg, hdlg, 0, 0, PM_REMOVE))
     if(!IsDialogMessage(hdlg, &msg))
       DispatchMessage(&msg);
-
-  Om_free(dlgt);
 
   return hdlg;
 }
@@ -637,9 +670,16 @@ int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HWND Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
+HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
 {
-  return __Om_dlgProgress(hins, hwnd, cpt, ico, hdr, result);
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt, OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
+
+  return __Om_dlgProgress(hins, hwnd, cpt_buf, ico, hdr, result);
 }
 
 
@@ -651,8 +691,10 @@ void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text)
   if(tot >= 0)
     SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETRANGE, 0, MAKELPARAM(0, tot));
 
-  if(cur >= 0)
+  if(cur >= 0) {
+    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETPOS, cur+1, 0);
     SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETPOS, cur, 0);
+  }
 
   if(text)
     SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_SC_MESG), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text));
@@ -695,6 +737,7 @@ void Om_dlgBox_ok(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
 }
@@ -710,6 +753,7 @@ void Om_dlgBox_okl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWStrin
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x0); //< OM_DLGBOX_OK
 }
@@ -725,6 +769,7 @@ bool Om_dlgBox_yn(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x2)); //< OM_DLGBOX_YN
 }
@@ -740,6 +785,7 @@ bool Om_dlgBox_ynl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWStrin
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x2)); //< OM_DLGBOX_YN
 }
@@ -755,6 +801,7 @@ bool Om_dlgBox_ca(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x4)); //< OM_DLGBOX_CA
 }
@@ -770,8 +817,39 @@ bool Om_dlgBox_cal(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWStrin
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x4)); //< OM_DLGBOX_CA
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t Om_dlgBox_ync(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg)
+{
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
+
+  return __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), nullptr, 0x8); //< OM_DLGBOX_YNC
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t Om_dlgBox_yncl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWString& hdr, const OmWString& msg, const OmWString& lst)
+{
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
+
+  return __Om_dlgBox(hins, hwnd, cpt_buf, ico, hdr.c_str(), msg.c_str(), lst.c_str(), 0x8); //< OM_DLGBOX_YNC
 }
 
 
@@ -864,13 +942,361 @@ bool Om_dlgBrowseDir(OmWString& result, HWND hWnd, const wchar_t* title, const O
   return suceess;
 }
 
+static bool __co_initialized = false;
 
+inline static void __co_initialize()
+{
+  if(!__co_initialized) {
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE);
+    __co_initialized = true;
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgOpenDir(OmWString& result, HWND hWnd, const wchar_t* title, const OmWString& start, bool force)
+{
+  // co co initialize co !
+  __co_initialize();
+
+  bool has_cancel = false;
+
+  IFileOpenDialog *FileOpenDialog;
+  if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
+
+    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
+    FileOpenDialog->SetOptions(FOS_PICKFOLDERS);
+    FileOpenDialog->SetTitle(title);
+
+    // set start location
+    if(!start.empty()) {
+      IShellItem* ItemStart;
+      if(S_OK == SHCreateItemFromParsingName(start.c_str(), nullptr, IID_IShellItem, reinterpret_cast<void**>(&ItemStart))) {
+        if(!force) {
+          FileOpenDialog->SetFolder(ItemStart);
+        } else {
+          FileOpenDialog->SetDefaultFolder(ItemStart);
+        }
+        ItemStart->Release();
+      }
+    }
+
+    if(S_OK == FileOpenDialog->Show(hWnd)) {
+
+      IShellItemArray* ShellItemArray = nullptr;
+      if(S_OK == FileOpenDialog->GetResults(&ShellItemArray)) {
+
+        IShellItem* ShellItem = nullptr;
+        if(S_OK == ShellItemArray->GetItemAt(0, &ShellItem)) {
+
+          wchar_t* szName;
+          if(S_OK == ShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &szName)) {
+            result = szName;
+            CoTaskMemFree(szName);
+          }
+
+          ShellItem->Release();
+        }
+
+        ShellItemArray->Release();
+      }
+
+    } else {
+      has_cancel = true;
+    }
+
+    FileOpenDialog->Release();
+  }
+
+  return !has_cancel;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgOpenDirMultiple(OmWStringArray& result, HWND hWnd, const wchar_t* title, const OmWString& start, bool force)
+{
+  // co co initialize co !
+  __co_initialize();
+
+  bool has_cancel = false;
+
+  IFileOpenDialog *FileOpenDialog;
+  if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
+
+    FileOpenDialog->SetOptions(FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT);
+    FileOpenDialog->SetTitle(title);
+
+    // set start location
+    if(!start.empty()) {
+      IShellItem* ItemStart;
+      if(S_OK == SHCreateItemFromParsingName(start.c_str(), nullptr, IID_IShellItem, reinterpret_cast<void**>(&ItemStart))) {
+        if(!force) {
+          FileOpenDialog->SetFolder(ItemStart);
+        } else {
+          FileOpenDialog->SetDefaultFolder(ItemStart);
+        }
+        ItemStart->Release();
+      }
+    }
+
+    if(S_OK == FileOpenDialog->Show(hWnd)) {
+
+      IShellItemArray* ShellItemArray = nullptr;
+      if(S_OK == FileOpenDialog->GetResults(&ShellItemArray)) {
+
+        DWORD ItemCount = 0;
+        ShellItemArray->GetCount(&ItemCount);
+
+        for(DWORD i = 0; i < ItemCount; ++i) {
+
+          IShellItem* ShellItem = nullptr;
+          if(S_OK == ShellItemArray->GetItemAt(i, &ShellItem)) {
+
+            wchar_t* szName;
+            if(S_OK == ShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &szName)) {
+              result.push_back(szName);
+              CoTaskMemFree(szName);
+            }
+
+            ShellItem->Release();
+          }
+        }
+
+        ShellItemArray->Release();
+      }
+
+    } else {
+      has_cancel = true;
+    }
+
+    FileOpenDialog->Release();
+  }
+
+  return !has_cancel;
+}
+
+/// \brief COMDLG_FILTERSPEC static array size
+///
+/// Size of the COMDLG_FILTERSPEC static array array.
+///
+#define OM_MAX_COMDLG_FILTERSPEC  64
+
+/// \brief Static array of COMDLG_FILTERSPEC
+///
+/// Static array of COMDLG_FILTERSPEC structure used for OFN filter conversion
+///
+static COMDLG_FILTERSPEC __comdlg_filterspec_buf[OM_MAX_COMDLG_FILTERSPEC];
+
+/// \brief Parse OFN filter as COMDLG_FILTERSPEC
+///
+/// Parse old OFN filter null-delimited string array into an array of COMDLG_FILTERSPEC structures.
+///
+/// \param[in]  ofn_filter  : Old OFN filter null-delimited string array
+/// \param[out] spec_count  : Point to integer that receive size of the returned COMDLG_FILTERSPEC array
+///
+/// \return Pointer to COMDLG_FILTERSPEC array or nullptr if failed
+///
+inline static COMDLG_FILTERSPEC* __ofn_filter_to_comdlg_spec(const wchar_t* ofn_filter, uint32_t* spec_count)
+{
+  uint32_t n;
+  const wchar_t* p;
+
+  // 1. get count of individual null-terminated string in the OFN filter
+  n = 0; p = ofn_filter;
+  while(*p != 0) {
+    n++;  p = &p[wcslen(p)+1];
+  }
+
+  // 2. check whether string count is even and compatible with
+  // static buffer size
+  if(n % 2 != 0) {
+    *spec_count = 0;
+    return nullptr;
+  }
+
+  n /= 2;
+
+  if(n > OM_MAX_COMDLG_FILTERSPEC) {
+    *spec_count = 0;
+    return nullptr;
+  }
+
+  // 3. fill the comdlg spec buffer
+  *spec_count = n;
+
+  n = 0; p = ofn_filter;
+  while(*p != 0) {
+
+    __comdlg_filterspec_buf[n].pszName = p;
+    p = &p[wcslen(p)+1];
+
+    __comdlg_filterspec_buf[n].pszSpec = p;
+    p = &p[wcslen(p)+1];
+
+    n++;
+  }
+
+  return __comdlg_filterspec_buf;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start, bool force)
+{
+  // co co initialize co !
+  __co_initialize();
+
+  bool has_cancel = false;
+
+  IFileOpenDialog *FileOpenDialog;
+  if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
+
+    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
+    //FileOpenDialog->SetOptions();
+    FileOpenDialog->SetTitle(title);
+
+    // set file filter
+    if(filter) {
+
+      // as the new API use structure for file filter we need to parse our old OFN filter
+      // string into array of COMDLG_FILTERSPEC struct
+      uint32_t spec_count;
+      COMDLG_FILTERSPEC* spec_array = __ofn_filter_to_comdlg_spec(filter, &spec_count);
+
+      if(spec_array)
+        FileOpenDialog->SetFileTypes(spec_count, spec_array);
+    }
+
+    // set start location
+    if(!start.empty()) {
+      IShellItem* ItemStart;
+      if(S_OK == SHCreateItemFromParsingName(start.c_str(), nullptr, IID_IShellItem, reinterpret_cast<void**>(&ItemStart))) {
+        if(!force) {
+          FileOpenDialog->SetFolder(ItemStart);
+        } else {
+          FileOpenDialog->SetDefaultFolder(ItemStart);
+        }
+        ItemStart->Release();
+      }
+    }
+
+    if(S_OK == FileOpenDialog->Show(hWnd)) {
+
+      IShellItemArray* ShellItemArray = nullptr;
+      if(S_OK == FileOpenDialog->GetResults(&ShellItemArray)) {
+
+        IShellItem* ShellItem = nullptr;
+        if(S_OK == ShellItemArray->GetItemAt(0, &ShellItem)) {
+
+          wchar_t* szName;
+          if(S_OK == ShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &szName)) {
+            result = szName;
+            CoTaskMemFree(szName);
+          }
+
+          ShellItem->Release();
+        }
+
+        ShellItemArray->Release();
+      }
+
+    } else {
+      has_cancel = true;
+    }
+
+    FileOpenDialog->Release();
+  }
+
+  return !has_cancel;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgOpenFileMultiple(OmWStringArray& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start, bool force = false)
+{
+  // co co initialize co !
+  __co_initialize();
+
+  bool has_cancel = false;
+
+  IFileOpenDialog *FileOpenDialog;
+  if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
+
+    FileOpenDialog->SetOptions(FOS_ALLOWMULTISELECT);
+    FileOpenDialog->SetTitle(title);
+
+    // set file filter
+    if(filter) {
+
+      // as the new API use structure for file filter we need to parse our old OFN filter
+      // string into array of COMDLG_FILTERSPEC struct
+      uint32_t spec_count;
+      COMDLG_FILTERSPEC* spec_array = __ofn_filter_to_comdlg_spec(filter, &spec_count);
+
+      if(spec_array)
+        FileOpenDialog->SetFileTypes(spec_count, spec_array);
+    }
+
+    // set start location
+    if(!start.empty()) {
+      IShellItem* ItemStart;
+      if(S_OK == SHCreateItemFromParsingName(start.c_str(), nullptr, IID_IShellItem, reinterpret_cast<void**>(&ItemStart))) {
+        if(!force) {
+          FileOpenDialog->SetFolder(ItemStart);
+        } else {
+          FileOpenDialog->SetDefaultFolder(ItemStart);
+        }
+        ItemStart->Release();
+      }
+    }
+
+    if(S_OK == FileOpenDialog->Show(hWnd)) {
+
+      IShellItemArray* ShellItemArray = nullptr;
+      if(S_OK == FileOpenDialog->GetResults(&ShellItemArray)) {
+
+        DWORD ItemCount = 0;
+        ShellItemArray->GetCount(&ItemCount);
+
+        for(DWORD i = 0; i < ItemCount; ++i) {
+
+          IShellItem* ShellItem = nullptr;
+          if(S_OK == ShellItemArray->GetItemAt(i, &ShellItem)) {
+
+            wchar_t* szName;
+            if(S_OK == ShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &szName)) {
+              result.push_back(szName);
+              CoTaskMemFree(szName);
+            }
+
+            ShellItem->Release();
+          }
+        }
+
+        ShellItemArray->Release();
+      }
+
+    } else {
+      has_cancel = true;
+    }
+
+    FileOpenDialog->Release();
+  }
+
+  return !has_cancel;
+}
+/*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start)
 {
-  wchar_t str_file[OM_MAX_PATH];
+  wchar_t result_buf[OM_MAX_PATH];
 
   OPENFILENAMEW ofn = {};
   ofn.lStructSize = sizeof(OPENFILENAMEW);
@@ -891,7 +1317,7 @@ bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
   // However, within the context of this function, this would require to add
   // an new argument specify the wildcard to set, or to parse the filter
   // string which would be such monstrous routine for a so little thing.
-  ofn.lpstrFile = str_file;
+  ofn.lpstrFile = result_buf;
   ofn.lpstrFile[0] = L'\0';
 
   ofn.nMaxFile = OM_MAX_PATH;
@@ -899,15 +1325,146 @@ bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
   ofn.lpstrTitle = title;
   ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
 
-  if(GetOpenFileNameW(&ofn)) {
-    result = str_file;
-    return true;
-  }
+  if(!GetOpenFileNameW(&ofn))
+    return false;
 
-  return false;
+  result = result_buf;
+
+  return true;
 }
 
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgOpenFileMultiple(OmWStringArray& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start)
+{
+  wchar_t result_buf[OM_MAX_PATH*50];
+
+  OPENFILENAMEW ofn = {};
+  ofn.lStructSize = sizeof(OPENFILENAMEW);
+
+  ofn.hwndOwner = hWnd;
+  ofn.lpstrFilter = filter;
+
+  // Oyé oyé, dear me in the future trying to fix this...
+
+  // lpstrInitialDir does not work as attended, since Windows 7 if it has the
+  // same value as was passed the first time the application used an Open or
+  // Save As dialog box, the path most recently selected by the user is used
+  // as the initial directory.
+  ofn.lpstrInitialDir = start.c_str();
+
+  // As workaround for the lpstrInitialDir behavior, we could set lpstrFile
+  // with an initial path with a wildcard as file name (eg. C:\folder\*.ext)
+  // However, within the context of this function, this would require to add
+  // an new argument specify the wildcard to set, or to parse the filter
+  // string which would be such monstrous routine for a so little thing.
+  ofn.lpstrFile = result_buf;
+  ofn.lpstrFile[0] = L'\0';
+
+  ofn.nMaxFile = OM_MAX_PATH*50;
+
+  ofn.lpstrTitle = title;
+  ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE|OFN_ALLOWMULTISELECT;
+
+  if(!GetOpenFileNameW(&ofn))
+    return false;
+
+  // parse result, the first string is path to folder, the following ones are
+  // selected file names, everything is null-separated
+  OmWString path, directory = result_buf;
+  wchar_t* filename = &result_buf[ofn.nFileOffset];
+  while(*filename != 0) {
+
+    Om_concatPaths(path, directory, filename);
+    result.push_back(path);
+
+    // jump to next string
+    filename = &filename[wcslen(filename)+1];
+  }
+
+  return true;
+}
+
+*/
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const wchar_t* ext, const wchar_t* name, const OmWString& start, bool force)
+{
+  // co co initialize co !
+  __co_initialize();
+
+  bool has_cancel = false;
+
+  IFileSaveDialog* FileSaveDialog;
+  if(S_OK == CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileSaveDialog))) {
+
+    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
+    //IFileSaveDialog->SetOptions();
+    FileSaveDialog->SetTitle(title);
+
+    // set file filter
+    if(filter) {
+
+      // as the new API use structure for file filter we need to parse our old OFN filter
+      // string into array of COMDLG_FILTERSPEC struct
+      uint32_t spec_count;
+      COMDLG_FILTERSPEC* spec_array = __ofn_filter_to_comdlg_spec(filter, &spec_count);
+
+      if(spec_array)
+        FileSaveDialog->SetFileTypes(spec_count, spec_array);
+    }
+
+    // set default extension
+    if(ext)
+     FileSaveDialog->SetDefaultExtension(ext);
+
+    // set default file name
+    if(name)
+      FileSaveDialog->SetFileName(name);
+
+    // set start location
+    if(!start.empty()) {
+      IShellItem* ItemStart;
+      if(S_OK == SHCreateItemFromParsingName(start.c_str(), nullptr, IID_IShellItem, reinterpret_cast<void**>(&ItemStart))) {
+        if(!force) {
+          FileSaveDialog->SetFolder(ItemStart);
+        } else {
+          FileSaveDialog->SetDefaultFolder(ItemStart);
+        }
+        ItemStart->Release();
+      }
+    }
+
+    if(S_OK == FileSaveDialog->Show(hWnd)) {
+
+      IShellItem* ShellItem = nullptr;
+      if(S_OK == FileSaveDialog->GetResult(&ShellItem)) {
+
+        wchar_t* szName;
+        if(S_OK == ShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &szName)) {
+          result = szName;
+          CoTaskMemFree(szName);
+        }
+
+        ShellItem->Release();
+      }
+
+    } else {
+      has_cancel = true;
+    }
+
+    FileSaveDialog->Release();
+  }
+
+  return !has_cancel;
+}
+
+/*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -937,32 +1494,33 @@ bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
 
   return false;
 }
-
+*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 bool Om_dlgCreateFolder(HWND hwnd, const OmWString& item, const OmWString& path)
 {
+  OM_UNUSED(item);
+
   if(!PathFileExistsW(path.c_str())) {
 
-    OmWString msg;
+    wchar_t cpt_buf[OM_MAX_ITEM];
 
-    msg = item + L" does not exists.\n\n  \"";
-    msg += path + L"\"\n\nDo you want to create it ?";
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Create directory", OM_APP_NAME);
 
-    if(IDYES == MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_YESNO|MB_ICONQUESTION)) {
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    if(0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Create directory",
+                           L"The directory does not exists, do you want to create it ?", path.c_str(), 0x2/*OM_DLGBOX_YN*/)) {
 
       int result = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
       if(result != 0) {
-
-        msg = item + L" cannot be created.\n\n  \"";
-        msg += path + L"\"\n\nError : " + Om_getErrorStr(result);
-
-        MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONERROR);
+        __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_ERR*/, L"Create directory error",
+                    L"Unable to create directory:", Om_getErrorStr(result).c_str(), 0x0/*OM_DLGBOX_OK*/);
         return false;
       }
-
     } else {
       return false;
     }
@@ -987,9 +1545,15 @@ bool Om_dlgOverwriteFile(HWND hwnd, const OmWString& path)
     return true; //< file does not exists, no overwriting possible
   }
 
-  return (IDYES == MessageBoxW(hwnd,
-                              L"The file already exists. Do you want to overwrite it ?",
-                              OM_APP_NAME, MB_YESNO|MB_ICONQUESTION));
+  wchar_t cpt_buf[OM_MAX_ITEM];
+
+  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Overwrite file", OM_APP_NAME);
+
+  HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
+
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Overwrite file",
+                           L"The file already exists. Do you want to overwrite it ?", path.c_str(), 0x2/*OM_DLGBOX_YN*/));
 }
 
 
@@ -1001,19 +1565,26 @@ bool Om_dlgValidName(HWND hwnd, const OmWString& item, const OmWString& name)
   OmWString msg;
 
   if(!name.empty()) {
-
-    if(!Om_isValidName(name)) {
-      msg = L"Invalid " + item + L".\n\n  \"";
-      msg += name + L"\"\n\nName cannot contain the following characters: / * ? \" < > | \\";
+    if(!Om_hasLegalSysChar(name)) {
+      msg = item; msg += L" cannot contain the following characters: / * ? \" < > | \\";
     }
-
   } else {
-    msg = L"Invalid " + item + L".\n\n";
-    msg += item + L" cannot be empty.";
+    msg = item; msg += L" cannot be empty";
   }
 
   if(!msg.empty()) {
-    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
+
+    wchar_t cpt_buf[OM_MAX_ITEM];
+
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Invalid name", OM_APP_NAME);
+
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    OmWString hdr = L"Invalid "; hdr += item;
+
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), name.c_str(), 0x0/*OM_DLGBOX_OK*/);
+
     return false;
   }
 
@@ -1029,25 +1600,99 @@ bool Om_dlgValidPath(HWND hwnd, const OmWString& item, const OmWString& path)
   OmWString msg;
 
   if(!path.empty()) {
-
-    if(!Om_isValidPath(path)) {
-      msg = L"Invalid " + item + L".\n\n  \"";
-      msg += path + L"\"\n\nPath cannot contain the following characters: / * ? \" < > |";
+    if(!Om_hasLegalPathChar(path)) {
+      msg = item; msg += L" path cannot contain the following characters: / * ? \" < > |";
     }
-
   } else {
-    msg = L"Invalid " + item + L".\n\n";
-    msg += item + L" cannot be empty.";
+    msg = item; msg += L" cannot be empty";
   }
 
   if(!msg.empty()) {
-    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
+
+    wchar_t cpt_buf[OM_MAX_ITEM];
+
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Invalid path", OM_APP_NAME);
+
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    OmWString hdr = L"Invalid "; hdr += item;
+
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
+
     return false;
   }
 
   return true;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgValidUrl(HWND hwnd, const OmWString& item, const OmWString& url)
+{
+  OmWString msg;
+
+  if(!url.empty()) {
+    if(!Om_isUrl(url)) {
+      msg = item; msg += L" must be a valid URL";
+    }
+  } else {
+    msg = item; msg += L" cannot be empty";
+  }
+
+  if(!msg.empty()) {
+
+    wchar_t cpt_buf[OM_MAX_ITEM];
+
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Invalid URL", OM_APP_NAME);
+
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    OmWString hdr = L"Invalid "; hdr += item;
+
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
+
+    return false;
+  }
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_dlgValidUrlPath(HWND hwnd, const OmWString& item, const OmWString& url)
+{
+  OmWString msg;
+
+  if(!url.empty()) {
+    if(!Om_hasLegalUrlChar(url)) {
+      msg = item; msg += L" cannot contain the following characters: # \" < > | \\ { } ^ [ ] ` + : @ $";
+    }
+  } else {
+    msg = item; msg += L" cannot be empty";
+  }
+
+  if(!msg.empty()) {
+
+    wchar_t cpt_buf[OM_MAX_ITEM];
+
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Illegal URL character", OM_APP_NAME);
+
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    OmWString hdr = L"Invalid "; hdr += item;
+
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
+
+    return false;
+  }
+
+  return true;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1058,9 +1703,20 @@ bool Om_dlgValidDir(HWND hwnd, const OmWString& item,  const OmWString& path)
   DWORD attr = GetFileAttributesW(path.c_str());
 
   if(attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-    OmWString msg = L"Invalid" + item + L".\n\n\"";
-    msg += L"\"\n\nFolder does not exists, " + item + L" must be an existing directory.";
-    MessageBoxW(hwnd, msg.c_str(), OM_APP_NAME, MB_OK|MB_ICONWARNING);
+
+    OmWString hdr = L"Invalid "; hdr += item;
+    OmWString msg = item; msg += L" must be an existing directory.";
+
+    wchar_t cpt_buf[OM_MAX_ITEM];
+
+    swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - Invalid directory", OM_APP_NAME);
+
+    HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+    if(!hins) hins = GetModuleHandle(nullptr);
+
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
+
+    return false;
   }
 
   return true;
@@ -1077,9 +1733,10 @@ bool Om_dlgCloseUnsaved(HWND hwnd, const OmWString& cpt)
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804, L"Unsaved changes",
-                           L"You made unsaved changes. Close without saving ?", nullptr, 0x2)); //< OM_DLGBOX_YN
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Unsaved changes",
+                           L"You made unsaved changes. Close without saving ?", nullptr, 0x2/*OM_DLGBOX_YN*/));
 }
 
 
@@ -1093,9 +1750,10 @@ bool Om_dlgResetUnsaved(HWND hwnd, const OmWString& cpt)
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804, L"Unsaved changes",
-                           L"You made unsaved changes. Continue without saving ?", nullptr, 0x2)); //< OM_DLGBOX_YN
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Unsaved changes",
+                           L"You made unsaved changes. Continue without saving ?", nullptr, 0x2/*OM_DLGBOX_YN*/));
 }
 
 
@@ -1109,10 +1767,11 @@ void Om_dlgSaveSucces(HWND hwnd, const OmWString& cpt, const OmWString& hdr, con
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   OmWString msg(item); msg.append(L" file was successfully saved.");
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, 803, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
+  __Om_dlgBox(hins, hwnd, cpt_buf, 803/*IDI_NFO*/, hdr.c_str(), msg.c_str(), nullptr, 0x0/*OM_DLGBOX_OK*/);
 }
 
 
@@ -1126,8 +1785,9 @@ void Om_dlgSaveError(HWND hwnd, const OmWString& cpt, const OmWString& hdr, cons
   swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
+  if(!hins) hins = GetModuleHandle(nullptr);
 
   OmWString msg(L"Saving "); msg.append(item); msg.append(L" file has failed:");
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, 801, hdr.c_str(), msg.c_str(), error.c_str(), 0x0); //< OM_DLGBOX_OK
+  __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_ERR*/, hdr.c_str(), msg.c_str(), error.c_str(), 0x0/*OM_DLGBOX_OK*/);
 }

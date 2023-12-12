@@ -64,7 +64,7 @@ OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
 OmUiToolPkg::~OmUiToolPkg()
 {
   HBITMAP hBm = this->setStImage(IDC_SB_SNAP, nullptr);
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
 
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   DeleteObject(hFt);
@@ -197,8 +197,8 @@ bool OmUiToolPkg::_parseSrc(const OmWString& path)
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
   this->enableItem(IDC_BC_CKBX2, false);
   this->enableItem(IDC_BC_BRW04, false);
-  hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
-  if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+  hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
   this->setItemText(IDC_EC_INP08, L"");
 
   // Description initial states
@@ -283,7 +283,7 @@ bool OmUiToolPkg::_parseSrc(const OmWString& path)
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
     hBm = this->setStImage(IDC_SB_SNAP, this->_ModPack.thumbnail().hbmp());
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
   }
 
   // check for package description
@@ -598,7 +598,7 @@ bool OmUiToolPkg::_onBcBrwDir(const wchar_t* path)
       start = Om_getDirPart(start);
     }
 
-    if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Mod source directory", start)) {
+    if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Mod source directory", start)) {
       this->setItemText(IDC_EC_INP01, L"");
       this->_parseSrc(L"");
       return false;
@@ -770,7 +770,7 @@ void OmUiToolPkg::_onBcBrwDest()
   }
 
   // open select folder dialog
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select destination location", Om_getDirPart(start)))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select destination location", Om_getDirPart(start)))
     return;
 
   if(!Om_isDir(result))
@@ -878,8 +878,8 @@ void OmUiToolPkg::_onCkBoxSnap()
 
     this->enableItem(IDC_BC_BRW04, false);
 
-    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
 
     this->setItemText(IDC_EC_INP08, L"");
   }
@@ -912,7 +912,7 @@ bool OmUiToolPkg::_onBcBrwSnap()
 
     // set thumbnail
     hBm = this->setStImage(IDC_SB_SNAP, thumb.hbmp());
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
 
     // set EditText content to image path
     this->setItemText(IDC_EC_INP08, result);
@@ -920,8 +920,8 @@ bool OmUiToolPkg::_onBcBrwSnap()
   } else {
 
     // remove any thumbnail
-    hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
-    if(hBm && hBm != Om_getResImage(this->_hins, IDB_BLANK)) DeleteObject(hBm);
+    hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
 
     // reset hidden EditText content
     this->setItemText(IDC_EC_INP08, L"");
@@ -1026,7 +1026,7 @@ void OmUiToolPkg::_onBcSave()
 void OmUiToolPkg::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins,IDI_APP,2),Om_getResIcon(this->_hins,IDI_APP,1));
+  this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Mod Pack editor ");
@@ -1069,12 +1069,12 @@ void OmUiToolPkg::_onInit()
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   // Set default package picture
-  this->setStImage(IDC_SB_SNAP, Om_getResImage(this->_hins, IDB_BLANK));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(this->_hins, IDI_BT_NEW));
-  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(this->_hins, IDI_BT_OPN));
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ENT));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_NEW));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(IDI_BT_OPN));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(IDI_BT_ENT));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_REM));
 
   // Enable Create From folder
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, 1);

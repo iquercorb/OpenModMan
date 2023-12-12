@@ -17,13 +17,13 @@
 #ifndef OMUIWIZHUBBEG_H
 #define OMUIWIZHUBBEG_H
 
-#include "OmDialog.h"
+#include "OmDialogWizPage.h"
 
 /// \brief New Mod Hub Wizard / Introduction page child
 ///
 /// OmDialog class derived for New Mod Hub Wizard / Introduction page child dialog window
 ///
-class OmUiWizHubBeg : public OmDialog
+class OmUiWizHubBeg : public OmDialogWizPage
 {
   public:
 
@@ -49,19 +49,31 @@ class OmUiWizHubBeg : public OmDialog
     ///
     long id() const;
 
+    /// \brief Check valid fields.
+    ///
+    /// Checks whether the page has proper fields filled, that is, the
+    /// next button can be enabled.
+    ///
+    /// \return True if propers fields are filled, false otherwise.
+    ///
+    bool validFields() const;
+
+    /// \brief Check valid parameters.
+    ///
+    /// Checks whether the page has valid parameters, that is, going to
+    /// the next page is allowed.
+    ///
+    /// \return True if parameters are valid, false otherwise.
+    ///
+    bool validParams() const;
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onInit();
+    void                _onPgInit();
 
-    void                _onShow();
+    void                _onPgResize();
 
-    void                _onResize();
-
-    void                _onRefresh();
-
-    void                _onQuit();
-
-    INT_PTR             _onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    INT_PTR             _onPgMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIWIZHUBBEG_H

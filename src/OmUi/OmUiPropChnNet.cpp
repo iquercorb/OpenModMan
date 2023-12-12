@@ -23,7 +23,8 @@
 #include "OmModMan.h"
 #include "OmNetRepo.h"
 
-#include "OmUiAddRep.h"
+#include "OmUiMan.h"
+#include "OmUiWizRep.h"
 #include "OmUiPropChn.h"
 
 #include "OmUtilDlg.h"
@@ -34,6 +35,9 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiPropChnNet.h"
 
+#define QRY_UNKNOWN_STRING    L"Not tested"
+#define QRY_PENDING_STRING    L"Sending request..."
+#define QRY_VALID_STRING      L"Repository appear valid"
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -64,23 +68,31 @@ long OmUiPropChnNet::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t code)
+void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t param)
 {
   OM_UNUSED(result);
 
   OmUiPropChnNet* self = static_cast<OmUiPropChnNet*>(ptr);
 
-  OmModChan* ModChan = static_cast<OmUiPropChn*>(self->_parent)->ModChan();
-  if(!ModChan)
-    return;
-
-  OmNetRepo* NetRepo = ModChan->getRepository(code);
+  OmNetRepo* NetRepo = reinterpret_cast<OmNetRepo*>(param);
 
   switch(NetRepo->queryResult()) {
-    case OM_RESULT_OK: self->setItemText(IDC_SC_STATE, L"Valid"); break;
-    case OM_RESULT_PENDING: self->setItemText(IDC_SC_STATE, L"Pending..."); break;
-    case OM_RESULT_UNKNOW: self->setItemText(IDC_SC_STATE, L"Unknow"); break;
-    default: self->setItemText(IDC_SC_STATE, NetRepo->lastError()); break;
+
+    case OM_RESULT_OK:
+      self->setItemText(IDC_SC_STATE, QRY_VALID_STRING);
+      break;
+
+    case OM_RESULT_PENDING:
+      self->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
+      break;
+
+    case OM_RESULT_UNKNOW:
+      self->setItemText(IDC_SC_STATE, QRY_UNKNOWN_STRING);
+      break;
+
+    default:
+      self->setItemText(IDC_SC_STATE, NetRepo->lastError());
+      break;
   }
 }
 
@@ -90,11 +102,10 @@ void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t code)
 void OmUiPropChnNet::_query_start(size_t i)
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
-  if(!ModChan)
-    return;
+  if(!ModChan) return;
 
   this->enableItem(IDC_SC_STATE, true);
-  this->setItemText(IDC_SC_STATE, L"Pending...");
+  this->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
 
   OmPNetRepoArray selection;
   selection.push_back(ModChan->getRepository(i));
@@ -105,139 +116,130 @@ void OmUiPropChnNet::_query_start(size_t i)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onLbReplsSel()
-{
-  OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
-  if(!ModChan)
-    return;
-
-  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
-  if(lb_sel >= 0) {
-
-    OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
-
-    this->enableItem(IDC_BC_DEL, true);
-    this->enableItem(IDC_BC_RPQRY, true);
-    this->enableItem(IDC_SC_STATE, true);
-
-    if(ModRepo->queryResult() == OM_RESULT_PENDING) {
-      this->setItemText(IDC_SC_STATE, L"Pending...");
-    } else {
-      if(ModRepo->queryResult() == OM_RESULT_OK) {
-        this->setItemText(IDC_SC_STATE, L"Valid");
-      } else if(ModRepo->queryResult() > 0) {
-        this->setItemText(IDC_SC_STATE, ModRepo->lastError());
-      } else {
-        this->setItemText(IDC_SC_STATE, L"Unknown");
-      }
-    }
-
-  } else {
-
-    this->enableItem(IDC_SC_STATE, false);
-    this->setItemText(IDC_SC_STATE, L"");
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnNet::_onBcAddRepo()
-{
-  OmModChan* pModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
-  if(!pModChan) return;
-
-  // Open new Repository dialog
-  OmUiAddRep* pUiNewRep = static_cast<OmUiAddRep*>(this->siblingById(IDD_ADD_REP));
-  pUiNewRep->setModChan(pModChan);
-  pUiNewRep->open(true);
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnNet::_onBcDelRepo()
-{
-  OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
-  if(!ModChan)
-    return;
-
-  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
-  if(lb_sel >= 0) {
-
-    OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
-
-    OmWString repo_name;
-    repo_name.assign(ModRepo->urlBase());
-    repo_name.append(L" -- ");
-    repo_name.append(ModRepo->urlName());
-
-    // warns the user before committing the irreparable
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Channel properties", IDI_QRY,
-                L"Remove Mod Repository", L"Remove the following Mod "
-                "Repository from Mod Channel ?", repo_name))
-    {
-      return;
-    }
-
-    // refresh list and buttons
-    this->_onTabRefresh();
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropChnNet::_onBcQryRepo()
+void OmUiPropChnNet::_lb_rep_on_selchg()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan) return;
 
-  int lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
+  int32_t lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
 
-  if(lb_sel >= 0)
-    this->_query_start(lb_sel);
+  bool has_select = (lb_sel >= 0);
+
+  this->enableItem(IDC_BC_RPDEL, has_select);
+  this->enableItem(IDC_SC_STATE, has_select);
+
+  if(!has_select) {
+    this->enableItem(IDC_BC_RPQRY, has_select);
+    this->setItemText(IDC_SC_STATE, L"");
+    return;
+  }
+
+  OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
+
+  this->enableItem(IDC_BC_RPQRY, has_select && (ModRepo->queryResult() != OM_RESULT_PENDING));
+
+  if(ModRepo->queryResult() == OM_RESULT_PENDING) {
+
+    this->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
+
+  } else {
+
+    if(ModRepo->queryResult() == OM_RESULT_OK) {
+
+      this->setItemText(IDC_SC_STATE, QRY_VALID_STRING);
+
+    } else if(ModRepo->queryResult() > 0) {
+
+      this->setItemText(IDC_SC_STATE, ModRepo->lastError());
+
+    } else {
+
+      this->setItemText(IDC_SC_STATE, QRY_UNKNOWN_STRING);
+    }
+  }
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onCkBoxWrn()
+void OmUiPropChnNet::_bc_rpadd_pressed()
 {
-  this->paramCheck(CHN_PROP_NET_WARNINGS);
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  // not during query, please
+  if(ModChan->queriesQueueSize())
+    return;
+
+  OmUiWizRep* UiWizRep = static_cast<OmUiWizRep*>(this->root()->childById(IDD_WIZ_REP));
+
+  UiWizRep->setModChan(ModChan);
+
+  UiWizRep->open(true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onBcRadUpg()
+void OmUiPropChnNet::_bc_rpdel_pressed()
 {
-  this->paramCheck(CHN_PROP_NET_ONUPGRADE);
+  int32_t lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
+  if(lb_sel < 0) return;
+
+  OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
+  if(!ModChan) return;
+
+  OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
+
+  // TODO: Améliorer ça, supposons une URL ultra longue, que faire ?
+  OmWString repo_name = ModRepo->base();
+  repo_name += L" -- ";
+  repo_name += ModRepo->name();
+
+  // warns the user before committing the irreparable
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Channel properties", IDI_QRY, L"Remove Mod Repository",
+                    L"Remove the following Mod Repository from Mod Channel ?", repo_name))
+    return;
+
+  // remove repository
+  ModChan->removeRepository(lb_sel);
+
+  // refresh all
+  this->root()->refresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onTabInit()
+void OmUiPropChnNet::_bc_rpqry_pressed()
+{
+  int32_t lb_sel = this->msgItem(IDC_LB_REP, LB_GETCURSEL);
+  if(lb_sel < 0) return;
+
+  this->_query_start(lb_sel);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropChnNet::_onTbInit()
 {
   // Set buttons inner icons
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_RPDEL, Om_getResIcon(IDI_BT_REM));
+  this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_REF));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_CHN,    L"Mod Repositories list");
+  this->_createTooltip(IDC_LB_CHN,    L"Repositories list");
 
-  this->_createTooltip(IDC_BC_DEL,    L"Remove selected Mod Repository");
-  this->_createTooltip(IDC_BC_EDI,    L"Query selected Mod Repository");
-  this->_createTooltip(IDC_BC_ADD,    L"Add a new Repository");
+  this->_createTooltip(IDC_BC_DEL,    L"Remove Repository");
+  this->_createTooltip(IDC_BC_EDI,    L"Query Repository");
+  this->_createTooltip(IDC_BC_ADD,    L"Add Repository");
 
-  this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to download");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to be downloaded");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn if Mods to download have missing dependencies");
   this->_createTooltip(IDC_BC_CKBX3,  L"Warn if upgrading Mods will delete older versions required by other");
 
@@ -247,54 +249,54 @@ void OmUiPropChnNet::_onTabInit()
   this->enableItem(IDC_SC_STATE, false);
 
   // Update values
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onTabResize()
+void OmUiPropChnNet::_onTbResize()
 {
-  // Mod Channel list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 50, 15, 68, 9);
-  this->_setItemPos(IDC_LB_REP, 50, 25, this->cliUnitX()-107, 20);
+  // Repositories list Label & ListBox
+  this->_setItemPos(IDC_SC_LBL01, 50, 20, 68, 16, true);
+  this->_setItemPos(IDC_LB_REP, 75, 40, this->cliWidth()-125, 64, true);
 
-  // Remove Button
-  this->_setItemPos(IDC_BC_DEL, 50, 48, 50, 14);
-  this->_setItemPos(IDC_BC_RPQRY, 105, 48, 50, 14);
-  // Add button
-  this->_setItemPos(IDC_BC_ADD, this->cliUnitX()-107, 48, 50, 14);
+  // Actions buttons
+  this->_setItemPos(IDC_BC_RPADD, 50, 39, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPDEL, 50, 61, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPQRY, 50, 83, 22, 22, true);
+
   // Query Status Label & result static
-  this->_setItemPos(IDC_SC_LBL04, 51, 64, 60, 9);
-  this->_setItemPos(IDC_SC_STATE, 97, 64, this->cliUnitX()-180, 9);
+  this->_setItemPos(IDC_SC_LBL04, 75, 110, 120, 16, true);
+  this->_setItemPos(IDC_SC_STATE, 145, 110, this->cliWidth()-185, 16, true);
 
   // Warnings label
-  this->_setItemPos(IDC_SC_LBL02, 50, 85, 180, 9);
+  this->_setItemPos(IDC_SC_LBL02, 50, 150, 300, 16, true);
   // Warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX1, 65, 95, 180, 9);
-  this->_setItemPos(IDC_BC_CKBX2, 65, 105, 180, 9);
-  this->_setItemPos(IDC_BC_CKBX3, 65, 115, 180, 9);
+  this->_setItemPos(IDC_BC_CKBX1, 75, 170, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX2, 75, 190, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX3, 75, 210, 300, 16, true);
 
   // Package upgrade label
-  this->_setItemPos(IDC_SC_LBL03, 50, 135, 180, 9);
+  this->_setItemPos(IDC_SC_LBL03, 50, 250, 300, 16, true);
   // Move to trash RadioButton
-  this->_setItemPos(IDC_BC_RAD01, 65, 145, 180, 9);
+  this->_setItemPos(IDC_BC_RAD01, 75, 270, 300, 16, true);
   // Rename RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 65, 155, 180, 9);
+  this->_setItemPos(IDC_BC_RAD02, 75, 290, 300, 16, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_onTabRefresh()
+void OmUiPropChnNet::_onTbRefresh()
 {
   // Set controls default states and parameters
   this->enableItem(IDC_SC_STATE, false);
   //this->setItemText(IDC_SC_STATE, L"Unknown");
 
-  this->enableItem(IDC_BC_DEL,  false);
+  this->enableItem(IDC_BC_RPDEL,  false);
   this->enableItem(IDC_BC_RPQRY,  false);
 
   this->msgItem(IDC_LB_REP, LB_RESETCONTENT);
@@ -308,9 +310,10 @@ void OmUiPropChnNet::_onTabRefresh()
 
     OmNetRepo* ModRepo = ModChan->getRepository(i);
 
-    lb_entry = ModRepo->urlBase();
+    // TODO: Améliorer ça, supposons une URL ultra longue, que faire ?
+    lb_entry = ModRepo->base();
     lb_entry += L" -- ";
-    lb_entry += ModRepo->urlName();
+    lb_entry += ModRepo->name();
 
     this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(lb_entry.c_str()));
   }
@@ -323,13 +326,15 @@ void OmUiPropChnNet::_onTabRefresh()
   // set Upgrade Rename
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !ModChan->upgdRename());
   this->msgItem(IDC_BC_RAD02, BM_SETCHECK, ModChan->upgdRename());
+
+  this->_lb_rep_on_selchg();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropChnNet::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropChnNet::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -339,30 +344,37 @@ INT_PTR OmUiPropChnNet::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case IDC_LB_REP: //< Mod Channel(s) list ListBox
       if(HIWORD(wParam) == LBN_SELCHANGE)
-        this->_onLbReplsSel();
+        this->_lb_rep_on_selchg();
       break;
 
-    case IDC_BC_ADD: //< New button for Mod Channel(s) list
-      this->_onBcAddRepo();
+    case IDC_BC_RPADD: //< Button : Add
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_bc_rpadd_pressed();
       break;
 
-    case IDC_BC_DEL: //< Remove button for Mod Channel(s) list
-      this->_onBcDelRepo();
+    case IDC_BC_RPDEL: //< Button : Delete
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_bc_rpdel_pressed();
       break;
 
-    case IDC_BC_RPQRY:
-      this->_onBcQryRepo();
+    case IDC_BC_RPQRY: //< Button : Query
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_bc_rpqry_pressed();
       break;
 
-    case IDC_BC_CKBX1:
-    case IDC_BC_CKBX2:
-    case IDC_BC_CKBX3:
-      this->_onCkBoxWrn();
+    case IDC_BC_CKBX1: //< CheckBox: warn extra downloads
+    case IDC_BC_CKBX2: //< CheckBox: warn missing dependency
+    case IDC_BC_CKBX3: //< CheckBox: warn upgrade breaks depends
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameters changes
+        this->paramCheck(CHN_PROP_NET_WARNINGS);
       break;
 
-    case IDC_BC_RAD01:
-    case IDC_BC_RAD02:
-      this->_onBcRadUpg();
+    case IDC_BC_RAD01: //< Radio: on upgrade move to recycle bin
+    case IDC_BC_RAD02: //< Radio: on upgrade rename to .old
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameters changes
+        this->paramCheck(CHN_PROP_NET_ONUPGRADE);
       break;
     }
   }

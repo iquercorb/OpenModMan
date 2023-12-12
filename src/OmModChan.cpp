@@ -437,24 +437,20 @@ bool OmModChan::open(const OmWString& path)
       base = xml_rep_list[i].attrAsString(L"base");
       name = xml_rep_list[i].attrAsString(L"name");
 
-      OmNetRepo* ModRepo = new OmNetRepo(this);
+      OmNetRepo* NetRepo = new OmNetRepo(this);
 
-      if(xml_rep_list[i].hasAttr(L"title")) {
-
-        if(!ModRepo->setup(base, name, xml_rep_list[i].attrAsString(L"title"))) {
-          delete ModRepo; ModRepo = nullptr;
-        }
-
-      } else {
-
-        if(!ModRepo->setup(base, name)) {
-          delete ModRepo; ModRepo = nullptr;
-        }
-
+      if(!NetRepo->setCoordinates(base, name)) {
+        delete NetRepo;
+        NetRepo = nullptr;
       }
 
-      if(ModRepo)
-        this->_repository_list.push_back(ModRepo);
+      if(NetRepo) {
+
+        if(xml_rep_list[i].hasAttr(L"title"))
+          NetRepo->setTempTitle(xml_rep_list[i].attrAsString(L"title"));
+
+        this->_repository_list.push_back(NetRepo);
+      }
 
     }
 
@@ -1000,6 +996,52 @@ bool OmModChan::ghostbusterModLibrary()
   #endif
 
   return has_change;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::importMods(const OmWStringArray& files, Om_progressCb progress_cb, void* user_ptr)
+{
+  if(!this->_xml.valid())
+    return OM_RESULT_ABORT;
+
+  OmResult result = OM_RESULT_OK;
+
+  bool has_error = false;
+
+  // create filtered list
+  OmWStringArray src_path;
+
+  for(size_t i = 0; i < files.size(); ++i)
+    if(Om_extensionMatches(files[i], OM_PKG_FILE_EXT) || Om_extensionMatches(files[i], L"zip"))
+      src_path.push_back(files[i]);
+
+  // copy files
+  OmWString dst_path;
+
+  for(size_t i = 0; i < src_path.size(); ++i) {
+
+    // call progress callback
+    if(progress_cb)
+      if(!progress_cb(user_ptr, src_path.size(), i, reinterpret_cast<uint64_t>(src_path[i].c_str())))
+        return OM_RESULT_ABORT;
+
+    // Compose destination path
+    Om_concatPaths(dst_path, this->_library_path, Om_getFilePart(src_path[i]));
+
+    int32_t result = Om_fileCopy(src_path[i], dst_path, true);
+    if(result != 0) {
+      this->_error(L"importMods", Om_errCopy(L"import Mod", src_path[i], result));
+      has_error = true;
+    }
+
+    #ifdef DEBUG
+    Sleep(100);
+    #endif // DEBUG
+  }
+
+  return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
 
 ///
@@ -2824,55 +2866,51 @@ int32_t OmModChan::indexOfRepository(OmNetRepo* NetRepo) const
 ///
 bool OmModChan::addRepository(const OmWString& base, const OmWString& name)
 {
-  if(this->_xml.valid()) {
+  if(!this->_xml.valid())
+    return false;
 
-    // get or create <network> node where repositories are listed
-    OmXmlNode network_node;
+  // get or create <network> node where repositories are listed
+  OmXmlNode network_node;
 
-    if(!this->_xml.hasChild(L"network")) {
-      network_node = this->_xml.addChild(L"network");
-    } else {
-      network_node = this->_xml.child(L"network");
-    }
+  if(!this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.addChild(L"network");
+  } else {
+    network_node = this->_xml.child(L"network");
+  }
 
-    // check whether repository already exists
-    OmXmlNodeArray repository_nodes;
-    network_node.children(repository_nodes, L"repository");
+  // check whether repository already exists
+  OmXmlNodeArray repository_nodes;
+  network_node.children(repository_nodes, L"repository");
 
-    for(size_t i = 0; i < repository_nodes.size(); ++i) {
-
-      if(base == repository_nodes[i].attrAsString(L"base")) {
-
-        if(name == repository_nodes[i].attrAsString(L"name")) {
-
-          this->_error(L"addRepository", L"Repository with same parameters already exists");
-
-          return false;
-        }
+  for(size_t i = 0; i < repository_nodes.size(); ++i) {
+    if(base == repository_nodes[i].attrAsString(L"base")) {
+      if(name == repository_nodes[i].attrAsString(L"name")) {
+        this->_error(L"addRepository", L"Repository with same parameters already exists");
+        return false;
       }
     }
-
-    // add repository entry in definition
-    OmXmlNode repository_node = network_node.addChild(L"repository");
-
-    repository_node.setAttr(L"base", base);
-    repository_node.setAttr(L"name", name);
-
-    // Save configuration
-    this->_xml.save();
-
-    // add repository in local list
-    OmNetRepo* ModRepo = new OmNetRepo(this);
-
-    // set repository parameters
-    if(!ModRepo->setup(base, name)) {
-      this->_error(L"addRepository", ModRepo->lastError());
-      delete ModRepo; return false;
-    }
-
-    // add to list
-    this->_repository_list.push_back(ModRepo);
   }
+
+  // add repository entry in definition
+  OmXmlNode repository_node = network_node.addChild(L"repository");
+
+  repository_node.setAttr(L"base", base);
+  repository_node.setAttr(L"name", name);
+
+  // Save configuration
+  this->_xml.save();
+
+  // add repository in local list
+  OmNetRepo* ModRepo = new OmNetRepo(this);
+
+  // set repository parameters
+  if(!ModRepo->setCoordinates(base, name)) {
+    this->_error(L"addRepository", ModRepo->lastError());
+    delete ModRepo; return false;
+  }
+
+  // add to list
+  this->_repository_list.push_back(ModRepo);
 
   return true;
 }
@@ -2881,56 +2919,49 @@ bool OmModChan::addRepository(const OmWString& base, const OmWString& name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::removeRepository(size_t i)
+void OmModChan::removeRepository(size_t index)
 {
-  if(i >= this->_repository_list.size())
+  if(index >= this->_repository_list.size())
     return;
 
   // Remove repository entry from configuration
-  if(this->_xml.valid()) {
+  if(!this->_xml.valid())
+    return;
 
-    OmNetRepo* NetRepo = this->_repository_list[i];
+  OmNetRepo* NetRepo = this->_repository_list[index];
 
-    // get <network> node
-    OmXmlNode network_node = this->_xml.child(L"network");
-    if(!network_node.empty()) {
+  // get <network> node
 
-      // retrieve proper <repository> reference then remove node
-      OmXmlNodeArray repository_nodes;
-      network_node.children(repository_nodes, L"repository");
+  if(this->_xml.hasChild(L"network")) {
 
-      for(size_t k = 0; k < repository_nodes.size(); ++k) {
+    OmXmlNodeArray repository_nodes;
+    this->_xml.child(L"network").children(repository_nodes, L"repository");
 
-        if(NetRepo->urlBase() == repository_nodes[k].attrAsString(L"base")) {
-
-          if(NetRepo->urlName() == repository_nodes[k].attrAsString(L"name")) {
-
-            network_node.remChild(repository_nodes[k]); break;
-          }
+    for(size_t i = 0; i < repository_nodes.size(); ++i) {
+      if(NetRepo->base() == repository_nodes[i].attrAsString(L"base")) {
+        if(NetRepo->name() == repository_nodes[i].attrAsString(L"name")) {
+          this->_xml.child(L"network").remChild(repository_nodes[i]);
+          break;
         }
       }
     }
-
-    // save configuration
-    this->_xml.save();
-
-    // remove all Remote packages related to this Repository
-    size_t i = this->_repository_list.size();
-
-    while(i--) {
-
-      if(this->_netpack_list[i]->NetRepo() == NetRepo) {
-
-        delete this->_netpack_list[i];
-
-        this->_netpack_list.erase(this->_netpack_list.begin() + i);
-      }
-    }
-
-    // delete object and remove it from local list
-    delete NetRepo;
-    this->_repository_list.erase(this->_repository_list.begin() + i);
   }
+
+  // save configuration
+  this->_xml.save();
+
+  // remove all Remote packages related to this Repository
+  size_t i = this->_netpack_list.size();
+  while(i--) {
+    if(this->_netpack_list[i]->NetRepo() == NetRepo) {
+      delete this->_netpack_list[i];
+      this->_netpack_list.erase(this->_netpack_list.begin() + i);
+    }
+  }
+
+  // delete object and remove it from local list
+  delete NetRepo;
+  this->_repository_list.erase(this->_repository_list.begin() + index);
 }
 
 ///
@@ -3053,8 +3084,8 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
         self->_xml.child(L"network").children(repository_nodes, L"repository");
 
         for(size_t i = 0; i < repository_nodes.size(); ++i) {
-          if(repository_nodes[i].attrAsString(L"base") == NetRepo->urlBase()) {
-            if(repository_nodes[i].attrAsString(L"name") == NetRepo->urlName()) {
+          if(repository_nodes[i].attrAsString(L"base") == NetRepo->base()) {
+            if(repository_nodes[i].attrAsString(L"name") == NetRepo->name()) {
               repository_nodes[i].setAttr(L"title", NetRepo->title()); break;
             }
           }

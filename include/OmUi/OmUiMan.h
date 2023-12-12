@@ -142,7 +142,7 @@ class OmUiMan : public OmDialog
 
     void createChannel();
 
-    void deleteChannel();
+    void deleteChannel(int32_t index = -1);
 
     void channelProperties();
 
@@ -204,6 +204,16 @@ class OmUiMan : public OmDialog
     ///
     HIMAGELIST listViewImgList() const {
       return this->_listview_himl;
+    }
+
+    /// \brief List views ImageList handle
+    ///
+    /// Handle to shared ImageList for child dialogs ListView controls.
+    ///
+    /// \return ImagList handle
+    ///
+    HIMAGELIST toolBarsImgList() const {
+      return this->_toolbars_himl;
     }
 
     /// \brief Context menu handle
@@ -275,6 +285,8 @@ class OmUiMan : public OmDialog
 
     uint32_t            _listview_himl_size;
 
+    HIMAGELIST          _toolbars_himl;
+
     HMENU               _context_menu;
 
     // Preset setup processing
@@ -311,6 +323,8 @@ class OmUiMan : public OmDialog
 
     // main window items
     void                _caption_populate();
+
+    void                _status_populate();
 
     void                _menu_recent_populate();
 

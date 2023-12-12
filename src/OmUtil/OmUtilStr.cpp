@@ -619,7 +619,7 @@ static const wchar_t __illegal_win_chr[] = L"/*?\"<>|\\";
 ///
 /// Regular expression pattern for URL.
 ///
-static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+)(:[\d]+)?([\/\.\w%-]*\/)([\w.%-]*)?(\?[\w%-=&]+)?)");
+static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(:[\d]+)?([\/\.\w%-]*\/)?([\w.%-]*)?(\?[\w%-=&]+)?)");
 
 /// \brief Illegal URL path characters
 ///
@@ -630,7 +630,7 @@ static const wchar_t __illegal_url_chr[] = L"#\"<>|\\{}^[]`+:@$";
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrl(const wchar_t* url)
+bool Om_isUrl(const wchar_t* url)
 {
   std::match_results<const wchar_t*> matches;
 
@@ -657,15 +657,15 @@ bool Om_isValidUrl(const wchar_t* url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrl(const OmWString& url)
+bool Om_isUrl(const OmWString& url)
 {
-  return Om_isValidUrl(url.c_str());
+  return Om_isUrl(url.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidFileUrl(const wchar_t* url)
+bool Om_isFileUrl(const wchar_t* url)
 {
   std::match_results<const wchar_t*> matches;
 
@@ -695,15 +695,15 @@ bool Om_isValidFileUrl(const wchar_t* url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidFileUrl(const OmWString& url)
+bool Om_isFileUrl(const OmWString& url)
 {
-  return Om_isValidFileUrl(url.c_str());
+  return Om_isFileUrl(url.c_str());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrlPath(const wchar_t* path)
+bool Om_hasLegalUrlChar(const wchar_t* path)
 {
   if(!wcslen(path))
     return false;
@@ -718,7 +718,7 @@ bool Om_isValidUrlPath(const wchar_t* path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidUrlPath(const OmWString& path)
+bool Om_hasLegalUrlChar(const OmWString& path)
 {
   if(path.empty())
     return false;
@@ -733,7 +733,7 @@ bool Om_isValidUrlPath(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidName(const wchar_t* name)
+bool Om_hasLegalSysChar(const wchar_t* name)
 {
   if(!wcslen(name))
     return false;
@@ -748,7 +748,7 @@ bool Om_isValidName(const wchar_t* name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidName(const OmWString& name)
+bool Om_hasLegalSysChar(const OmWString& name)
 {
   if(name.empty())
     return false;
@@ -763,7 +763,7 @@ bool Om_isValidName(const OmWString& name)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidPath(const wchar_t* path)
+bool Om_hasLegalPathChar(const wchar_t* path)
 {
   if(!wcslen(path))
     return false;
@@ -779,7 +779,7 @@ bool Om_isValidPath(const wchar_t* path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isValidPath(const OmWString& path)
+bool Om_hasLegalPathChar(const OmWString& path)
 {
   if(path.empty())
     return false;
@@ -1172,7 +1172,6 @@ void Om_toCRLF(OmWString* crlf_txt, const OmWString& lf_txt)
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1183,6 +1182,37 @@ OmWString Om_toCRLF(const OmWString& lf_txt)
   for(size_t i = 0; i < lf_txt.size(); ++i) {
     if(lf_txt[i] == L'\n') {
       crlf_txt += L"\r\n"; continue;
+    }
+    crlf_txt.push_back(lf_txt[i]);
+  }
+
+  return crlf_txt;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_toCRLF(OmCString* crlf_txt, const OmCString& lf_txt)
+{
+  crlf_txt->clear();
+  for(size_t i = 0; i < lf_txt.size(); ++i) {
+    if(lf_txt[i] == '\n') {
+      *crlf_txt += "\r\n"; continue;
+    }
+    crlf_txt->push_back(lf_txt[i]);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmCString Om_toCRLF(const OmCString& lf_txt)
+{
+  OmCString crlf_txt;
+
+  for(size_t i = 0; i < lf_txt.size(); ++i) {
+    if(lf_txt[i] == '\n') {
+      crlf_txt += "\r\n"; continue;
     }
     crlf_txt.push_back(lf_txt[i]);
   }
@@ -1235,4 +1265,28 @@ OmWString Om_underscoresToSpaces(const OmWString& spaces)
   std::replace(result.begin(), result.end(), '_', ' ');
 
   return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_trim(OmWString* wstr)
+{
+  wstr->erase(wstr->find_last_not_of(L" \r\n") + 1);
+  wstr->erase(0, wstr->find_first_not_of(L" \r\n"));
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_trimed(const OmWString& wstr)
+{
+  OmWString trimed;
+
+  size_t subpos = wstr.find_first_not_of(L" \r\n");
+  size_t sublen = wstr.find_last_not_of(L" \r\n") + 1;
+
+  trimed.assign(wstr, subpos, sublen);
+
+  return trimed;
 }

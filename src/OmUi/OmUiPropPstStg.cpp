@@ -61,50 +61,39 @@ long OmUiPropPstStg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstStg::_onCkBoxIonly()
-{
-  this->paramCheck(PST_PROP_STG_IONLY);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiPropPstStg::_onTabInit()
+void OmUiPropPstStg::_onTbInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Preset name, to identify it");
+  this->_createTooltip(IDC_EC_INP01,  L"Preset name");
   this->_createTooltip(IDC_BC_CKBX1,  L"Preset will install selected packages without uninstalling others");
 
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstStg::_onTabResize()
+void OmUiPropPstStg::_onTbResize()
 {
+  int32_t y_base = 30;
+
   // Preset Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 50, 25, 240, 9);
-  this->_setItemPos(IDC_EC_INP01, 50, 35, this->cliUnitX()-100, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 240, 16, true);
+  this->_setItemPos(IDC_EC_INP01, 50, y_base+20, this->cliWidth()-100, 21, true);
 
   // Install Only checkbox
-  this->_setItemPos(IDC_BC_CKBX1, 50, 65, this->cliUnitX()-100, 13);
+  this->_setItemPos(IDC_BC_CKBX1, 50, y_base+70, this->cliWidth()-100, 16, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropPstStg::_onTabRefresh()
+void OmUiPropPstStg::_onTbRefresh()
 {
   OmModPset* ModPset = static_cast<OmUiPropPst*>(this->_parent)->ModPset();
-  if(!ModPset)
-    return;
-
-  OmModHub* ModHub = ModPset->ModHub();
-  if(!ModHub)
-    return;
+  if(!ModPset) return;
 
   // Preset title
   this->setItemText(IDC_EC_INP01, ModPset->title());
@@ -121,7 +110,7 @@ void OmUiPropPstStg::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropPstStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropPstStg::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -136,7 +125,9 @@ INT_PTR OmUiPropPstStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CKBX1:
-      this->_onCkBoxIonly();
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(PST_PROP_STG_IONLY);
       break;
     }
   }

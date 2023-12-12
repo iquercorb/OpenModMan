@@ -23,6 +23,8 @@
 #include "OmConnect.h"
 
 class OmModChan;
+class OmModPack;
+class OmImage;
 
 /// \brief Network Mod repository object
 ///
@@ -47,28 +49,96 @@ class OmNetRepo
     ///
     ~OmNetRepo();
 
-    /// \brief Set base parameters.
+    /// \brief Clear instance
     ///
-    /// Defines repository address parameter to query data.
+    /// Reset all instance data and parameters to initial state
     ///
-    /// \param[in]  base    : Repository HTTP base address.
-    /// \param[in]  name    : Repository HTTP suffix name.
+    void clear();
+
+    /// \brief Initialize new repository
     ///
-    /// \return True if parameters makes a valid HTTP URL, false otherwise.
+    /// Initializes new repository definition basis using the given parameters, this
+    /// operation erase any previously parsed data.
     ///
-    bool setup(const OmWString& base, const OmWString& name);
+    /// \param[in] title    : Repository title (description)
+    ///
+    void init(const OmWString& title);
 
     /// \brief Set base parameters.
     ///
-    /// Defines repository address parameter to query data.
+    /// Set repository network coordinates for network query
     ///
     /// \param[in]  base    : Repository HTTP base address.
     /// \param[in]  name    : Repository HTTP suffix name.
-    /// \param[in]  title   : Repository title
     ///
     /// \return True if parameters makes a valid HTTP URL, false otherwise.
     ///
-    bool setup(const OmWString& base, const OmWString& name, const OmWString& title);
+    bool setCoordinates(const OmWString& base, const OmWString& name);
+
+    /// \brief Set temporary title
+    ///
+    /// Set temporary repository title (short description), the title
+    /// is set in local variable but not written into definition and will
+    /// be replace as soon as new definition is loaded.
+    ///
+    /// \param[in]  title   : Temporary title to set.
+    ///
+    void setTempTitle(const OmWString& title) {
+      this->_title = title;
+    }
+
+    /// \brief Parse definition
+    ///
+    /// Parse given XML data as repository definition to set data of this instance.
+    ///
+    /// \param[in] data     : XML data to parse.
+    ///
+    /// \return True if operation succeed, false otherwise
+    ///
+    bool parse(const OmWString& data);
+
+    /// \brief Load repository definition
+    ///
+    /// Load repository definition from local file system.
+    ///
+    /// \param[in] path     : Path to XML repository definition to load.
+    ///
+    /// \return Operation result code.
+    ///
+    OmResult load(const OmWString& path);
+
+    /// \brief Save repository definition
+    ///
+    /// Save repository definition to local file system.
+    ///
+    /// \param[in] path     : Path to file to save XML definition
+    ///
+    /// \return Operation result code.
+    ///
+    OmResult save(const OmWString& path);
+
+    /// \brief Query repository.
+    ///
+    /// Try connect to repository to get definition file repository data. This
+    /// function does not use thread and block until request response or timeout.
+    ///
+    /// \return True if query succeed, false if an error occurred.
+    ///
+    OmResult query();
+
+    /// \brief Abort query
+    ///
+    /// Abort the current pending query if any
+    ///
+    void abortQuery();
+
+    /// \brief Query result
+    ///
+    /// Returns last query result code
+    ///
+    OmResult queryResult() const {
+      return this->_query_result;
+    }
 
     /// \brief Get URL base address
     ///
@@ -76,8 +146,8 @@ class OmNetRepo
     ///
     /// \return HTTP base address.
     ///
-    const OmWString& urlBase() const {
-      return this->_url_base;
+    const OmWString& base() const {
+      return this->_base;
     }
 
     /// \brief Get URL suffix name
@@ -86,18 +156,18 @@ class OmNetRepo
     ///
     /// \return Suffix name.
     ///
-    const OmWString& urlName() const {
-      return this->_url_name;
+    const OmWString& name() const {
+      return this->_name;
     }
 
-    /// \brief Get full URL
+    /// \brief Get access path or URL
     ///
-    /// Returns real XML file URL as combination of base and name.
+    /// Return repository XML access URL or local file Path depending context.
     ///
-    /// \return Repo definition file URL.
+    /// \return XML file local path or internet URL.
     ///
-    const OmWString& urlFull() const {
-      return this->_url_full;
+    const OmWString& path() const {
+      return this->_path;
     }
 
     /// \brief Get title.
@@ -120,6 +190,14 @@ class OmNetRepo
       return this->_title;
     }
 
+    /// \brief Set title.
+    ///
+    /// Set repository indicative title (description).
+    ///
+    /// \param[in] title  : Title to set.
+    ///
+    void setTitle(const OmWString& title);
+
     /// \brief Get download path.
     ///
     /// Returns repository common download path, this is the
@@ -132,28 +210,15 @@ class OmNetRepo
       return this->_downpath;
     }
 
-    /// \brief Query repository.
+    /// \brief Set download path.
     ///
-    /// Try connect to repository to get definition file repository data. This
-    /// function does not use thread and block until request response or timeout.
+    /// Set repository common download path, this is the
+    /// path added to base address where to find files to be
+    /// downloaded.
     ///
-    /// \return True if query succeed, false if an error occured.
+    /// \param[in] downpath  : Default download path to set.
     ///
-    OmResult query();
-
-    /// \brief Abort query
-    ///
-    /// Abort the current pending query if any
-    ///
-    void abortQuery();
-
-    /// \brief Query result
-    ///
-    /// Returns last query result code
-    ///
-    OmResult queryResult() const {
-      return this->_qry_result;
-    }
+    void setDownpath(const OmWString& downpath);
 
     /// \brief Get Mod reference count.
     ///
@@ -162,17 +227,19 @@ class OmNetRepo
     /// \return Mods count.
     ///
     size_t referenceCount() const {
-      return this->_reference.size();
+      return this->_reference_list.size();
     }
 
     /// \brief Get Mod reference.
     ///
     /// Returns repository Mod reference as XML node.
     ///
+    /// \param[in] index  : Index of reference to get
+    ///
     /// \return XML node.
     ///
-    const OmXmlNode& getReference(size_t i) const {
-      return this->_reference[i];
+    const OmXmlNode& getReference(size_t index) const {
+      return this->_reference_list[index];
     }
 
     /// \brief Check for reference.
@@ -185,7 +252,7 @@ class OmNetRepo
     ///
     bool hasReference(const OmWString& iden) const;
 
-    /// \brief Get reference index.
+    /// \brief Get reference index
     ///
     /// Search for referenced Mod identity and returns its current
     /// index in list.
@@ -194,7 +261,36 @@ class OmNetRepo
     ///
     /// \return Reference index or -1 if not found.
     ///
-    int32_t referenceIndex(const OmWString& iden) const;
+    int32_t indexOfReference(const OmWString& iden) const;
+
+    /// \brief Delete reference
+    ///
+    /// Search for referenced Mod identity and delete it.
+    ///
+    /// \param[in] iden   : Mod identity to search
+    ///
+    /// \return True if reference found and deleted, false otherwise
+    ///
+    bool deleteReference(const OmWString& iden);
+
+    /// \brief Delete reference
+    ///
+    /// Search for referenced Mod identity and delete it.
+    ///
+    /// \param[in] iden   : Index of reference to delete
+    ///
+    void deleteReference(size_t index);
+
+    /// \brief Add Mod reference
+    ///
+    /// Add new Mod reference to this instance
+    ///
+    /// \param[in] ModPack : Pointer to Mod Pack to add reference from
+    ///
+    /// \return If reference with same identity was found, the
+    ///         index of updated reference, otherwise -1 is returned
+    ///
+    int32_t addReference(const OmModPack* ModPack);
 
     /// \brief Get Mod Channel.
     ///
@@ -223,30 +319,35 @@ class OmNetRepo
     // linking
     OmModChan*          _ModChan;
 
+    // Coordinates
+    OmWString           _base;
+
+    OmWString           _name;
+
     // XML definition
+    OmWString           _path;
+
     OmXmlConf           _xml;
 
     // general parameters
-
     OmWString           _uuid;
 
     OmWString           _title;
 
     OmWString           _downpath;
 
-    OmWString           _url_base;
-
-    OmWString           _url_name;
-
-    OmWString           _url_full;
-
     // referenced mods
-    OmXmlNodeArray      _reference;
+    OmXmlNodeArray      _reference_list;
 
     // query stuff
-    OmConnect           _connect;
+    OmConnect           _query_connect;
 
-    OmResult            _qry_result;
+    OmResult            _query_result;
+
+    // reference build helpers
+    bool                _save_thumbnail(OmXmlNode&, const OmImage&);
+
+    bool                _save_description(OmXmlNode&, const OmWString&);
 
     // logs and errors
     void                _log(unsigned level, const OmWString& origin, const OmWString& detail) const;

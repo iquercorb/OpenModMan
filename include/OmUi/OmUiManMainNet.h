@@ -51,11 +51,11 @@ class OmUiManMainNet : public OmDialog
     ///
     long id() const;
 
-    void queryRepositories();
-
     void addRepository();
 
     void deleteRepository();
+
+    void queryRepositories();
 
     /// \brief Stop downloads
     ///
@@ -178,13 +178,9 @@ class OmUiManMainNet : public OmDialog
     void                _lv_net_on_rclick();
 
 
-    void                _bc_rpqry_hit();
+    void                _bc_stop_clicked();
 
-    void                _bc_rpadd_pressed();
-
-    void                _bc_stop_hit();
-
-    void                _bc_abort_pressed();
+    void                _bc_abort_clicked();
 
     void                _onInit();
 

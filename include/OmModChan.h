@@ -172,6 +172,18 @@ class OmModChan
     ///
     bool ghostbusterModLibrary();
 
+    /// \brief Import Mods
+    ///
+    /// Copy specified files into local Library
+    ///
+    /// \param[in] files        : Array of file paths to import
+    /// \param[in] progress_cb  : Callback for process progression
+    /// \param[in] user_ptr     : Custom pointer passed to callback
+    ///
+    /// \return Operation result code
+    ///
+    OmResult importMods(const OmWStringArray& files, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+
     /// \brief Library Mod Count
     ///
     /// Return count of Mod Pack in local Library
@@ -240,11 +252,11 @@ class OmModChan
     ///
     /// Check whether the specified Mod is overlapped by other
     ///
-    /// \param[in] i    : Mod index in Local Library to check
+    /// \param[in] index  : Mod index in Local Library to check
     ///
     /// \return True if Mod is overlapped by any other, false otherwise
     ///
-    bool isOverlapped(size_t i) const;
+    bool isOverlapped(size_t index) const;
 
     /// \brief Check Mod overlap
     ///
@@ -733,12 +745,12 @@ class OmModChan
     ///
     /// Returns Net Repository repository object at index.
     ///
-    /// \param[in] i    : Index to get Net Repository
+    /// \param[in] index : Index to get Net Repository
     ///
     /// \return Net Repository object
     ///
-    OmNetRepo* getRepository(size_t i) const {
-      return this->_repository_list[i];
+    OmNetRepo* getRepository(size_t index) const {
+      return this->_repository_list[index];
     }
 
     /// \brief Get Repository index.

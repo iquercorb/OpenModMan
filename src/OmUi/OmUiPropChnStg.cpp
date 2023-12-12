@@ -54,13 +54,13 @@ long OmUiPropChnStg::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnStg::_onBcBrwDst()
+void OmUiPropChnStg::_browse_dir_target()
 {
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP02, start);
 
-  if(!Om_dlgBrowseDir(result, this->_hwnd, L"Select Target path, where Mods/Packages are to be applied.", start))
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Select Target directory, where Mods are to be applied", start))
     return;
 
   this->setItemText(IDC_EC_INP02, result);
@@ -70,43 +70,43 @@ void OmUiPropChnStg::_onBcBrwDst()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnStg::_onTabInit()
+void OmUiPropChnStg::_onTbInit()
 {
   // define controls tool-tips
-  this->_createTooltip(IDC_EC_INP01,  L"Mod Channel name, to identify it");
+  this->_createTooltip(IDC_EC_INP01,  L"Channel title");
 
-  this->_createTooltip(IDC_EC_INP02,  L"Installation destination path, where Mods/Packages are to be installed");
-  this->_createTooltip(IDC_BC_BRW02,  L"Browse to select destination folder");
+  this->_createTooltip(IDC_EC_INP02,  L"Target directory path, where Mods are to be applied");
+  this->_createTooltip(IDC_BC_BRW02,  L"Select target directory");
 
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnStg::_onTabResize()
+void OmUiPropChnStg::_onTbResize()
 {
+  int32_t y_base = 30;
+
   // Mod Channel Title Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 50, 15, 220, 9);
-  this->_setItemPos(IDC_EC_INP01, 50, 25, this->cliUnitX()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 220, 16, true);
+  this->_setItemPos(IDC_EC_INP01, 50, y_base+20, this->cliWidth()-100, 20, true);
 
   // Mod Channel Label, EditControl and Browse button
-  this->_setItemPos(IDC_SC_LBL02, 50, 50, 220, 9);
-  this->_setItemPos(IDC_EC_INP02, 50, 60, this->cliUnitX()-108, 13);
-  this->_setItemPos(IDC_BC_BRW02, this->cliUnitX()-55, 60, 16, 13);
+  this->_setItemPos(IDC_SC_LBL02, 50, y_base+80, 220, 16, true);
+  this->_setItemPos(IDC_EC_INP02, 50, y_base+100, this->cliWidth()-130, 20, true);
+  this->_setItemPos(IDC_BC_BRW02, this->cliWidth()-75, y_base+99, 25, 22, true);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnStg::_onTabRefresh()
+void OmUiPropChnStg::_onTbRefresh()
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
-
-  if(ModChan == nullptr)
-    return;
+  if(!ModChan) return;
 
   this->setItemText(IDC_EC_INP01, ModChan->title());
   this->setItemText(IDC_EC_INP02, ModChan->targetPath());
@@ -116,7 +116,7 @@ void OmUiPropChnStg::_onTabRefresh()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmUiPropChnStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmUiPropChnStg::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
@@ -131,7 +131,8 @@ INT_PTR OmUiPropChnStg::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_BRW02: //< Target path "..." (browse) Button
-      this->_onBcBrwDst();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_browse_dir_target();
       break;
 
     case IDC_EC_INP02: //< Target path EditText

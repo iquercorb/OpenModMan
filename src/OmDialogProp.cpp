@@ -28,8 +28,7 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmDialogProp::OmDialogProp(HINSTANCE hins) : OmDialog(hins),
-  _pageName(), _pageDial(), _noChanges(false), _hTab(nullptr),
-  _hBcOk(nullptr), _hBcApply(nullptr), _hBcCancel(nullptr)
+  _noChanges(false)
 {
 
 }
@@ -40,7 +39,8 @@ OmDialogProp::OmDialogProp(HINSTANCE hins) : OmDialog(hins),
 ///
 OmDialogProp::~OmDialogProp()
 {
-
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_TC_PROP, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -73,7 +73,7 @@ bool OmDialogProp::applyChanges()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogProp::_addPage(const OmWString& title, OmDialog* dialog)
+void OmDialogProp::_addPage(const OmWString& title, OmDialogPropTab* dialog)
 {
   this->addChild(dialog);
   this->_pageDial.push_back(dialog);
@@ -92,20 +92,42 @@ void OmDialogProp::_setNoChange(bool enable)
   this->showItem(IDC_BC_CANCEL, !enable);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogProp::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
+  this->setIcon(Om_getResIcon(IDI_APP, 2), Om_getResIcon(IDI_APP, 1));
+
+  DWORD ComStyle = WS_CHILD|WS_VISIBLE;
+
+  CreateWindowExW(WS_EX_LEFT, WC_TABCONTROLW, L"", ComStyle|WS_CLIPSIBLINGS|WS_TABSTOP,
+        5, 5, this->cliWidth()-10, this->cliHeight()-40,
+        this->_hwnd, reinterpret_cast<HMENU>(IDC_TC_PROP), this->_hins, nullptr);
+
+  CreateWindowExW(WS_EX_LEFT, L"BUTTON", L"Apply", ComStyle|WS_DISABLED|WS_TABSTOP,
+        this->cliWidth()-248, this->cliHeight()-30, 78, 23,
+        this->_hwnd, reinterpret_cast<HMENU>(IDC_BC_APPLY), this->_hins, nullptr);
+
+  CreateWindowExW(WS_EX_LEFT, L"BUTTON", L"Cancel", ComStyle|WS_TABSTOP,
+        this->cliWidth()-166, this->cliHeight()-30, 78, 23,
+        this->_hwnd, reinterpret_cast<HMENU>(IDC_BC_CANCEL), this->_hins, nullptr);
+
+  CreateWindowExW(WS_EX_LEFT, L"BUTTON", L"Close", ComStyle|WS_TABSTOP,
+        this->cliWidth()-84, this->cliHeight()-30, 78, 23,
+        this->_hwnd, reinterpret_cast<HMENU>(IDC_BC_CLOSE), this->_hins, nullptr);
+
+  // Defines fonts for Mod Hub ComboBox
+  HFONT hFt = Om_createFont(12, 200, L"Ms Shell Dlg");
+
+  this->msgItem(IDC_TC_PROP, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_BC_APPLY, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_BC_CANCEL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  this->msgItem(IDC_BC_CLOSE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // Retrieve handle to common controls
   this->_hTab = this->getItem(IDC_TC_PROP);
-  this->_hBcOk = this->getItem(IDC_BC_OK);
-  this->_hBcApply = this->getItem(IDC_BC_APPLY);
-  this->_hBcCancel = this->getItem(IDC_BC_CANCEL);
 
   this->showItem(IDC_BC_APPLY, !this->_noChanges);
   this->showItem(IDC_BC_CANCEL, !this->_noChanges);
@@ -153,7 +175,7 @@ void OmDialogProp::_onResize()
   HWND hTab = FindWindowEx(this->_hwnd, nullptr, WC_TABCONTROL, nullptr);
 
   // TabControl
-  this->_setItemPos(IDC_TC_PROP, 4, 5, this->cliUnitX()-8, this->cliUnitY()-28);
+  this->_setItemPos(IDC_TC_PROP, 5, 5, this->cliWidth()-10, this->cliHeight()-40, true);
 
   if(this->_pageDial.size() && this->_hTab) {
 
@@ -163,16 +185,10 @@ void OmDialogProp::_onResize()
     GetWindowRect(hTab, reinterpret_cast<LPRECT>(&pos));
     MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&pos), 2);
 
-    // convert into base unit and adjust to keep inside the TabControl
-    pos[0] = MulDiv(pos[0], 4, this->ubaseX()) + 3;
-    pos[1] = MulDiv(pos[1], 8, this->ubaseY()) + 14;
-    pos[2] = MulDiv(pos[2], 4, this->ubaseX()) - 3;
-    pos[3] = MulDiv(pos[3], 8, this->ubaseY()) - 3;
-
-    // Map again in pixels
-    MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&pos));
-    pos[2] -= pos[0]; // width = right - left
-    pos[3] -= pos[1]; // height = bottom - top
+    pos[0] += 1;  //< add 1 pixel margin
+    pos[1] += 21; //< add 21 pixel for tabs
+    pos[2] -= pos[0] + 3; //< width = (right - left) - margin
+    pos[3] -= pos[1] + 2; //< height = (bottom - top) - margin
 
     // apply this for all dialogs
     for(size_t i = 0; i < this->_pageDial.size(); ++i) {
@@ -181,11 +197,11 @@ void OmDialogProp::_onResize()
   }
 
   // Apply Button
-  this->_setItemPos(IDC_BC_APPLY, this->cliUnitX()-161, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_APPLY, this->cliWidth()-248, this->cliHeight()-30, 78, 23, true);
   // Cancel Button
-  this->_setItemPos(IDC_BC_CANCEL, this->cliUnitX()-108, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CANCEL, this->cliWidth()-166, this->cliHeight()-30, 78, 23, true);
   // Close Button
-  this->_setItemPos(IDC_BC_OK, this->cliUnitX()-54, this->cliUnitY()-19, 50, 14);
+  this->_setItemPos(IDC_BC_CLOSE, this->cliWidth()-84, this->cliHeight()-30, 78, 23, true);
 
   this->_onPropResize();
 
@@ -245,27 +261,30 @@ INT_PTR OmDialogProp::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch(LOWORD(wParam))
     {
     case IDC_BC_APPLY:
-      if(this->validChanges()) {
-        if(this->applyChanges()) {
-          // refresh all dialogs from root (Main dialog)
-          this->root()->refresh();
+      if(HIWORD(wParam) == BN_CLICKED)
+        if(this->validChanges()) {
+          if(this->applyChanges()) {
+            // refresh all dialogs from root (Main dialog)
+            this->root()->refresh();
+          }
         }
-      }
       break;
 
-    case IDC_BC_OK:
-      if(this->validChanges()) {
-        if(this->applyChanges()) {
-          // quit the dialog
-          this->quit();
-          // refresh all dialogs from root (Main dialog)
-          this->root()->refresh();
+    case IDC_BC_CLOSE:
+      if(HIWORD(wParam) == BN_CLICKED)
+        if(this->validChanges()) {
+          if(this->applyChanges()) {
+            // quit the dialog
+            this->quit();
+            // refresh all dialogs from root (Main dialog)
+            this->root()->refresh();
+          }
         }
-      }
       break; // case BTN_OK:
 
     case IDC_BC_CANCEL:
-      this->quit();
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->quit();
       break; // case BTN_CANCEL:
     }
   }

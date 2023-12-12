@@ -36,7 +36,6 @@ OmDialogPropTab::~OmDialogPropTab()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -47,7 +46,6 @@ void OmDialogPropTab::paramCheck(unsigned i)
   if(this->_parent != nullptr)
     static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -60,7 +58,6 @@ void OmDialogPropTab::paramReset(unsigned i)
     static_cast<OmDialogProp*>(this->_parent)->checkChanges();
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -70,112 +67,100 @@ void OmDialogPropTab::_paramResetAll()
     this->_chParam[i] = false;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogPropTab::_onInit()
 {
-  this->_onTabInit();
+  this->_onTbInit();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogPropTab::_onShow()
 {
-  this->_onTabShow();
+  this->_onTbShow();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogPropTab::_onResize()
 {
-  this->_onTabResize();
+  this->_onTbResize();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogPropTab::_onRefresh()
 {
-  this->_onTabRefresh();
+  this->_onTbRefresh();
 
   this->_paramResetAll();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmDialogPropTab::_onQuit()
 {
-  this->_onTabQuit();
+  this->_onTbQuit();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 INT_PTR OmDialogPropTab::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  return this->_onTabMsg(uMsg, wParam, lParam);
+  return this->_onTbMsg(uMsg, wParam, lParam);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogPropTab::_onTabInit()
+void OmDialogPropTab::_onTbInit()
 {
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogPropTab::_onTabShow()
+void OmDialogPropTab::_onTbShow()
 {
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogPropTab::_onTabResize()
+void OmDialogPropTab::_onTbResize()
 {
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogPropTab::_onTabRefresh()
+void OmDialogPropTab::_onTbRefresh()
 {
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmDialogPropTab::_onTabQuit()
+void OmDialogPropTab::_onTbQuit()
 {
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-INT_PTR OmDialogPropTab::_onTabMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR OmDialogPropTab::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(uMsg); OM_UNUSED(wParam);  OM_UNUSED(lParam);
 

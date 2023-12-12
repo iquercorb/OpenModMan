@@ -43,6 +43,8 @@
 #include "OmUiHelpLog.h"
 #include "OmUiHelpAbt.h"
 #include "OmUiWizHub.h"
+#include "OmUiWizChn.h"
+#include "OmUiWizRep.h"
 #include "OmUiToolPkg.h"
 #include "OmUiToolRep.h"
 #include "OmUiPictView.h"
@@ -56,6 +58,7 @@
 
 #define FOOT_MIN_HEIGHT 170
 #define MAIN_MIN_HEIGHT 200
+#define SATUSBAR_HEIGHT 24
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -99,6 +102,8 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiHelpLog(hins));    //< Dialog for Help Debug log
   this->addChild(new OmUiHelpAbt(hins));    //< Dialog for Help About
   this->addChild(new OmUiWizHub(hins));     //< Dialog for New Mod Hub Wizard
+  this->addChild(new OmUiWizChn(hins));     //< Dialog for New Mod Channel Wizard
+  this->addChild(new OmUiWizRep(hins));     //< Dialog for Repository Config Wizard
   this->addChild(new OmUiToolPkg(hins));    //< Dialog for New Package
   this->addChild(new OmUiAddPst(hins));     //< Dialog for New Preset
   this->addChild(new OmUiAddChn(hins));     //< Dialog for Adding Mod Channel
@@ -115,7 +120,8 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
 ///
 OmUiMan::~OmUiMan()
 {
-
+  HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_CB_HUB, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 ///
@@ -203,7 +209,7 @@ void OmUiMan::openFile()
 
   ModMan->loadDefaultLocation(start);
 
-  if(Om_dlgOpenFile(result, this->_hwnd, L"Select Hub definition file", OM_OMX_FILE_FILER, start)) {
+  if(Om_dlgOpenFile(result, this->_hwnd, L"Select Hub definition file", OM_OMX_FILES_FILTER, start)) {
 
     this->openHub(result);
   }
@@ -242,17 +248,26 @@ void OmUiMan::openHub(const OmWString& path)
 {
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
+  int32_t previous = ModMan->activeHubIndex();
+
+  // unselect Hub
+  ModMan->selectHub(-1);
+
+  // refresh
+  this->refresh();
+
   // Try to open Mod Hub
-  if(ModMan->openHub(path)) {
-
-    // refresh
-    this->refresh();
-
-  } else {
+  if(!ModMan->openHub(path)) {
 
     Om_dlgBox_okl(this->_hwnd, L"Open Mod Hub", IDI_ERR, L"Mod Hub open error",
                   L"Unable to open Mod Hub:", ModMan->lastError());
+
+    if(ModMan->hubCount())
+      ModMan->selectHub(previous);
   }
+
+  // refresh
+  this->refresh();
 }
 
 ///
@@ -351,18 +366,25 @@ void OmUiMan::createChannel()
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
-
+/*
   OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
 
   UiAddChn->setModHub(ModHub);
 
   UiAddChn->open(true);
+  */
+
+  OmUiWizChn* UiWizChn = static_cast<OmUiWizChn*>(this->childById(IDD_WIZ_CHN));
+
+  UiWizChn->setModHub(ModHub);
+
+  UiWizChn->open(true);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::deleteChannel()
+void OmUiMan::deleteChannel(int32_t index)
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
@@ -370,12 +392,20 @@ void OmUiMan::deleteChannel()
   // we rely on current active channel since channel may be active but not actually
   // selected in the ListView control
 
-  OmModChan* ModChan = ModHub->activeChannel();
+  OmModChan* ModChan;
+
+  if(index  < 0) {
+    ModChan = ModHub->activeChannel();
+  } else {
+    ModChan = ModHub->getChannel(index);
+  }
+
   if(!ModChan) return;
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Channel",
-                    L"Delete the following Channel ?", ModChan->title()))
+  if(!Om_dlgBox_cal(this->_hwnd, L"Hub properties", IDI_QRY, L"Delete Channel",
+                   L"This operation will permanently delete the following Channel "
+                   L"and associated data:", ModChan->title()))
     return;
 
   // here we go for Mod Channel delete
@@ -817,7 +847,7 @@ DWORD WINAPI OmUiMan::_delchan_run_fn(void* ptr)
 
   // Open progress dialog
   self->_delchan_abort = 0;
-  self->_delchan_hdlg = Om_dlgProgress(self->_hins, self->_hwnd, L"Delete Channel - Backup Purge", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
+  self->_delchan_hdlg = Om_dlgProgress(self->_hwnd, L"delete Channel", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
 
   // delete channel, will purge backup if required
   OmResult result = ModHub->deleteChannel(self->_delchan_idch, OmUiMan::_delchan_progress_fn, self);
@@ -900,6 +930,19 @@ void OmUiMan::_caption_populate()
   this->setCaption(caption + OM_APP_NAME);
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::_status_populate()
+{
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+  OmModHub* ModHub = ModMan->activeHub();
+
+  OmWString path = ModHub->home();
+  if(path.back() != L'\\') path.push_back(L'\\');
+
+  this->setItemText(IDC_SC_FILE, path);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1022,15 +1065,17 @@ void OmUiMan::_cb_hub_populate()
     for(unsigned i = 0; i < ModMan->hubCount(); ++i) {
 
       cb_entry = ModMan->getHub(i)->title();
-      cb_entry += L" - ";
-      cb_entry += ModMan->getHub(i)->home();
+      //cb_entry += L" - ";
+      //cb_entry += ModMan->getHub(i)->home();
 
       this->msgItem(IDC_CB_HUB, CB_ADDSTRING, i, reinterpret_cast<LPARAM>(cb_entry.c_str()));
     }
 
     // If no context selected, force the selection of the first context in list
+    /*
     if(!ModMan->activeHub())
       ModMan->selectHub(0);
+    */
 
     // select context according current active one
     this->msgItem(IDC_CB_HUB, CB_SETCURSEL, ModMan->activeHubIndex());
@@ -1133,16 +1178,10 @@ void OmUiMan::_lv_chn_populate()
     this->enableItem(IDC_LV_CHN, false);
 
     // ask user to create at least one Mod Channel in the Mod Hub
-    if(Om_dlgBox_yn(this->_hwnd, L"Mod Hub", IDI_QRY,
-                  L"Mod Hub is empty", L"The selected Mod Hub is "
-                  "empty and have no Mod Channel configured. Do you want "
-                  "to add a Mod Channel now ?"))
+    if(Om_dlgBox_yn(this->_hwnd, L"Mod Hub", IDI_QRY, L"Adding Channel",
+                    L"This Hub is empty and have no Channel configured. Do you want to add a modding Channel now ?"))
     {
-      OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
-
-      UiAddChn->setModHub(ModHub);
-
-      UiAddChn->open(true);
+      this->createChannel();
     }
   }
 }
@@ -1333,24 +1372,58 @@ void OmUiMan::_onInit()
   std::cout << "DEBUG => OmUiMan::_onInit\n";
   #endif
 
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+  // set menu icons
+  HMENU hMnuFile = this->getPopup(MNU_FILE);
+
+  //this->setPopupItemIcon(hMnuFile, MNU_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_CLOSE, Om_getResIconPremult(IDI_CLOSE));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
+
+  HMENU hMnuEdit = this->getPopup(MNU_EDIT);
+  this->setPopupItemIcon(hMnuEdit, MNU_EDIT_MANPROP, Om_getResIconPremult(IDI_BT_EDI));
+
+  HMENU hMnuHub = this->getPopup(MNU_HUB);
+  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDCHN, Om_getResIconPremult(IDI_CHN_ADD));
+  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDPST, Om_getResIconPremult(IDI_PST_ADD));
+  this->setPopupItemIcon(hMnuHub, MNU_HUB_PROP, Om_getResIconPremult(IDI_BT_EDI));
+
+  HMENU hMnuChn = this->getPopup(MNU_CHN);
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDREP, Om_getResIconPremult(IDI_REP_ADD));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_IMPMOD, Om_getResIconPremult(IDI_BT_IMP));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_QRYREP, Om_getResIconPremult(IDI_BT_REF));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_PROP, Om_getResIconPremult(IDI_BT_EDI));
+
+  HMENU hMnuTls = this->getPopup(MNU_TOOL);
+  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITREP, Om_getResIconPremult(IDI_REP_TOOL));
+  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITPKG, Om_getResIconPremult(IDI_MOD_TOOL));
+
+  HMENU hMnuHlp = this->getPopup(MNU_HELP);
+  this->setPopupItemIcon(hMnuHlp, MNU_HELP_ABOUT, Om_getResIconPremult(IDI_ABOUT));
+  this->setPopupItemIcon(hMnuHlp, MNU_HELP_DEBUG, Om_getResIconPremult(IDI_DBG_LOG));
+
 
   // Set Presets buttons icons
-  this->setBmIcon(IDC_BC_PSRUN, Om_getResIcon(this->_hins, IDI_BT_RUN));
-  this->setBmIcon(IDC_BC_PSNEW, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_PSEDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
-  this->setBmIcon(IDC_BC_PSDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
+  this->setBmIcon(IDC_BC_PSRUN, Om_getResIcon(IDI_BT_RUN));
+  this->setBmIcon(IDC_BC_PSNEW, Om_getResIcon(IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_PSEDI, Om_getResIcon(IDI_BT_EDI));
+  this->setBmIcon(IDC_BC_PSDEL, Om_getResIcon(IDI_BT_REM));
 
   // Set Channels buttons icons
-  this->setBmIcon(IDC_BC_CHADD, Om_getResIcon(this->_hins, IDI_BT_ADD));
-  this->setBmIcon(IDC_BC_CHDEL, Om_getResIcon(this->_hins, IDI_BT_REM));
-  this->setBmIcon(IDC_BC_CHEDI, Om_getResIcon(this->_hins, IDI_BT_EDI));
+  this->setBmIcon(IDC_BC_CHADD, Om_getResIcon(IDI_BT_ADD));
+  this->setBmIcon(IDC_BC_CHDEL, Om_getResIcon(IDI_BT_REM));
+  this->setBmIcon(IDC_BC_CHEDI, Om_getResIcon(IDI_BT_EDI));
+
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+
+  // - - - - - - - - - - -
 
   // new array for the icons res ID
-  uint32_t idb[OM_LISTVIEW_ICON_COUNT];
+  uint32_t lvIdb[OM_LISTVIEW_ICON_COUNT];
 
   // initialize array with the 16px icons res ID
-  Om_setupLvIconsDb(idb);
+  Om_setupLvIconsDb(lvIdb);
 
   uint32_t shift = 0;
   switch(ModMan->iconsSize())
@@ -1363,9 +1436,25 @@ void OmUiMan::_onInit()
   this->_listview_himl = ImageList_Create(ModMan->iconsSize(), ModMan->iconsSize(), ILC_COLOR32, 0, OM_LISTVIEW_ICON_COUNT);
 
   for(uint32_t i = 0; i < OM_LISTVIEW_ICON_COUNT; ++i)
-    ImageList_Add(this->_listview_himl, Om_getResImage(this->_hins, idb[i]+shift), nullptr);
+    ImageList_Add(this->_listview_himl, Om_getResImage(lvIdb[i]+shift), nullptr);
 
   this->_listview_himl_size =  ModMan->iconsSize();
+
+  // - - - - - - - - - - -
+
+  // new array for the icons res ID
+  uint32_t TbIdb[OM_TOOLBARS_ICON_COUNT];
+
+  // initialize array with the 16px icons res ID
+  Om_setupTbIconsDb(TbIdb);
+
+  // Create ImageList and fill it with bitmaps
+  this->_toolbars_himl = ImageList_Create(16, 16, ILC_COLOR32, 0, OM_TOOLBARS_ICON_COUNT);
+
+  for(uint32_t i = 0; i < OM_TOOLBARS_ICON_COUNT; ++i)
+    ImageList_Add(this->_toolbars_himl, Om_getResIconPremult(TbIdb[i]), nullptr);
+
+  // - - - - - - - - - - -
 
   // load the context menu ressource
   this->_context_menu = LoadMenu(this->hins(), MAKEINTRESOURCE(IDR_CONTEXT_MENU));
@@ -1374,7 +1463,7 @@ void OmUiMan::_onInit()
   bool autoload;
   OmWStringArray path_ls;
 
-  ModMan->loadStartHubs(&autoload, path_ls);
+  ModMan->getStartHubs(&autoload, path_ls);
 
   if(autoload) {
 
@@ -1411,10 +1500,10 @@ void OmUiMan::_onInit()
   }
 
   // set window icon
-  this->setIcon(Om_getResIcon(this->_hins, IDI_APP, 2), Om_getResIcon(this->_hins, IDI_APP, 1));
+  this->setIcon(Om_getResIcon(IDI_APP, 2), Om_getResIcon(IDI_APP, 1));
 
   // Defines fonts for Mod Hub ComboBox
-  HFONT hFt = Om_createFont(18, 200, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(19, 200, L"Ms Shell Dlg");
   this->msgItem(IDC_CB_HUB, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   this->_createTooltip(IDC_CB_HUB,    L"Select active Mod Hub");
@@ -1579,15 +1668,21 @@ void OmUiMan::_onResize()
   if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
 
   // foot frame top position, relative to client
-  y = this->cliHeight() - h;
+  y = this->cliHeight() - (h + SATUSBAR_HEIGHT);
 
   // resize and move frames
+  //this->_setChildPos(this->_UiManFoot->hwnd(), 4, y - 4 , this->cliWidth() - 8, h, true);
   this->_setChildPos(this->_UiManFoot->hwnd(), 4, y - 4 , this->cliWidth() - 8, h, true);
   this->_setChildPos(this->_UiManMain->hwnd(), 4, 118, this->cliWidth() - 212, y - 126, true);
 
   // resize Presets ListView
   this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, 142, 200, y - 151, true);
   this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
+
+  // Foot status bar
+  this->_setItemPos(IDC_SC_STATUS, 3, this->cliHeight()-24, this->cliWidth()-6, 22, true);
+  this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-20, this->cliWidth()-100, 16, true);
+  this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-20, 90, 16, true);
 
   if(!this->_split_curs_dragg) {
 
@@ -1661,7 +1756,7 @@ void OmUiMan::_onRefresh()
 
     // reload icon with new size
     for(uint32_t i = 0; i < OM_LISTVIEW_ICON_COUNT; ++i)
-      ImageList_Add(himl, Om_getResImage(this->_hins, idb[i]+shift), nullptr);
+      ImageList_Add(himl, Om_getResImage(idb[i]+shift), nullptr);
 
     this->_listview_himl_size = ModMan->iconsSize();
   }
@@ -1684,8 +1779,9 @@ void OmUiMan::_onRefresh()
   // rebuild the Mod Hub list ComboBox
   this->_cb_hub_populate();
 
-  // update window caption
+  // update window caption and status bar
   this->_caption_populate();
+  this->_status_populate();
 
   // update Mod Hub Icon
   this->_sb_hub_populate();
@@ -1695,10 +1791,6 @@ void OmUiMan::_onRefresh()
 
   // update Mod Presets ListView
   this->_lv_pst_populate();
-
-  // refresh Library directory monitoring
-  //this->monitorLibrary(true);
-  // TODO: Implementer une sécurité ici ou vérifier que rien ne peut se casser
 }
 
 
@@ -1805,7 +1897,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     } else {
       // checks whether mouse cursor is hovering between frames, we take a
       // good margin around the gap to make it easier to catch.
-      long y = this->cliHeight() - this->_UiManFoot->height();
+      long y = this->cliHeight() - (this->_UiManFoot->height() + SATUSBAR_HEIGHT);
       this->_split_curs_hover = (p > (y - 10) && p < (y - 1));
     }
     return 0;
@@ -1936,7 +2028,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     // Menu : File []
-    case IDM_FILE_NEW_HUB:
+    case IDM_FILE_NEW:
       this->childById(IDD_WIZ_HUB)->open(); // New Mod Hub Wizard
       break;
 
@@ -1952,137 +2044,140 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->clearRecents();
       break;
 
-    case IDM_FILE_QUIT:
+    case IDM_QUIT:
       this->quit();
       break;
 
     // Menu : Edit []
-    case IDM_EDIT_HUB_PROP:
+    case IDM_HUB_PROP:
       this->hubProperties();
       break;
 
-    case IDM_EDIT_CHN_ADD:
+    case IDM_CHN_ADD:
       this->createChannel();
       break;
 
-    case IDM_EDIT_CHN_DEL:
+    case IDM_CHN_DEL:
       this->deleteChannel();
       break;
 
-    case IDM_EDIT_CHN_PROP:
+    case IDM_CHN_PROP:
       this->channelProperties();
       break;
 
     // Menu : Edit > Preset > []
-    case IDM_EDIT_PST_RUN:
+    case IDM_PST_RUN:
       this->runPreset();
       break;
 
-    case IDM_EDIT_PST_ADD:
+    case IDM_PST_ADD:
       this->createPreset();
       break;
 
-    case IDM_EDIT_PST_DEL:
+    case IDM_PST_DEL:
       this->deletePreset();
       break;
 
-    case IDM_EDIT_PST_PROP:
+    case IDM_PST_PROP:
       this->presetProperties();
       break;
 
 
-    // Menu : Edit > Repository > []
-    case IDM_EDIT_REP_QRY:
+    case IDM_REP_QRY:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->queryRepositories();
       break;
 
-    case IDM_EDIT_REP_ADD:
+    case IDM_REP_ADD:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->addRepository();
       break;
 
-    case IDM_EDIT_REP_DEL:
+    case IDM_REP_DEL:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->deleteRepository();
       break;
 
-    // Menu : Edit > Local Mod > []
-    case IDM_EDIT_MOD_INST:
+
+    case IDM_MOD_IMP:
+      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->importMods();
+      break;
+
+    case IDM_MOD_INST:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->queueInstalls();
       break;
 
-    case IDM_EDIT_MOD_UINS:
+    case IDM_MOD_UINS:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->queueRestores();
       break;
 
-    case IDM_EDIT_MOD_CLNS:
+    case IDM_MOD_CLNS:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->queueCleaning();
       break;
 
-    case IDM_EDIT_MOD_TRSH:
+    case IDM_MOD_TRSH:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->deleteSources();
       break;
 
-    case IDM_EDIT_MOD_DISC:
+    case IDM_MOD_DISC:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->discardBackups();
       break;
 
-    case IDM_EDIT_MOD_OPEN:
+    case IDM_MOD_OPEN:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->exploreSources();
       break;
 
-    case IDM_EDIT_MOD_EDIT:
+    case IDM_MOD_EDIT:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->editSource();
       break;
 
-    case IDM_EDIT_MOD_INFO:
+    case IDM_MOD_INFO:
       static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->showProperties();
       break;
 
 
     // Menu : Edit > Network Mod > []
-    case IDM_EDIT_NET_DNWS:
+    case IDM_NET_DNWS:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->startDownloads(false);
       break;
 
-    case IDM_EDIT_NET_DNLD:
+    case IDM_NET_DNLD:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->startDownloads(true);
       break;
 
-    case IDM_EDIT_NET_STOP:
+    case IDM_NET_STOP:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->stopDownloads();
       break;
 
-    case IDM_EDIT_NET_RVOK:
+    case IDM_NET_RVOK:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->revokeDownloads();
       break;
 
-    case IDM_EDIT_NET_FIXD:
+    case IDM_NET_FIXD:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->downloadDepends(false);
       break;
 
-    case IDM_EDIT_NET_INFO:
+    case IDM_NET_INFO:
       static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET))->showProperties();
       break;
 
-    case IDM_EDIT_MAN_PROP:
+    case IDM_MAN_PROP:
       this->childById(IDD_PROP_MGR)->open();
       break;
 
     // Menu : Tools > []
-    case IDM_TOOLS_EDI_REP:
+    case IDM_REPEDITOR:
       this->childById(IDD_TOOL_REP)->modeless();
       break;
 
-    case IDM_TOOLS_EDI_PKG:
+    case IDM_PKGEDITOR:
       this->childById(IDD_TOOL_PKG)->modeless();
       break;
 
 
     // Menu : Help > []
-    case IDM_HELP_LOG:
+    case IDM_DBGLOG:
       this->childById(IDD_HELP_LOG)->modeless();
       break;
 
-    case IDM_HELP_ABOUT:
+    case IDM_ABOUT:
       this->childById(IDD_HELP_ABT)->open();
       break;
 
