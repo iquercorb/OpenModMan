@@ -32,12 +32,40 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmImage::OmImage() :
-  _path(), _data(nullptr), _width(0), _height(0),
-  _hbmp(nullptr), _valid(false), _ercode(0)
+  _data(nullptr),
+  _width(0),
+  _height(0),
+  _hbmp(nullptr),
+  _valid(false),
+  _ercode(0)
 {
 
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmImage::OmImage(const OmImage& other) :
+  _data(nullptr),
+  _ercode(0)
+{
+  this->_path = other._path;
+  this->_width = other._width;
+  this->_height = other._height;
+  this->_valid = other._valid;
+
+  if(other._data) {
+
+    // copy pixel data from other
+    uint64_t data_size = this->_width * this->_height * 4;
+
+    this->_data = static_cast<uint8_t*>(Om_alloc(data_size));
+    Om_memcpy(this->_data, other._data, data_size);
+
+    // create HBITMAP from data
+    this->_hbmp = Om_imgEncodeHbmp(this->_data, this->_width, this->_height, 4);
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -47,6 +75,55 @@ OmImage::~OmImage()
   this->clear();
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmImage::clear()
+{
+  if(this->_data) {
+    Om_free(this->_data);
+    this->_data = nullptr;
+  }
+
+  if(this->_hbmp) {
+    DeleteObject(this->_hbmp);
+    this->_hbmp = nullptr;
+  }
+
+  this->_path.clear();
+  this->_width = 0;
+  this->_height = 0;
+  this->_valid = false;
+
+  this->_ercode = 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+const OmImage& OmImage::operator=(const OmImage& other)
+{
+  this->clear();
+
+  this->_path = other._path;
+  this->_width = other._width;
+  this->_height = other._height;
+  this->_valid = other._valid;
+
+  if(other._data) {
+
+    // copy pixel data from other
+    uint64_t data_size = this->_width * this->_height * 4;
+
+    this->_data = static_cast<uint8_t*>(Om_alloc(data_size));
+    Om_memcpy(this->_data, other._data, data_size);
+
+    // create HBITMAP from data
+    this->_hbmp = Om_imgEncodeHbmp(this->_data, this->_width, this->_height, 4);
+  }
+
+  return *this;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -275,24 +352,102 @@ bool OmImage::loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMod
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmImage::clear()
+bool OmImage::loadThumbnail(const OmImage& image, unsigned span, OmSizeMode mode)
 {
-  if(this->_data) {
-    Om_free(this->_data);
-    this->_data = nullptr;
+  // clear all previous data
+  this->clear();
+
+  if(!image._data) {
+    this->_ercode = OM_IMAGE_ERR_TYPE;
+    return false;
   }
 
-  if(this->_hbmp) {
-    DeleteObject(this->_hbmp);
-    this->_hbmp = nullptr;
+  this->_data = Om_imgMakeThumb(span, mode, image._data, image._width, image._height);
+
+  if(!this->_data) {
+    this->_ercode = OM_IMAGE_ERR_LOAD;
+    return false;
   }
 
-  this->_path.clear();
-  this->_width = 0;
-  this->_height = 0;
-  this->_valid = false;
+  this->_width = span;
+  this->_height = span;
 
-  this->_ercode = 0;
+  // create HBITMAP from data
+  this->_hbmp = Om_imgEncodeHbmp(this->_data, span, span, 4);
+
+  // image is loaded and valid
+  this->_valid = true;
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmImage::operator==(const OmImage& other) const
+{
+  if(this->_valid != other._valid)
+    return false;
+
+  if(this->_valid) {
+
+    if(!this->_path.empty() && (this->_path == other._path))
+      return true;
+
+    if(this->_width != other._width)
+      return false;
+
+    if(this->_height != other._height)
+      return false;
+
+    // here we go to compare pixel data, to do this we cast to uint32_t
+    // to compare RGBA blocks, this is faster.
+    uint64_t data_size = this->_width * this->_height;
+
+    uint32_t* self_data = reinterpret_cast<uint32_t*>(this->_data);
+    uint32_t* other_data = reinterpret_cast<uint32_t*>(other._data);
+
+    for(uint64_t i = 0; i < data_size; ++i)
+      if(self_data[i] != other_data[i])
+        return false;
+  }
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmImage::operator!=(const OmImage& other) const
+{
+  if(this->_valid != other._valid)
+    return true;
+
+  if(this->_valid) {
+
+    if(!this->_path.empty() && (this->_path == other._path))
+      return false;
+
+    if(this->_width != other._width)
+      return true;
+
+    if(this->_height != other._height)
+      return true;
+
+    // here we go to compare pixel data, to do this we cast to uint32_t
+    // to compare RGBA blocks, this is faster.
+    uint64_t data_size = this->_width * this->_height;
+
+    uint32_t* self_data = reinterpret_cast<uint32_t*>(this->_data);
+    uint32_t* other_data = reinterpret_cast<uint32_t*>(other._data);
+
+    for(uint64_t i = 0; i < data_size; ++i)
+      if(self_data[i] != other_data[i])
+        return true;
+  }
+
+  return false;
 }
 
 

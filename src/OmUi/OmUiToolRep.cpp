@@ -48,7 +48,6 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
-  _xml(),
   _NetRepo(new OmNetRepo(nullptr)),
   _has_unsaved(false),
   _repo_addlist_abort(0),
@@ -80,6 +79,74 @@ OmUiToolRep::~OmUiToolRep()
 long OmUiToolRep::id() const
 {
   return IDD_TOOL_REP;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_status_update_filename()
+{
+  OmWString file_path;
+
+  // set definition file path to status bar
+  if(!this->_NetRepo->path().empty()) {
+    file_path = this->_NetRepo->path();
+  } else {
+    file_path = L"<unsaved definition>";
+  }
+
+  this->setItemText(IDC_SC_FILE, file_path);
+
+  OmWString caption = Om_getFilePart(file_path);
+  caption += L" - Repository editor";
+  this->setCaption(caption);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_status_update_references()
+{
+  // set references count to status bar
+  OmWString sc_entry = std::to_wstring(this->_NetRepo->referenceCount());
+  sc_entry += L" reference(s)";
+
+  this->setItemText(IDC_SC_INFO, sc_entry);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_set_unsaved(bool enable)
+{
+  this->_has_unsaved = enable;
+
+  // enable/disable and change tool bar 'save' button image
+  TBBUTTONINFOA tbBi = {}; tbBi.cbSize = sizeof(TBBUTTONINFOA);
+  tbBi.dwMask = TBIF_STATE;
+  //tbBi.dwMask = TBIF_IMAGE|TBIF_STATE;
+  //tbBi.iImage = (this->_has_unsaved) ? ICON_SAV : ICON_SVD;
+  tbBi.fsState = (this->_has_unsaved) ? TBSTATE_ENABLED : 0;
+  this->msgItem(IDC_TB_TOOLS, TB_SETBUTTONINFO, IDC_BC_SAVE, reinterpret_cast<LPARAM>(&tbBi));
+
+  // enable/disable and change menu 'save' item
+  if(this->_has_unsaved && !this->_NetRepo->path().empty()) {
+    this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_ENABLED);
+  } else {
+    this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_GRAYED);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t OmUiToolRep::_ask_unsaved()
+{
+  // Check and ask for unsaved changes
+  if(this->_has_unsaved)
+    return Om_dlgBox_ync(this->_hwnd, L"Repository editor", IDI_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
+
+  return 0;
 }
 
 ///
@@ -119,7 +186,7 @@ void OmUiToolRep::_repo_init()
   this->msgItem(IDC_LB_MOD, LB_RESETCONTENT, 0, 0);
 
   // update selection
-  this->_ref_selected();
+  this->_ref_sel_changed();
 
   // reset unsaved changes
   this->_set_unsaved(true);
@@ -185,7 +252,7 @@ void OmUiToolRep::_repo_open()
   }
 
   // update selection
-  this->_ref_selected();
+  this->_ref_sel_changed();
 
   // reset unsaved changes
   this->_set_unsaved(false);
@@ -228,7 +295,7 @@ void OmUiToolRep::_repo_close()
   this->enableItem(IDC_LB_MOD, false);
 
   // update selection
-  this->_ref_selected();
+  this->_ref_sel_changed();
 
   // reset unsaved changes
   this->_set_unsaved(true);
@@ -402,7 +469,7 @@ bool OmUiToolRep::_repo_del_ref()
   this->msgItem(IDC_LB_MOD, LB_DELETESTRING, lb_sel);
 
   // update reference parameters controls
-  this->_ref_selected();
+  this->_ref_sel_changed();
 
   // update status bar
   this->_status_update_references();
@@ -416,7 +483,7 @@ bool OmUiToolRep::_repo_del_ref()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_selected()
+void OmUiToolRep::_ref_sel_changed()
 {
   // get ListBox current selection
   int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
@@ -627,7 +694,6 @@ void OmUiToolRep::_ref_url_save()
 
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -713,7 +779,7 @@ void OmUiToolRep::_ref_desc_save()
       if(ref_node.hasChild(L"description")) {
         description_node = ref_node.child(L"description");
         // compare deflated size
-        if(txt_size != description_node.attrAsInt(L"bytes")) {
+        if(txt_size != static_cast<uint32_t>(description_node.attrAsInt(L"bytes"))) {
           has_changes = true;
         } else {
           // compare data URI strings
@@ -896,74 +962,6 @@ void OmUiToolRep::_ref_depends_check()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_set_unsaved(bool enable)
-{
-  this->_has_unsaved = enable;
-
-  // enable/disable and change tool bar 'save' button image
-  TBBUTTONINFOA tbBi = {}; tbBi.cbSize = sizeof(TBBUTTONINFOA);
-  tbBi.dwMask = TBIF_STATE;
-  //tbBi.dwMask = TBIF_IMAGE|TBIF_STATE;
-  //tbBi.iImage = (this->_has_unsaved) ? ICON_SAV : ICON_SVD;
-  tbBi.fsState = (this->_has_unsaved) ? TBSTATE_ENABLED : 0;
-  this->msgItem(IDC_TB_HBAR, TB_SETBUTTONINFO, IDC_BC_SAVE, reinterpret_cast<LPARAM>(&tbBi));
-
-  // enable/disable and change menu 'save' item
-  if(this->_has_unsaved && !this->_NetRepo->path().empty()) {
-    this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_ENABLED);
-  } else {
-    this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_GRAYED);
-  }
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-int32_t OmUiToolRep::_ask_unsaved()
-{
-  // Check and ask for unsaved changes
-  if(this->_has_unsaved)
-    return Om_dlgBox_ync(this->_hwnd, L"Repository editor", IDI_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
-
-  return 0;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiToolRep::_status_update_filename()
-{
-  OmWString file_path;
-
-  // set definition file path to status bar
-  if(!this->_NetRepo->path().empty()) {
-    file_path = this->_NetRepo->path();
-  } else {
-    file_path = L"<unsaved definition>";
-  }
-
-  this->setItemText(IDC_SC_FILE, file_path);
-
-  OmWString caption = Om_getFilePart(file_path);
-  caption += L" - Repository editor";
-  this->setCaption(caption);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiToolRep::_status_update_references()
-{
-  // set references count to status bar
-  OmWString sc_entry = std::to_wstring(this->_NetRepo->referenceCount());
-  sc_entry += L" reference(s)";
-
-  this->setItemText(IDC_SC_INFO, sc_entry);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 void OmUiToolRep::_browse_add_files()
 {
   // if available, select current active channel library as start location
@@ -973,7 +971,7 @@ void OmUiToolRep::_browse_add_files()
 
   // new dialog to open file (allow multiple selection)
   OmWStringArray result;
-  if(!Om_dlgOpenFileMultiple(result, this->_hwnd, L"Open Mod package", OM_PKG_FILES_FILTER, start))
+  if(!Om_dlgOpenFileMultiple(result, this->_hwnd, L"Open Mod-Package(s)", OM_PKG_FILES_FILTER, start))
     return;
 
   // run add list thread
@@ -1164,27 +1162,31 @@ void OmUiToolRep::_onInit()
   this->setBmIcon(IDC_BC_CHECK, Om_getResIcon(IDI_DEP_CHK));
 
   // Create the toolbar.
-  HWND hWndToolbar = CreateWindowExW(WS_EX_LEFT, TOOLBARCLASSNAMEW, nullptr, WS_CHILD|TBSTYLE_WRAPABLE|TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
-                                    this->_hwnd, reinterpret_cast<HMENU>(IDC_TB_HBAR), this->_hins, nullptr);
+  CreateWindowExW(WS_EX_LEFT, TOOLBARCLASSNAMEW, nullptr, WS_CHILD|TBSTYLE_WRAPABLE|TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
+                  this->_hwnd, reinterpret_cast<HMENU>(IDC_TB_TOOLS), this->_hins, nullptr);
 
   HIMAGELIST himl = static_cast<OmUiMan*>(this->root())->toolBarsImgList();
-  this->msgItem(IDC_TB_HBAR, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(himl));
+  this->msgItem(IDC_TB_TOOLS, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(himl));
 
   // Initialize button info.
   TBBUTTON tbButtons[3] = {
-    {ICON_NEW, IDC_BC_NEW,  TBSTATE_ENABLED, BTNS_AUTOSIZE, {0}, 0, reinterpret_cast<INT_PTR>("New repository")},
-    {ICON_OPN, IDC_BC_OPEN, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0}, 0, reinterpret_cast<INT_PTR>("Open definition file")},
-    {ICON_SAV, IDC_BC_SAVE, 0,               BTNS_AUTOSIZE, {0}, 0, reinterpret_cast<INT_PTR>("Save definition file")}
+    {ICON_NEW, IDC_BC_NEW,  TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("New repository")},
+    {ICON_OPN, IDC_BC_OPEN, TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Open definition file")},
+    {ICON_SAV, IDC_BC_SAVE, 0,               0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Save definition file")}
   };
 
   // Add buttons
-  this->msgItem(IDC_TB_HBAR, TB_SETMAXTEXTROWS, 0); //< disable text under buttons
-  this->msgItem(IDC_TB_HBAR, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON));
-  this->msgItem(IDC_TB_HBAR, TB_ADDBUTTONS, 3, reinterpret_cast<LPARAM>(&tbButtons));
+  this->msgItem(IDC_TB_TOOLS, TB_SETMAXTEXTROWS, 0); //< disable text under buttons
+  this->msgItem(IDC_TB_TOOLS, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON));
+  this->msgItem(IDC_TB_TOOLS, TB_ADDBUTTONS, 3, reinterpret_cast<LPARAM>(&tbButtons));
 
-  // Resize the toolbar, and then show it.
-  SendMessage(hWndToolbar, TB_AUTOSIZE, 0, 0);
-  ShowWindow(hWndToolbar,  TRUE);
+  this->msgItem(IDC_TB_TOOLS, TB_SETBUTTONSIZE, 0, MAKELPARAM(26, 22));
+  //this->msgItem(IDC_TB_TOOLS, TB_SETLISTGAP, 25);                       //< this does not work
+  //this->msgItem(IDC_TB_TOOLS, TB_SETPADDING, 0, MAKELPARAM(25, 20));    //< this does not work
+
+  // Resize and show the toolbar
+  this->msgItem(IDC_TB_TOOLS, TB_AUTOSIZE);
+  this->showItem(IDC_TB_TOOLS, true);
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository short description");
@@ -1199,7 +1201,7 @@ void OmUiToolRep::_onInit()
   this->_createTooltip(IDC_BC_CKBX1,  L"Use custom download link");
   this->_createTooltip(IDC_EC_INP03,  L"Relative or absolute link to downloadable file");
 
-  this->_createTooltip(IDC_BC_BRW03,  L"Load image file");
+  this->_createTooltip(IDC_BC_BRW03,  L"Load thumbnail image");
   this->_createTooltip(IDC_BC_RESET,  L"Delete thumbnail image");
 
   this->_createTooltip(IDC_BC_BRW04,  L"Load text file");
@@ -1217,7 +1219,7 @@ void OmUiToolRep::_onInit()
   this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVAS, MF_GRAYED);
 
   // update selection to enable menu/buttons
-  this->_ref_selected();
+  this->_ref_sel_changed();
 
   // reset unsaved changes
   this->_set_unsaved(false);
@@ -1230,8 +1232,14 @@ void OmUiToolRep::_onInit()
 void OmUiToolRep::_onResize()
 {
   int32_t half_w = this->cliWidth() * 0.5f;
-  int32_t base_y = 30;
+  int32_t base_y = 33;
   int32_t foot_y = this->cliHeight() - (base_y+28);
+
+  // resize the toolbar
+  this->msgItem(IDC_TB_TOOLS, TB_AUTOSIZE);
+
+  // toolbar separator
+  this->_setItemPos(IDC_SC_SEPAR, -1, 28, this->cliWidth()+2, 1, true);
 
   // -- Left Frame --
 
@@ -1248,9 +1256,9 @@ void OmUiToolRep::_onResize()
   // Referenced Mods label
   this->_setItemPos(IDC_SC_LBL03, 10, base_y+150, 200, 16, true);
   // Referenced Mods Actions buttons
-  this->_setItemPos(IDC_BC_BRW01, half_w-83, base_y+145, 23, 22, true);
-  this->_setItemPos(IDC_BC_BRW02, half_w-58, base_y+145, 23, 22, true);
-  this->_setItemPos(IDC_BC_DEL,   half_w-33, base_y+145, 23, 22, true);
+  this->_setItemPos(IDC_BC_BRW01, half_w-78, base_y+145, 22, 22, true);
+  this->_setItemPos(IDC_BC_BRW02, half_w-55, base_y+145, 22, 22, true);
+  this->_setItemPos(IDC_BC_DEL,   half_w-32, base_y+145, 22, 22, true);
   // Referenced Mods list
   this->_setItemPos(IDC_LB_MOD, 10, base_y+170, half_w-20, (foot_y-177), true);
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
@@ -1270,31 +1278,30 @@ void OmUiToolRep::_onResize()
   // Thumbnail Label
   this->_setItemPos(IDC_SC_LBL04, half_w+10, base_y+90, 90, 16, true);
     // Thumbnail notice text
-  this->_setItemPos(IDC_SC_NOTES, half_w+100, base_y+90, 180, 16, true);
+  this->_setItemPos(IDC_SC_NOTES, half_w+110, base_y+90, 150, 16, true);
   // Thumbnail Action buttons
-  this->_setItemPos(IDC_BC_RESET, this->cliWidth()-58, base_y+87, 23, 22, true);
-  this->_setItemPos(IDC_BC_BRW03, this->cliWidth()-33, base_y+87, 23, 22, true);
+  this->_setItemPos(IDC_BC_RESET, this->cliWidth()-55, base_y+87, 22, 22, true);
+  this->_setItemPos(IDC_BC_BRW03, this->cliWidth()-32, base_y+87, 22, 22, true);
   // Thumbnail static bitmap
   this->_setItemPos(IDC_SB_SNAP, half_w+10, base_y+110, 128, 128, true);
 
   // Description label
   this->_setItemPos(IDC_SC_LBL05, half_w+10, base_y+260, 90, 16, true);
   // Description Actions buttons
-  this->_setItemPos(IDC_BC_SAV02, this->cliWidth()-58, base_y+257, 23, 22, true);
-  this->_setItemPos(IDC_BC_BRW04, this->cliWidth()-33, base_y+257, 23, 22, true);
+  this->_setItemPos(IDC_BC_BRW04, this->cliWidth()-32, base_y+257, 22, 22, true);
   // Description EditText
   this->_setItemPos(IDC_EC_DESC, half_w+10, base_y+280, half_w-21, foot_y-(290+85), true);
 
   // Dependencies Label
   this->_setItemPos(IDC_SC_LBL06, half_w+10, foot_y-45, 100, 16, true);
   // Dependencies Check button
-  this->_setItemPos(IDC_BC_CHECK, this->cliWidth()-33, foot_y-48, 23, 22, true);
+  this->_setItemPos(IDC_BC_CHECK, this->cliWidth()-32, foot_y-48, 22, 22, true);
   // Dependencies EditText & Check Button
   this->_setItemPos(IDC_EC_READ3, half_w+10, foot_y-25, half_w-20, 48, true);
 
-  // ---- Foot status bar
+  // Foot status bar
   this->_setItemPos(IDC_SC_STATUS, 2, this->cliHeight()-24, this->cliWidth()-4, 22, true);
-  this->_setItemPos(IDC_SC_FILE, 7, this->cliHeight()-20, half_w, 16, true);
+  this->_setItemPos(IDC_SC_FILE, 7, this->cliHeight()-20, this->cliWidth()-110, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-20, 90, 16, true);
 
   // redraw the window
@@ -1318,7 +1325,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         #ifdef DEBUG
         std::wcout << "DEBUG => OmUiToolRep::_onMsg : IDC_LB_MOD : LBN_SELCHANGE\n";
         #endif // DEBUG
-        this->_ref_selected();
+        this->_ref_sel_changed();
       }
       break;
 
@@ -1452,19 +1459,19 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_repo_del_ref();
       break;
 
-    case IDM_REF_THMBSEL:
+    case IDM_THMB_SEL:
       this->_ref_thumb_set();
       break;
 
-    case IDM_REF_THMBDEL:
+    case IDM_THMB_DEL:
       this->_ref_thumb_del();
       break;
 
-    case IDM_REF_DESCSEL:
+    case IDM_DESC_SEL:
       this->_ref_desc_load();
       break;
 
-    case IDM_REF_DEPCHK:
+    case IDM_DEP_CHK:
       this->_ref_depends_check();
       break;
     }

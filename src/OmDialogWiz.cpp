@@ -85,7 +85,7 @@ void OmDialogWiz::_changePage(int32_t index)
   if(this->_currPage >= 0) {
 
     for(size_t i = 0; i < this->_pageDial.size(); ++i)
-      if(i != this->_currPage)
+      if(i != static_cast<uint32_t>(this->_currPage))
         this->_pageDial[i]->hide();
 
     this->_pageDial[this->_currPage]->show();

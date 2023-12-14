@@ -80,6 +80,8 @@ typedef struct zip_entry_
 {
   int64_t         offset;
 
+  int32_t         method;
+
   int32_t         is_dir;
 
   uint64_t        file_size;
@@ -278,6 +280,7 @@ bool OmArchive::read(const OmWString& path)
     if(mz_err != MZ_OK) break;
 
     zent->offset = mz_zip_get_entry(zctx->zip_hnd);
+    zent->method = file_info->compression_method;
     zent->is_dir = (mz_zip_entry_is_dir(zctx->zip_hnd) == MZ_OK);
     zent->file_size = file_info->uncompressed_size;
     // convert filename UTF-8 to UTF-16
@@ -310,29 +313,54 @@ bool OmArchive::read(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-const wchar_t* OmArchive::entryPath(size_t i) const {
-  return static_cast<zip_entry_t*>(this->_zent)[i].file_path;
+const wchar_t* OmArchive::entryPath(size_t i) const
+{
+  if(i < this->_zent_size)
+    return static_cast<zip_entry_t*>(this->_zent)[i].file_path;
+
+  return nullptr;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmArchive::entryPath(size_t i, OmWString& path) const {
-  path = static_cast<zip_entry_t*>(this->_zent)[i].file_path;
+void OmArchive::entryPath(size_t i, OmWString& path) const
+{
+  if(i < this->_zent_size)
+    path = static_cast<zip_entry_t*>(this->_zent)[i].file_path;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-uint64_t OmArchive::entrySize(size_t i) const {
-  return static_cast<zip_entry_t*>(this->_zent)[i].file_size;
+uint64_t OmArchive::entrySize(size_t i) const
+{
+  if(i < this->_zent_size)
+    return static_cast<zip_entry_t*>(this->_zent)[i].file_size;
+
+  return 0L;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmArchive::entryIsDir(size_t i) const {
-  return static_cast<zip_entry_t*>(this->_zent)[i].is_dir;
+bool OmArchive::entryIsDir(size_t i) const
+{
+  if(i < this->_zent_size)
+    return static_cast<zip_entry_t*>(this->_zent)[i].is_dir;
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t OmArchive::entryMethod(size_t i) const
+{
+  if(i < this->_zent_size)
+    return static_cast<zip_entry_t*>(this->_zent)[i].method;
+
+  return -1;
 }
 
 ///
@@ -434,7 +462,7 @@ bool OmArchive::entrySave(size_t i, const OmWString& dst, Om_progressCb progress
           break;
         }
         if(progress_cb) {
-          progress_cb(user_ptr, file_info->uncompressed_size, wb, 0);
+          progress_cb(user_ptr, file_info->uncompressed_size, wb, reinterpret_cast<uint64_t>(zent[i].file_path));
         }
       }
       mz_zip_entry_close(zctx->zip_hnd);
@@ -557,7 +585,7 @@ bool OmArchive::entrySave(size_t i, void* buffer, Om_progressCb progress_cb, voi
         }
 
         if(progress_cb) {
-          progress_cb(user_ptr, file_info->uncompressed_size, wb, 0);
+          progress_cb(user_ptr, file_info->uncompressed_size, wb, reinterpret_cast<uint64_t>(zent[i].file_path));
         }
       }
 
@@ -746,8 +774,13 @@ bool OmArchive::entryAdd(const OmWString& src, const OmWString& dst, Om_progress
         }
 
         if(progress_cb) {
-          progress_cb(user_ptr, file_info.uncompressed_size, rb, 0);
+          progress_cb(user_ptr, file_info.uncompressed_size, rb, reinterpret_cast<uint64_t>(dst.c_str()));
         }
+
+        #ifdef DEBUG
+        Sleep(20); //< for debug
+        #endif
+
       }
     }
 
@@ -860,8 +893,12 @@ bool OmArchive::entryAdd(const void* data, uint64_t size, const OmWString& dst, 
         }
 
         if(progress_cb) {
-          progress_cb(user_ptr, file_info.uncompressed_size, rb, 0);
+          progress_cb(user_ptr, file_info.uncompressed_size, rb, reinterpret_cast<uint64_t>(dst.c_str()));
         }
+
+        #ifdef DEBUG
+        Sleep(20); //< for debug
+        #endif
       }
     }
 

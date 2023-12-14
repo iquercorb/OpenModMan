@@ -260,15 +260,11 @@ bool OmModPack::parseSource(const OmWString& path)
 
     isdir = true;
 
-    __parse_source_dir(&this->_src_entry, path, L"");
-
+    //__parse_source_dir(&this->_src_entry, path, L"");
+    OmModPack::_src_parse_dir(&this->_src_entry, path, L"");
     src_root = path;
 
     src_iden = Om_getFilePart(path);
-
-    this->loadDirDescription();
-
-    this->loadDirThumbnail();
 
   } else if(Om_isFileZip(path)) {
 
@@ -484,6 +480,13 @@ bool OmModPack::parseSource(const OmWString& path)
 
   this->_src_time = Om_itemTime(path);
 
+  if(this->_src_isdir) {
+
+    this->loadDirDescription();
+
+    this->loadDirThumbnail();
+  }
+
   this->_has_src = true;
 
   return true;
@@ -507,6 +510,49 @@ bool OmModPack::refreshSource()
   }
 
   return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t OmModPack::getSourceCompMethod() const
+{
+  int32_t result = -1;
+
+  if(this->_has_src) {
+
+    OmArchive source_zip;
+
+    if(!source_zip.read(this->_src_path))
+      return result;
+
+    if(source_zip.entryCount()) {
+
+      result = 0; //< Store (no compression)
+
+      // verify the whole archive is consistent
+      for(size_t i = 0; i < source_zip.entryCount(); ++i) {
+
+        int32_t method = source_zip.entryMethod(i);
+
+        // search for Non-Store compression method
+        if(method != 0) {
+
+          if(result == 0) { //< mean this is the first time result is set
+            result = method;
+          } else if(method != result) {
+            // method changed within the same Central directory
+            result = -1; break;
+          }
+        }
+      }
+    }
+
+    source_zip.close();
+
+  }
+
+  return result;
 }
 
 ///
@@ -596,6 +642,16 @@ void OmModPack::setThumbnail(const OmWString& path)
   this->_thumbnail_time = 0;
 }
 
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModPack::setThumbnail(const OmImage& image)
+{
+  this->_thumbnail.loadThumbnail(image, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL);
+  this->_thumbnail_time = 0;
+}
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -616,6 +672,15 @@ bool OmModPack::hasDepend(const OmWString& ident) const
       return true;
 
   return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModPack::deleteDepend(size_t index)
+{
+  if(index < this->_src_depend.size())
+    this->_src_depend.erase(this->_src_depend.begin() + index);
 }
 
 ///
@@ -1557,14 +1622,14 @@ OmResult OmModPack::discardBackup()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_progressCb progress_cb, void* user_ptr)
+OmResult OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_progressCb progress_cb, Om_progressCb compress_cb, void* user_ptr)
 {
   // initialize local timer
   clock_t time = clock();
 
   if(!this->_has_src) {
     this->_error(L"saveAs", L"Source missing");
-    return false;
+    return OM_RESULT_ERROR;
   }
 
   OmArchive source_zip;
@@ -1573,12 +1638,12 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
   if(this->_src_isdir) {
     if(!Om_isDir(this->_src_root)) {
       this->_error(L"saveAs", Om_errNotDir(L"Source directory", this->_src_root));
-      return false;
+      return OM_RESULT_ERROR;
     }
   } else {
     if(!source_zip.read(this->_src_path)) {
       this->_error(L"saveAs", Om_errLoad(L"Source archive file", this->_src_path, source_zip.lastErrorStr()));
-      return false;
+      return OM_RESULT_ERROR;
     }
   }
 
@@ -1590,7 +1655,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
   // open output archive for writing
   if(!output_zip.write(tmp_path, method, level)) {
     this->_error(L"saveAs", Om_errInit(L"Output archive file", tmp_path, output_zip.lastErrorStr()));
-    return false;
+    return OM_RESULT_ERROR;
   }
 
   // some required constants strings
@@ -1611,14 +1676,6 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
   // transfer data from source to output zip
   for(size_t i = 0; i < this->_src_entry.size(); ++i) {
 
-    // call progression callback
-    if(progress_cb) {
-      entry_cur++;
-      if(!progress_cb(user_ptr, entry_tot, entry_cur, reinterpret_cast<uint64_t>(this))) {
-        has_abort = true; break;
-      }
-    }
-
     // output file path (in zip)
     Om_concatPaths(out_file, out_root, this->_src_entry[i].path);
 
@@ -1638,7 +1695,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
         OmWString src_file;
         Om_concatPaths(src_file, this->_src_root, this->_src_entry[i].path);
 
-        if(!output_zip.entryAdd(src_file, out_file, nullptr, user_ptr)) {
+        if(!output_zip.entryAdd(src_file, out_file, compress_cb, user_ptr)) {
           this->_error(L"saveAs", Om_errZipComp(L"Source file to destination", src_file, output_zip.lastErrorStr()));
           has_error = true; break;
         }
@@ -1654,12 +1711,12 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
           has_error = true; break;
         }
 
-        if(!source_zip.entrySave(this->_src_entry[i].cdid, data_buf, nullptr, user_ptr)) {
+        if(!source_zip.entrySave(this->_src_entry[i].cdid, data_buf, compress_cb, user_ptr)) {
           this->_error(L"saveAs", Om_errZipExtr(L"Source file", this->_src_entry[i].path, source_zip.lastErrorStr()));
           delete [] data_buf; has_error = true; break;
         }
 
-        if(!output_zip.entryAdd(data_buf, data_len, out_file, nullptr, user_ptr)) {
+        if(!output_zip.entryAdd(data_buf, data_len, out_file, compress_cb, user_ptr)) {
           this->_error(L"saveAs", Om_errZipComp(L"Destination file", out_file, output_zip.lastErrorStr()));
           delete [] data_buf; has_error = true; break;
         }
@@ -1667,6 +1724,14 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
         delete [] data_buf;
       }
 
+    }
+
+    // call progression callback
+    if(progress_cb) {
+      entry_cur++;
+      if(!progress_cb(user_ptr, entry_tot, entry_cur, reinterpret_cast<uint64_t>(this))) {
+        has_abort = true; break;
+      }
     }
 
     #ifdef DEBUG
@@ -1680,7 +1745,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
   if(has_error || has_abort) {
     output_zip.close();
     Om_fileDelete(tmp_path);
-    return !has_error;
+    return has_error ? OM_RESULT_ERROR : OM_RESULT_ABORT;
   }
 
   // create the Mod source definition
@@ -1765,7 +1830,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
     if(data_buf) {
 
       // add PNG data as file in destination archive
-      if(!output_zip.entryAdd(data_buf, data_len, SAVEAS_THUMBN_NAME, nullptr, user_ptr)) {
+      if(!output_zip.entryAdd(data_buf, data_len, SAVEAS_THUMBN_NAME, compress_cb, user_ptr)) {
         this->_error(L"saveAs", Om_errZipComp(L"Thumbnail file", SAVEAS_THUMBN_NAME, output_zip.lastErrorStr()));
         has_error = true;
       }
@@ -1780,7 +1845,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
 
   // finally add the definition file
   OmCString cfg_data = output_cfg.data();
-  if(!output_zip.entryAdd(cfg_data.c_str(), cfg_data.size(), SAVEAS_MODDEF_NAME, nullptr, user_ptr)) {
+  if(!output_zip.entryAdd(cfg_data.c_str(), cfg_data.size(), SAVEAS_MODDEF_NAME, compress_cb, user_ptr)) {
     this->_error(L"saveAs", Om_errZipComp(L"Definition file", SAVEAS_MODDEF_NAME, output_zip.lastErrorStr()));
     has_error = true;
   }
@@ -1799,7 +1864,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
 
   if(has_error) {
     Om_fileDelete(tmp_path);
-    return false;
+    return OM_RESULT_ERROR;
   }
 
   // making report
@@ -1807,7 +1872,7 @@ bool OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level, Om_
   swprintf(done_str, 32, L"done in %.2fs", (double)(clock()-time)/CLOCKS_PER_SEC);
   this->_log(OM_LOG_OK, L"saveAs", done_str);
 
-  return true;
+  return OM_RESULT_OK;
 }
 
 ///

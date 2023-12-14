@@ -470,6 +470,13 @@ void OmDialog::setItemText(unsigned id, const OmWString& text) const
   SendMessageW(GetDlgItem(this->_hwnd, id), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text.c_str()));
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmDialog::setItemText(unsigned id, const OmCString& text) const
+{
+  SendMessageA(GetDlgItem(this->_hwnd, id), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text.c_str()));
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -492,6 +499,26 @@ size_t OmDialog::getItemText(unsigned id, OmWString& text) const
   return 0;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmDialog::getItemText(unsigned id, OmCString& text) const
+{
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  int len = SendMessageA(hCtrl, WM_GETTEXTLENGTH , 0, 0);
+  if(len > 0) {
+    text.resize(len);
+    int n = SendMessageA(hCtrl, WM_GETTEXT , len + 1, reinterpret_cast<LPARAM>(&text[0]));
+    // Under certain conditions, the DefWindowProc function returns a value that is
+    // larger than the actual length of the text. This occurs with certain mixtures
+    // of ANSI and Unicode, and is due to the system allowing for the possible
+    // existence of double-byte character set (DBCS) characters within the text.
+    if(n < len) text.resize(n);
+    return n;
+  }
+  text.clear();
+  return 0;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -503,6 +530,27 @@ size_t OmDialog::getLbText(unsigned id, unsigned i, OmWString& text) const
   if(len > 0) {
     text.resize(len);
     int n = SendMessageW(hCtrl, LB_GETTEXT, i, reinterpret_cast<LPARAM>(&text[0]));
+    // Under certain conditions, the DefWindowProc function returns a value that is
+    // larger than the actual length of the text. This occurs with certain mixtures
+    // of ANSI and Unicode, and is due to the system allowing for the possible
+    // existence of double-byte character set (DBCS) characters within the text.
+    if(n < len) text.resize(n);
+    return n;
+  }
+  text.clear();
+  return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmDialog::getCbText(unsigned id, unsigned i, OmWString& text) const
+{
+  HWND hCtrl = GetDlgItem(this->_hwnd, id);
+  int len = SendMessageW(hCtrl, CB_GETLBTEXTLEN, i, 0);
+  if(len > 0) {
+    text.resize(len);
+    int n = SendMessageW(hCtrl, CB_GETLBTEXT, i, reinterpret_cast<LPARAM>(&text[0]));
     // Under certain conditions, the DefWindowProc function returns a value that is
     // larger than the actual length of the text. This occurs with certain mixtures
     // of ANSI and Unicode, and is due to the system allowing for the possible

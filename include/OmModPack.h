@@ -58,26 +58,6 @@ typedef std::vector<OmModEntry_t> OmModEntryArray;
 ///
 const size_t OmPkgCatCnt = 12;
 
-/// \brief Package default category list.
-///
-/// Package default Mod category string list.
-///
-const wchar_t OmModCategory[][16] = {
-  L"GENERIC",
-  L"TEXTURE",
-  L"SKIN",
-  L"MODEL",
-  L"LEVEL",
-  L"MISSION",
-  L"UI",
-  L"AUDIO",
-  L"FEATURE",
-  L"PLUGIN",
-  L"SCRIPT",
-  L"PATCH",
-};
-
-const size_t OmModCategoryCount = sizeof(OmModCategory) / 16;
 
 class OmModPack
 {
@@ -195,6 +175,16 @@ class OmModPack
     const OmModEntry_t& getSourceEntry(size_t i) const {
       return this->_src_entry[i];
     }
+
+    /// \brief Get source compression method
+    ///
+    /// Returns Source compression method as OmArchiveMethod constant value
+    /// or -1 if source is a directory or if source archive use multiple
+    /// compression methods
+    ///
+    /// \return Source compression method as OmArchiveMethod constant value
+    ///
+    int32_t getSourceCompMethod() const;
 
     /// \brief Parse Mod Backup
     ///
@@ -400,6 +390,14 @@ class OmModPack
     ///
     void setThumbnail(const OmWString& path);
 
+    /// \brief Set Mod Thumbnail
+    ///
+    /// Set or replace the Mod thumbnail.
+    ///
+    /// \param[in]  image : Image object to set
+    ///
+    void setThumbnail(const OmImage& image);
+
     /// \brief Remove Mod Thumbnail
     ///
     /// Remove the Mod thumbnail inf any.
@@ -445,8 +443,16 @@ class OmModPack
     /// \param[in] iden  : Mod identity to add
     ///
     void addDependIden(const OmWString& iden) {
-      return this->_src_depend.push_back(iden);
+      this->_src_depend.push_back(iden);
     }
+
+    /// \brief Remove dependency entry
+    ///
+    /// Remove dependency reference at given index.
+    ///
+    /// \param[in] index  : Index of dependency to remove
+    ///
+    void deleteDepend(size_t index);
 
     /// \brief Clear dependency Mod list
     ///
@@ -587,12 +593,13 @@ class OmModPack
     /// \param[in] path         : Path and filename of Mod Pack archive file to create
     /// \param[in] method       : Compression method for archive file
     /// \param[in] level        : Compression level for archive file
-    /// \param[in] progress_cb  : Optional progression callback function
+    /// \param[in] progress_cb  : Optional general progression callback function
+    /// \param[in] compress_cb  : Optional file compression callback function
     /// \param[in] user_ptr     : Optional user pointer to be passed to callback
     ///
     /// \return True if operation succeed, false otherwise
     ///
-    bool saveAs(const OmWString& path, int32_t method = 93, int32_t level = 6, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    OmResult saveAs(const OmWString& path, int32_t method = 93, int32_t level = 6, Om_progressCb progress_cb = nullptr, Om_progressCb compress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Check overlapped
     ///

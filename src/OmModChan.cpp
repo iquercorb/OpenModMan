@@ -92,7 +92,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _library_showhidden(false),
   _warn_overlaps(true),
   _warn_extra_inst(true),
-  _backup_comp_method(OM_METHOD_ZSTD),
+  _backup_method_cache(OM_METHOD_ZSTD),
   _backup_comp_level(OM_LEVEL_FAST),
   _warn_extra_unin(true),
   _warn_extra_dnld(true),
@@ -232,7 +232,7 @@ void OmModChan::close()
   this->_warn_overlaps = true;
   this->_warn_extra_inst = true;
   this->_cust_backup_path = false;
-  this->_backup_comp_method = OM_METHOD_ZSTD;
+  this->_backup_method_cache = OM_METHOD_ZSTD;
   this->_backup_comp_level = OM_LEVEL_FAST;
   this->_warn_extra_unin = true;
   this->_warn_extra_dnld = true;
@@ -334,10 +334,10 @@ bool OmModChan::open(const OmWString& path)
 
   if(this->_xml.hasChild(L"backup_comp")) {
 
-    this->_backup_comp_method = this->_xml.child(L"backup_comp").attrAsInt(L"method");
+    this->_backup_method_cache = this->_xml.child(L"backup_comp").attrAsInt(L"method");
 
-    if(this->_backup_comp_method > 95 || this->_backup_comp_method < 0)
-      this->_backup_comp_method = -1;
+    if(this->_backup_method_cache > 95 || this->_backup_method_cache < 0)
+      this->_backup_method_cache = -1;
 
     this->_backup_comp_level = this->_xml.child(L"backup_comp").attrAsInt(L"level");
 
@@ -346,7 +346,7 @@ bool OmModChan::open(const OmWString& path)
 
   } else {
     // create default values
-    this->setBackupComp(this->_backup_comp_method, this->_backup_comp_level);
+    this->setBackupComp(this->_backup_method_cache, this->_backup_comp_level);
   }
 
   if(this->_xml.hasChild(L"library_sort")) {
@@ -3628,7 +3628,7 @@ void OmModChan::setBackupComp(int32_t method, int32_t level)
   if(!this->_xml.valid())
     return;
 
-  this->_backup_comp_method = method;
+  this->_backup_method_cache = method;
   this->_backup_comp_level = level;
 
   OmXmlNode backup_comp_node;

@@ -1008,7 +1008,7 @@ class OmModChan
     /// \return Zip compression method.
     ///
     int backupCompMethod() const {
-      return _backup_comp_method;
+      return _backup_method_cache;
     }
 
     /// \brief Get backup compression method.
@@ -1427,7 +1427,7 @@ class OmModChan
 
     bool                  _warn_extra_inst;
 
-    int32_t               _backup_comp_method;
+    int32_t               _backup_method_cache;
 
     int32_t               _backup_comp_level;
 

@@ -105,7 +105,8 @@ INT_PTR OmUiPictView::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       bmi.bmiHeader.biBitCount = 32;
       bmi.bmiHeader.biCompression = BI_RGB;
 
-      if(ps.rcPaint.right < this->_image->width() || ps.rcPaint.bottom < this->_image->height()) {
+      if(static_cast<uint32_t>(ps.rcPaint.right) < this->_image->width() ||
+         static_cast<uint32_t>(ps.rcPaint.bottom) < this->_image->height()) {
 
         if((static_cast<float>(this->_image->width()) / this->_image->height()) > (static_cast<float>(ps.rcPaint.right) / ps.rcPaint.bottom)) {
 

@@ -225,7 +225,7 @@ void OmUiMan::openRecent(int32_t index)
   OmWStringArray paths;
   ModMan->getRecentFileList(paths);
 
-  if((index >= 0) && (index < paths.size()))
+  if((index >= 0) && (static_cast<uint32_t>(index) < paths.size()))
     this->openHub(paths[index]);
 }
 

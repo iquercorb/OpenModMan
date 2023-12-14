@@ -319,7 +319,7 @@ void OmUiManMainLib::editSource()
   if(ModPack) {
 
     OmUiToolPkg* UiToolPkg = static_cast<OmUiToolPkg*>(this->_UiMan->childById(IDD_TOOL_PKG));
-
+/*
     if(UiToolPkg->visible()) {
 
       UiToolPkg->selectSource(ModPack->sourcePath());
@@ -330,6 +330,7 @@ void OmUiManMainLib::editSource()
 
       UiToolPkg->modeless(true);
     }
+*/
   }
 }
 

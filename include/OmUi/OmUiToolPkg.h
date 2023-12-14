@@ -49,7 +49,7 @@ class OmUiToolPkg : public OmDialog
     /// \return dialog resource id.
     ///
     long id() const;
-
+/*
     /// \brief Set initial source path.
     ///
     /// Set path to package source to be parsed at dialog initialization.
@@ -67,13 +67,106 @@ class OmUiToolPkg : public OmDialog
     /// \param[in]  path    : Path to source to parse.
     ///
     void selectSource(const OmWString& path);
-
+*/
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmModPack           _ModPack;
+    // edited Mod Pack object
+    OmModPack*          _ModPack;
 
+    // status bar populate/refresh
+    void                _status_update_filename();
+
+    // unsaved changes managment
+    bool                _has_unsaved;
+
+    void                _set_unsaved(bool enable);
+
+    int32_t             _ask_unsaved();
+
+    bool                _has_changes();
+
+    // misc
+    void                _reset_controls();
+
+    void                _check_zip_method();
+
+    int32_t             _method_cache;
+
+    // package management
+    OmWString           _modpack_save_path;
+
+    int32_t             _modpack_save_abort;
+
+    void*               _modpack_save_hth;
+
+    void*               _modpack_save_hwo;
+
+    void*               _modpack_save_hdp;
+
+    static DWORD WINAPI _modpack_save_run_fn(void*);
+
+    static bool         _modpack_save_progress_fn(void*,size_t,size_t,uint64_t);
+
+    static bool         _modpack_save_compress_fn(void*,size_t,size_t,uint64_t);
+
+    static VOID WINAPI  _modpack_save_end_fn(void*,uint8_t);
+
+    bool                _modpack_parse(const OmWString& path);
+
+    void                _modpack_open();
+
+    void                _modpack_build();
+
+    void                _modpack_save();
+
+    void                _modpack_save_as();
+
+    // filename management
+    void                _name_compose();
+
+    // thumbnail management
+    void                _categ_select();
+
+    void                _categ_changed();
+
+    OmWString           _categ_cache;
+
+    // thumbnail management
+    void                _thumb_toggle();
+
+    void                _thumb_load();
+
+    OmImage             _thumb_cache;
+
+    // description management
+    void                _desc_toggle();
+
+    void                _desc_load();
+
+    void                _desc_changed();
+
+    OmWString           _desc_cache;
+
+    // dependencies management
+    void                _depend_populate();
+
+    void                _depend_toggle();
+
+    void                _depend_sel_changed();
+
+    void                _depend_delete();
+
+    void                _depend_browse();
+
+    void                _depend_add_show(bool show);
+
+    void                _depend_add_valid();
+
+    OmWStringArray      _depend_cache;
+
+/*
     bool                _unsaved;
 
     OmWString           _initial_src;
@@ -123,7 +216,7 @@ class OmUiToolPkg : public OmDialog
     bool                _onBcBrwDesc();
 
     void                _onBcSave();
-
+*/
     void                _onInit();
 
     void                _onResize();

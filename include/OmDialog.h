@@ -485,6 +485,15 @@ class OmDialog
     ///
     void setItemText(unsigned id, const OmWString& text) const;
 
+    /// \brief Set control text
+    ///
+    /// Define inner text for the specified dialog control.
+    ///
+    /// \param[in]  id    : Control resource ID to set text for.
+    /// \param[in]  text  : Text to set.
+    ///
+    void setItemText(unsigned id, const OmCString& text) const;
+
     /// \brief Get control text
     ///
     /// Retrieve inner text for the specified dialog control.
@@ -495,6 +504,17 @@ class OmDialog
     /// \return Count of written characters.
     ///
     size_t getItemText(unsigned id, OmWString& text) const;
+
+    /// \brief Get control text
+    ///
+    /// Retrieve inner text for the specified dialog control.
+    ///
+    /// \param[in]  id    : Control resource ID to set text for.
+    /// \param[in]  text  : Char string to get text.
+    ///
+    /// \return Count of written characters.
+    ///
+    size_t getItemText(unsigned id, OmCString& text) const;
 
     /// \brief Get ListBox control text
     ///
@@ -507,6 +527,18 @@ class OmDialog
     /// \return Count of written characters.
     ///
     size_t getLbText(unsigned id, unsigned i, OmWString& text) const;
+
+    /// \brief Get ComboBox control text
+    ///
+    /// Retrieve text at specified index of the specified ComboBox control.
+    ///
+    /// \param[in]  id    : ComboBox resource ID to set text for.
+    /// \param[in]  i     : ComboBox entry index to get text.
+    /// \param[in]  text  : Wide char string to get text.
+    ///
+    /// \return Count of written characters.
+    ///
+    size_t getCbText(unsigned id, unsigned i, OmWString& text) const;
 
     /// \brief Find listView param
     ///

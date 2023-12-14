@@ -81,9 +81,10 @@ enum OmTbIconsId : int
   ICON_DAD = 5,
   ICON_FRM = 6,
   ICON_EDI = 7,
+  ICON_BLD = 8,
 };
 
-#define OM_TOOLBARS_ICON_COUNT       8
+#define OM_TOOLBARS_ICON_COUNT       9
 
 inline void Om_setupTbIconsDb(unsigned* icon_db)
 {
@@ -95,6 +96,7 @@ inline void Om_setupTbIconsDb(unsigned* icon_db)
   icon_db[ICON_DAD] = IDI_BT_DAD;
   icon_db[ICON_FRM] = IDI_BT_FRM;
   icon_db[ICON_EDI] = IDI_BT_EDI;
+  icon_db[ICON_BLD] = IDI_PKG_BLD;
 }
 
 /// \brief Main menu menu items positions
@@ -205,5 +207,29 @@ inline void Om_setupTbIconsDb(unsigned* icon_db)
     #define MNU_RE_REF_DESCSEL  3
     // ------------------------ 4
     #define MNU_RE_REF_DEPCHK   5
+
+    /// \brief Main menu menu items positions
+///
+/// Positions constants for main menu
+///
+#define MNU_ME_FILE          static_cast<unsigned>(0)
+    #define MNU_ME_FILE_NEW     0
+        #define MNU_ME_FILE_NEW_DEF   0
+    // ------------------------ 1
+    #define MNU_ME_FILE_OPEN    2
+    #define MNU_ME_FILE_BUIL    3
+    // ------------------------ 4
+    #define MNU_ME_FILE_SAVE    5
+    #define MNU_ME_FILE_SAVAS   6
+    // ------------------------ 7
+    #define MNU_ME_FILE_QUIT    8
+
+#define MNU_ME_EDIT          1
+    #define MNU_ME_EDIT_THMBSEL 0
+    // ------------------------ 1
+    #define MNU_ME_EDIT_DESCSEL 2
+    // ------------------------ 3
+    #define MNU_ME_EDIT_DEPIMP  4
+
 
 #endif // OMBASEUI_H

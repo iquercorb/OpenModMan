@@ -24,13 +24,13 @@
 ///
 /// Predefined common files filter string for Open dialog
 ///
-#define OM_PKG_FILES_FILTER       L"Package File (*.zip,*.ozp)\0*.ZIP;*.OZP;\0"
-#define OM_BCK_FILES_FILTER       L"Backup File (*.zip,*.ozb)\0*.ZIP;*.OZB;\0"
-#define OM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0"
-#define OM_XML_FILES_FILTER       L"XML File (*.xml)\0*.XML;\0"
-#define OM_TXT_FILES_FILTER       L"Text file (*.txt)\0*.TXT\0"
-#define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0"
-#define OM_OMX_FILES_FILTER       L"Mod Hub definition (*.omx,*.omc)\0*.OMX;*.OMC;\0"
+#define OM_PKG_FILES_FILTER       L"Package file (*.ozp,*.zip)\0*.OZP;*.ZIP;\0Open Mod Pack (*.ozp)\0*.OZP;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
+#define OM_BCK_FILES_FILTER       L"Backup file (*.ozb,*.zip)\0*.ZIP;*.OZB;\0Open Mod Backup (*.ozb)\0*.OZB;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
+#define OM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0All files (*.*)\0*.*;\0"
+#define OM_XML_FILES_FILTER       L"XML file (*.xml)\0*.XML;\0All files (*.*)\0*.*;\0"
+#define OM_TXT_FILES_FILTER       L"Reamde file (*.txt,*.md,*.mkd)\0*.TXT;*.MD;*.MKD;\0Text file (*.txt)\0*.TXT;\0Markdown file (*.md,*.mkd)\0*.MD;*.MKD;\0All files (*.*)\0*.*;\0"
+#define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0All files (*.*)\0*.*;\0"
+#define OM_OMX_FILES_FILTER       L"Hub definition (*.omx,*.omc)\0*.OMX;*.OMC;\0Open Mod XML (*.omx)\0*.OMX;\0Open Mod Context (*.omc)\0*.OMC;\0All files (*.*)\0*.*;\0"
 
 typedef struct Om_filterSpec_s
 {
@@ -47,7 +47,7 @@ typedef struct Om_filterSpec_s
 #define OM_DLGBOX_YN        0x2   //< Yes - No
 #define OM_DLGBOX_CA        0x4   //< Continue - Abort
 #define OM_DLGBOX_YNC       0x8   //< Yes - No
-#define OM_DLGBOX_PROGRESS  0x10  //< Progress dialog
+#define OM_DLGBOX_DUAL_BARS 0x80  //< Progress dialog
 
 /// \brief Custom message box dialog.
 ///
@@ -77,10 +77,11 @@ int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const
 /// \param[in] ico      : Optional icon resource ID.
 /// \param[in] hdr      : Optional message header.
 /// \param[out] result  : Integer to be set as dialog quit result (1 if abort).
+/// \param[in] flags    : Option flags.
 ///
 /// \return Handle to progression dialog
 ///
-HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result = nullptr);
+HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result = nullptr, unsigned flags = 0);
 
 /// \brief Update progression dialog.
 ///
@@ -91,8 +92,9 @@ HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* 
 /// \param[in] tot      : Progress bar range.
 /// \param[in] cur      : Progress bar current position.
 /// \param[in] msg      : Progression message (item name) to set.
+/// \param[in] bar      : In case of multiple progress bars, the progress bar index
 ///
-void Om_dlgProgressUpdate(HWND hwnd, int tot = -1, int cur = -1, const wchar_t* msg = nullptr);
+void Om_dlgProgressUpdate(HWND hwnd, int tot = -1, int cur = -1, const wchar_t* msg = nullptr, uint8_t bar = 0);
 
 /// \brief Close progression dialog.
 ///
@@ -244,7 +246,7 @@ void Om_dlgBox_err(const OmWString& cpt, const OmWString& hdr, const OmWString& 
 /// \param[in] msg    : Optional message body.
 ///
 void Om_dlgBox_wrn(const OmWString& cpt, const OmWString& hdr, const OmWString& msg);
-
+/*
 /// \brief Select folder dialog box.
 ///
 /// Opens a folder selection dialog box.
@@ -259,7 +261,7 @@ void Om_dlgBox_wrn(const OmWString& cpt, const OmWString& hdr, const OmWString& 
 /// \return True if succeed, false if user canceled or an error occurred.
 ///
 bool Om_dlgBrowseDir(OmWString& result, HWND hwnd, const wchar_t* title, const OmWString& start, bool captive = false, bool nonew = false);
-
+*/
 /// \brief Select directory dialog box (explorer style).
 ///
 /// Opens a single directory selection dialog box using modern explorer style.

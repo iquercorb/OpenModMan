@@ -55,15 +55,22 @@ class OmUiToolRep : public OmDialog
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // XML definition
-    OmXmlConf           _xml;
-
+    // edited repository object
     OmNetRepo*          _NetRepo;
 
+    // status bar populate/refresh
+    void                _status_update_filename();
 
-    OmWString           _path;
+    void                _status_update_references();
 
-    //
+    // unsaved changes managment
+    bool                _has_unsaved;
+
+    void                _set_unsaved(bool enable);
+
+    int32_t             _ask_unsaved();
+
+    // repository edition
     void                _repo_init();
 
     void                _repo_open();
@@ -82,7 +89,8 @@ class OmUiToolRep : public OmDialog
 
     bool                _repo_del_ref();
 
-    void                _ref_selected();
+    // reference edition
+    void                _ref_sel_changed();
 
     void                _ref_url_save();
 
@@ -99,24 +107,11 @@ class OmUiToolRep : public OmDialog
     void                _ref_depends_check();
 
 
-    void                _status_update_filename();
-
-    void                _status_update_references();
-
-
     void                _browse_add_files();
 
     void                _browse_add_directory();
 
-
-    void                _set_unsaved(bool enable);
-
-    int32_t             _ask_unsaved();
-
-    bool                _has_unsaved;
-
-
-    // add directory thread stuff
+    // add reference Mod parsing thread
     OmWStringQueue      _repo_addlist_queue;
 
     int32_t             _repo_addlist_abort;
@@ -133,7 +128,7 @@ class OmUiToolRep : public OmDialog
 
     static VOID WINAPI  _repo_addlist_end_fn(void*,uint8_t);
 
-
+    // common dialog functions
     void                _onClose();
 
     void                _onInit();

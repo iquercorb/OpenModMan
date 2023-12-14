@@ -71,16 +71,6 @@ bool Om_parseModFilename(const OmWString& filename, OmWString* iden, OmWString* 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_parseModDirname(const OmWString& dirname, OmWString* iden, OmWString* core, OmWString* vers, OmWString* name)
-{
-  *iden = Om_getFilePart(dirname);
-
-  return __parseModIdent(*iden, name, core, vers);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 bool Om_parseModIdent(const OmWString& iden, OmWString* core, OmWString* vers, OmWString* name)
 {
   return __parseModIdent(iden, name, core, vers);

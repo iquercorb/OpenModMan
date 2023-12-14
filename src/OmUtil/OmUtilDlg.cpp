@@ -39,7 +39,8 @@
 #define OM_DLGBOX_SC_HEAD   400
 #define OM_DLGBOX_SC_MESG   401
 #define OM_DLGBOX_SC_LIST   402
-#define OM_DLGBOX_PB_PBAR   403
+#define OM_DLGBOX_PB_BAR0   403
+#define OM_DLGBOX_PB_BAR1   404
 
 /// \brief Fonts for custom message box.
 ///
@@ -155,11 +156,24 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       yalign += rect[3] + 10;
     }
 
-    // Static Control - Item List
-    hItem = GetDlgItem(hWnd, OM_DLGBOX_PB_PBAR);
+    // add little margin before progress bar
+    yalign += 10;
+
+    // default progress bar height
+    rect[3] = 18;
+
+    // Progress Bar control - Secondary progress bar
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_PB_BAR1);
     if(hItem) {
-      yalign += 15; //< little margin
-      rect[3] = 18;
+      rect[3] = 10; //< smaller progress bars
+      // move and resize control
+      SetWindowPos(hItem, nullptr, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      yalign += rect[3] + 2;
+    }
+
+    // Progress Bar control - Main or Alone progress bar
+    hItem = GetDlgItem(hWnd, OM_DLGBOX_PB_BAR0);
+    if(hItem) {
       // move and resize control
       SetWindowPos(hItem, nullptr, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 10;
@@ -458,7 +472,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
     // Edit Control for item list
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-    itmt->id = OM_DLGBOX_PB_PBAR;
+    itmt->id = OM_DLGBOX_PB_BAR0;
     itmt->style = WS_CHILD|WS_VISIBLE;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = 16; itmt->y = 50; itmt->cx = 255; itmt->cy = 22;
@@ -510,7 +524,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
 ///
 /// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
 ///
-static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
+static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result, unsigned flags)
 {
   // configure buttons according params
   const wchar_t* fnt = __Om_dlgBox_str_FNT;
@@ -518,6 +532,7 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   bt1 = __Om_dlgBox_str_AB;
 
   bool has_hdr = hdr ? wcslen(hdr) : false;
+  bool has_2pb = (flags & 0x80) ? true : false;
 
   // compute template size
   size_t tplSize = sizeof(DLGTEMPLATE) + 10;
@@ -528,6 +543,7 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   if(has_hdr) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(hdr);
   tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * 2;
   tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(PROGRESS_CLASSW);
+  if(has_2pb) tplSize += sizeof(DLGITEMTEMPLATE) + 10 + sizeof(wchar_t) * wcslen(PROGRESS_CLASSW);
 
   DLGTEMPLATE* dlgt;
   DLGITEMTEMPLATE* itmt;
@@ -615,7 +631,7 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   // Static Control main message
   itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
   itmt->id = OM_DLGBOX_SC_MESG;
-  itmt->style = WS_CHILD|WS_VISIBLE|SS_ENDELLIPSIS;
+  itmt->style = WS_CHILD|WS_VISIBLE|SS_PATHELLIPSIS/*SS_ENDELLIPSIS*/;
   itmt->dwExtendedStyle = WS_EX_LEFT;
   itmt->x = 45; itmt->y = 30; itmt->cx = 220; itmt->cy = 0;
   pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
@@ -628,7 +644,7 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
   // Edit Control for item list
   itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
-  itmt->id = OM_DLGBOX_PB_PBAR;
+  itmt->id = OM_DLGBOX_PB_BAR0;
   itmt->style = WS_CHILD|WS_VISIBLE;
   itmt->dwExtendedStyle = WS_EX_LEFT;
   itmt->x = 16; itmt->y = 50; itmt->cx = 255; itmt->cy = 22;
@@ -638,6 +654,23 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
   *pTpl++ = 0; //< No Item text
   *pTpl++ = 0; //< No creation
   dlgt->cdit++; //< increment item count
+
+  if(has_2pb) {
+    // align to word boundary
+    if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
+    // Edit Control for item list
+    itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
+    itmt->id = OM_DLGBOX_PB_BAR1;
+    itmt->style = WS_CHILD|WS_VISIBLE;
+    itmt->dwExtendedStyle = WS_EX_LEFT;
+    itmt->x = 16; itmt->y = 50; itmt->cx = 255; itmt->cy = 22;
+    pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
+    const wchar_t* clsname = PROGRESS_CLASSW;
+    while((*reinterpret_cast<wchar_t*>(pTpl++) = *clsname++)); //< class name
+    *pTpl++ = 0; //< No Item text
+    *pTpl++ = 0; //< No creation
+    dlgt->cdit++; //< increment item count
+  }
 
   HWND hdlg = CreateDialogIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
   Om_free(dlgt);
@@ -670,7 +703,7 @@ int Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result)
+HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result, unsigned flags)
 {
   wchar_t cpt_buf[OM_MAX_ITEM];
 
@@ -679,21 +712,23 @@ HWND Om_dlgProgress(HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* 
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
   if(!hins) hins = GetModuleHandle(nullptr);
 
-  return __Om_dlgProgress(hins, hwnd, cpt_buf, ico, hdr, result);
+  return __Om_dlgProgress(hins, hwnd, cpt_buf, ico, hdr, result, flags);
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text)
+void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text, uint8_t bar)
 {
+  int32_t bar_id = (bar == 0) ? OM_DLGBOX_PB_BAR0 : OM_DLGBOX_PB_BAR1;
+
   if(tot >= 0)
-    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETRANGE, 0, MAKELPARAM(0, tot));
+    SendMessageW(GetDlgItem(hwnd, bar_id), PBM_SETRANGE, 0, MAKELPARAM(0, tot));
 
   if(cur >= 0) {
-    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETPOS, cur+1, 0);
-    SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_PB_PBAR), PBM_SETPOS, cur, 0);
+    SendMessageW(GetDlgItem(hwnd, bar_id), PBM_SETPOS, cur+1, 0);
+    SendMessageW(GetDlgItem(hwnd, bar_id), PBM_SETPOS, cur, 0);
   }
 
   if(text)
@@ -896,8 +931,7 @@ INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM 
 
   return 0;
 }
-
-
+/*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -941,14 +975,25 @@ bool Om_dlgBrowseDir(OmWString& result, HWND hWnd, const wchar_t* title, const O
 
   return suceess;
 }
+*/
 
+/// \brief Microsoft COM library initialization flag
+///
+/// Flag used for Microsoft COM library initialization function, to
+/// prevent multiple initialization attemp
+///
 static bool __co_initialized = false;
 
+/// \brief Microsoft COM library initialization
+///
+/// Initialization function for the Microsoft COM library for main application thread
+///
 inline static void __co_initialize()
 {
   if(!__co_initialized) {
-    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE);
-    __co_initialized = true;
+    if(S_OK == CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE)) {
+      __co_initialized = true;
+    }
   }
 }
 
@@ -965,7 +1010,6 @@ bool Om_dlgOpenDir(OmWString& result, HWND hWnd, const wchar_t* title, const OmW
   IFileOpenDialog *FileOpenDialog;
   if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
 
-    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
     FileOpenDialog->SetOptions(FOS_PICKFOLDERS);
     FileOpenDialog->SetTitle(title);
 
@@ -1155,8 +1199,6 @@ bool Om_dlgOpenFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
   IFileOpenDialog *FileOpenDialog;
   if(S_OK == CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileOpenDialog))) {
 
-    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
-    //FileOpenDialog->SetOptions();
     FileOpenDialog->SetTitle(title);
 
     // set file filter
@@ -1403,8 +1445,6 @@ bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
   IFileSaveDialog* FileSaveDialog;
   if(S_OK == CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&FileSaveDialog))) {
 
-    //DWORD dwOptions = FOS_PICKFOLDERS|FOS_ALLOWMULTISELECT;
-    //IFileSaveDialog->SetOptions();
     FileSaveDialog->SetTitle(title);
 
     // set file filter

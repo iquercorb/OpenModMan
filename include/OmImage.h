@@ -36,11 +36,29 @@ class OmImage
     ///
     OmImage();
 
+    /// \brief Copy Constructor
+    ///
+    /// Object copy destructor
+    ///
+    /// \param[in]  other  : Other object instance
+    ///
+    OmImage(const OmImage& other);
+
     /// \brief Destructor
     ///
     /// Default object destructor
     ///
     ~OmImage();
+
+    /// \brief Assign operator
+    ///
+    /// Object assign operator overload
+    ///
+    /// \param[in]  other  : Other object instance
+    ///
+    /// \return This object reference
+    ///
+    const OmImage& operator=(const OmImage& other);
 
     /// \brief Load image.
     ///
@@ -90,6 +108,39 @@ class OmImage
     ///
     bool loadThumbnail(uint8_t* data, size_t size, unsigned span, OmSizeMode mode);
 
+    /// \brief Load image to thumbnail.
+    ///
+    /// Load image from data in memory then create and store its
+    /// thumbnail version.
+    ///
+    /// \param[in]  image : Other image to create thumbnail from
+    /// \param[in]  span  : Span of thumbnail canvas to create.
+    /// \param[in]  mode  : Thumbnail resize mode.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool loadThumbnail(const OmImage& image, unsigned span, OmSizeMode mode);
+
+    /// \brief Equal operator
+    ///
+    /// Object equal operator overload
+    ///
+    /// \param[in]  other  : Other object instance
+    ///
+    /// \return True if instances are equal, false otherwise
+    ///
+    bool operator==(const OmImage& other) const;
+
+    /// \brief Not-equal operator
+    ///
+    /// Object Not-equal operator overload
+    ///
+    /// \param[in]  other  : Other object instance
+    ///
+    /// \return True if instances are not equal, false otherwise
+    ///
+    bool operator!=(const OmImage& other) const;
+
     /// \brief Check validity
     ///
     /// Check whether this instance is valid.
@@ -113,7 +164,8 @@ class OmImage
 
     /// \brief Image pixel data.
     ///
-    /// Get pointer to stored image pixel data.
+    /// Get pointer to stored image pixel data. Pixel data
+    /// are always stored as RGBA
     ///
     /// \return Pointer to pixel data.
     ///
@@ -169,7 +221,7 @@ class OmImage
 
     OmWString           _path;        //< Source image path if exists
 
-    uint8_t*            _data;        //< Image pixel data
+    uint8_t*            _data;        //< Image pixel data (RGBA)
 
     unsigned            _width;       //< Image width
 

@@ -152,6 +152,16 @@ class OmArchive
     ///
     bool entryIsDir(size_t i) const;
 
+    /// \brief Get entry compression method
+    ///
+    /// Returns the compression method of the specified entry at index
+    ///
+    /// \param[in] i       : Entry index
+    ///
+    /// \return Entry file compression method
+    ///
+    int32_t entryMethod(size_t i) const;
+
     /// \brief Extract and save as file
     ///
     /// Extract and save specified entry as file
