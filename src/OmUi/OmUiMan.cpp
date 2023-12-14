@@ -770,7 +770,7 @@ bool OmUiMan::_psetup_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t pa
 
   int32_t chn_index = ModHub->indexOfChannel(ModPack->ModChan());
 
-  // FIXME: le changement de selection n'est pas visible lors du processus
+  // FIXME: le changement de selection de channel n'est pas visible lors de l'installation du Preset
   self->selectChannel(chn_index);
 
   #ifdef DEBUG

@@ -1324,10 +1324,10 @@ void OmUiManMainNet::_lv_net_on_selchg()
     OmNetPack* NetPack = nullptr;
 
     // scan selection to check what can be done
-    int32_t lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    while(lv_sl != -1) {
+    int32_t lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sel != -1) {
 
-      NetPack = ModChan->getNetpack(lv_sl);
+      NetPack = ModChan->getNetpack(lv_sel);
 
       if(NetPack->hasLocal()) {
         if(NetPack->hasMissingDepend()) can_fixd = true;
@@ -1342,7 +1342,7 @@ void OmUiManMainNet::_lv_net_on_selchg()
       }
 
       // next selected item
-      lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+      lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
     }
 
     // if single selection show mod pack overview
@@ -1422,10 +1422,10 @@ void OmUiManMainNet::_lv_net_on_rclick()
     bool can_fixd = false;
 
     // scan selection to check what can be done
-    int32_t lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    while(lv_sl != -1) {
+    int32_t lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sel != -1) {
 
-      OmNetPack* NetPack = ModChan->getNetpack(lv_sl);
+      OmNetPack* NetPack = ModChan->getNetpack(lv_sel);
 
       if(NetPack->hasLocal()) {
         if(NetPack->hasMissingDepend()) can_fixd = true;
@@ -1440,7 +1440,7 @@ void OmUiManMainNet::_lv_net_on_rclick()
       }
 
       // next selected item
-      lv_sl = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+      lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
     }
 
     this->setPopupItemText(hPopup, POP_NET_DNLD, can_rvok ? L"Resume" : L"Download");

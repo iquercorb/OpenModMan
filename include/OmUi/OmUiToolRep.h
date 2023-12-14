@@ -90,43 +90,50 @@ class OmUiToolRep : public OmDialog
     bool                _repo_del_ref();
 
     // reference edition
-    void                _ref_sel_changed();
+    void                _reflist_resize();
 
-    void                _ref_url_save();
+    void                _reflist_populate();
 
-    void                _ref_desc_load();
+    void                _reflist_selchg(int32_t item = -1, bool selected = true);
 
-    void                _ref_desc_save();
+    int32_t             _reflist_lastsel;
 
-    void                _ref_thumb_set();
+    void                _reflist_add_files();
 
-    void                _ref_thumb_del();
-
-    void                _ref_depends_get(const OmWString&, OmWStringArray*);
-
-    void                _ref_depends_check();
+    void                _reflist_add_directory();
 
 
-    void                _browse_add_files();
+    void                _reference_url_changed(int32_t item = -1);
 
-    void                _browse_add_directory();
+    void                _reference_desc_load();
+
+    void                _reference_desc_changed(int32_t item = -1);
+
+    void                _reference_thumb_load();
+
+    void                _reference_thumb_delete();
+
+    void                _reference_deps_get(const OmWString&, OmWStringArray*);
+
+    void                _reference_deps_check();
+
 
     // add reference Mod parsing thread
-    OmWStringQueue      _repo_addlist_queue;
+    OmWStringQueue      _reflist_add_queue;
 
-    int32_t             _repo_addlist_abort;
+    int32_t             _reflist_add_abort;
 
-    void*               _repo_addlist_hth;
+    void*               _reflist_add_hth;
 
-    void*               _repo_addlist_hwo;
+    void*               _reflist_add_hwo;
 
-    void                _repo_addlist_start(const OmWStringArray&);
+    void                _reflist_add_start(const OmWStringArray&);
 
-    void*               _repo_addlist_hpd;
+    void*               _reflist_add_hpd;
 
-    static DWORD WINAPI _repo_addlist_run_fn(void*);
+    static DWORD WINAPI _reflist_add_run_fn(void*);
 
-    static VOID WINAPI  _repo_addlist_end_fn(void*,uint8_t);
+    static VOID WINAPI  _reflist_add_end_fn(void*,uint8_t);
 
     // common dialog functions
     void                _onClose();

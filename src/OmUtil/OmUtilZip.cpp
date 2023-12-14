@@ -41,21 +41,34 @@ uint8_t* Om_zDeflate(size_t* out_size, const uint8_t* in_data, size_t in_size, u
   if(deflateInit(&zs, level) != Z_OK)
     return nullptr;
 
+  // with very small input data (bellow 500 bytes), it may happen that
+  // output data is larger than input, so we allocate large enough buffer
+  // to prevent Deflate() function to fail
+  size_t out_cap = in_size > 1024 ? in_size : 1024;
+
   // allocate new output buffer
-  uint8_t* buff = reinterpret_cast<uint8_t*>(Om_alloc(in_size));
-  if(!buff) return nullptr;
+  uint8_t* out_buf = reinterpret_cast<uint8_t*>(Om_alloc(out_cap));
+  if(!out_buf) return nullptr;
 
   // setup sizes and pointers
-  zs.next_out = buff;
-  zs.avail_out = in_size;
+  zs.next_out = out_buf;
+  zs.avail_out = out_cap;
 
   zs.next_in = const_cast<uint8_t*>(in_data);
   zs.avail_in = in_size;
 
-  // deflate data
-  if(deflate(&zs, Z_FINISH) != Z_STREAM_END) {
-    Om_free(buff);
+  int result;
+
+  do {
+    result = deflate(&zs, Z_FINISH);
+  } while(result == Z_OK);
+
+  if(result != Z_STREAM_END) {
+
+    Om_free(out_buf);
+
     deflateEnd(&zs);
+
     return nullptr;
   }
 
@@ -64,7 +77,7 @@ uint8_t* Om_zDeflate(size_t* out_size, const uint8_t* in_data, size_t in_size, u
   // clean compressor
   deflateEnd(&zs);
 
-  return buff;
+  return out_buf;
 }
 
 ///

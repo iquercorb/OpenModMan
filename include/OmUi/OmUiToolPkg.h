@@ -95,6 +95,21 @@ class OmUiToolPkg : public OmDialog
     int32_t             _method_cache;
 
     // package management
+    void                _modpack_close();
+
+    void                _modpack_new();
+
+    void                _modpack_open();
+
+    void                _modpack_build();
+
+    void                _modpack_save();
+
+    void                _modpack_save_as();
+
+    bool                _modpack_parse(const OmWString& path);
+
+    // package 'save' thread
     OmWString           _modpack_save_path;
 
     int32_t             _modpack_save_abort;
@@ -113,18 +128,17 @@ class OmUiToolPkg : public OmDialog
 
     static VOID WINAPI  _modpack_save_end_fn(void*,uint8_t);
 
-    bool                _modpack_parse(const OmWString& path);
-
-    void                _modpack_open();
-
-    void                _modpack_build();
-
-    void                _modpack_save();
-
-    void                _modpack_save_as();
-
     // filename management
     void                _name_compose();
+
+    // content management
+    void                _content_resize();
+
+    void                _content_selchg();
+
+    void                _content_populate();
+
+    OmModEntryArray     _content_cache;
 
     // thumbnail management
     void                _categ_select();
@@ -136,16 +150,16 @@ class OmUiToolPkg : public OmDialog
     // thumbnail management
     void                _thumb_toggle();
 
-    void                _thumb_load();
+    void                _reference_thumb_load();
 
     OmImage             _thumb_cache;
 
     // description management
     void                _desc_toggle();
 
-    void                _desc_load();
+    void                _reference_desc_load();
 
-    void                _desc_changed();
+    void                _reference_desc_changed();
 
     OmWString           _desc_cache;
 

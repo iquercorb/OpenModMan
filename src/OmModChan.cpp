@@ -352,8 +352,7 @@ bool OmModChan::open(const OmWString& path)
   if(this->_xml.hasChild(L"library_sort")) {
     this->_modpack_list_sort = this->_xml.child(L"library_sort").attrAsInt(L"sort");
   } else {
-    // create default values
-    // TODO
+    // TODO: create default values
   }
 
   if(this->_xml.hasChild(L"library_devmode")) {
@@ -373,8 +372,7 @@ bool OmModChan::open(const OmWString& path)
   if(this->_xml.hasChild(L"remotes_sort")) {
     this->_modpack_list_sort = this->_xml.child(L"remotes_sort").attrAsInt(L"sort");
   } else {
-    // create default values
-    // TODO
+    // TODO: create default values
   }
 
   // Check warnings options
@@ -1945,85 +1943,6 @@ bool OmModChan::hasBackupData()
       return true;
   }
   return false;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModChan::purgeBackupData(Om_progressCb progress_cb, void* user_ptr)
-{
-  // TODO: Rrefaire tout ça en utilisant la fille d'attente dans un thread
-
-  // checks for access to backup folder
-  if(!this->accessesBackup(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
-    this->_error(L"purgeBackupData", L"Backup folder access error.");
-    return false;
-  }
-  // checks for access to Target path
-  if(!this->accessesTarget(true)) { //< check for read and write
-    this->_error(L"purgeBackupData", L"Target path access error.");
-    return false;
-  }
-
-  // get list of all installed packages
-  OmPModPackArray selection; //< our select list
-
-  for(size_t i = 0; i < this->_modpack_list.size(); ++i)
-    if(this->_modpack_list[i]->hasBackup())
-      selection.push_back(this->_modpack_list[i]);
-
-  // if no package installed, nothing to purge
-  if(selection.empty())
-    return true;
-
-  // initialize progression
-  size_t progress_tot = 0, progress_cur = 0;
-  if(progress_cb) {
-    progress_tot = selection.size();
-    progress_cur = 0;
-    if(!progress_cb(user_ptr, progress_tot, progress_cur, 0))
-      return true;
-  }
-
-  // even if we uninstall all packages, we need to get a sorted list
-  // so we prepare with all overlaps and dependencies checking
-  OmPModPackArray restores;
-  OmWStringArray overlappings, dependents;
-
-  // prepare packages uninstall and backups restoration
-  this->prepareRestores(selection, &restores, &overlappings, &dependents);
-
-  bool has_error = false;
-
-  unsigned n = 0;
-
-  // here we go for uninstall all packages
-  for(size_t i = 0; i < restores.size(); ++i) {
-
-    // call progression callback
-    if(progress_cb) {
-      progress_cur++;
-      if(!progress_cb(user_ptr, progress_tot, progress_cur, reinterpret_cast<uint64_t>(restores[i]->iden().c_str())))
-        break;
-    }
-
-    // uninstall package
-    if(restores[i]->restoreData()) {
-      n++; //< increase counter
-    } else {
-      this->_error(L"purgeBackupData", restores[i]->lastError());
-      has_error = true;
-    }
-
-    #ifdef DEBUG
-    Sleep(50); //< for debug
-    #endif
-  }
-
-  // refresh Mod Packs analytical parameters
-  this->refreshModLibrary();
-
-  return !has_error;
 }
 
 ///

@@ -17,7 +17,8 @@
 #include "OmBase.h"
 
 #include "OmBaseWin.h"
-#include <ShlObj.h>
+  #include <UxTheme.h>
+//#include <ShlObj.h>
 
 #include "OmBaseUi.h"
 
@@ -50,10 +51,11 @@
 OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
   _NetRepo(new OmNetRepo(nullptr)),
   _has_unsaved(false),
-  _repo_addlist_abort(0),
-  _repo_addlist_hth(nullptr),
-  _repo_addlist_hwo(nullptr),
-  _repo_addlist_hpd(nullptr)
+  _reflist_lastsel(-1),
+  _reflist_add_abort(0),
+  _reflist_add_hth(nullptr),
+  _reflist_add_hwo(nullptr),
+  _reflist_add_hpd(nullptr)
 {
 
 }
@@ -181,12 +183,11 @@ void OmUiToolRep::_repo_init()
   this->enableItem(IDC_BC_BRW01, true);
   this->enableItem(IDC_BC_BRW02, true);
 
-  // empty referenced Mods ListBox
-  this->enableItem(IDC_LB_MOD, true);
-  this->msgItem(IDC_LB_MOD, LB_RESETCONTENT, 0, 0);
+  this->enableItem(IDC_LV_MOD, true);
+  this->_reflist_populate();
 
   // update selection
-  this->_ref_sel_changed();
+  this->_reflist_selchg();
 
   // reset unsaved changes
   this->_set_unsaved(true);
@@ -240,19 +241,12 @@ void OmUiToolRep::_repo_open()
   this->enableItem(IDC_BC_BRW01, true);
   this->enableItem(IDC_BC_BRW02, true);
 
-  // populate referenced Mods ListBox
-  this->enableItem(IDC_LB_MOD, true);
-  this->msgItem(IDC_LB_MOD, LB_RESETCONTENT, 0, 0); //< empty ListBox
-
-  OmXmlNode modref;
-
-  for(size_t i = 0; i < this->_NetRepo->referenceCount(); ++i) {
-    modref = this->_NetRepo->getReference(i);
-    this->msgItem(IDC_LB_MOD, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(modref.attrAsString(L"ident")));
-  }
+  // populate references list
+  this->enableItem(IDC_LV_MOD, true);
+  this->_reflist_populate();
 
   // update selection
-  this->_ref_sel_changed();
+  this->_reflist_selchg();
 
   // reset unsaved changes
   this->_set_unsaved(false);
@@ -290,12 +284,12 @@ void OmUiToolRep::_repo_close()
   this->enableItem(IDC_BC_BRW01, false);
   this->enableItem(IDC_BC_BRW02, false);
 
-    // empty referenced Mods ListBox
-  this->msgItem(IDC_LB_MOD, LB_RESETCONTENT, 0, 0);
-  this->enableItem(IDC_LB_MOD, false);
+  // disable and rebuild ListView
+  this->enableItem(IDC_LV_MOD, false);
+  this->_reflist_populate();
 
   // update selection
-  this->_ref_sel_changed();
+  this->_reflist_selchg();
 
   // reset unsaved changes
   this->_set_unsaved(true);
@@ -413,81 +407,182 @@ void OmUiToolRep::_repo_save_downpath()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repo_add_ref(const OmWString& path, bool select)
+void OmUiToolRep::_reflist_resize()
 {
-  // try to parse package
-  OmModPack ModPack;
-  if(!ModPack.parseSource(path))
-    return false;
+  LONG size[4];
 
-  bool is_update = false;
-
-  // check if reference with same identity already exists
-  if(this->_NetRepo->hasReference(ModPack.iden())) {
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Repository Editor", IDI_QRY, L"Duplicate reference",
-                     L"This Mod is already referenced, do you want to update the existing one ?", ModPack.iden()))
-      return true;
-
-    is_update = true;
-  }
-
-  // add reference to Repository
-  this->_NetRepo->addReference(&ModPack);
-
-  // append to ListBox
-  if(!is_update)
-    this->msgItem(IDC_LB_MOD, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ModPack.iden().c_str()));
-
-  if(select) {
-    // select the last ListBox entry
-    uint32_t lb_count = this->msgItem(IDC_LB_MOD, LB_GETCOUNT);
-    this->msgItem(IDC_LB_MOD, LB_SETSEL, true, lb_count - 1);
-  }
-
-  // update status bar
-  this->_status_update_references();
-
-  // set unsaved changes
-  this->_set_unsaved(true);
-
-  return true;
+  // Resize the Mods ListView column
+  GetClientRect(this->getItem(IDC_LV_MOD), reinterpret_cast<LPRECT>(&size));
+  this->msgItem(IDC_LV_MOD, LVM_SETCOLUMNWIDTH, 0, size[2]-2);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repo_del_ref()
+void OmUiToolRep::_reflist_populate()
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return false;
+  // Save list-view scroll position to lvRect
+  RECT lvRec;
+  this->msgItem(IDC_LV_MOD, LVM_GETVIEWRECT, 0, reinterpret_cast<LPARAM>(&lvRec));
+  // empty list view
+  this->msgItem(IDC_LV_MOD, LVM_DELETEALLITEMS);
 
-  this->_NetRepo->deleteReference(lb_sel);
+  if(this->_NetRepo->referenceCount()) {
 
-  // unselect and remove ListBox entry
-  this->msgItem(IDC_LB_MOD, LB_SETSEL, true, -1);
-  this->msgItem(IDC_LB_MOD, LB_DELETESTRING, lb_sel);
+    OmXmlNode modref;
 
-  // update reference parameters controls
-  this->_ref_sel_changed();
+    // add item to list view
+    LVITEMW lvI = {};
+    for(size_t i = 0; i < this->_NetRepo->referenceCount(); ++i) {
 
-  // update status bar
-  this->_status_update_references();
+      modref = this->_NetRepo->getReference(i);
 
-  // set unsaved changes
-  this->_set_unsaved(true);
+      lvI.iItem = static_cast<int32_t>(i);
 
-  return true;
+      // Single column, entry path, if it is a file
+      lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_TEXT|LVIF_PARAM;
+      lvI.iImage = ICON_MOD_PKG;
+      lvI.lParam = i;
+      lvI.pszText = const_cast<LPWSTR>(modref.attrAsString(L"ident"));
+      this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+    }
+
+    // we enable the ListView
+    this->enableItem(IDC_LV_MOD, true);
+
+    // restore ListView scroll position from lvRec
+    this->msgItem(IDC_LV_MOD, LVM_SCROLL, 0, -lvRec.top );
+  }
+
+  // adapt ListView column size to client area
+  this->_reflist_resize();
+
+  // update Mods ListView selection
+  this->_reflist_selchg();
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_sel_changed()
+void OmUiToolRep::_reflist_selchg(int32_t item, bool selected)
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  bool has_select = (lb_sel >= 0);
+  bool has_url = false;
+  bool has_depend = false;
+  bool has_thumbnail = false;
+  bool has_description = false;
+
+  if(item >= 0) {
+
+    // check whether this an item select or unselect
+    if(!selected) {
+
+      // this is a item unselect, we save custom URL and description before switching
+      this->_reference_url_changed(item);
+      this->_reference_desc_changed(item);
+
+    } else {
+
+      // store last selected item
+      this->_reflist_lastsel = item;
+
+      OmXmlNode ref_node = this->_NetRepo->getReference(item);
+
+      // check for custom URL
+      if(ref_node.hasChild(L"url")) {
+        this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
+        this->enableItem(IDC_EC_INP03, true);
+        this->setItemText(IDC_EC_INP03, ref_node.child(L"url").content());
+        has_url = true;
+      }
+
+      // check for dependencies
+      if(ref_node.hasChild(L"dependencies")) {
+        this->enableItem(IDC_BC_CHECK, true);
+        this->enableItem(IDC_EC_READ3, true);
+
+        OmXmlNodeArray ident_nodes;
+        ref_node.child(L"dependencies").children(ident_nodes, L"ident");
+        OmWString ec_entry;
+        for(unsigned i = 0; i < ident_nodes.size(); ++i) {
+          ec_entry += ident_nodes[i].content();
+          if(i < (ident_nodes.size() - 1))
+            ec_entry += L"\r\n";
+        }
+
+        this->setItemText(IDC_EC_READ3, ec_entry);
+        this->setPopupItem(MNU_RE_REF, MNU_RE_REF_DEPCHK, MF_ENABLED);
+        has_depend = true;
+      }
+
+      // check for thumbnail
+      if(ref_node.hasChild(L"picture")) {
+
+        // decode the DataURI
+        size_t jpg_size;
+        OmWString mimetype, charset;
+        uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"picture").content());
+
+        // load Jpeg image
+        if(jpg_data) {
+
+          uint32_t w, h;
+
+          uint8_t* rgb_data = Om_imgLoadData(&w, &h, jpg_data, jpg_size);
+
+          Om_free(jpg_data);
+
+          if(rgb_data) {
+
+            HBITMAP hBm = Om_imgEncodeHbmp(rgb_data, w, h, 4);
+
+            Om_free(rgb_data);
+
+            // set image to dialog
+            this->enableItem(IDC_SB_SNAP, true);
+            hBm = this->setStImage(IDC_SB_SNAP, hBm);
+            if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+
+            this->enableItem(IDC_BC_RESET, true);
+            this->setPopupItem(MNU_RE_REF, MNU_RE_REF_THMBDEL, MF_ENABLED);
+            has_thumbnail = true;
+          }
+        }
+      }
+
+      // check for <remote> description
+      if(ref_node.hasChild(L"description")) {
+
+        OmXmlNode description_node = ref_node.child(L"description");
+
+        // decode the DataURI
+        size_t dfl_size;
+        OmWString mimetype, charset;
+        uint8_t* dfl_data = Om_decodeDataUri(&dfl_size, mimetype, charset, description_node.content());
+
+        if(dfl_data) {
+
+          size_t txt_size = description_node.attrAsInt(L"bytes");
+
+          uint8_t* txt_data = Om_zInflate(dfl_data, dfl_size, txt_size);
+
+          Om_free(dfl_data);
+
+          if(txt_data) {
+
+            // set text to item
+            this->setItemText(IDC_EC_DESC, Om_toUTF16(reinterpret_cast<char*>(txt_data)));
+
+            Om_free(txt_data);
+
+            has_description = true;
+          }
+        }
+      }
+    }
+  }
+
+  // check whether we still have one selection
+  bool has_select = (this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT) > 0);
 
   this->setPopupItem(MNU_RE_REF, MNU_RE_REF_THMBSEL, has_select ? MF_ENABLED : MF_GRAYED);
   this->setPopupItem(MNU_RE_REF, MNU_RE_REF_DESCSEL, has_select ? MF_ENABLED : MF_GRAYED);
@@ -507,109 +602,7 @@ void OmUiToolRep::_ref_sel_changed()
   this->enableItem(IDC_BC_SAV02, has_select);
   this->enableItem(IDC_EC_DESC, has_select);
 
-  bool has_cust_url = false;
-  bool has_depend = false;
-  bool has_thumbnail = false;
-  bool has_description = false;
-
-  if(has_select) {
-
-    OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
-
-    // check for custom URL
-    if(ref_node.hasChild(L"url")) {
-      this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
-      this->enableItem(IDC_EC_INP03, true);
-      this->setItemText(IDC_EC_INP03, ref_node.child(L"url").content());
-      has_cust_url = true;
-    }
-
-    // check for dependencies
-    if(ref_node.hasChild(L"dependencies")) {
-      this->enableItem(IDC_BC_CHECK, true);
-      this->enableItem(IDC_EC_READ3, true);
-
-      OmXmlNodeArray ident_nodes;
-      ref_node.child(L"dependencies").children(ident_nodes, L"ident");
-      OmWString ec_entry;
-      for(unsigned i = 0; i < ident_nodes.size(); ++i) {
-        ec_entry += ident_nodes[i].content();
-        if(i < (ident_nodes.size() - 1))
-          ec_entry += L"\r\n";
-      }
-
-      this->setItemText(IDC_EC_READ3, ec_entry);
-      this->setPopupItem(MNU_RE_REF, MNU_RE_REF_DEPCHK, MF_ENABLED);
-      has_depend = true;
-    }
-
-    // check for thumbnail
-    if(ref_node.hasChild(L"picture")) {
-
-      // decode the DataURI
-      size_t jpg_size;
-      OmWString mimetype, charset;
-      uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"picture").content());
-
-      // load Jpeg image
-      if(jpg_data) {
-
-        uint32_t w, h;
-
-        uint8_t* rgb_data = Om_imgLoadData(&w, &h, jpg_data, jpg_size);
-
-        Om_free(jpg_data);
-
-        if(rgb_data) {
-
-          HBITMAP hBm = Om_imgEncodeHbmp(rgb_data, w, h, 4);
-
-          Om_free(rgb_data);
-
-          // set image to dialog
-          this->enableItem(IDC_SB_SNAP, true);
-          hBm = this->setStImage(IDC_SB_SNAP, hBm);
-          if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
-
-          this->enableItem(IDC_BC_RESET, true);
-          this->setPopupItem(MNU_RE_REF, MNU_RE_REF_THMBDEL, MF_ENABLED);
-          has_thumbnail = true;
-        }
-      }
-    }
-
-    // check for <remote> description
-    if(ref_node.hasChild(L"description")) {
-
-      OmXmlNode description_node = ref_node.child(L"description");
-
-      // decode the DataURI
-      size_t dfl_size;
-      OmWString mimetype, charset;
-      uint8_t* dfl_data = Om_decodeDataUri(&dfl_size, mimetype, charset, description_node.content());
-
-      if(dfl_data) {
-
-        size_t txt_size = description_node.attrAsInt(L"bytes");
-
-        uint8_t* txt_data = Om_zInflate(dfl_data, dfl_size, txt_size);
-
-        Om_free(dfl_data);
-
-        if(txt_data) {
-
-          // set text to item
-          this->setItemText(IDC_EC_DESC, Om_toUTF16(reinterpret_cast<char*>(txt_data)));
-
-          Om_free(txt_data);
-
-          has_description = true;
-        }
-      }
-    }
-  }
-
-  if(!has_cust_url) {
+  if(!has_url) {
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
     this->enableItem(IDC_EC_INP03, false);
     this->setItemText(IDC_EC_INP03, L"");
@@ -637,14 +630,101 @@ void OmUiToolRep::_ref_sel_changed()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_url_save()
+bool OmUiToolRep::_repo_add_ref(const OmWString& path, bool select)
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  // try to parse package
+  OmModPack ModPack;
+  if(!ModPack.parseSource(path))
+    return false;
+
+  bool is_update = false;
+
+  // check if reference with same identity already exists
+  if(this->_NetRepo->hasReference(ModPack.iden())) {
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Repository Editor", IDI_QRY, L"Duplicate reference",
+                     L"This Mod is already referenced, do you want to update the existing one ?", ModPack.iden()))
+      return true;
+
+    is_update = true;
+  }
+
+  // add reference to Repository
+  this->_NetRepo->addReference(&ModPack);
+
+  // append to ListBox
+  if(!is_update) {
+    // add item to list view
+    LVITEMW lvI = {}; lvI.iItem = this->_NetRepo->referenceCount(); // insert at end of list
+    // Single column, entry path, if it is a file
+    lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE|LVIF_TEXT;
+    lvI.iImage = ICON_MOD_PKG; lvI.pszText = const_cast<LPWSTR>(ModPack.iden().c_str());
+    this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+  }
+
+  if(select) {
+    // select the last ListView entry
+    uint32_t lv_last = this->msgItem(IDC_LV_MOD, LVM_GETITEMCOUNT) - 1;
+    LVITEMW lvI = {}; lvI.state = LVIS_SELECTED;
+    this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, lv_last, reinterpret_cast<LPARAM>(&lvI));
+  }
+
+  // update status bar
+  this->_status_update_references();
+
+  // set unsaved changes
+  this->_set_unsaved(true);
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolRep::_repo_del_ref()
+{
+  // check for ListView selection
+  if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+    return false;
+
+  // get single selection index
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+
+  this->_NetRepo->deleteReference(lv_sel);
+
+  // delete ListView item
+  this->msgItem(IDC_LV_MOD, LVM_DELETEITEM, lv_sel);
+
+  // update reference parameters controls
+  this->_reflist_selchg();
+
+  // update status bar
+  this->_status_update_references();
+
+  // set unsaved changes
+  this->_set_unsaved(true);
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_reference_url_changed(int32_t item)
+{
+  int32_t lv_sel;
+
+  if(item < 0) {
+    // check for ListView selection
+    if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+      return;
+    // get single selection index
+    lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  } else {
+    lv_sel = item;
+  }
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   bool has_changes = false;
 
@@ -666,8 +746,9 @@ void OmUiToolRep::_ref_url_save()
       if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
         Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR, L"Invalid custom download link",
                       L"Download link path or URL is invalid or contain illegal character", ec_content);
-        // force ListBox selection and focus to entry
-        this->msgItem(IDC_LB_MOD, LB_SETCURSEL, lb_sel);
+        // force ListView selection and focus to entry
+        LVITEMW lvI = {}; lvI.state = LVIS_SELECTED;
+        this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, lv_sel, reinterpret_cast<LPARAM>(&lvI));
         SetFocus(this->getItem(IDC_EC_INP03));
       }
 
@@ -697,14 +778,17 @@ void OmUiToolRep::_ref_url_save()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_desc_load()
+void OmUiToolRep::_reference_desc_load()
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  // check for ListView selection
+  if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+    return;
+
+  // get single selection index
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   OmWString open_start, open_result;
 
@@ -721,20 +805,28 @@ void OmUiToolRep::_ref_desc_load()
   SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text.c_str());
 
   // save description
-  this->_ref_desc_save();
+  this->_reference_desc_changed();
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_desc_save()
+void OmUiToolRep::_reference_desc_changed(int32_t item)
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  int32_t lv_sel;
+
+  if(item < 0) {
+    // check for ListView selection
+    if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+      return;
+    // get single selection index
+    lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  } else {
+    lv_sel = item;
+  }
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   // get current reference description data URI
   OmWString ref_uri;
@@ -805,14 +897,17 @@ void OmUiToolRep::_ref_desc_save()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_thumb_set()
+void OmUiToolRep::_reference_thumb_load()
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  // check for ListView selection
+  if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+    return;
+
+  // get single selection index
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   OmWString open_start, open_result;
 
@@ -869,14 +964,17 @@ void OmUiToolRep::_ref_thumb_set()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_thumb_del()
+void OmUiToolRep::_reference_thumb_delete()
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  // check for ListView selection
+  if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+    return;
+
+  // get single selection index
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   bool has_changes = false;
 
@@ -898,7 +996,7 @@ void OmUiToolRep::_ref_thumb_del()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_depends_get(const OmWString& iden, OmWStringArray* missings)
+void OmUiToolRep::_reference_deps_get(const OmWString& iden, OmWStringArray* missings)
 {
   // retrieve reference from identity
   int32_t ref_index = this->_NetRepo->indexOfReference(iden);
@@ -925,7 +1023,7 @@ void OmUiToolRep::_ref_depends_get(const OmWString& iden, OmWStringArray* missin
       }
 
       // recursive check
-      this->_ref_depends_get(dep_iden, missings);
+      this->_reference_deps_get(dep_iden, missings);
     }
   }
 }
@@ -933,19 +1031,22 @@ void OmUiToolRep::_ref_depends_get(const OmWString& iden, OmWStringArray* missin
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_depends_check()
+void OmUiToolRep::_reference_deps_check()
 {
-  // get ListBox current selection
-  int32_t lb_sel = this->msgItem(IDC_LB_MOD, LB_GETCURSEL);
-  if(lb_sel < 0) return;
+  // check for ListView selection
+  if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
+    return;
+
+  // get single selection index
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   // get corresponding reference node
-  OmXmlNode ref_node = this->_NetRepo->getReference(lb_sel);
+  OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
 
   OmWStringArray missings;
 
   // recursive check for dependencies within the repository references
-  this->_ref_depends_get(ref_node.attrAsString(L"ident"), &missings);
+  this->_reference_deps_get(ref_node.attrAsString(L"ident"), &missings);
 
   if(!missings.empty()) {
 
@@ -962,7 +1063,7 @@ void OmUiToolRep::_ref_depends_check()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_browse_add_files()
+void OmUiToolRep::_reflist_add_files()
 {
   // if available, select current active channel library as start location
   OmWString start;
@@ -975,13 +1076,13 @@ void OmUiToolRep::_browse_add_files()
     return;
 
   // run add list thread
-  this->_repo_addlist_start(result);
+  this->_reflist_add_start(result);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_browse_add_directory()
+void OmUiToolRep::_reflist_add_directory()
 {
   // if available, select current active channel library as start location
   OmWString start;
@@ -999,82 +1100,82 @@ void OmUiToolRep::_browse_add_directory()
   Om_lsFileFiltered(&paths, result, L"*." OM_PKG_FILE_EXT, true, true);
 
   // run add list thread
-  this->_repo_addlist_start(paths);
+  this->_reflist_add_start(paths);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_addlist_start(const OmWStringArray& paths)
+void OmUiToolRep::_reflist_add_start(const OmWStringArray& paths)
 {
   // add paths to queue
   for(size_t i = 0; i < paths.size(); ++i)
-    this->_repo_addlist_queue.push_back(paths[i]);
+    this->_reflist_add_queue.push_back(paths[i]);
 
   // launch thread if not already running
-  if(!this->_repo_addlist_hth) {
+  if(!this->_reflist_add_hth) {
 
     // disable buttons
     this->enableItem(IDC_BC_BRW01, false);
     this->enableItem(IDC_BC_BRW02, false);
 
-    this->_repo_addlist_abort = 0;
+    this->_reflist_add_abort = 0;
 
     // launch thread
-    this->_repo_addlist_hth = Om_createThread(OmUiToolRep::_repo_addlist_run_fn, this);
-    this->_repo_addlist_hwo = Om_waitForThread(this->_repo_addlist_hth, OmUiToolRep::_repo_addlist_end_fn, this);
+    this->_reflist_add_hth = Om_createThread(OmUiToolRep::_reflist_add_run_fn, this);
+    this->_reflist_add_hwo = Om_waitForThread(this->_reflist_add_hth, OmUiToolRep::_reflist_add_end_fn, this);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmUiToolRep::_repo_addlist_run_fn(void* ptr)
+DWORD WINAPI OmUiToolRep::_reflist_add_run_fn(void* ptr)
 {
   OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
 
   // Open progress dialog
-  self->_repo_addlist_abort = 0;
-  self->_repo_addlist_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_PKG_ADD, L"Parsing Mod packages", &self->_repo_addlist_abort);
+  self->_reflist_add_abort = 0;
+  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_PKG_ADD, L"Parsing Mod packages", &self->_reflist_add_abort);
 
   // stuff for progress dialog
   OmWString progress_text;
-  int32_t progress_tot = self->_repo_addlist_queue.size();
+  int32_t progress_tot = self->_reflist_add_queue.size();
   int32_t progress_cur = 0;
 
   OmWString file_path;
 
   // try to add each file, silently fail
-  while(self->_repo_addlist_queue.size()) {
+  while(self->_reflist_add_queue.size()) {
 
     // check for abort
-    if(self->_repo_addlist_abort != 0)
+    if(self->_reflist_add_abort != 0)
       break;
 
     // get next file to proceed
-    file_path = self->_repo_addlist_queue.front();
+    file_path = self->_reflist_add_queue.front();
 
     // update progress text
     progress_text = L"Computing checksum: ";
     progress_text += Om_getFilePart(file_path);
-    Om_dlgProgressUpdate(static_cast<HWND>(self->_repo_addlist_hpd), -1, -1, progress_text.c_str());
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_reflist_add_hpd), -1, -1, progress_text.c_str());
 
     // proceed this file
     self->_repo_add_ref(file_path);
 
     // update progress bar
-    Om_dlgProgressUpdate(static_cast<HWND>(self->_repo_addlist_hpd), progress_tot, ++progress_cur, nullptr);
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_reflist_add_hpd), progress_tot, ++progress_cur, nullptr);
 
     #ifdef DEBUG
     Sleep(50); //< for debug
     #endif
 
-    self->_repo_addlist_queue.pop_front();
+    self->_reflist_add_queue.pop_front();
   }
 
   // quit the progress dialog (dialogs must be opened and closed within the same thread)
-  Om_dlgProgressClose(static_cast<HWND>(self->_repo_addlist_hpd));
-  self->_repo_addlist_hpd = nullptr;
+  Om_dlgProgressClose(static_cast<HWND>(self->_reflist_add_hpd));
+  self->_reflist_add_hpd = nullptr;
 
   return 0;
 }
@@ -1082,18 +1183,18 @@ DWORD WINAPI OmUiToolRep::_repo_addlist_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-VOID WINAPI OmUiToolRep::_repo_addlist_end_fn(void* ptr, uint8_t fired)
+VOID WINAPI OmUiToolRep::_reflist_add_end_fn(void* ptr, uint8_t fired)
 {
   OM_UNUSED(fired);
 
   OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
 
-  Om_clearThread(self->_repo_addlist_hth, self->_repo_addlist_hwo);
+  Om_clearThread(self->_reflist_add_hth, self->_reflist_add_hwo);
 
-  self->_repo_addlist_hth = nullptr;
-  self->_repo_addlist_hwo = nullptr;
+  self->_reflist_add_hth = nullptr;
+  self->_reflist_add_hwo = nullptr;
 
-  self->_repo_addlist_queue.clear();
+  self->_reflist_add_queue.clear();
 
   // enable buttons
   self->enableItem(IDC_BC_BRW01, true);
@@ -1125,41 +1226,9 @@ void OmUiToolRep::_onInit()
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Repository editor ");
 
-  // Set menu icons
-  HMENU hMnuFile = this->getPopup(MNU_RE_FILE);
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVAS, Om_getResIconPremult(IDI_BT_SVA));
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
-
-  HMENU hMnuEdit = this->getPopup(MNU_RE_EDIT);
-  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FAD, Om_getResIconPremult(IDI_BT_FAD));
-  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_DAD, Om_getResIconPremult(IDI_BT_DAD));
-  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FRM, Om_getResIconPremult(IDI_BT_FRM));
-
-  HMENU hMnuRef = this->getPopup(MNU_RE_REF);
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBSEL, Om_getResIconPremult(IDI_PIC_ADD));
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBDEL, Om_getResIconPremult(IDI_BT_REM));
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DESCSEL, Om_getResIconPremult(IDI_TXT_ADD));
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DEPCHK, Om_getResIconPremult(IDI_DEP_CHK));
-
   // Set font for description
   HFONT hFt = Om_createFont(14, 400, L"Consolas");
   this->msgItem(IDC_EC_DESC, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
-
-  // Set default package picture
-  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
-
-  // Set buttons icons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));
-  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(IDI_BT_DAD));
-  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_FRM));
-  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_PIC_ADD)); //< Thumbnail Select
-  this->setBmIcon(IDC_BC_RESET, Om_getResIcon(IDI_BT_REM)); //< Thumbnail Erase
-  //this->setBmIcon(IDC_BC_SAV02, Om_getResIcon(IDI_BT_SVD)); //< Description Save
-  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_TXT_ADD)); //< Description Load
-  this->setBmIcon(IDC_BC_CHECK, Om_getResIcon(IDI_DEP_CHK));
 
   // Create the toolbar.
   CreateWindowExW(WS_EX_LEFT, TOOLBARCLASSNAMEW, nullptr, WS_CHILD|TBSTYLE_WRAPABLE|TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
@@ -1188,11 +1257,59 @@ void OmUiToolRep::_onInit()
   this->msgItem(IDC_TB_TOOLS, TB_AUTOSIZE);
   this->showItem(IDC_TB_TOOLS, true);
 
+  // Shared Image list for ListView controls
+  himl = static_cast<OmUiMan*>(this->root())->listViewImgList();
+
+  // Initialize Mod content ListView control with explorer theme
+  this->msgItem(IDC_LV_MOD, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER);
+  SetWindowTheme(this->getItem(IDC_LV_MOD),L"EXPLORER",nullptr);
+  // add column into ListView
+  LVCOLUMNW lvC = {}; lvC.mask = LVCF_WIDTH|LVCF_FMT;
+  // Single column for paths
+  lvC.fmt = LVCFMT_LEFT;
+  lvC.iSubItem = 0; lvC.cx = 300;
+  this->msgItem(IDC_LV_MOD, LVM_INSERTCOLUMNW, lvC.iSubItem, reinterpret_cast<LPARAM>(&lvC));
+  // set shared ImageList
+  this->msgItem(IDC_LV_MOD, LVM_SETIMAGELIST, LVSIL_SMALL, reinterpret_cast<LPARAM>(himl));
+  this->msgItem(IDC_LV_MOD, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(himl));
+
+  // Set default package picture
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+
+  // Set buttons icons
+  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));
+  this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(IDI_BT_DAD));
+  this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_FRM));
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_PIC_ADD)); //< Thumbnail Select
+  this->setBmIcon(IDC_BC_RESET, Om_getResIcon(IDI_BT_REM)); //< Thumbnail Erase
+  //this->setBmIcon(IDC_BC_SAV02, Om_getResIcon(IDI_BT_SVD)); //< Description Save
+  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_TXT_ADD)); //< Description Load
+  this->setBmIcon(IDC_BC_CHECK, Om_getResIcon(IDI_DEP_CHK));
+
+  // Set menu icons
+  HMENU hMnuFile = this->getPopup(MNU_RE_FILE);
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVAS, Om_getResIconPremult(IDI_BT_SVA));
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
+
+  HMENU hMnuEdit = this->getPopup(MNU_RE_EDIT);
+  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FAD, Om_getResIconPremult(IDI_BT_FAD));
+  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_DAD, Om_getResIconPremult(IDI_BT_DAD));
+  this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FRM, Om_getResIconPremult(IDI_BT_FRM));
+
+  HMENU hMnuRef = this->getPopup(MNU_RE_REF);
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBSEL, Om_getResIconPremult(IDI_PIC_ADD));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBDEL, Om_getResIconPremult(IDI_BT_REM));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DESCSEL, Om_getResIconPremult(IDI_TXT_ADD));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DEPCHK, Om_getResIconPremult(IDI_DEP_CHK));
+
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository short description");
   this->_createTooltip(IDC_EC_INP02,  L"Relative or absolute link to downloadable files");
 
-  this->_createTooltip(IDC_LB_MOD,    L"Repository referenced Mod list");
+  this->_createTooltip(IDC_LV_MOD,    L"Repository referenced Mod list");
 
   this->_createTooltip(IDC_BC_BRW01,  L"Add from files");
   this->_createTooltip(IDC_BC_BRW02,  L"Add from directory");
@@ -1219,7 +1336,7 @@ void OmUiToolRep::_onInit()
   this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVAS, MF_GRAYED);
 
   // update selection to enable menu/buttons
-  this->_ref_sel_changed();
+  this->_reflist_selchg();
 
   // reset unsaved changes
   this->_set_unsaved(false);
@@ -1260,7 +1377,8 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_BC_BRW02, half_w-55, base_y+145, 22, 22, true);
   this->_setItemPos(IDC_BC_DEL,   half_w-32, base_y+145, 22, 22, true);
   // Referenced Mods list
-  this->_setItemPos(IDC_LB_MOD, 10, base_y+170, half_w-20, (foot_y-177), true);
+  this->_setItemPos(IDC_LV_MOD, 10, base_y+168, half_w-20, (foot_y-179), true);
+  this->_reflist_resize();
   // - - - - - - - - - - - - - - - - - - - - - - - - - ]
 
 
@@ -1315,20 +1433,35 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
+  if(uMsg == WM_NOTIFY) {
+
+    if(LOWORD(wParam) == IDC_LV_MOD) {
+      switch(reinterpret_cast<NMHDR*>(lParam)->code)
+      {
+      /*
+      case NM_DBLCLK:
+        break;
+
+      case NM_RCLICK:
+        break;
+      */
+      case LVN_ITEMCHANGED: {
+          NMLISTVIEW* nmLv = reinterpret_cast<NMLISTVIEW*>(lParam);
+          // detect only selection changes
+          if((nmLv->uNewState ^ nmLv->uOldState) & LVIS_SELECTED)
+            this->_reflist_selchg(nmLv->iItem, (nmLv->uNewState & LVIS_SELECTED));
+          break;
+        }
+      }
+    }
+
+    return false;
+  }
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))
     {
-    case IDC_LB_MOD: //< Packages list ListBox
-      // check for selection change
-      if(HIWORD(wParam) == LBN_SELCHANGE) {
-        #ifdef DEBUG
-        std::wcout << "DEBUG => OmUiToolRep::_onMsg : IDC_LB_MOD : LBN_SELCHANGE\n";
-        #endif // DEBUG
-        this->_ref_sel_changed();
-      }
-      break;
-
     case IDC_BC_NEW:
       if(HIWORD(wParam) == BN_CLICKED)
         this->_repo_init();
@@ -1373,12 +1506,12 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_BRW01: //< Button : Mod references Add Files
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_browse_add_files();
+        this->_reflist_add_files();
       break;
 
     case IDC_BC_BRW02: //< Button : Mod references Add Directory
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_browse_add_directory();
+        this->_reflist_add_directory();
       break;
 
     case IDC_BC_DEL:
@@ -1391,40 +1524,40 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->enableItem(IDC_EC_INP03, true);
       } else {
         this->setItemText(IDC_EC_INP03, L"");
-        this->_ref_url_save();
+        this->_reference_url_changed();
         this->enableItem(IDC_EC_INP03, false);
       }
       break;
 
     case IDC_EC_INP03: //< Custon URL EditText
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_ref_url_save();
+        this->_reference_url_changed();
       break;
 
     case IDC_BC_BRW03: //< Thumbnail "Select..." Button
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_ref_thumb_set();
+        this->_reference_thumb_load();
       break;
 
     case IDC_BC_RESET: //< Thumbnail "Delete" Button
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_ref_thumb_del();
+        this->_reference_thumb_delete();
       break;
 
     case IDC_BC_BRW04: //< Description "Load.." Button
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_ref_desc_load();
+        this->_reference_desc_load();
       break;
 
     case IDC_EC_DESC: //< Description EditText
       // check for content changes
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_ref_desc_save();
+        this->_reference_desc_changed();
       break;
 
     case IDC_BC_CHECK: //< Dependencies "Check" Button
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_ref_depends_check();
+        this->_reference_deps_check();
       break;
 
     case IDM_FILE_NEW:
@@ -1448,11 +1581,11 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_ENTRY_FADD:
-      this->_browse_add_files();
+      this->_reflist_add_files();
       break;
 
     case IDM_ENTRY_DADD:
-      this->_browse_add_directory();
+      this->_reflist_add_directory();
       break;
 
     case IDM_ENTRY_DEL:
@@ -1460,19 +1593,19 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_THMB_SEL:
-      this->_ref_thumb_set();
+      this->_reference_thumb_load();
       break;
 
     case IDM_THMB_DEL:
-      this->_ref_thumb_del();
+      this->_reference_thumb_delete();
       break;
 
     case IDM_DESC_SEL:
-      this->_ref_desc_load();
+      this->_reference_desc_load();
       break;
 
     case IDM_DEP_CHK:
-      this->_ref_depends_check();
+      this->_reference_deps_check();
       break;
     }
   }

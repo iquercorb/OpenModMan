@@ -101,6 +101,8 @@ void OmUiManMainLib::importMods()
 
   this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
   this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
+
+  // TODO: Implementer l'import de Mod-directory avec conversion automatique en Package
 }
 
 ///
@@ -167,11 +169,6 @@ void OmUiManMainLib::deleteSources()
   lvI.mask = LVIF_STATE; lvI.stateMask = LVIS_SELECTED;
   this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
 
-  // stop monitory to avoid real-time library refresh while deleting files which
-  // can cause access violation to unallocated memory (deleted Package)
-  //this->_UiMan->monitorLibrary(false);
-  // TODO: Implementer une sécurité ici ou vérifier que rien ne peut se casser
-
   for(size_t i = 0; i < selection.size(); ++i) {
 
     OmModPack* ModPack = selection[i];
@@ -194,9 +191,6 @@ void OmUiManMainLib::deleteSources()
   this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, 0);
   this->msgItem(IDC_PB_MOD, PBM_SETPOS, 0);
   this->enableItem(IDC_PB_MOD, false);
-
-  // restart library directory monitor, refresh and repopulate Listview
-  //this->_UiMan->monitorLibrary(true);
 }
 
 ///
@@ -1206,10 +1200,10 @@ void OmUiManMainLib::_lv_mod_on_selchg()
     OmModPack* ModPack = nullptr;
 
     // scan selection to check what can be done
-    int32_t lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    while(lv_sl != -1) {
+    int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sel != -1) {
 
-      ModPack = ModChan->getModpack(lv_sl);
+      ModPack = ModChan->getModpack(lv_sel);
 
       if(ModPack->hasBackup()) {
         can_restore = true;
@@ -1220,7 +1214,7 @@ void OmUiManMainLib::_lv_mod_on_selchg()
       }
 
       // next selected item
-      lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+      lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
     }
 
     // if single selection show mod pack overview
@@ -1275,10 +1269,10 @@ void OmUiManMainLib::_lv_mod_on_rclick()
     bool can_cleanng = false;
 
     // scan selection to check what can be done
-    int32_t lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    while(lv_sl != -1) {
+    int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    while(lv_sel != -1) {
 
-      OmModPack* ModPack = ModChan->getModpack(lv_sl);
+      OmModPack* ModPack = ModChan->getModpack(lv_sel);
 
       if(ModPack->hasBackup()) {
         can_restore = true;
@@ -1289,7 +1283,7 @@ void OmUiManMainLib::_lv_mod_on_rclick()
       }
 
       // next selected item
-      lv_sl = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sl, LVNI_SELECTED);
+      lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
     }
 
     this->setPopupItem(hPopup, POP_MOD_INST, can_install ? MF_ENABLED:MF_GRAYED);

@@ -41,10 +41,12 @@ enum OmLvIconsId : int
   ICON_MOD_ERR = 16,
   ICON_CHN = 17,
   ICON_PST = 18,
-  ICON_REP = 19
+  ICON_REP = 19,
+  ICON_FIL = 20,
+  ICON_DIR = 21
 };
 
-#define OM_LISTVIEW_ICON_COUNT       20
+#define OM_LISTVIEW_ICON_COUNT       22
 
 inline void Om_setupLvIconsDb(unsigned* icon_db)
 {
@@ -68,6 +70,8 @@ inline void Om_setupLvIconsDb(unsigned* icon_db)
   icon_db[ICON_CHN]     = IDB_ITM_CHN;
   icon_db[ICON_PST]     = IDB_ITM_PST;
   icon_db[ICON_REP]     = IDB_ITM_REP;
+  icon_db[ICON_FIL]     = IDB_ITM_FIL;
+  icon_db[ICON_DIR]     = IDB_ITM_DIR;
 }
 
 enum OmTbIconsId : int
@@ -213,16 +217,16 @@ inline void Om_setupTbIconsDb(unsigned* icon_db)
 /// Positions constants for main menu
 ///
 #define MNU_ME_FILE          static_cast<unsigned>(0)
-    #define MNU_ME_FILE_NEW     0
-        #define MNU_ME_FILE_NEW_DEF   0
-    // ------------------------ 1
-    #define MNU_ME_FILE_OPEN    2
-    #define MNU_ME_FILE_BUIL    3
-    // ------------------------ 4
-    #define MNU_ME_FILE_SAVE    5
-    #define MNU_ME_FILE_SAVAS   6
-    // ------------------------ 7
-    #define MNU_ME_FILE_QUIT    8
+    //#define MNU_ME_FILE_NEW     0
+    //    #define MNU_ME_FILE_NEW_DEF   0
+    //// ------------------------ 1
+    #define MNU_ME_FILE_OPEN    0
+    #define MNU_ME_FILE_BUIL    1
+    // ------------------------ 2
+    #define MNU_ME_FILE_SAVE    3
+    #define MNU_ME_FILE_SAVAS   4
+    // ------------------------ 5
+    #define MNU_ME_FILE_QUIT    6
 
 #define MNU_ME_EDIT          1
     #define MNU_ME_EDIT_THMBSEL 0

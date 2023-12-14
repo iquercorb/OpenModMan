@@ -490,17 +490,6 @@ class OmModChan
     ///
     bool hasBackupData();
 
-    /// \brief Purge backup data.
-    ///
-    /// Uninstall all installed packages to restore and delete all backup data.
-    ///
-    /// \param[in]  progress_cb : Optional progression callback function.
-    /// \param[in]  user_ptr    : Optional pointer to user data passed to progression callback.
-    ///
-    /// \return True if operation succeed, false if error occurred.
-    ///
-    bool purgeBackupData(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
-
     /// \brief Clear Metwork Library
     ///
     /// Clear the Network Mod Library list.

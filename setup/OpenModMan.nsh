@@ -23,11 +23,11 @@
 !define REL_32_EXE        "..\bin\32-bit\Release\OpenModMan.exe"
 
 !define CURL_32_DLL       "..\dll\32-bit\libcurl.dll"
-!define LZMA_64_DLL       "..\dll\32-bit\liblzma.dll"
-!define ZSTD_64_DLL       "..\dll\32-bit\libzstd.dll"
-!define ZLIB_64_DLL       "..\dll\32-bit\zlib1.dll"
+!define LZMA_32_DLL       "..\dll\32-bit\liblzma.dll"
+!define ZSTD_32_DLL       "..\dll\32-bit\libzstd.dll"
+!define ZLIB_32_DLL       "..\dll\32-bit\zlib1.dll"
 
-!define OM_ICO           "..\res\images\omm_icon.ico"
+!define OMM_ICO           "..\res\images\omm_icon.ico"
 !define OMB_ICO           "..\res\images\omb_icon.ico"
 !define OMX_ICO           "..\res\images\omx_icon.ico"
 !define OZP_ICO           "..\res\images\ozp_icon.ico"
