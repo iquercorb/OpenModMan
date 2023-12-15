@@ -98,6 +98,10 @@ class OmUiToolPkg : public OmDialog
 
     int32_t             _method_cache;
 
+    bool                _method_compare();
+
+    bool                _method_unsaved;
+
     // package management
     void                _modpack_close();
 
@@ -151,12 +155,20 @@ class OmUiToolPkg : public OmDialog
 
     void                _categ_changed();
 
+    bool                _categ_compare();
+
+    bool                _categ_unsaved;
+
     OmWString           _categ_cache;
 
     // thumbnail management
     void                _thumb_toggle();
 
     void                _thumb_load();
+
+    bool                _thumb_compare();
+
+    bool                _thumb_unsaved;
 
     OmImage             _thumb_cache;
 
@@ -166,6 +178,10 @@ class OmUiToolPkg : public OmDialog
     void                _desc_load();
 
     void                _desc_changed();
+
+    bool                _desc_compare();
+
+    bool                _desc_unsaved;
 
     OmWString           _desc_cache;
 
@@ -183,6 +199,10 @@ class OmUiToolPkg : public OmDialog
     void                _depend_add_show(bool show);
 
     void                _depend_add_valid();
+
+    bool                _depend_compare();
+
+    bool                _depend_unsaved;
 
     OmWStringArray      _depend_cache;
 

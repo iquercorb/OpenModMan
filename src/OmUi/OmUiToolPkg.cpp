@@ -97,14 +97,18 @@ OmUiToolPkg::OmUiToolPkg(HINSTANCE hins) : OmDialog(hins),
   _ModPack(new OmModPack(nullptr)),
   _has_unsaved(false),
   _method_cache(-1),
+  _method_unsaved(false),
   _modpack_save_abort(0),
   _modpack_save_hth(nullptr),
   _modpack_save_hwo(nullptr),
-  _modpack_save_hdp(nullptr)
+  _modpack_save_hdp(nullptr),
+  _categ_unsaved(false),
+  _thumb_unsaved(false),
+  _desc_unsaved(false),
+  _depend_unsaved(false)
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -193,40 +197,7 @@ int32_t OmUiToolPkg::_ask_unsaved()
 ///
 bool OmUiToolPkg::_has_changes()
 {
-  // check for compression method difference
-  if(this->_ModPack->hasSource()) {
-    int32_t cb_sel = this->msgItem(IDC_CB_ZMD, CB_GETCURSEL);
-    if(this->_method_cache != this->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, cb_sel))
-      return true;
-  }
-
-  // check for category difference
-  if(this->_ModPack->category().empty()) {
-    if(this->msgItem(IDC_CB_CAT, CB_GETCURSEL) != 0)
-      return true;
-  } else {
-    if(!Om_namesMatches(this->_ModPack->category(), this->_categ_cache))
-       return true;
-  }
-
-  // check for description difference
-  if(this->_ModPack->description() != this->_desc_cache)
-    return true;
-
-  // check for dependencies differences
-  if(this->_ModPack->dependCount() != this->_depend_cache.size()) {
-
-    return true;
-
-  } else {
-
-    for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
-      if(Om_arrayContain(this->_depend_cache, this->_ModPack->getDependIden(i)))
-        return true;
-  }
-
-  // finally check for thumbnail difference (potentially the most costly)
-  if(this->_ModPack->thumbnail() != this->_thumb_cache)
+  if(this->_method_unsaved || this->_categ_unsaved || this->_thumb_unsaved || this->_desc_unsaved || this->_depend_unsaved)
     return true;
 
   return false;
@@ -319,8 +290,27 @@ void OmUiToolPkg::_check_zip_method()
   }
 
   // check for changes
-  if(this->_ModPack->hasSource())
+  if(this->_ModPack->hasSource()) {
+    this->_method_compare();
     this->_set_unsaved(this->_has_changes());
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_method_compare()
+{
+  this->_method_unsaved = false;
+
+  // check for compression method difference
+  if(this->_ModPack->hasSource()) {
+    int32_t cb_sel = this->msgItem(IDC_CB_ZMD, CB_GETCURSEL);
+    if(this->_method_cache != this->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, cb_sel))
+      this->_method_unsaved = true;
+  }
+
+  return this->_method_unsaved;
 }
 
 ///
@@ -898,6 +888,7 @@ void OmUiToolPkg::_categ_select()
   // check whether user selected the last item (GENERIC)
   if(cb_sel == this->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1) {
 
+    this->_categ_cache = L"";
     this->enableItem(IDC_EC_INP07, true);
     this->setItemText(IDC_EC_INP07, this->_categ_cache);
 
@@ -911,6 +902,7 @@ void OmUiToolPkg::_categ_select()
   }
 
   // check for changes
+  this->_categ_compare();
   this->_set_unsaved(this->_has_changes());
 }
 
@@ -925,8 +917,28 @@ void OmUiToolPkg::_categ_changed()
     this->getItemText(IDC_EC_INP07, this->_categ_cache);
 
     // check for changes
+    this->_categ_compare();
     this->_set_unsaved(this->_has_changes());
   }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_categ_compare()
+{
+  this->_categ_unsaved = false;
+
+  // check for category difference
+  if(this->_ModPack->category().empty()) {
+    if(this->msgItem(IDC_CB_CAT, CB_GETCURSEL) != 0)
+      this->_categ_unsaved = true;
+  } else {
+    if(!Om_namesMatches(this->_ModPack->category(), this->_categ_cache))
+       this->_categ_unsaved = true;
+  }
+
+  return this->_categ_unsaved;
 }
 
 ///
@@ -963,6 +975,7 @@ void OmUiToolPkg::_thumb_toggle()
   }
 
   // check for changes
+  this->_thumb_compare();
   this->_set_unsaved(this->_has_changes());
 
   if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
@@ -992,7 +1005,22 @@ void OmUiToolPkg::_thumb_load()
   }
 
   // check for changes
+  this->_thumb_compare();
   this->_set_unsaved(this->_has_changes());
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_thumb_compare()
+{
+  this->_thumb_unsaved = false;
+
+  // finally check for thumbnail difference (potentially the most costly)
+  if(this->_ModPack->thumbnail() != this->_thumb_cache)
+    this->_thumb_unsaved = true;
+
+  return this->_thumb_unsaved;
 }
 
 ///
@@ -1014,6 +1042,7 @@ void OmUiToolPkg::_desc_toggle()
   }
 
   // check for changes
+  this->_desc_compare();
   this->_set_unsaved(this->_has_changes());
 
   this->setItemText(IDC_EC_DESC, this->_desc_cache);
@@ -1041,6 +1070,7 @@ void OmUiToolPkg::_desc_load()
   this->setItemText(IDC_EC_DESC, this->_desc_cache);
 
   // check for changes
+  this->_desc_compare();
   this->_set_unsaved(this->_has_changes());
 }
 
@@ -1055,9 +1085,25 @@ void OmUiToolPkg::_desc_changed()
     this->getItemText(IDC_EC_DESC, this->_desc_cache);
 
     // check for changes
+    this->_desc_compare();
     this->_set_unsaved(this->_has_changes());
   }
 }
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_desc_compare()
+{
+  this->_desc_unsaved = false;
+
+  // check for description difference
+  if(this->_ModPack->description() != this->_desc_cache)
+    this->_desc_unsaved = true;
+
+  return this->_desc_unsaved;
+}
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1093,6 +1139,7 @@ void OmUiToolPkg::_depend_toggle()
   this->_depend_populate();
 
   // check for changes
+  this->_depend_compare();
   this->_set_unsaved(this->_has_changes());
 }
 
@@ -1122,6 +1169,7 @@ void OmUiToolPkg::_depend_delete()
   this->_depend_sel_changed();
 
   // check for changes
+  this->_depend_compare();
   this->_set_unsaved(this->_has_changes());
 }
 
@@ -1153,6 +1201,7 @@ void OmUiToolPkg::_depend_browse()
   this->_depend_sel_changed();
 
   // check for changes
+  this->_depend_compare();
   this->_set_unsaved(this->_has_changes());
 }
 
@@ -1193,7 +1242,31 @@ void OmUiToolPkg::_depend_add_valid()
   this->_depend_add_show(false);
 
   // check for changes
+  this->_depend_compare();
   this->_set_unsaved(this->_has_changes());
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_depend_compare()
+{
+
+  this->_depend_unsaved = false;
+
+  // check for dependencies differences
+  if(this->_ModPack->dependCount() != this->_depend_cache.size()) {
+
+    this->_depend_unsaved = true;
+
+  } else {
+
+    for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
+      if(Om_arrayContain(this->_depend_cache, this->_ModPack->getDependIden(i)))
+        this->_depend_unsaved = true;
+  }
+
+  return this->_depend_unsaved;
 }
 
 ///
@@ -1564,8 +1637,8 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_EC_INP07: //< Entry : Custom Category
-      //if(HIWORD(wParam) == EN_CHANGE)
-      if(HIWORD(wParam) == EN_KILLFOCUS)
+      if(HIWORD(wParam) == EN_CHANGE)
+      //if(HIWORD(wParam) == EN_KILLFOCUS)
         this->_categ_changed();
       break;
 
@@ -1606,8 +1679,8 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_EC_DESC: //< Entry : Description entry
-      //if(HIWORD(wParam) == EN_CHANGE)
-      if(HIWORD(wParam) == EN_KILLFOCUS)
+      if(HIWORD(wParam) == EN_CHANGE)
+      //if(HIWORD(wParam) == EN_KILLFOCUS)
         this->_desc_changed();
       break;
 
