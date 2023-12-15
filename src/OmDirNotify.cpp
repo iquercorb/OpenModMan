@@ -225,8 +225,12 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
           std::wcout << L"DEBUG => OmDirNotify : File Add (Rename) (" << FileName << L")\n";
           #endif // DEBUG
 
-          if(self->_notify_cb)
-            self->_notify_cb(self->_user_ptr, OM_NOTIFY_CREATED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+          // In case of file rename, the system send both FILE_ACTION_RENAMED_NEW_NAME
+          // and FILE_ACTION_ADDED, so to prevent concurrency bug due to notification
+          // called twice from two threads, we add to queue like another file creation,
+          // verifying it is not already in queue.
+
+          Om_push_backUnique(self->_added_queue, FilePath);
 
           break;
         }
