@@ -237,6 +237,13 @@ bool OmUiToolPkg::_has_changes()
 ///
 void OmUiToolPkg::_reset_controls()
 {
+  // reset all cached data
+  this->_method_cache = -1;
+  this->_content_cache.clear();
+  this->_categ_cache.clear();
+  this->_thumb_cache.clear();
+  this->_desc_cache.clear();
+  this->_depend_cache.clear();
 
   // empty controls
   this->setItemText(IDC_EC_INP01, L"");
@@ -329,14 +336,6 @@ void OmUiToolPkg::_modpack_close()
   // new Mod-Package
   this->_ModPack->clearAll();
 
-  // reset all cached data
-  this->_method_cache = -1;
-  this->_content_cache.clear();
-  this->_categ_cache.clear();
-  this->_thumb_cache.clear();
-  this->_desc_cache.clear();
-  this->_depend_cache.clear();
-
   // resets all controls to initial state
   this->_reset_controls();
 
@@ -354,14 +353,6 @@ void OmUiToolPkg::_modpack_new()
 
   // new Mod-Package
   this->_ModPack->clearAll();
-
-  // reset all cached data
-  this->_method_cache = -1;
-  this->_content_cache.clear();
-  this->_categ_cache.clear();
-  this->_thumb_cache.clear();
-  this->_desc_cache.clear();
-  this->_depend_cache.clear();
 
   // resets all controls to initial state
   this->_reset_controls();
@@ -522,14 +513,6 @@ void OmUiToolPkg::_modpack_save()
 ///
 bool OmUiToolPkg::_modpack_parse(const OmWString& path)
 {
-  // reset all cached data
-  this->_method_cache = -1;
-  this->_content_cache.clear();
-  this->_categ_cache.clear();
-  this->_thumb_cache.clear();
-  this->_desc_cache.clear();
-  this->_depend_cache.clear();
-
   // resets all controls to initial state
   this->_reset_controls();
 
@@ -700,6 +683,10 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
 DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(ptr);
+
+  // ensure "cache" are up to date
+  self->_categ_changed();
+  self->_desc_changed();
 
   // set cached data to local instance
   self->_ModPack->setCategory(self->_categ_cache);
@@ -984,7 +971,7 @@ void OmUiToolPkg::_thumb_toggle()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_reference_thumb_load()
+void OmUiToolPkg::_thumb_load()
 {
   OmWString open_start, open_result;
 
@@ -1035,7 +1022,7 @@ void OmUiToolPkg::_desc_toggle()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_reference_desc_load()
+void OmUiToolPkg::_desc_load()
 {
   OmWString open_start, open_result;
 
@@ -1060,7 +1047,7 @@ void OmUiToolPkg::_reference_desc_load()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_reference_desc_changed()
+void OmUiToolPkg::_desc_changed()
 {
   // we keep a local copy of the last edited text to restore it
   if(IsWindowEnabled(this->getItem(IDC_EC_DESC))) {
@@ -1589,14 +1576,14 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_BRW03: //< Button : Description: Load
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_reference_thumb_load();
+        this->_thumb_load();
       break;
 
     case IDM_THMB_SEL: //< Menu: Add thumbnail
       {
         this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
         this->_thumb_toggle();
-        this->_reference_thumb_load();
+        this->_thumb_load();
       }
       break;
 
@@ -1607,21 +1594,21 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_BRW04: //< Button : Description: Load
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_reference_desc_load();
+        this->_desc_load();
       break;
 
     case IDM_DESC_SEL: //< Menu: Add thumbnail
       {
         this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
         this->_desc_toggle();
-        this->_reference_desc_load();
+        this->_desc_load();
       }
       break;
 
     case IDC_EC_DESC: //< Entry : Description entry
       //if(HIWORD(wParam) == EN_CHANGE)
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_reference_desc_changed();
+        this->_desc_changed();
       break;
 
     case IDC_BC_CKBX3: //< CheckBox: Dependencies

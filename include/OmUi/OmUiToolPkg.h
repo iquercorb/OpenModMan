@@ -156,16 +156,16 @@ class OmUiToolPkg : public OmDialog
     // thumbnail management
     void                _thumb_toggle();
 
-    void                _reference_thumb_load();
+    void                _thumb_load();
 
     OmImage             _thumb_cache;
 
     // description management
     void                _desc_toggle();
 
-    void                _reference_desc_load();
+    void                _desc_load();
 
-    void                _reference_desc_changed();
+    void                _desc_changed();
 
     OmWString           _desc_cache;
 
