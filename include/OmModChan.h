@@ -176,13 +176,26 @@ class OmModChan
     ///
     /// Copy specified files into local Library
     ///
-    /// \param[in] files        : Array of file paths to import
+    /// \param[in] files        : Array of file paths to copy into library
     /// \param[in] progress_cb  : Callback for process progression
     /// \param[in] user_ptr     : Custom pointer passed to callback
     ///
     /// \return Operation result code
     ///
-    OmResult importMods(const OmWStringArray& files, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    OmResult addToLibrary(const OmWStringArray& files, Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+
+    /// \brief Import Mods
+    ///
+    /// Convert the specified directories to Mod-packages saved into local Library
+    ///
+    /// \param[in] paths        : Array of paths to parse and build into library
+    /// \param[in] progress_cb  : Callback for process progression
+    /// \param[in] compress_cb  : Callback for compression process
+    /// \param[in] user_ptr     : Custom pointer passed to callback
+    ///
+    /// \return Operation result code
+    ///
+    OmResult importToLibrary(const OmWStringArray& paths, Om_progressCb progress_cb = nullptr, Om_progressCb compress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Library Mod Count
     ///
@@ -997,7 +1010,7 @@ class OmModChan
     /// \return Zip compression method.
     ///
     int backupCompMethod() const {
-      return _backup_method_cache;
+      return _backup_method;
     }
 
     /// \brief Get backup compression method.
@@ -1007,7 +1020,7 @@ class OmModChan
     /// \return Zip compression method.
     ///
     int backupCompLevel() const {
-      return _backup_comp_level;
+      return _backup_level;
     }
 
     /// \brief Set Backup compression level.
@@ -1416,9 +1429,9 @@ class OmModChan
 
     bool                  _warn_extra_inst;
 
-    int32_t               _backup_method_cache;
+    int32_t               _backup_method;
 
-    int32_t               _backup_comp_level;
+    int32_t               _backup_level;
 
     bool                  _warn_extra_unin;
 

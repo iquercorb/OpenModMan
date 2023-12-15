@@ -43,15 +43,15 @@ from one location to another.
 
 Open Mod Mananager currently implements the following key features:
 
-- Mdular and flexible usage with Hubs and Channels.
-- Allow custom directories everywhere.
-- Support Mods as directory or 'Packaged' archive files.
-- Mods dependencies mechanism.
-- Safe overlapped Mods apply.
-- Compressed backup data.
-- Resumable downloads.
-- Packaged Mod editor.
-- Network repository editor.
+- Mdular and flexible usage with Hubs and Channels
+- Allow custom directories everywhere
+- Support Mods as directory or 'Packaged' archive files
+- Online Mod repositories mechanism with resumable downloads
+- Mods dependencies mechanism
+- Mods safe overlapped install and restoration
+- Compressed Mods backup data
+- Tools and features for Mod creators
+- Tools and features for Mod repository managers
 
 - Presets mechanism for automatic Mods apply sequences.
 - Network repositories for remote packages distribution and download.

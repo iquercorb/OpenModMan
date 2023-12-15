@@ -33,7 +33,7 @@ OmUiPropNet::OmUiPropNet(HINSTANCE hins) : OmDialogProp(hins),
   _NetPack(nullptr)
 {
   // create child tab dialogs
-  this->_addPage(L"Main", new OmUiPropNetDet(hins));
+  this->_addPage(L"General", new OmUiPropNetDet(hins));
   this->_setNoChange(true);
 }
 

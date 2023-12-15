@@ -103,6 +103,8 @@ Section "Install (required)"
   WriteRegStr HKCR ".omx" "Content Type" "application/xml"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml" "" "${APP_NAME} Open Mod XML definition"
+  WriteRegStr HKCR "${APP_REG_NAME}.Context\shell" "" "open"
+  WriteRegStr HKCR "${APP_REG_NAME}.Context\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
 
 SectionEnd
 

@@ -193,6 +193,16 @@ class OmImage
       return _height;
     }
 
+    /// \brief Image bytes per pixel
+    ///
+    /// Get stored image bytes per pixel
+    ///
+    /// \return Bytes per pixel
+    ///
+    unsigned bpp() const {
+      return 4; //< yes this is a constant
+    }
+
     /// \brief Get thumbnail.
     ///
     /// Get the previously generated thumbnail bitmap.

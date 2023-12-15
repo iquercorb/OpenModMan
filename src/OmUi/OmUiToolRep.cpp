@@ -57,7 +57,8 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
   _reflist_add_hwo(nullptr),
   _reflist_add_hpd(nullptr)
 {
-
+  // set the accelerator table for the dialog
+  this->setAccel(IDR_ACCEL);
 }
 
 ///
@@ -515,12 +516,12 @@ void OmUiToolRep::_reflist_selchg(int32_t item, bool selected)
       }
 
       // check for thumbnail
-      if(ref_node.hasChild(L"picture")) {
+      if(ref_node.hasChild(L"thumbnail")) {
 
         // decode the DataURI
         size_t jpg_size;
         OmWString mimetype, charset;
-        uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"picture").content());
+        uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"thumbnail").content());
 
         // load Jpeg image
         if(jpg_data) {
@@ -928,7 +929,7 @@ void OmUiToolRep::_reference_thumb_load()
 
     // Encode RGBA to JPEG
     uint64_t jpg_size;
-    uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, image.data(), image.width(), image.height(), 4, 7);
+    uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, image.data(), image.width(), image.height(), image.bpp());
 
     if(jpg_data) {
       // format jpeg to base64 encoded data URI
@@ -936,10 +937,10 @@ void OmUiToolRep::_reference_thumb_load()
       Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg_data, jpg_size);
 
       // set node content to data URI string
-      if(ref_node.hasChild(L"picture")) {
-        ref_node.child(L"picture").setContent(data_uri);
+      if(ref_node.hasChild(L"thumbnail")) {
+        ref_node.child(L"thumbnail").setContent(data_uri);
       } else {
-        ref_node.addChild(L"picture").setContent(data_uri);
+        ref_node.addChild(L"thumbnail").setContent(data_uri);
       }
 
       has_changes = true;
@@ -979,9 +980,9 @@ void OmUiToolRep::_reference_thumb_delete()
   bool has_changes = false;
 
   // set node content to data URI string
-  if(ref_node.hasChild(L"picture")) {
+  if(ref_node.hasChild(L"thumbnail")) {
 
-    ref_node.remChild(L"picture");
+    ref_node.remChild(L"thumbnail");
     has_changes = true;
 
     // set thumbnail placeholder image
@@ -1136,7 +1137,7 @@ DWORD WINAPI OmUiToolRep::_reflist_add_run_fn(void* ptr)
 
   // Open progress dialog
   self->_reflist_add_abort = 0;
-  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_PKG_ADD, L"Parsing Mod packages", &self->_reflist_add_abort);
+  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_MOD_ADD, L"Parsing Mod packages", &self->_reflist_add_abort);
 
   // stuff for progress dialog
   OmWString progress_text;

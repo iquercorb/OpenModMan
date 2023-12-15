@@ -28,10 +28,10 @@
 #include "OmUiMan.h"
 #include "OmUiManMain.h"
 #include "OmUiManFoot.h"
-#include "OmUiAddChn.h"
-#include "OmUiAddPst.h"
+//#include "OmUiAddChn.h"
+//#include "OmUiAddPst.h"
 #include "OmUiPropMod.h"
-#include "OmUiPropPst.h"
+//#include "OmUiPropPst.h"
 #include "OmUiToolPkg.h"
 
 #include "OmUtilFs.h"
@@ -48,6 +48,7 @@
 ///
 OmUiManMainLib::OmUiManMainLib(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
+  _import_build(false),
   _import_abort(false),
   _import_hdp(nullptr),
   _import_hth(nullptr),
@@ -84,7 +85,7 @@ long OmUiManMainLib::id() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::importMods()
+void OmUiManMainLib::addToLibrary()
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
@@ -96,8 +97,38 @@ void OmUiManMainLib::importMods()
 
   // new dialog to open file (allow multiple selection)
   this->_import_array.clear();
-  if(!Om_dlgOpenFileMultiple(this->_import_array, this->_hwnd, L"Open Mod package", OM_PKG_FILES_FILTER, start))
+  if(!Om_dlgOpenFileMultiple(this->_import_array, this->_hwnd, L"Select Mod-package to add", OM_PKG_FILES_FILTER, start))
     return;
+
+  // this is simple Mod add to library
+  this->_import_build = false;
+
+  this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
+  this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
+
+  // TODO: Implementer l'import de Mod-directory avec conversion automatique en Package
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainLib::importToLibrary()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  if(this->_import_hth)
+    return;
+
+  OmWString start;
+
+  // new dialog to open file (allow multiple selection)
+  this->_import_array.clear();
+  if(!Om_dlgOpenDirMultiple(this->_import_array, this->_hwnd, L"Select Mod-directories to import", start))
+    return;
+
+  // this is true Mod build/import
+  this->_import_build = true;
 
   this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
   this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
@@ -142,7 +173,7 @@ void OmUiManMainLib::deleteSources()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  if(!Om_dlgBox_yn(this->_hwnd, L"Delete Mods", IDI_PKG_DEL, L"Delete Mods",
+  if(!Om_dlgBox_yn(this->_hwnd, L"Delete Mods", IDI_MOD_DEL, L"Delete Mods",
                     L"Move the selected Mods to recycle bin ?")) return;
 
   OmPModPackArray selection;
@@ -205,7 +236,7 @@ void OmUiManMainLib::discardBackups()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  if(!Om_dlgBox_yn(this->_hwnd, L"Discard backup data", IDI_PKG_WRN, L"Deleting backup data",
+  if(!Om_dlgBox_yn(this->_hwnd, L"Discard backup data", IDI_MOD_WRN, L"Deleting backup data",
                   L"Selected Mods backup data will be deleted so no longer can be restored, continue anyway ?"))
                   return;
 
@@ -313,18 +344,18 @@ void OmUiManMainLib::editSource()
   if(ModPack) {
 
     OmUiToolPkg* UiToolPkg = static_cast<OmUiToolPkg*>(this->_UiMan->childById(IDD_TOOL_PKG));
-/*
+
     if(UiToolPkg->visible()) {
 
-      UiToolPkg->selectSource(ModPack->sourcePath());
+      UiToolPkg->parseSource(ModPack->sourcePath());
 
     } else {
 
-      UiToolPkg->setSource(ModPack->sourcePath());
+      UiToolPkg->setInitParse(ModPack->sourcePath());
 
       UiToolPkg->modeless(true);
     }
-*/
+
   }
 }
 
@@ -565,7 +596,7 @@ void OmUiManMainLib::queueCleaning(bool silent)
 
   // check and warn for extra uninstall due to dependencies
   if(!silent && depends.size() && ModChan->warnExtraUnin()) {
-    if(!Om_dlgBox_cal(this->_hwnd, L"Clean uninstall Mods", IDI_PKG_DEL, L"Unused dependency Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, L"Clean uninstall Mods", IDI_MOD_DEL, L"Unused dependency Mods",
                       L"The following dependency Mods will no longer be used by any another so will be also uninstalled:",
                       Om_concatStrings(depends, L"\r\n")))
       return;
@@ -698,9 +729,18 @@ DWORD WINAPI OmUiManMainLib::_import_run_fn(void* ptr)
 
   // Open progress dialog
   HWND hParent = self->root()->hwnd(); //< we must provide main dialog handle or things goes wrong
-  self->_import_hdp = Om_dlgProgress(hParent, L"Import Mods", IDI_PKG_ADD, L"Importing Mods", &self->_import_abort);
 
-  OmResult result = ModChan->importMods(self->_import_array, OmUiManMainLib::_import_progress_fn, self);
+  OmResult result;
+
+  if(self->_import_build) {
+    // true importation with mod building from directories
+    self->_import_hdp = Om_dlgProgress(hParent, L"Import to Library", IDI_MOD_ADD, L"Importing Mods to Library", &self->_import_abort, OM_DLGBOX_DUAL_BARS);
+    result = ModChan->importToLibrary(self->_import_array, OmUiManMainLib::_import_progress_fn, OmUiManMainLib::_import_compress_fn, self);
+  } else {
+    // simple importation, copying files to library
+    self->_import_hdp = Om_dlgProgress(hParent, L"Add to Library", IDI_MOD_ADD, L"Adding Mods to Library", &self->_import_abort);
+    result = ModChan->addToLibrary(self->_import_array, OmUiManMainLib::_import_progress_fn, self);
+  }
 
   // quit the progress dialog (dialogs must be opened and closed within the same thread)
   Om_dlgProgressClose(static_cast<HWND>(self->_import_hdp));
@@ -716,10 +756,43 @@ bool OmUiManMainLib::_import_progress_fn(void* ptr, size_t tot, size_t cur, uint
 {
   OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
-  // update progress text
-  OmWString progress_text = L"Copying Mod package: ";
-  progress_text += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
-  Om_dlgProgressUpdate(static_cast<HWND>(self->_import_hdp), tot, cur, progress_text.c_str());
+  if(self->_import_build) {
+
+    // preparing text
+    self->_import_str = L"Building ";
+    self->_import_str += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
+    self->_import_str += L": ";
+
+    // update progress bar only
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_import_hdp), tot, cur, nullptr, 1); //< secondary bar
+
+  } else {
+
+    // preparing text
+    self->_import_str = L"Copying Mod package: ";
+    self->_import_str += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
+
+    // update progress bar + text
+    Om_dlgProgressUpdate(static_cast<HWND>(self->_import_hdp), tot, cur, self->_import_str.c_str());
+
+  }
+
+  return (self->_import_abort != 1);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiManMainLib::_import_compress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+{
+  OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
+
+  // preparing text
+  OmWString progress_str = self->_import_str;
+  progress_str += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
+
+  // update progress bar + text
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_import_hdp), tot, cur, progress_str.c_str(), 0); //< main bar
 
   return (self->_import_abort != 1);
 }
@@ -928,11 +1001,11 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
     }
 
     if(result == OM_RESULT_ERROR_APPLY || result == OM_RESULT_ERROR_BACKP) {
-      Om_dlgBox_okl(self->_hwnd, L"Mod installation", IDI_PKG_ERR,
+      Om_dlgBox_okl(self->_hwnd, L"Mod installation", IDI_MOD_ERR,
                   L"Mod install error", L"The installation of \""
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
     } else {
-      Om_dlgBox_okl(self->_hwnd, L"Mod backup restore", IDI_PKG_ERR,
+      Om_dlgBox_okl(self->_hwnd, L"Mod backup restore", IDI_MOD_ERR,
                   L"Mod backup data restore error", L"Restoring backup data of \""
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
     }
@@ -1289,7 +1362,7 @@ void OmUiManMainLib::_lv_mod_on_rclick()
     this->setPopupItem(hPopup, POP_MOD_INST, can_install ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_UINS, can_restore ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_CLNS, can_cleanng ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, POP_MOD_DISC, MF_ENABLED);
+    this->setPopupItem(hPopup, POP_MOD_DISC, can_restore ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_OPEN, MF_ENABLED);
     this->setPopupItem(hPopup, POP_MOD_TRSH, MF_ENABLED);
     this->setPopupItem(hPopup, POP_MOD_EDIT, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
@@ -1382,10 +1455,14 @@ void OmUiManMainLib::_onInit()
   // retrieve main dialog
   this->_UiMan = static_cast<OmUiMan*>(this->root());
 
-// Set Presets buttons icons
+  // Set buttons icons
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(IDI_PKG_ADD));
   this->setBmIcon(IDC_BC_IMPORT, Om_getResIcon(IDI_BT_IMP));
 
   // define controls tool-tips
+  this->_createTooltip(IDC_BC_ADD,    L"Add Mod(s) to library");
+  this->_createTooltip(IDC_BC_IMPORT, L"Import Mod(s) to library");
+
   this->_createTooltip(IDC_BC_INST,   L"Install selected Mod(s)");
   this->_createTooltip(IDC_BC_UNIN,   L"Uninstall selected Mod(s)");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort current process");
@@ -1479,9 +1556,10 @@ void OmUiManMainLib::_onHide()
 void OmUiManMainLib::_onResize()
 {
   // Library path EditControl
-  this->_setItemPos(IDC_EC_INP01, 2, 0, this->cliWidth()-28, 21, true);
-  // Import button
-  this->_setItemPos(IDC_BC_IMPORT, this->cliWidth()-24, -1, 24, 23, true);
+  this->_setItemPos(IDC_EC_INP01, 2, 0, this->cliWidth()-53, 21, true);
+  // Import & Build button
+  this->_setItemPos(IDC_BC_ADD, this->cliWidth()-24, -1, 24, 23, true);
+  this->_setItemPos(IDC_BC_IMPORT, this->cliWidth()-49, -1, 24, 23, true);
   // Mods Library ListView
   this->_setItemPos(IDC_LV_MOD, 2, 24, this->cliWidth()-3, this->cliHeight()-50, true);
   this->_lv_mod_on_resize(); //< Resize the Mods ListView column
@@ -1512,6 +1590,7 @@ void OmUiManMainLib::_onRefresh()
   // disable or enable elements depending context
   this->enableItem(IDC_SC_LBL01, (ModChan != nullptr));
   this->enableItem(IDC_LV_MOD, (ModChan != nullptr));
+  this->enableItem(IDC_BC_ADD, (ModChan != nullptr));
   this->enableItem(IDC_BC_IMPORT, (ModChan != nullptr));
 
   // load or reload theme for ListView custom draw (progress bar)
@@ -1646,18 +1725,23 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_COMMAND) {
 
     // Prevent command/shorcut execution when main dialog is not active
-    if(!this->_UiMan->active())
+    if(!this->root()->active())
       return false;
 
     #ifdef DEBUG
-    //std::cout << "DEBUG => OmUiManMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
+    std::cout << "DEBUG => OmUiManMainLib::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
     #endif
 
     switch(LOWORD(wParam))
     {
+    case IDC_BC_ADD:
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->addToLibrary();
+      break;
+
     case IDC_BC_IMPORT:
       if(HIWORD(wParam) == BN_CLICKED)
-        this->importMods();
+        this->importToLibrary();
       break;
 
     case IDC_BC_INST:

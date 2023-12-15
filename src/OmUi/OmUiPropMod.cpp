@@ -37,8 +37,8 @@ OmUiPropMod::OmUiPropMod(HINSTANCE hins) : OmDialogProp(hins), _ModPack(nullptr)
 {
   // create child tab dialogs
   this->_addPage(L"General", new OmUiPropModCmn(hins));
-  this->_addPage(L"Source", new OmUiPropModSrc(hins));
-  this->_addPage(L"Backup", new OmUiPropModBck(hins));
+  this->_addPage(L"Mod Source", new OmUiPropModSrc(hins));
+  this->_addPage(L"Backup data", new OmUiPropModBck(hins));
   this->_setNoChange(true);
 }
 

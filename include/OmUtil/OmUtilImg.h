@@ -32,6 +32,12 @@ enum OmSizeMode : unsigned {
   OM_SIZE_FILL
 };
 
+enum OmPixelBytes : unsigned {
+  OM_RGB = 3,
+  OM_RGBA = 4
+};
+
+
 /// \brief Get image type.
 ///
 /// Search within the given data buffer for known image signature. Possible
@@ -193,7 +199,7 @@ uint8_t* Om_imgEncodeBmp(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_
 ///
 /// \return Pointer to encoded JPG image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodeJpg(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 8);
+uint8_t* Om_imgEncodeJpg(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 70);
 
 /// \brief Encode PNG data.
 ///
@@ -209,7 +215,7 @@ uint8_t* Om_imgEncodeJpg(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_
 ///
 /// \return Pointer to encoded PNG image data or nullptr if failed.
 ///
-uint8_t* Om_imgEncodePng(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 4);
+uint8_t* Om_imgEncodePng(uint64_t* out_size, const uint8_t* in_rgb, unsigned in_w, unsigned in_h, unsigned in_c, int level = 6);
 
 /// \brief Encode GIF data.
 ///

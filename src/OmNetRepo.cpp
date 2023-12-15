@@ -156,9 +156,18 @@ bool OmNetRepo::parse(const OmWString& data)
     this->_xml.child(L"remotes").children(this->_reference_list, L"remote");
 
     // migrate to new XML shema
-    for(size_t i = 0; i < this->_reference_list.size(); ++i)
-      this->_reference_list[i].setName(L"mod");
+    for(size_t i = 0; i < this->_reference_list.size(); ++i) {
 
+      // <picture>  --> <thumbnail>
+      if(this->_reference_list[i].hasChild(L"picture")) {
+        this->_reference_list[i].child(L"picture").setName(L"thumbnail");
+      }
+
+      // <remote>  --> <mod>
+      this->_reference_list[i].setName(L"mod");
+    }
+
+    // <remotes>  --> <references>
     this->_xml.child(L"remotes").setName(L"references");
 
   } else {
@@ -408,8 +417,8 @@ int32_t OmNetRepo::addReference(const OmModPack* ModPack)
     if(!this->_save_thumbnail(modref, ModPack->thumbnail()))
       this->_log(OM_LOG_WRN, L"addReference", L"thumbnail JPEG encode failed");
   } else {
-    if(modref.hasChild(L"picture"))
-      modref.remChild(L"picture");
+    if(modref.hasChild(L"thumbnail"))
+      modref.remChild(L"thumbnail");
   }
 
   // set, replace or delete description data
@@ -441,10 +450,10 @@ bool OmNetRepo::_save_thumbnail(OmXmlNode& modref, const OmImage& image)
   Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg_data, jpg_size);
 
   // set node content to data URI string
-  if(modref.hasChild(L"picture")) {
-    modref.child(L"picture").setContent(data_uri);
+  if(modref.hasChild(L"thumbnail")) {
+    modref.child(L"thumbnail").setContent(data_uri);
   } else {
-    modref.addChild(L"picture").setContent(data_uri);
+    modref.addChild(L"thumbnail").setContent(data_uri);
   }
 
   // free allocated data

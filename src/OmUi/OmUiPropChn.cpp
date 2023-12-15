@@ -214,22 +214,13 @@ bool OmUiPropChn::checkChanges()
 
     if(UiPropChnBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
 
-      int32_t comp_method, comp_level;
+      int32_t cb_sel;
 
-      switch(UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
-      case 1:   comp_method = OM_METHOD_DEFLATE; break; //< MZ_COMPRESS_METHOD_DEFLATE
-      case 2:   comp_method = OM_METHOD_LZMA; break;    //< MZ_COMPRESS_METHOD_LZMA
-      case 3:   comp_method = OM_METHOD_LZMA2; break;   //< MZ_COMPRESS_METHOD_XZ
-      case 4:   comp_method = OM_METHOD_ZSTD; break;    //< MZ_COMPRESS_METHOD_ZSTD
-      default:  comp_method = OM_METHOD_STORE; break;   //< MZ_COMPRESS_METHOD_STORE
-      }
+      cb_sel = UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL);
+      int32_t comp_method = UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, cb_sel);
 
-      switch(UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
-      case 1:   comp_level = OM_LEVEL_FAST; break; //< MZ_COMPRESS_LEVEL_FAST
-      case 2:   comp_level = OM_LEVEL_SLOW; break; //< MZ_COMPRESS_LEVEL_NORMAL
-      case 3:   comp_level = OM_LEVEL_BEST; break; //< MZ_COMPRESS_LEVEL_BEST
-      default:  comp_level = OM_LEVEL_NONE; break;
-      }
+      cb_sel = UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL);
+      int32_t comp_level = UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETITEMDATA, cb_sel);
 
       if(this->_ModChan->backupCompMethod() != comp_method)
         different = true;
@@ -516,22 +507,13 @@ bool OmUiPropChn::applyChanges()
 
     if(UiPropChnBck->msgItem(IDC_BC_CKBX2, BM_GETCHECK)) {
 
-      int32_t comp_method, comp_level;
+      int32_t cb_sel;
 
-      switch(UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL)) {
-      case 1:   comp_method = OM_METHOD_DEFLATE; break; //< MZ_COMPRESS_METHOD_DEFLATE
-      case 2:   comp_method = OM_METHOD_LZMA; break;    //< MZ_COMPRESS_METHOD_LZMA
-      case 3:   comp_method = OM_METHOD_LZMA2; break;   //< MZ_COMPRESS_METHOD_XZ
-      case 4:   comp_method = OM_METHOD_ZSTD; break;    //< MZ_COMPRESS_METHOD_ZSTD
-      default:  comp_method = OM_METHOD_STORE; break;   //< MZ_COMPRESS_METHOD_STORE
-      }
+      cb_sel = UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETCURSEL);
+      int32_t comp_method = UiPropChnBck->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, cb_sel);
 
-      switch(UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL)) {
-      case 1:   comp_level = OM_LEVEL_FAST; break; //< MZ_COMPRESS_LEVEL_FAST
-      case 2:   comp_level = OM_LEVEL_SLOW; break; //< MZ_COMPRESS_LEVEL_NORMAL
-      case 3:   comp_level = OM_LEVEL_BEST; break; //< MZ_COMPRESS_LEVEL_BEST
-      default:  comp_level = OM_LEVEL_NONE; break;
-      }
+      cb_sel = UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETCURSEL);
+      int32_t comp_level = UiPropChnBck->msgItem(IDC_CB_ZLV, CB_GETITEMDATA, cb_sel);
 
       this->_ModChan->setBackupComp(comp_method, comp_level);
 

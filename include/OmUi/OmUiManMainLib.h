@@ -52,11 +52,17 @@ class OmUiManMainLib : public OmDialog
     ///
     long id() const;
 
-    /// \brief Import Mods
+    /// \brief Add Mods to library
     ///
-    /// Open file selector to import Mods in library
+    /// Open file selector to add Mods into current library
     ///
-    void importMods();
+    void addToLibrary();
+
+    /// \brief Add Mods to library
+    ///
+    /// Open directory selector to import/build Mods into current library
+    ///
+    void importToLibrary();
 
     /// \brief Open Mod properties
     ///
@@ -178,9 +184,13 @@ class OmUiManMainLib : public OmDialog
     // mods import
     OmWStringArray      _import_array;
 
+    bool                _import_build;
+
     int32_t             _import_abort;
 
     HWND                _import_hdp;
+
+    OmWString           _import_str;
 
     void*               _import_hth;
 
@@ -189,6 +199,8 @@ class OmUiManMainLib : public OmDialog
     static DWORD WINAPI _import_run_fn(void*);
 
     static bool         _import_progress_fn(void*, size_t, size_t, uint64_t);
+
+    static bool         _import_compress_fn(void*, size_t, size_t, uint64_t);
 
     static VOID WINAPI  _import_end_fn(void*,uint8_t);
 

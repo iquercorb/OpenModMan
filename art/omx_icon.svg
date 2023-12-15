@@ -6,10 +6,10 @@
    height="256"
    width="256"
    sodipodi:docname="omx_icon.svg"
-   inkscape:export-filename="D:\Atelier\Code\Cpp\OpenModMan\art\omx_icon16.png"
-   inkscape:export-xdpi="6.0000005"
-   inkscape:export-ydpi="6.0000005"
-   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   inkscape:export-filename="omx_icon_256.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -20,18 +20,6 @@
    xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient47411">
-      <stop
-         style="stop-color:#4590d0;stop-opacity:1"
-         offset="0"
-         id="stop47407" />
-      <stop
-         style="stop-color:#106bb1;stop-opacity:1"
-         offset="1"
-         id="stop47409" />
-    </linearGradient>
     <rect
        x="105.75315"
        y="109.62217"
@@ -83,16 +71,6 @@
        y2="7.0079703"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(-1.144269,0.66064398,-0.66064398,-1.144269,315.62244,74.916756)" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient47411"
-       id="linearGradient47413"
-       x1="48.645653"
-       y1="286.28137"
-       x2="39.323532"
-       y2="258.98712"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.9537488,0,0,1,2.0635327,3.1750001)" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -123,15 +101,18 @@
      inkscape:bbox-nodes="true"
      inkscape:document-rotation="0"
      showguides="true"
-     inkscape:guide-bbox="true">
+     inkscape:guide-bbox="true"
+     inkscape:deskcolor="#d1d1d1">
     <sodipodi:guide
        position="107.73412,4.0125403"
        orientation="0,-1"
-       id="guide4107" />
+       id="guide4107"
+       inkscape:locked="false" />
     <sodipodi:guide
        position="101.16497,63.134927"
        orientation="0,-1"
-       id="guide4109" />
+       id="guide4109"
+       inkscape:locked="false" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -159,7 +140,7 @@
        transform="matrix(-0.00592677,0.29480502,-0.29480502,-0.00592677,57.044865,225.0716)"
        inkscape:label="Puzzle_New" />
     <ellipse
-       style="display:inline;fill:url(#linearGradient47413);fill-opacity:1;stroke:none;stroke-width:9.97871;stroke-linecap:square;stroke-linejoin:round"
+       style="display:inline;fill:#425d79;fill-opacity:1;stroke:none;stroke-width:9.97871;stroke-linecap:square;stroke-linejoin:round"
        id="path11571"
        cx="43.571297"
        cy="274.5433"
@@ -170,12 +151,12 @@
        xml:space="preserve"
        transform="matrix(0.20732652,0,0,0.20732652,2.2145816,236.87855)"
        id="text31257"
-       style="font-size:113.333px;line-height:1.25;font-family:'Noto Mono';-inkscape-font-specification:'Noto Mono';letter-spacing:0px;white-space:pre;shape-inside:url(#rect31259);fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:4.7811;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="font-size:113.333px;line-height:1.25;font-family:'Noto Mono';-inkscape-font-specification:'Noto Mono';letter-spacing:0px;white-space:pre;shape-inside:url(#rect31259);display:inline;fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:4.7811;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        inkscape:label="Text"><tspan
          x="105.75391"
          y="213.51163"
-         id="tspan1101"><tspan
+         id="tspan2"><tspan
            style="font-family:Consolas;-inkscape-font-specification:Consolas"
-           id="tspan1099">&lt;/&gt;</tspan></tspan></text>
+           id="tspan1">&lt;/&gt;</tspan></tspan></text>
   </g>
 </svg>

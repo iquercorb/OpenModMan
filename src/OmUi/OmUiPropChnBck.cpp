@@ -119,18 +119,30 @@ void OmUiPropChnBck::_onTbInit()
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_WRN));
 
+  int32_t cb_id;
   // add items to Compression Method ComboBox
-  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
-  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Deflate (Legacy Zip)"));
-  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA"));
-  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA2"));
-  this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Zstandard"));
+  cb_id = this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
+  this->msgItem(IDC_CB_ZMD, CB_SETITEMDATA, cb_id, OM_METHOD_STORE);
+  cb_id = this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Deflate (Legacy Zip)"));
+  this->msgItem(IDC_CB_ZMD, CB_SETITEMDATA, cb_id, OM_METHOD_DEFLATE);
+  cb_id = this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA"));
+  this->msgItem(IDC_CB_ZMD, CB_SETITEMDATA, cb_id, OM_METHOD_LZMA);
+  cb_id = this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"LZMA2"));
+  this->msgItem(IDC_CB_ZMD, CB_SETITEMDATA, cb_id, OM_METHOD_LZMA2);
+  cb_id = this->msgItem(IDC_CB_ZMD, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Zstandard"));
+  this->msgItem(IDC_CB_ZMD, CB_SETITEMDATA, cb_id, OM_METHOD_ZSTD);
+  this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 4);
 
-  // add items to Compression Level ComboBox
-  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
-  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Fast"));
-  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal"));
-  this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best"));
+  // add items into Compression Level ComboBox
+  cb_id = this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"None (Store only)"));
+  this->msgItem(IDC_CB_ZLV, CB_SETITEMDATA, cb_id, OM_LEVEL_NONE);
+  cb_id = this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Fast"));
+  this->msgItem(IDC_CB_ZLV, CB_SETITEMDATA, cb_id, OM_LEVEL_FAST);
+  cb_id = this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Normal"));
+  this->msgItem(IDC_CB_ZLV, CB_SETITEMDATA, cb_id, OM_LEVEL_SLOW);
+  cb_id = this->msgItem(IDC_CB_ZLV, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Best"));
+  this->msgItem(IDC_CB_ZLV, CB_SETITEMDATA, cb_id, OM_LEVEL_BEST);
+  this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 2);
 
   this->_onTbRefresh();
 }
@@ -156,6 +168,16 @@ void OmUiPropChnBck::_onTbRefresh()
 
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
 
+    uint32_t cb_count;
+
+    // select proper compression method
+    cb_count = this->msgItem(IDC_CB_ZMD, CB_GETCOUNT);
+    for(uint32_t i = 0; i < cb_count; ++i) {
+      if(this->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, i) == comp_method) {
+        this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, i); break;
+      }
+    }
+/*
     switch(comp_method)
     {
     case OM_METHOD_DEFLATE: this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 1); break; //< MZ_COMPRESS_METHOD_DEFLATE
@@ -164,9 +186,17 @@ void OmUiPropChnBck::_onTbRefresh()
     case OM_METHOD_ZSTD:    this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 4); break; //< MZ_COMPRESS_METHOD_ZSTD
     default:                this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 0); break; //< MZ_COMPRESS_METHOD_STORE
     }
-
+*/
     this->enableItem(IDC_CB_ZMD, true);
 
+    // select proper compression level
+    cb_count = this->msgItem(IDC_CB_ZLV, CB_GETCOUNT);
+    for(uint32_t i = 0; i < cb_count; ++i) {
+      if(this->msgItem(IDC_CB_ZLV, CB_GETITEMDATA, i) == comp_level) {
+        this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, i); break;
+      }
+    }
+/*
     switch(comp_level)
     {
     case OM_LEVEL_FAST:   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 1); break; //< MZ_COMPRESS_LEVEL_FAST
@@ -174,7 +204,7 @@ void OmUiPropChnBck::_onTbRefresh()
     case OM_LEVEL_BEST:   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 3); break; //< MZ_COMPRESS_LEVEL_BEST
     default:              this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 0); break;
     }
-
+*/
     this->enableItem(IDC_CB_ZLV, true);
 
   } else {

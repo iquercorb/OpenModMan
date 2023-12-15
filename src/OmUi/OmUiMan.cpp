@@ -32,8 +32,8 @@
 #include "OmUiManMainLib.h"
 #include "OmUiManMainNet.h"
 #include "OmUiAddPst.h"
-#include "OmUiAddRep.h"
-#include "OmUiAddChn.h"
+//#include "OmUiAddRep.h"
+//#include "OmUiAddChn.h"
 #include "OmUiPropHub.h"
 #include "OmUiPropChn.h"
 #include "OmUiPropMan.h"
@@ -104,10 +104,10 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   this->addChild(new OmUiWizHub(hins));     //< Dialog for New Mod Hub Wizard
   this->addChild(new OmUiWizChn(hins));     //< Dialog for New Mod Channel Wizard
   this->addChild(new OmUiWizRep(hins));     //< Dialog for Repository Config Wizard
-  this->addChild(new OmUiToolPkg(hins));    //< Dialog for New Package
   this->addChild(new OmUiAddPst(hins));     //< Dialog for New Preset
-  this->addChild(new OmUiAddChn(hins));     //< Dialog for Adding Mod Channel
-  this->addChild(new OmUiAddRep(hins));     //< Dialog for Add Repository
+  //this->addChild(new OmUiAddChn(hins));     //< Dialog for Adding Mod Channel
+  //this->addChild(new OmUiAddRep(hins));     //< Dialog for Add Repository
+  this->addChild(new OmUiToolPkg(hins));    //< Dialog for New Package
   this->addChild(new OmUiToolRep(hins));    //< Dialog for Repository Editor
   this->addChild(new OmUiPictView(hins));   //< Dialog for Picture Viewer
 
@@ -366,13 +366,6 @@ void OmUiMan::createChannel()
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
-/*
-  OmUiAddChn* UiAddChn = static_cast<OmUiAddChn*>(this->childById(IDD_ADD_CHN));
-
-  UiAddChn->setModHub(ModHub);
-
-  UiAddChn->open(true);
-  */
 
   OmUiWizChn* UiWizChn = static_cast<OmUiWizChn*>(this->childById(IDD_WIZ_CHN));
 
@@ -618,7 +611,7 @@ bool OmUiMan::checkBackupWrite(const OmWString& operation)
 bool OmUiMan::warnMissings(bool enabled, const OmWString& operation, const OmWStringArray& missings)
 {
   if(missings.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_WRN, L"Missing Mods dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Missing Mods dependencies",
                       L"Selected Mods have missing dependencies, the following Mods are not available:",
                       Om_concatStrings(missings, L"\r\n")))
       return false;
@@ -633,7 +626,7 @@ bool OmUiMan::warnMissings(bool enabled, const OmWString& operation, const OmWSt
 bool OmUiMan::warnOverlaps(bool enabled, const OmWString& operation, const OmWStringArray& overlaps)
 {
   if(overlaps.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_OWR, L"Mods are overlapping",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_OWR, L"Mods are overlapping",
                       L"Selected Mods are overlapping others, the following Mods will be overwritten:",
                       Om_concatStrings(overlaps, L"\r\n")))
       return false;
@@ -648,7 +641,7 @@ bool OmUiMan::warnOverlaps(bool enabled, const OmWString& operation, const OmWSt
 bool OmUiMan::warnExtraInstalls(bool enabled, const OmWString& operation, const OmWStringArray& depends)
 {
   if(depends.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_ADD, L"Mods with dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_ADD, L"Mods with dependencies",
                       L"Selected Mods have dependencies, the following Mods will also be installed:",
                       Om_concatStrings(depends, L"\r\n")))
       return false;
@@ -663,7 +656,7 @@ bool OmUiMan::warnExtraInstalls(bool enabled, const OmWString& operation, const 
 bool OmUiMan::warnExtraDownloads(bool enabled, const OmWString& operation, const OmWStringArray& depends)
 {
   if(depends.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_ADD, L"Mods with dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_ADD, L"Mods with dependencies",
                       L"Selected Mods have dependencies, the following Mods will also be downloaded:",
                       Om_concatStrings(depends, L"\r\n")))
       return false;
@@ -678,14 +671,14 @@ bool OmUiMan::warnExtraDownloads(bool enabled, const OmWString& operation, const
 bool OmUiMan::warnExtraRestores(bool enabled, const OmWString& operation, const OmWStringArray& overlappers, const OmWStringArray& dependents)
 {
   if(overlappers.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_OWR, L"Overlapped Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_OWR, L"Overlapped Mods",
                       L"Selected Mods are overlapped by others, the following Mods must also be uninstalled:",
                       Om_concatStrings(overlappers, L"\r\n")))
       return false;
   }
 
   if(dependents.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_WRN, L"Dependency Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Dependency Mods",
                       L"Selected Mods are required as dependency, the following Mods will also be uninstalled:",
                       Om_concatStrings(dependents, L"\r\n")))
       return false;
@@ -700,7 +693,7 @@ bool OmUiMan::warnExtraRestores(bool enabled, const OmWString& operation, const 
 bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWStringArray& breakings)
 {
   if(breakings.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_PKG_WRN, L"Upgrade breaks dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Upgrade breaks dependencies",
                       L"Selected Mods replaces whom others depends, upgrading following Mods may break dependencies:",
                       Om_concatStrings(breakings,L"\r\n")))
       return false;
@@ -847,7 +840,7 @@ DWORD WINAPI OmUiMan::_delchan_run_fn(void* ptr)
 
   // Open progress dialog
   self->_delchan_abort = 0;
-  self->_delchan_hdlg = Om_dlgProgress(self->_hwnd, L"delete Channel", IDI_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
+  self->_delchan_hdlg = Om_dlgProgress(self->_hwnd, L"delete Channel", IDI_MOD_DEL, L"Restoring backup data", &self->_delchan_abort);
 
   // delete channel, will purge backup if required
   OmResult result = ModHub->deleteChannel(self->_delchan_idch, OmUiMan::_delchan_progress_fn, self);
@@ -1391,6 +1384,7 @@ void OmUiMan::_onInit()
 
   HMENU hMnuChn = this->getPopup(MNU_CHN);
   this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDREP, Om_getResIconPremult(IDI_REP_ADD));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDMOD, Om_getResIconPremult(IDI_PKG_ADD));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_IMPMOD, Om_getResIconPremult(IDI_BT_IMP));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_QRYREP, Om_getResIconPremult(IDI_BT_REF));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_PROP, Om_getResIconPremult(IDI_BT_EDI));
@@ -1633,9 +1627,11 @@ void OmUiMan::_onResize()
   if(!this->_split_curs_dragg) {
 
     // Mod Hubs ComboBox
-    this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 32, true);
+    //this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 32, true);
+    this->_setItemPos(IDC_CB_HUB, 4, 4, this->cliWidth()-8 , 32, true);
     // Mod Hub Icon
-    this->_setItemPos(IDC_SB_ICON, this->cliWidth()-37, 1, 32, 32, true);
+    //this->_setItemPos(IDC_SB_ICON, 3, 5, 24, 24, true);
+    //this->_setItemPos(IDC_SB_ICON, this->cliWidth()-37, 1, 26, 26, true);
 
     // Channel buttons
     this->_setItemPos(IDC_BC_CHEDI, 4, 34, 22, 22, true);
@@ -1643,6 +1639,7 @@ void OmUiMan::_onResize()
     this->_setItemPos(IDC_BC_CHDEL, 4, 92, 22, 22, true);
 
     // Mod Channel ListView
+    //this->_setItemPos(IDC_LV_CHN, 30, 35, this->cliWidth()-35, 79, true);
     this->_setItemPos(IDC_LV_CHN, 30, 35, this->cliWidth()-35, 79, true);
     this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
 
@@ -2096,8 +2093,12 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
 
+    case IDM_MOD_ADD:
+      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->addToLibrary();
+      break;
+
     case IDM_MOD_IMP:
-      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->importMods();
+      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->importToLibrary();
       break;
 
     case IDM_MOD_INST:

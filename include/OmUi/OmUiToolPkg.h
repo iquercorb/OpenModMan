@@ -49,31 +49,35 @@ class OmUiToolPkg : public OmDialog
     /// \return dialog resource id.
     ///
     long id() const;
-/*
-    /// \brief Set initial source path.
+
+    /// \brief Set dialog init parse
     ///
-    /// Set path to package source to be parsed at dialog initialization.
+    /// Set path to package to be parsed at dialog initialization.
     ///
-    /// \param[in]  path    : Path to source to parse.
-    ///
-    void setSource(const OmWString& path) {
-      this->_initial_src = path;
+    void setInitParse(const OmWString& path) {
+      this->_init_path = path;
     }
 
-    /// \brief Select source path.
+    /// \brief Parse specified source
     ///
-    /// Force to load the specified path as source.
+    /// Load and parse the specified source as Mod-package
     ///
-    /// \param[in]  path    : Path to source to parse.
+    /// \param[in] path : Path to Mod-Package file or directory to parse
     ///
-    void selectSource(const OmWString& path);
-*/
+    /// \return True if operation succeed, false otherwise
+    ///
+    bool parseSource(const OmWString& path) {
+      return this->_modpack_parse(path);
+    }
+
   protected:
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     // edited Mod Pack object
     OmModPack*          _ModPack;
+
+    OmWString           _init_path;
 
     // status bar populate/refresh
     void                _status_update_filename();
@@ -119,6 +123,8 @@ class OmUiToolPkg : public OmDialog
     void*               _modpack_save_hwo;
 
     void*               _modpack_save_hdp;
+
+    OmWString           _modpack_save_str;
 
     static DWORD WINAPI _modpack_save_run_fn(void*);
 
@@ -180,57 +186,7 @@ class OmUiToolPkg : public OmDialog
 
     OmWStringArray      _depend_cache;
 
-/*
-    bool                _unsaved;
-
-    OmWString           _initial_src;
-
-    bool                _parseSrc(const OmWString& path);
-
-    void                _freeze(bool freeze);
-
-    void                _save_init();
-
-    void                _save_stop();
-
-    void*               _save_hth;
-
-    static bool         _save_progress_cb(void* ptr, size_t tot, size_t cur, uint64_t data);
-
-    static DWORD WINAPI _save_fth(void*);
-
-    bool                _save_abort;
-
-    void                _onBcRadSrc();
-
-    bool                _onBcBrwDir(const wchar_t* path = nullptr);
-
-    bool                _onBcBrwPkg(const wchar_t* path = nullptr);
-
-    void                _onNameChange();
-
-    void                _onBcBrwDest();
-
-    void                _onLbDpnlsSel();
-
-    void                _onCbCatSel();
-
-    void                _onCkBoxDep();
-
-    void                _onBcAddDep();
-
-    void                _onBcDelDep();
-
-    void                _onCkBoxSnap();
-
-    bool                _onBcBrwSnap();
-
-    void                _onCkBoxDesc();
-
-    bool                _onBcBrwDesc();
-
-    void                _onBcSave();
-*/
+    // common dialog process
     void                _onInit();
 
     void                _onResize();

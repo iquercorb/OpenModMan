@@ -32,8 +32,8 @@
 #include "OmUiMan.h"
 #include "OmUiManMain.h"
 #include "OmUiManFoot.h"
-#include "OmUiAddChn.h"
-#include "OmUiAddRep.h"
+//#include "OmUiAddChn.h"
+//#include "OmUiAddRep.h"
 #include "OmUiWizRep.h"
 #include "OmUiPropNet.h"
 
@@ -694,7 +694,7 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
       self->_UiMan->selectChannel(chn_id);
     }
 
-    Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_PKG_ERR,
+    Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_MOD_ERR,
                 L"Mod download error", L"The download of \""
                 +NetPack->iden()+L"\" failed:", NetPack->lastError());
   }
@@ -838,7 +838,7 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
       self->_UiMan->selectChannel(chn_id);
     }
 
-    Om_dlgBox_okl(self->_hwnd, L"Upgrade Mods", IDI_PKG_ERR,
+    Om_dlgBox_okl(self->_hwnd, L"Upgrade Mods", IDI_MOD_ERR,
                 L"Mod upgrade error", L"The upgrading of \""
                 +NetPack->core()+L"\" failed:", NetPack->lastError());
   }

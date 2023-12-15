@@ -262,9 +262,6 @@ void OmUiToolPkg::_reset_controls()
   this->enableItem(IDC_LV_PAT,    false);
   this->_content_populate();
 
-  //this->enableItem(IDC_EC_READ1,  false);
-  //this->setItemText(IDC_EC_READ1, L"");
-
   //this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0);  //< FIXME : keep or reset ?
   //this->setItemText(IDC_EC_INP07, L"");  //< FIXME : keep or reset ?
 
@@ -563,7 +560,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   this->enableItem(IDC_BC_BRW01,  true);
   this->enableItem(IDC_BC_BRW02,  true);
   this->enableItem(IDC_LV_PAT,    true);
-  //this->enableItem(IDC_EC_READ1,  true);
 
   // Category and CheckBoxes
   this->enableItem(IDC_CB_CAT,    true);
@@ -605,10 +601,11 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   if(this->_method_cache < 0) {
     this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 4);
   } else {
+    // select proper compression method
     uint32_t cb_count = this->msgItem(IDC_CB_ZMD, CB_GETCOUNT);
     for(uint32_t i = 0; i < cb_count; ++i) {
       if(this->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, i) == this->_method_cache) {
-        this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, i);
+        this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, i); break;
       }
     }
   }
@@ -623,18 +620,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     }
     // build-up ListView content
     this->_content_populate();
-
-    /*
-    OmWString ec_content;
-
-    size_t n = this->_ModPack->sourceEntryCount();
-    for(size_t i = 0; i < n; ++i) {
-      ec_content += this->_ModPack->getSourceEntry(i).path;
-      if(i < n - 1) ec_content += L"\r\n";
-    }
-
-    this->setItemText(IDC_EC_READ1, ec_content);
-    */
   }
 
   // set category
@@ -667,7 +652,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   // set thumbnail
   if(!this->_ModPack->thumbnail().valid()) {
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
-    //this->_thumb_toggle();
   } else {
     // copy to local cache
     this->_thumb_cache = this->_ModPack->thumbnail();
@@ -681,7 +665,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   // set description
   if(this->_ModPack->description().empty()) {
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
-    //this->_desc_toggle();
   } else {
     // copy to local cache
     this->_desc_cache = this->_ModPack->description();
@@ -695,7 +678,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   // set dependencies
   if(this->_ModPack->dependCount() == 0) {
     this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 0);
-    //this->_depend_toggle();
   } else {
     // copy to local cache
     for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
@@ -733,7 +715,7 @@ DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
 
   // Open progress dialog
   self->_modpack_save_abort = 0;
-  self->_modpack_save_hdp = Om_dlgProgress(self->_hwnd, L"Save Mod-Package", IDI_PKG_ADD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
+  self->_modpack_save_hdp = Om_dlgProgress(self->_hwnd, L"Save Mod-Package", IDI_MOD_ADD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
 
   // and here we go for saving
   OmResult result = self->_ModPack->saveAs(self->_modpack_save_path, method, level,
@@ -756,7 +738,12 @@ bool OmUiToolPkg::_modpack_save_progress_fn(void* ptr, size_t tot, size_t cur, u
 
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(ptr);
 
-  // update progress bar
+  // preparing text
+  self->_modpack_save_str = L"Building ";
+  self->_modpack_save_str += Om_getFilePart(self->_modpack_save_path);
+  self->_modpack_save_str += L": ";
+
+  // update progress secondary bar
   Om_dlgProgressUpdate(static_cast<HWND>(self->_modpack_save_hdp), tot, cur, nullptr, 1);
 
   return (self->_modpack_save_abort != 1);
@@ -769,10 +756,12 @@ bool OmUiToolPkg::_modpack_save_compress_fn(void* ptr, size_t tot, size_t cur, u
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(ptr);
 
-  // update progress text
-  OmWString progress_text = L"Compressing file: ";
-  progress_text += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
-  Om_dlgProgressUpdate(static_cast<HWND>(self->_modpack_save_hdp), tot, cur, progress_text.c_str(), 0);
+  // preparing text
+  OmWString progress_str = self->_modpack_save_str;
+  progress_str += Om_getFilePart(reinterpret_cast<wchar_t*>(param));
+
+  // update progress primary bar and text
+  Om_dlgProgressUpdate(static_cast<HWND>(self->_modpack_save_hdp), tot, cur, progress_str.c_str(), 0);
 
   return (self->_modpack_save_abort != 1);
 }
@@ -1232,7 +1221,7 @@ void OmUiToolPkg::_onInit()
   HMENU hMnuFile = this->getPopup(MNU_ME_FILE);
   //this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
-  this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_BUIL, Om_getResIconPremult(IDI_PKG_BLD));
+  this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_BUIL, Om_getResIconPremult(IDI_BT_BLD));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_SAVAS, Om_getResIconPremult(IDI_BT_SVA));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
@@ -1365,7 +1354,7 @@ void OmUiToolPkg::_onInit()
   this->_createTooltip(IDC_BC_BRW01,  L"Add files");
   this->_createTooltip(IDC_BC_BRW02,  L"Add directory");
   this->_createTooltip(IDC_BC_DEL,    L"Delete entry");
-  this->_createTooltip(IDC_EC_READ1,  L"List of Mod files");
+  this->_createTooltip(IDC_LV_PAT,    L"List of Mod files");
 
   this->_createTooltip(IDC_CB_CAT,    L"Predefined categories");
   this->_createTooltip(IDC_EC_INP07,  L"Custom category");
@@ -1392,7 +1381,15 @@ void OmUiToolPkg::_onInit()
   this->_set_unsaved(false);
 
   // reset controls to initial states
-  //this->_modpack_new();
+  this->_reset_controls();
+
+  // parse init modpack if any
+  if(!this->_init_path.empty()) {
+
+    this->_modpack_parse(this->_init_path);
+
+    this->_init_path.clear();
+  }
 }
 
 
@@ -1437,7 +1434,6 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_BC_BRW02, half_w-55, base_y+148, 22, 22, true);
   this->_setItemPos(IDC_BC_DEL,   half_w-32, base_y+148, 22, 22, true);
   // Content Edit control
-  //this->_setItemPos(IDC_EC_READ1, 10, base_y+170, half_w-20, foot_y-180, true);
   this->_setItemPos(IDC_LV_PAT, 10, base_y+172, half_w-20, foot_y-180, true);
   this->_content_resize();
 

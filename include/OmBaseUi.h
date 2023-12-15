@@ -100,7 +100,7 @@ inline void Om_setupTbIconsDb(unsigned* icon_db)
   icon_db[ICON_DAD] = IDI_BT_DAD;
   icon_db[ICON_FRM] = IDI_BT_FRM;
   icon_db[ICON_EDI] = IDI_BT_EDI;
-  icon_db[ICON_BLD] = IDI_PKG_BLD;
+  icon_db[ICON_BLD] = IDI_BT_BLD;
 }
 
 /// \brief Main menu menu items positions
@@ -127,10 +127,12 @@ inline void Om_setupTbIconsDb(unsigned* icon_db)
 #define MNU_CHN             3
     #define MNU_CHN_ADDREP      0
     // ------------------------ 1
-    #define MNU_CHN_IMPMOD      2
-    #define MNU_CHN_QRYREP      3
+    #define MNU_CHN_ADDMOD      2
+    #define MNU_CHN_IMPMOD      3
     // ------------------------ 4
-    #define MNU_CHN_PROP        5
+    #define MNU_CHN_QRYREP      5
+    // ------------------------ 6
+    #define MNU_CHN_PROP        7
 #define MNU_TOOL            4
     #define MNU_TOOL_EDITPKG    0
     #define MNU_TOOL_EDITREP    1

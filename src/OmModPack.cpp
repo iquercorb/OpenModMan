@@ -24,6 +24,7 @@
 #include "OmUtilErr.h"
 #include "OmUtilHsh.h"
 #include "OmUtilPkg.h"
+#include "OmUtilB64.h"
 #include <ctime>
 
 #include "OmModChan.h"
@@ -344,7 +345,23 @@ bool OmModPack::parseSource(const OmWString& path)
         Om_toCRLF(&this->_description, source_cfg.child(L"description").content());
       }
 
-      // search for <picture>
+      // search for <thumbnail>
+      if(source_cfg.hasChild(L"thumbnail")) {
+
+        OmWString mimetype, charset;
+
+        // decode the DataURI
+        size_t png_size;
+        uint8_t* png_data = Om_decodeDataUri(&png_size, mimetype, charset, source_cfg.child(L"thumbnail").content());
+
+        // load png data as thumbnail
+        if(png_data) {
+          this->_thumbnail.load(png_data, png_size);
+          Om_free(png_data);
+        }
+      }
+
+      // search for <picture> (old format, deprectated)
       if(source_cfg.hasChild(L"picture")) {
 
         zcd_path = source_cfg.child(L"picture").content();
@@ -1819,6 +1836,8 @@ OmResult OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level,
   // add picture reference (will be added to zip later)
   if(this->_thumbnail.valid()) {
 
+    /* old format, deprecated
+
     // add entry into definition
     output_cfg.addChild(L"picture").setContent(SAVEAS_THUMBN_NAME);
 
@@ -1840,6 +1859,26 @@ OmResult OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level,
     } else {
       this->_error(L"saveAs", Om_errBadAlloc(L"Thumbnail creation", SAVEAS_THUMBN_NAME));
       has_error = true;
+    }
+    */
+
+    // Encode image (rgba) to png
+    uint64_t png_size;
+    uint8_t* png_data = Om_imgEncodePng(&png_size,  this->_thumbnail.data(),
+                                                    this->_thumbnail.width(),
+                                                    this->_thumbnail.height(),
+                                                    this->_thumbnail.bpp());
+    if(png_data) {
+
+      // encode png binary data to base64 encoded data URI
+      OmWString data_uri;
+      Om_encodeDataUri(data_uri, L"image/png", L"", png_data, png_size);
+
+      // free png data
+      Om_free(png_data);
+
+      // set node content to data URI string
+      output_cfg.addChild(L"thumbnail").setContent(data_uri);
     }
   }
 

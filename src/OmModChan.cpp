@@ -92,8 +92,8 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _library_showhidden(false),
   _warn_overlaps(true),
   _warn_extra_inst(true),
-  _backup_method_cache(OM_METHOD_ZSTD),
-  _backup_comp_level(OM_LEVEL_FAST),
+  _backup_method(OM_METHOD_ZSTD),
+  _backup_level(OM_LEVEL_FAST),
   _warn_extra_unin(true),
   _warn_extra_dnld(true),
   _warn_miss_deps(true),
@@ -232,8 +232,8 @@ void OmModChan::close()
   this->_warn_overlaps = true;
   this->_warn_extra_inst = true;
   this->_cust_backup_path = false;
-  this->_backup_method_cache = OM_METHOD_ZSTD;
-  this->_backup_comp_level = OM_LEVEL_FAST;
+  this->_backup_method = OM_METHOD_ZSTD;
+  this->_backup_level = OM_LEVEL_FAST;
   this->_warn_extra_unin = true;
   this->_warn_extra_dnld = true;
   this->_warn_miss_deps = true;
@@ -308,6 +308,7 @@ bool OmModChan::open(const OmWString& path)
     }
   }
 
+
   // check for the presence of <backup> entry for custom Backup path
   if(this->_xml.hasChild(L"backup")) {
 
@@ -334,25 +335,60 @@ bool OmModChan::open(const OmWString& path)
 
   if(this->_xml.hasChild(L"backup_comp")) {
 
-    this->_backup_method_cache = this->_xml.child(L"backup_comp").attrAsInt(L"method");
+    // set need for XML saving
+    bool has_changes = false;
 
-    if(this->_backup_method_cache > 95 || this->_backup_method_cache < 0)
-      this->_backup_method_cache = -1;
+    this->_backup_level = this->_xml.child(L"backup_comp").attrAsInt(L"level");
 
-    this->_backup_comp_level = this->_xml.child(L"backup_comp").attrAsInt(L"level");
+    // create default <method> if not exists
+    if(!this->_xml.child(L"backup_comp").hasAttr(L"method")) {
 
-    if(this->_backup_comp_level > 9)
-      this->_backup_comp_level = 0;
+      if(this->_backup_level < 0) {
+
+        this->_xml.child(L"backup_comp").setAttr(L"method", -1);
+
+      } else {
+
+        this->_xml.child(L"backup_comp").setAttr(L"method", OM_METHOD_ZSTD);
+      }
+
+      has_changes = true;
+    }
+
+    // ensure consistent level values
+    if(this->_backup_level > OM_LEVEL_BEST) {
+      this->_backup_level = OM_LEVEL_BEST;
+      has_changes = true;
+    }
+
+    if(this->_backup_level < OM_LEVEL_NONE) {
+      this->_backup_level = OM_LEVEL_NONE;
+      has_changes = true;
+    }
+
+    this->_backup_method = this->_xml.child(L"backup_comp").attrAsInt(L"method");
+
+    // ensure consistent method values
+    if(this->_backup_method > 95) {
+      this->_backup_method = OM_METHOD_ZSTD;
+      has_changes = true;
+    }
+
+    if(has_changes)
+      // reset to consistent values
+      this->setBackupComp(this->_backup_method, this->_backup_level);
 
   } else {
     // create default values
-    this->setBackupComp(this->_backup_method_cache, this->_backup_comp_level);
+    this->setBackupComp(this->_backup_method, this->_backup_level);
   }
 
   if(this->_xml.hasChild(L"library_sort")) {
     this->_modpack_list_sort = this->_xml.child(L"library_sort").attrAsInt(L"sort");
   } else {
-    // TODO: create default values
+    // create default values
+    this->_xml.addChild(L"library_sort").setAttr(L"sort", (int)this->_modpack_list_sort);
+    this->_xml.save();
   }
 
   if(this->_xml.hasChild(L"library_devmode")) {
@@ -370,9 +406,11 @@ bool OmModChan::open(const OmWString& path)
   }
 
   if(this->_xml.hasChild(L"remotes_sort")) {
-    this->_modpack_list_sort = this->_xml.child(L"remotes_sort").attrAsInt(L"sort");
+    this->_netpack_list_sort = this->_xml.child(L"remotes_sort").attrAsInt(L"sort");
   } else {
-    // TODO: create default values
+    // create default values
+    this->_xml.addChild(L"remotes_sort").setAttr(L"sort", (int)this->_netpack_list_sort);
+    this->_xml.save();
   }
 
   // Check warnings options
@@ -999,12 +1037,10 @@ bool OmModChan::ghostbusterModLibrary()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmResult OmModChan::importMods(const OmWStringArray& files, Om_progressCb progress_cb, void* user_ptr)
+OmResult OmModChan::addToLibrary(const OmWStringArray& files, Om_progressCb progress_cb, void* user_ptr)
 {
   if(!this->_xml.valid())
     return OM_RESULT_ABORT;
-
-  OmResult result = OM_RESULT_OK;
 
   bool has_error = false;
 
@@ -1040,6 +1076,73 @@ OmResult OmModChan::importMods(const OmWStringArray& files, Om_progressCb progre
   }
 
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmResult OmModChan::importToLibrary(const OmWStringArray& paths, Om_progressCb progress_cb, Om_progressCb compress_cb, void* user_ptr)
+{
+  if(!this->_xml.valid())
+    return OM_RESULT_ABORT;
+
+  bool has_error = false;
+  bool has_abort = false;
+
+  OmModPack* ModPack = new OmModPack(this);
+
+  OmWString filename;
+  OmWString dst_path;
+
+  for(size_t i = 0; i < paths.size(); ++i) {
+
+    // call progress callback
+    if(progress_cb)
+      if(!progress_cb(user_ptr, paths.size(), i, reinterpret_cast<uint64_t>(paths[i].c_str()))) {
+        has_abort = true; break;
+      }
+
+    // parse directory as Mod-package
+    if(!ModPack->parseSource(paths[i])) {
+      this->_error(L"importDirs", Om_errParse(L"Mod directory", Om_getFilePart(paths[i]), ModPack->lastError()));
+      has_error = true;
+      continue;
+    }
+
+    // compose filename
+    filename = Om_spacesToUnderscores(ModPack->name());
+
+    if(ModPack->version().valid()) {
+      filename += L"_v";
+      filename += ModPack->version().asString();
+    }
+
+    filename += L"." OM_PKG_FILE_EXT;
+
+    // compose final destination path
+    Om_concatPaths(dst_path, this->libraryPath(), filename);
+
+    // create Mod-Package from directory
+    OmResult result = ModPack->saveAs(dst_path, OM_METHOD_ZSTD, OM_LEVEL_SLOW, nullptr, compress_cb, user_ptr);
+    if(result != OM_RESULT_OK) {
+      if(result == OM_RESULT_ABORT) {
+        has_abort = true; break;
+      } else {
+        has_error = true;
+      }
+    }
+
+    #ifdef DEBUG
+    Sleep(100);
+    #endif // DEBUG
+  }
+
+  delete ModPack;
+
+  if(has_abort || has_error)
+    return has_error ? OM_RESULT_ERROR : OM_RESULT_ABORT;
+
+  return OM_RESULT_OK;
 }
 
 ///
@@ -3547,8 +3650,8 @@ void OmModChan::setBackupComp(int32_t method, int32_t level)
   if(!this->_xml.valid())
     return;
 
-  this->_backup_method_cache = method;
-  this->_backup_comp_level = level;
+  this->_backup_method = method;
+  this->_backup_level = level;
 
   OmXmlNode backup_comp_node;
 
