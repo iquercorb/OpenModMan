@@ -214,7 +214,7 @@ class OmModChan
     /// \return Pointer to Mod Pack object.
     ///
     OmModPack* getModpack(size_t index) const {
-      return this->_modpack_list[index];
+      return (index < this->_modpack_list.size()) ? this->_modpack_list[index] : nullptr;
     }
 
     /// \brief Find Mod in Library
@@ -534,7 +534,7 @@ class OmModChan
     /// \return Pointer to Net Pack object.
     ///
     OmNetPack* getNetpack(size_t index) const {
-      return this->_netpack_list[index];
+      return (index < this->_netpack_list.size()) ? this->_netpack_list[index] : nullptr;
     }
 
     /// \brief Find Net Pack
