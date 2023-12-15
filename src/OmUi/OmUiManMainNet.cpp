@@ -1237,6 +1237,7 @@ void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
   if(!ModChan) return;
 
   OmNetPack* NetPack = ModChan->getNetpack(item);
+  if(!NetPack) return;
 
   if(!NetPack->isDownloading() && !NetPack->isUpgrading())
     return;

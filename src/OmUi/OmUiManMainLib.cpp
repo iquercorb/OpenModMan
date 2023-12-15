@@ -1386,6 +1386,7 @@ void OmUiManMainLib::_lv_mod_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
   if(!ModChan) return;
 
   OmModPack* ModPack = ModChan->getModpack(item);
+  if(!ModPack) return;
 
   if(!ModPack->isBackuping() && !ModPack->isRestoring() && !ModPack->isApplying())
     return;
