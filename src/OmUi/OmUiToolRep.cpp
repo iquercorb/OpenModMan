@@ -309,6 +309,13 @@ void OmUiToolRep::_repo_save()
     return;
   }
 
+  // ensure last values saved
+  this->_repo_save_title();
+  this->_repo_save_downpath();
+  // ensure current reference changes are saved
+  this->_reference_url_changed();
+  this->_reference_desc_changed();
+
   OmResult result = this->_NetRepo->save(this->_NetRepo->path());
   if(result != OM_RESULT_OK) {
     Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_ERR, L"Save file error",
@@ -327,6 +334,7 @@ void OmUiToolRep::_repo_save()
 ///
 void OmUiToolRep::_repo_save_as()
 {
+
   OmWString dlg_start, dlg_result;
 
   // if available, select current active channel library as start location
@@ -345,6 +353,13 @@ void OmUiToolRep::_repo_save_as()
   // ask user for overwirte
   if(!Om_dlgOverwriteFile(this->_hwnd, dlg_result))
     return;
+
+  // ensure last values saved
+  this->_repo_save_title();
+  this->_repo_save_downpath();
+  // ensure current reference changes are saved
+  this->_reference_url_changed();
+  this->_reference_desc_changed();
 
   OmResult result = this->_NetRepo->save(dlg_result);
   if(result != OM_RESULT_OK) {
@@ -705,6 +720,24 @@ bool OmUiToolRep::_repo_del_ref()
   this->_set_unsaved(true);
 
   return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_reference_url_toggle()
+{
+  if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
+
+    this->enableItem(IDC_EC_INP03, true);
+
+  } else {
+
+    this->setItemText(IDC_EC_INP03, L"");
+
+    this->_reference_url_changed();
+    this->enableItem(IDC_EC_INP03, false);
+  }
 }
 
 ///
@@ -1521,17 +1554,13 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_BC_CKBX1: // Custom Url CheckBox
-      if(this->msgItem(IDC_BC_CKBX1, BM_GETCHECK)) {
-        this->enableItem(IDC_EC_INP03, true);
-      } else {
-        this->setItemText(IDC_EC_INP03, L"");
-        this->_reference_url_changed();
-        this->enableItem(IDC_EC_INP03, false);
-      }
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_reference_url_toggle();
       break;
 
     case IDC_EC_INP03: //< Custon URL EditText
-      if(HIWORD(wParam) == EN_KILLFOCUS)
+      //if(HIWORD(wParam) == EN_KILLFOCUS)
+      if(HIWORD(wParam) == EN_CHANGE)
         this->_reference_url_changed();
       break;
 
@@ -1552,7 +1581,8 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_EC_DESC: //< Description EditText
       // check for content changes
-      if(HIWORD(wParam) == EN_KILLFOCUS)
+      //if(HIWORD(wParam) == EN_KILLFOCUS)
+      if(HIWORD(wParam) == EN_CHANGE)
         this->_reference_desc_changed();
       break;
 

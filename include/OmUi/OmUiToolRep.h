@@ -103,6 +103,8 @@ class OmUiToolRep : public OmDialog
     void                _reflist_add_directory();
 
 
+    void                _reference_url_toggle();
+
     void                _reference_url_changed(int32_t item = -1);
 
     void                _reference_desc_load();
