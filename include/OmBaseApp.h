@@ -51,8 +51,8 @@
 #define OM_PKG_FILE_EXT           L"ozp"
 #define OM_BCK_FILE_EXT           L"ozb"
 
-#define OM_MODHUB_FILENAME        L"OmModHub.omx"
-#define OM_MODCHN_FILENAME        L"OmModChan.omx"
+#define OM_MODHUB_FILENAME        L"hub.omx"
+#define OM_MODCHN_FILENAME        L"channel.omx"
 
 #define OM_MODHUB_MODPSET_DIR     L".Presets"
 
