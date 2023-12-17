@@ -76,6 +76,24 @@ class OmModMan
     ///
     bool quit();
 
+    /// \brief Pending command line arguments
+    ///
+    /// Pending command line arguments string that may be processed by UI
+    ///
+    /// \return Command line argument string.
+    ///
+    OmWString pendingArg() const {
+      return this->_args;
+    }
+
+    /// \brief Clear pending arguments
+    ///
+    /// Clear pending command line arguments string
+    ///
+    void clearPendingArg() {
+      this->_args.clear();
+    }
+
     /// \brief Open from argument.
     ///
     /// Try to open Mod Hub from argument string, seeking for
@@ -84,7 +102,11 @@ class OmModMan
     /// \param[in]  arg       : Argument string.
     /// \param[in]  select    : Select the opened Mod Hub.
     ///
-    bool openArg(const char* arg, bool select = true);
+    /// \return Operation result code, OM_RESULT_PENDING is returned if
+    ///         further operation is possible, like opening Mod Pack in
+    ///         editor.
+    ///
+    OmResult openArg(const char* arg, bool select = true);
 
     /// \brief Create new Mod Hub.
     ///
@@ -94,7 +116,9 @@ class OmModMan
     /// \param[in]  name      : New Mod Hub title.
     /// \param[in]  open      : Open newly created Mod Hub after creation.
     ///
-    bool createHub(const OmWString& path, const OmWString& name, bool open = true);
+    /// \return Operation result code.
+    ///
+    OmResult createHub(const OmWString& path, const OmWString& name, bool open = true);
 
     /// \brief Open Mod Hub.
     ///
@@ -103,7 +127,9 @@ class OmModMan
     /// \param[in]  path      : Mod Hub file path.
     /// \param[in]  select    : Select the opened Mod Hub.
     ///
-    bool openHub(const OmWString& path, bool select = true);
+    /// \return Operation result code.
+    ///
+    OmResult openHub(const OmWString& path, bool select = true);
 
     /// \brief Close Mod Hub.
     ///
@@ -419,6 +445,9 @@ class OmModMan
 
     // general parameters
     OmWString             _home;
+
+    // Arguments management
+    OmWString             _args;
 
     // Mod Hubs management
     OmPModHubArray        _hub_list;

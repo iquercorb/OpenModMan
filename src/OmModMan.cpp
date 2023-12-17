@@ -19,7 +19,9 @@
 #include "OmBaseWin.h"
 #include <ShlObj.h>
 
+#include "OmBaseUi.h"
 #include "OmBaseApp.h"
+
 
 #include "OmUtilFs.h"
 #include "OmUtilAlg.h"
@@ -85,7 +87,7 @@ bool OmModMan::init(const char* arg)
     int32_t result = Om_dirCreate(this->_home);
     if(result != 0) {
       this->_error(L"", Om_errCreate(L"Application data directory", this->_home, result));
-      Om_dlgBox_err(L"Initialization", L"Mod Manager initialization failed", this->_lasterr);
+      Om_dlgBox_err(L"Initialization error", L"Mod Manager initialization failed:", this->_lasterr);
       return false;
     }
   }
@@ -113,7 +115,7 @@ bool OmModMan::init(const char* arg)
       // this is not a fatal error, but this will surely be a problem...
       OmWString error_str = Om_errInit(L"Configuration file", conf_path, this->_xml.lastErrorStr());
       this->_log(OM_LOG_WRN, L"", error_str);
-      Om_dlgBox_wrn(L"Initialization", L"Mod Manager initialization error", error_str);
+      Om_dlgBox_wrn(L"Initialization error", L"Mod Manager initialization error:", error_str);
     }
 
     // default icons size
@@ -133,10 +135,52 @@ bool OmModMan::init(const char* arg)
     this->_no_markdown = this->_xml.child(L"no_markdown").attrAsInt(L"enable");
   }
 
+  // load startup Mod Hub files if any
+  bool autoload;
+  OmWStringArray path_ls;
+
+  this->getStartHubs(&autoload, path_ls);
+
+  if(autoload) {
+
+    OmWStringArray remv_ls; //< in case we must remove entries
+
+    for(size_t i = 0; i < path_ls.size(); ++i) {
+
+      if(OM_RESULT_OK != this->openHub(path_ls[i], false)) {
+
+        Om_dlgBox_okl(nullptr, L"Hub startup load", IDI_DLG_ERR, L"Startup Hub open failed",
+                      path_ls[i], this->lastError());
+
+        if(Om_dlgBox_ynl(nullptr, L"Hub startup load", IDI_DLG_WRN, L"Remove invalid startup Hub",
+                         L"The following Hub cannot be loaded, do you want to remove it from startup load list ?",
+                         path_ls[i])) {
+
+          remv_ls.push_back(path_ls[i]);
+        }
+      }
+    }
+
+    // Remove invalid startup Mod Hub
+    if(remv_ls.size()) {
+
+      for(size_t i = 0; i < remv_ls.size(); ++i)
+        path_ls.erase(find(path_ls.begin(), path_ls.end(), remv_ls[i]));
+
+      this->saveStartHubs(autoload, path_ls);
+    }
+
+    // if no active hub, select the last in list
+    if(!this->activeHub())
+      this->selectHub(this->_hub_list.size() - 1);
+  }
+
   // load the Hub file passed as argument if any
   if(strlen(arg)) {
+
     // try to open
-    if(!this->openArg(arg, true)) {
+    OmResult result = this->openArg(arg, true);
+    if(result != OM_RESULT_OK && result != OM_RESULT_PENDING) {
 
       // convert to UTF-16
       OmWString path; Om_fromAnsiCp(&path, arg);
@@ -146,7 +190,7 @@ bool OmModMan::init(const char* arg)
         path.erase(0, 1); path.pop_back();
       }
 
-      Om_dlgBox_err(L"Open Mod Hub", L"Unable to load file \""+path+L"\":", this->lastError());
+      Om_dlgBox_err(L"Error opening file", L"Unable to open file \""+path+L"\":", this->lastError());
     }
   }
 
@@ -158,62 +202,111 @@ bool OmModMan::init(const char* arg)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModMan::openArg(const char* arg, bool select)
+OmResult OmModMan::openArg(const char* arg, bool select)
 {
   // convert to UTF-16
-  OmWString path; Om_fromAnsiCp(&path, arg);
+  Om_fromAnsiCp(&this->_args, arg);
 
   // check for quotes and removes them
-  if(path.back() == L'"' && path.front() == L'"') {
-    path.erase(0, 1); path.pop_back();
+  if(this->_args.back() == L'"' && this->_args.front() == L'"') {
+    this->_args.erase(0, 1); this->_args.pop_back();
   }
 
-  this->_log(OM_LOG_OK, L"Manager.openArg", path);
+  this->_log(OM_LOG_OK, L"Manager.openArg", this->_args);
 
   OmXmlConf unknown_cfg;
 
   // check whether file is Hub definition
-  if(unknown_cfg.load(path, OM_XMAGIC_HUB)) {
+  if(unknown_cfg.load(this->_args, OM_XMAGIC_HUB)) {
     unknown_cfg.clear();
-    return this->openHub(path, select);
+    this->_args.empty(); //< no pending arg
+    return this->openHub(this->_args, select);
   }
 
   bool try_parent = false;
+  bool arg_remain = false;
+
+  // check whether file is a Mod Package
+  if(Om_extensionMatches(this->_args, OM_PKG_FILE_EXT)) {
+    try_parent = true;
+    arg_remain = true; //< try open into editor
+  }
+
+  // check whether file is a Mod Backup
+  if(!try_parent) {
+    if(Om_extensionMatches(this->_args, OM_BCK_FILE_EXT)) {
+      try_parent = true;
+    }
+  }
+
+  // check whether file is Repository definition
+  if(!try_parent) {
+    if(unknown_cfg.load(this->_args, OM_XMAGIC_REP)) {
+      unknown_cfg.clear();
+      arg_remain = true; //< try open into editor
+      try_parent = true;
+    }
+  }
 
   // check whether file is Channel definition
-  if(unknown_cfg.load(path, OM_XMAGIC_CHN)) {
-    unknown_cfg.clear();
-    try_parent = true;
+  if(!try_parent) {
+    if(unknown_cfg.load(this->_args, OM_XMAGIC_CHN)) {
+      unknown_cfg.clear();
+      arg_remain = true; //< try to select channel
+      try_parent = true;
+    }
   }
 
   // check whether file is Preset definition
-  if(unknown_cfg.load(path, OM_XMAGIC_PST)) {
-    unknown_cfg.clear();
-    try_parent = true;
+  if(!try_parent) {
+    if(unknown_cfg.load(this->_args, OM_XMAGIC_PST)) {
+      unknown_cfg.clear();
+      try_parent = true;
+    }
   }
 
   if(!try_parent) {
     this->_error(L"Manager.openArg", L"unknown file type");
-    return false;
+    this->_args.empty(); //< no pending arg
+    return OM_RESULT_ERROR;
   }
 
-  // try to find Hub definition into parent directory
-  OmWString parent_dir = Om_getDirPart(path); //< remove file name
-  parent_dir = Om_getDirPart(parent_dir); //< remove last directory
-
+  // try to find Hub OMX file in parent directories
   OmWStringArray files;
-  Om_lsFileFiltered(&files, parent_dir, L"*." OM_XML_DEF_EXT, true);
+  OmWString parent_dir = Om_getDirPart(this->_args); //< remove file name
 
-  for(size_t i = 0; i < files.size(); ++i) {
-    if(unknown_cfg.load(files[i], OM_XMAGIC_HUB)) {
-      unknown_cfg.clear();
-      return this->openHub(files[i], select);
+  OmResult result = OM_RESULT_UNKNOW;
+
+  uint8_t up_limit = 2; //< limit for up directory jump
+  while(up_limit--) {
+
+    // up to parent directory
+    parent_dir = Om_getDirPart(parent_dir); //< remove last directory
+    // in case we arrived at disk root
+    if(parent_dir.size() < 5)
+      break;
+
+    files.clear();
+    Om_lsFileFiltered(&files, parent_dir, L"*." OM_XML_DEF_EXT, true);
+
+    for(size_t i = 0; i < files.size(); ++i) {
+      if(unknown_cfg.load(files[i], OM_XMAGIC_HUB)) {
+        unknown_cfg.clear();
+        result = this->openHub(files[i], select);
+        break;
+      }
     }
   }
 
-  this->_error(L"Manager.openArg", L"hub definition file not found in expected location");
+  if(!arg_remain)
+    this->_args.empty(); //< no pending arg
 
-  return false;
+  if(result == OM_RESULT_UNKNOW) {
+    this->_error(L"Manager.openArg", L"no hub definition file found in expected location");
+    result = OM_RESULT_ERROR;
+  }
+
+  return arg_remain ? OM_RESULT_PENDING : result;
 }
 
 ///
@@ -674,12 +767,12 @@ void OmModMan::setNoMarkdown(bool enable)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open)
+OmResult OmModMan::createHub(const OmWString& path, const OmWString& name, bool open)
 {
   // check whether install path exists
   if(!Om_isDir(path)) {
     this->_error(L"createHub", Om_errNotDir(L"home location", path));
-    return false;
+    return OM_RESULT_ERROR;
   }
 
   // compose Mod Hub home path
@@ -690,14 +783,14 @@ bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open
     int32_t result = Om_dirCreate(hub_home);
     if(result != 0) {
       this->_error(L"createHub", Om_errCreate(L"home directory", hub_home, result));
-      return false;
+      return OM_RESULT_ERROR_IO;
     }
   } else {
     if(Om_isDirEmpty(hub_home)) {
       this->_log(OM_LOG_WRN, L"createHub", L"chosen home directory already exists");
     } else {
       this->_error(L"createHub", L"chosen home directory already exists and is not empty");
-      return false;
+      return OM_RESULT_ABORT;
     }
   }
 
@@ -714,36 +807,39 @@ bool OmModMan::createHub(const OmWString& path, const OmWString& name, bool open
   // save and close definition file
   if(!modhub_cfg.save(hub_path)) {
     this->_error(L"createHub", Om_errSave(L"Definition file", hub_path, modhub_cfg.lastErrorStr()));
-    return false;
+    return OM_RESULT_ERROR_IO;
   }
 
   // open the new created Mod Hub
   if(open)
     return this->openHub(hub_path);
 
-  return true;
+  return OM_RESULT_OK;
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModMan::openHub(const OmWString& path, bool select)
+OmResult OmModMan::openHub(const OmWString& path, bool select)
 {
   this->_log(OM_LOG_OK, L"Manager.openHub", path);
 
-  // FIXME: Eviter que les Hub puissent s'ouvrir en double ou trible ou...
-
   // check whether Mod Hub is already opened
   for(size_t i = 0; i < this->_hub_list.size(); ++i)
-    if(Om_namesMatches(this->_hub_list[i]->path(), path))
-      return true;
+    if(Om_namesMatches(this->_hub_list[i]->path(), path)) {
+
+      if(select)
+        this->selectHub(i);
+
+      return OM_RESULT_OK;
+    }
 
   OmModHub* ModHub = new OmModHub(this);
 
   if(!ModHub->open(path)) {
     this->_error(L"openHub", ModHub->lastError());
-    delete ModHub; return false;
+    delete ModHub; return OM_RESULT_ERROR;
   }
 
   this->_hub_list.push_back(ModHub);
@@ -754,7 +850,7 @@ bool OmModMan::openHub(const OmWString& path, bool select)
   if(select)
     this->selectHub(this->_hub_list.size() - 1);
 
-  return true;
+  return OM_RESULT_OK;
 }
 
 
