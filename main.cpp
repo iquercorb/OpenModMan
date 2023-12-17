@@ -23,8 +23,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
 {
   OM_UNUSED(hPrevInst); OM_UNUSED(nShowCmd);
 
-  //TODO: verifier l'ouverture de fichier par ligne de commande
-
   // Check if another instance already running
   HANDLE hMutex = OpenMutexW(MUTEX_ALL_ACCESS, false, L"OpenModMan.Mutex");
   if(hMutex) {
