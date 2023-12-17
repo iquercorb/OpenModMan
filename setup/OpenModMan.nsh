@@ -1,7 +1,7 @@
 ; MUI Settings
 !define MUI_ABORTWARNING
-!define MUI_ICON          "..\res\images\inst_icon.ico"
-!define MUI_UNICON        "..\res\images\unin_icon.ico"
+!define MUI_ICON          "..\res\images\setup_inst.ico"
+!define MUI_UNICON        "..\res\images\setup_unin.ico"
 
 !define AAP_MAJ           "1"
 !define AAP_MIN           "2"
@@ -27,11 +27,10 @@
 !define ZSTD_32_DLL       "..\dll\32-bit\libzstd.dll"
 !define ZLIB_32_DLL       "..\dll\32-bit\zlib1.dll"
 
-!define OMM_ICO           "..\res\images\omm_icon.ico"
-!define OMB_ICO           "..\res\images\omb_icon.ico"
-!define OMX_ICO           "..\res\images\omx_icon.ico"
-!define OZP_ICO           "..\res\images\ozp_icon.ico"
-!define OZB_ICO           "..\res\images\ozb_icon.ico"
+!define OMM_ICO           "..\res\images\sys_icon_omm.ico"
+!define OMX_ICO           "..\res\images\sys_icon_omx.ico"
+!define OZP_ICO           "..\res\images\sys_icon_ozp.ico"
+!define OZB_ICO           "..\res\images\sys_icon_ozb.ico"
 
 !define SETUP_SPLASH      "..\res\images\setup_splash.bmp"
 

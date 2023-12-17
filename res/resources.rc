@@ -7,154 +7,160 @@
 // Bitmap resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_ERR  BITMAP    ".\\images\\pkg_err_16.bmp"
+IDB_SC_THMB_BLANK   BITMAP    ".\\images\\sc_thmb_blank.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_ERR_L   BITMAP    ".\\images\\pkg_err_24.bmp"
+IDB_SC_THMB_DIR     BITMAP    ".\\images\\sc_thmb_dir.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_DIR     BITMAP    ".\\images\\pkg_dir_16.bmp"
+IDB_SC_THMB_PKG     BITMAP    ".\\images\\sc_thmb_pkg.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_DIR_L  BITMAP    ".\\images\\pkg_dir_24.bmp"
+IDB_SC_WIZ_HUB       BITMAP    ".\\images\\sc_wiz_hub.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_PKG     BITMAP    ".\\images\\pkg_zip_16.bmp"
+IDB_SC_WIZ_CHN       BITMAP    ".\\images\\sc_wiz_chn.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_PKG_L  BITMAP    ".\\images\\pkg_zip_24.bmp"
+IDB_SC_WIZ_REP       BITMAP    ".\\images\\sc_wiz_rep.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_DPN     BITMAP    ".\\images\\pkg_dpn_16.bmp"
+IDB_ITM_MOD_ERR     BITMAP    ".\\images\\itm_mod_err_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_MOD_DPN_L   BITMAP    ".\\images\\pkg_dpn_24.bmp"
+IDB_ITM_MOD_ERR_L   BITMAP    ".\\images\\itm_mod_err_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_FIL         BITMAP    ".\\images\\fil_16.bmp"
+IDB_ITM_MOD_DIR     BITMAP    ".\\images\\itm_mod_dir_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_FIL_L       BITMAP    ".\\images\\fil_24.bmp"
+IDB_ITM_MOD_DIR_L   BITMAP    ".\\images\\itm_mod_dir_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_DIR         BITMAP    ".\\images\\dir_16.bmp"
+IDB_ITM_MOD_PKG     BITMAP    ".\\images\\itm_mod_pkg_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_DIR_L       BITMAP    ".\\images\\dir_24.bmp"
+IDB_ITM_MOD_PKG_L   BITMAP    ".\\images\\itm_mod_pkg_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_WIP     BITMAP    ".\\images\\sts_wip_16.bmp"
+IDB_ITM_MOD_DPN     BITMAP    ".\\images\\itm_mod_dpn_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_WIP_L   BITMAP    ".\\images\\sts_wip_24.bmp"
+IDB_ITM_MOD_DPN_L   BITMAP    ".\\images\\itm_mod_dpn_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_ERR     BITMAP    ".\\images\\sts_err_16.bmp"
+IDB_ITM_FIL         BITMAP    ".\\images\\itm_fil_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_ERR_L   BITMAP    ".\\images\\sts_err_24.bmp"
+IDB_ITM_FIL_L       BITMAP    ".\\images\\itm_fil_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_WRN     BITMAP    ".\\images\\sts_wrn_16.bmp"
+IDB_ITM_DIR         BITMAP    ".\\images\\itm_dir_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_WRN_L   BITMAP    ".\\images\\sts_wrn_24.bmp"
+IDB_ITM_DIR_L       BITMAP    ".\\images\\itm_dir_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_CHK     BITMAP    ".\\images\\sts_chk_16.bmp"
+IDB_ITM_PST         BITMAP    ".\\images\\itm_pst_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_CHK_L   BITMAP    ".\\images\\sts_chk_24.bmp"
+IDB_ITM_PST_L       BITMAP    ".\\images\\itm_pst_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OVR     BITMAP    ".\\images\\sts_ovr_16.bmp"
+IDB_ITM_CHN         BITMAP    ".\\images\\itm_chn_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_OVR_L   BITMAP    ".\\images\\sts_ovr_24.bmp"
+IDB_ITM_CHN_L       BITMAP    ".\\images\\itm_chn_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_DNG     BITMAP    ".\\images\\sts_dng_16.bmp"
+IDB_ITM_REP         BITMAP    ".\\images\\itm_rep_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_DNG_L   BITMAP    ".\\images\\sts_dng_24.bmp"
+IDB_ITM_REP_L       BITMAP    ".\\images\\itm_rep_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_UPG     BITMAP    ".\\images\\sts_upg_16.bmp"
+IDB_STS_WIP         BITMAP    ".\\images\\sts_wip_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_UPG_L   BITMAP    ".\\images\\sts_upg_24.bmp"
+IDB_STS_WIP_L       BITMAP    ".\\images\\sts_wip_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_DNL     BITMAP    ".\\images\\sts_dnl_16.bmp"
+IDB_STS_ERR         BITMAP    ".\\images\\sts_err_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_DNL_L   BITMAP    ".\\images\\sts_dnl_24.bmp"
+IDB_STS_ERR_L       BITMAP    ".\\images\\sts_err_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_NEW     BITMAP    ".\\images\\sts_new_16.bmp"
+IDB_STS_WRN         BITMAP    ".\\images\\sts_wrn_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_NEW_L   BITMAP    ".\\images\\sts_new_24.bmp"
+IDB_STS_WRN_L       BITMAP    ".\\images\\sts_wrn_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RES     BITMAP    ".\\images\\sts_res_16.bmp"
+IDB_STS_CHK         BITMAP    ".\\images\\sts_chk_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RES_L   BITMAP    ".\\images\\sts_res_24.bmp"
+IDB_STS_CHK_L       BITMAP    ".\\images\\sts_chk_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RB0     BITMAP    ".\\images\\sts_rb0_16.bmp"
+IDB_STS_OVR         BITMAP    ".\\images\\sts_ovr_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RB0_L   BITMAP    ".\\images\\sts_rb0_24.bmp"
+IDB_STS_OVR_L       BITMAP    ".\\images\\sts_ovr_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RB1     BITMAP    ".\\images\\sts_rb1_16.bmp"
+IDB_STS_DNG         BITMAP    ".\\images\\sts_dng_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_RB1_L   BITMAP    ".\\images\\sts_rb1_24.bmp"
+IDB_STS_DNG_L       BITMAP    ".\\images\\sts_dng_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_QUE     BITMAP    ".\\images\\sts_que_16.bmp"
+IDB_STS_UPG         BITMAP    ".\\images\\sts_upg_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_STS_QUE_L  BITMAP    ".\\images\\sts_que_24.bmp"
+IDB_STS_UPG_L       BITMAP    ".\\images\\sts_upg_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_PST      BITMAP    ".\\images\\pst_16.bmp"
+IDB_STS_DNL         BITMAP    ".\\images\\sts_dnl_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_PST_L      BITMAP    ".\\images\\pst_24.bmp"
+IDB_STS_DNL_L       BITMAP    ".\\images\\sts_dnl_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_CHN      BITMAP    ".\\images\\chn_16.bmp"
+IDB_STS_NEW         BITMAP    ".\\images\\sts_new_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_CHN_L      BITMAP    ".\\images\\chn_24.bmp"
+IDB_STS_NEW_L       BITMAP    ".\\images\\sts_new_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_REP      BITMAP    ".\\images\\rep_16.bmp"
+IDB_STS_RES         BITMAP    ".\\images\\sts_res_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_ITM_REP_L      BITMAP    ".\\images\\rep_24.bmp"
+IDB_STS_RES_L       BITMAP    ".\\images\\sts_res_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_WIZARD      BITMAP    ".\\images\\wiz_splash.bmp"
+IDB_STS_RB0         BITMAP    ".\\images\\sts_rb0_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_BLANK       BITMAP    ".\\images\\blank_snap.bmp"
+IDB_STS_RB0_L       BITMAP    ".\\images\\sts_rb0_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_SNAP_DIR    BITMAP    ".\\images\\snap_dir.bmp"
+IDB_STS_RB1         BITMAP    ".\\images\\sts_rb1_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_SNAP_PKG    BITMAP    ".\\images\\snap_pkg.bmp"
+IDB_STS_RB1_L       BITMAP    ".\\images\\sts_rb1_24.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_DON_PP      BITMAP    ".\\images\\don_pp.bmp"
+IDB_STS_QUE         BITMAP    ".\\images\\sts_que_16.bmp"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDB_DON_PP_HOV  BITMAP    ".\\images\\don_pp_hov.bmp"
+IDB_STS_QUE_L       BITMAP    ".\\images\\sts_que_24.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_BTN_DON          BITMAP   ".\\images\\btn_don.bmp"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDB_BTN_DON_HOV      BITMAP   ".\\images\\btn_don_hov.bmp"
 
 
 //
@@ -1353,142 +1359,146 @@ IDR_ACCEL ACCELERATORS
 // Icon resources
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_APP     ICON      ".\\images\\omm_icon.ico"
+IDI_APP         ICON      ".\\images\\sys_icon_omm.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_ERR     ICON      ".\\images\\msg_err.ico"
+IDI_DLG_ERR     ICON      ".\\images\\dlg_err.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_WRN     ICON      ".\\images\\msg_wrn.ico"
+IDI_DLG_WRN     ICON      ".\\images\\dlg_wrn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_NFO     ICON      ".\\images\\msg_nfo.ico"
+IDI_DLG_NFO     ICON      ".\\images\\dlg_nfo.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_QRY     ICON      ".\\images\\msg_qry.ico"
+IDI_DLG_QRY     ICON      ".\\images\\dlg_qry.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_ADD ICON      ".\\images\\msg_pkg_add.ico"
+IDI_DLG_PKG_ADD ICON      ".\\images\\dlg_pkg_add.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_OWR ICON      ".\\images\\msg_pkg_owr.ico"
+IDI_DLG_PKG_OWR ICON      ".\\images\\dlg_pkg_owr.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_WRN ICON      ".\\images\\msg_pkg_wrn.ico"
+IDI_DLG_PKG_WRN ICON      ".\\images\\dlg_pkg_wrn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_DEL ICON      ".\\images\\msg_pkg_del.ico"
+IDI_DLG_PKG_DEL ICON      ".\\images\\dlg_pkg_del.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_ERR ICON      ".\\images\\msg_pkg_err.ico"
+IDI_DLG_PKG_ERR ICON      ".\\images\\dlg_pkg_err.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_ADD  ICON      ".\\images\\btn_add.ico"
+IDI_DLG_PKG_BLD ICON      ".\\images\\dlg_pkg_bld.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_EDI  ICON      ".\\images\\btn_edi.ico"
+IDI_BT_ABT      ICON      ".\\images\\bt_abt.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_REM  ICON      ".\\images\\btn_rem.ico"
+IDI_BT_ADD      ICON      ".\\images\\bt_add.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_REF  ICON      ".\\images\\btn_ref.ico"
+IDI_BT_ADD_CHN  ICON      ".\\images\\bt_add_chn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_DAD  ICON      ".\\images\\btn_dad.ico"
+IDI_BT_ADD_REP  ICON      ".\\images\\bt_add_rep.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_FAD  ICON      ".\\images\\btn_fad.ico"
+IDI_BT_ADD_PST  ICON      ".\\images\\bt_add_pst.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_FRM  ICON      ".\\images\\btn_frm.ico"
+IDI_BT_ADD_PKG  ICON      ".\\images\\bt_add_pkg.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_ENT  ICON      ".\\images\\btn_ent.ico"
+IDI_BT_ADD_IMG  ICON      ".\\images\\bt_add_img.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_NOT  ICON      ".\\images\\btn_not.ico"
+IDI_BT_ADD_TXT   ICON     ".\\images\\bt_add_txt.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_OPN  ICON      ".\\images\\btn_opn.ico"
+IDI_BT_BLD      ICON      ".\\images\\bt_bld.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_NEW  ICON      ".\\images\\btn_new.ico"
+IDI_BT_EDI      ICON      ".\\images\\bt_edi.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_WRN  ICON      ".\\images\\btn_wrn.ico"
+IDI_BT_REM      ICON      ".\\images\\bt_rem.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_UP   ICON      ".\\images\\btn_up.ico"
+IDI_BT_REF      ICON      ".\\images\\bt_ref.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_DN   ICON      ".\\images\\btn_dn.ico"
+IDI_BT_DAD      ICON      ".\\images\\bt_dad.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_RUN  ICON      ".\\images\\btn_run.ico"
+IDI_BT_FAD      ICON      ".\\images\\bt_fad.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_CHN_ADD  ICON     ".\\images\\chn_add.ico"
+IDI_BT_FRM      ICON      ".\\images\\bt_frm.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_REP_ADD  ICON     ".\\images\\rep_add.ico"
+IDI_BT_ENT      ICON      ".\\images\\bt_ent.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_PST_ADD  ICON     ".\\images\\pst_add.ico"
+IDI_BT_NOT      ICON      ".\\images\\bt_not.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_MOD_TOOL  ICON     ".\\images\\mod_tool.ico"
+IDI_BT_OPN      ICON      ".\\images\\bt_opn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_REP_TOOL  ICON     ".\\images\\rep_tool.ico"
+IDI_BT_NEW      ICON      ".\\images\\bt_new.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_DBG_LOG  ICON      ".\\images\\dbg_log.ico"
+IDI_BT_WRN      ICON      ".\\images\\bt_wrn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_ABOUT    ICON      ".\\images\\about.ico"
+IDI_BT_UP       ICON      ".\\images\\bt_up.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_SAV   ICON      ".\\images\\btn_sav.ico"
+IDI_BT_DN       ICON      ".\\images\\bt_dn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_SVD   ICON      ".\\images\\btn_svd.ico"
+IDI_BT_RUN      ICON      ".\\images\\bt_run.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_SVA   ICON      ".\\images\\btn_sva.ico"
+IDI_BT_SAV      ICON      ".\\images\\bt_sav.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_IMP   ICON      ".\\images\\btn_imp.ico"
+IDI_BT_SVD      ICON      ".\\images\\bt_svd.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_BLD   ICON      ".\\images\\btn_bld.ico"
+IDI_BT_SVA      ICON      ".\\images\\bt_sva.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_VAL   ICON      ".\\images\\btn_val.ico"
+IDI_BT_IMP      ICON      ".\\images\\bt_imp.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_BT_ABT   ICON      ".\\images\\btn_abt.ico"
+IDI_BT_VAL      ICON      ".\\images\\bt_val.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_DEP_CHK   ICON      ".\\images\\dep_chk.ico"
+IDI_BT_LOG      ICON      ".\\images\\bt_log.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_PIC_ADD   ICON      ".\\images\\pic_add.ico"
+IDI_BT_NFO      ICON      ".\\images\\bt_nfo.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_TXT_ADD   ICON      ".\\images\\txt_add.ico"
+IDI_BT_DPN      ICON      ".\\images\\bt_dpn.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_PKG_IMP   ICON      ".\\images\\imp_pkg.ico"
+IDI_BT_CLO      ICON      ".\\images\\bt_clo.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_PKG_ADD   ICON      ".\\images\\pkg_add.ico"
+IDI_BT_EXI      ICON      ".\\images\\bt_exi.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_CLOSE     ICON      ".\\images\\close.ico"
+IDI_BT_IMP_PKG   ICON     ".\\images\\bt_imp_pkg.ico"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDI_QUIT      ICON      ".\\images\\quit.ico"
+IDI_BT_TOOLPKG  ICON      ".\\images\\bt_toolpkg.ico"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_BT_TOOLREP  ICON      ".\\images\\bt_toolrep.ico"
+
 
 //
 // Manifest resources
