@@ -87,7 +87,7 @@ void OmModHub::close()
   this->_netlib_notify_cb = nullptr;
   this->_netlib_notify_ptr = nullptr;
 
-  Om_clearThread(this->_psetup_hth, this->_psetup_hwo);
+  Om_threadClear(this->_psetup_hth, this->_psetup_hwo);
   this->_psetup_hth = nullptr;
   this->_psetup_hwo = nullptr;
 
@@ -132,6 +132,12 @@ void OmModHub::close()
 bool OmModHub::open(const OmWString& path)
 {
   this->close();
+
+  // check whether at least file exists
+  if(!Om_isFile(path)) {
+    this->_error(L"open", Om_errLoad(L"Definition file", Om_getFilePart(path), L"File not found"));
+    return false;
+  }
 
   // path of migrated HUB definition file (renamed by migration process)
   OmWString omx_path;
@@ -981,8 +987,8 @@ void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progress
   if(!this->_psetup_hth) {
 
     // launch thread
-    this->_psetup_hth = Om_createThread(OmModHub::_psetup_run_fn, this);
-    this->_psetup_hwo = Om_waitForThread(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
+    this->_psetup_hth = Om_threadCreate(OmModHub::_psetup_run_fn, this);
+    this->_psetup_hwo = Om_threadWaitEnd(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
   }
 }
 
@@ -1104,7 +1110,7 @@ VOID WINAPI OmModHub::_psetup_end_fn(void* ptr,uint8_t fired)
   #endif // DEBUG
 
   //DWORD exit_code = Om_threadExitCode(self->_install_hth);
-  Om_clearThread(self->_psetup_hth, self->_psetup_hwo);
+  Om_threadClear(self->_psetup_hth, self->_psetup_hwo);
 
   self->_psetup_dones = 0;
   self->_psetup_percent = 0;
