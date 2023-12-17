@@ -2,4 +2,5 @@
 *.depend
 bin/
 obj/
+art/*.png
 setup/*.exe
