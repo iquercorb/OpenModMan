@@ -154,6 +154,12 @@ class OmUiMan : public OmDialog
 
     void presetProperties();
 
+    bool openArg(const OmWString& path);
+
+    void openPkgEditor(const OmWString& path);
+
+    void openRepEditor(const OmWString& path);
+
     /// \brief Get tab frame dialog
     ///
     /// Return pointer to main (top) frame dialog.
