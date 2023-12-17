@@ -244,6 +244,8 @@ void OmDialog::modeless(bool show)
 ///
 void OmDialog::registered(const char* classname, bool show)
 {
+  __cce_init(); //< initialize WinAPI Common Controls (done only once)
+
   if(!this->id())
     return;
 
@@ -637,7 +639,6 @@ void OmDialog::_setItemPos(unsigned id, long x, long y, long w, long h, bool pix
   long rect[4] = {x, y, w, h};
   if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
   SetWindowPos(GetDlgItem(this->_hwnd, id), nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
-  //DeferWindowPos(this->_hdwp, GetDlgItem(this->_hwnd, id), nullptr,rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
 }
 
 
@@ -649,7 +650,6 @@ void OmDialog::_setChildPos(HWND hwnd, long x, long y, long w, long h, bool pixe
   long rect[4] = {x, y, w, h};
   if(!pixel) MapDialogRect(this->_hwnd, reinterpret_cast<LPRECT>(&rect));
   SetWindowPos(hwnd, nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
-  //DeferWindowPos(this->_hdwp, hwnd, nullptr, rect[0], rect[1], rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
 }
 
 
@@ -908,13 +908,13 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_WINDOWPOSCHANGED:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGED
 
     case WM_WINDOWPOSCHANGING:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGING
 

@@ -1572,7 +1572,7 @@ void OmUiMan::_onInit()
   if(h <= 0) h = 340; //< default height
 
   // window placement flags
-  unsigned uFlags = SWP_NOZORDER;
+  uint32_t uFlags = 0; //< allow Z-Order, see bellow
 
   // check whether any top-left or top-right window corner is outside visible desktop
   if(!MonitorFromPoint({rec.top, rec.left}, MONITOR_DEFAULTTONULL) ||
@@ -1581,7 +1581,10 @@ void OmUiMan::_onInit()
   }
 
   // move window rect to the last saved
-  SetWindowPos(this->_hwnd, nullptr, rec.left, rec.top, w, h, uFlags);
+
+  // for an unknown reason, since some builds the window is set to TOPMOST
+  // Z-Order, here we disable this by specifying HWND_NOTOPMOST
+  SetWindowPos(this->_hwnd, HWND_NOTOPMOST, rec.left, rec.top, w, h, uFlags);
 
   // create frames dialogs
   this->_UiManMain->modeless(true);
@@ -1837,7 +1840,7 @@ void OmUiMan::_onRefresh()
   this->_status_populate();
 
   // update Mod Hub Icon
-  this->_sb_hub_populate();
+  //this->_sb_hub_populate();
 
   // update Mod Channel ListView
   this->_lv_chn_populate();
