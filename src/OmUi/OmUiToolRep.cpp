@@ -70,7 +70,7 @@ OmUiToolRep::~OmUiToolRep()
     delete this->_NetRepo;
 
   HBITMAP hBm = this->setStImage(IDC_SB_SNAP, nullptr);
-  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+  if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
 
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   DeleteObject(hFt);
@@ -147,7 +147,7 @@ int32_t OmUiToolRep::_ask_unsaved()
 {
   // Check and ask for unsaved changes
   if(this->_has_unsaved)
-    return Om_dlgBox_ync(this->_hwnd, L"Repository editor", IDI_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
+    return Om_dlgBox_ync(this->_hwnd, L"Repository editor", IDI_DLG_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
 
   return 0;
 }
@@ -155,11 +155,11 @@ int32_t OmUiToolRep::_ask_unsaved()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_init()
+void OmUiToolRep::_repository_init()
 {
   // Check and ask for unsaved changes
   switch(this->_ask_unsaved()) {
-    case  1: this->_repo_save(); break; //< 'Yes'
+    case  1: this->_repository_save(); break; //< 'Yes'
     case -1: return;                    //< 'Cancel'
   }
 
@@ -197,41 +197,33 @@ void OmUiToolRep::_repo_init()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_open()
+bool OmUiToolRep::_repository_load(const OmWString& path)
 {
-  // Check and ask for unsaved changes
-  switch(this->_ask_unsaved()) {
-    case  1: this->_repo_save(); break; //< 'Yes'
-    case -1: return;                    //< 'Cancel'
-  }
-
-  OmWString dlg_start, dlg_result;
-
-  // if available, select current active channel library as start location
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(ModChan) dlg_start = ModChan->libraryPath();
-
-  // new dialog to open file
-  if(!Om_dlgOpenFile(dlg_result, this->_hwnd, L"Open Repository definition", OM_XML_FILES_FILTER, dlg_start))
-    return;
+  bool has_failed = false;
 
   // (try) load and parse repository XML file
-  OmResult result = this->_NetRepo->load(dlg_result);
+  OmResult result = this->_NetRepo->load(path);
   if(result != OM_RESULT_OK) {
-    Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_ERR, L"Repository open error",
+    Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_DLG_ERR, L"Repository open error",
                   L"Unable to load Repository definition:", this->_NetRepo->lastError());
-    return;
+    has_failed = true;
   }
+
+  // reset unsaved changes
+  this->_set_unsaved(false);
+
+  // update status bar and caption
+  this->_status_update_filename();
+  this->_status_update_references();
+
+  if(has_failed)
+    return false;
 
   // disable/enable proper menu items
   this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_FAD, MF_ENABLED);
   this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_DAD, MF_ENABLED);
   this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_GRAYED);
   this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVAS, MF_ENABLED);
-
-  // update status bar and caption
-  this->_status_update_filename();
-  this->_status_update_references();
 
   // populate title and download path
   this->enableItem(IDC_EC_INP01, true);
@@ -249,18 +241,48 @@ void OmUiToolRep::_repo_open()
   // update selection
   this->_reflist_selchg();
 
-  // reset unsaved changes
-  this->_set_unsaved(false);
+  return true;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_close()
+bool OmUiToolRep::_repository_save(const OmWString& path)
+{
+  bool has_failed = false;
+
+  // ensure last values saved
+  this->_repository_save_title();
+  this->_repository_save_downpath();
+  // ensure current reference changes are saved
+  this->_reference_url_changed();
+  this->_reference_desc_changed();
+
+  if(OM_RESULT_OK != this->_NetRepo->save(path)) {
+
+    Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_DLG_ERR, L"Save file error",
+                  L"Unable to save file:", this->_NetRepo->lastError());
+
+    has_failed = true;
+  }
+
+  // update status bar and caption
+  this->_status_update_filename();
+
+  // changes now saved
+  this->_set_unsaved(false);
+
+  return !has_failed;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_repository_close()
 {
   // Check and ask for unsaved changes
   switch(this->_ask_unsaved()) {
-    case  1: this->_repo_save(); break; //< 'Yes'
+    case  1: this->_repository_save(); break; //< 'Yes'
     case -1: return;                    //< 'Cancel'
   }
 
@@ -299,41 +321,13 @@ void OmUiToolRep::_repo_close()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_save()
+void OmUiToolRep::_repository_open()
 {
-  // Force Save As... if empty path
-  if(this->_NetRepo->path().empty()) {
-
-    this->_repo_save_as();
-
-    return;
+  // Check and ask for unsaved changes
+  switch(this->_ask_unsaved()) {
+    case  1: this->_repository_save(); break; //< 'Yes'
+    case -1: return;                    //< 'Cancel'
   }
-
-  // ensure last values saved
-  this->_repo_save_title();
-  this->_repo_save_downpath();
-  // ensure current reference changes are saved
-  this->_reference_url_changed();
-  this->_reference_desc_changed();
-
-  OmResult result = this->_NetRepo->save(this->_NetRepo->path());
-  if(result != OM_RESULT_OK) {
-    Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_ERR, L"Save file error",
-                  L"Unable to save file:", this->_NetRepo->lastError());
-  }
-
-  // update status bar and caption
-  this->_status_update_filename();
-
-  // changes now saved
-  this->_set_unsaved(false);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmUiToolRep::_repo_save_as()
-{
 
   OmWString dlg_start, dlg_result;
 
@@ -341,44 +335,58 @@ void OmUiToolRep::_repo_save_as()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(ModChan) dlg_start = ModChan->libraryPath();
 
-  // send save dialog to user
-  if(!Om_dlgSaveFile(dlg_result, this->_hwnd, L"Save Repository definition", OM_XML_FILES_FILTER, L"xml", L"default.xml", dlg_start))
+  // new dialog to open file
+  if(!Om_dlgOpenFile(dlg_result, this->_hwnd, L"Open Repository definition", OM_REP_FILES_FILTER, dlg_start))
     return;
 
-  // check for ".xml" extension, add it if needed
-  if(!Om_extensionMatches(dlg_result, L"xml")) {
-    dlg_result += L".xml";
-  }
+  // load repository file
+  this->_repository_load(dlg_result);
+}
 
-  // ask user for overwirte
-  if(!Om_dlgOverwriteFile(this->_hwnd, dlg_result))
-    return;
 
-  // ensure last values saved
-  this->_repo_save_title();
-  this->_repo_save_downpath();
-  // ensure current reference changes are saved
-  this->_reference_url_changed();
-  this->_reference_desc_changed();
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_repository_save()
+{
+  // Force Save As... if empty path
+  if(this->_NetRepo->path().empty()) {
 
-  OmResult result = this->_NetRepo->save(dlg_result);
-  if(result != OM_RESULT_OK) {
-    Om_dlgBox_okl(this->_hwnd, L"Repository editor", IDI_ERR, L"Save file error",
-                  L"Unable to save file:", this->_NetRepo->lastError());
+    this->_repository_save_as();
+
     return;
   }
 
-  // update status bar and caption
-  this->_status_update_filename();
-
-  // changes now saved
-  this->_set_unsaved(false);
+  this->_repository_save(this->_NetRepo->path());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_save_title()
+void OmUiToolRep::_repository_save_as()
+{
+  OmWString dlg_start, dlg_result;
+
+  // if available, select current active channel library as start location
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(ModChan) dlg_start = ModChan->libraryPath();
+
+  // send save dialog to user
+  if(!Om_dlgSaveFile(dlg_result, this->_hwnd, L"Save Repository definition", OM_REP_FILES_FILTER, OM_XML_DEF_EXT, L"default.omx", dlg_start))
+    return;
+
+  // check for ".omx" extension, add it if needed
+  if(!Om_extensionMatches(dlg_result, OM_XML_DEF_EXT)) {
+    dlg_result += L"." OM_XML_DEF_EXT;
+  }
+
+  this->_repository_save(dlg_result);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_repository_save_title()
 {
   // check for unsaved changes
   OmWString ec_content;
@@ -395,7 +403,7 @@ void OmUiToolRep::_repo_save_title()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repo_save_downpath()
+void OmUiToolRep::_repository_save_downpath()
 {
   // check for unsaved changes
   OmWString ec_content;
@@ -405,7 +413,7 @@ void OmUiToolRep::_repo_save_downpath()
 
   if(!ec_content.empty()) {
     if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
-      Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR, L"Invalid default download link",
+      Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid default download link",
                     L"Download link path or URL is invalid or contain illegal character", ec_content);
       // force focus to entry
       SetFocus(this->getItem(IDC_EC_INP02));
@@ -556,7 +564,7 @@ void OmUiToolRep::_reflist_selchg(int32_t item, bool selected)
             // set image to dialog
             this->enableItem(IDC_SB_SNAP, true);
             hBm = this->setStImage(IDC_SB_SNAP, hBm);
-            if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+            if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
 
             this->enableItem(IDC_BC_RESET, true);
             this->setPopupItem(MNU_RE_REF, MNU_RE_REF_THMBDEL, MF_ENABLED);
@@ -632,7 +640,7 @@ void OmUiToolRep::_reflist_selchg(int32_t item, bool selected)
   }
 
   if(!has_thumbnail) {
-    this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+    this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
     this->enableItem(IDC_SB_SNAP, false);
     this->enableItem(IDC_BC_RESET, false);
     this->setPopupItem(MNU_RE_REF, MNU_RE_REF_THMBDEL, MF_GRAYED);
@@ -657,7 +665,7 @@ bool OmUiToolRep::_repo_add_ref(const OmWString& path, bool select)
 
   // check if reference with same identity already exists
   if(this->_NetRepo->hasReference(ModPack.iden())) {
-    if(!Om_dlgBox_ynl(this->_hwnd, L"Repository Editor", IDI_QRY, L"Duplicate reference",
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Repository Editor", IDI_DLG_QRY, L"Duplicate reference",
                      L"This Mod is already referenced, do you want to update the existing one ?", ModPack.iden()))
       return true;
 
@@ -778,7 +786,7 @@ void OmUiToolRep::_reference_url_changed(int32_t item)
     } else {
 
       if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
-        Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_ERR, L"Invalid custom download link",
+        Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid custom download link",
                       L"Download link path or URL is invalid or contain illegal character", ec_content);
         // force ListView selection and focus to entry
         LVITEMW lvI = {}; lvI.state = LVIS_SELECTED;
@@ -983,7 +991,7 @@ void OmUiToolRep::_reference_thumb_load()
 
       // set thumbnail bitmap to static control
       HBITMAP hBm = this->setStImage(IDC_SB_SNAP, image.hbmp());
-      if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+      if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
 
       // enable Snapshot "Delete" Button
       this->enableItem(IDC_BC_RESET, true);
@@ -1019,8 +1027,8 @@ void OmUiToolRep::_reference_thumb_delete()
     has_changes = true;
 
     // set thumbnail placeholder image
-    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
-    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
+    if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   }
 
   if(has_changes)
@@ -1084,12 +1092,12 @@ void OmUiToolRep::_reference_deps_check()
 
   if(!missings.empty()) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_WRN, L"Missing dependencies",
+    Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_WRN, L"Missing dependencies",
                   L"The following declared Mod dependencies are not referenced in the repository",
                   Om_concatStrings(missings, L"\r\n"));
   } else {
 
-    Om_dlgBox_ok(this->_hwnd, L"Repository Editor", IDI_NFO, L"Satisfied dependencies ",
+    Om_dlgBox_ok(this->_hwnd, L"Repository Editor", IDI_DLG_NFO, L"Satisfied dependencies ",
                  L"All declared Mod dependencies are referenced in the repository");
   }
 }
@@ -1156,8 +1164,8 @@ void OmUiToolRep::_reflist_add_start(const OmWStringArray& paths)
     this->_reflist_add_abort = 0;
 
     // launch thread
-    this->_reflist_add_hth = Om_createThread(OmUiToolRep::_reflist_add_run_fn, this);
-    this->_reflist_add_hwo = Om_waitForThread(this->_reflist_add_hth, OmUiToolRep::_reflist_add_end_fn, this);
+    this->_reflist_add_hth = Om_threadCreate(OmUiToolRep::_reflist_add_run_fn, this);
+    this->_reflist_add_hwo = Om_threadWaitEnd(this->_reflist_add_hth, OmUiToolRep::_reflist_add_end_fn, this);
   }
 }
 
@@ -1170,7 +1178,7 @@ DWORD WINAPI OmUiToolRep::_reflist_add_run_fn(void* ptr)
 
   // Open progress dialog
   self->_reflist_add_abort = 0;
-  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_MOD_ADD, L"Parsing Mod packages", &self->_reflist_add_abort);
+  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_DLG_PKG_BLD, L"Parsing Mod packages", &self->_reflist_add_abort);
 
   // stuff for progress dialog
   OmWString progress_text;
@@ -1223,7 +1231,7 @@ VOID WINAPI OmUiToolRep::_reflist_add_end_fn(void* ptr, uint8_t fired)
 
   OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
 
-  Om_clearThread(self->_reflist_add_hth, self->_reflist_add_hwo);
+  Om_threadClear(self->_reflist_add_hth, self->_reflist_add_hwo);
 
   self->_reflist_add_hth = nullptr;
   self->_reflist_add_hwo = nullptr;
@@ -1241,7 +1249,7 @@ VOID WINAPI OmUiToolRep::_reflist_add_end_fn(void* ptr, uint8_t fired)
 void OmUiToolRep::_onClose()
 {
   switch(this->_ask_unsaved()) {
-    case  1: this->_repo_save(); break; //< 'Yes'
+    case  1: this->_repository_save(); break; //< 'Yes'
     case -1: return;                    //< 'Cancel'
   }
 
@@ -1255,7 +1263,7 @@ void OmUiToolRep::_onClose()
 void OmUiToolRep::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(IDI_REP_TOOL,2),Om_getResIcon(IDI_REP_TOOL,1));
+  this->setIcon(Om_getResIcon(IDI_BT_TOOLREP,2),Om_getResIcon(IDI_BT_TOOLREP,1));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Repository editor ");
@@ -1308,17 +1316,17 @@ void OmUiToolRep::_onInit()
   this->msgItem(IDC_LV_MOD, LVM_SETIMAGELIST, LVSIL_NORMAL, reinterpret_cast<LPARAM>(himl));
 
   // Set default package picture
-  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
 
   // Set buttons icons
   this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));
   this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(IDI_BT_DAD));
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_FRM));
-  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_PIC_ADD)); //< Thumbnail Select
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_BT_ADD_IMG)); //< Thumbnail Select
   this->setBmIcon(IDC_BC_RESET, Om_getResIcon(IDI_BT_REM)); //< Thumbnail Erase
   //this->setBmIcon(IDC_BC_SAV02, Om_getResIcon(IDI_BT_SVD)); //< Description Save
-  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_TXT_ADD)); //< Description Load
-  this->setBmIcon(IDC_BC_CHECK, Om_getResIcon(IDI_DEP_CHK));
+  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_BT_ADD_TXT)); //< Description Load
+  this->setBmIcon(IDC_BC_CHECK, Om_getResIcon(IDI_BT_DPN));
 
   // Set menu icons
   HMENU hMnuFile = this->getPopup(MNU_RE_FILE);
@@ -1326,7 +1334,7 @@ void OmUiToolRep::_onInit()
   this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
   this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
   this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_SAVAS, Om_getResIconPremult(IDI_BT_SVA));
-  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
+  this->setPopupItemIcon(hMnuFile, MNU_RE_FILE_QUIT, Om_getResIconPremult(IDI_BT_EXI));
 
   HMENU hMnuEdit = this->getPopup(MNU_RE_EDIT);
   this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FAD, Om_getResIconPremult(IDI_BT_FAD));
@@ -1334,10 +1342,10 @@ void OmUiToolRep::_onInit()
   this->setPopupItemIcon(hMnuEdit, MNU_RE_EDIT_FRM, Om_getResIconPremult(IDI_BT_FRM));
 
   HMENU hMnuRef = this->getPopup(MNU_RE_REF);
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBSEL, Om_getResIconPremult(IDI_PIC_ADD));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBSEL, Om_getResIconPremult(IDI_BT_ADD_IMG));
   this->setPopupItemIcon(hMnuRef, MNU_RE_REF_THMBDEL, Om_getResIconPremult(IDI_BT_REM));
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DESCSEL, Om_getResIconPremult(IDI_TXT_ADD));
-  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DEPCHK, Om_getResIconPremult(IDI_DEP_CHK));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DESCSEL, Om_getResIconPremult(IDI_BT_ADD_TXT));
+  this->setPopupItemIcon(hMnuRef, MNU_RE_REF_DEPCHK, Om_getResIconPremult(IDI_BT_DPN));
 
   // define controls tool-tips
   this->_createTooltip(IDC_EC_INP01,  L"Repository short description");
@@ -1360,9 +1368,6 @@ void OmUiToolRep::_onInit()
 
   this->_createTooltip(IDC_BC_CHECK,  L"Check for dependencies availability");
 
-  // Initialize new Repository definition XML scheme
-  //this->_repo_init();
-
   // disable/enable proper menu items
   this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_FAD, MF_GRAYED);
   this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_DAD, MF_GRAYED);
@@ -1372,8 +1377,21 @@ void OmUiToolRep::_onInit()
   // update selection to enable menu/buttons
   this->_reflist_selchg();
 
-  // reset unsaved changes
-  this->_set_unsaved(false);
+  // Initialize new Repository definition XML scheme
+  //this->_repository_init();
+
+  // Load initial repository
+  if(!this->_init_path.empty()) {
+
+    this->_repository_load(this->_init_path);
+
+    this->_init_path.clear();
+
+  } else {
+
+    // reset unsaved changes
+    this->_set_unsaved(false);
+  }
 }
 
 
@@ -1498,16 +1516,16 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case IDC_BC_NEW:
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_repo_init();
+        this->_repository_init();
       break;
 
     case IDC_BC_OPEN:
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_repo_open();
+        this->_repository_open();
       break;
 
     case IDC_BC_SAVE: //< General "Save as.." Button
-      this->_repo_save();
+      this->_repository_save();
       break;
 
     case IDC_EC_INP01: //< Repository title EditText
@@ -1521,7 +1539,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           this->_set_unsaved(true);
       }
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_repo_save_title();
+        this->_repository_save_title();
       break;
 
     case IDC_EC_INP02: //< Download path EditText
@@ -1535,7 +1553,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           this->_set_unsaved(true);
       }
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_repo_save_downpath();
+        this->_repository_save_downpath();
       break;
 
     case IDC_BC_BRW01: //< Button : Mod references Add Files
@@ -1592,19 +1610,19 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_FILE_NEW:
-      this->_repo_init();
+      this->_repository_init();
       break;
 
     case IDM_FILE_OPEN:
-      this->_repo_open();
+      this->_repository_open();
       break;
 
     case IDM_FILE_SAVE:
-      this->_repo_save();
+      this->_repository_save();
       break;
 
     case IDM_FILE_SAVAS:
-      this->_repo_save_as();
+      this->_repository_save_as();
       break;
 
     case IDM_QUIT:

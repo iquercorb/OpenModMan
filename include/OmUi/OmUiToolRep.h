@@ -53,10 +53,32 @@ class OmUiToolRep : public OmDialog
     ///
     long id() const;
 
+    /// \brief Load repository
+    ///
+    /// Loads the specified repository definition
+    ///
+    /// \param[in] path : Path to repository definition
+    ///
+    /// \return true if succeed, false otherwise
+    ///
+    bool loadRepository(const OmWString& path) {
+      return this->_repository_load(path);
+    }
+
+    /// \brief Set dialog init load
+    ///
+    /// Set path to repository definition to be loaded at dialog initialization.
+    ///
+    void setInitLoad(const OmWString& path) {
+      this->_init_path = path;
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     // edited repository object
     OmNetRepo*          _NetRepo;
+
+    OmWString           _init_path;
 
     // status bar populate/refresh
     void                _status_update_filename();
@@ -71,19 +93,23 @@ class OmUiToolRep : public OmDialog
     int32_t             _ask_unsaved();
 
     // repository edition
-    void                _repo_init();
+    void                _repository_init();
 
-    void                _repo_open();
+    bool                _repository_load(const OmWString& path);
 
-    void                _repo_close();
+    bool                _repository_save(const OmWString& path);
 
-    void                _repo_save();
+    void                _repository_close();
 
-    void                _repo_save_as();
+    void                _repository_open();
 
-    void                _repo_save_title();
+    void                _repository_save();
 
-    void                _repo_save_downpath();
+    void                _repository_save_as();
+
+    void                _repository_save_title();
+
+    void                _repository_save_downpath();
 
     bool                _repo_add_ref(const OmWString& path, bool select = false);
 
@@ -101,7 +127,6 @@ class OmUiToolRep : public OmDialog
     void                _reflist_add_files();
 
     void                _reflist_add_directory();
-
 
     void                _reference_url_toggle();
 
