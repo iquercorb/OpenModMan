@@ -140,6 +140,34 @@ class OmNetRepo
       return this->_query_result;
     }
 
+    /// \brief Query HTTP response code
+    ///
+    /// Returns last query HTTP response code
+    ///
+    uint32_t queryResponseCode() const {
+      return this->_query_respcode;
+    }
+
+    /// \brief Query HTTP response data
+    ///
+    /// Returns last query HTTP response raw data
+    ///
+    /// \return UTF-16 converted response data
+    ///
+    const OmWString& queryResponseData() const {
+      return this->_query_respdata;
+    }
+
+    /// \brief Query last error message
+    ///
+    /// Returns error message specific to last query
+    ///
+    /// \return String describing last error
+    ///
+    const OmWString& queryLastError() const {
+      return this->_query_lasterr;
+    }
+
     /// \brief Get URL base address
     ///
     /// Returns repository HTTP base address.
@@ -343,6 +371,12 @@ class OmNetRepo
     OmConnect           _query_connect;
 
     OmResult            _query_result;
+
+    uint32_t            _query_respcode;
+
+    OmWString           _query_respdata;
+
+    OmWString           _query_lasterr;
 
     // reference build helpers
     bool                _save_thumbnail(OmXmlNode&, const OmImage&);

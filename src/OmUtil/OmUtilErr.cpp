@@ -125,6 +125,14 @@ OmWString Om_errSave(const OmWString& item, const OmWString& path, const OmWStri
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmWString Om_errHttp(const OmWString& item, const OmWString& url, const OmWString& error)
+{
+  return item + L" \"" + url + L"\" request failed: " + error;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 OmWString Om_errParse(const OmWString& item, const OmWString& path, const OmWString& error)
 {
   return item + L" \"" + path + L"\" parse error: " + error;

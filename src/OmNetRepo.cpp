@@ -32,7 +32,8 @@
 ///
 OmNetRepo::OmNetRepo(OmModChan* ModChan) :
   _ModChan(ModChan),
-  _query_result(OM_RESULT_UNKNOW)
+  _query_result(OM_RESULT_UNKNOW),
+  _query_respcode(0)
 {
 
 }
@@ -60,6 +61,8 @@ void OmNetRepo::clear()
   this->_reference_list.clear();
   this->_query_connect.clear();
   this->_query_result = OM_RESULT_UNKNOW;
+  this->_query_respcode = 0;
+  this->_query_respdata.clear();
 }
 
 ///
@@ -90,36 +93,18 @@ void OmNetRepo::init(const OmWString& title)
 ///
 bool OmNetRepo::setCoordinates(const OmWString& base, const OmWString& name)
 {
-  // Build final URL to check if given setting is valid
-  OmWString url;
+  // preliminary test on parameters
+  OmWString url = Om_concatURLs(base, name);
 
-  if(name.empty()) {
-
-    // assume a raw URL is provided
-    url = base;
-
-    // check for valid URL (less restrictive) ie. "http://www.example.com"
-    if(!Om_isUrl(url)) {
-      this->_error(L"setCoordinates", Om_errParam(url, L"URL"));
-      return false;
-    }
-
-  } else {
-
-    // assume named coordinates is provided
-    Om_concatURLs(url, base, name);
-    url += L".xml";
-
-    // check for valid URL to file ie. "http://www.example.com/toto/default.xml"
-    if(!Om_isFileUrl(url)) {
-      this->_error(L"setCoordinates", Om_errParam(url, L"file URL"));
-      return false;
-    }
+  // check for valid URL (less restrictive) ie. "http://www.example.com/toto"
+  if(!Om_isUrl(url)) {
+    this->_error(L"setCoordinates", Om_errParam(url, L"URL"));
+    return false;
   }
 
   this->_base = base;
-  this->_name = name;
-  this->_path = url;
+  if(!name.empty())
+    this->_name = name;
 
   return true;
 }
@@ -130,15 +115,11 @@ bool OmNetRepo::setCoordinates(const OmWString& base, const OmWString& name)
 bool OmNetRepo::parse(const OmWString& data)
 {
   // try to parse received data as repository
-  if(!this->_xml.parse(data, OM_XMAGIC_REP)) {
-    this->_error(L"parse", Om_errParse(L"Repository definition", this->_path, this->_xml.lastErrorStr()));
+  if(!this->_xml.parse(data, OM_XMAGIC_REP))
     return false;
-  }
 
-  if(!this->_xml.hasChild(L"uuid") || !this->_xml.hasChild(L"title") || !this->_xml.hasChild(L"downpath")) {
-    this->_error(L"parse", Om_errParse(L"Repository definition", this->_path, L"basic nodes missing"));
+  if(!this->_xml.hasChild(L"uuid") || !this->_xml.hasChild(L"title") || !this->_xml.hasChild(L"downpath"))
     return false;
-  }
 
   this->_uuid = this->_xml.child(L"uuid").content();
   this->_title = this->_xml.child(L"title").content();
@@ -170,8 +151,6 @@ bool OmNetRepo::parse(const OmWString& data)
     // <remotes>  --> <references>
     this->_xml.child(L"remotes").setName(L"references");
 
-  } else {
-    this->_log(OM_LOG_WRN, L"parse", L"repository does not provide any mod reference");
   }
 
   return true;
@@ -236,38 +215,110 @@ void OmNetRepo::abortQuery()
 ///
 OmResult OmNetRepo::query()
 {
-  if(!this->_path.empty()) {
+  // Notice to who consider rewrite this part asynchronous way :
+  //
+  // Since updating repositories in Mod Channel imply Libraries (Mods list)
+  // manipulation, in case of multiple repositories, such operation need to be
+  // performed sequentially to prevent potential conflicting between threads.
+  // For this reason, this is easier and cleaner to run thread within
+  // Mod Channel and keep Repository Query operation synchronous way.
 
-    // Notice to who consider rewrite this part asynchronous way :
-    //
-    // Since updating repositories in Mod Channel imply Libraries (Mods list)
-    // manipulation, in case of multiple repositories, such operation need to be
-    // performed sequentially to prevent potential conflicting between threads.
-    // For this reason, this is easier and cleaner to run thread within
-    // Mod Channel and keep Repository Query operation synchronous way.
+  // check for basic setup
+  if(this->_base.empty() && this->_name.empty())
+    return this->_query_result;
 
-    // send synchronous request
-    OmCString response;
+  // create list of URL to try
+  OmWStringArray urls;
 
-    this->_query_result = OM_RESULT_PENDING;
-    this->_query_result = this->_query_connect.requestHttpGet(this->_path, &response);
+  if(this->_name.empty()) {
+    urls.push_back(this->_base);
+  } else {
+    // we test repository coordinates with two possible extension
+    urls.push_back(Om_concatURLs(this->_base, this->_name) + L"." OM_XML_DEF_EXT);
+    urls.push_back(Om_concatURLs(this->_base, this->_name) + L".xml");
+  }
 
-    // if request succeed, try to parse response data
-    if(this->_query_result == OM_RESULT_OK) {
+  // send synchronous request
+  OmXmlDoc parsexml;
+  OmCString respdata;
 
-      if(!this->parse(Om_toUTF16(response))) {
+  // the stuff bellow is used for error reporting in various test
+  // situations such as properties and wizard dialogs in order to avoid
+  // duplicate code (poor maintainability) and keep consistent behavior.
+  this->_query_respdata.clear();
+  this->_query_respcode = 0;
+  this->_query_lasterr.clear();
+
+  // the general query result
+  this->_query_result = OM_RESULT_PENDING;
+
+  for(size_t i = 0; i < urls.size(); ++i) {
+
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmNetRepo::query : try url=" << urls[i] << L"\n";
+    #endif // DEBUG
+
+    OmResult result = this->_query_connect.requestHttpGet(urls[i], &respdata);
+
+    if(result == OM_RESULT_OK) {
+
+      // store HTTP response code
+      this->_query_respdata = Om_toUTF16(respdata);
+      this->_query_respcode = this->_query_connect.httpGetResponse();
+
+      // we verify we received valid XML data
+      if(!parsexml.parse(this->_query_respdata)) {
         this->_query_result = OM_RESULT_ERROR_PARSE;
+        this->_query_lasterr = L"Received invalid data";
         return this->_query_result;
       }
 
+      // try to parse the XML data as repository
+      if(!this->parse(this->_query_respdata)) {
+        this->_query_result = OM_RESULT_ERROR_PARSE;
+        this->_query_lasterr = L"Invalid Repository XML";
+        return this->_query_result;
+      }
+
+      this->_path = urls[i]; //< save the working URL in path
+      this->_query_result = OM_RESULT_OK;
+      return this->_query_result;
+
     } else {
 
-      // if query was not aborted, this is definitely an error
-      if(this->_query_result != OM_RESULT_ABORT) {
-        this->_error(L"query", this->_query_connect.lastError());
+      if(result == OM_RESULT_ABORT) {
+
+        // operation aborted, we simply return
+
+        this->_query_result = OM_RESULT_ABORT;
+
+        return this->_query_result;
+
+      } else {
+
+        // since we try several URLs, at least one will result in 404 error, so to keep
+        // consistent error reporting we ignore 404 error unless we are a the end of
+        // list. If other error type occur, statistically this will be the same for both
+        // URLs so we don't care if we store errors for the first or the second one
+
+        if((this->_query_connect.httpGetResponse() != 404) || (i == (urls.size() - 1))) {
+
+          // store data if any (should not)
+          if(!respdata.empty())
+            this->_query_respdata = Om_toUTF16(respdata);
+
+          // store HTTP response code and error string
+          this->_query_respcode = this->_query_connect.httpGetResponse();
+          this->_query_lasterr = this->_query_connect.lastError();
+        }
+
+        this->_error(L"query", Om_errHttp(L"repository def", urls[i], this->_query_connect.lastError()));
       }
     }
   }
+
+  // arriving here mean no URL succeed, this is a fail
+  this->_query_result = OM_RESULT_ERROR;
 
   return this->_query_result;
 }

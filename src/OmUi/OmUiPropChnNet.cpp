@@ -53,7 +53,9 @@ OmUiPropChnNet::OmUiPropChnNet(HINSTANCE hins) : OmDialogPropTab(hins)
 ///
 OmUiPropChnNet::~OmUiPropChnNet()
 {
-
+  HFONT hFt;
+  hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_STATE, WM_GETFONT));
+  if(hFt) DeleteObject(hFt);
 }
 
 
@@ -91,7 +93,7 @@ void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
       break;
 
     default:
-      self->setItemText(IDC_SC_STATE, NetRepo->lastError());
+      self->setItemText(IDC_SC_STATE, NetRepo->queryLastError());
       break;
   }
 }
@@ -199,7 +201,7 @@ void OmUiPropChnNet::_bc_rpdel_pressed()
   repo_name += ModRepo->name();
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Channel properties", IDI_QRY, L"Remove Mod Repository",
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Channel properties", IDI_DLG_QRY, L"Remove Mod Repository",
                     L"Remove the following Mod Repository from Mod Channel ?", repo_name))
     return;
 
@@ -227,6 +229,11 @@ void OmUiPropChnNet::_bc_rpqry_pressed()
 ///
 void OmUiPropChnNet::_onTbInit()
 {
+  HFONT hFt;
+  // set specific fonts
+  hFt = Om_createFont(12, 800, L"Ms Shell Dlg");
+  this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(IDI_BT_ADD));
   this->setBmIcon(IDC_BC_RPDEL, Om_getResIcon(IDI_BT_REM));
@@ -268,8 +275,8 @@ void OmUiPropChnNet::_onTbResize()
   this->_setItemPos(IDC_BC_RPQRY, 50, 83, 22, 22, true);
 
   // Query Status Label & result static
-  this->_setItemPos(IDC_SC_LBL04, 75, 110, 120, 16, true);
-  this->_setItemPos(IDC_SC_STATE, 145, 110, this->cliWidth()-185, 16, true);
+  this->_setItemPos(IDC_SC_LBL04, 75, 110, 70, 16, true);
+  this->_setItemPos(IDC_SC_STATE, 148, 110, this->cliWidth()-185, 16, true);
 
   // Warnings label
   this->_setItemPos(IDC_SC_LBL02, 50, 150, 300, 16, true);

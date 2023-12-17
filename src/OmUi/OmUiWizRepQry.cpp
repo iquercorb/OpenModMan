@@ -39,7 +39,10 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiWizRepQry::OmUiWizRepQry(HINSTANCE hins) : OmDialogWizPage(hins),
-  _query_result(OM_RESULT_UNKNOW)
+  _NetRepo(new OmNetRepo(nullptr)),
+  _query_result(OM_RESULT_UNKNOW),
+  _query_hth(nullptr),
+  _query_hwo(nullptr)
 {
 
 }
@@ -49,6 +52,9 @@ OmUiWizRepQry::OmUiWizRepQry(HINSTANCE hins) : OmDialogWizPage(hins),
 ///
 OmUiWizRepQry::~OmUiWizRepQry()
 {
+  if(this->_NetRepo)
+    delete this->_NetRepo;
+
   HFONT hFt;
   hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_SC_STATE, WM_GETFONT));
   if(hFt) DeleteObject(hFt);
@@ -79,14 +85,14 @@ bool OmUiWizRepQry::validFields() const
 bool OmUiWizRepQry::validParams() const
 {
   if(this->_query_result == OM_RESULT_UNKNOW) {
-    if(!Om_dlgBox_yn(this->_hwnd, L"Repository Configuration Wizard", IDI_WRN, L"Repository not tested",
+    if(!Om_dlgBox_yn(this->_hwnd, L"Repository Configuration Wizard", IDI_DLG_WRN, L"Repository not tested",
                      L"You did not query the Repository to verify parameters and availability. "
                      "Do you want to add it anyway ?"))
        return false;
   }
 
   if(this->_query_result != OM_RESULT_OK) {
-    if(!Om_dlgBox_yn(this->_hwnd, L"Repository Configuration Wizard", IDI_WRN, L"Repository unavailable",
+    if(!Om_dlgBox_yn(this->_hwnd, L"Repository Configuration Wizard", IDI_DLG_WRN, L"Repository unavailable",
                     L"The last Repository query failed, either parameters are invalid or Repository is unavailable. "
                     "Do you want to add it anyway ?"))
        return false;
@@ -98,16 +104,22 @@ bool OmUiWizRepQry::validParams() const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizRepQry::_query_send()
+void OmUiWizRepQry::_query_abort()
 {
-  if(this->_connect.isPerforming()) {
-    this->_connect.abortRequest();
-    return;
-  }
+  this->_NetRepo->abortQuery();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizRepQry::_query_start()
+{
+  if(this->_query_hth)
+    this->_query_abort();
 
   OmUiWizRepCfg* UiWizRepCfg = static_cast<OmUiWizRepCfg*>(this->siblingById(IDD_WIZ_REP_CFG));
 
-  OmWString base, name, full;
+  OmWString base, name;
 
   if(UiWizRepCfg->msgItem(IDC_BC_RAD01, BM_GETCHECK)) {
     UiWizRepCfg->getItemText(IDC_EC_INP01, base);
@@ -116,48 +128,33 @@ void OmUiWizRepQry::_query_send()
     UiWizRepCfg->getItemText(IDC_EC_INP03, base);
   }
 
-  if(!name.empty()) {
-    Om_concatURLs(full, base, name); full += L".xml";
-  } else {
-    full = base;
-  }
-
-  // trim string
-  Om_trim(&full);
-
-  if(!Om_isFileUrl(full)) {
+  // set Repository coordinates, they should be valid
+  if(!this->_NetRepo->setCoordinates(base, name)) {
     this->setItemText(IDC_SC_STATE, QRY_INVALID_STRING);
     return;
   }
 
-  this->setItemText(IDC_EC_RESUL, L"");
-
-  this->_query_result = OM_RESULT_PENDING;
-
-  this->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
-
-  this->setItemText(IDC_BC_RPQRY, L"Abort query");
-
-  this->_connect.requestHttpGet(full, OmUiWizRepQry::_query_response_fn, this);
+  // here we go
+  this->_query_hth = Om_threadCreate(OmUiWizRepQry::_query_run_fn, this);
+  this->_query_hwo = Om_threadWaitEnd(this->_query_hth, OmUiWizRepQry::_query_end_fn, this);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizRepQry::_query_response_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t param)
+DWORD WINAPI OmUiWizRepQry::_query_run_fn(void* ptr)
 {
   OmUiWizRepQry* self = static_cast<OmUiWizRepQry*>(ptr);
 
-  self->setItemText(IDC_BC_RPQRY, L"Send query");
+  self->setItemText(IDC_EC_RESUL, L"");
+  self->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
+  self->setItemText(IDC_BC_RPQRY, L"Abort query");
 
-  // convert received data to UTF-16 string
-  OmWString data_str;
-  if((len > 0) && (buf != nullptr))
-    data_str = Om_toUTF16(reinterpret_cast<char*>(buf));
+  self->_query_result = self->_NetRepo->query();
 
   // if any, print received data to log
-  if(!data_str.empty()) {
-    OmWString crlf_str = Om_toCRLF(data_str);
+  if(!self->_NetRepo->queryResponseData().empty()) {
+    OmWString crlf_str = Om_toCRLF(self->_NetRepo->queryResponseData());
     size_t len = self->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
     self->msgItem(IDC_EC_RESUL, EM_SETSEL, 0, len);
     self->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(crlf_str.c_str()));
@@ -165,57 +162,32 @@ void OmUiWizRepQry::_query_response_fn(void* ptr, uint8_t* buf, uint64_t len, ui
     self->msgItem(IDC_EC_RESUL, 0, 0, RDW_ERASE|RDW_INVALIDATE);
   }
 
-  if(param == 200) {
-
-    OmXmlDoc data_xml;
-    OmXmlConf repo_cfg;
-
-    // try to parse received data as XML data
-    if(!data_xml.parse(data_str)) {
-
-      self->_query_result = OM_RESULT_ERROR;
-
-      self->setItemText(IDC_SC_STATE, L"Received invalid data");
-
-      return;
-    }
-
-    // try to parse received data as repository definition
-    if(!repo_cfg.parse(data_str, OM_XMAGIC_REP)) {
-
-      self->_query_result = OM_RESULT_ERROR;
-
-      self->setItemText(IDC_SC_STATE, L"Invalid Repository XML");
-
-      return;
-    }
-
-    self->_query_result = OM_RESULT_OK;
-
+  if(self->_query_result == OM_RESULT_OK) {
     self->setItemText(IDC_SC_STATE, QRY_VALID_STRING);
-
   } else {
-
-    self->_query_result = OM_RESULT_ERROR;
-
-    self->setItemText(IDC_SC_STATE, self->_connect.lastError());
+    if(self->_query_result != OM_RESULT_ABORT) {
+      self->setItemText(IDC_SC_STATE, self->_NetRepo->queryLastError());
+    }
   }
+
+  return 0;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiWizRepQry::_query_add_log(const OmWString& log)
+VOID WINAPI OmUiWizRepQry::_query_end_fn(void* ptr, uint8_t fired)
 {
-  OmWString entry = log;
-  entry += L"\r\n";
+  OM_UNUSED(fired);
 
-  size_t len = this->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
-  this->msgItem(IDC_EC_RESUL, EM_SETSEL, len, len);
-  this->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(entry.c_str()));
-  this->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_BOTTOM, 0);
-  this->msgItem(IDC_EC_RESUL, 0, 0, RDW_ERASE|RDW_INVALIDATE);
-  //RedrawWindow(this->getItem(IDC_EC_RESUL), nullptr, nullptr, RDW_ERASE|RDW_INVALIDATE);
+  OmUiWizRepQry* self = static_cast<OmUiWizRepQry*>(ptr);
+
+  Om_threadClear(self->_query_hth, self->_query_hwo);
+  self->_query_hth = nullptr;
+  self->_query_hwo = nullptr;
+
+  // reset query button
+  self->setItemText(IDC_BC_RPQRY, L"Send query");
 }
 
 ///
@@ -252,7 +224,7 @@ void OmUiWizRepQry::_onPgShow()
   this->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, 0);
 
   // send new query
-  this->_query_send();
+  this->_query_start();
 }
 
 ///
@@ -286,7 +258,7 @@ INT_PTR OmUiWizRepQry::_onPgMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case IDC_BC_RPQRY:
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_query_send();
+        this->_query_start();
       break;
     }
   }

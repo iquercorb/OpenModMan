@@ -79,15 +79,22 @@ class OmUiWizRepQry : public OmDialogWizPage
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    OmConnect           _connect;
+    OmNetRepo*          _NetRepo;
 
     OmResult            _query_result;
 
-    void                _query_send();
+    void                _query_abort();
 
-    static void         _query_response_fn(void* ptr, uint8_t* buf, uint64_t len, uint64_t code);
+    void                _query_start();
 
-    void                _query_add_log(const OmWString& log);
+    void*               _query_hth;
+
+    void*               _query_hwo;
+
+    static DWORD WINAPI _query_run_fn(void*);
+
+    static VOID WINAPI  _query_end_fn(void*,uint8_t);
+
 
     void                _onPgInit();
 
