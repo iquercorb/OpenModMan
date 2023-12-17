@@ -17,6 +17,7 @@
 #include "OmModHub.h"
 
 #include "OmBaseUi.h"
+#include "OmUtilWin.h"
 
 #include "OmUiWizChnBeg.h"
 #include "OmUiWizChnTgt.h"
@@ -89,10 +90,19 @@ void OmUiWizChn::_onWizFinish()
 
   // create new Mod Channel in Mod Hub
   if(!ModHub->createChannel(title, target_dir, modlib_dir, backup_dir)) {
-    Om_dlgBox_okl(this->_hwnd, L"Mod Channel Wizard", IDI_ERR, L"Mod Channel creation error",
+    Om_dlgBox_okl(this->_hwnd, L"Mod Channel Wizard", IDI_DLG_ERR, L"Mod Channel creation error",
                   L"The Channel creation failed:", ModHub->lastError());
   }
 
   // force parent dialog to refresh
   this->root()->refresh();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizChn::_onWizInit()
+{
+  // set splash image
+  this->setStImage(IDC_SB_IMAGE, Om_getResImage(IDB_SC_WIZ_CHN));
 }

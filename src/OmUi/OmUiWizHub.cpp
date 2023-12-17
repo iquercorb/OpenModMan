@@ -81,8 +81,8 @@ void OmUiWizHub::_onWizFinish()
   static_cast<OmUiMan*>(this->root())->selectHub(-1);
 
   // create the new Mod Hub, if an error occur, error message
-  if(!ModMan->createHub(hub_path, hub_name, true)) {
-    Om_dlgBox_okl(this->_hwnd, L"Mod Hub Wizard", IDI_ERR, L"Hub creation failed",
+  if(OM_RESULT_OK != ModMan->createHub(hub_path, hub_name, true)) {
+    Om_dlgBox_okl(this->_hwnd, L"Mod Hub Wizard", IDI_DLG_ERR, L"Hub creation failed",
                   L"Unable to create the Mod Hub:", ModMan->lastError());
 
     // Select previous Hub
@@ -99,5 +99,6 @@ void OmUiWizHub::_onWizFinish()
 ///
 void OmUiWizHub::_onWizInit()
 {
-
+  // set splash image
+  this->setStImage(IDC_SB_IMAGE, Om_getResImage(IDB_SC_WIZ_HUB));
 }

@@ -51,9 +51,9 @@ class OmUiWizHub : public OmDialogWiz
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _onWizFinish();
-
     void                _onWizInit();
+
+    void                _onWizFinish();
 };
 
 #endif // OMUIWIZHUB_H

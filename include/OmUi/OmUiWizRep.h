@@ -75,6 +75,8 @@ class OmUiWizRep : public OmDialogWiz
 
     OmModChan*          _ModChan;
 
+    void                _onWizInit();
+
     void                _onWizFinish();
 };
 

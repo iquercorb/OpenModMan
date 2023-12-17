@@ -163,10 +163,6 @@ void OmDialogWiz::_onInit()
   this->msgItem(IDC_BC_NEXT, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
   this->msgItem(IDC_BC_CANCEL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
-  // set splash image
-  this->setStImage(IDC_SB_IMAGE, Om_getResImage(IDB_WIZARD));
-
-
   for(size_t i = 0; i < this->_pageDial.size(); ++i)
     this->_pageDial[i]->modeless(false);
 

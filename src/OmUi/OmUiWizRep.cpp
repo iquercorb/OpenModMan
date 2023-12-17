@@ -17,6 +17,7 @@
 #include "OmModChan.h"
 
 #include "OmBaseUi.h"
+#include "OmUtilWin.h"
 
 #include "OmUiWizRepBeg.h"
 #include "OmUiWizRepCfg.h"
@@ -78,10 +79,19 @@ void OmUiWizRep::_onWizFinish()
   this->quit();
 
   if(!this->_ModChan->addRepository(base, name)) {
-    Om_dlgBox_okl(this->_hwnd, L"Repository Configuration Wizard", IDI_ERR, L"Repository config error",
+    Om_dlgBox_okl(this->_hwnd, L"Repository Configuration Wizard", IDI_DLG_ERR, L"Repository config error",
                     L"Unable to add Repository to Channel:", this->_ModChan->lastError());
   }
 
   // force parent dialog to refresh
   this->root()->refresh();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiWizRep::_onWizInit()
+{
+  // set splash image
+  this->setStImage(IDC_SB_IMAGE, Om_getResImage(IDB_SC_WIZ_REP));
 }

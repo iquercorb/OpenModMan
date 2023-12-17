@@ -75,6 +75,8 @@ class OmUiWizChn : public OmDialogWiz
 
     OmModHub*           _ModHub;
 
+    void                _onWizInit();
+
     void                _onWizFinish();
 };
 
