@@ -170,13 +170,13 @@ void OmUiPropHubPst::_preset_delete()
   if(!ModPset) return;
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Hub properties", IDI_QRY, L"Delete Preset",
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Hub properties", IDI_DLG_QRY, L"Delete Preset",
                     L"Delete the following Preset ?", ModPset->title()))
     return;
 
   if(!ModHub->deletePreset(bat_id)) {
     // warns the user error occurred
-    Om_dlgBox_okl(this->_hwnd, L"Hub properties", IDI_ERR, L"Preset delete error",
+    Om_dlgBox_okl(this->_hwnd, L"Hub properties", IDI_DLG_ERR, L"Preset delete error",
                   L"Unable to delete Preset:",ModHub->lastError());
   }
 

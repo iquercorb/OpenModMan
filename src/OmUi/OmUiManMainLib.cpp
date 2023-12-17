@@ -103,8 +103,8 @@ void OmUiManMainLib::addToLibrary()
   // this is simple Mod add to library
   this->_import_build = false;
 
-  this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
-  this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
+  this->_import_hth = Om_threadCreate(OmUiManMainLib::_import_run_fn, this);
+  this->_import_hwo = Om_threadWaitEnd(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
 
   // TODO: Implementer l'import de Mod-directory avec conversion automatique en Package
 }
@@ -130,8 +130,8 @@ void OmUiManMainLib::importToLibrary()
   // this is true Mod build/import
   this->_import_build = true;
 
-  this->_import_hth = Om_createThread(OmUiManMainLib::_import_run_fn, this);
-  this->_import_hwo = Om_waitForThread(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
+  this->_import_hth = Om_threadCreate(OmUiManMainLib::_import_run_fn, this);
+  this->_import_hwo = Om_threadWaitEnd(this->_import_hth, OmUiManMainLib::_import_end_fn, this);
 
   // TODO: Implementer l'import de Mod-directory avec conversion automatique en Package
 }
@@ -173,7 +173,7 @@ void OmUiManMainLib::deleteSources()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  if(!Om_dlgBox_yn(this->_hwnd, L"Delete Mods", IDI_MOD_DEL, L"Delete Mods",
+  if(!Om_dlgBox_yn(this->_hwnd, L"Delete Mods", IDI_DLG_PKG_DEL, L"Delete Mods",
                     L"Move the selected Mods to recycle bin ?")) return;
 
   OmPModPackArray selection;
@@ -210,7 +210,7 @@ void OmUiManMainLib::deleteSources()
 
     int32_t result = Om_moveToTrash(ModPack->sourcePath());
     if(result != 0) {
-      Om_dlgBox_okl(this->_hwnd, L"Delete Mods", IDI_ERR, L"Delete Mod error",
+      Om_dlgBox_okl(this->_hwnd, L"Delete Mods", IDI_DLG_ERR, L"Delete Mod error",
                     L"Moving Mod \""+ModPack->iden()+L"\" to recycle bin failed:",
                     Om_errShell(L"", ModPack->sourcePath(), result));
     }
@@ -236,7 +236,7 @@ void OmUiManMainLib::discardBackups()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  if(!Om_dlgBox_yn(this->_hwnd, L"Discard backup data", IDI_MOD_WRN, L"Deleting backup data",
+  if(!Om_dlgBox_yn(this->_hwnd, L"Discard backup data", IDI_DLG_PKG_WRN, L"Deleting backup data",
                   L"Selected Mods backup data will be deleted so no longer can be restored, continue anyway ?"))
                   return;
 
@@ -274,7 +274,7 @@ void OmUiManMainLib::discardBackups()
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
     if(result == OM_RESULT_ERROR) {
-      Om_dlgBox_okl(this->_hwnd, L"Discard backup data", IDI_ERR, L"Backup data discord error",
+      Om_dlgBox_okl(this->_hwnd, L"Discard backup data", IDI_DLG_ERR, L"Backup data discord error",
                     L"Deleting backup data of \""+ModPack->name()+L"\" has failed:", ModPack->lastError());
     }
 
@@ -596,7 +596,7 @@ void OmUiManMainLib::queueCleaning(bool silent)
 
   // check and warn for extra uninstall due to dependencies
   if(!silent && depends.size() && ModChan->warnExtraUnin()) {
-    if(!Om_dlgBox_cal(this->_hwnd, L"Clean uninstall Mods", IDI_MOD_DEL, L"Unused dependency Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, L"Clean uninstall Mods", IDI_DLG_PKG_DEL, L"Unused dependency Mods",
                       L"The following dependency Mods will no longer be used by any another so will be also uninstalled:",
                       Om_concatStrings(depends, L"\r\n")))
       return;
@@ -734,11 +734,11 @@ DWORD WINAPI OmUiManMainLib::_import_run_fn(void* ptr)
 
   if(self->_import_build) {
     // true importation with mod building from directories
-    self->_import_hdp = Om_dlgProgress(hParent, L"Import to Library", IDI_MOD_ADD, L"Importing Mods to Library", &self->_import_abort, OM_DLGBOX_DUAL_BARS);
+    self->_import_hdp = Om_dlgProgress(hParent, L"Import to Library", IDI_DLG_PKG_BLD, L"Importing Mods to Library", &self->_import_abort, OM_DLGBOX_DUAL_BARS);
     result = ModChan->importToLibrary(self->_import_array, OmUiManMainLib::_import_progress_fn, OmUiManMainLib::_import_compress_fn, self);
   } else {
     // simple importation, copying files to library
-    self->_import_hdp = Om_dlgProgress(hParent, L"Add to Library", IDI_MOD_ADD, L"Adding Mods to Library", &self->_import_abort);
+    self->_import_hdp = Om_dlgProgress(hParent, L"Add to Library", IDI_DLG_PKG_ADD, L"Adding Mods to Library", &self->_import_abort);
     result = ModChan->addToLibrary(self->_import_array, OmUiManMainLib::_import_progress_fn, self);
   }
 
@@ -807,7 +807,7 @@ VOID WINAPI OmUiManMainLib::_import_end_fn(void* ptr, uint8_t fired)
   OmUiManMainLib* self = static_cast<OmUiManMainLib*>(ptr);
 
   OmResult result = static_cast<OmResult>(Om_threadExitCode(self->_import_hth));
-  Om_clearThread(self->_import_hth, self->_import_hwo);
+  Om_threadClear(self->_import_hth, self->_import_hwo);
 
   self->_import_hth = nullptr;
   self->_import_hwo = nullptr;
@@ -815,7 +815,7 @@ VOID WINAPI OmUiManMainLib::_import_end_fn(void* ptr, uint8_t fired)
   self->_import_array.clear();
 
   if(result == OM_RESULT_ERROR) {
-    Om_dlgBox_ok(self->_hwnd, L"Import Mods", IDI_WRN, L"Mod importation error",
+    Om_dlgBox_ok(self->_hwnd, L"Import Mods", IDI_DLG_WRN, L"Mod importation error",
                 L"One or more error occurred during Mod importation, see log for details.");
   }
 }
@@ -1001,11 +1001,11 @@ void OmUiManMainLib::_modops_result_fn(void* ptr, OmResult result, uint64_t para
     }
 
     if(result == OM_RESULT_ERROR_APPLY || result == OM_RESULT_ERROR_BACKP) {
-      Om_dlgBox_okl(self->_hwnd, L"Mod installation", IDI_MOD_ERR,
+      Om_dlgBox_okl(self->_hwnd, L"Mod installation", IDI_DLG_PKG_ERR,
                   L"Mod install error", L"The installation of \""
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
     } else {
-      Om_dlgBox_okl(self->_hwnd, L"Mod backup restore", IDI_MOD_ERR,
+      Om_dlgBox_okl(self->_hwnd, L"Mod backup restore", IDI_DLG_PKG_ERR,
                   L"Mod backup data restore error", L"Restoring backup data of \""
                   +ModPack->name()+L"\" failed:", ModPack->lastError());
     }
@@ -1457,7 +1457,7 @@ void OmUiManMainLib::_onInit()
   this->_UiMan = static_cast<OmUiMan*>(this->root());
 
   // Set buttons icons
-  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(IDI_PKG_ADD));
+  this->setBmIcon(IDC_BC_ADD, Om_getResIcon(IDI_BT_ADD_PKG));
   this->setBmIcon(IDC_BC_IMPORT, Om_getResIcon(IDI_BT_IMP));
 
   // define controls tool-tips

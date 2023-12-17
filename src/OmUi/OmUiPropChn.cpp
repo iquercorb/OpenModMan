@@ -384,7 +384,7 @@ bool OmUiPropChn::applyChanges()
     static_cast<OmUiMan*>(this->root())->enableSafeMode(false);
 
     if(result != OM_RESULT_OK) {
-      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Channel rename error",
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_DLG_WRN, L"Channel rename error",
                    L"Unable to rename Channel:", this->_ModChan->lastError());
       return false;
     }
@@ -402,7 +402,7 @@ bool OmUiPropChn::applyChanges()
     OmResult result = this->_ModChan->setTargetPath(ec_entry);
 
     if(result != OM_RESULT_OK) {
-      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Target directory change error",
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_DLG_WRN, L"Target directory change error",
                    L"Unable to change target directory:", this->_ModChan->lastError());
       return false;
     }
@@ -432,7 +432,7 @@ bool OmUiPropChn::applyChanges()
     }
 
     if(result != OM_RESULT_OK) {
-      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Library directory change error",
+      Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_DLG_WRN, L"Library directory change error",
                    L"Unable to change library directory:", this->_ModChan->lastError());
       return false;
     }
@@ -490,10 +490,10 @@ bool OmUiPropChn::applyChanges()
 
     if(result != OM_RESULT_OK) {
       if(result == OM_RESULT_ERROR) {
-        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Backup directory change error",
+        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_DLG_WRN, L"Backup directory change error",
                      L"Backup data transfer encountered error:", this->_ModChan->lastError());
       } else {
-        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_WRN, L"Backup directory change error",
+        Om_dlgBox_okl(this->_hwnd, L"Mod Channel properties", IDI_DLG_WRN, L"Backup directory change error",
                      L"Unable to change backup directory:", this->_ModChan->lastError());
       }
       return false;

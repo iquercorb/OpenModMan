@@ -50,7 +50,7 @@ typedef void _stdcall (*Om_waitCb)(void* ptr, unsigned char fired);
 ///
 /// \return System Handle to thread.
 ///
-inline HANDLE Om_createThread(Om_threadProc thread_proc, void* user_ptr)
+inline HANDLE Om_threadCreate(Om_threadProc thread_proc, void* user_ptr)
 {
   return CreateThread(NULL, 0, thread_proc, user_ptr, 0, NULL);
 }
@@ -65,7 +65,7 @@ inline HANDLE Om_createThread(Om_threadProc thread_proc, void* user_ptr)
 ///
 /// \return System Handle to registered wait.
 ///
-inline HANDLE Om_waitForThread(HANDLE hthread, Om_waitCb wait_cb, void* user_ptr)
+inline HANDLE Om_threadWaitEnd(HANDLE hthread, Om_waitCb wait_cb, void* user_ptr)
 {
   HANDLE hNewWaitObject;
   RegisterWaitForSingleObject(&hNewWaitObject, hthread, wait_cb, user_ptr,
@@ -80,7 +80,7 @@ inline HANDLE Om_waitForThread(HANDLE hthread, Om_waitCb wait_cb, void* user_ptr
 /// \param[in] hthread    : Handle to thread to wait for end
 /// \param[in] hwait      : Handle to wait for thread process
 ///
-inline void Om_clearThread(HANDLE hthread, HANDLE hwait)
+inline void Om_threadClear(HANDLE hthread, HANDLE hwait)
 {
   if(hthread)
     CloseHandle(hthread);

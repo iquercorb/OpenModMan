@@ -204,9 +204,9 @@ LRESULT WINAPI OmUiHelpAbt::_donate_subclass_proc(HWND hWnd, UINT uMsg, WPARAM w
     // select HBITMAP to be drawn
     HBITMAP hBm;
     if(MouseHover) {
-      hBm = Om_getResImagePremult(IDB_DON_PP_HOV);
+      hBm = Om_getResImagePremult(IDB_BTN_DON_HOV);
     } else {
-      hBm = Om_getResImagePremult(IDB_DON_PP);
+      hBm = Om_getResImagePremult(IDB_BTN_DON);
     }
 
     // get bitmap to get image size

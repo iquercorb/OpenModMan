@@ -89,7 +89,7 @@ OmConnect::~OmConnect()
 ///
 void OmConnect::clear()
 {
-  Om_clearThread(this->_perform_hth, this->_perform_hwo);
+  Om_threadClear(this->_perform_hth, this->_perform_hwo);
   this->_perform_hth = nullptr;
   this->_perform_hwo = nullptr;
 
@@ -294,10 +294,10 @@ bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, 
   this->_req_abort = false;
 
   // launch new download thread
-  this->_perform_hth = Om_createThread(OmConnect::_perform_run_fn, this);
+  this->_perform_hth = Om_threadCreate(OmConnect::_perform_run_fn, this);
 
   // register wait object to track thread end
-  this->_perform_hwo = Om_waitForThread(this->_perform_hth, OmConnect::_perform_end_fn, this);
+  this->_perform_hwo = Om_threadWaitEnd(this->_perform_hth, OmConnect::_perform_end_fn, this);
 
   return true;
 }
@@ -380,9 +380,9 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
   this->_req_abort = false;
 
   // launch new download thread
-  this->_perform_hth = Om_createThread(OmConnect::_perform_run_fn, this);
+  this->_perform_hth = Om_threadCreate(OmConnect::_perform_run_fn, this);
   // register wait object to track thread end
-  this->_perform_hwo = Om_waitForThread(this->_perform_hth, OmConnect::_perform_end_fn, this);
+  this->_perform_hwo = Om_threadWaitEnd(this->_perform_hth, OmConnect::_perform_end_fn, this);
 
   return true;
 }
@@ -540,7 +540,7 @@ VOID CALLBACK OmConnect::_perform_end_fn(void* ptr, uint8_t timer)
   OmConnect* self = static_cast<OmConnect*>(ptr);
 
   // free and reset all thread data
-  Om_clearThread(self->_perform_hth, self->_perform_hwo);
+  Om_threadClear(self->_perform_hth, self->_perform_hwo);
   self->_perform_hth = nullptr;
   self->_perform_hwo = nullptr;
 

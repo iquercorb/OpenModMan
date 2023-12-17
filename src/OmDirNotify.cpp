@@ -85,8 +85,8 @@ void OmDirNotify::startMonitor(const OmWString& path)
     this->_stop_hev = CreateEvent(nullptr, true, false, nullptr);
   }
 
-  this->_changes_hth = Om_createThread(OmDirNotify::_changes_run_fn, this);
-  this->_available_hth = Om_createThread(OmDirNotify::_available_run_fn, this);
+  this->_changes_hth = Om_threadCreate(OmDirNotify::_changes_run_fn, this);
+  this->_available_hth = Om_threadCreate(OmDirNotify::_available_run_fn, this);
 }
 
 ///

@@ -213,7 +213,7 @@ bool OmUiAddChn::_bc_ok_pressed()
   // create new Mod Channel in Mod Hub
   if(!this->_ModHub->createChannel(chn_name, chn_dst, chn_lib, chn_bck)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"New Mod Channel", IDI_ERR,
+    Om_dlgBox_okl(this->_hwnd, L"New Mod Channel", IDI_DLG_ERR,
                   L"Mod Channel creation error", L"Mod Channel "
                   "creation failed because of the following error:",
                   this->_ModHub->lastError());

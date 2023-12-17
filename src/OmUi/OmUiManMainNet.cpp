@@ -163,7 +163,7 @@ void OmUiManMainNet::deleteRepository()
   }
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Delete Mod Repository", IDI_QRY, L"Delete Mod Repository",
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Delete Mod Repository", IDI_DLG_QRY, L"Delete Mod Repository",
                     L"Delete the following Mod Repository from Mod Channel ?", repo_ref))
     return;
 
@@ -694,7 +694,7 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
       self->_UiMan->selectChannel(chn_id);
     }
 
-    Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_MOD_ERR,
+    Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_DLG_PKG_ERR,
                 L"Mod download error", L"The download of \""
                 +NetPack->iden()+L"\" failed:", NetPack->lastError());
   }
@@ -838,7 +838,7 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
       self->_UiMan->selectChannel(chn_id);
     }
 
-    Om_dlgBox_okl(self->_hwnd, L"Upgrade Mods", IDI_MOD_ERR,
+    Om_dlgBox_okl(self->_hwnd, L"Upgrade Mods", IDI_DLG_PKG_ERR,
                 L"Mod upgrade error", L"The upgrading of \""
                 +NetPack->core()+L"\" failed:", NetPack->lastError());
   }

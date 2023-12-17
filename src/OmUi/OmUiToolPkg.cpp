@@ -119,7 +119,7 @@ OmUiToolPkg::~OmUiToolPkg()
     delete this->_ModPack;
 
   HBITMAP hBm = this->setStImage(IDC_SB_SNAP, nullptr);
-  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+  if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
 
   HFONT hFt = reinterpret_cast<HFONT>(this->msgItem(IDC_EC_DESC, WM_GETFONT));
   DeleteObject(hFt);
@@ -187,7 +187,7 @@ int32_t OmUiToolPkg::_ask_unsaved()
 {
   // Check and ask for unsaved changes
   if(this->_has_unsaved)
-    return Om_dlgBox_ync(this->_hwnd, L"Mod-Package editor", IDI_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
+    return Om_dlgBox_ync(this->_hwnd, L"Mod-Package editor", IDI_DLG_QRY, L"Unsaved changes", L"Do you want to save changes before closing ?");
 
   return 0;
 }
@@ -247,8 +247,8 @@ void OmUiToolPkg::_reset_controls()
   this->enableItem(IDC_BC_CKBX1,  false);
   this->enableItem(IDC_BC_BRW03,  false);
   // set thumbnail placeholder
-  HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
-  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+  HBITMAP hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
+  if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   this->setPopupItem(MNU_ME_EDIT, MNU_ME_EDIT_THMBSEL, MF_GRAYED);
 
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
@@ -284,7 +284,7 @@ void OmUiToolPkg::_check_zip_method()
 
   if(Om_namesMatches(cb_entry, L".zip") && method != OM_METHOD_DEFLATE) {
 
-    Om_dlgBox_ok(this->_hwnd, L"Mod-package editor", IDI_WRN, L"Non-standard Zip compression",
+    Om_dlgBox_ok(this->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Non-standard Zip compression",
                  L"The selected compression method is not widely supported for Zip files, for "
                  "maximum compatibility prefer the \"Defalte\" method.");
   }
@@ -402,7 +402,7 @@ void OmUiToolPkg::_modpack_open()
 
   // run add list thread
   if(!this->_modpack_parse(result)) {
-    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_WRN, L"Mod-package parse error",
+    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Mod-package parse error",
                  L"The following file parse failed, it is either corrupted or not a valid Mod-package",
                  result);
   }
@@ -430,7 +430,7 @@ void OmUiToolPkg::_modpack_build()
 
   // run add list thread
   if(!this->_modpack_parse(result)) {
-    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_WRN, L"Mod directory parse error",
+    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Mod directory parse error",
                  L"The following directory parse failed, and this should never happen, so...",
                  result);
   }
@@ -474,8 +474,8 @@ void OmUiToolPkg::_modpack_save_as()
   // start the "save" thread
   this->_modpack_save_path = dlg_result;
 
-  this->_modpack_save_hth = Om_createThread(OmUiToolPkg::_modpack_save_run_fn, this);
-  this->_modpack_save_hwo = Om_waitForThread(this->_modpack_save_hth, OmUiToolPkg::_modpack_save_end_fn, this);
+  this->_modpack_save_hth = Om_threadCreate(OmUiToolPkg::_modpack_save_run_fn, this);
+  this->_modpack_save_hwo = Om_threadWaitEnd(this->_modpack_save_hth, OmUiToolPkg::_modpack_save_end_fn, this);
 }
 
 ///
@@ -494,8 +494,8 @@ void OmUiToolPkg::_modpack_save()
   // start the "save" thread
   this->_modpack_save_path = this->_ModPack->sourcePath();
 
-  this->_modpack_save_hth = Om_createThread(OmUiToolPkg::_modpack_save_run_fn, this);
-  this->_modpack_save_hwo = Om_waitForThread(this->_modpack_save_hth, OmUiToolPkg::_modpack_save_end_fn, this);
+  this->_modpack_save_hth = Om_threadCreate(OmUiToolPkg::_modpack_save_run_fn, this);
+  this->_modpack_save_hwo = Om_threadWaitEnd(this->_modpack_save_hth, OmUiToolPkg::_modpack_save_end_fn, this);
 }
 
 ///
@@ -515,6 +515,9 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
 
   // update status
   this->_status_update_filename();
+
+  // nothing to save
+  this->_set_unsaved(false);
 
   if(has_failed)
     return false;
@@ -632,7 +635,7 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW03, true);
     HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
-    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   }
 
   // set description
@@ -660,9 +663,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->enableItem(IDC_LB_DPN, true);
     this->_depend_populate();
   }
-
-  // nothing to save
-  this->_set_unsaved(false);
 
   return true;
 }
@@ -692,7 +692,7 @@ DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
 
   // Open progress dialog
   self->_modpack_save_abort = 0;
-  self->_modpack_save_hdp = Om_dlgProgress(self->_hwnd, L"Save Mod-Package", IDI_MOD_ADD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
+  self->_modpack_save_hdp = Om_dlgProgress(self->_hwnd, L"Save Mod-Package", IDI_DLG_PKG_BLD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
 
   // and here we go for saving
   OmResult result = self->_ModPack->saveAs(self->_modpack_save_path, method, level,
@@ -753,7 +753,7 @@ VOID WINAPI OmUiToolPkg::_modpack_save_end_fn(void* ptr, uint8_t fired)
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(ptr);
 
   OmResult result = static_cast<OmResult>(Om_threadExitCode(self->_modpack_save_hth));
-  Om_clearThread(self->_modpack_save_hth, self->_modpack_save_hwo);
+  Om_threadClear(self->_modpack_save_hth, self->_modpack_save_hwo);
 
   self->_modpack_save_hth = nullptr;
   self->_modpack_save_hwo = nullptr;
@@ -766,7 +766,7 @@ VOID WINAPI OmUiToolPkg::_modpack_save_end_fn(void* ptr, uint8_t fired)
   } else {
 
     if(result == OM_RESULT_ERROR) {
-      Om_dlgBox_okl(self->_hwnd, L"Mod-package editor", IDI_WRN, L"Mod-Package save error",
+      Om_dlgBox_okl(self->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Mod-Package save error",
                    L"Mod-Package save failed:", self->_ModPack->lastError());
     }
 
@@ -964,13 +964,13 @@ void OmUiToolPkg::_thumb_toggle()
       this->_thumb_cache = this->_ModPack->thumbnail();
       hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
     } else {
-      hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+      hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
     }
 
   } else {
 
     // set thumbnail placeholder to static control
-    hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+    hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
 
   }
 
@@ -978,7 +978,7 @@ void OmUiToolPkg::_thumb_toggle()
   this->_thumb_compare();
   this->_set_unsaved(this->_has_changes());
 
-  if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+  if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
 }
 
 ///
@@ -1001,7 +1001,7 @@ void OmUiToolPkg::_thumb_load()
 
     // set image to static control
     HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
-    if(hBm && hBm != Om_getResImage(IDB_BLANK)) DeleteObject(hBm);
+    if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   }
 
   // check for changes
@@ -1275,7 +1275,7 @@ bool OmUiToolPkg::_depend_compare()
 void OmUiToolPkg::_onInit()
 {
   // set dialog icon
-  this->setIcon(Om_getResIcon(IDI_MOD_TOOL,2),Om_getResIcon(IDI_MOD_TOOL,1));
+  this->setIcon(Om_getResIcon(IDI_BT_TOOLPKG,2),Om_getResIcon(IDI_BT_TOOLPKG,1));
 
   // Set menu icons
   HMENU hMnuFile = this->getPopup(MNU_ME_FILE);
@@ -1284,12 +1284,12 @@ void OmUiToolPkg::_onInit()
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_BUIL, Om_getResIconPremult(IDI_BT_BLD));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_SAVAS, Om_getResIconPremult(IDI_BT_SVA));
-  this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
+  this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_QUIT, Om_getResIconPremult(IDI_BT_EXI));
 
   HMENU hMnuEdit = this->getPopup(MNU_ME_EDIT);
-  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_THMBSEL, Om_getResIconPremult(IDI_PIC_ADD));
-  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_DESCSEL, Om_getResIconPremult(IDI_TXT_ADD));
-  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_DEPIMP, Om_getResIconPremult(IDI_PKG_IMP));
+  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_THMBSEL, Om_getResIconPremult(IDI_BT_ADD_IMG));
+  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_DESCSEL, Om_getResIconPremult(IDI_BT_ADD_TXT));
+  this->setPopupItemIcon(hMnuEdit, MNU_ME_EDIT_DEPIMP, Om_getResIconPremult(IDI_BT_IMP_PKG));
 
   // dialog is modeless so we set dialog title with app name
   this->setCaption(L"Mod-Package editor");
@@ -1377,7 +1377,7 @@ void OmUiToolPkg::_onInit()
   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 2);
 
   // Set thumbnail placeholder image
-  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_BLANK));
+  this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
 
   // Set buttons icons
   this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));   //< Add file
@@ -1389,9 +1389,9 @@ void OmUiToolPkg::_onInit()
   this->showItem(IDC_BC_BRW02,  false);
   this->showItem(IDC_BC_DEL,    false);
 
-  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_PIC_ADD));  //< Thumbnail Select
-  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_TXT_ADD));  //< Description Load
-  this->setBmIcon(IDC_BC_DPBRW, Om_getResIcon(IDI_PKG_IMP));  //< Dependencies Select
+  this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_BT_ADD_IMG));  //< Thumbnail Select
+  this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_BT_ADD_TXT));  //< Description Load
+  this->setBmIcon(IDC_BC_DPBRW, Om_getResIcon(IDI_BT_IMP_PKG));  //< Dependencies Select
   this->setBmIcon(IDC_BC_DPADD, Om_getResIcon(IDI_BT_ADD));   //< Dependencies Add
   this->setBmIcon(IDC_BC_DPDEL, Om_getResIcon(IDI_BT_REM));   //< Dependencies Delete
   this->setBmIcon(IDC_BC_DPVAL, Om_getResIcon(IDI_BT_VAL));   //< Depend-Add Valid
@@ -1437,9 +1437,6 @@ void OmUiToolPkg::_onInit()
   // update status
   this->_status_update_filename();
 
-  // nothing to save
-  this->_set_unsaved(false);
-
   // reset controls to initial states
   this->_reset_controls();
 
@@ -1449,6 +1446,11 @@ void OmUiToolPkg::_onInit()
     this->_modpack_parse(this->_init_path);
 
     this->_init_path.clear();
+
+  } else {
+
+    // nothing to save
+    this->_set_unsaved(false);
   }
 }
 

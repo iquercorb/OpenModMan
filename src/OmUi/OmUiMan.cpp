@@ -209,7 +209,7 @@ void OmUiMan::openFile()
 
   ModMan->loadDefaultLocation(start);
 
-  if(Om_dlgOpenFile(result, this->_hwnd, L"Select Hub definition file", OM_OMX_FILES_FILTER, start)) {
+  if(Om_dlgOpenFile(result, this->_hwnd, L"Select Hub definition file", OM_HUB_FILES_FILTER, start)) {
 
     this->openHub(result);
   }
@@ -257,9 +257,9 @@ void OmUiMan::openHub(const OmWString& path)
   this->refresh();
 
   // Try to open Mod Hub
-  if(!ModMan->openHub(path)) {
+  if(OM_RESULT_OK != ModMan->openHub(path)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Open Mod Hub", IDI_ERR, L"Mod Hub open error",
+    Om_dlgBox_okl(this->_hwnd, L"Open Mod Hub", IDI_DLG_ERR, L"Mod Hub open error",
                   L"Unable to open Mod Hub:", ModMan->lastError());
 
     if(ModMan->hubCount())
@@ -396,7 +396,7 @@ void OmUiMan::deleteChannel(int32_t index)
   if(!ModChan) return;
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_cal(this->_hwnd, L"Hub properties", IDI_QRY, L"Delete Channel",
+  if(!Om_dlgBox_cal(this->_hwnd, L"Hub properties", IDI_DLG_QRY, L"Delete Channel",
                    L"This operation will permanently delete the following Channel "
                    L"and associated data:", ModChan->title()))
     return;
@@ -407,8 +407,8 @@ void OmUiMan::deleteChannel(int32_t index)
     this->_delchan_idch = ModHub->activeChannelIndex();
 
     // launch thread
-    this->_delchan_hth = Om_createThread(OmUiMan::_delchan_run_fn, this);
-    this->_delchan_hwo = Om_waitForThread(this->_delchan_hth, OmUiMan::_delchan_end_fn, this);
+    this->_delchan_hth = Om_threadCreate(OmUiMan::_delchan_run_fn, this);
+    this->_delchan_hwo = Om_threadWaitEnd(this->_delchan_hth, OmUiMan::_delchan_end_fn, this);
   }
 
   // reload the Channels ListView
@@ -469,13 +469,13 @@ void OmUiMan::deletePreset()
   OmModPset* ModPset = ModHub->getPreset(lv_sel);
 
   // warns the user before committing the irreparable
-  if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_QRY, L"Delete Preset",
+  if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_DLG_QRY, L"Delete Preset",
                     L"Delete the following Preset ?", ModPset->title()))
     return;
 
   if(!ModHub->deletePreset(lv_sel)) {
     // warns the user error occurred
-    Om_dlgBox_okl(this->_hwnd, L"Mod Hub properties", IDI_ERR, L"Preset delete error",
+    Om_dlgBox_okl(this->_hwnd, L"Mod Hub properties", IDI_DLG_ERR, L"Preset delete error",
                   L"Unable to delete Preset:",ModHub->lastError());
     return;
   }
@@ -527,6 +527,90 @@ void OmUiMan::presetProperties()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmUiMan::openArg(const OmWString& path)
+{
+  if(Om_extensionMatches(path, OM_PKG_FILE_EXT)) {
+
+    this->openPkgEditor(path);
+
+    return true;
+  }
+
+  if(Om_extensionMatches(path, OM_XML_DEF_EXT)) {
+
+    OmXmlConf unknown_cfg;
+
+    if(unknown_cfg.load(path, OM_XMAGIC_CHN)) {
+
+      OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
+      if(ModHub) {
+        // select channel, which should be in the current active hub
+        OmWString uuid = unknown_cfg.child(L"uuid").content();
+        int32_t chan_id = ModHub->indexOfChannel(uuid);
+        if(chan_id >= 0) this->selectChannel(chan_id);
+      }
+
+      unknown_cfg.clear();
+
+      return true;
+    }
+
+    if(unknown_cfg.load(path, OM_XMAGIC_REP)) {
+
+      unknown_cfg.clear();
+
+      this->openPkgEditor(path);
+
+      return true;
+    }
+
+    unknown_cfg.clear();
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::openPkgEditor(const OmWString& path)
+{
+  OmUiToolPkg* UiToolPkg = static_cast<OmUiToolPkg*>(this->childById(IDD_TOOL_PKG));
+
+  if(UiToolPkg->visible()) {
+
+    UiToolPkg->parseSource(path);
+
+  } else {
+
+    UiToolPkg->setInitParse(path);
+
+    UiToolPkg->modeless(true);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiMan::openRepEditor(const OmWString& path)
+{
+  OmUiToolRep* UiToolRep = static_cast<OmUiToolRep*>(this->childById(IDD_TOOL_REP));
+
+  if(UiToolRep->visible()) {
+
+    UiToolRep->loadRepository(path);
+
+  } else {
+
+    UiToolRep->setInitLoad(path);
+
+    UiToolRep->modeless(true);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmUiMan::checkTargetWrite(const OmWString& operation)
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
@@ -534,7 +618,7 @@ bool OmUiMan::checkTargetWrite(const OmWString& operation)
 
   // checks whether we have a valid Target directory
   if(!ModChan->accessesTarget(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
-    Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Target directory access error",
+    Om_dlgBox_okl(this->_hwnd, operation, IDI_DLG_ERR, L"Target directory access error",
                   L"The Target directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
                   ModChan->targetPath());
@@ -554,7 +638,7 @@ bool OmUiMan::checkLibraryRead(const OmWString& operation)
 
   // checks whether we have a valid Library directory
   if(!ModChan->accessesLibrary(OM_ACCESS_DIR_READ)) { //< check only for read
-    Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Library directory access error",
+    Om_dlgBox_okl(this->_hwnd, operation, IDI_DLG_ERR, L"Library directory access error",
                   L"The Library directory cannot be accessed because it do not exist or have read "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
                   ModChan->libraryPath());
@@ -574,7 +658,7 @@ bool OmUiMan::checkLibraryWrite(const OmWString& operation)
 
   // checks whether we have a valid Library directory
   if(!ModChan->accessesLibrary(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check only for read
-    Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Library directory access error",
+    Om_dlgBox_okl(this->_hwnd, operation, IDI_DLG_ERR, L"Library directory access error",
                   L"The Library directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel settings and directory permissions.",
                   ModChan->libraryPath());
@@ -594,7 +678,7 @@ bool OmUiMan::checkBackupWrite(const OmWString& operation)
 
   // checks whether we have a valid Backup folder
   if(!ModChan->accessesBackup(OM_ACCESS_DIR_READ|OM_ACCESS_DIR_WRITE)) { //< check for read and write
-    Om_dlgBox_okl(this->_hwnd, operation, IDI_ERR, L"Backup directory access error",
+    Om_dlgBox_okl(this->_hwnd, operation, IDI_DLG_ERR, L"Backup directory access error",
                   L"The Backup directory cannot be accessed because it do not exist or have read or write "
                   "access restrictions. Please check Mod Channel's settings and directory permissions.",
                   ModChan->backupPath());
@@ -611,7 +695,7 @@ bool OmUiMan::checkBackupWrite(const OmWString& operation)
 bool OmUiMan::warnMissings(bool enabled, const OmWString& operation, const OmWStringArray& missings)
 {
   if(missings.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Missing Mods dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_WRN, L"Missing Mods dependencies",
                       L"Selected Mods have missing dependencies, the following Mods are not available:",
                       Om_concatStrings(missings, L"\r\n")))
       return false;
@@ -626,7 +710,7 @@ bool OmUiMan::warnMissings(bool enabled, const OmWString& operation, const OmWSt
 bool OmUiMan::warnOverlaps(bool enabled, const OmWString& operation, const OmWStringArray& overlaps)
 {
   if(overlaps.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_OWR, L"Mods are overlapping",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_OWR, L"Mods are overlapping",
                       L"Selected Mods are overlapping others, the following Mods will be overwritten:",
                       Om_concatStrings(overlaps, L"\r\n")))
       return false;
@@ -641,7 +725,7 @@ bool OmUiMan::warnOverlaps(bool enabled, const OmWString& operation, const OmWSt
 bool OmUiMan::warnExtraInstalls(bool enabled, const OmWString& operation, const OmWStringArray& depends)
 {
   if(depends.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_ADD, L"Mods with dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_ADD, L"Mods with dependencies",
                       L"Selected Mods have dependencies, the following Mods will also be installed:",
                       Om_concatStrings(depends, L"\r\n")))
       return false;
@@ -656,7 +740,7 @@ bool OmUiMan::warnExtraInstalls(bool enabled, const OmWString& operation, const 
 bool OmUiMan::warnExtraDownloads(bool enabled, const OmWString& operation, const OmWStringArray& depends)
 {
   if(depends.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_ADD, L"Mods with dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_ADD, L"Mods with dependencies",
                       L"Selected Mods have dependencies, the following Mods will also be downloaded:",
                       Om_concatStrings(depends, L"\r\n")))
       return false;
@@ -671,14 +755,14 @@ bool OmUiMan::warnExtraDownloads(bool enabled, const OmWString& operation, const
 bool OmUiMan::warnExtraRestores(bool enabled, const OmWString& operation, const OmWStringArray& overlappers, const OmWStringArray& dependents)
 {
   if(overlappers.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_OWR, L"Overlapped Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_OWR, L"Overlapped Mods",
                       L"Selected Mods are overlapped by others, the following Mods must also be uninstalled:",
                       Om_concatStrings(overlappers, L"\r\n")))
       return false;
   }
 
   if(dependents.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Dependency Mods",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_WRN, L"Dependency Mods",
                       L"Selected Mods are required as dependency, the following Mods will also be uninstalled:",
                       Om_concatStrings(dependents, L"\r\n")))
       return false;
@@ -693,7 +777,7 @@ bool OmUiMan::warnExtraRestores(bool enabled, const OmWString& operation, const 
 bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWStringArray& breakings)
 {
   if(breakings.size() && enabled) {
-    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_MOD_WRN, L"Upgrade breaks dependencies",
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_WRN, L"Upgrade breaks dependencies",
                       L"Selected Mods replaces whom others depends, upgrading following Mods may break dependencies:",
                       Om_concatStrings(breakings,L"\r\n")))
       return false;
@@ -840,7 +924,7 @@ DWORD WINAPI OmUiMan::_delchan_run_fn(void* ptr)
 
   // Open progress dialog
   self->_delchan_abort = 0;
-  self->_delchan_hdlg = Om_dlgProgress(self->_hwnd, L"delete Channel", IDI_MOD_DEL, L"Restoring backup data", &self->_delchan_abort);
+  self->_delchan_hdlg = Om_dlgProgress(self->_hwnd, L"delete Channel", IDI_DLG_PKG_DEL, L"Restoring backup data", &self->_delchan_abort);
 
   // delete channel, will purge backup if required
   OmResult result = ModHub->deleteChannel(self->_delchan_idch, OmUiMan::_delchan_progress_fn, self);
@@ -885,7 +969,7 @@ VOID WINAPI OmUiMan::_delchan_end_fn(void* ptr, uint8_t fired)
   if(!ModHub) return;
 
   DWORD exit_code = Om_threadExitCode(self->_delchan_hth);
-  Om_clearThread(self->_delchan_hth, self->_delchan_hwo);
+  Om_threadClear(self->_delchan_hth, self->_delchan_hwo);
 
   self->_delchan_hth = nullptr;
   self->_delchan_hwo = nullptr;
@@ -894,7 +978,7 @@ VOID WINAPI OmUiMan::_delchan_end_fn(void* ptr, uint8_t fired)
 
   if(result == OM_RESULT_ERROR) {
       // an error occurred during backup purge
-      Om_dlgBox_okl(self->_hwnd, L"Delete Channel", IDI_WRN, L"Delete channel error",
+      Om_dlgBox_okl(self->_hwnd, L"Delete Channel", IDI_DLG_WRN, L"Delete channel error",
                     L"Deletion process encountered error(s):", ModHub->lastError() );
   }
 
@@ -931,8 +1015,12 @@ void OmUiMan::_status_populate()
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
   OmModHub* ModHub = ModMan->activeHub();
 
-  OmWString path = ModHub->home();
-  if(path.back() != L'\\') path.push_back(L'\\');
+  OmWString path;
+
+  if(ModHub) {
+    path = ModHub->home();
+    if(path.back() != L'\\') path.push_back(L'\\');
+  }
 
   this->setItemText(IDC_SC_FILE, path);
 }
@@ -1171,7 +1259,7 @@ void OmUiMan::_lv_chn_populate()
     this->enableItem(IDC_LV_CHN, false);
 
     // ask user to create at least one Mod Channel in the Mod Hub
-    if(Om_dlgBox_yn(this->_hwnd, L"Mod Hub", IDI_QRY, L"Adding Channel",
+    if(Om_dlgBox_yn(this->_hwnd, L"Mod Hub", IDI_DLG_QRY, L"Adding Channel",
                     L"This Hub is empty and have no Channel configured. Do you want to add a modding Channel now ?"))
     {
       this->createChannel();
@@ -1365,37 +1453,39 @@ void OmUiMan::_onInit()
   std::cout << "DEBUG => OmUiMan::_onInit\n";
   #endif
 
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+
   // set menu icons
   HMENU hMnuFile = this->getPopup(MNU_FILE);
 
   //this->setPopupItemIcon(hMnuFile, MNU_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
   this->setPopupItemIcon(hMnuFile, MNU_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
   this->setPopupItemIcon(hMnuFile, MNU_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
-  this->setPopupItemIcon(hMnuFile, MNU_FILE_CLOSE, Om_getResIconPremult(IDI_CLOSE));
-  this->setPopupItemIcon(hMnuFile, MNU_FILE_QUIT, Om_getResIconPremult(IDI_QUIT));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_CLOSE, Om_getResIconPremult(IDI_BT_CLO));
+  this->setPopupItemIcon(hMnuFile, MNU_FILE_QUIT, Om_getResIconPremult(IDI_BT_EXI));
 
   HMENU hMnuEdit = this->getPopup(MNU_EDIT);
   this->setPopupItemIcon(hMnuEdit, MNU_EDIT_MANPROP, Om_getResIconPremult(IDI_BT_EDI));
 
   HMENU hMnuHub = this->getPopup(MNU_HUB);
-  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDCHN, Om_getResIconPremult(IDI_CHN_ADD));
-  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDPST, Om_getResIconPremult(IDI_PST_ADD));
+  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDCHN, Om_getResIconPremult(IDI_BT_ADD_CHN));
+  this->setPopupItemIcon(hMnuHub, MNU_HUB_ADDPST, Om_getResIconPremult(IDI_BT_ADD_PST));
   this->setPopupItemIcon(hMnuHub, MNU_HUB_PROP, Om_getResIconPremult(IDI_BT_EDI));
 
   HMENU hMnuChn = this->getPopup(MNU_CHN);
-  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDREP, Om_getResIconPremult(IDI_REP_ADD));
-  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDMOD, Om_getResIconPremult(IDI_PKG_ADD));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDREP, Om_getResIconPremult(IDI_BT_ADD_REP));
+  this->setPopupItemIcon(hMnuChn, MNU_CHN_ADDMOD, Om_getResIconPremult(IDI_BT_ADD_PKG));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_IMPMOD, Om_getResIconPremult(IDI_BT_IMP));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_QRYREP, Om_getResIconPremult(IDI_BT_REF));
   this->setPopupItemIcon(hMnuChn, MNU_CHN_PROP, Om_getResIconPremult(IDI_BT_EDI));
 
   HMENU hMnuTls = this->getPopup(MNU_TOOL);
-  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITREP, Om_getResIconPremult(IDI_REP_TOOL));
-  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITPKG, Om_getResIconPremult(IDI_MOD_TOOL));
+  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITREP, Om_getResIconPremult(IDI_BT_TOOLREP));
+  this->setPopupItemIcon(hMnuTls, MNU_TOOL_EDITPKG, Om_getResIconPremult(IDI_BT_TOOLPKG));
 
   HMENU hMnuHlp = this->getPopup(MNU_HELP);
-  this->setPopupItemIcon(hMnuHlp, MNU_HELP_ABOUT, Om_getResIconPremult(IDI_ABOUT));
-  this->setPopupItemIcon(hMnuHlp, MNU_HELP_DEBUG, Om_getResIconPremult(IDI_DBG_LOG));
+  this->setPopupItemIcon(hMnuHlp, MNU_HELP_ABOUT, Om_getResIconPremult(IDI_BT_NFO));
+  this->setPopupItemIcon(hMnuHlp, MNU_HELP_DEBUG, Om_getResIconPremult(IDI_BT_LOG));
 
 
   // Set Presets buttons icons
@@ -1408,8 +1498,6 @@ void OmUiMan::_onInit()
   this->setBmIcon(IDC_BC_CHADD, Om_getResIcon(IDI_BT_ADD));
   this->setBmIcon(IDC_BC_CHDEL, Om_getResIcon(IDI_BT_REM));
   this->setBmIcon(IDC_BC_CHEDI, Om_getResIcon(IDI_BT_EDI));
-
-  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
   // - - - - - - - - - - -
 
@@ -1452,46 +1540,6 @@ void OmUiMan::_onInit()
 
   // load the context menu ressource
   this->_context_menu = LoadMenu(this->hins(), MAKEINTRESOURCE(IDR_CONTEXT_MENU));
-
-  // load startup Mod Hub files if any
-  bool autoload;
-  OmWStringArray path_ls;
-
-  ModMan->getStartHubs(&autoload, path_ls);
-
-  if(autoload) {
-
-    OmWStringArray remv_ls; //< in case we must remove entries
-
-    for(size_t i = 0; i < path_ls.size(); ++i) {
-
-      if(!ModMan->openHub(path_ls[i], false)) {
-
-        Om_dlgBox_okl(this->_hwnd, L"Mod Hub startup autoload", IDI_ERR,
-               L"Startup Mod Hub open error", path_ls[i], ModMan->lastError());
-
-        if(Om_dlgBox_ynl(this->_hwnd, L"Mod Hub startup autoload", IDI_WRN,
-                       L"Remove startup Mod Hub", L"The following Mod Hub "
-                       "cannot be loaded, do you want to remove it from "
-                       "startup load list ?", path_ls[i])) {
-
-          remv_ls.push_back(path_ls[i]);
-        }
-      }
-    }
-
-    // Remove invalid startup Mod Hub
-    if(remv_ls.size()) {
-
-      for(size_t i = 0; i < remv_ls.size(); ++i)
-        path_ls.erase(find(path_ls.begin(), path_ls.end(), remv_ls[i]));
-
-      ModMan->saveStartHubs(autoload, path_ls);
-    }
-
-    // we select the first Mod Hub in list
-    ModMan->selectHub(0);
-  }
 
   // set window icon
   this->setIcon(Om_getResIcon(IDI_APP, 2), Om_getResIcon(IDI_APP, 1));
@@ -1604,6 +1652,14 @@ void OmUiMan::_onInit()
   // set shared ImageList
   this->msgItem(IDC_LV_PST, LVM_SETIMAGELIST, LVSIL_SMALL, himl);
   this->msgItem(IDC_LV_PST, LVM_SETIMAGELIST, LVSIL_NORMAL, himl);
+
+
+  // check for pending command line arguments
+  if(!ModMan->pendingArg().empty()) {
+    if(this->openArg(ModMan->pendingArg())) {
+      ModMan->clearPendingArg();
+    }
+  }
 
   // refresh all elements
   this->_onRefresh();
@@ -1911,17 +1967,23 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if(pCd->cbData > 3) { //< at least more than a nullchar and two quotes
 
-        // convert ANSI string to proper wide string
-        OmWString path;
-        Om_fromAnsiCp(&path, reinterpret_cast<char*>(pCd->lpData));
+        OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-        // check for quotes and removes them
-        if(path.back() == L'"' && path.front() == L'"') {
-          path.erase(0, 1);  path.pop_back();
+        OmResult result = ModMan->openArg(static_cast<char*>(pCd->lpData));
+        if(result == OM_RESULT_OK || result == OM_RESULT_PENDING) {
+
+          // refresh UI
+          this->refresh();
+
+          if(result == OM_RESULT_PENDING) {
+            if(this->openArg(ModMan->pendingArg())) {
+              ModMan->clearPendingArg();
+            }
+          }
+
+        } else {
+          Om_dlgBox_okl(this->_hwnd, L"file open", IDI_DLG_ERR, L"Error opening file", L"unable to open file:", ModMan->lastError());
         }
-
-        // try to open
-        this->openHub(path);
       }
     }
 

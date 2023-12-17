@@ -143,7 +143,7 @@ void OmUiManFootOvw::_overview_populate(const OmWString& name, const OmVersion& 
   if(snap.hbmp()) {
     hBm = snap.hbmp();
   } else {
-    hBm = Om_getResImage(dir ? IDB_SNAP_DIR : IDB_SNAP_PKG);
+    hBm = Om_getResImage(dir ? IDB_SC_THMB_DIR : IDB_SC_THMB_PKG);
   }
 
   // Update the selected picture
@@ -151,8 +151,8 @@ void OmUiManFootOvw::_overview_populate(const OmWString& name, const OmVersion& 
 
   // Properly delete unused image
   if(hBm) {
-    if(hBm != Om_getResImage(IDB_SNAP_DIR) &&
-       hBm != Om_getResImage(IDB_SNAP_PKG)) DeleteObject(hBm);
+    if(hBm != Om_getResImage(IDB_SC_THMB_DIR) &&
+       hBm != Om_getResImage(IDB_SC_THMB_PKG)) DeleteObject(hBm);
   }
 }
 
@@ -211,7 +211,7 @@ void OmUiManFootOvw::_ft_desc_on_link(LPARAM lParam)
 
   this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&trw));
 
-  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_QRY, L"Open link",
+  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_DLG_QRY, L"Open link",
                    L"Do you want to open this link in browser ?", url)) {
 
       ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);

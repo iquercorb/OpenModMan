@@ -300,7 +300,7 @@ void OmUiManFootDet::_ft_desc_on_link(LPARAM lParam)
 
   this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&trw));
 
-  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_QRY, L"Open link",
+  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_DLG_QRY, L"Open link",
                    L"Do you want to open this link in browser ?", url)) {
 
       ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);

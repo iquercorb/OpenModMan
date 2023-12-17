@@ -161,7 +161,7 @@ bool OmUiPropPst::validChanges()
 
       if(ModHub->getPreset(i)->title() == input) {
 
-        Om_dlgBox_ok(this->_hwnd, L"Preset Properties", IDI_ERR,
+        Om_dlgBox_ok(this->_hwnd, L"Preset Properties", IDI_DLG_ERR,
                      L"Mod Preset name exists", L"Mod Preset "
                      "with the same name already exists.");
 
@@ -199,10 +199,10 @@ bool OmUiPropPst::applyChanges()
     if(result != OM_RESULT_OK) { //< rename Preset filename
 
       if(result == OM_RESULT_ERROR) {
-        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_WRN, L"Preset rename error",
+        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_DLG_WRN, L"Preset rename error",
                       L"Preset file rename failed:", ModHub->lastError());
       } else {
-        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_WRN, L"Preset rename error",
+        Om_dlgBox_okl(this->_hwnd, L"Mod Preset Properties", IDI_DLG_WRN, L"Preset rename error",
                       L"Unable to rename Preset:", ModHub->lastError());
       }
 

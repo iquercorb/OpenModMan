@@ -127,7 +127,7 @@ void OmModChan::close()
     WaitForSingleObject(this->_modops_hth, 1000);
   }
 
-  Om_clearThread(this->_modops_hth, this->_modops_hwo);
+  Om_threadClear(this->_modops_hth, this->_modops_hwo);
   this->_modops_hth = nullptr;
   this->_modops_hwo = nullptr;
 
@@ -136,7 +136,7 @@ void OmModChan::close()
     this->_upgrade_abort = true;
     WaitForSingleObject(this->_upgrade_hth, 1000);
   }
-  Om_clearThread(this->_upgrade_hth, this->_upgrade_hwo);
+  Om_threadClear(this->_upgrade_hth, this->_upgrade_hwo);
   this->_upgrade_hth = nullptr;
   this->_upgrade_hwo = nullptr;
 
@@ -145,7 +145,7 @@ void OmModChan::close()
     this->_query_abort = true;
     WaitForSingleObject(this->_query_hth, 1000);
   }
-  Om_clearThread(this->_query_hth, this->_query_hwo);
+  Om_threadClear(this->_query_hth, this->_query_hwo);
   this->_query_hth = nullptr;
   this->_query_hwo = nullptr;
 
@@ -1797,8 +1797,8 @@ void OmModChan::queueModOps(const OmPModPackArray& selection, Om_beginCb begin_c
   if(!this->_modops_hth) {
 
     // launch thread
-    this->_modops_hth = Om_createThread(OmModChan::_modops_run_fn, this);
-    this->_modops_hwo = Om_waitForThread(this->_modops_hth, OmModChan::_modops_end_fn, this);
+    this->_modops_hth = Om_threadCreate(OmModChan::_modops_run_fn, this);
+    this->_modops_hwo = Om_threadWaitEnd(this->_modops_hth, OmModChan::_modops_end_fn, this);
   }
 }
 
@@ -1991,7 +1991,7 @@ VOID WINAPI OmModChan::_modops_end_fn(void* ptr, uint8_t fired)
   self->_locked_mod_library = false;
 
   //DWORD exit_code = Om_threadExitCode(self->_modops_hth);
-  Om_clearThread(self->_modops_hth, self->_modops_hwo);
+  Om_threadClear(self->_modops_hth, self->_modops_hwo);
 
   // call notify callback
   if(self->_modops_notify_cb)
@@ -2516,8 +2516,8 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
   if(!this->_upgrade_hth) {
 
     // launch thread
-    this->_upgrade_hth = Om_createThread(OmModChan::_upgrade_run_fn, this);
-    this->_upgrade_hwo = Om_waitForThread(this->_upgrade_hth, OmModChan::_upgrade_end_fn, this);
+    this->_upgrade_hth = Om_threadCreate(OmModChan::_upgrade_run_fn, this);
+    this->_upgrade_hwo = Om_threadWaitEnd(this->_upgrade_hth, OmModChan::_upgrade_end_fn, this);
   }
 }
 
@@ -2625,7 +2625,7 @@ VOID WINAPI OmModChan::_upgrade_end_fn(void* ptr, uint8_t fired)
   self->_locked_mod_library = false;
 
   //DWORD exit_code = Om_threadExitCode(self->_upgrade_hth);
-  Om_clearThread(self->_upgrade_hth, self->_upgrade_hwo);
+  Om_threadClear(self->_upgrade_hth, self->_upgrade_hwo);
 
   self->_upgrade_hth = nullptr;
   self->_upgrade_hwo = nullptr;
@@ -3053,8 +3053,8 @@ void OmModChan::queueQueries(const OmPNetRepoArray& selection, Om_beginCb begin_
   if(!this->_query_hth) {
 
     // launch thread
-    this->_query_hth = Om_createThread(OmModChan::_query_run_fn, this);
-    this->_query_hwo = Om_waitForThread(this->_query_hth, OmModChan::_query_end_fn, this);
+    this->_query_hth = Om_threadCreate(OmModChan::_query_run_fn, this);
+    this->_query_hwo = Om_threadWaitEnd(this->_query_hth, OmModChan::_query_end_fn, this);
   }
 }
 
@@ -3197,7 +3197,7 @@ VOID WINAPI OmModChan::_query_end_fn(void* ptr, uint8_t fired)
   self->_locked_net_library = false;
 
   //DWORD exit_code = Om_threadExitCode(self->_query_hth);
-  Om_clearThread(self->_query_hth, self->_query_hwo);
+  Om_threadClear(self->_query_hth, self->_query_hwo);
 
   self->_query_hth = nullptr;
   self->_query_hwo = nullptr;

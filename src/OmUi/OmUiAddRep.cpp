@@ -167,7 +167,7 @@ void OmUiAddRep::_onBcChk()
   url_full.append(L".xml");
 
   if(!Om_isFileUrl(url_full)) {
-    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_DLG_ERR,
                   L"Invalid Mod Repository parameters", L"The specified "
                   "base address and definition name combination cannot make "
                   "valid access URL:", url_full);
@@ -192,7 +192,7 @@ bool OmUiAddRep::_onBcOk()
 
   if(this->_qry_result == OM_RESULT_UNKNOW) {
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_DLG_ERR,
                   L"Mod Repository not tested", L"You did not query the "
                   "Repository, it may be not valid or unavailable. "
                   "Do you want to add it anyway ?"))
@@ -201,7 +201,7 @@ bool OmUiAddRep::_onBcOk()
 
   } else if(this->_qry_result != OM_RESULT_OK) {
 
-    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+    if(!Om_dlgBox_yn(this->_hwnd, L"Add Mod Repository", IDI_DLG_ERR,
                   L"Mod Repository not valid", L"The last Repository query "
                   "failed, it appear to be not valid or unavailable. "
                   "Do you want to add it anyway ?"))
@@ -222,7 +222,7 @@ bool OmUiAddRep::_onBcOk()
 
   if(!Om_isFileUrl(url_full)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_DLG_ERR,
                   L"Invalid Mod Repository parameters", L"The specified "
                   "base address and definition name combination cannot make "
                   "make valid access URL:", url_full);
@@ -233,7 +233,7 @@ bool OmUiAddRep::_onBcOk()
   // add new repository in Mod Hub
   if(!this->_ModChan->addRepository(url_base, url_name)) {
 
-    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_ERR,
+    Om_dlgBox_okl(this->_hwnd, L"Add Mod Repository", IDI_DLG_ERR,
                  L"Add Mod Repository error", L"Repository cannot be added "
                  "to Mod Channel:", this->_ModChan->lastError());
   }
