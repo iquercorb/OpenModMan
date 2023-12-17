@@ -93,18 +93,22 @@ Section "Install (required)"
   WriteRegStr HKCR ".ozp" "Content Type" "application/x-zip-compressed"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModPack\DefaultIcon" "" "$INSTDIR\ozp_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModPack" "" "${APP_NAME} Open Mod Pack"
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModPack\shell" "" "open"
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModPack\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
 
   WriteRegStr HKCR ".ozb" "" "${APP_REG_NAME}.ModBack"
   WriteRegStr HKCR ".ozb" "Content Type" "application/x-zip-compressed"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModBack\DefaultIcon" "" "$INSTDIR\ozb_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModBack" "" "${APP_NAME} Open Mod Backup"
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModBack\shell" "" "open"
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModBack\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
 
   WriteRegStr HKCR ".omx" "" "${APP_REG_NAME}.OpenModXml"
   WriteRegStr HKCR ".omx" "Content Type" "application/xml"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml\DefaultIcon" "" "$INSTDIR\omx_icon.ico"
   WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml" "" "${APP_NAME} Open Mod XML definition"
-  WriteRegStr HKCR "${APP_REG_NAME}.Context\shell" "" "open"
-  WriteRegStr HKCR "${APP_REG_NAME}.Context\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml\shell" "" "open"
+  WriteRegStr HKCR "${APP_REG_NAME}.OpenModXml\shell\open\command" "" '"$INSTDIR\${APP_EXE_NAME}.exe" "%1"'
 
 SectionEnd
 
