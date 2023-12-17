@@ -30,7 +30,8 @@
 #define OM_XML_FILES_FILTER       L"XML file (*.xml)\0*.XML;\0All files (*.*)\0*.*;\0"
 #define OM_TXT_FILES_FILTER       L"Reamde file (*.txt,*.md,*.mkd)\0*.TXT;*.MD;*.MKD;\0Text file (*.txt)\0*.TXT;\0Markdown file (*.md,*.mkd)\0*.MD;*.MKD;\0All files (*.*)\0*.*;\0"
 #define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0All files (*.*)\0*.*;\0"
-#define OM_OMX_FILES_FILTER       L"Hub definition (*.omx,*.omc)\0*.OMX;*.OMC;\0Open Mod XML (*.omx)\0*.OMX;\0Open Mod Context (*.omc)\0*.OMC;\0All files (*.*)\0*.*;\0"
+#define OM_HUB_FILES_FILTER       L"Definition file (*.omx,*.omc)\0*.OMX;*.OMC;\0Open Mod XML (*.omx)\0*.OMX;\0Open Mod Context (*.omc)\0*.OMC;\0All files (*.*)\0*.*;\0"
+#define OM_REP_FILES_FILTER       L"Definition file (*.omx,*.xml)\0*.OMX;*.XML;\0Open Mod XML (*.omx)\0*.OMX;\0XML file (*.xml)\0*.XML;\0All files (*.*)\0*.*;\0"
 
 typedef struct Om_filterSpec_s
 {

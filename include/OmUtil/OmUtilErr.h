@@ -172,6 +172,18 @@ OmWString Om_errLoad(const OmWString& item, const OmWString& path, const OmWStri
 ///
 OmWString Om_errSave(const OmWString& item, const OmWString& path, const OmWString& error);
 
+/// \brief HTTP request error message.
+///
+/// Compose error string for HTTP request error.
+///
+/// \param[in]  item    : Formated message item designation.
+/// \param[in]  path    : Formated message item URL.
+/// \param[in]  error   : Additional error message details.
+///
+/// \return Formated error log message.
+///
+OmWString Om_errHttp(const OmWString& item, const OmWString& url, const OmWString& error);
+
 /// \brief Save error message.
 ///
 /// Compose error string for unable to save.
@@ -240,5 +252,6 @@ OmWString Om_errParam(const OmWString& value, const OmWString& type);
 /// \return Formated error log message.
 ///
 OmWString Om_errBadAlloc(const OmWString& subject, const OmWString& name);
+
 
 #endif // OMUTILERR_H
