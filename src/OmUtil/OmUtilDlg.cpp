@@ -891,26 +891,22 @@ int32_t Om_dlgBox_yncl(HWND hwnd, const OmWString& cpt, uint16_t ico, const OmWS
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_err(const OmWString& cpt, const OmWString& hdr, const OmWString& msg)
+void Om_dlgBox_err(const OmWString& hdr, const OmWString& msg, const OmWString& item)
 {
-  wchar_t cpt_buf[OM_MAX_ITEM];
+  HINSTANCE hins = GetModuleHandle(nullptr);
 
-  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
-
-  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x62, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
+  __Om_dlgBox(hins, nullptr, OM_APP_NAME, IDI_DLG_ERR, hdr.c_str(), msg.c_str(), item.c_str(), 0x0); //< OM_DLGBOX_OK
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_dlgBox_wrn(const OmWString& cpt, const OmWString& hdr, const OmWString& msg)
+void Om_dlgBox_wrn(const OmWString& hdr, const OmWString& msg, const OmWString& item)
 {
-  wchar_t cpt_buf[OM_MAX_ITEM];
+  HINSTANCE hins = GetModuleHandle(nullptr);
 
-  swprintf(cpt_buf, OM_MAX_ITEM, L"%ls - %ls", cpt.c_str(), OM_APP_NAME);
-
-  __Om_dlgBox(nullptr, nullptr, cpt_buf, 0x54, hdr.c_str(), msg.c_str(), nullptr, 0x0); //< OM_DLGBOX_OK
+  __Om_dlgBox(hins, nullptr, OM_APP_NAME, IDI_DLG_WRN, hdr.c_str(), msg.c_str(), item.c_str(), 0x0); //< OM_DLGBOX_OK
 }
 
 
@@ -1552,12 +1548,12 @@ bool Om_dlgCreateFolder(HWND hwnd, const OmWString& item, const OmWString& path)
     HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
     if(!hins) hins = GetModuleHandle(nullptr);
 
-    if(0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Create directory",
+    if(0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_DLG_QRY*/, L"Create directory",
                            L"The directory does not exists, do you want to create it ?", path.c_str(), 0x2/*OM_DLGBOX_YN*/)) {
 
       int result = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
       if(result != 0) {
-        __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_ERR*/, L"Create directory error",
+        __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_DLG_ERR*/, L"Create directory error",
                     L"Unable to create directory:", Om_getErrorStr(result).c_str(), 0x0/*OM_DLGBOX_OK*/);
         return false;
       }
@@ -1592,7 +1588,7 @@ bool Om_dlgOverwriteFile(HWND hwnd, const OmWString& path)
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
   if(!hins) hins = GetModuleHandle(nullptr);
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Overwrite file",
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_DLG_QRY*/, L"Overwrite file",
                            L"The file already exists. Do you want to overwrite it ?", path.c_str(), 0x2/*OM_DLGBOX_YN*/));
 }
 
@@ -1623,7 +1619,7 @@ bool Om_dlgValidName(HWND hwnd, const OmWString& item, const OmWString& name)
 
     OmWString hdr = L"Invalid "; hdr += item;
 
-    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), name.c_str(), 0x0/*OM_DLGBOX_OK*/);
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_DLG_WRN*/, hdr.c_str(), msg.c_str(), name.c_str(), 0x0/*OM_DLGBOX_OK*/);
 
     return false;
   }
@@ -1658,7 +1654,7 @@ bool Om_dlgValidPath(HWND hwnd, const OmWString& item, const OmWString& path)
 
     OmWString hdr = L"Invalid "; hdr += item;
 
-    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_DLG_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
 
     return false;
   }
@@ -1692,7 +1688,7 @@ bool Om_dlgValidUrl(HWND hwnd, const OmWString& item, const OmWString& url)
 
     OmWString hdr = L"Invalid "; hdr += item;
 
-    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_DLG_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
 
     return false;
   }
@@ -1726,7 +1722,7 @@ bool Om_dlgValidUrlPath(HWND hwnd, const OmWString& item, const OmWString& url)
 
     OmWString hdr = L"Invalid "; hdr += item;
 
-    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_DLG_WRN*/, hdr.c_str(), msg.c_str(), url.c_str(), 0x0/*OM_DLGBOX_OK*/);
 
     return false;
   }
@@ -1754,7 +1750,7 @@ bool Om_dlgValidDir(HWND hwnd, const OmWString& item,  const OmWString& path)
     HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
     if(!hins) hins = GetModuleHandle(nullptr);
 
-    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
+    __Om_dlgBox(hins, hwnd, cpt_buf, 802/*IDI_DLG_WRN*/, hdr.c_str(), msg.c_str(), path.c_str(), 0x0/*OM_DLGBOX_OK*/);
 
     return false;
   }
@@ -1775,7 +1771,7 @@ bool Om_dlgCloseUnsaved(HWND hwnd, const OmWString& cpt)
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
   if(!hins) hins = GetModuleHandle(nullptr);
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Unsaved changes",
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_DLG_QRY*/, L"Unsaved changes",
                            L"You made unsaved changes. Close without saving ?", nullptr, 0x2/*OM_DLGBOX_YN*/));
 }
 
@@ -1792,7 +1788,7 @@ bool Om_dlgResetUnsaved(HWND hwnd, const OmWString& cpt)
   HINSTANCE hins = reinterpret_cast<HINSTANCE>(GetWindowLongPtr(hwnd, GWLP_HINSTANCE));
   if(!hins) hins = GetModuleHandle(nullptr);
 
-  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_QRY*/, L"Unsaved changes",
+  return (0 != __Om_dlgBox(hins, hwnd, cpt_buf, 804/*IDI_DLG_QRY*/, L"Unsaved changes",
                            L"You made unsaved changes. Continue without saving ?", nullptr, 0x2/*OM_DLGBOX_YN*/));
 }
 
@@ -1811,7 +1807,7 @@ void Om_dlgSaveSucces(HWND hwnd, const OmWString& cpt, const OmWString& hdr, con
 
   OmWString msg(item); msg.append(L" file was successfully saved.");
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, 803/*IDI_NFO*/, hdr.c_str(), msg.c_str(), nullptr, 0x0/*OM_DLGBOX_OK*/);
+  __Om_dlgBox(hins, hwnd, cpt_buf, 803/*IDI_DLG_NFO*/, hdr.c_str(), msg.c_str(), nullptr, 0x0/*OM_DLGBOX_OK*/);
 }
 
 
@@ -1829,5 +1825,5 @@ void Om_dlgSaveError(HWND hwnd, const OmWString& cpt, const OmWString& hdr, cons
 
   OmWString msg(L"Saving "); msg.append(item); msg.append(L" file has failed:");
 
-  __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_ERR*/, hdr.c_str(), msg.c_str(), error.c_str(), 0x0/*OM_DLGBOX_OK*/);
+  __Om_dlgBox(hins, hwnd, cpt_buf, 801/*IDI_DLG_ERR*/, hdr.c_str(), msg.c_str(), error.c_str(), 0x0/*OM_DLGBOX_OK*/);
 }
