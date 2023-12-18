@@ -155,6 +155,38 @@ int32_t OmUiToolRep::_ask_unsaved()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiToolRep::_reset_controls()
+{
+  // disable/enable proper menu items
+  this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_FAD, MF_GRAYED);
+  this->setPopupItem(MNU_RE_EDIT, MNU_RE_EDIT_DAD, MF_GRAYED);
+  this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVE, MF_GRAYED);
+  this->setPopupItem(MNU_RE_FILE, MNU_RE_FILE_SAVAS, MF_GRAYED);
+
+  // reset and disable title
+  this->enableItem(IDC_EC_INP01, false);
+  this->setItemText(IDC_EC_INP01, L"");
+
+  // reset and disable download path
+  this->enableItem(IDC_EC_INP02, false);
+  this->setItemText(IDC_EC_INP02, L"");
+
+
+  this->enableItem(IDC_BC_BRW01, false);
+  this->enableItem(IDC_BC_BRW02, false);
+
+  // rebuild and disable reference list
+  this->_reflist_populate();
+  this->enableItem(IDC_LV_MOD, false);
+
+
+  // update selection (disable references properties controls)
+  this->_reflist_selchg();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiToolRep::_repository_init()
 {
   // Check and ask for unsaved changes
@@ -187,7 +219,7 @@ void OmUiToolRep::_repository_init()
   this->enableItem(IDC_LV_MOD, true);
   this->_reflist_populate();
 
-  // update selection
+  // update selection (disable references properties controls)
   this->_reflist_selchg();
 
   // reset unsaved changes
@@ -252,8 +284,9 @@ bool OmUiToolRep::_repository_save(const OmWString& path)
   bool has_failed = false;
 
   // ensure last values saved
-  this->_repository_save_title();
-  this->_repository_save_downpath();
+  this->_repository_title_save();
+  this->_repository_downpath_save();
+
   // ensure current reference changes are saved
   this->_reference_url_changed();
   this->_reference_desc_changed();
@@ -310,9 +343,6 @@ void OmUiToolRep::_repository_close()
   // disable and rebuild ListView
   this->enableItem(IDC_LV_MOD, false);
   this->_reflist_populate();
-
-  // update selection
-  this->_reflist_selchg();
 
   // reset unsaved changes
   this->_set_unsaved(true);
@@ -386,7 +416,7 @@ void OmUiToolRep::_repository_save_as()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repository_save_title()
+void OmUiToolRep::_repository_title_save()
 {
   // check for unsaved changes
   OmWString ec_content;
@@ -403,7 +433,7 @@ void OmUiToolRep::_repository_save_title()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_repository_save_downpath()
+void OmUiToolRep::_repository_downpath_save()
 {
   // check for unsaved changes
   OmWString ec_content;
@@ -654,7 +684,7 @@ void OmUiToolRep::_reflist_selchg(int32_t item, bool selected)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repo_add_ref(const OmWString& path, bool select)
+bool OmUiToolRep::_repository_reference_add(const OmWString& path, bool select)
 {
   // try to parse package
   OmModPack ModPack;
@@ -704,7 +734,7 @@ bool OmUiToolRep::_repo_add_ref(const OmWString& path, bool select)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolRep::_repo_del_ref()
+bool OmUiToolRep::_repository_reference_del()
 {
   // check for ListView selection
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
@@ -842,9 +872,12 @@ void OmUiToolRep::_reference_desc_load()
   if(!Om_dlgOpenFile(open_result, this->_hwnd, L"Open text file", OM_TXT_FILES_FILTER, open_start))
     return;
 
-  // set loaded text as description
-  OmCString text = Om_toCRLF(Om_loadPlainText(open_result));
-  SetDlgItemTextA(this->_hwnd, IDC_EC_DESC, text.c_str());
+  // load text
+  OmWString text;
+  Om_loadToUTF16(&text, open_result);
+
+  // fill with new description
+  this->setItemText(IDC_EC_DESC, text);
 
   // save description
   this->_reference_desc_changed();
@@ -1176,9 +1209,12 @@ DWORD WINAPI OmUiToolRep::_reflist_add_run_fn(void* ptr)
 {
   OmUiToolRep* self = static_cast<OmUiToolRep*>(ptr);
 
+  // we need to set root as parent or we got strange behaviors
+  HWND hParent = self->_parent->hwnd();
+
   // Open progress dialog
   self->_reflist_add_abort = 0;
-  self->_reflist_add_hpd = Om_dlgProgress(self->_hwnd, L"add Mod references", IDI_DLG_PKG_BLD, L"Parsing Mod packages", &self->_reflist_add_abort);
+  self->_reflist_add_hpd = Om_dlgProgress(hParent, L"add Mod references", IDI_DLG_PKG_BLD, L"Parsing Mod packages", &self->_reflist_add_abort);
 
   // stuff for progress dialog
   OmWString progress_text;
@@ -1203,7 +1239,7 @@ DWORD WINAPI OmUiToolRep::_reflist_add_run_fn(void* ptr)
     Om_dlgProgressUpdate(static_cast<HWND>(self->_reflist_add_hpd), -1, -1, progress_text.c_str());
 
     // proceed this file
-    self->_repo_add_ref(file_path);
+    self->_repository_reference_add(file_path);
 
     // update progress bar
     Om_dlgProgressUpdate(static_cast<HWND>(self->_reflist_add_hpd), progress_tot, ++progress_cur, nullptr);
@@ -1539,7 +1575,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           this->_set_unsaved(true);
       }
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_repository_save_title();
+        this->_repository_title_save();
       break;
 
     case IDC_EC_INP02: //< Download path EditText
@@ -1553,7 +1589,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
           this->_set_unsaved(true);
       }
       if(HIWORD(wParam) == EN_KILLFOCUS)
-        this->_repository_save_downpath();
+        this->_repository_downpath_save();
       break;
 
     case IDC_BC_BRW01: //< Button : Mod references Add Files
@@ -1568,7 +1604,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_DEL:
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_repo_del_ref();
+        this->_repository_reference_del();
       break;
 
     case IDC_BC_CKBX1: // Custom Url CheckBox
@@ -1638,7 +1674,7 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_ENTRY_DEL:
-      this->_repo_del_ref();
+      this->_repository_reference_del();
       break;
 
     case IDM_THMB_SEL:

@@ -524,7 +524,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
 ///
 /// \return Zero if NO or CANCEL button was clicked, 1 if OK or YES button was clicked.
 ///
-static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result, unsigned flags)
+static HWND __Om_dlgProgress(HINSTANCE hins, HWND hparent, const wchar_t* cpt, uint16_t ico, const wchar_t* hdr, int* result, unsigned flags)
 {
   // configure buttons according params
   const wchar_t* fnt = __Om_dlgBox_str_FNT;
@@ -555,7 +555,7 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
 
   // main dialog template definition
   dlgt->style = DS_3DLOOK|DS_MODALFRAME|WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_SETFONT;
-  if(!hwnd) dlgt->style |= DS_CENTER;
+  if(!hparent) dlgt->style |= DS_CENTER;
   dlgt->dwExtendedStyle = DS_SHELLFONT;
   dlgt->cdit = 0; //< item count
   dlgt->x = 0; dlgt->y = 0; dlgt->cx = 330; dlgt->cy = 150;
@@ -672,22 +672,22 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint
     dlgt->cdit++; //< increment item count
   }
 
-  HWND hdlg = CreateDialogIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
+  HWND hwnd = CreateDialogIndirectParamW(hins, dlgt, hparent, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
   Om_free(dlgt);
 
   // mimic modal dialog window
-  if(hwnd) EnableWindow(hwnd, false);
+  if(hparent) EnableWindow(hparent, false);
 
-  ShowWindow(hdlg, SW_SHOW);
+  ShowWindow(hwnd, SW_SHOW);
 
   MSG msg;
 
   // force all dialog messages to be treated before return
-  while(PeekMessage(&msg, hdlg, 0, 0, PM_REMOVE))
-    if(!IsDialogMessage(hdlg, &msg))
+  while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
+    if(!IsDialogMessage(hwnd, &msg))
       DispatchMessage(&msg);
 
-  return hdlg;
+  return hwnd;
 }
 
 
@@ -927,51 +927,6 @@ INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM 
 
   return 0;
 }
-/*
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_dlgBrowseDir(OmWString& result, HWND hWnd, const wchar_t* title, const OmWString& start, bool captive, bool nonew)
-{
-  BROWSEINFOW bI = {};
-  bI.hwndOwner = hWnd;
-  bI.lpszTitle = title;
-  bI.ulFlags = BIF_USENEWUI|BIF_RETURNONLYFSDIRS|BIF_VALIDATE;
-  if(nonew) bI.ulFlags |= BIF_NONEWFOLDERBUTTON;
-
-  PIDLIST_ABSOLUTE pIdl_start = nullptr;
-
-  // this is the advanced way to use SHBrowseForFolderW, here we use a
-  // callback function to handle the dialog window initialization, the "start"
-  // path object will be passed as lParam to the callback with the
-  // BFFM_INITIALIZED message.
-  if(start.size()) {
-    SHParseDisplayName(start.c_str(), nullptr, &pIdl_start, 0, nullptr); //< convert path string to LPITEMIDLIST
-  }
-
-  bI.pidlRoot = (captive) ? pIdl_start : 0;
-  bI.lpfn = __dialogBrowseDir_Proc;
-  bI.lParam = reinterpret_cast<LPARAM>(pIdl_start);
-
-  bool suceess = false;
-
-  LPITEMIDLIST pIdl;
-  if((pIdl = SHBrowseForFolderW(&bI)) != nullptr) {
-
-    wchar_t psz_path[OM_MAX_PATH];
-
-    psz_path[0] = 0;
-    if(SHGetPathFromIDListEx(pIdl, psz_path, OM_MAX_PATH, GPFIDL_DEFAULT)) {
-      result = psz_path;
-      suceess = true;
-    }
-  }
-
-  CoTaskMemFree(pIdl);
-
-  return suceess;
-}
-*/
 
 /// \brief Microsoft COM library initialization flag
 ///
@@ -1499,38 +1454,6 @@ bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wc
 
   return !has_cancel;
 }
-
-/*
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool Om_dlgSaveFile(OmWString& result, HWND hWnd, const wchar_t* title, const wchar_t* filter, const OmWString& start)
-{
-  wchar_t str_file[OM_MAX_PATH];
-  swprintf(str_file, OM_MAX_PATH, L"%ls", result.c_str());
-
-  OPENFILENAMEW ofn = {};
-  ofn.lStructSize = sizeof(OPENFILENAMEW);
-
-  ofn.hwndOwner = hWnd;
-  ofn.lpstrFilter = filter;
-
-  ofn.lpstrFile = str_file;
-  ofn.nMaxFile = OM_MAX_PATH;
-
-  ofn.lpstrInitialDir = start.c_str();
-
-  ofn.lpstrTitle = title;
-  ofn.Flags = OFN_EXPLORER|OFN_NONETWORKBUTTON|OFN_NOTESTFILECREATE;
-
-  if(GetSaveFileNameW(&ofn)) {
-    result = str_file;
-    return true;
-  }
-
-  return false;
-}
-*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

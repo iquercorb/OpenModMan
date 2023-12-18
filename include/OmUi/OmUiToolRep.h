@@ -92,6 +92,9 @@ class OmUiToolRep : public OmDialog
 
     int32_t             _ask_unsaved();
 
+    // misc
+    void                _reset_controls();
+
     // repository edition
     void                _repository_init();
 
@@ -107,13 +110,14 @@ class OmUiToolRep : public OmDialog
 
     void                _repository_save_as();
 
-    void                _repository_save_title();
+    // repository title
+    void                _repository_title_save();
 
-    void                _repository_save_downpath();
+    void                _repository_downpath_save();
 
-    bool                _repo_add_ref(const OmWString& path, bool select = false);
+    bool                _repository_reference_add(const OmWString& path, bool select = false);
 
-    bool                _repo_del_ref();
+    bool                _repository_reference_del();
 
     // reference edition
     void                _reflist_resize();

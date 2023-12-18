@@ -695,9 +695,12 @@ DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
   int32_t method = self->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, self->msgItem(IDC_CB_ZMD, CB_GETCURSEL));
   int32_t level = self->msgItem(IDC_CB_ZLV, CB_GETITEMDATA, self->msgItem(IDC_CB_ZLV, CB_GETCURSEL));
 
+  // we need to set root as parent or we got strange behaviors
+  HWND hParent = self->_parent->hwnd();
+
   // Open progress dialog
   self->_modpack_save_abort = 0;
-  self->_modpack_save_hdp = Om_dlgProgress(self->_hwnd, L"Save Mod-Package", IDI_DLG_PKG_BLD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
+  self->_modpack_save_hdp = Om_dlgProgress(hParent, L"Save Mod-Package", IDI_DLG_PKG_BLD, L"Saving Mod-Package", &self->_modpack_save_abort, OM_DLGBOX_DUAL_BARS);
 
   // and here we go for saving
   OmResult result = self->_ModPack->saveAs(self->_modpack_save_path, method, level,

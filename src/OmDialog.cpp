@@ -275,6 +275,9 @@ void OmDialog::registered(const char* classname, bool show)
 
     SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
+    // disable the TOPMOST style, seam to be set by default since WINVER >= 0x0601
+    SetWindowPos(this->_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+
     // Retrieve the associated dialog menu if exists
     this->_menu = GetMenu(this->_hwnd);
 
@@ -908,13 +911,13 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_WINDOWPOSCHANGED:
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGED\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGED
 
     case WM_WINDOWPOSCHANGING:
       #ifdef DEBUG
-      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
+      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_WINDOWPOSCHANGING\n";
       #endif
       return 0; // case WM_WINDOWPOSCHANGING
 
