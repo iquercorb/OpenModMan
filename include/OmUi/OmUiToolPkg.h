@@ -151,48 +151,46 @@ class OmUiToolPkg : public OmDialog
     OmModEntryArray     _content_cache;
 
     // thumbnail management
-    void                _categ_select();
+    bool                _categ_compare();
 
     void                _categ_changed();
 
-    bool                _categ_compare();
+    void                _categ_select();
 
     bool                _categ_unsaved;
 
-    OmWString           _categ_cache;
-
     // thumbnail management
+    bool                _thumb_compare();
+
     void                _thumb_toggle();
 
     void                _thumb_load();
-
-    bool                _thumb_compare();
 
     bool                _thumb_unsaved;
 
     OmImage             _thumb_cache;
 
     // description management
+    bool                _desc_compare();
+
+    void                _desc_changed();
+
     void                _desc_toggle();
 
     void                _desc_load();
 
-    void                _desc_changed();
-
-    bool                _desc_compare();
-
     bool                _desc_unsaved;
 
-    OmWString           _desc_cache;
-
     // dependencies management
+    bool                _depend_compare();
+
     void                _depend_populate();
 
     void                _depend_toggle();
 
-    void                _depend_sel_changed();
+    void                _depend_selchg();
 
-    void                _depend_delete();
+    void                _depend_del();
 
     void                _depend_browse();
 
@@ -200,11 +198,7 @@ class OmUiToolPkg : public OmDialog
 
     void                _depend_add_valid();
 
-    bool                _depend_compare();
-
     bool                _depend_unsaved;
-
-    OmWStringArray      _depend_cache;
 
     // common dialog process
     void                _onInit();

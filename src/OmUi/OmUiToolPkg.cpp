@@ -211,10 +211,7 @@ void OmUiToolPkg::_reset_controls()
   // reset all cached data
   this->_method_cache = -1;
   this->_content_cache.clear();
-  this->_categ_cache.clear();
   this->_thumb_cache.clear();
-  this->_desc_cache.clear();
-  this->_depend_cache.clear();
 
   // empty controls
   this->setItemText(IDC_EC_INP01, L"");
@@ -266,7 +263,7 @@ void OmUiToolPkg::_reset_controls()
   this->msgItem(IDC_LB_DPN, LB_RESETCONTENT); //< empty ListBox
   this->enableItem(IDC_LB_DPN, false);
   this->setItemText(IDC_EC_INP08, L"");
-  this->enableItem(IDC_EC_INP08,  false);
+  //this->enableItem(IDC_EC_INP08,  false);
   this->setPopupItem(MNU_ME_EDIT, MNU_ME_EDIT_DEPIMP, MF_GRAYED);
 }
 
@@ -614,10 +611,7 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   if(categ_id >= 0) {
     this->enableItem(IDC_EC_INP07, false);
     this->msgItem(IDC_CB_CAT, CB_SETCURSEL, categ_id);
-    this->getCbText(IDC_CB_CAT, categ_id, this->_categ_cache);
   } else {
-    // copy to local cache
-    this->_categ_cache = this->_ModPack->category();
     // set controls
     int32_t cb_last = this->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1;
     this->msgItem(IDC_CB_CAT, CB_SETCURSEL, cb_last);
@@ -642,24 +636,21 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   if(this->_ModPack->description().empty()) {
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 0);
   } else {
-    // copy to local cache
-    this->_desc_cache = this->_ModPack->description();
     // set controls
     this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW04, true);
     this->enableItem(IDC_EC_DESC, true);
-    this->setItemText(IDC_EC_DESC, this->_desc_cache);
+    this->setItemText(IDC_EC_DESC, this->_ModPack->description());
   }
 
   // set dependencies
   if(this->_ModPack->dependCount() == 0) {
     this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 0);
   } else {
-    // copy to local cache
-    for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
-      this->_depend_cache.push_back(this->_ModPack->getDependIden(i));
     // set controls
     this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, 1);
+    this->enableItem(IDC_BC_DPBRW, true);
+    this->enableItem(IDC_BC_DPADD, true);
     this->enableItem(IDC_LB_DPN, true);
     this->_depend_populate();
   }
@@ -674,17 +665,31 @@ DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
 {
   OmUiToolPkg* self = static_cast<OmUiToolPkg*>(ptr);
 
-  // ensure "cache" are up to date
-  self->_categ_changed();
-  self->_desc_changed();
+  OmWString item_text;
 
-  // set cached data to local instance
-  self->_ModPack->setCategory(self->_categ_cache);
+  // get category string to save
+  int32_t cb_sel = self->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+  if(cb_sel == self->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1) {
+    self->getItemText(IDC_EC_INP07, item_text);
+  } else {
+    self->getCbText(IDC_CB_CAT, cb_sel, item_text);
+  }
+
+  self->_ModPack->setCategory(item_text);
+
   self->_ModPack->setThumbnail(self->_thumb_cache);
-  self->_ModPack->setDescription(self->_desc_cache);
+
+  // get description text to save
+  self->getItemText(IDC_EC_DESC, item_text);
+  self->_ModPack->setDescription(item_text);
+
+  // get dependencies list
   self->_ModPack->clearDepend();
-  for(size_t i = 0; i < self->_depend_cache.size(); ++i)
-    self->_ModPack->addDependIden(self->_depend_cache[i]);
+  uint32_t lb_count = self->msgItem(IDC_LB_DPN, LB_GETCOUNT);
+  for(size_t i = 0; i < lb_count; ++i) {
+    self->getLbText(IDC_LB_DPN, i, item_text);
+    self->_ModPack->addDependIden(item_text);
+  }
 
   //get compression method and level
   int32_t method = self->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, self->msgItem(IDC_CB_ZMD, CB_GETCURSEL));
@@ -881,29 +886,35 @@ void OmUiToolPkg::_content_populate()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_categ_select()
+bool OmUiToolPkg::_categ_compare()
 {
-  int32_t cb_sel = this->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+  this->_categ_unsaved = false;
 
-  // check whether user selected the last item (GENERIC)
-  if(cb_sel == this->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1) {
-
-    this->_categ_cache = L"";
-    this->enableItem(IDC_EC_INP07, true);
-    this->setItemText(IDC_EC_INP07, this->_categ_cache);
+  // check for special case where Pack has no category string
+  if(this->_ModPack->category().empty()) {
+    // the first category is the default one
+    if(this->msgItem(IDC_CB_CAT, CB_GETCURSEL) != 0)
+      this->_categ_unsaved = true;
 
   } else {
 
-    this->enableItem(IDC_EC_INP07, false);
-    this->setItemText(IDC_EC_INP07, L"");
+    OmWString item_text;
 
-    // write changes to current Package
-    this->getCbText(IDC_CB_CAT, cb_sel, this->_categ_cache);
+    // current selected ComboBox item
+    int32_t cb_sel = this->msgItem(IDC_CB_CAT, CB_GETCURSEL);
+
+    // check whether user selected the last item (- Custom -)
+    if(cb_sel == this->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1) {
+      this->getItemText(IDC_EC_INP07, item_text);
+    } else {
+      this->getCbText(IDC_CB_CAT, cb_sel, item_text);
+    }
+
+    if(!Om_namesMatches(this->_ModPack->category(), item_text))
+       this->_categ_unsaved = true;
   }
 
-  // check for changes
-  this->_categ_compare();
-  this->_set_unsaved(this->_has_changes());
+  return this->_categ_unsaved;
 }
 
 ///
@@ -914,8 +925,6 @@ void OmUiToolPkg::_categ_changed()
   // we keep a local copy of the last edited text to restore it
   if(IsWindowEnabled(this->getItem(IDC_EC_INP07))) {
 
-    this->getItemText(IDC_EC_INP07, this->_categ_cache);
-
     // check for changes
     this->_categ_compare();
     this->_set_unsaved(this->_has_changes());
@@ -925,20 +934,34 @@ void OmUiToolPkg::_categ_changed()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_categ_compare()
+void OmUiToolPkg::_categ_select()
 {
-  this->_categ_unsaved = false;
+  int32_t cb_sel = this->msgItem(IDC_CB_CAT, CB_GETCURSEL);
 
-  // check for category difference
-  if(this->_ModPack->category().empty()) {
-    if(this->msgItem(IDC_CB_CAT, CB_GETCURSEL) != 0)
-      this->_categ_unsaved = true;
-  } else {
-    if(!Om_namesMatches(this->_ModPack->category(), this->_categ_cache))
-       this->_categ_unsaved = true;
-  }
+  // check whether user selected the last item (- Custom -)
+  bool is_custom = (cb_sel == this->msgItem(IDC_CB_CAT, CB_GETCOUNT) - 1);
 
-  return this->_categ_unsaved;
+  // reset then enable or disable custom category entry
+  this->setItemText(IDC_EC_INP07, L"");
+  this->enableItem(IDC_EC_INP07, is_custom);
+
+  // check for changes
+  this->_categ_compare();
+  this->_set_unsaved(this->_has_changes());
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolPkg::_thumb_compare()
+{
+  this->_thumb_unsaved = false;
+
+  // check for thumbnail difference (potentially the most costly)
+  if(this->_ModPack->thumbnail() != this->_thumb_cache)
+    this->_thumb_unsaved = true;
+
+  return this->_thumb_unsaved;
 }
 
 ///
@@ -1012,15 +1035,31 @@ void OmUiToolPkg::_thumb_load()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiToolPkg::_thumb_compare()
+bool OmUiToolPkg::_desc_compare()
 {
-  this->_thumb_unsaved = false;
+  this->_desc_unsaved = false;
 
-  // finally check for thumbnail difference (potentially the most costly)
-  if(this->_ModPack->thumbnail() != this->_thumb_cache)
-    this->_thumb_unsaved = true;
+  OmWString ec_content;
+  this->getItemText(IDC_EC_DESC, ec_content);
 
-  return this->_thumb_unsaved;
+  // check for description difference
+  if(this->_ModPack->description() != ec_content)
+    this->_desc_unsaved = true;
+
+  return this->_desc_unsaved;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_desc_changed()
+{
+  // we keep a local copy of the last edited text to restore it
+  if(IsWindowEnabled(this->getItem(IDC_EC_DESC))) {
+    // check for changes
+    this->_desc_compare();
+    this->_set_unsaved(this->_has_changes());
+  }
 }
 
 ///
@@ -1033,19 +1072,16 @@ void OmUiToolPkg::_desc_toggle()
   this->enableItem(IDC_BC_BRW04, is_enabled);
   this->enableItem(IDC_EC_DESC, is_enabled);
 
-  // reset description
-  this->_desc_cache.clear();
+  OmWString ec_content;
 
-  if(is_enabled) {
-    if(!this->_ModPack->description().empty())
-      this->_desc_cache = this->_ModPack->description();
-  }
+  if(is_enabled)
+    ec_content = this->_ModPack->description();
+
+  this->setItemText(IDC_EC_DESC, ec_content);
 
   // check for changes
   this->_desc_compare();
   this->_set_unsaved(this->_has_changes());
-
-  this->setItemText(IDC_EC_DESC, this->_desc_cache);
 }
 
 ///
@@ -1063,11 +1099,12 @@ void OmUiToolPkg::_desc_load()
   if(!Om_dlgOpenFile(open_result, this->_hwnd, L"Open text file", OM_TXT_FILES_FILTER, open_start))
     return;
 
-  // we keep local copy of loaded text
-  this->_desc_cache = Om_toCRLF(Om_toUTF16(Om_loadPlainText(open_result)));
+  // load text
+  OmWString text;
+  Om_loadToUTF16(&text, open_result);
 
-  // assign new description
-  this->setItemText(IDC_EC_DESC, this->_desc_cache);
+  // fill with new description
+  this->setItemText(IDC_EC_DESC, text);
 
   // check for changes
   this->_desc_compare();
@@ -1077,31 +1114,32 @@ void OmUiToolPkg::_desc_load()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_desc_changed()
+bool OmUiToolPkg::_depend_compare()
 {
-  // we keep a local copy of the last edited text to restore it
-  if(IsWindowEnabled(this->getItem(IDC_EC_DESC))) {
+  this->_depend_unsaved = false;
 
-    this->getItemText(IDC_EC_DESC, this->_desc_cache);
+  // get count of ListBox element
+  uint32_t lb_count = this->msgItem(IDC_LB_DPN, LB_GETCOUNT);
 
-    // check for changes
-    this->_desc_compare();
-    this->_set_unsaved(this->_has_changes());
+  // check for dependencies differences
+  if(this->_ModPack->dependCount() != lb_count) {
+
+    this->_depend_unsaved = true;
+
+  } else {
+
+    OmWString lb_entry;
+
+    for(size_t i = 0; i < lb_count; ++i) {
+
+      this->getLbText(IDC_LB_DPN, i, lb_entry);
+
+      if(!this->_ModPack->hasDepend(lb_entry))
+        this->_depend_unsaved = true;
+    }
   }
-}
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiToolPkg::_desc_compare()
-{
-  this->_desc_unsaved = false;
-
-  // check for description difference
-  if(this->_ModPack->description() != this->_desc_cache)
-    this->_desc_unsaved = true;
-
-  return this->_desc_unsaved;
+  return this->_depend_unsaved;
 }
 
 ///
@@ -1111,8 +1149,8 @@ void OmUiToolPkg::_depend_populate()
 {
   this->msgItem(IDC_LB_DPN, LB_RESETCONTENT); //< empty ListBox
 
-  for(size_t i = 0; i < this->_depend_cache.size(); ++i)
-    this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(this->_depend_cache[i].c_str()));
+  for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
+    this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(this->_ModPack->getDependIden(i).c_str()));
 }
 
 ///
@@ -1126,17 +1164,11 @@ void OmUiToolPkg::_depend_toggle()
   this->enableItem(IDC_BC_DPBRW, is_enabled);
   this->enableItem(IDC_LB_DPN, is_enabled);
 
-  this->_depend_cache.clear();
-
   if(is_enabled) {
-    if(this->_ModPack->dependCount()) {
-      for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
-        this->_depend_cache.push_back(this->_ModPack->getDependIden(i));
-    }
+    this->_depend_populate();
+  } else {
+    this->msgItem(IDC_LB_DPN, LB_RESETCONTENT); //< empty ListBox
   }
-
-  // rebuild depend list
-  this->_depend_populate();
 
   // check for changes
   this->_depend_compare();
@@ -1146,7 +1178,7 @@ void OmUiToolPkg::_depend_toggle()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_depend_sel_changed()
+void OmUiToolPkg::_depend_selchg()
 {
   // get ListBox current selection
   int32_t lb_sel = this->msgItem(IDC_LB_DPN, LB_GETCURSEL);
@@ -1157,16 +1189,13 @@ void OmUiToolPkg::_depend_sel_changed()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_depend_delete()
+void OmUiToolPkg::_depend_del()
 {
   // get ListBox current selection
   int32_t lb_sel = this->msgItem(IDC_LB_DPN, LB_GETCURSEL);
   if(lb_sel < 0) return;
 
   this->msgItem(IDC_LB_DPN, LB_DELETESTRING, lb_sel);
-  this->_depend_cache.erase(this->_depend_cache.begin() + lb_sel);
-
-  this->_depend_sel_changed();
 
   // check for changes
   this->_depend_compare();
@@ -1189,16 +1218,10 @@ void OmUiToolPkg::_depend_browse()
     return;
 
   OmWString identity;
-
   for(size_t i = 0; i < result.size(); ++i) {
-
     identity = Om_getNamePart(result[i]);
-
     this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(identity.c_str()));
-    this->_depend_cache.push_back(identity);
   }
-
-  this->_depend_sel_changed();
 
   // check for changes
   this->_depend_compare();
@@ -1222,7 +1245,7 @@ void OmUiToolPkg::_depend_add_show(bool show)
   this->showItem(IDC_BC_DPBRW, !show);
   this->showItem(IDC_LB_DPN,   !show);
 
-  this->_depend_sel_changed();
+  this->_depend_selchg();
 }
 
 ///
@@ -1236,37 +1259,19 @@ void OmUiToolPkg::_depend_add_valid()
   this->getItemText(IDC_EC_INP08, ec_content);
   this->setItemText(IDC_EC_INP08, L"");
 
-  this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ec_content.c_str()));
-  this->_depend_cache.push_back(ec_content);
+  Om_trim(&ec_content);
+
+  LPARAM lpzText = reinterpret_cast<LPARAM>(ec_content.c_str());
+
+  // add to ListBox if unique
+  if(LB_ERR == this->msgItem(IDC_LB_DPN, LB_FINDSTRINGEXACT, -1, lpzText))
+    this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, lpzText);
 
   this->_depend_add_show(false);
 
   // check for changes
   this->_depend_compare();
   this->_set_unsaved(this->_has_changes());
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiToolPkg::_depend_compare()
-{
-
-  this->_depend_unsaved = false;
-
-  // check for dependencies differences
-  if(this->_ModPack->dependCount() != this->_depend_cache.size()) {
-
-    this->_depend_unsaved = true;
-
-  } else {
-
-    for(size_t i = 0; i < this->_ModPack->dependCount(); ++i)
-      if(Om_arrayContain(this->_depend_cache, this->_ModPack->getDependIden(i)))
-        this->_depend_unsaved = true;
-  }
-
-  return this->_depend_unsaved;
 }
 
 ///
@@ -1694,7 +1699,7 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_LB_DPN: //< Packages list ListBox
       // check for selection change
       if(HIWORD(wParam) == LBN_SELCHANGE) {
-        this->_depend_sel_changed();
+        this->_depend_selchg();
       }
       break;
 
@@ -1720,7 +1725,7 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_BC_DPDEL: //< Button : Dependencies: Delete
       if(HIWORD(wParam) == BN_CLICKED)
-        this->_depend_delete();
+        this->_depend_del();
       break;
 
     case IDC_BC_DPABT: //< Button : Add-Depend Prompt: Abort
