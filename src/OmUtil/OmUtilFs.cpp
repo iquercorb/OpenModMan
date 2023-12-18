@@ -744,9 +744,9 @@ inline static size_t __load_plaintxt(OmCString* pstr, const wchar_t* path)
 
   DWORD rb;
   size_t rt = 0;
-  char cbuf[4097];
+  char cbuf[524288];
 
-  while(ReadFile(hFile, cbuf, 4096, &rb, nullptr)) {
+  while(ReadFile(hFile, cbuf, 524288, &rb, nullptr)) {
 
     if(rb == 0)
       break;

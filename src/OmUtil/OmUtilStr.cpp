@@ -361,7 +361,7 @@ OmWString Om_toUTF16(const uint8_t* data, size_t size)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_loadToUTF16(OmWString* pwcs, const OmWString& path)
+size_t Om_loadToUTF16(OmWString* result, const OmWString& path)
 {
   size_t len = 0;
 
@@ -373,15 +373,15 @@ size_t Om_loadToUTF16(OmWString* pwcs, const OmWString& path)
     return len;
 
   DWORD rb;
-  uint8_t data[4097];
+  uint8_t data[524288];
 
-  while(ReadFile(hFile, data, 4096, &rb, nullptr)) {
+  while(ReadFile(hFile, data, 524288, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
     // guess encoding then convert to UTF-16
-    len += __utf16_encode(pwcs, data, rb);
+    len += __utf16_encode(result, data, rb);
   }
 
   CloseHandle(hFile);
@@ -1157,19 +1157,80 @@ size_t Om_escapeMarkdown(wchar_t* buf, const OmWString& src)
   return n;
 }
 
+/// \brief Convert to CRLF text
+///
+/// Create CRLF version of the given input text, if the input text is
+/// already CRLF the text is simply copied.
+///
+/// \param[out] out_text : Pointer to string to receive CRLF text.
+/// \param[in]  in_text  : String to convert to CRLF.
+///
+inline static void __to_crlf(OmWString* out_text, const OmWString& in_text)
+{
+  out_text->clear();
+
+  for(size_t i = 0; i < in_text.size(); ++i) {
+
+    if(in_text[i] == L'\n') {
+
+      // check for preceding '\r', if not add it
+      if(i < 0) {
+        if(in_text[i - 1] != L'\r') {
+          out_text->push_back(L'\r');
+          out_text->push_back(L'\n');
+          continue;
+        }
+      } else {
+        out_text->push_back(L'\r');
+        out_text->push_back(L'\n');
+        continue;
+      }
+    }
+
+    out_text->push_back(in_text[i]);
+  }
+}
+
+/// \brief Convert to CRLF text
+///
+/// Create CRLF version of the given input text, if the input text is
+/// already CRLF the text is simply copied.
+///
+/// \param[out] out_text : Pointer to string to receive CRLF text.
+/// \param[in]  in_text  : String to convert to CRLF.
+///
+inline static void __to_crlf(OmCString* out_text, const OmCString& in_text)
+{
+  out_text->clear();
+
+  for(size_t i = 0; i < in_text.size(); ++i) {
+
+    if(in_text[i] == '\n') {
+
+      // check for preceding '\r', if not add it
+      if(i < 0) {
+        if(in_text[i - 1] != '\r') {
+          out_text->push_back('\r');
+          out_text->push_back('\n');
+          continue;
+        }
+      } else {
+        out_text->push_back('\r');
+        out_text->push_back('\n');
+        continue;
+      }
+    }
+
+    out_text->push_back(in_text[i]);
+  }
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void Om_toCRLF(OmWString* crlf_txt, const OmWString& lf_txt)
 {
-  crlf_txt->clear();
-  for(size_t i = 0; i < lf_txt.size(); ++i) {
-    if(lf_txt[i] == L'\n') {
-      *crlf_txt += L"\r\n"; continue;
-    }
-    crlf_txt->push_back(lf_txt[i]);
-  }
+  __to_crlf(crlf_txt, lf_txt);
 }
 
 ///
@@ -1179,12 +1240,7 @@ OmWString Om_toCRLF(const OmWString& lf_txt)
 {
   OmWString crlf_txt;
 
-  for(size_t i = 0; i < lf_txt.size(); ++i) {
-    if(lf_txt[i] == L'\n') {
-      crlf_txt += L"\r\n"; continue;
-    }
-    crlf_txt.push_back(lf_txt[i]);
-  }
+  __to_crlf(&crlf_txt, lf_txt);
 
   return crlf_txt;
 }
@@ -1194,13 +1250,7 @@ OmWString Om_toCRLF(const OmWString& lf_txt)
 ///
 void Om_toCRLF(OmCString* crlf_txt, const OmCString& lf_txt)
 {
-  crlf_txt->clear();
-  for(size_t i = 0; i < lf_txt.size(); ++i) {
-    if(lf_txt[i] == '\n') {
-      *crlf_txt += "\r\n"; continue;
-    }
-    crlf_txt->push_back(lf_txt[i]);
-  }
+  __to_crlf(crlf_txt, lf_txt);
 }
 
 ///
@@ -1210,12 +1260,7 @@ OmCString Om_toCRLF(const OmCString& lf_txt)
 {
   OmCString crlf_txt;
 
-  for(size_t i = 0; i < lf_txt.size(); ++i) {
-    if(lf_txt[i] == '\n') {
-      crlf_txt += "\r\n"; continue;
-    }
-    crlf_txt.push_back(lf_txt[i]);
-  }
+  __to_crlf(&crlf_txt, lf_txt);
 
   return crlf_txt;
 }
