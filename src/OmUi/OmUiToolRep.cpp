@@ -45,6 +45,8 @@
 
 #define REPO_DEFAULT_DOWLOAD  L"files/"
 
+#define UWM_REF_URL_ALERT       (WM_APP+1)
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -54,7 +56,6 @@ OmUiToolRep::OmUiToolRep(HINSTANCE hins) : OmDialog(hins),
   _title_unsaved(false),
   _downpath_unsaved(false),
   _refs_unsaved(false),
-  _refs_sel_lock(-1),
   _append_abort(0),
   _append_hth(nullptr),
   _append_hwo(nullptr),
@@ -328,6 +329,11 @@ bool OmUiToolRep::_repository_save(const OmWString& path)
 
   // set download path to repository instance
   if(this->_downpath_unsaved) {
+
+    // check whether download path is valid
+    if(!this->_downpath_valid())
+      return true;
+
     this->getItemText(IDC_EC_INP02, ec_content);
     Om_trim(&ec_content);
     this->_NetRepo->setDownpath(ec_content);
@@ -335,7 +341,9 @@ bool OmUiToolRep::_repository_save(const OmWString& path)
   }
 
   // ensure current reference changes are recored to repository instance
-  this->_ref_save();
+  if(this->_ref_has_changes())
+    if(!this->_ref_save())
+      return true; //< something cannot be saved
 
   if(OM_RESULT_OK != this->_NetRepo->save(path)) {
 
@@ -394,7 +402,7 @@ void OmUiToolRep::_repository_close()
   this->_refs_populate();
 
   // reset unsaved changes
-  this->_set_unsaved(true);
+  this->_set_unsaved(false);
 }
 
 ///
@@ -497,11 +505,11 @@ bool OmUiToolRep::_downpath_compare()
 
   // check for unsaved changes
   OmWString ec_content;
-  this->getItemText(IDC_EC_INP01, ec_content);
+  this->getItemText(IDC_EC_INP02, ec_content);
 
   Om_trim(&ec_content);
 
-  if(this->_NetRepo->title() != ec_content)
+  if(this->_NetRepo->downpath() != ec_content)
     this->_downpath_unsaved = true;
 
   return this->_downpath_unsaved;
@@ -527,11 +535,15 @@ bool OmUiToolRep::_downpath_valid()
   Om_trim(&ec_content);
 
   if(!ec_content.empty()) {
+
     if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
+
       Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid default download link",
                     L"Download link path or URL is invalid or contain illegal character", ec_content);
+
       // force focus to entry
       SetFocus(this->getItem(IDC_EC_INP02));
+
       return false;
     }
   }
@@ -691,7 +703,8 @@ void OmUiToolRep::_refs_selchg(int32_t item, bool selected)
     #endif // DEBUG
 
     // save reference attributes
-    this->_ref_save(item);
+    if(this->_ref_has_changes())
+      this->_ref_save(item);
 
     // check whether it still something selected
     has_selection = (this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT) > 0);
@@ -775,12 +788,14 @@ bool OmUiToolRep::_refs_add(const OmWString& path, bool select)
     this->msgItem(IDC_LV_MOD, LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
   }
 
+  /*
   if(select) {
     // select the last ListView entry
     uint32_t lv_last = this->msgItem(IDC_LV_MOD, LVM_GETITEMCOUNT) - 1;
     LVITEMW lvI = {}; lvI.stateMask = lvI.state = LVIS_SELECTED;
     this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, lv_last, reinterpret_cast<LPARAM>(&lvI));
   }
+  */
 
   // update status bar
   this->_status_update_references();
@@ -798,7 +813,7 @@ bool OmUiToolRep::_refs_add(const OmWString& path, bool select)
 bool OmUiToolRep::_refs_del()
 {
   // get single selection index
-  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVIS_FOCUSED); //< LVNI_SELECTED is not reliable
   if(lv_sel < 0) return false;
 
   this->_NetRepo->deleteReference(lv_sel);
@@ -967,13 +982,13 @@ VOID WINAPI OmUiToolRep::_append_end_fn(void* ptr, uint8_t fired)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolRep::_ref_save(int32_t item)
+bool OmUiToolRep::_ref_save(int32_t item)
 {
   int32_t index;
 
   if(item < 0) {
-    index = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-    if(index < 0) return;
+    index = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVIS_FOCUSED); //< LVNI_SELECTED is not reliable
+    if(index < 0) return false; //< this should never happen
   } else {
     index = item;
   }
@@ -986,20 +1001,11 @@ void OmUiToolRep::_ref_save(int32_t item)
 
   if(this->_ref_url_unsaved) {
 
-    /*
-
-    This does not work properly, see _onMsg() function for details. I give up this sh*t.
-
+    // check for valid custom URL
     if(!this->_ref_url_valid()) {
-      // force item selection
-      LVITEM lvI = {}; lvI.stateMask = LVIS_SELECTED; lvI.state = 0;
-      this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, -1, reinterpret_cast<LPARAM>(&lvI));
-      lvI.state = LVIS_SELECTED;
-      this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, index, reinterpret_cast<LPARAM>(&lvI));
-      this->_refs_sel_lock = index; //< lock selection to item
-      return;
+      this->_ref_url_alert();
+      return false;
     }
-    */
 
     this->getItemText(IDC_EC_INP03, ec_content);
     this->_NetRepo->setReferenceUrl(index, ec_content);
@@ -1027,6 +1033,16 @@ void OmUiToolRep::_ref_save(int32_t item)
     this->_ref_desc_unsaved = false;
     this->_refs_unsaved = true;
   }
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiToolRep::_ref_has_changes()
+{
+  return (this->_ref_url_unsaved || this->_ref_thumb_unsaved || this->_ref_desc_unsaved);
 }
 
 ///
@@ -1091,11 +1107,6 @@ bool OmUiToolRep::_ref_url_valid()
 
       if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
 
-        Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid custum download link",
-                      L"Download link path or URL is invalid or contain illegal character", ec_content);
-
-        // force focus to entry
-        SetFocus(this->getItem(IDC_EC_INP03));
         return false;
       }
     }
@@ -1103,6 +1114,23 @@ bool OmUiToolRep::_ref_url_valid()
   }
 
   return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolRep::_ref_url_alert()
+{
+
+  OmWString ec_content;
+  this->getItemText(IDC_EC_INP03, ec_content);
+  Om_trim(&ec_content);
+
+  Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid custum download link",
+                L"Download link path or URL is invalid or contain illegal character", ec_content);
+
+  // force focus to entry
+  SetFocus(this->getItem(IDC_EC_INP03));
 }
 
 ///
@@ -1263,7 +1291,7 @@ void OmUiToolRep::_ref_deps_check()
     return;
 
   // get single selection index
-  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+  int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVIS_FOCUSED); //< LVNI_SELECTED is not reliable
 
   // get corresponding reference node
   OmXmlNode ref_node = this->_NetRepo->getReference(lv_sel);
@@ -1527,6 +1555,20 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   OM_UNUSED(lParam);
 
+  // this is a custom window message that inform we must alert user about invalid URL. We use
+  // asynchronous window messaging because opening dialog box during LVN_ITEMCHANGING cause
+  // notification to be sent twice (because of Microsoft voodoo magic), so dialog box is
+  // opened twice... this way we ensure dialog box is opened only once per user "click"
+  if(uMsg == UWM_REF_URL_ALERT) {
+    this->_ref_url_alert();
+    return true;
+  }
+
+  // this is a static flag to know we  are currently in "locked" selection state, it
+  // is used as "white magic" exorcism to counter the "Microsoft voodoo magic" demonic
+  // possession of the List View selection internal logic.
+  static bool sel_locked = false;
+
   if(uMsg == WM_NOTIFY) {
 
     if(LOWORD(wParam) == IDC_LV_MOD) {
@@ -1537,80 +1579,53 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       case NM_RCLICK:
         break;
-      /*
-      After sepending long hours trying to prevent List View selection when URL is invalid, showing
-      an error dialog box, in a consistent way, meaning, without popping the dialog-box 3 or 4 times while
-      keeping the selection on the same item, here is my conclusion:
-
-      The WinAPI List View internal selection and notification logic is totally messed up, bugged and it appear
-      nearly impossible to achieve simple things without artifacts, even with complicated conditional branching.
-
-      Not only it send SAME notification twice, but it also change behavior and notification sequence depending
-      unknown variables, canceled operations, and a timer, making things often unpredictable.
-
-      The only way to achieve what we want seem to implement a whole queuing system only for that, so we could
-      correct and filter the garbage the API send to us... I give up.
 
       case LVN_ITEMCHANGING: {
           NMLISTVIEW* nmLv = reinterpret_cast<NMLISTVIEW*>(lParam);
 
-          #ifdef DEBUG
-          std::cout << "DEBUG => OmUiToolRep::_onMsg LVN_ITEMCHANGING: iItem[" << nmLv->iItem;
-          std::cout << "] uOldState:";
-          if((nmLv->uOldState & LVIS_SELECTED)) {
-            std::cout << "SELECT[x]";
-          } else {
-            std::cout << "SELECT[ ]";
-          }
-          std::cout << " => uNewState:";
-          if((nmLv->uNewState & LVIS_SELECTED)) {
-            std::cout << "SELECT[x]";
-          } else {
-            std::cout << "SELECT[ ]";
-          }
-          std::cout << " uChanged:" << nmLv->uChanged;
-          std::cout << "\n";
-          #endif // DEBUG
+          // I finally got this to work almost properly... what an adventure
+          if((nmLv->uOldState & LVIS_SELECTED) || (nmLv->uOldState & LVIS_FOCUSED)) {
 
-          int32_t index = nmLv->iItem;
+            // check valid values for unselected item
+            if(!this->_ref_url_valid()) {
 
-          if(this->_refs_sel_lock >= 0) {
-            if((nmLv->uNewState & LVIS_SELECTED)) {
+              // we send "alert" message only for Focus loss to prevent multiple dialog box open, otherwise
+              // (because of Microsoft voodoo magic) since LVN_ITEMCHANGING flood with 2 to 3 notifications,
+              // sometimes the exact same, for a single user input...
+              if((nmLv->uOldState & LVIS_FOCUSED)) {
 
-              if(this->_refs_sel_lock != nmLv->iItem) {
-                if(this->_ref_url_valid()) {
-                  this->_refs_sel_lock = -1;
-                  SetWindowLongPtr(this->_hwnd, DWLP_MSGRESULT, 0);
-                  return 1;
-                }
+                // (because of Microsoft voodoo magic) we send a message instead of calling function directly because
+                // calling dialog box here cause LVN_ITEMCHANGING to re-send the same notification a second time so
+                // dialog box is send AGAIN...
+                // List View selection and notification was probably coded by a psychopath that want to see
+                // the world burning...
+                PostMessage(this->_hwnd, UWM_REF_URL_ALERT, 0, 0); //< show alert message
               }
 
+              // (because of Microsoft voodoo magic) we need a flag to know we are currently in locked selection
+              // state, see below
+              sel_locked = true;
+
+              // cancel the unselect/unfocus to keep current selection
               SetWindowLongPtr(this->_hwnd, DWLP_MSGRESULT, 1);
-              return 1;
+              return true;
 
             } else {
 
-              if(this->_refs_sel_lock == nmLv->iItem) {
-                SetWindowLongPtr(this->_hwnd, DWLP_MSGRESULT, 1);
-                return 1;
-              }
-            }
-
-          } else {
-
-            if((nmLv->uOldState & LVIS_SELECTED)) {
-
-              if(!this->_ref_url_valid()) {
-
-                this->_refs_sel_lock = nmLv->iItem;
-                SetWindowLongPtr(this->_hwnd, DWLP_MSGRESULT, 1);
-                return 1;
+              // if we exit a "locked" state, we need to explicitly unselect and unfocus the current (locked)
+              // item otherwise (because of Microsoft voodoo magic) internal List View selection logic become
+              // buggy causing anarchic multi-selects...
+              // Did I mention that the author of List View internal selection logic was either a drunk monkey
+              // or a psychopath ?
+              if(sel_locked) {
+                sel_locked = false;
+                LVITEMW lvI = {}; lvI.stateMask = LVIS_SELECTED|LVIS_FOCUSED; lvI.state = 0;
+                this->msgItem(IDC_LV_MOD, LVM_SETITEMSTATE, nmLv->iItem, reinterpret_cast<LPARAM>(&lvI));
               }
             }
           }
           break;
         }
-      */
 
       case LVN_ITEMCHANGED: {
           NMLISTVIEW* nmLv = reinterpret_cast<NMLISTVIEW*>(lParam);
@@ -1754,6 +1769,8 @@ INT_PTR OmUiToolRep::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_ref_deps_check();
       break;
     }
+
+    return true;
   }
 
   return false;

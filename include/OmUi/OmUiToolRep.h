@@ -135,8 +135,6 @@ class OmUiToolRep : public OmDialog
 
     void                _refs_populate();
 
-    int32_t             _refs_sel_lock;
-
     void                _refs_selchg(int32_t item = -1, bool selected = true);
 
     bool                _refs_add(const OmWString& path, bool select = false);
@@ -165,7 +163,9 @@ class OmUiToolRep : public OmDialog
     static VOID WINAPI  _append_end_fn(void*,uint8_t);
 
     // reference state
-    void                _ref_save(int32_t index = -1);
+    bool                _ref_save(int32_t index = -1);
+
+    bool                _ref_has_changes();
 
     // reference URL
     OmWString           _ref_url_cache;
@@ -179,6 +179,8 @@ class OmUiToolRep : public OmDialog
     void                _ref_url_changed();
 
     bool                _ref_url_valid();
+
+    void                _ref_url_alert();
 
     // reference thumbnail
     OmImage             _ref_thumb_cache;
