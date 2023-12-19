@@ -265,28 +265,28 @@ bool OmNetPack::refreshAnalytics()
   if(!this->_ModChan)
     return false;
 
-  uint32_t new_stat = this->_stat;
+  uint32_t new_stat = 0;
+  uint32_t old_stat = 0;
 
-  // remove relevant states, but not all of them to
-  // keep states such as downloading or error
-  OM_REM_BIT(new_stat, PACK_OLD);
-  OM_REM_BIT(new_stat, PACK_DEP);
+  // set bits for old state to be compared to new state
+  if(this->_has_part)       OM_ADD_BIT(old_stat, 0x01);
+  if(this->_has_local)      OM_ADD_BIT(old_stat, 0x02);
+  if(this->_has_misg_dep)   OM_ADD_BIT(old_stat, 0x04);
+  if(this->_upgrade.size()) OM_ADD_BIT(old_stat, 0x08);
+  if(this->_dngrade.size()) OM_ADD_BIT(old_stat, 0x10);
 
-  //check for resumable download data
-  this->_has_part = Om_isFile(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"));
-
-  // by default the net pack is "NEW"
-  OM_ADD_BIT(new_stat, PACK_NEW);
-
-  // clear the replacement list
+  // reset all values
+  this->_has_part = false;
+  this->_has_local = false;
+  this->_has_misg_dep = false;
   this->_upgrade.clear();
   this->_dngrade.clear();
 
-  // clear downloaded status
-  this->_has_local = false;
-
-  // clear missing dependencies status
-  this->_has_misg_dep = false;
+  //check for resumable download data
+  if( Om_isFile(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"))) {
+    this->_has_part = true;
+    OM_ADD_BIT(new_stat, 0x01);
+  }
 
   for(size_t i = 0; i < this->_ModChan->modpackCount(); ++i) {
 
@@ -302,9 +302,13 @@ bool OmNetPack::refreshAnalytics()
       if(this->_iden == ModPack->iden()) {
 
         this->_has_local = true;
+        OM_ADD_BIT(new_stat, 0x02);
 
         // check for missing dependencies
-        this->_has_misg_dep = this->_ModChan->hasMissingDepend(ModPack);
+        if(this->_ModChan->hasMissingDepend(ModPack)) {
+          this->_has_misg_dep = true;
+          OM_ADD_BIT(new_stat, 0x04);
+        }
 
       } else {
 
@@ -312,24 +316,19 @@ bool OmNetPack::refreshAnalytics()
         if(this->_version > ModPack->version()) {
 
           this->_upgrade.push_back(ModPack);
+          OM_ADD_BIT(new_stat, 0x08);
 
         } else {
 
           this->_dngrade.push_back(ModPack);
+          OM_ADD_BIT(new_stat, 0x10);
         }
 
       }
     }
   }
 
-  if(this->_stat != new_stat) {
-
-    this->_stat = new_stat;
-
-    return true;
-  }
-
-  return false;
+  return (new_stat != old_stat);
 }
 
 ///
