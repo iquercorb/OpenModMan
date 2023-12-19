@@ -21,7 +21,8 @@
 #include "OmBaseWin.h"        //< WinAPI
 #include <ShlWApi.h>          //< StrFromKBSizeW, etc.
 
-
+#define READ_BUF_SIZE 524288
+static uint8_t __read_buf[READ_BUF_SIZE];
 
 /* Deprecated implementations.
 
@@ -373,15 +374,14 @@ size_t Om_loadToUTF16(OmWString* result, const OmWString& path)
     return len;
 
   DWORD rb;
-  uint8_t data[524288];
 
-  while(ReadFile(hFile, data, 524288, &rb, nullptr)) {
+  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
     // guess encoding then convert to UTF-16
-    len += __utf16_encode(result, data, rb);
+    len += __utf16_encode(result, __read_buf, rb);
   }
 
   CloseHandle(hFile);

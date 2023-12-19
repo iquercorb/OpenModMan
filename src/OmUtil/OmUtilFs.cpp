@@ -20,6 +20,9 @@
 #include <ShlwApi.h>          //< PathIsDirectoryEmptyW
 #include <ShlObj.h>           //< SHCreateDirectoryExW
 
+#define READ_BUF_SIZE 524288
+static uint8_t __read_buf[READ_BUF_SIZE];
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -744,16 +747,15 @@ inline static size_t __load_plaintxt(OmCString* pstr, const wchar_t* path)
 
   DWORD rb;
   size_t rt = 0;
-  char cbuf[524288];
 
-  while(ReadFile(hFile, cbuf, 524288, &rb, nullptr)) {
+  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
     rt += rb;
 
-    pstr->append(cbuf, rb);
+    pstr->append(reinterpret_cast<char*>(__read_buf), rb);
   }
 
   CloseHandle(hFile);
