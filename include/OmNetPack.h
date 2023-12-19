@@ -27,18 +27,6 @@
 class OmModChan;
 class OmNetRepo;
 
-enum OmPackStat : uint32_t {
-  PACK_UKN = 0x00,
-  PACK_NEW = 0x01,    ///< Remote package is new (not in local library)
-  PACK_UPG = 0x02,    ///< Remote package is an upgrade (newer version)
-  PACK_OLD = 0x04,    ///< Remote package is a downgrade (older version)
-  PACK_DEP = 0x08,    ///< Remote package is downloaded but has missing dependencies
-  PACK_DNL = 0x10,    ///< Remote package is downloading
-  PACK_ERR = 0x20,    ///< Remote package download error
-  PACK_WIP = 0x40,    ///< Remote package is work in progress
-  PACK_PRT = 0x80,    ///< Remote package has partial download
-};
-
 class OmNetPack
 {
   public:
@@ -530,7 +518,7 @@ class OmNetPack
 
     OmPModPackArray     _dngrade;
 
-    uint32_t            _stat;
+    //uint32_t            _stat;
 
     bool                _has_part;
 

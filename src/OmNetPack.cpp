@@ -43,7 +43,6 @@ OmNetPack::OmNetPack() :
   _hash(0),
   _size(0),
   _csum_is_md5(false),
-  _stat(PACK_UKN),
   _has_part(false),
   _has_local(false),
   _has_error(false),
@@ -69,7 +68,6 @@ OmNetPack::OmNetPack(OmModChan* ModChan) :
   _hash(0),
   _size(0),
   _csum_is_md5(false),
-  _stat(PACK_UKN),
   _has_part(false),
   _has_local(false),
   _has_error(false),
@@ -238,8 +236,6 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
       this->_log(OM_LOG_WRN, L"parseReference", L"description 'bytes' attribute missing");
     }
   }
-
-  this->_stat = PACK_UKN;
 
   return true;
 }
@@ -481,8 +477,6 @@ void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t param)
   OM_UNUSED(param);
 
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
-
-  OM_REM_BIT(self->_stat, PACK_DNL); //< no more in DNL state
 
   if(result == OM_RESULT_OK) {
 
