@@ -211,7 +211,7 @@ void OmUiToolPkg::_reset_controls()
   // reset all cached data
   this->_method_cache = -1;
   this->_content_cache.clear();
-  this->_thumb_cache.clear();
+  this->_thumb_image.clear();
 
   // empty controls
   this->setItemText(IDC_EC_INP01, L"");
@@ -624,11 +624,11 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 0);
   } else {
     // copy to local cache
-    this->_thumb_cache = this->_ModPack->thumbnail();
+    this->_thumb_image = this->_ModPack->thumbnail();
     // set controls
     this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, 1);
     this->enableItem(IDC_BC_BRW03, true);
-    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_image.hbmp());
     if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   }
 
@@ -677,7 +677,7 @@ DWORD WINAPI OmUiToolPkg::_modpack_save_run_fn(void* ptr)
 
   self->_ModPack->setCategory(item_text);
 
-  self->_ModPack->setThumbnail(self->_thumb_cache);
+  self->_ModPack->setThumbnail(self->_thumb_image);
 
   // get description text to save
   self->getItemText(IDC_EC_DESC, item_text);
@@ -961,7 +961,7 @@ bool OmUiToolPkg::_thumb_compare()
   this->_thumb_unsaved = false;
 
   // check for thumbnail difference (potentially the most costly)
-  if(this->_ModPack->thumbnail() != this->_thumb_cache)
+  if(this->_ModPack->thumbnail() != this->_thumb_image)
     this->_thumb_unsaved = true;
 
   return this->_thumb_unsaved;
@@ -981,14 +981,14 @@ void OmUiToolPkg::_thumb_toggle()
   HBITMAP hBm = nullptr;
 
   // clear local thumbnail
-  this->_thumb_cache.clear();
+  this->_thumb_image.clear();
 
   if(is_enabled) {
 
     // set thumbnail to current Mod Pack thumbnail
     if(this->_ModPack->thumbnail().valid()) {
-      this->_thumb_cache = this->_ModPack->thumbnail();
-      hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
+      this->_thumb_image = this->_ModPack->thumbnail();
+      hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_image.hbmp());
     } else {
       hBm = this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
     }
@@ -1023,10 +1023,10 @@ void OmUiToolPkg::_thumb_load()
     return;
 
   // try to load image file
-  if(this->_thumb_cache.loadThumbnail(open_result, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL)) {
+  if(this->_thumb_image.loadThumbnail(open_result, OM_MODPACK_THUMB_SIZE, OM_SIZE_FILL)) {
 
     // set image to static control
-    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_cache.hbmp());
+    HBITMAP hBm = this->setStImage(IDC_SB_SNAP, this->_thumb_image.hbmp());
     if(hBm && hBm != Om_getResImage(IDB_SC_THMB_BLANK)) DeleteObject(hBm);
   }
 

@@ -92,6 +92,8 @@ class OmUiToolRep : public OmDialog
 
     int32_t             _ask_unsaved();
 
+    bool                _has_changes();
+
     // misc
     void                _reset_controls();
 
@@ -111,60 +113,101 @@ class OmUiToolRep : public OmDialog
     void                _repository_save_as();
 
     // repository title
-    void                _repository_title_save();
+    bool                _title_unsaved;
 
-    void                _repository_downpath_save();
+    bool                _title_compare();
 
-    bool                _repository_reference_add(const OmWString& path, bool select = false);
+    void                _title_changed();
 
-    bool                _repository_reference_del();
+    // repository download path
+    bool                _downpath_unsaved;
+
+    bool                _downpath_compare();
+
+    void                _downpath_changed();
+
+    bool                _downpath_valid();
 
     // reference edition
-    void                _reflist_resize();
+    bool                _refs_unsaved;
 
-    void                _reflist_populate();
+    void                _refs_resize();
 
-    void                _reflist_selchg(int32_t item = -1, bool selected = true);
+    void                _refs_populate();
 
-    int32_t             _reflist_lastsel;
+    int32_t             _refs_sel_lock;
 
-    void                _reflist_add_files();
+    void                _refs_selchg(int32_t item = -1, bool selected = true);
 
-    void                _reflist_add_directory();
+    bool                _refs_add(const OmWString& path, bool select = false);
 
-    void                _reference_url_toggle();
+    bool                _refs_del();
 
-    void                _reference_url_changed(int32_t item = -1);
+    void                _refs_append_files();
 
-    void                _reference_desc_load();
-
-    void                _reference_desc_changed(int32_t item = -1);
-
-    void                _reference_thumb_load();
-
-    void                _reference_thumb_delete();
-
-    void                _reference_deps_get(const OmWString&, OmWStringArray*);
-
-    void                _reference_deps_check();
-
+    void                _refs_append_directory();
 
     // add reference Mod parsing thread
-    OmWStringQueue      _reflist_add_queue;
+    OmWStringQueue      _append_queue;
 
-    int32_t             _reflist_add_abort;
+    int32_t             _append_abort;
 
-    void*               _reflist_add_hth;
+    void*               _append_hth;
 
-    void*               _reflist_add_hwo;
+    void*               _append_hwo;
 
-    void                _reflist_add_start(const OmWStringArray&);
+    void                _append_start(const OmWStringArray&);
 
-    void*               _reflist_add_hpd;
+    void*               _append_hpd;
 
-    static DWORD WINAPI _reflist_add_run_fn(void*);
+    static DWORD WINAPI _append_run_fn(void*);
 
-    static VOID WINAPI  _reflist_add_end_fn(void*,uint8_t);
+    static VOID WINAPI  _append_end_fn(void*,uint8_t);
+
+    // reference state
+    void                _ref_save(int32_t index = -1);
+
+    // reference URL
+    OmWString           _ref_url_cache;
+
+    bool                _ref_url_unsaved;
+
+    bool                _ref_url_compare();
+
+    void                _ref_url_toggle();
+
+    void                _ref_url_changed();
+
+    bool                _ref_url_valid();
+
+    // reference thumbnail
+    OmImage             _ref_thumb_cache;
+
+    bool                _ref_thumb_unsaved;
+
+    bool                _ref_thumb_compare();
+
+    void                _ref_thumb_load();
+
+    void                _ref_thumb_delete();
+
+    OmImage             _ref_thumb_image;
+
+    // reference description
+    OmWString           _ref_desc_cache;
+
+    bool                _ref_desc_unsaved;
+
+    bool                _ref_desc_compare();
+
+    void                _ref_desc_load();
+
+    void                _ref_desc_changed();
+
+    // reference depends
+    void                _ref_deps_get(const OmWString&, OmWStringArray*);
+
+    void                _ref_deps_check();
 
     // common dialog functions
     void                _onClose();

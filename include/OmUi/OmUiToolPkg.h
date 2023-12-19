@@ -168,7 +168,7 @@ class OmUiToolPkg : public OmDialog
 
     bool                _thumb_unsaved;
 
-    OmImage             _thumb_cache;
+    OmImage             _thumb_image;
 
     // description management
     bool                _desc_compare();

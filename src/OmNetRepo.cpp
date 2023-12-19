@@ -21,6 +21,8 @@
 #include "OmUtilZip.h"
 #include "OmUtilB64.h"
 
+#include "OmImage.h"
+
 #include "OmModChan.h"
 
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -426,38 +428,38 @@ void OmNetRepo::deleteReference(size_t index)
 ///
 int32_t OmNetRepo::addReference(const OmModPack* ModPack)
 {
-    // get references root node
+  // get references root node
   OmXmlNode references_node = this->_xml.child(L"references");
 
   // in case of invalid call
   if(references_node.empty())
     return false;
 
-  OmXmlNode modref;
+  OmXmlNode ref_node;
 
   // search whether reference with same identity exists
   int32_t found = this->indexOfReference(ModPack->iden());
 
   if(found >= 0) {
-    modref = this->_reference_list[found];
+    ref_node = this->_reference_list[found];
   } else {
-    modref = references_node.addChild(L"mod");
-    this->_reference_list.push_back(modref);
-    modref.setAttr(L"ident", ModPack->iden());
+    ref_node = references_node.addChild(L"mod");
+    this->_reference_list.push_back(ref_node);
+    ref_node.setAttr(L"ident", ModPack->iden());
   }
 
   // set or replace references bases values
-  modref.setAttr(L"file", Om_getFilePart(ModPack->sourcePath()));
-  modref.setAttr(L"bytes", Om_itemSize(ModPack->sourcePath()));
-  modref.setAttr(L"xxhsum", Om_getXXHsum(ModPack->sourcePath())); //< use XXHash3 by default
-  modref.setAttr(L"category", ModPack->category());
+  ref_node.setAttr(L"file", Om_getFilePart(ModPack->sourcePath()));
+  ref_node.setAttr(L"bytes", Om_itemSize(ModPack->sourcePath()));
+  ref_node.setAttr(L"xxhsum", Om_getXXHsum(ModPack->sourcePath())); //< use XXHash3 by default
+  ref_node.setAttr(L"category", ModPack->category());
 
   // set or replace dependencies
-  if(modref.hasChild(L"dependencies"))
-    modref.remChild(L"dependencies");
+  if(ref_node.hasChild(L"dependencies"))
+    ref_node.remChild(L"dependencies");
 
   if(ModPack->dependCount()) {
-    OmXmlNode dependencies_nodes = modref.addChild(L"dependencies");
+    OmXmlNode dependencies_nodes = ref_node.addChild(L"dependencies");
     for(size_t i = 0; i < ModPack->dependCount(); ++i) {
       dependencies_nodes.addChild(L"ident").setContent(ModPack->getDependIden(i));
     }
@@ -465,23 +467,249 @@ int32_t OmNetRepo::addReference(const OmModPack* ModPack)
 
   // set, replace or delete thumbnail data
   if(ModPack->thumbnail().valid()) {
-    if(!this->_save_thumbnail(modref, ModPack->thumbnail()))
+    if(!this->_save_thumbnail(ref_node, ModPack->thumbnail()))
       this->_log(OM_LOG_WRN, L"addReference", L"thumbnail JPEG encode failed");
   } else {
-    if(modref.hasChild(L"thumbnail"))
-      modref.remChild(L"thumbnail");
+    if(ref_node.hasChild(L"thumbnail"))
+      ref_node.remChild(L"thumbnail");
   }
 
   // set, replace or delete description data
   if(!ModPack->description().empty()) {
-    if(!this->_save_description(modref, ModPack->description()))
+    if(!this->_save_description(ref_node, ModPack->description()))
       this->_log(OM_LOG_WRN, L"addReference", L"description deflate failed");
   } else {
-    if(modref.hasChild(L"description"))
-      modref.remChild(L"description");
+    if(ref_node.hasChild(L"description"))
+      ref_node.remChild(L"description");
   }
 
   return found;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmNetRepo::setReferenceUrl(size_t index, const OmWString& url)
+{
+  if(index >= this->_reference_list.size())
+    return;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(url.empty()) {
+
+    if(ref_node.hasChild(L"url"))
+       ref_node.remChild(L"url");
+
+  } else {
+
+    if(ref_node.hasChild(L"url")) {
+      ref_node.child(L"url").setContent(url);
+    } else {
+      ref_node.addChild(L"url").setContent(url);
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString OmNetRepo::getReferenceUrl(size_t index) const
+{
+  OmWString result;
+
+  if(index >= this->_reference_list.size())
+    return result;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(ref_node.hasChild(L"url"))
+    result = ref_node.child(L"url").content();
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmNetRepo::referenceHasUrl(size_t index) const
+{
+  if(index >= this->_reference_list.size())
+    return false;
+
+  return this->_reference_list[index].hasChild(L"url");
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmNetRepo::setReferenceThumbnail(size_t index, const OmImage& image, uint8_t level)
+{
+  if(index >= this->_reference_list.size())
+    return;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(!image.valid()) {
+
+    if(ref_node.hasChild(L"thumbnail"))
+       ref_node.remChild(L"thumbnail");
+
+  } else {
+
+    if(!this->_save_thumbnail(ref_node, image))
+      this->_log(OM_LOG_WRN, L"setReferenceThumbnail", L"thumbnail JPEG encode failed");
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmImage OmNetRepo::getReferenceThumbnail(size_t index) const
+{
+  OmImage image;
+
+  if(index >= this->_reference_list.size())
+    return image;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(ref_node.hasChild(L"thumbnail")) {
+
+    // decode the DataURI
+    size_t jpg_size;
+    OmWString mimetype, charset;
+    uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"thumbnail").content());
+
+    // load Jpeg image
+    if(jpg_data) {
+      image.load(jpg_data, jpg_size);
+      Om_free(jpg_data);
+    }
+  }
+
+  return image;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmNetRepo::referenceHasThumbnail(size_t index) const
+{
+  if(index >= this->_reference_list.size())
+    return false;
+
+  return this->_reference_list[index].hasChild(L"thumbnail");
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmNetRepo::setReferenceDescription(size_t index, const OmWString& text, uint8_t level)
+{
+  if(index >= this->_reference_list.size())
+    return;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(text.empty()) {
+
+    if(ref_node.hasChild(L"description"))
+       ref_node.remChild(L"description");
+
+  } else {
+
+    if(!this->_save_description(ref_node, text))
+      this->_log(OM_LOG_WRN, L"setReferenceDescription", L"description deflate failed");
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString OmNetRepo::getReferenceDescription(size_t index) const
+{
+  OmWString desc;
+
+  if(index >= this->_reference_list.size())
+    return desc;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  if(ref_node.hasChild(L"description")) {
+
+    // decode the DataURI
+    size_t dfl_size;
+    OmWString mimetype, charset;
+    uint8_t* dfl_data = Om_decodeDataUri(&dfl_size, mimetype, charset, ref_node.child(L"description").content());
+
+    // decompress text
+    if(dfl_data) {
+
+      size_t txt_size = ref_node.child(L"description").attrAsInt(L"bytes");
+      uint8_t* txt_data = Om_zInflate(dfl_data, dfl_size, txt_size);
+      Om_free(dfl_data);
+
+      if(txt_data) {
+        Om_toUTF16(&desc, reinterpret_cast<char*>(txt_data));
+        Om_free(txt_data);
+      }
+    }
+  }
+
+  return desc;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmNetRepo::referenceHasDescription(size_t index) const
+{
+  if(index >= this->_reference_list.size())
+    return false;
+
+  return this->_reference_list[index].hasChild(L"description");
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmNetRepo::getReferenceDepends(size_t index, OmWStringArray* depends) const
+{
+  if(!depends) return;
+  depends->clear();
+
+  if(index >= this->_reference_list.size())
+    return;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  // check for dependencies
+  if(ref_node.hasChild(L"dependencies")) {
+
+    OmXmlNodeArray ident_nodes;
+    ref_node.child(L"dependencies").children(ident_nodes, L"ident");
+
+    for(size_t i = 0; i < ident_nodes.size(); ++i)
+      depends->push_back(ident_nodes[i].content());
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t OmNetRepo::getReferenceDependCount(size_t index) const
+{
+  if(index >= this->_reference_list.size())
+    return 0;
+
+  OmXmlNode ref_node = this->_reference_list[index];
+
+  // check for dependencies
+  if(ref_node.hasChild(L"dependencies"))
+    return ref_node.child(L"dependencies").childCount(L"ident");
+
+  return 0;
 }
 
 ///
@@ -500,15 +728,15 @@ bool OmNetRepo::_save_thumbnail(OmXmlNode& modref, const OmImage& image)
   OmWString data_uri;
   Om_encodeDataUri(data_uri, L"image/jpeg", L"", jpg_data, jpg_size);
 
+  // free allocated data
+  Om_free(jpg_data);
+
   // set node content to data URI string
   if(modref.hasChild(L"thumbnail")) {
     modref.child(L"thumbnail").setContent(data_uri);
   } else {
     modref.addChild(L"thumbnail").setContent(data_uri);
   }
-
-  // free allocated data
-  Om_free(jpg_data);
 
   return true;
 }

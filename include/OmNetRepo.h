@@ -320,6 +320,115 @@ class OmNetRepo
     ///
     int32_t addReference(const OmModPack* ModPack);
 
+    /// \brief Set Mod reference custom URL
+    ///
+    /// Set or replace Custom URL of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference to modify
+    /// \param[in] url    : Custom URL to set
+    ///
+    void setReferenceUrl(size_t index, const OmWString& url);
+
+    /// \brief Get Mod reference custom URL
+    ///
+    /// Get the custom URL of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return Pointer to null-terminated wide string, or nullptr.
+    ///
+    OmWString getReferenceUrl(size_t index) const;
+
+    /// \brief Check whether reference has custom URL
+    ///
+    /// Returns whether the reference at specified index has custom URL configured
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return True if reference has custom URL, false otherwise
+    ///
+    bool referenceHasUrl(size_t index) const;
+
+    /// \brief Set Mod reference thumbnail
+    ///
+    /// Set or replace thumbnail image of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference to modify
+    /// \param[in] image  : Thumbnail image to set
+    /// \param[in] level  : Jpeg compression level (0-100)
+    ///
+    void setReferenceThumbnail(size_t index, const OmImage& image, uint8_t level = 70);
+
+    /// \brief Get Mod reference thumbnail
+    ///
+    /// Get the thumbnail image of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return thumbnail image object
+    ///
+    OmImage getReferenceThumbnail(size_t index) const;
+
+    /// \brief Check whether reference has thumbnail
+    ///
+    /// Returns whether the reference at specified index has thumbnail image
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return True if reference has thumbnail, false otherwise
+    ///
+    bool referenceHasThumbnail(size_t index) const;
+
+    /// \brief Set Mod reference description
+    ///
+    /// Set or replace description text of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference to modify
+    /// \param[in] text   : Thumbnail image to set
+    /// \param[in] level  : Deflate compression level
+    ///
+    void setReferenceDescription(size_t index, const OmWString& text, uint8_t level = 6);
+
+    /// \brief Get Mod reference description
+    ///
+    /// Get the description text of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return description text
+    ///
+    OmWString getReferenceDescription(size_t index) const;
+
+    /// \brief Check whether reference has description
+    ///
+    /// Returns whether the reference at specified index has description text
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return True if reference has description, false otherwise
+    ///
+    bool referenceHasDescription(size_t index) const;
+
+    /// \brief Get Mod reference dependencies
+    ///
+    /// Get the dependencies list of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return description text
+    ///
+    void getReferenceDepends(size_t index, OmWStringArray* depends) const;
+
+    /// \brief Get Mod reference dependencies count
+    ///
+    /// Get the count of dependencies of the Mod reference at specified index
+    ///
+    /// \param[in] index  : Index of Mod reference
+    ///
+    /// \return Dependencies count
+    ///
+    size_t getReferenceDependCount(size_t index) const;
+
     /// \brief Get Mod Channel.
     ///
     /// Returns Mod Channel this instance is related to.
