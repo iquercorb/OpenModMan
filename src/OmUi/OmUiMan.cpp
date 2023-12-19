@@ -559,7 +559,7 @@ bool OmUiMan::openArg(const OmWString& path)
 
       unknown_cfg.clear();
 
-      this->openPkgEditor(path);
+      this->openRepEditor(path);
 
       return true;
     }
