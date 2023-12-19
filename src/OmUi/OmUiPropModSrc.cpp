@@ -55,9 +55,27 @@ OmUiPropModSrc::~OmUiPropModSrc()
 ///
 long OmUiPropModSrc::id() const
 {
-  return IDD_PROP_PKG_SRC;
+  return IDD_PROP_MOD_SRC;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiPropModSrc::_comput_checksum()
+{
+  OmModPack* ModPack = static_cast<OmUiPropMod*>(this->_parent)->getModPack();
+  if(!ModPack) return;
+
+  this->setItemText(IDC_BC_CHECK, L"Computing...");
+
+  OmWString xxhsum = Om_getXXHsum(ModPack->sourcePath());
+
+  this->setItemText(IDC_BC_CHECK, L"Compute");
+  this->showItem(IDC_BC_CHECK, false);
+
+  this->showItem(IDC_EC_READ6, true);
+  this->setItemText(IDC_EC_READ6, xxhsum);
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -72,12 +90,24 @@ void OmUiPropModSrc::_onTbInit()
   this->_createTooltip(IDC_EC_READ1,  L"Mod source type, either ZIP archive or Directory (developer mode)");
   this->_createTooltip(IDC_EC_READ2,  L"Mod source location path");
   this->_createTooltip(IDC_EC_READ3,  L"List of Mod dependencies");
+  this->_createTooltip(IDC_EC_READ6,  L"Mod source file checksum (xxhash)");
+  this->_createTooltip(IDC_BC_CHECK,  L"Compute Mod source file checksum");
 
- OmModPack* ModPack = static_cast<OmUiPropMod*>(this->_parent)->getModPack();
-  if(!ModPack)
-    return;
+  OmModPack* ModPack = static_cast<OmUiPropMod*>(this->_parent)->getModPack();
+  if(!ModPack) return;
+
+  // initial state for compute checksum
+  this->showItem(IDC_BC_CHECK, false);
+  this->showItem(IDC_EC_READ6, true);
+  this->setItemText(IDC_EC_READ6, L"<unavailable>");
 
   if(ModPack->hasSource()) {
+
+    // enable compute checksum button
+    if(!ModPack->sourceIsDir()) {
+      this->showItem(IDC_BC_CHECK, true);
+      this->showItem(IDC_EC_READ6, false);
+    }
 
     // Type
     if(ModPack->sourceIsDir()) {
@@ -157,25 +187,31 @@ void OmUiPropModSrc::_onTbInit()
   }
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiPropModSrc::_onTbResize()
 {
+  uint32_t base_y = 10;
+
   // Source Type Label & EditControl
-  this->_setItemPos(IDC_SC_LBL01, 5, 10, 64, 9);
-  this->_setItemPos(IDC_EC_READ1, 70, 10, this->cliUnitX()-90, 13);
+  this->_setItemPos(IDC_SC_LBL01, 5, base_y, 64, 9);
+  this->_setItemPos(IDC_EC_READ1, 70, base_y, this->cliUnitX()-90, 13);
   // Source Location Label & EditControl
-  this->_setItemPos(IDC_SC_LBL02, 5, 26, 64, 9);
-  this->_setItemPos(IDC_EC_READ2, 70, 26, this->cliUnitX()-90, 13);
+  this->_setItemPos(IDC_SC_LBL02, 5, base_y+16, 64, 9);
+  this->_setItemPos(IDC_EC_READ2, 70, base_y+16, this->cliUnitX()-90, 13);
+
+  // Source Location Label & EditControl
+  this->_setItemPos(IDC_SC_LBL06, 5, base_y+32, 64, 9);
+  this->_setItemPos(IDC_BC_CHECK, 70, base_y+30, 50, 14);
+  this->_setItemPos(IDC_EC_READ6, 70, base_y+32, this->cliUnitX()-90, 13);
 
   // separator
-  this->_setItemPos(IDC_SC_SEP01, 5, 47, this->cliUnitX()-25, 1);
+  this->_setItemPos(IDC_SC_SEP01, 5, base_y+53, this->cliUnitX()-25, 1);
 
   // Dependencies Label & EditControl
-  this->_setItemPos(IDC_SC_LBL03, 5, 58, 64, 9);
-  this->_setItemPos(IDC_EC_READ3, 70, 58, this->cliUnitX()-90, 50);
+  this->_setItemPos(IDC_SC_LBL03, 5, base_y+64, 64, 9);
+  this->_setItemPos(IDC_EC_READ3, 70, base_y+64, this->cliUnitX()-90, 30);
 
   // separator
   this->_setItemPos(IDC_SC_SEP02, 5, 115, this->cliUnitX()-25, 1);
@@ -187,4 +223,23 @@ void OmUiPropModSrc::_onTbResize()
   this->_setItemPos(IDC_SC_LBL05, 5, 142, 64, 9);
   // Package Source Files EditControl
   this->_setItemPos(IDC_EC_READ5, 70, 144, this->cliUnitX()-90, this->cliUnitY()-155);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+INT_PTR OmUiPropModSrc::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+  if(uMsg == WM_COMMAND) {
+
+    switch(LOWORD(wParam))
+    {
+    case IDC_BC_CHECK:
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_comput_checksum();
+      break;
+    }
+  }
+
+  return false;
 }

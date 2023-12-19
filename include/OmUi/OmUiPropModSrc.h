@@ -52,9 +52,13 @@ class OmUiPropModSrc : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    void                _comput_checksum();
+
     void                _onTbInit();
 
     void                _onTbResize();
+
+    INT_PTR             _onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
 #endif // OMUIPROPMODSRC_H
