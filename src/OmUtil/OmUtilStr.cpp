@@ -625,7 +625,7 @@ static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(
 ///
 /// List of forbidden characters to test validity of URL path.
 ///
-static const wchar_t __illegal_url_chr[] = L"#\"<>|\\{}^[]`+:@$";
+static const wchar_t __illegal_url_chr[] = L" #\"<>|\\{}^[]`+:@$";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1174,7 +1174,7 @@ inline static void __to_crlf(OmWString* out_text, const OmWString& in_text)
     if(in_text[i] == L'\n') {
 
       // check for preceding '\r', if not add it
-      if(i < 0) {
+      if(i < 1) {
         if(in_text[i - 1] != L'\r') {
           out_text->push_back(L'\r');
           out_text->push_back(L'\n');
@@ -1208,7 +1208,7 @@ inline static void __to_crlf(OmCString* out_text, const OmCString& in_text)
     if(in_text[i] == '\n') {
 
       // check for preceding '\r', if not add it
-      if(i < 0) {
+      if(i < 1) {
         if(in_text[i - 1] != '\r') {
           out_text->push_back('\r');
           out_text->push_back('\n');
