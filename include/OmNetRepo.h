@@ -488,9 +488,9 @@ class OmNetRepo
     OmWString           _query_lasterr;
 
     // reference build helpers
-    bool                _save_thumbnail(OmXmlNode&, const OmImage&);
+    bool                _save_thumbnail(OmXmlNode&, const OmImage&, uint8_t level = 70);
 
-    bool                _save_description(OmXmlNode&, const OmWString&);
+    bool                _save_description(OmXmlNode&, const OmWString&, uint8_t level = 6);
 
     // logs and errors
     void                _log(unsigned level, const OmWString& origin, const OmWString& detail) const;

@@ -557,7 +557,7 @@ void OmNetRepo::setReferenceThumbnail(size_t index, const OmImage& image, uint8_
 
   } else {
 
-    if(!this->_save_thumbnail(ref_node, image))
+    if(!this->_save_thumbnail(ref_node, image, level))
       this->_log(OM_LOG_WRN, L"setReferenceThumbnail", L"thumbnail JPEG encode failed");
   }
 }
@@ -619,7 +619,7 @@ void OmNetRepo::setReferenceDescription(size_t index, const OmWString& text, uin
 
   } else {
 
-    if(!this->_save_description(ref_node, text))
+    if(!this->_save_description(ref_node, text, level))
       this->_log(OM_LOG_WRN, L"setReferenceDescription", L"description deflate failed");
   }
 }
@@ -715,11 +715,11 @@ size_t OmNetRepo::getReferenceDependCount(size_t index) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetRepo::_save_thumbnail(OmXmlNode& modref, const OmImage& image)
+bool OmNetRepo::_save_thumbnail(OmXmlNode& modref, const OmImage& image, uint8_t level)
 {
   // Encode RGBA to JPEG
   uint64_t jpg_size;
-  uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, image.data(), image.width(), image.height(), 4, 7);
+  uint8_t* jpg_data = Om_imgEncodeJpg(&jpg_size, image.data(), image.width(), image.height(), image.bpp(), level);
 
   if(!jpg_data)
     return false;
@@ -744,7 +744,7 @@ bool OmNetRepo::_save_thumbnail(OmXmlNode& modref, const OmImage& image)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetRepo::_save_description(OmXmlNode& modref, const OmWString& text)
+bool OmNetRepo::_save_description(OmXmlNode& modref, const OmWString& text, uint8_t level)
 {
   // convert to UTF-8
   OmCString utf8 = Om_toUTF8(text);
@@ -754,7 +754,7 @@ bool OmNetRepo::_save_description(OmXmlNode& modref, const OmWString& text)
 
   // compress data using defalte
   size_t dfl_size;
-  uint8_t* dfl_data = Om_zDeflate(&dfl_size, reinterpret_cast<const uint8_t*>(utf8.c_str()), txt_size, 9);
+  uint8_t* dfl_data = Om_zDeflate(&dfl_size, reinterpret_cast<const uint8_t*>(utf8.c_str()), txt_size, level);
 
   if(!dfl_data)
     return false;
