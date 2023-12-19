@@ -135,7 +135,7 @@ class OmUiToolRep : public OmDialog
 
     void                _refs_populate();
 
-    void                _refs_selchg(int32_t item = -1, bool selected = true);
+    void                _refs_selchg(int32_t item = -1, bool selected = false);
 
     bool                _refs_add(const OmWString& path, bool select = false);
 
