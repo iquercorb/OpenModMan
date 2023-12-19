@@ -38,10 +38,10 @@
 #define IDD_PROP_CHN_LIB                        728
 #define IDD_PROP_CHN_BCK                        729
 #define IDD_PROP_CHN_NET                        730
-#define IDD_PROP_PKG                            731
-#define IDD_PROP_PKG_SRC                        732
-#define IDD_PROP_PKG_BCK                        733
-#define IDD_PROP_PKG_CMN                        734
+#define IDD_PROP_MOD                            731
+#define IDD_PROP_MOD_SRC                        732
+#define IDD_PROP_MOD_BCK                        733
+#define IDD_PROP_MOD_CMN                        734
 #define IDD_PROP_RMT                            735
 #define IDD_PROP_RMT_DET                        736
 #define IDD_PROP_PST                            737

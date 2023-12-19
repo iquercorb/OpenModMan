@@ -53,7 +53,7 @@ OmUiPropModCmn::~OmUiPropModCmn()
 ///
 long OmUiPropModCmn::id() const
 {
-  return IDD_PROP_PKG_CMN;
+  return IDD_PROP_MOD_CMN;
 }
 
 

@@ -151,7 +151,7 @@ void OmUiManMainLib::showProperties()
   OmModPack* ModPack = ModChan->getModpack(this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED));
   if(!ModPack) return;
 
-  OmUiPropMod* UiPropPkg = static_cast<OmUiPropMod*>(this->_UiMan->childById(IDD_PROP_PKG));
+  OmUiPropMod* UiPropPkg = static_cast<OmUiPropMod*>(this->_UiMan->childById(IDD_PROP_MOD));
 
   UiPropPkg->setModPack(ModPack);
 

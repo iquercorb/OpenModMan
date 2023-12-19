@@ -56,7 +56,7 @@ OmUiPropModBck::~OmUiPropModBck()
 ///
 long OmUiPropModBck::id() const
 {
-  return IDD_PROP_PKG_BCK;
+  return IDD_PROP_MOD_BCK;
 }
 
 

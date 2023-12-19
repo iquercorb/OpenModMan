@@ -853,7 +853,7 @@ FONT 8, "Ms Shell Dlg"
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG DIALOGEX 0, 0, 340, 320
+IDD_PROP_MOD DIALOGEX 0, 0, 340, 320
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_THICKFRAME | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE
 CAPTION "Library Mod properties"
@@ -867,7 +867,7 @@ FONT 8, "Ms Shell Dlg"
 //                                COMMON TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_CMN DIALOGEX 0, 0, 305, 300
+IDD_PROP_MOD_CMN DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -891,7 +891,7 @@ FONT 8, "Ms Shell Dlg"
 //                                SOURCE TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_SRC DIALOGEX 0, 0, 305, 300
+IDD_PROP_MOD_SRC DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
@@ -899,6 +899,9 @@ FONT 8, "Ms Shell Dlg"
     EDITTEXT        IDC_EC_READ1, 70, 130, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     LTEXT           "Location :", IDC_SC_LBL02, 5, 150, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ2, 70, 150, 205, 12, NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
+    LTEXT           "Checksum :", IDC_SC_LBL06, 5, 150, 64, 9, SS_LEFT, WS_EX_LEFT
+    PUSHBUTTON      "Compute", IDC_BC_CHECK, 70, 70, 50, 14, WS_TABSTOP, WS_EX_LEFT
+    EDITTEXT        IDC_EC_READ6, 70, 150, 205, 12, NOT WS_VISIBLE | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
     CONTROL         "-----------", IDC_SC_SEP01, WC_STATIC, SS_ETCHEDHORZ, 5, 175, 270, 1, WS_EX_LEFT
     LTEXT           "Dependencies :", IDC_SC_LBL03, 5, 190, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_READ3, 70, 190, 205, 22, WS_VSCROLL | NOT WS_BORDER | NOT WS_TABSTOP | ES_MULTILINE | ES_READONLY, WS_EX_LEFT
@@ -914,7 +917,7 @@ FONT 8, "Ms Shell Dlg"
 //                                BACKUP TAB
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-IDD_PROP_PKG_BCK DIALOGEX 0, 0, 305, 300
+IDD_PROP_MOD_BCK DIALOGEX 0, 0, 305, 300
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
