@@ -451,8 +451,6 @@ bool OmModPack::parseSource(const OmWString& path)
           entry.attr = 0;
         }
 
-
-
         this->_src_entry.push_back(entry);
       }
     }
@@ -1102,7 +1100,6 @@ OmResult OmModPack::makeBackup(Om_progressCb progress_cb, void* user_ptr)
     entry.path = this->_src_entry[i].path;
     entry.attr = this->_src_entry[i].attr;
     entry.cdid = -1; //< invalid zip central-directory index
-    entry.attr = 0;
 
     Om_concatPaths(tgt_file, this->_ModChan->targetPath(), entry.path);
     Om_concatPaths(bck_file, bck_root, entry.path);
@@ -1406,7 +1403,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
 
         int32_t result = Om_dirDelete(tgt_file);
         if(result != 0) {
-          // this may happen in some cas but it is not as bad as an error, only a warning
+          // do not throw error, simple warning
           this->_log(OM_LOG_WRN, L"restoreData", Om_errDelete(L"directory in Target", tgt_file, result));
         }
       }
@@ -1415,8 +1412,8 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
 
       int32_t result = Om_fileDelete(tgt_file);
       if(result != 0) {
-        this->_error(L"restoreData", Om_errDelete(L"file in Target", tgt_file, result));
-        has_error = true;
+        // do not throw error, simple warning
+        this->_log(OM_LOG_WRN, L"restoreData", Om_errDelete(L"file in Target", tgt_file, result));
       }
     }
 
