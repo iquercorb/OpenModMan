@@ -901,8 +901,8 @@ OmResult OmModHub::renamePreset(size_t index, const OmWString& title)
   OmWString old_path = ModPset->path();
 
   // compose new Preset filename
-  OmWString new_path = Om_concatPaths(Om_getDirPart(old_path), title);
-  new_path += L"." OM_XML_DEF_EXT;;
+  OmWString new_path = Om_concatPaths(Om_getDirPart(old_path), Om_spacesToUnderscores(title));
+  new_path += L"." OM_XML_DEF_EXT;
 
   bool has_error = false;
 
