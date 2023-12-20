@@ -320,7 +320,7 @@ bool OmModPack::parseSource(const OmWString& path)
     }
 
     // Either we found XML definition file, or we try to parse this Package the old fashion
-    if(!source_cfg.empty()) {
+    if(source_cfg.valid()) {
 
       src_root = source_cfg.child(L"install").content();
 
@@ -806,7 +806,7 @@ bool OmModPack::parseBackup(const OmWString& path)
   OmWString bck_iden;
   uint64_t bck_hash;
 
-  if(!backup_cfg.empty()) {
+  if(backup_cfg.valid()) {
 
     // verify the Backup definition have the proper nodes
     if(!backup_cfg.hasChild(L"backup") || !backup_cfg.hasChild(L"ident") || !backup_cfg.hasChild(L"hash")) {

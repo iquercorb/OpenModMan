@@ -1111,7 +1111,7 @@ OmCString OmXmlConf::data()
 ///
 bool OmXmlConf::empty() const
 {
-  return PUGI_DOC(_docu)->empty();
+  return PUGI_DOC(_root)->empty();
 }
 
 
@@ -1120,7 +1120,7 @@ bool OmXmlConf::empty() const
 ///
 bool OmXmlConf::valid() const
 {
-  return !PUGI_DOC(_docu)->empty();
+  return !PUGI_DOC(_root)->empty();
 }
 
 
@@ -1328,6 +1328,7 @@ bool OmXmlConf::remChild(const OmWString& name)
 ///
 void OmXmlConf::clear()
 {
+  *PUGI_NODE(_root) = pugi::xml_node();
   PUGI_DOC(_docu)->reset();
   _path.clear();
 }
