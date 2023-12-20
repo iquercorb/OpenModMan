@@ -902,7 +902,7 @@ OmResult OmModHub::renamePreset(size_t index, const OmWString& title)
 
   // compose new Preset filename
   OmWString new_path = Om_concatPaths(Om_getDirPart(old_path), title);
-  new_path += L".xml";
+  new_path += L"." OM_XML_DEF_EXT;;
 
   bool has_error = false;
 
