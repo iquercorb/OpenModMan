@@ -49,7 +49,11 @@ OmModPset::OmModPset() :
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmModPset::OmModPset(OmModHub* ModHub) : _ModHub(ModHub), _index(0), _installonly(false)
+OmModPset::OmModPset(OmModHub* ModHub) :
+  _ModHub(ModHub),
+  _locked(false),
+  _index(0),
+  _installonly(false)
 {
 
 }
