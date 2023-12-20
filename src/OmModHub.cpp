@@ -807,7 +807,7 @@ OmModPset* OmModHub::createPreset(const OmWString& title)
 
   // compose path using title and context home
   OmWString preset_path = Om_concatPaths(presets_dir, Om_spacesToUnderscores(title));
-  preset_path += L".xml";
+  preset_path += L"." OM_XML_DEF_EXT;
 
   // save definition file
   if(!preset_cfg.save(preset_path)) {
