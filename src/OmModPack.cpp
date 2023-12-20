@@ -1406,8 +1406,8 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
 
         int32_t result = Om_dirDelete(tgt_file);
         if(result != 0) {
-          this->_error(L"restoreData", Om_errDelete(L"directory in Target", tgt_file, result));
-          has_error = true;
+          // this may happen in some cas but it is not as bad as an error, only a warning
+          this->_log(OM_LOG_WRN, L"restoreData", Om_errDelete(L"directory in Target", tgt_file, result));
         }
       }
 
