@@ -831,7 +831,9 @@ bool OmModPack::parseBackup(const OmWString& path)
 
       OmModEntry_t entry;
       entry.cdid = xml_node_ls[i].attrAsInt(L"cdi");
-      entry.attr = (xml_node_ls[i].attrAsInt(L"dir") > 0) ? OM_MODENTRY_DIR : 0;
+      entry.attr = 0;
+      if(xml_node_ls[i].attrAsInt(L"dir") > 0)
+        entry.attr |= OM_MODENTRY_DIR;
       entry.path = xml_node_ls[i].content();
 
       this->_bck_entry.push_back(entry);
@@ -843,7 +845,11 @@ bool OmModPack::parseBackup(const OmWString& path)
 
       OmModEntry_t entry;
       entry.cdid = -1;
-      entry.attr = OM_MODENTRY_DEL | (xml_node_ls[i].attrAsInt(L"dir") > 0) ? OM_MODENTRY_DIR : 0;
+      entry.attr = OM_MODENTRY_DEL;
+      if(xml_node_ls[i].attrAsInt(L"dir") > 0)
+        entry.attr |= OM_MODENTRY_DIR;
+      // note for me in the future, this does not work properly:
+      // entry.attr = OM_MODENTRY_DEL | (xml_node_ls[i].attrAsInt(L"dir") > 0) ? OM_MODENTRY_DIR : 0;
       entry.path = xml_node_ls[i].content();
 
       this->_bck_entry.push_back(entry);
