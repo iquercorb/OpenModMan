@@ -50,6 +50,16 @@ static HFONT __Om_dlgBox_FontB = nullptr;
 static HFONT __Om_dlgBox_FontS = nullptr;
 static HICON __Om_dlgBox_TIcon = nullptr;
 
+inline static void __Om_dlgBox_peekMessages(HWND hwnd)
+{
+  MSG msg;
+
+  // force all dialog messages to be treated before return
+  while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
+    if(!IsDialogMessage(hwnd, &msg))
+      DispatchMessage(&msg);
+}
+
 /// \brief Dialog Procedure function for message box.
 ///
 /// Custom Dialog Procedure function for custom message box.
@@ -672,20 +682,18 @@ static HWND __Om_dlgProgress(HINSTANCE hins, HWND hparent, const wchar_t* cpt, u
     dlgt->cdit++; //< increment item count
   }
 
+
   HWND hwnd = CreateDialogIndirectParamW(hins, dlgt, hparent, __Om_dlgBox_dlgProc, reinterpret_cast<LPARAM>(result));
   Om_free(dlgt);
 
   // mimic modal dialog window
-  if(hparent) EnableWindow(hparent, false);
+  if(hparent)
+    EnableWindow(hparent, false);
 
   ShowWindow(hwnd, SW_SHOW);
 
-  MSG msg;
-
   // force all dialog messages to be treated before return
-  while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
-    if(!IsDialogMessage(hwnd, &msg))
-      DispatchMessage(&msg);
+  __Om_dlgBox_peekMessages(hwnd);
 
   return hwnd;
 }
@@ -734,12 +742,8 @@ void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text, uint
   if(text)
     SendMessageW(GetDlgItem(hwnd, OM_DLGBOX_SC_MESG), WM_SETTEXT, 0, reinterpret_cast<LPARAM>(text));
 
-  MSG msg;
-
   // force all dialog messages to be treated before return
-  while(PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
-    if(!IsDialogMessage(hwnd, &msg))
-      DispatchMessage(&msg);
+  __Om_dlgBox_peekMessages(hwnd);
 }
 
 
@@ -748,18 +752,36 @@ void Om_dlgProgressUpdate(HWND hwnd, int tot, int cur, const wchar_t* text, uint
 ///
 void Om_dlgProgressClose(HWND hwnd)
 {
+  // force all dialog messages to be treated
+  __Om_dlgBox_peekMessages(hwnd);
+
   // get parent Windows to stop 'modal'
   HWND hparent = GetParent(hwnd);
 
   if(DestroyWindow(hwnd)) {
+
     // stop 'modal'
     EnableWindow(hparent, true);
-    SetActiveWindow(hparent);
+
+    // this does not work and fail with error 0x578 (ERROR_INVALID_WINDOW_HANDLE) : Why ?!
+    // SetActiveWindow(hparent)
+
+    // this "work" but is ugly and does not "focus" windows
+    //SetWindowPos(hparent, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+    //SetWindowPos(hparent, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+
+    // this work, it seem, and "focus" window
+    SetForegroundWindow(hparent);
+
   } else {
+
     #ifdef DEBUG
     std::cout << "DEBUG => Om_dlgProgressClose : DestroyWindow failed\n";
     #endif // DEBUG
   }
+
+  // force all dialog messages to be treated
+  __Om_dlgBox_peekMessages(hwnd);
 }
 
 ///
