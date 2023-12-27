@@ -308,6 +308,15 @@ bool Om_hasLegalUrlChar(const wchar_t* path);
 ///
 bool Om_hasLegalUrlChar(const OmWString& path);
 
+/// \brief Escape URL characters
+///
+/// Convert the given Wide String to properly escaped UTF-8 URL.
+///
+/// \param[out] esc    : Escaped URL string
+/// \param[in]  url    : Wide string URL to escape and convert
+///
+void Om_urlEscape(OmCString* esc, const OmWString& url);
+
 /// \brief Check file name validity
 ///
 /// Checks whether the given string is suitable for file name or

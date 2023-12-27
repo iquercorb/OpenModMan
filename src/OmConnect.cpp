@@ -149,7 +149,8 @@ OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse)
   CURLM* curl_mult = reinterpret_cast<CURLM*>(this->_hmult);
 
   this->_req_url.clear();
-  Om_toUTF8(&this->_req_url, url);
+  Om_urlEscape(&this->_req_url, url);
+  //this->_req_url = curl_easy_escape(curl_easy, Om_toUTF8(url).c_str(), 0); //< this is "too much" escaping, and does not work
 
   curl_easy_setopt(curl_easy, CURLOPT_URL, this->_req_url.c_str());
 
@@ -277,7 +278,8 @@ bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, 
   CURL* curl_easy = reinterpret_cast<CURL*>(this->_heasy);
 
   this->_req_url.clear();
-  Om_toUTF8(&this->_req_url, url);
+  Om_urlEscape(&this->_req_url, url);
+  //this->_req_url = curl_easy_escape(curl_easy, Om_toUTF8(url).c_str(), 0); //< this is "too much" escaping, and does not work
 
   curl_easy_setopt(curl_easy, CURLOPT_URL, this->_req_url.c_str());
 
@@ -339,7 +341,8 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
   CURL* curl_easy = reinterpret_cast<CURL*>(this->_heasy);
 
   this->_req_url.clear();
-  Om_toUTF8(&this->_req_url, url);
+  Om_urlEscape(&this->_req_url, url);
+  //this->_req_url = curl_easy_escape(curl_easy, Om_toUTF8(url).c_str(), 0); //< this is "too much" escaping, and does not work
 
   curl_easy_setopt(curl_easy, CURLOPT_URL, this->_req_url.c_str());
 

@@ -627,6 +627,12 @@ static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(
 ///
 static const wchar_t __illegal_url_chr[] = L" #\"<>|\\{}^[]`+:@$";
 
+/// \brief Illegal URL path characters
+///
+/// List of forbidden characters to test validity of URL path.
+///
+static const wchar_t __escaped_url_chr[] = L" #\"<>|\\{}^[]`+$";
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -708,7 +714,7 @@ bool Om_hasLegalUrlChar(const wchar_t* path)
   if(!wcslen(path))
     return false;
 
-  for(unsigned i = 0; i < 16; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 16; ++i) // forbids all including back-slash
     if(wcschr(path, __illegal_url_chr[i]))
       return false;
 
@@ -723,11 +729,40 @@ bool Om_hasLegalUrlChar(const OmWString& path)
   if(path.empty())
     return false;
 
-  for(unsigned i = 0; i < 16; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 16; ++i) // forbids all including back-slash
     if(path.find_first_of(__illegal_url_chr[i]) != OmWString::npos)
       return false;
 
   return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_urlEscape(OmCString* esc, const OmWString& url)
+{
+  // convert to UTF-8
+  OmCString utf8;
+  __multibyte_encode(CP_UTF8, &utf8, url.c_str());
+
+  char buf[16];
+
+  bool escaped;
+  for(size_t i = 0; i < utf8.size(); ++i) {
+
+    escaped = false;
+
+    for(size_t k = 0; k < 15; ++k) {
+      if(utf8[i] == __escaped_url_chr[k]) {
+        std::sprintf(buf, "%%%X", static_cast<int>(utf8[i]));
+        esc->append(buf);
+        escaped = true;
+      }
+    }
+
+    if(!escaped)
+      esc->push_back(utf8[i]);
+  }
 }
 
 ///
@@ -738,7 +773,7 @@ bool Om_hasLegalSysChar(const wchar_t* name)
   if(!wcslen(name))
     return false;
 
-  for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 8; ++i) // forbids all including back-slash
     if(wcschr(name, __illegal_win_chr[i]))
       return false;
 
@@ -753,7 +788,7 @@ bool Om_hasLegalSysChar(const OmWString& name)
   if(name.empty())
     return false;
 
-  for(unsigned i = 0; i < 8; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 8; ++i) // forbids all including back-slash
     if(name.find_first_of(__illegal_win_chr[i]) != OmWString::npos)
       return false;
 
