@@ -222,7 +222,7 @@ void OmUiPropChnBck::_onTbRefresh()
 ///
 void OmUiPropChnBck::_onTbResize()
 {
-  int32_t y_base = 30;
+  int32_t y_base = 40;
 
   // Custom Backup CheckBox
   this->_setItemPos(IDC_BC_CKBX1, 50, y_base, 240, 16, true);

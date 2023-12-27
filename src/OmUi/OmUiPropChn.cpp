@@ -28,6 +28,7 @@
 #include "OmUiPropChnLib.h"
 #include "OmUiPropChnBck.h"
 #include "OmUiPropChnNet.h"
+#include "OmUiPropChnDnl.h"
 
 #include "OmUtilFs.h"
 #include "OmUtilDlg.h"
@@ -56,6 +57,7 @@ OmUiPropChn::OmUiPropChn(HINSTANCE hins) : OmDialogProp(hins),
   this->_addPage(L"Mod Library", new OmUiPropChnLib(hins));
   this->_addPage(L"Backup storage", new OmUiPropChnBck(hins));
   this->_addPage(L"Network Repositories", new OmUiPropChnNet(hins));
+  this->_addPage(L"Download options", new OmUiPropChnDnl(hins));
 }
 
 
@@ -243,7 +245,7 @@ bool OmUiPropChn::checkChanges()
 
   // Mods Repositories Tab
   OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
-
+/*
   if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
 
      different = false;
@@ -267,6 +269,81 @@ bool OmUiPropChn::checkChanges()
       changed = true;
     } else {
       UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
+    }
+  }
+*/
+  // Data backup Tab
+  OmUiPropChnDnl* UiPropChnDnl  = static_cast<OmUiPropChnDnl*>(this->childById(IDD_PROP_CHN_DNL));
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_WARNINGS)) {
+
+     different = false;
+
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModChan->warnExtraDnld())
+      different = true;
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->warnMissDnld())
+      different = true;
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnUpgdBrkDeps())
+      different = true;
+
+    if(different) {
+      changed = true;
+    } else {
+      UiPropChnDnl->paramReset(CHN_PROP_DNL_WARNINGS);
+    }
+  }
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_ONUPGRADE)) {
+    if(UiPropChnDnl->msgItem(IDC_BC_RAD02, BM_GETCHECK) != this->_ModChan->upgdRename()) {
+      changed = true;
+    } else {
+      UiPropChnDnl->paramReset(CHN_PROP_DNL_ONUPGRADE);
+    }
+  }
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_LIMITS)) {
+
+    different = false;
+
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX4, BM_GETCHECK)) {
+      if(this->_ModChan->downMaxRate() > 0) {
+
+        OmWString ec_entry;
+        UiPropChnDnl->getItemText(IDC_EC_NUM01, ec_entry);
+
+        uint32_t rate = std::stoi(ec_entry) * 1000;
+        if(rate != this->_ModChan->downMaxRate())
+          different = true;
+
+      } else {
+        different = true;
+      }
+    } else {
+      if(this->_ModChan->downMaxRate() > 0)
+        different = true;
+    }
+
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX5, BM_GETCHECK)) {
+      if(this->_ModChan->downMaxThread() > 0) {
+
+        OmWString ec_entry;
+        UiPropChnDnl->getItemText(IDC_EC_NUM02, ec_entry);
+
+        if(std::stoi(ec_entry) != this->_ModChan->downMaxThread())
+          different = true;
+
+      } else {
+        different = true;
+      }
+    } else {
+      if(this->_ModChan->downMaxThread() > 0)
+        different = true;
+    }
+
+    if(different) {
+      changed = true;
+    } else {
+      UiPropChnDnl->paramReset(CHN_PROP_DNL_LIMITS);
     }
   }
 
@@ -530,7 +607,7 @@ bool OmUiPropChn::applyChanges()
 
   // Mods Repositories Tab
   OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
-
+/*
   if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
 
     this->_ModChan->setWarnExtraDnld(UiPropChnNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
@@ -547,6 +624,50 @@ bool OmUiPropChn::applyChanges()
 
     // Reset parameter as unmodified
     UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
+  }
+*/
+  // Data backup Tab
+  OmUiPropChnDnl* UiPropChnDnl  = static_cast<OmUiPropChnDnl*>(this->childById(IDD_PROP_CHN_DNL));
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_WARNINGS)) {
+
+    this->_ModChan->setWarnExtraDnld(UiPropChnDnl->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    this->_ModChan->setWarnMissDnld(UiPropChnDnl->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+    this->_ModChan->setWarnUpgdBrkDeps(UiPropChnDnl->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    UiPropChnDnl->paramReset(CHN_PROP_DNL_WARNINGS);
+  }
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_ONUPGRADE)) {
+
+    this->_ModChan->setUpgdRename(UiPropChnDnl->msgItem(IDC_BC_RAD02, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    UiPropChnDnl->paramReset(CHN_PROP_DNL_ONUPGRADE);
+  }
+
+  if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_LIMITS)) {
+
+    uint32_t max_rate = 0;
+    uint32_t max_thread = 0;
+
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX4, BM_GETCHECK)) {
+      OmWString ec_entry;
+      UiPropChnDnl->getItemText(IDC_EC_NUM01, ec_entry);
+      max_rate = std::stoi(ec_entry) * 1000;
+    }
+
+    if(UiPropChnDnl->msgItem(IDC_BC_CKBX5, BM_GETCHECK)) {
+      OmWString ec_entry;
+      UiPropChnDnl->getItemText(IDC_EC_NUM02, ec_entry);
+      max_thread = std::stoi(ec_entry);
+    }
+
+    this->_ModChan->setDownLimits(max_rate, max_thread);
+
+    // Reset parameter as unmodified
+    UiPropChnDnl->paramReset(CHN_PROP_DNL_LIMITS);
   }
 
   // disable Apply button

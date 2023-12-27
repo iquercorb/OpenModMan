@@ -602,12 +602,13 @@ class OmModChan
     /// the currently processing Net Pack object.
     ///
     /// \param[in] selection     : List of Mods to add to
+    /// \param[in] begin_cb      : Callback function to be called each download start.
     /// \param[in] progress_cb   : Callback function to be called during download progression.
     /// \param[in] result_cb     : Callback function to be called each download end.
     /// \param[in] notify_cb     : Callback function to be called once downloads queue is empty
     /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
     ///
-    void startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
+    void startDownloads(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Stop all downloads
     ///
@@ -636,12 +637,12 @@ class OmModChan
     /// \brief Downloads queue size
     ///
     /// Returns the current download queue size, that is, count of
-    /// concurrent running downloads
+    /// concurrently running and pending downloads.
     ///
     /// \return Download queue size
     ///
     size_t downloadQueueSize() const {
-      return this->_download_queue.size();
+      return (this->_download_queue.size() + this->_download_array.size());
     }
 
     /// \brief Add Mods to Upgrades queue
@@ -1195,7 +1196,6 @@ class OmModChan
     ///
     void setWarnMissDnld(bool enable);
 
-
     /// \brief Get warning for upgrade breaking dependencies option.
     ///
     /// Returns warning for upgrade breaking dependencies option value.
@@ -1213,6 +1213,35 @@ class OmModChan
     /// \param[in]  enable    : Warning for upgrade breaking dependencies enable or disable.
     ///
     void setWarnUpgdBrkDeps(bool enable);
+
+    /// \brief Get download max rate value
+    ///
+    /// Returns download max rate option value
+    ///
+    /// \return Download rate in bytes per seconds
+    ///
+    uint32_t downMaxRate() const {
+      return this->_down_max_rate;
+    }
+
+    /// \brief Get download max thread value
+    ///
+    /// Returns download max thread (concurrent downloads) option value
+    ///
+    /// \return Max thread count
+    ///
+    uint32_t downMaxThread() const {
+      return this->_down_max_thread;
+    }
+
+    /// \brief Set download limits options
+    ///
+    /// Define the download limits options values
+    ///
+    /// \param[in] rate   : Download max rate in bytes per seconds
+    /// \param[in] thread : Maximum count of concurrent download thread
+    ///
+    void setDownLimits(uint32_t rate, uint32_t thread);
 
     /// \brief Get Mod Hub
     ///
@@ -1350,13 +1379,19 @@ class OmModChan
 
     OmPNetPackQueue       _download_queue;
 
+    OmPNetPackArray       _download_array;
+
     uint32_t              _download_dones;
 
     uint32_t              _download_percent;
 
+    static DWORD WINAPI   _download_start_fn(void*);
+
     static void           _download_result_fn(void*, OmResult, uint64_t);
 
     static bool           _download_download_fn(void*, int64_t, int64_t, int64_t, uint64_t);
+
+    Om_beginCb            _download_begin_cb;
 
     Om_downloadCb         _download_download_cb;
 
@@ -1444,6 +1479,10 @@ class OmModChan
     bool                  _warn_upgd_brk_deps;
 
     bool                  _upgd_rename;
+
+    uint32_t              _down_max_rate;
+
+    uint32_t              _down_max_thread;
 
     // sorting comparison functions
     static bool           _compare_mod_name(const OmModPack* a, const OmModPack* b);

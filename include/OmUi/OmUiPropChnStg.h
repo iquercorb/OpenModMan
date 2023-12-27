@@ -19,7 +19,7 @@
 
 #include "OmDialogPropTab.h"
 
-#define CHN_PROP_STG_TITLE     0
+#define CHN_PROP_STG_TITLE    0
 #define CHN_PROP_STG_TARGET   1
 
 /// \brief Mod Channel Properties: "General Settings" tab

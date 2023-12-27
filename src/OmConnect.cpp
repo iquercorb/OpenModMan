@@ -23,6 +23,17 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmConnect.h"
 
+/// \brief Optimum buffer size
+///
+/// Default CURL download/upload buffers size to for optimal transfer speed
+///
+#define OM_REQ_DEFAULT_BUFFSIZE      262144L
+
+/// \brief Optimum buffer size
+///
+/// Default CURL download/upload buffers size to for optimal transfer speed
+///
+#define OM_REQ_MIN_LIMIT_RATE        1024
 
 /// \brief Initialized libCURL flag
 ///
@@ -59,6 +70,7 @@ OmConnect::OmConnect() :
   _req_result_cb(nullptr),
   _req_download_cb(nullptr),
   _req_abort(false),
+  _req_max_rate(0),
   _get_data_buf(nullptr),
   _get_data_len(0),
   _get_data_cap(0),
@@ -114,6 +126,7 @@ void OmConnect::clear()
   this->_req_result_cb = nullptr;
   this->_req_download_cb = nullptr;
   this->_req_abort = false;
+  this->_req_max_rate = 0;
 
   if(this->_get_data_buf) {
     Om_free(this->_get_data_buf);
@@ -136,7 +149,7 @@ void OmConnect::clear()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse)
+OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse, uint32_t rate)
 {
   __curl_init();
 
@@ -169,17 +182,31 @@ OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse)
   curl_easy_setopt(curl_easy, CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(curl_easy, CURLOPT_FAILONERROR, 1L);
 
-  // Set large buffer to optimize write/download rate
-  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, 262144L);
+  // download rate limit
+  this->_req_max_rate = rate;
+
+  int64_t buff_size = OM_REQ_DEFAULT_BUFFSIZE;
+
+  if(this->_req_max_rate > 0) {
+
+    if(this->_req_max_rate < OM_REQ_MIN_LIMIT_RATE) //< prevent stupid limit
+      this->_req_max_rate = OM_REQ_MIN_LIMIT_RATE;
+
+    // set download rate limit
+    curl_easy_setopt(curl_easy, CURLOPT_MAX_RECV_SPEED_LARGE, this->_req_max_rate);
+    curl_easy_setopt(curl_easy, CURLOPT_MAX_SEND_SPEED_LARGE, this->_req_max_rate);
+
+    // adjust buffer size if needed
+    if((this->_req_max_rate / 4) < OM_REQ_DEFAULT_BUFFSIZE)
+      buff_size = this->_req_max_rate / 4;
+
+  }
+
+  // Set proper buffer size to optimize write/download rate
+  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, buff_size);
+  curl_easy_setopt(curl_easy, CURLOPT_UPLOAD_BUFFERSIZE, buff_size);
 
   curl_multi_add_handle(curl_mult, curl_easy);
-
-  #ifdef DEBUG
-  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, 64000L);
-  curl_easy_setopt(curl_easy, CURLOPT_MAX_RECV_SPEED_LARGE, 150000L);
-  curl_easy_setopt(curl_easy, CURLOPT_UPLOAD_BUFFERSIZE, 64000L);
-  curl_easy_setopt(curl_easy, CURLOPT_MAX_SEND_SPEED_LARGE, 150000L);
-  #endif
 
   // artificially set peforming thread handle
   this->_perform_hth = reinterpret_cast<void*>(0x1);
@@ -263,7 +290,7 @@ OmResult OmConnect::requestHttpGet(const OmWString& url, OmCString* reponse)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, void* user_ptr)
+bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, void* user_ptr, uint32_t rate)
 {
   if(this->_perform_hth)
     return false;
@@ -290,6 +317,9 @@ bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, 
 
   curl_easy_setopt(curl_easy, CURLOPT_NOPROGRESS, 1L);
 
+  // download rate limit
+  this->_req_max_rate = rate;
+
   this->_req_user_ptr = user_ptr;
   this->_req_response_cb = response_cb;
 
@@ -307,7 +337,7 @@ bool OmConnect::requestHttpGet(const OmWString& url, Om_responseCb response_cb, 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool resume, Om_resultCb result_cb, Om_downloadCb download_cb, void* user_ptr)
+bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool resume, Om_resultCb result_cb, Om_downloadCb download_cb, void* user_ptr, uint32_t rate)
 {
   if(this->_perform_hth)
     return false;
@@ -371,6 +401,9 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
   this->_req_user_ptr = user_ptr;
   this->_req_result_cb = result_cb;
   this->_req_download_cb = download_cb;
+
+  // download rate limit
+  this->_req_max_rate = rate;
 
   // initialize download statistics
   this->_rate_accu = 0;
@@ -438,17 +471,28 @@ DWORD WINAPI OmConnect::_perform_run_fn(void* ptr)
   curl_easy_setopt(curl_easy, CURLOPT_SSL_VERIFYHOST, 0L);
   curl_easy_setopt(curl_easy, CURLOPT_FAILONERROR, 1L);
 
-  // Set large buffer to optimize write/download rate
-  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, 262144L);
+  int64_t buff_size = OM_REQ_DEFAULT_BUFFSIZE;
+
+  if(self->_req_max_rate > 0) {
+
+    // prevent stupid limit
+    if(self->_req_max_rate < OM_REQ_MIN_LIMIT_RATE)
+      self->_req_max_rate = OM_REQ_MIN_LIMIT_RATE;
+
+    // set download rate limit
+    curl_easy_setopt(curl_easy, CURLOPT_MAX_RECV_SPEED_LARGE, self->_req_max_rate);
+    curl_easy_setopt(curl_easy, CURLOPT_MAX_SEND_SPEED_LARGE, self->_req_max_rate);
+
+    // adjust buffer size if needed
+    if((self->_req_max_rate / 4) < OM_REQ_DEFAULT_BUFFSIZE)
+      buff_size = self->_req_max_rate / 4;
+  }
+
+  // Set proper buffer size to optimize write/download rate
+  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, buff_size);
+  curl_easy_setopt(curl_easy, CURLOPT_UPLOAD_BUFFERSIZE, buff_size);
 
   curl_multi_add_handle(curl_mult, curl_easy);
-
-  #ifdef DEBUG
-  curl_easy_setopt(curl_easy, CURLOPT_BUFFERSIZE, 64000L);
-  curl_easy_setopt(curl_easy, CURLOPT_MAX_RECV_SPEED_LARGE, 150000L);
-  curl_easy_setopt(curl_easy, CURLOPT_UPLOAD_BUFFERSIZE, 64000L);
-  curl_easy_setopt(curl_easy, CURLOPT_MAX_SEND_SPEED_LARGE, 150000L);
-  #endif
 
   // number of running handles
   int32_t running_count = 1;

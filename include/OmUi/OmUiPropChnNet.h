@@ -22,9 +22,9 @@
 #define CHN_PROP_NET_ONUPGRADE   0
 #define CHN_PROP_NET_WARNINGS    1
 
-/// \brief Mod Channel Properties: "Mods Repositories" tab
+/// \brief Mod Channel Properties: "Network Repositories" tab
 ///
-/// OmDialogPropTab class derived for "Mods Repositories" tab child dialog window
+/// OmDialogPropTab class derived for "Network Repositories" tab child dialog window
 ///
 class OmUiPropChnNet : public OmDialogPropTab
 {

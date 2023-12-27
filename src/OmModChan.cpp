@@ -65,6 +65,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _download_abort(false),
   _download_dones(0),
   _download_percent(0),
+  _download_begin_cb(nullptr),
   _download_download_cb(nullptr),
   _download_result_cb(nullptr),
   _download_notify_cb(nullptr),
@@ -99,7 +100,9 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _warn_miss_deps(true),
   _warn_miss_dnld(true),
   _warn_upgd_brk_deps(true),
-  _upgd_rename(false)
+  _upgd_rename(false),
+  _down_max_rate(0),
+  _down_max_thread(0)
 {
   // set parameters for library monitor
   this->_monitor.setCallback(OmModChan::_monitor_notify_fn, this);
@@ -202,6 +205,8 @@ void OmModChan::close()
   this->_download_dones = 0;
   this->_download_percent = 0;
   this->_download_queue.clear();
+  this->_download_array.clear();
+  this->_download_begin_cb = nullptr;
   this->_download_download_cb = nullptr;
   this->_download_result_cb = nullptr;
   this->_download_notify_cb = nullptr;
@@ -240,6 +245,8 @@ void OmModChan::close()
   this->_warn_miss_dnld = true;
   this->_warn_upgd_brk_deps = true;
   this->_upgd_rename = false;
+  this->_down_max_rate = 0;
+  this->_down_max_thread = 0;
 }
 
 ///
@@ -416,28 +423,28 @@ bool OmModChan::open(const OmWString& path)
   // Check warnings options
   if(this->_xml.hasChild(L"warn_options")) {
 
-    OmXmlNode xml_wrn = this->_xml.child(L"warn_options");
+    OmXmlNode warn_options_node = this->_xml.child(L"warn_options");
 
-    if(xml_wrn.hasChild(L"warn_overlaps")) {
-      this->_warn_overlaps = xml_wrn.child(L"warn_overlaps").attrAsInt(L"enable");
+    if(warn_options_node.hasChild(L"warn_overlaps")) {
+      this->_warn_overlaps = warn_options_node.child(L"warn_overlaps").attrAsInt(L"enable");
     } else {
       this->setWarnOverlaps(this->_warn_overlaps);
     }
 
-    if(xml_wrn.hasChild(L"warn_extra_inst")) {
-      this->_warn_extra_inst = xml_wrn.child(L"warn_extra_inst").attrAsInt(L"enable");
+    if(warn_options_node.hasChild(L"warn_extra_inst")) {
+      this->_warn_extra_inst = warn_options_node.child(L"warn_extra_inst").attrAsInt(L"enable");
     } else {
       this->setWarnExtraInst(this->_warn_extra_inst);
     }
 
-    if(xml_wrn.hasChild(L"warn_miss_deps")) {
-      this->_warn_miss_deps = xml_wrn.child(L"warn_miss_deps").attrAsInt(L"enable");
+    if(warn_options_node.hasChild(L"warn_miss_deps")) {
+      this->_warn_miss_deps = warn_options_node.child(L"warn_miss_deps").attrAsInt(L"enable");
     } else {
       this->setWarnMissDeps(this->_warn_miss_deps);
     }
 
-    if(xml_wrn.hasChild(L"warn_extra_unin")) {
-      this->_warn_extra_unin = xml_wrn.child(L"warn_extra_unin").attrAsInt(L"enable");
+    if(warn_options_node.hasChild(L"warn_extra_unin")) {
+      this->_warn_extra_unin = warn_options_node.child(L"warn_extra_unin").attrAsInt(L"enable");
     } else {
       this->setWarnExtraUnin(this->_warn_extra_unin);
     }
@@ -455,23 +462,23 @@ bool OmModChan::open(const OmWString& path)
   // Get network repository list
   if(this->_xml.hasChild(L"network")) {
 
-    OmXmlNode xml_net = this->_xml.child(L"network");
+    OmXmlNode network_node = this->_xml.child(L"network");
 
-    if(xml_net.hasAttr(L"upgd_rename")) {
-      this->_upgd_rename = xml_net.attrAsInt(L"upgd_rename");
+    if(network_node.hasAttr(L"upgd_rename")) {
+      this->_upgd_rename = network_node.attrAsInt(L"upgd_rename");
     } else {
       this->_upgd_rename = false;
     }
 
-    OmXmlNodeArray xml_rep_list;
-    xml_net.children(xml_rep_list, L"repository");
+    OmXmlNodeArray repository_nodes;
+    network_node.children(repository_nodes, L"repository");
 
     OmWString base, name;
 
-    for(size_t i = 0; i < xml_rep_list.size(); ++i) {
+    for(size_t i = 0; i < repository_nodes.size(); ++i) {
 
-      base = xml_rep_list[i].attrAsString(L"base");
-      name = xml_rep_list[i].attrAsString(L"name");
+      base = repository_nodes[i].attrAsString(L"base");
+      name = repository_nodes[i].attrAsString(L"name");
 
       OmNetRepo* NetRepo = new OmNetRepo(this);
 
@@ -482,30 +489,37 @@ bool OmModChan::open(const OmWString& path)
 
       if(NetRepo) {
 
-        if(xml_rep_list[i].hasAttr(L"title"))
-          NetRepo->setTempTitle(xml_rep_list[i].attrAsString(L"title"));
+        if(repository_nodes[i].hasAttr(L"title"))
+          NetRepo->setTempTitle(repository_nodes[i].attrAsString(L"title"));
 
         this->_repository_list.push_back(NetRepo);
       }
 
     }
 
-    if(xml_net.hasChild(L"warn_extra_dnld")) {
-      this->_warn_extra_dnld = xml_net.child(L"warn_extra_dnld").attrAsInt(L"enable");
+    if(network_node.hasChild(L"warn_extra_dnld")) {
+      this->_warn_extra_dnld = network_node.child(L"warn_extra_dnld").attrAsInt(L"enable");
     } else {
       this->setWarnExtraDnld(this->_warn_extra_dnld);
     }
 
-    if(xml_net.hasChild(L"warn_miss_dnld")) {
-      this->_warn_miss_dnld = xml_net.child(L"warn_miss_dnld").attrAsInt(L"enable");
+    if(network_node.hasChild(L"warn_miss_dnld")) {
+      this->_warn_miss_dnld = network_node.child(L"warn_miss_dnld").attrAsInt(L"enable");
     } else {
       this->setWarnMissDnld(this->_warn_miss_dnld);
     }
 
-    if(xml_net.hasChild(L"warn_upgd_brk_deps")) {
-      this->_warn_upgd_brk_deps = xml_net.child(L"warn_upgd_brk_deps").attrAsInt(L"enable");
+    if(network_node.hasChild(L"warn_upgd_brk_deps")) {
+      this->_warn_upgd_brk_deps = network_node.child(L"warn_upgd_brk_deps").attrAsInt(L"enable");
     } else {
       this->setWarnUpgdBrkDeps(this->_warn_upgd_brk_deps);
+    }
+
+    if(network_node.hasChild(L"down_limits")) {
+      this->_down_max_rate = network_node.child(L"down_limits").attrAsInt(L"rate");
+      this->_down_max_thread = network_node.child(L"down_limits").attrAsInt(L"thread");
+    } else {
+      this->setDownLimits(this->_down_max_rate, this->_down_max_thread);
     }
 
   } else {
@@ -514,6 +528,7 @@ bool OmModChan::open(const OmWString& path)
     this->setWarnExtraDnld(this->_warn_extra_dnld);
     this->setWarnMissDnld(this->_warn_miss_dnld);
     this->setWarnUpgdBrkDeps(this->_warn_upgd_brk_deps);
+    this->setDownLimits(this->_down_max_rate, this->_down_max_thread);
   }
 
   this->_log(OM_LOG_OK, L"open", L"OK");
@@ -2295,9 +2310,9 @@ void OmModChan::prepareDownloads(const OmPNetPackArray& selection, OmPNetPackArr
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb download_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
+void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_beginCb begin_cb, Om_downloadCb download_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
-  if(this->_download_queue.empty()) {
+  if(this->_download_array.empty()) {
 
     // another operation is currently processing
     if(this->_locked_net_library) {
@@ -2312,6 +2327,7 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
     }
 
     this->_download_user_ptr = user_ptr;
+    this->_download_begin_cb = begin_cb;
     this->_download_download_cb = download_cb;
     this->_download_result_cb = result_cb;
     this->_download_notify_cb = notify_cb;
@@ -2325,6 +2341,7 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
     // emit a warning in case a crazy client starts new download with
     // different parameters than current
     if(this->_download_download_cb != download_cb ||
+       this->_download_begin_cb != begin_cb ||
        this->_download_result_cb != result_cb ||
        this->_download_notify_cb != notify_cb ||
        this->_download_user_ptr != user_ptr) {
@@ -2336,18 +2353,15 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
 
   this->_download_abort = false;
 
-  for(size_t i = 0; i < selection.size(); ++i) {
-
-    // add download to stack
+  // add to queue
+  for(size_t i = 0; i < selection.size(); ++i)
     Om_push_backUnique(this->_download_queue, selection[i]);
 
-    // start download
-    if(!selection[i]->startDownload(OmModChan::_download_download_fn, OmModChan::_download_result_fn, this)) {
+  // start downloads according thread limits
+  //this->_download_start();
 
-      if(result_cb) // call result callback with error
-        result_cb(user_ptr, OM_RESULT_ERROR, reinterpret_cast<uint64_t>(selection[i]));
-    }
-  }
+  // launch 'starter' thread
+  Om_threadCreate(OmModChan::_download_start_fn, this);
 }
 
 ///
@@ -2355,7 +2369,19 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_downloadCb d
 ///
 void OmModChan::stopDownloads()
 {
-  if(this->_download_queue.size()) {
+  // flush download queue
+  while(this->_download_queue.size()) {
+
+    OmNetPack* NetPack = this->_download_queue.front();
+
+    if(this->_download_result_cb) // call result callback with error
+      this->_download_result_cb(this->_download_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(NetPack));
+
+    this->_download_queue.pop_front();
+  }
+
+  // start sequential stops of running downloads
+  if(this->_download_array.size()) {
     // we abort all processing downloads
     this->_download_abort = true;
 
@@ -2363,7 +2389,7 @@ void OmModChan::stopDownloads()
     // prevent callback concurrent calls that mess up all process, so we
     // only stop the last started download, they will be aborted in cascade
     // through the result callback
-    this->_download_queue.back()->stopDownload();
+    this->_download_array.back()->stopDownload();
   }
 }
 
@@ -2378,16 +2404,54 @@ void OmModChan::stopDownload(size_t index)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+DWORD WINAPI OmModChan::_download_start_fn(void* ptr)
+{
+  OmModChan* self = static_cast<OmModChan*>(ptr);
+
+  while(self->_download_queue.size()) {
+
+    if(self->_down_max_thread > 0) {
+      if(self->_download_array.size() >= self->_down_max_thread)
+        break;
+    }
+
+    OmNetPack* NetPack = self->_download_queue.front();
+
+    // add download to stack
+    Om_push_backUnique(self->_download_array, NetPack);
+
+    if(self->_download_begin_cb)
+      self->_download_begin_cb(self->_download_user_ptr, reinterpret_cast<uint64_t>(NetPack));
+
+    // start download
+    if(!NetPack->startDownload(OmModChan::_download_download_fn, OmModChan::_download_result_fn, self, self->_down_max_rate)) {
+
+      if(self->_download_result_cb) // call result callback with error
+        self->_download_result_cb(self->_download_user_ptr, OM_RESULT_ERROR, reinterpret_cast<uint64_t>(NetPack));
+    }
+
+    self->_download_queue.pop_front();
+
+    // wait a bit to prevent flood
+    Sleep(250);
+  }
+
+  return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmModChan::_download_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t rate, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   // update global progress
   double queue_percents = self->_download_dones * 100;
-  for(size_t i = 0; i < self->_download_queue.size(); ++i)
-    queue_percents += self->_download_queue[i]->downloadProgress();
+  for(size_t i = 0; i < self->_download_array.size(); ++i)
+    queue_percents += self->_download_array[i]->downloadProgress();
 
-  self->_download_percent = queue_percents / (self->_download_dones + self->_download_queue.size());
+  self->_download_percent = queue_percents / (self->_download_dones + self->_download_array.size() + self->_download_queue.size());
 
   if(self->_download_download_cb)
     if(!self->_download_download_cb(self->_download_user_ptr, tot, cur, rate, param))
@@ -2428,7 +2492,11 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
   self->refreshNetLibrary();
 
   // remove download from stack
-  Om_eraseValue(self->_download_queue, NetPack);
+  Om_eraseValue(self->_download_array, NetPack);
+
+  // start queued download if any
+  if(self->_download_queue.size())
+    OmModChan::_download_start_fn(self);
 
   // increase download done count
   self->_download_dones++;
@@ -2437,13 +2505,14 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
   if(self->_download_result_cb)
     self->_download_result_cb(self->_download_user_ptr, final_result, param);
 
-  if(self->_download_queue.size()) {
+  if(self->_download_array.size()) {
 
     // if abort request was fired, we must stop downloads sequentially to
     // prevent callback concurrent calls that mess up all process
     if(self->_download_abort) {
-      self->_download_queue.back()->stopDownload();
+      self->_download_array.back()->stopDownload();
     }
+
   } else {
 
     self->_locked_net_library = false;
@@ -2456,6 +2525,7 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
     self->_download_percent = 0;
 
     self->_download_user_ptr = nullptr;
+    self->_download_begin_cb = nullptr;
     self->_download_download_cb = nullptr;
     self->_download_result_cb = nullptr;
     self->_download_notify_cb = nullptr;
@@ -3767,6 +3837,40 @@ void OmModChan::setWarnUpgdBrkDeps(bool enable)
   } else {
     network_node.addChild(L"warn_upgd_brk_deps").setAttr(L"enable", this->_warn_upgd_brk_deps ? 1 : 0);
   }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setDownLimits(uint32_t rate, uint32_t thread)
+{
+  if(!this->_xml.valid())
+    return;
+
+  this->_down_max_rate = rate;
+  this->_down_max_thread = thread;
+
+
+  OmXmlNode network_node;
+
+  if(this->_xml.hasChild(L"network")) {
+    network_node = this->_xml.child(L"network");
+  } else {
+    network_node = this->_xml.addChild(L"network");
+  }
+
+  OmXmlNode limits_node;
+
+  if(network_node.hasChild(L"down_limits")) {
+    limits_node = network_node.child(L"down_limits");
+  } else {
+    limits_node = network_node.addChild(L"down_limits");
+  }
+
+  limits_node.setAttr(L"rate", static_cast<int>(this->_down_max_rate));
+  limits_node.setAttr(L"thread", static_cast<int>(this->_down_max_thread));
 
   this->_xml.save();
 }

@@ -363,10 +363,11 @@ class OmNetPack
     /// \param[in] download_cb  : Callback for download progression.
     /// \param[in] result_cb    : Callback for download result
     /// \param[in] user_ptr     : User pointer to be passed to callback functions
+    /// \param[in] rate         : Download max rate or 0 for no limit
     ///
     /// \return True if download successfully started, false otherwise
     ///
-    bool startDownload(Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    bool startDownload(Om_downloadCb download_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr, uint32_t rate = 0);
 
     /// \brief Download progress
     ///

@@ -359,7 +359,7 @@ void OmNetPack::stopDownload()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr)
+bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr, uint32_t rate)
 {
   if(this->_connect.isPerforming()) {
     this->_error(L"startDownload", L"download already processing");
@@ -386,7 +386,7 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
 
   this->_dnl_percent = 0.0;
 
-  if(!this->_connect.requestHttpGet(this->_down_url, this->_dnl_temp, true, OmNetPack::_dnl_result_fn, OmNetPack::_dnl_download_fn, this)) {
+  if(!this->_connect.requestHttpGet(this->_down_url, this->_dnl_temp, true, OmNetPack::_dnl_result_fn, OmNetPack::_dnl_download_fn, this, rate)) {
     this->_error(L"startDownload", this->_connect.lastError());
     this->_has_error = true;
     return false;

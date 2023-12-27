@@ -122,6 +122,8 @@ class OmUiManMainNet : public OmDialog
 
     void                _download_start(bool, const OmPNetPackArray&);
 
+    static void         _download_begin_fn(void*, uint64_t);
+
     static bool         _download_download_fn(void*, int64_t, int64_t, int64_t, uint64_t);
 
     static void         _download_result_fn(void*, OmResult, uint64_t);

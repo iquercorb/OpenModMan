@@ -87,7 +87,7 @@ void OmUiPropChnStg::_onTbInit()
 ///
 void OmUiPropChnStg::_onTbResize()
 {
-  int32_t y_base = 30;
+  int32_t y_base = 40;
 
   // Mod Channel Title Label & EditControl
   this->_setItemPos(IDC_SC_LBL01, 50, y_base, 220, 16, true);

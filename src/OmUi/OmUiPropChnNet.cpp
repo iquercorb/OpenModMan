@@ -245,39 +245,41 @@ void OmUiPropChnNet::_onTbInit()
   this->_createTooltip(IDC_BC_DEL,    L"Remove Repository");
   this->_createTooltip(IDC_BC_EDI,    L"Query Repository");
   this->_createTooltip(IDC_BC_ADD,    L"Add Repository");
-
+/*
   this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to be downloaded");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn if Mods to download have missing dependencies");
   this->_createTooltip(IDC_BC_CKBX3,  L"Warn if upgrading Mods will delete older versions required by other");
 
   this->_createTooltip(IDC_BC_RAD01,  L"On Mod upgrade, the older Mod is moved to recycle bin");
   this->_createTooltip(IDC_BC_RAD02,  L"On Mod upgrade, the older Mod is renamed with .old extension");
-
+*/
   this->enableItem(IDC_SC_STATE, false);
 
   // Update values
   this->_onTbRefresh();
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void OmUiPropChnNet::_onTbResize()
 {
+  int32_t y_base = 40;
+
   // Repositories list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 50, 20, 68, 16, true);
-  this->_setItemPos(IDC_LB_REP, 75, 40, this->cliWidth()-125, 64, true);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 68, 16, true);
+  this->_setItemPos(IDC_LB_REP, 75, y_base+20, this->cliWidth()-125, 64, true);
 
   // Actions buttons
-  this->_setItemPos(IDC_BC_RPADD, 50, 39, 22, 22, true);
-  this->_setItemPos(IDC_BC_RPDEL, 50, 61, 22, 22, true);
-  this->_setItemPos(IDC_BC_RPQRY, 50, 83, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPADD, 50, y_base+19, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPDEL, 50, y_base+41, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPQRY, 50, y_base+63, 22, 22, true);
 
   // Query Status Label & result static
-  this->_setItemPos(IDC_SC_LBL04, 75, 110, 70, 16, true);
-  this->_setItemPos(IDC_SC_STATE, 148, 110, this->cliWidth()-185, 16, true);
+  this->_setItemPos(IDC_SC_LBL04, 75, y_base+90, 70, 16, true);
+  this->_setItemPos(IDC_SC_STATE, 148, y_base+90, this->cliWidth()-185, 16, true);
 
+/*
   // Warnings label
   this->_setItemPos(IDC_SC_LBL02, 50, 150, 300, 16, true);
   // Warnings CheckBoxes
@@ -291,8 +293,8 @@ void OmUiPropChnNet::_onTbResize()
   this->_setItemPos(IDC_BC_RAD01, 75, 270, 300, 16, true);
   // Rename RadioButton
   this->_setItemPos(IDC_BC_RAD02, 75, 290, 300, 16, true);
+  */
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -324,7 +326,7 @@ void OmUiPropChnNet::_onTbRefresh()
 
     this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(lb_entry.c_str()));
   }
-
+/*
   // set warning messages
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->warnExtraDnld());
   this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, ModChan->warnMissDnld());
@@ -333,10 +335,9 @@ void OmUiPropChnNet::_onTbRefresh()
   // set Upgrade Rename
   this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !ModChan->upgdRename());
   this->msgItem(IDC_BC_RAD02, BM_SETCHECK, ModChan->upgdRename());
-
+*/
   this->_lb_rep_on_selchg();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -368,7 +369,7 @@ INT_PTR OmUiPropChnNet::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(HIWORD(wParam) == BN_CLICKED)
         this->_bc_rpqry_pressed();
       break;
-
+    /*
     case IDC_BC_CKBX1: //< CheckBox: warn extra downloads
     case IDC_BC_CKBX2: //< CheckBox: warn missing dependency
     case IDC_BC_CKBX3: //< CheckBox: warn upgrade breaks depends
@@ -383,6 +384,7 @@ INT_PTR OmUiPropChnNet::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         // notify parameters changes
         this->paramCheck(CHN_PROP_NET_ONUPGRADE);
       break;
+      */
     }
   }
 

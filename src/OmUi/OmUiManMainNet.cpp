@@ -586,7 +586,7 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
   // update selected Net Pack ListView items
   LVITEMW lvI = {};
   // change status icon
-  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_DNL;
+  lvI.mask = LVIF_IMAGE; lvI.iSubItem = 0; lvI.iImage = ICON_STS_QUE;
   for(size_t i = 0; i < selection.size(); ++i) {
     lvI.iItem = ModChan->indexOfNetpack(selection[i]);
     this->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
@@ -600,6 +600,7 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
 
   // start or append downloads
   ModChan->startDownloads(selection,
+                          OmUiManMainNet::_download_begin_fn,
                           OmUiManMainNet::_download_download_fn,
                           OmUiManMainNet::_download_result_fn,
                           OmUiManMainNet::_download_ended_fn,
@@ -607,6 +608,31 @@ void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& select
 
   // enter processing
   this->_refresh_processing();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::_download_begin_fn(void* ptr, uint64_t param)
+{
+  OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
+
+  OmNetPack* NetPack = reinterpret_cast<OmNetPack*>(param);
+
+  OmModChan* ModChan = NetPack->ModChan();
+
+  // check whether dialog is showing the proper Channel
+  if(ModChan != static_cast<OmModMan*>(self->_data)->activeChannel())
+    return; //< wrong Channel, do not abort but ignore
+
+  // get ListView item index search using lparam, that is, Net Pack hash value.
+  int32_t item_id = self->findLvParam(IDC_LV_NET, NetPack->hash());
+
+  // update ListView item
+  LVITEMW lvI = {}; lvI.iItem = item_id;
+  // change status icon
+  lvI.iSubItem = 0; lvI.mask = LVIF_IMAGE; lvI.iImage = ICON_STS_DNL;
+  self->msgItem(IDC_LV_NET, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 }
 
 ///
@@ -787,7 +813,7 @@ bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uin
   self->redrawItem(IDC_LV_NET, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
 
   // update global progression, but prevent interfering with current downloading
-  if(!ModChan->downloadQueueSize()) {
+  if(ModChan->downloadQueueSize() == 0) {
     self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress());
   }
