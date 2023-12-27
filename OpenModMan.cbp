@@ -628,6 +628,7 @@
 		<Unit filename="include/OmUi/OmUiManMainNet.h" />
 		<Unit filename="include/OmUi/OmUiPropChn.h" />
 		<Unit filename="include/OmUi/OmUiPropChnBck.h" />
+		<Unit filename="include/OmUi/OmUiPropChnDnl.h" />
 		<Unit filename="include/OmUi/OmUiPropChnLib.h" />
 		<Unit filename="include/OmUi/OmUiPropChnNet.h" />
 		<Unit filename="include/OmUi/OmUiPropChnStg.h" />
@@ -723,6 +724,7 @@
 		<Unit filename="src/OmUi/OmUiPictView.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChn.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnBck.cpp" />
+		<Unit filename="src/OmUi/OmUiPropChnDnl.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnLib.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnNet.cpp" />
 		<Unit filename="src/OmUi/OmUiPropChnStg.cpp" />
