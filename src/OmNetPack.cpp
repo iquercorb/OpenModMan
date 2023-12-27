@@ -484,10 +484,18 @@ void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t param)
 
   } else {
 
-    if(result != OM_RESULT_ABORT)
-      self->_has_error = true;
+    if(result != OM_RESULT_ABORT) {
 
-    self->_dnl_result = OM_RESULT_ERROR;
+      // delete temporary file if nothing was download
+      if(Om_itemSize(self->_dnl_temp) == 0)
+        Om_fileDelete(self->_dnl_temp);
+
+      self->_error(L"_dnl_result_fn", self->_connect.lastError());
+      self->_has_error = true;
+    }
+
+    self->_dnl_result = OM_RESULT_ABORT;
+
   }
 
   if(self->_cli_result_cb)
