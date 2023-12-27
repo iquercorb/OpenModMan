@@ -1118,7 +1118,7 @@ void OmUiMan::_menu_enable()
 
   this->setPopupItem(MNU_FILE, MNU_FILE_CLOSE, has_hub_stat);
 
-  for(uint32_t i = 0; i < 6; ++i) {
+  for(uint32_t i = 0; i < 8; ++i) {
     this->setPopupItem(MNU_HUB, i, has_hub_stat);
     this->setPopupItem(MNU_CHN, i, has_chn_stat);
   }
