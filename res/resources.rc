@@ -790,15 +790,7 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Add...", IDC_BC_RPADD, 235, 55, 50, 14, BS_BITMAP, WS_EX_LEFT
     LTEXT           "Query status :", IDC_SC_LBL04, 70, 92, 40, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_SC_STATE, 122, 92, 155, 13, WS_DISABLED | NOT WS_BORDER | NOT WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_LEFT
-    /*
-    LTEXT           "Enable warning messages for :", IDC_SC_LBL02, 5, 100, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Additional download of Mod dependencies", IDC_BC_CKBX1, 65, 110, 170, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Mod download dependencies missing", IDC_BC_CKBX2, 65, 62, 120, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Mod upgrade breaks dependencies", IDC_BC_CKBX3, 65, 62, 130, 9, 0, WS_EX_LEFT
-    LTEXT           "On Mod upgrade :", IDC_SC_LBL03, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTORADIOBUTTON "Move older versions to recycle bin", IDC_BC_RAD01, 5, 145, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTORADIOBUTTON "Rename older versions with .old extension", IDC_BC_RAD02, 5, 165, 64, 9, SS_LEFT, WS_EX_LEFT
-    */
+    EDITTEXT        IDC_EC_RESUL, 10, 70, 280, 45, WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_READONLY, 0
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                         MOD CHANNEL PROPERTIES

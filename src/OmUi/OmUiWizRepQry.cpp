@@ -154,12 +154,15 @@ DWORD WINAPI OmUiWizRepQry::_query_run_fn(void* ptr)
 
   // if any, print received data to log
   if(!self->_NetRepo->queryResponseData().empty()) {
+    /*
     OmWString crlf_str = Om_toCRLF(self->_NetRepo->queryResponseData());
     size_t len = self->msgItem(IDC_EC_RESUL, WM_GETTEXTLENGTH);
     self->msgItem(IDC_EC_RESUL, EM_SETSEL, 0, len);
     self->msgItem(IDC_EC_RESUL, EM_REPLACESEL, 0, reinterpret_cast<LPARAM>(crlf_str.c_str()));
     self->msgItem(IDC_EC_RESUL, WM_VSCROLL, SB_TOP, 0);
     self->msgItem(IDC_EC_RESUL, 0, 0, RDW_ERASE|RDW_INVALIDATE);
+    */
+    self->setItemText(IDC_EC_RESUL, self->_NetRepo->queryResponseData());
   }
 
   if(self->_query_result == OM_RESULT_OK) {
@@ -203,8 +206,8 @@ void OmUiWizRepQry::_onPgInit()
   this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   this->_createTooltip(IDC_BC_RPQRY,  L"query the Repository to check parameters and availability");
-  this->_createTooltip(IDC_SC_STATE,  L"Query test result");
-  this->_createTooltip(IDC_EC_RESUL,  L"Query test logs");
+  this->_createTooltip(IDC_SC_STATE,  L"query test result");
+  this->_createTooltip(IDC_EC_RESUL,  L"Received query data");
 
   // set default start values
   this->setItemText(IDC_SC_STATE, QRY_UNKNOWN_STRING);
@@ -237,11 +240,14 @@ void OmUiWizRepQry::_onPgResize()
   // Introduction text
   this->_setItemPos(IDC_SC_HELP, 0, 0, this->cliWidth(), 70, true);
 
+  // query button
   this->_setItemPos(IDC_BC_RPQRY, 0, y_base, 78, 23, true);
 
+  // Query Status Label & static
   this->_setItemPos(IDC_SC_LBL01, 80, y_base+6, 40, 18, true);
   this->_setItemPos(IDC_SC_STATE, 122, y_base+6, this->cliWidth()-122, 18, true);
 
+  // Query received data entry
   this->_setItemPos(IDC_EC_RESUL, 1, y_base+30, this->cliWidth()-2, this->cliHeight()-140, true);
 }
 

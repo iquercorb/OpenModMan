@@ -96,12 +96,16 @@ void OmUiPropChnNet::_query_result_fn(void* ptr, OmResult result, uint64_t param
       self->setItemText(IDC_SC_STATE, NetRepo->queryLastError());
       break;
   }
+
+  // if any, print received data to log
+  if(!NetRepo->queryResponseData().empty())
+    self->setItemText(IDC_EC_RESUL, NetRepo->queryResponseData());
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiPropChnNet::_query_start(size_t i)
+void OmUiPropChnNet::_query_start(size_t index)
 {
   OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
   if(!ModChan) return;
@@ -110,7 +114,7 @@ void OmUiPropChnNet::_query_start(size_t i)
   this->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
 
   OmPNetRepoArray selection;
-  selection.push_back(ModChan->getRepository(i));
+  selection.push_back(ModChan->getRepository(index));
 
   ModChan->queueQueries(selection, nullptr, OmUiPropChnNet::_query_result_fn, nullptr, this);
 }
@@ -136,28 +140,35 @@ void OmUiPropChnNet::_lb_rep_on_selchg()
     return;
   }
 
-  OmNetRepo* ModRepo = ModChan->getRepository(lb_sel);
+  OmNetRepo* NetRepo = ModChan->getRepository(lb_sel);
 
-  this->enableItem(IDC_BC_RPQRY, has_select && (ModRepo->queryResult() != OM_RESULT_PENDING));
+  this->enableItem(IDC_BC_RPQRY, has_select && (NetRepo->queryResult() != OM_RESULT_PENDING));
 
-  if(ModRepo->queryResult() == OM_RESULT_PENDING) {
+  if(NetRepo->queryResult() == OM_RESULT_PENDING) {
 
     this->setItemText(IDC_SC_STATE, QRY_PENDING_STRING);
 
   } else {
 
-    if(ModRepo->queryResult() == OM_RESULT_OK) {
+    if(NetRepo->queryResult() == OM_RESULT_OK) {
 
       this->setItemText(IDC_SC_STATE, QRY_VALID_STRING);
 
-    } else if(ModRepo->queryResult() > 0) {
+    } else if(NetRepo->queryResult() > 0) {
 
-      this->setItemText(IDC_SC_STATE, ModRepo->lastError());
+      this->setItemText(IDC_SC_STATE, NetRepo->lastError());
 
     } else {
 
       this->setItemText(IDC_SC_STATE, QRY_UNKNOWN_STRING);
     }
+  }
+
+  // if any, print received data to log
+  if(!NetRepo->queryResponseData().empty()) {
+    this->setItemText(IDC_EC_RESUL, NetRepo->queryResponseData());
+  } else {
+    this->setItemText(IDC_EC_RESUL, L"");
   }
 }
 
@@ -233,6 +244,8 @@ void OmUiPropChnNet::_onTbInit()
   // set specific fonts
   hFt = Om_createFont(12, 800, L"Ms Shell Dlg");
   this->msgItem(IDC_SC_STATE, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
+  hFt = Om_createFont(12, 400, L"Consolas");
+  this->msgItem(IDC_EC_RESUL, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_RPADD, Om_getResIcon(IDI_BT_ADD));
@@ -240,19 +253,14 @@ void OmUiPropChnNet::_onTbInit()
   this->setBmIcon(IDC_BC_RPQRY, Om_getResIcon(IDI_BT_REF));
 
   // define controls tool-tips
-  this->_createTooltip(IDC_LB_CHN,    L"Repositories list");
+  this->_createTooltip(IDC_LB_CHN,    L"repositories list");
 
-  this->_createTooltip(IDC_BC_DEL,    L"Remove Repository");
-  this->_createTooltip(IDC_BC_EDI,    L"Query Repository");
-  this->_createTooltip(IDC_BC_ADD,    L"Add Repository");
-/*
-  this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to be downloaded");
-  this->_createTooltip(IDC_BC_CKBX2,  L"Warn if Mods to download have missing dependencies");
-  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if upgrading Mods will delete older versions required by other");
+  this->_createTooltip(IDC_BC_DEL,    L"remove Repository");
+  this->_createTooltip(IDC_BC_EDI,    L"query Repository");
+  this->_createTooltip(IDC_BC_ADD,    L"add Repository");
 
-  this->_createTooltip(IDC_BC_RAD01,  L"On Mod upgrade, the older Mod is moved to recycle bin");
-  this->_createTooltip(IDC_BC_RAD02,  L"On Mod upgrade, the older Mod is renamed with .old extension");
-*/
+  this->_createTooltip(IDC_EC_RESUL,  L"Received query data");
+
   this->enableItem(IDC_SC_STATE, false);
 
   // Update values
@@ -275,25 +283,12 @@ void OmUiPropChnNet::_onTbResize()
   this->_setItemPos(IDC_BC_RPDEL, 50, y_base+41, 22, 22, true);
   this->_setItemPos(IDC_BC_RPQRY, 50, y_base+63, 22, 22, true);
 
-  // Query Status Label & result static
-  this->_setItemPos(IDC_SC_LBL04, 75, y_base+90, 70, 16, true);
-  this->_setItemPos(IDC_SC_STATE, 148, y_base+90, this->cliWidth()-185, 16, true);
+  // Query Status Label & static
+  this->_setItemPos(IDC_SC_LBL04, 75, y_base+100, 70, 16, true);
+  this->_setItemPos(IDC_SC_STATE, 148, y_base+100, this->cliWidth()-185, 16, true);
 
-/*
-  // Warnings label
-  this->_setItemPos(IDC_SC_LBL02, 50, 150, 300, 16, true);
-  // Warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX1, 75, 170, 300, 16, true);
-  this->_setItemPos(IDC_BC_CKBX2, 75, 190, 300, 16, true);
-  this->_setItemPos(IDC_BC_CKBX3, 75, 210, 300, 16, true);
-
-  // Package upgrade label
-  this->_setItemPos(IDC_SC_LBL03, 50, 250, 300, 16, true);
-  // Move to trash RadioButton
-  this->_setItemPos(IDC_BC_RAD01, 75, 270, 300, 16, true);
-  // Rename RadioButton
-  this->_setItemPos(IDC_BC_RAD02, 75, 290, 300, 16, true);
-  */
+  // Query received data entry
+  this->_setItemPos(IDC_EC_RESUL, 75, y_base+120, this->cliWidth()-125, this->cliHeight()-220, true);
 }
 
 ///
@@ -326,16 +321,7 @@ void OmUiPropChnNet::_onTbRefresh()
 
     this->msgItem(IDC_LB_REP, LB_ADDSTRING, i, reinterpret_cast<LPARAM>(lb_entry.c_str()));
   }
-/*
-  // set warning messages
-  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModChan->warnExtraDnld());
-  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, ModChan->warnMissDnld());
-  this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, ModChan->warnUpgdBrkDeps());
 
-  // set Upgrade Rename
-  this->msgItem(IDC_BC_RAD01, BM_SETCHECK, !ModChan->upgdRename());
-  this->msgItem(IDC_BC_RAD02, BM_SETCHECK, ModChan->upgdRename());
-*/
   this->_lb_rep_on_selchg();
 }
 
@@ -369,22 +355,6 @@ INT_PTR OmUiPropChnNet::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(HIWORD(wParam) == BN_CLICKED)
         this->_bc_rpqry_pressed();
       break;
-    /*
-    case IDC_BC_CKBX1: //< CheckBox: warn extra downloads
-    case IDC_BC_CKBX2: //< CheckBox: warn missing dependency
-    case IDC_BC_CKBX3: //< CheckBox: warn upgrade breaks depends
-      if(HIWORD(wParam) == BN_CLICKED)
-        // notify parameters changes
-        this->paramCheck(CHN_PROP_NET_WARNINGS);
-      break;
-
-    case IDC_BC_RAD01: //< Radio: on upgrade move to recycle bin
-    case IDC_BC_RAD02: //< Radio: on upgrade rename to .old
-      if(HIWORD(wParam) == BN_CLICKED)
-        // notify parameters changes
-        this->paramCheck(CHN_PROP_NET_ONUPGRADE);
-      break;
-      */
     }
   }
 

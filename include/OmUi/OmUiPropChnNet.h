@@ -53,7 +53,7 @@ class OmUiPropChnNet : public OmDialogPropTab
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    void                _query_start(size_t i);
+    void                _query_start(size_t);
 
     static void         _query_result_fn(void*, OmResult, uint64_t);
 
