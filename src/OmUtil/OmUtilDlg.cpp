@@ -1649,7 +1649,7 @@ bool Om_dlgValidUrlPath(HWND hwnd, const OmWString& item, const OmWString& url)
   OmWString msg;
 
   if(!url.empty()) {
-    if(!Om_hasLegalUrlChar(url)) {
+    if(Om_hasIllegalUrlChar(url)) {
       msg = item; msg += L" cannot contain the following characters: # \" < > | \\ { } ^ [ ] ` + : @ $";
     }
   } else {

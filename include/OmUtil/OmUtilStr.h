@@ -245,6 +245,24 @@ bool Om_namesMatches(const OmWString& left, const OmWString& right);
 ///
 bool Om_namesMatches(const OmWString& left, const wchar_t* right);
 
+/// \brief Trim string
+///
+/// Removes all leading and trailing white-space characters from the given string
+///
+/// \param[in] wstr     : Pointer to string to trim
+///
+void Om_trim(OmWString* wstr);
+
+/// \brief Trim string
+///
+/// Return trimed version of the given string, with all leading and
+/// trailing white-space characters removed
+///
+/// \param[in] wstr     : Pointer to string to trim
+///
+/// \return Trimed string
+///
+OmWString Om_trimed(const OmWString& wstr);
 
 /// \brief Check URL validity
 ///
@@ -290,13 +308,13 @@ bool Om_isFileUrl(const OmWString& url);
 
 /// \brief Check URL path validity
 ///
-/// Checks whether the given string is a valid HTTP(S) URL path.
+/// Checks whether the given string contains illegal characters for URL path
 ///
 /// \param[in]  path    : Path to check.
 ///
-/// \return True if the given string is a valid URL path, false otherwise.
+/// \return True if string contains illegal URL character, false otherwise
 ///
-bool Om_hasLegalUrlChar(const wchar_t* path);
+bool Om_hasIllegalUrlChar(const wchar_t* path);
 
 /// \brief Check URL path validity
 ///
@@ -304,9 +322,9 @@ bool Om_hasLegalUrlChar(const wchar_t* path);
 ///
 /// \param[in]  path    : Path to check.
 ///
-/// \return True if the given string is a valid URL path, false otherwise.
+/// \return True if string contains illegal URL character, false otherwise
 ///
-bool Om_hasLegalUrlChar(const OmWString& path);
+bool Om_hasIllegalUrlChar(const OmWString& path);
 
 /// \brief Escape URL characters
 ///
@@ -649,23 +667,5 @@ OmWString Om_spacesToUnderscores(const OmWString& spaces);
 ///
 OmWString Om_underscoresToSpaces(const OmWString& underscores);
 
-/// \brief Trim string
-///
-/// Removes all leading and trailing white-space characters from the given string
-///
-/// \param[in] wstr     : Pointer to string to trim
-///
-void Om_trim(OmWString* wstr);
-
-/// \brief Trim string
-///
-/// Return trimed version of the given string, with all leading and
-/// trailing white-space characters removed
-///
-/// \param[in] wstr     : Pointer to string to trim
-///
-/// \return Trimed string
-///
-OmWString Om_trimed(const OmWString& wstr);
 
 #endif // OMUTILSTR_H

@@ -609,6 +609,39 @@ bool Om_namesMatches(const OmWString& left, const wchar_t* right)
   return true;
 }
 
+/// \brief whitespace characters
+///
+/// List of standard whitespace characters
+///
+static const wchar_t __wspace_chr[] = L" \r\n\t\xA0";
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_trim(OmWString* wstr)
+{
+  // erase trailing whitespace chars
+  wstr->erase(wstr->find_last_not_of(__wspace_chr) + 1);
+
+  // erase leading whitespace chars
+  wstr->erase(0, wstr->find_first_not_of(__wspace_chr));
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_trimed(const OmWString& wstr)
+{
+  OmWString trimed;
+
+  size_t subpos = wstr.find_first_not_of(__wspace_chr);
+  size_t sublen = wstr.find_last_not_of(__wspace_chr) + 1;
+
+  trimed.assign(wstr, subpos, sublen);
+
+  return trimed;
+}
+
 /// \brief Illegal Windows characters
 ///
 /// List of forbidden characters to test validity of file name or path.
@@ -625,13 +658,7 @@ static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(
 ///
 /// List of forbidden characters to test validity of URL path.
 ///
-static const wchar_t __illegal_url_chr[] = L" #\"<>|\\{}^[]`+:@$";
-
-/// \brief Illegal URL path characters
-///
-/// List of forbidden characters to test validity of URL path.
-///
-static const wchar_t __escaped_url_chr[] = L" #\"<>|\\{}^[]`+$";
+static const wchar_t __illegal_url_chr[] = L" \"\\#<>|{}^[]`+$:@";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -709,31 +736,25 @@ bool Om_isFileUrl(const OmWString& url)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_hasLegalUrlChar(const wchar_t* path)
+bool Om_hasIllegalUrlChar(const wchar_t* path)
 {
-  if(!wcslen(path))
-    return false;
-
-  for(size_t i = 0; i < 16; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 17; ++i)
     if(wcschr(path, __illegal_url_chr[i]))
-      return false;
+      return true;
 
-  return true;
+  return false;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_hasLegalUrlChar(const OmWString& path)
+bool Om_hasIllegalUrlChar(const OmWString& path)
 {
-  if(path.empty())
-    return false;
-
-  for(size_t i = 0; i < 16; ++i) // forbids all including back-slash
+  for(size_t i = 0; i < 17; ++i)
     if(path.find_first_of(__illegal_url_chr[i]) != OmWString::npos)
-      return false;
+      return true;
 
-  return true;
+  return false;
 }
 
 ///
@@ -747,21 +768,17 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
 
   char buf[16];
 
-  bool escaped;
   for(size_t i = 0; i < utf8.size(); ++i) {
 
-    escaped = false;
-
-    for(size_t k = 0; k < 15; ++k) {
-      if(utf8[i] == __escaped_url_chr[k]) {
+    for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
+      if(utf8[i] == __illegal_url_chr[k]) {
         std::sprintf(buf, "%%%X", static_cast<int>(utf8[i]));
         esc->append(buf);
-        escaped = true;
+        continue;
       }
     }
 
-    if(!escaped)
-      esc->push_back(utf8[i]);
+    esc->push_back(utf8[i]);
   }
 }
 
@@ -1345,28 +1362,4 @@ OmWString Om_underscoresToSpaces(const OmWString& spaces)
   std::replace(result.begin(), result.end(), '_', ' ');
 
   return result;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_trim(OmWString* wstr)
-{
-  wstr->erase(wstr->find_last_not_of(L" \r\n") + 1);
-  wstr->erase(0, wstr->find_first_not_of(L" \r\n"));
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-OmWString Om_trimed(const OmWString& wstr)
-{
-  OmWString trimed;
-
-  size_t subpos = wstr.find_first_not_of(L" \r\n");
-  size_t sublen = wstr.find_last_not_of(L" \r\n") + 1;
-
-  trimed.assign(wstr, subpos, sublen);
-
-  return trimed;
 }

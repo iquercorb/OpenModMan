@@ -536,7 +536,7 @@ bool OmUiToolRep::_downpath_valid()
 
   if(!ec_content.empty()) {
 
-    if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
+    if(Om_hasIllegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
 
       Om_dlgBox_okl(this->_hwnd, L"Repository Editor", IDI_DLG_ERR, L"Invalid default download link",
                     L"Download link path or URL is invalid or contain illegal character", ec_content);
@@ -1105,7 +1105,7 @@ bool OmUiToolRep::_ref_url_valid()
 
     if(!ec_content.empty()) {
 
-      if(!Om_hasLegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
+      if(Om_hasIllegalUrlChar(ec_content) && !Om_isUrl(ec_content)) {
 
         return false;
       }
