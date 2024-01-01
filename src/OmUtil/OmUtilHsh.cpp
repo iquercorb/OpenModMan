@@ -385,7 +385,7 @@ uint64_t Om_getCRC64(const OmWString& str)
 ///
 static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
 {
-  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+  HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
 
   if(hFile == INVALID_HANDLE_VALUE)

@@ -402,22 +402,50 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
 ///
 bool OmNetPack::finalizeDownload()
 {
-  if(this->_dnl_result != OM_RESULT_OK && this->_dnl_result != OM_RESULT_ERROR) {
+  if(this->_dnl_result != OM_RESULT_OK) {
 
-    // either download is still processing or it has never started, in all
+    // either download is still processing, aborted (paused) or it has never started, in all
     // case this function should not be called at this stage
 
     this->_error(L"finalizeDownload", L"invalid call");
     return false;
   }
 
-  if(this->_dnl_result == OM_RESULT_ERROR) {
+  // check whether something exists
+  if(!Om_isFile(this->_dnl_temp)) {
 
-    // download ended with error, we have nothing to do
+    this->_error(L"finalizeDownload", L"Received invalid data (no data)");
+    this->_has_error = true;
 
-    this->_error(L"finalizeDownload", this->_connect.lastError());
     return false;
   }
+
+  // wait for proper file read and write access
+  HANDLE hFile;
+  uint8_t attempt = 20;
+  while(attempt--) {
+
+    hFile = CreateFileW(this->_dnl_temp.c_str(),
+                        GENERIC_READ|GENERIC_WRITE,0,
+                        nullptr,OPEN_EXISTING,
+                        0,nullptr);
+
+    if(hFile != INVALID_HANDLE_VALUE)
+      break;
+
+    Sleep(50);
+  }
+
+  // do we have read/write access problem on the file ?
+  if(hFile == INVALID_HANDLE_VALUE) {
+
+    this->_error(L"finalizeDownload", L"Unable to get proper downloaded data read/write access");
+    this->_has_error = true;
+
+    return false;
+  }
+
+  CloseHandle(hFile);
 
   // check whether received data is a zip file
   if(!Om_isFileZip(this->_dnl_temp)) {
@@ -501,24 +529,16 @@ void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t param)
 
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
-  if(result == OM_RESULT_OK) {
+  self->_dnl_result = result;
 
-    self->_dnl_result = OM_RESULT_OK;
+  if(self->_dnl_result == OM_RESULT_ERROR) {
 
-  } else {
+    // delete temporary file if nothing was download
+    if(Om_itemSize(self->_dnl_temp) == 0)
+      Om_fileDelete(self->_dnl_temp);
 
-    if(result != OM_RESULT_ABORT) {
-
-      // delete temporary file if nothing was download
-      if(Om_itemSize(self->_dnl_temp) == 0)
-        Om_fileDelete(self->_dnl_temp);
-
-      self->_error(L"_dnl_result_fn", self->_connect.lastError());
-      self->_has_error = true;
-    }
-
-    self->_dnl_result = OM_RESULT_ABORT;
-
+    self->_error(L"_dnl_result_fn", self->_connect.lastError());
+    self->_has_error = true;
   }
 
   if(self->_cli_result_cb)
