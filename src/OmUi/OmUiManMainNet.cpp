@@ -662,6 +662,7 @@ bool OmUiManMainNet::_download_download_fn(void* ptr, int64_t tot, int64_t cur, 
 
   // update global progression
   self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->downloadsProgress()+1);
   self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->downloadsProgress());
 
   return true; //< continue
@@ -721,8 +722,7 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
     }
 
     Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_DLG_PKG_ERR,
-                L"Mod download error", L"The download of \""
-                +NetPack->iden()+L"\" failed:", NetPack->lastError());
+                L"Download error", NetPack->fileName(), NetPack->lastError());
   }
 
   // if we are downloading for upgrade, here we go
@@ -815,6 +815,7 @@ bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uin
   // update global progression, but prevent interfering with current downloading
   if(ModChan->downloadQueueSize() == 0) {
     self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress()+1);
     self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress());
   }
 

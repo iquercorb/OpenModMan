@@ -944,6 +944,7 @@ bool OmUiManMainLib::_modops_progress_fn(void* ptr, size_t tot, size_t cur, uint
 
   // update the general progress bar
   self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->modOpsProgress()+1);
   self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->modOpsProgress());
 
   return !self->_modops_abort;
