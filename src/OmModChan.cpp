@@ -2357,9 +2357,6 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_beginCb begi
   for(size_t i = 0; i < selection.size(); ++i)
     Om_push_backUnique(this->_download_queue, selection[i]);
 
-  // start downloads according thread limits
-  //this->_download_start();
-
   // launch 'starter' thread
   Om_threadCreate(OmModChan::_download_start_fn, this);
 }
@@ -2753,18 +2750,6 @@ bool OmModChan::_compare_net_name(const OmNetPack* a, const OmNetPack* b)
 ///
 bool OmModChan::_compare_net_stat(const OmNetPack* a, const OmNetPack* b)
 {
-  /*
-  if(a->status() == b->status()) {
-    return OmModChan::_compare_net_name(a, b);
-  } else {
-    if(a->hasStatus(PACK_NEW) == b->hasStatus(PACK_NEW)) {
-      return (a->status() < b->status());
-    } else {
-      return (!a->hasStatus(PACK_NEW) && b->hasStatus(PACK_NEW));
-    }
-  }
-  */
-
   uint16_t a_score = 0;
   uint16_t b_score = 0;
 

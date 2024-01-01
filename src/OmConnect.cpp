@@ -534,6 +534,7 @@ DWORD WINAPI OmConnect::_perform_run_fn(void* ptr)
   // close file handle
   if(self->_get_file_hnd) {
     CloseHandle(self->_get_file_hnd);
+    self->_get_file_hnd = nullptr;
   }
 
   if(self->_get_data_buf) {
