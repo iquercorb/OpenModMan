@@ -189,11 +189,8 @@ int Om_dirDeleteRecursive(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFileZip(const OmWString& path) {
-
-  // Microsoft functions are ugly (this is not new) but they are proven to be
-  // the most efficient for file I/O... maybe because they are directly sticked
-  // to the kernel at low level...
+bool Om_isFileZip(const OmWString& path)
+{
   HANDLE hFile = CreateFileW(path.c_str(),
                              GENERIC_READ,
                              FILE_SHARE_READ,
@@ -205,31 +202,28 @@ bool Om_isFileZip(const OmWString& path) {
   if(hFile == INVALID_HANDLE_VALUE)
     return false;
 
-  // We have to seek over the file until we found something else
-  // that zero, because a zip file can begin with a blank space before the
-  // signature...
+  char buf[1024]; //< read buffer
+  DWORD rb = 0;
 
-  char buf[1024]; // <- our read buffer
-  unsigned* sign; // <- our future 4 bytes signature
-  DWORD r = 0; //< count of bytes read
-
-  do {
-    SetFilePointer(hFile, r, nullptr, FILE_CURRENT);
-    ReadFile(hFile, &buf, 1024, &r, nullptr);
-    for(unsigned i = 0; i < r; ++i) {
-      // check for something else than zero
-      if(buf[i] != 0) {
-        // we got something, we don't go further we close the file
-        // and check the result.
-        CloseHandle(hFile);
-        sign = (unsigned*)&buf[i]; //< cast our buffer in unsigned pointer
-        return ( *sign == 0x04034b50 );
-      }
-    }
-  } while(r == 1024);
-
+  ReadFile(hFile, &buf, 1024, &rb, nullptr);
   CloseHandle(hFile);
-  return false; // PKWARE Zip file signature
+
+  for(uint32_t i = 0; i < rb; ++i) {
+
+    // We have to seek over the file until we found something else
+    // that zero, because a zip file can begin with a blank space before the
+    // signature...
+
+    if(buf[i] != 0) {
+
+      // we got something, we don't go further we close the file
+      // and check the result.
+
+      return ( *reinterpret_cast<uint32_t*>(&buf[i]) == 0x04034b50 );
+    }
+  }
+
+  return false;
 }
 
 ///
