@@ -419,6 +419,28 @@ bool OmNetPack::finalizeDownload()
     return false;
   }
 
+  // check whether received data is a zip file
+  if(!Om_isFileZip(this->_dnl_temp)) {
+
+    Om_fileDelete(this->_dnl_temp);
+
+    this->_error(L"finalizeDownload", L"Received invalid data (it is not a Mod package file)");
+    this->_has_error = true;
+
+    return false;
+  }
+
+  // check for file size
+  if(Om_itemSize(this->_dnl_temp) != this->_size) {
+
+    Om_fileDelete(this->_dnl_temp);
+
+    this->_error(L"finalizeDownload", L"Downloaded file size mismatch the reference");
+    this->_has_error = true;
+
+    return false;
+  }
+
   // compare checksum
   bool checksum_ok = false;
 
@@ -443,7 +465,8 @@ bool OmNetPack::finalizeDownload()
   } else {
 
     Om_fileDelete(this->_dnl_temp);
-    this->_error(L"finalizeDownload", L"downloaded data checksum mismatch the reference");
+
+    this->_error(L"finalizeDownload", L"Downloaded file checksum mismatch the reference");
     this->_has_error = true;
   }
 
