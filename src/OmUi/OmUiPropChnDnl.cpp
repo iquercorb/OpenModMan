@@ -92,19 +92,19 @@ void OmUiPropChnDnl::_limit_thread_toggle()
 ///
 void OmUiPropChnDnl::_onTbInit()
 {
-  DWORD ud_style = WS_CHILDWINDOW|WS_VISIBLE|UDS_SETBUDDYINT|UDS_HOTTRACK;
+  DWORD ud_style = WS_CHILDWINDOW|WS_VISIBLE|UDS_SETBUDDYINT|UDS_HOTTRACK|UDS_NOTHOUSANDS;
 
   CreateWindowEx(WS_EX_LEFT|WS_EX_LTRREADING, UPDOWN_CLASS, nullptr, ud_style, 0, 0, 0, 0,
                  this->_hwnd, reinterpret_cast<HMENU>(IDC_UD_SPIN1), this->_hins, nullptr);
 
   this->msgItem(IDC_UD_SPIN1, UDM_SETBUDDY, reinterpret_cast<WPARAM>(this->getItem(IDC_EC_NUM01)));
-  this->msgItem(IDC_UD_SPIN1, UDM_SETRANGE, 0, MAKELPARAM(UD_MAXVAL,10));
+  this->msgItem(IDC_UD_SPIN1, UDM_SETRANGE32, 10, 999999);
 
   CreateWindowEx(WS_EX_LEFT|WS_EX_LTRREADING, UPDOWN_CLASS, nullptr, ud_style, 0, 0, 0, 0,
                  this->_hwnd, reinterpret_cast<HMENU>(IDC_UD_SPIN2), this->_hins, nullptr);
 
   this->msgItem(IDC_UD_SPIN2, UDM_SETBUDDY, reinterpret_cast<WPARAM>(this->getItem(IDC_EC_NUM02)));
-  this->msgItem(IDC_UD_SPIN2, UDM_SETRANGE, 0, MAKELPARAM(64,1));
+  this->msgItem(IDC_UD_SPIN2, UDM_SETRANGE32, 1, 64);
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to be downloaded");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn if Mods to download have missing dependencies");
@@ -180,7 +180,7 @@ void OmUiPropChnDnl::_onTbRefresh()
   this->msgItem(IDC_BC_CKBX4, BM_SETCHECK, limit_rate);
   this->enableItem(IDC_EC_NUM01, limit_rate);
   this->enableItem(IDC_UD_SPIN1, limit_rate);
-  this->msgItem(IDC_UD_SPIN1, UDM_SETPOS, 0, limit_rate ? ModChan->downMaxRate()/1000 : 300);
+  this->msgItem(IDC_UD_SPIN1, UDM_SETPOS32, 0, limit_rate ? ModChan->downMaxRate()/1000 : 300);
   this->redrawItem(IDC_UD_SPIN1, nullptr, RDW_INVALIDATE);
 
   // set download thread limit
@@ -188,7 +188,7 @@ void OmUiPropChnDnl::_onTbRefresh()
   this->msgItem(IDC_BC_CKBX5, BM_SETCHECK, limit_thread);
   this->enableItem(IDC_EC_NUM02, limit_thread);
   this->enableItem(IDC_UD_SPIN2, limit_thread);
-  this->msgItem(IDC_UD_SPIN2, UDM_SETPOS, 0, limit_thread ? ModChan->downMaxThread() : 5);
+  this->msgItem(IDC_UD_SPIN2, UDM_SETPOS32, 0, limit_thread ? ModChan->downMaxThread() : 5);
   this->redrawItem(IDC_UD_SPIN2, nullptr, RDW_INVALIDATE);
 }
 
