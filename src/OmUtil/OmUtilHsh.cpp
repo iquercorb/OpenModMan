@@ -27,7 +27,6 @@ static std::mt19937                             __rnd_generator(time(0));
 static std::uniform_int_distribution<uint8_t>   __rnd_uint8dist(0, 255);
 
 #define READ_BUF_SIZE 524288
-static uint8_t __read_buf[READ_BUF_SIZE];
 
 /// \brief Swap bytes
 ///
@@ -379,7 +378,7 @@ uint64_t Om_getCRC64(const OmWString& str)
 /// algorithm
 ///
 /// \param[out] xxh   : Pointer to uint64_t that receive hash value.
-/// \param[in]  path  : Path to file to generate digest from.
+/// \param[in]  hFile : File handle to generate digest from.
 ///
 /// \return True if operation succeed, false if file open error.
 ///
@@ -390,10 +389,12 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const HANDLE hFile)
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
   if(!read_buf) {
     return false;
   }
+
+  SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
   while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
@@ -433,7 +434,7 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
   if(!read_buf) {
     CloseHandle(hFile);
     return false;
@@ -540,7 +541,7 @@ bool Om_cmpXXHsum(void* hFile, const OmWString& str)
 {
   uint64_t xxh_l, xxh_r;
 
-  if(!__XXHash3_file_digest(&xxh_l, reinterpret_cast<const HANDLE>(hFile)))
+  if(!__XXHash3_file_digest(&xxh_l, static_cast<HANDLE>(hFile)))
     return false;
 
   xxh_r = __hex_to_uint64(str.data());
@@ -553,7 +554,7 @@ bool Om_cmpXXHsum(void* hFile, const OmWString& str)
 /// Generate file digest (checksum) using MD5 digest algorithm
 ///
 /// \param[out] md5   : 16 bytes buffer that receive digest result.
-/// \param[in]  path  : Path to file to generate digest from.
+/// \param[in]  hFile : File handle to generate digest from.
 ///
 /// \return True if operation succeed, false if file open error.
 ///
@@ -564,11 +565,13 @@ static inline bool __MD5_file_digest(uint8_t* md5, const HANDLE hFile)
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
   if(!read_buf) {
     CloseHandle(hFile);
     return false;
   }
+
+  SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
   while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
@@ -608,7 +611,7 @@ static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
   if(!read_buf) {
     CloseHandle(hFile);
     return false;
@@ -622,10 +625,9 @@ static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
     MD5_Update(&md5ct, read_buf, rb);
   }
 
-  CloseHandle(hFile);
-
   MD5_Final(md5, &md5ct);
 
+  CloseHandle(hFile);
   Om_free(read_buf);
 
   return true;
@@ -699,7 +701,7 @@ bool Om_cmpMD5sum(void* hFile, const OmWString& str)
 {
   uint8_t md5[16] = {};
 
-  if(!__MD5_file_digest(md5, reinterpret_cast<HANDLE>(hFile)))
+  if(!__MD5_file_digest(md5, static_cast<HANDLE>(hFile)))
     return false;
 
   OmWString ctrl;
