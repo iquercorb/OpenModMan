@@ -185,6 +185,16 @@ bool Om_itemHasAttr(const OmWString& path, uint32_t mask);
 ///
 bool Om_isFileZip(const OmWString& path);
 
+/// \brief Check valid Zip file
+///
+/// Checks whether the specified item is file with Zip signature.
+///
+/// \param[in]  hFile  : file HANDLE to check.
+///
+/// \return True if item is actually a file with Zip signature, false otherwise.
+///
+bool Om_isFileZip(void* hFile);
+
 /// \brief List folders
 ///
 /// Retrieves the list of folders contained in the specified origin location.

@@ -193,7 +193,7 @@ bool Om_isFileZip(const OmWString& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(),
                              GENERIC_READ,
-                             FILE_SHARE_READ,
+                             FILE_SHARE_READ|FILE_SHARE_WRITE,
                              nullptr,
                              OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL,
@@ -202,28 +202,102 @@ bool Om_isFileZip(const OmWString& path)
   if(hFile == INVALID_HANDLE_VALUE)
     return false;
 
-  char buf[1024]; //< read buffer
+  /*
+  char buf[64]; //< read buffer
   DWORD rb = 0;
 
-  ReadFile(hFile, &buf, 1024, &rb, nullptr);
+  ReadFile(hFile, &buf, 64, &rb, nullptr);
   CloseHandle(hFile);
 
-  for(uint32_t i = 0; i < rb; ++i) {
+  if(rb >= 4) {
+    return (*reinterpret_cast<uint32_t*>(buf) == 0x04034b50); //< PK\3\4 in little-endian
+  }
+  */
 
-    // We have to seek over the file until we found something else
-    // that zero, because a zip file can begin with a blank space before the
-    // signature...
+  // Depending on the comment length, the start of the EOCD will be at different offsets from
+  // the end of file. The interval where the EOCD signature may exist is between 65557 and
+  // 18 from the end.
 
-    if(buf[i] != 0) {
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(65557)); //< read buffer
+  if(!read_buf) {
+    CloseHandle(hFile);
+    return false;
+  }
 
-      // we got something, we don't go further we close the file
-      // and check the result.
+  DWORD rb = 0;
 
-      return ( *reinterpret_cast<uint32_t*>(&buf[i]) == 0x04034b50 );
+  SetFilePointer(hFile, -65557, 0, FILE_END);
+  ReadFile(hFile, read_buf, 65557, &rb, nullptr);
+  CloseHandle(hFile);
+
+  if(rb < 20) { //< file too small, cannot be a Zip file
+    Om_free(read_buf);
+    return false;
+  }
+
+  bool is_zip = false;
+
+  while(rb--) {
+    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50) { //< PK\1\2 in little-endian
+      is_zip = true;
+      break;
     }
   }
 
-  return false;
+  Om_free(read_buf);
+
+  return is_zip;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_isFileZip(void* hFile)
+{
+  /*
+  char buf[64]; //< read buffer
+  DWORD rb = 0;
+
+  ReadFile(hFile, &buf, 64, &rb, nullptr);
+  CloseHandle(hFile);
+
+  if(rb >= 4) {
+    return (*reinterpret_cast<uint32_t*>(buf) == 0x04034b50); //< PK\3\4 in little-endian
+  }
+  */
+
+  // Depending on the comment length, the start of the EOCD will be at different offsets from
+  // the end of file. The interval where the EOCD signature may exist is between 65557 and
+  // 18 from the end.
+
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(65557)); //< read buffer
+  if(!read_buf) {
+    return false;
+  }
+
+  DWORD rb = 0;
+
+  SetFilePointer(hFile, -65557, 0, FILE_END);
+  ReadFile(hFile, read_buf, 65557, &rb, nullptr);
+  SetFilePointer(hFile, 0, 0, FILE_BEGIN);
+
+  if(rb < 20) { //< file too small, cannot be a Zip file
+    Om_free(read_buf);
+    return false;
+  }
+
+  bool is_zip = false;
+
+  while(rb--) {
+    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50) { //< PK\1\2 in little-endian
+      is_zip = true;
+      break;
+    }
+  }
+
+  Om_free(read_buf);
+
+  return is_zip;
 }
 
 ///

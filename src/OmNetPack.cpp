@@ -420,20 +420,23 @@ bool OmNetPack::finalizeDownload()
     return false;
   }
 
-  // wait for proper file read and write access
+  // wait to get handle to file to prevent concurrency with directory notification
+  // thread and prevent useless multiple notifications to be sent
+
   HANDLE hFile;
   uint8_t attempt = 20;
   while(attempt--) {
 
     hFile = CreateFileW(this->_dnl_temp.c_str(),
-                        GENERIC_READ|GENERIC_WRITE,0,
+                        GENERIC_READ|GENERIC_WRITE,
+                        FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                         nullptr,OPEN_EXISTING,
                         0,nullptr);
 
     if(hFile != INVALID_HANDLE_VALUE)
       break;
 
-    Sleep(50);
+    Sleep(25);
   }
 
   // do we have read/write access problem on the file ?
@@ -445,26 +448,31 @@ bool OmNetPack::finalizeDownload()
     return false;
   }
 
-  CloseHandle(hFile);
-
   // check whether received data is a zip file
-  if(!Om_isFileZip(this->_dnl_temp)) {
+  if(!Om_isFileZip(hFile)) {
 
     Om_fileDelete(this->_dnl_temp);
 
     this->_error(L"finalizeDownload", L"Received invalid data (it is not a Mod package file)");
     this->_has_error = true;
 
+    CloseHandle(hFile);
+
     return false;
   }
 
   // check for file size
-  if(Om_itemSize(this->_dnl_temp) != this->_size) {
+  LARGE_INTEGER FileSize;
+  GetFileSizeEx(hFile, &FileSize);
+
+  if(FileSize.QuadPart != this->_size) {
 
     Om_fileDelete(this->_dnl_temp);
 
     this->_error(L"finalizeDownload", L"Downloaded file size mismatch the reference");
     this->_has_error = true;
+
+    CloseHandle(hFile);
 
     return false;
   }
@@ -473,9 +481,9 @@ bool OmNetPack::finalizeDownload()
   bool checksum_ok = false;
 
   if(this->_csum_is_md5) {
-    checksum_ok = Om_cmpMD5sum(this->_dnl_temp, this->_csum);
+    checksum_ok = Om_cmpMD5sum(hFile, this->_csum);
   } else {
-    checksum_ok = Om_cmpXXHsum(this->_dnl_temp, this->_csum);
+    checksum_ok = Om_cmpXXHsum(hFile, this->_csum);
   }
 
   if(checksum_ok) {
@@ -487,9 +495,6 @@ bool OmNetPack::finalizeDownload()
       this->_has_error = true;
     }
 
-    // wait for changes notifications to propagates
-    Sleep(100);
-
   } else {
 
     Om_fileDelete(this->_dnl_temp);
@@ -497,6 +502,8 @@ bool OmNetPack::finalizeDownload()
     this->_error(L"finalizeDownload", L"Downloaded file checksum mismatch the reference");
     this->_has_error = true;
   }
+
+  CloseHandle(hFile);
 
   return !this->_has_error;
 }

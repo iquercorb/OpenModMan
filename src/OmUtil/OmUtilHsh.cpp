@@ -383,6 +383,43 @@ uint64_t Om_getCRC64(const OmWString& str)
 ///
 /// \return True if operation succeed, false if file open error.
 ///
+static inline bool __XXHash3_file_digest(uint64_t* xxh, const HANDLE hFile)
+{
+  DWORD rb;
+
+  XXH3_state_t xxhst;
+  XXH3_64bits_reset(&xxhst);
+
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  if(!read_buf) {
+    return false;
+  }
+
+  while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
+
+    if(rb == 0)
+      break;
+
+    XXH3_64bits_update(&xxhst, read_buf, rb);
+  }
+
+  Om_free(read_buf);
+
+  *xxh = XXH3_64bits_digest(&xxhst);
+
+  return true;
+}
+
+/// \brief Generate file XXHash3 digest (checksum)
+///
+/// Generate file digest (checksum) string using XXHash3 64 bits digest
+/// algorithm
+///
+/// \param[out] xxh   : Pointer to uint64_t that receive hash value.
+/// \param[in]  path  : Path to file to generate digest from.
+///
+/// \return True if operation succeed, false if file open error.
+///
 static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
 {
   HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
@@ -396,13 +433,21 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  if(!read_buf) {
+    CloseHandle(hFile);
+    return false;
+  }
+
+  while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
-    XXH3_64bits_update(&xxhst, __read_buf, rb);
+    XXH3_64bits_update(&xxhst, read_buf, rb);
   }
+
+  Om_free(read_buf);
 
   CloseHandle(hFile);
 
@@ -488,6 +533,59 @@ bool Om_cmpXXHsum(const OmWString& path, const OmWString& str)
 }
 
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_cmpXXHsum(void* hFile, const OmWString& str)
+{
+  uint64_t xxh_l, xxh_r;
+
+  if(!__XXHash3_file_digest(&xxh_l, reinterpret_cast<const HANDLE>(hFile)))
+    return false;
+
+  xxh_r = __hex_to_uint64(str.data());
+
+  return (xxh_l == xxh_r);
+}
+
+/// \brief Generate file MD5 digest (checksum)
+///
+/// Generate file digest (checksum) using MD5 digest algorithm
+///
+/// \param[out] md5   : 16 bytes buffer that receive digest result.
+/// \param[in]  path  : Path to file to generate digest from.
+///
+/// \return True if operation succeed, false if file open error.
+///
+static inline bool __MD5_file_digest(uint8_t* md5, const HANDLE hFile)
+{
+  DWORD rb;
+
+  MD5_CTX md5ct;
+  MD5_Init(&md5ct);
+
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  if(!read_buf) {
+    CloseHandle(hFile);
+    return false;
+  }
+
+  while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
+
+    if(rb == 0)
+      break;
+
+    MD5_Update(&md5ct, read_buf, rb);
+  }
+
+  MD5_Final(md5, &md5ct);
+
+  Om_free(read_buf);
+
+  return true;
+}
+
+
 /// \brief Generate file MD5 digest (checksum)
 ///
 /// Generate file digest (checksum) using MD5 digest algorithm
@@ -510,17 +608,25 @@ static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
+  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
+  if(!read_buf) {
+    CloseHandle(hFile);
+    return false;
+  }
+
+  while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
-    MD5_Update(&md5ct, __read_buf, rb);
+    MD5_Update(&md5ct, read_buf, rb);
   }
 
   CloseHandle(hFile);
 
   MD5_Final(md5, &md5ct);
+
+  Om_free(read_buf);
 
   return true;
 }
@@ -586,6 +692,22 @@ bool Om_cmpMD5sum(const OmWString& path, const OmWString& str)
 }
 
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_cmpMD5sum(void* hFile, const OmWString& str)
+{
+  uint8_t md5[16] = {};
+
+  if(!__MD5_file_digest(md5, reinterpret_cast<HANDLE>(hFile)))
+    return false;
+
+  OmWString ctrl;
+
+  __bytes_to_hex_le(&ctrl, md5, 16);
+
+  return (str == ctrl);
+}
 
 
 ///

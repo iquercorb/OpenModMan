@@ -152,6 +152,17 @@ bool Om_getXXHsum(OmWString* pstr, const OmWString& path);
 ///
 bool Om_cmpXXHsum(const OmWString& path, const OmWString& str);
 
+/// \brief Compare file XXHash3 checksum.
+///
+/// Calculates the 16 characters hash string of the given data.
+///
+/// \param[in]  hFile   : File HANDLE to generate checksum.
+/// \param[in]  str     : Checksum hexadecimal string to compare.
+///
+/// \return true if checksum matches, false otherwise
+///
+bool Om_cmpXXHsum(void* hFile, const OmWString& str);
+
 /// \brief Get file MD5 digest.
 ///
 /// Compute the MD5 digest of the given file.
@@ -195,6 +206,17 @@ bool Om_getMD5sum(OmWString* pstr, const OmWString& path);
 /// \return true if checksum matches, false otherwise
 ///
 bool Om_cmpMD5sum(const OmWString& path, const OmWString& str);
+
+/// \brief Compare file MD5 checksum.
+///
+/// Calculates the 32 characters MD5 digest string of the given data.
+///
+/// \param[in]  hFile   : file HANDLE to generate checksum.
+/// \param[in]  str     : Checksum hexadecimal string to compare.
+///
+/// \return true if checksum matches, false otherwise
+///
+bool Om_cmpMD5sum(void* hFile, const OmWString& str);
 
 /// \brief Calculate CRC64 value.
 ///
