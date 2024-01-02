@@ -362,8 +362,7 @@ void OmNetPack::stopDownload()
 bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, void* user_ptr, uint32_t rate)
 {
   if(this->_connect.isPerforming()) {
-    this->_error(L"startDownload", L"download already processing");
-    return false;
+    return true; //< avoid error
   }
 
   if(!this->_ModChan) {
