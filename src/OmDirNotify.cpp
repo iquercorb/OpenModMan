@@ -199,6 +199,11 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
           if(self->_notify_cb)
             self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
 
+          // this file will never be accessible anymore, we ensure it will
+          // not still tested forever in the availability check thread
+          if(Om_arrayContain(self->_added_queue, FilePath))
+            Om_push_backUnique(self->_unadd_queue, FilePath);
+
           break;
 
         case FILE_ACTION_MODIFIED:
@@ -216,6 +221,11 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
 
           if(self->_notify_cb)
             self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+
+          // this file will never be accessible anymore, we ensure it will
+          // not still tested forever in the availability check thread
+          if(Om_arrayContain(self->_added_queue, FilePath))
+            Om_push_backUnique(self->_unadd_queue, FilePath);
 
           break;
 
@@ -277,9 +287,22 @@ DWORD WINAPI OmDirNotify::_available_run_fn(void* ptr)
 
   while(true) {
 
+    // Check for 'stop' event, wait 50 MS each loop to to prevent flood of 'CreateFileW'
     if(0 == WaitForSingleObject(self->_stop_hev, 50))
       break;
 
+
+    // check for files that will never be available anymore, we remove them
+    // from queue to ensure they will not be tested forever
+    while(self->_unadd_queue.size()) {
+
+      Om_eraseValue(self->_added_queue, self->_unadd_queue.back());
+
+      self->_unadd_queue.pop_back();
+    }
+
+    // test added files true availability, so we are sure once notification is sent the file
+    // is available for read/write operation
     size_t i = self->_added_queue.size();
     while(i--) {
 
@@ -291,7 +314,10 @@ DWORD WINAPI OmDirNotify::_available_run_fn(void* ptr)
         Flags = 0;
       }
 
-      hFile = CreateFileW(self->_added_queue[i].c_str(),GENERIC_READ|GENERIC_WRITE,0,nullptr,OPEN_EXISTING,Flags,nullptr);
+      hFile = CreateFileW(self->_added_queue[i].c_str(),
+                          GENERIC_READ|GENERIC_WRITE,
+                          0, //< try to take exclusive control to ensure file is fully available
+                          nullptr,OPEN_EXISTING,Flags,nullptr);
 
       if(hFile != INVALID_HANDLE_VALUE) {
 
