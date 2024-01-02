@@ -389,10 +389,7 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const HANDLE hFile)
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
-  if(!read_buf) {
-    return false;
-  }
+  uint8_t read_buf[READ_BUF_SIZE];
 
   SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
@@ -403,8 +400,6 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const HANDLE hFile)
 
     XXH3_64bits_update(&xxhst, read_buf, rb);
   }
-
-  Om_free(read_buf);
 
   *xxh = XXH3_64bits_digest(&xxhst);
 
@@ -434,11 +429,7 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
   XXH3_state_t xxhst;
   XXH3_64bits_reset(&xxhst);
 
-  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
-  if(!read_buf) {
-    CloseHandle(hFile);
-    return false;
-  }
+  uint8_t read_buf[READ_BUF_SIZE];
 
   while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
@@ -447,8 +438,6 @@ static inline bool __XXHash3_file_digest(uint64_t* xxh, const OmWString& path)
 
     XXH3_64bits_update(&xxhst, read_buf, rb);
   }
-
-  Om_free(read_buf);
 
   CloseHandle(hFile);
 
@@ -565,11 +554,7 @@ static inline bool __MD5_file_digest(uint8_t* md5, const HANDLE hFile)
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
-  if(!read_buf) {
-    CloseHandle(hFile);
-    return false;
-  }
+  uint8_t read_buf[READ_BUF_SIZE];
 
   SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
@@ -582,8 +567,6 @@ static inline bool __MD5_file_digest(uint8_t* md5, const HANDLE hFile)
   }
 
   MD5_Final(md5, &md5ct);
-
-  Om_free(read_buf);
 
   return true;
 }
@@ -611,11 +594,7 @@ static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
   MD5_CTX md5ct;
   MD5_Init(&md5ct);
 
-  uint8_t* read_buf = static_cast<uint8_t*>(Om_alloc(READ_BUF_SIZE));
-  if(!read_buf) {
-    CloseHandle(hFile);
-    return false;
-  }
+  uint8_t read_buf[READ_BUF_SIZE];
 
   while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
@@ -628,7 +607,6 @@ static inline bool __MD5_file_digest(uint8_t* md5, const OmWString& path)
   MD5_Final(md5, &md5ct);
 
   CloseHandle(hFile);
-  Om_free(read_buf);
 
   return true;
 }

@@ -218,35 +218,24 @@ bool Om_isFileZip(const OmWString& path)
   // the end of file. The interval where the EOCD signature may exist is between 65557 and
   // 18 from the end.
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(65557)); //< read buffer
-  if(!read_buf) {
-    CloseHandle(hFile);
-    return false;
-  }
+  uint8_t read_buf[65557];
 
   DWORD rb = 0;
 
   SetFilePointer(hFile, -65557, 0, FILE_END);
-  ReadFile(hFile, read_buf, 65557, &rb, nullptr);
+  ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
   CloseHandle(hFile);
 
   if(rb < 20) { //< file too small, cannot be a Zip file
-    Om_free(read_buf);
     return false;
   }
 
-  bool is_zip = false;
-
   while(rb--) {
-    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50) { //< PK\1\2 in little-endian
-      is_zip = true;
-      break;
-    }
+    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50)
+      return true;
   }
 
-  Om_free(read_buf);
-
-  return is_zip;
+  return false;
 }
 
 ///
@@ -270,34 +259,24 @@ bool Om_isFileZip(void* hFile)
   // the end of file. The interval where the EOCD signature may exist is between 65557 and
   // 18 from the end.
 
-  uint8_t* read_buf = reinterpret_cast<uint8_t*>(Om_alloc(65557)); //< read buffer
-  if(!read_buf) {
-    return false;
-  }
+  uint8_t read_buf[65557];
 
   DWORD rb = 0;
 
   SetFilePointer(hFile, -65557, 0, FILE_END);
-  ReadFile(hFile, read_buf, 65557, &rb, nullptr);
+  ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
   SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
   if(rb < 20) { //< file too small, cannot be a Zip file
-    Om_free(read_buf);
     return false;
   }
 
-  bool is_zip = false;
-
   while(rb--) {
-    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50) { //< PK\1\2 in little-endian
-      is_zip = true;
-      break;
-    }
+    if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50)
+      return true;
   }
 
-  Om_free(read_buf);
-
-  return is_zip;
+  return false;
 }
 
 ///
