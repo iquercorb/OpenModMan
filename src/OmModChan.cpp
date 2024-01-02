@@ -2424,8 +2424,10 @@ DWORD WINAPI OmModChan::_download_start_run_fn(void* ptr)
   while(self->_download_queue.size()) {
 
     if(self->_down_max_thread > 0) {
-      if(self->_download_array.size() >= self->_down_max_thread)
+      if(self->_download_array.size() >= self->_down_max_thread) {
+        Sleep(250);
         continue;
+      }
     }
 
     OmNetPack* NetPack = self->_download_queue.front();
