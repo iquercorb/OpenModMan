@@ -763,7 +763,7 @@ bool Om_hasIllegalUrlChar(const OmWString& path)
 ///
 /// Static translation string to convert integer value to hexadecimal digit.
 ///
-static const wchar_t __hex_digit[] = L"0123456789abcdef";
+static const char __hex_digit[] = "0123456789abcdef";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
