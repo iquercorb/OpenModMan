@@ -356,8 +356,7 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
                                       FILE_ATTRIBUTE_NORMAL,
                                       nullptr);
 
-  if(!this->_get_file_hnd) {
-
+  if(this->_get_file_hnd == INVALID_HANDLE_VALUE) {
     return false;
   }
 
