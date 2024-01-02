@@ -782,6 +782,8 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
 
     for(int32_t i = 0; i < mb_len; ++i) {
 
+      bool is_escaped = false;
+
       for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
         if(mb_buf[i] == __illegal_url_chr[k]) {
 
@@ -791,11 +793,13 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
           esc->push_back(__hex_digit[(c >> 4) & 0x0F]);
           esc->push_back(__hex_digit[(c)      & 0x0F]);
 
-          continue;
+          is_escaped = true;
+          break;
         }
       }
 
-      esc->push_back(mb_buf[i]);
+      if(!is_escaped)
+        esc->push_back(mb_buf[i]);
     }
 
     Om_free(mb_buf);
