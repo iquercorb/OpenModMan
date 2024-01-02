@@ -778,16 +778,22 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
 
     WideCharToMultiByte(CP_UTF8, 0, url.c_str(), -1, mb_buf, mb_len, nullptr, nullptr);
 
+    // set capacity for target string
+    esc->clear();
+    esc->reserve(mb_len * 2);
+
     mb_len--; //< reduce to string length without nullchar
 
     for(int32_t i = 0; i < mb_len; ++i) {
 
+      uint8_t c = mb_buf[i];
+
       bool is_escaped = false;
 
       for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
-        if(mb_buf[i] == __illegal_url_chr[k]) {
+        if(c == __illegal_url_chr[k]) {
 
-          uint8_t c = mb_buf[i];
+
 
           esc->push_back('%');
           esc->push_back(__hex_digit[(c >> 4) & 0x0F]);
@@ -799,7 +805,7 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
       }
 
       if(!is_escaped)
-        esc->push_back(mb_buf[i]);
+        esc->push_back(c);
     }
 
     Om_free(mb_buf);
