@@ -1385,7 +1385,15 @@ class OmModChan
 
     uint32_t              _download_percent;
 
-    static DWORD WINAPI   _download_start_fn(void*);
+    void                  _download_srart_queued();
+
+    void*                 _download_start_hth;
+
+    void*                 _download_start_hwo;
+
+    static DWORD WINAPI   _download_start_run_fn(void*);
+
+    static VOID WINAPI    _download_start_end_fn(void*,uint8_t);
 
     static void           _download_result_fn(void*, OmResult, uint64_t);
 

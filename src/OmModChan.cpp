@@ -65,6 +65,8 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _download_abort(false),
   _download_dones(0),
   _download_percent(0),
+  _download_start_hth(nullptr),
+  _download_start_hwo(nullptr),
   _download_begin_cb(nullptr),
   _download_download_cb(nullptr),
   _download_result_cb(nullptr),
@@ -204,6 +206,8 @@ void OmModChan::close()
   this->_download_abort = false;
   this->_download_dones = 0;
   this->_download_percent = 0;
+  this->_download_start_hth = nullptr;
+  this->_download_start_hwo = nullptr;
   this->_download_queue.clear();
   this->_download_array.clear();
   this->_download_begin_cb = nullptr;
@@ -2357,8 +2361,8 @@ void OmModChan::startDownloads(const OmPNetPackArray& selection, Om_beginCb begi
   for(size_t i = 0; i < selection.size(); ++i)
     Om_push_backUnique(this->_download_queue, selection[i]);
 
-  // launch 'starter' thread
-  Om_threadCreate(OmModChan::_download_start_fn, this);
+  // starts queued downloads (according current limits)
+  this->_download_srart_queued();
 }
 
 ///
@@ -2401,7 +2405,19 @@ void OmModChan::stopDownload(size_t index)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmModChan::_download_start_fn(void* ptr)
+void OmModChan::_download_srart_queued()
+{
+  // prevent simultaneous startings
+  if(!this->_download_start_hth) {
+    this->_download_start_hth = Om_threadCreate(OmModChan::_download_start_run_fn, this);
+    this->_download_start_hwo = Om_threadWaitEnd(this->_download_start_hth, OmModChan::_download_start_end_fn, this);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmModChan::_download_start_run_fn(void* ptr)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
@@ -2434,6 +2450,24 @@ DWORD WINAPI OmModChan::_download_start_fn(void* ptr)
   }
 
   return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmModChan::_download_start_end_fn(void* ptr, uint8_t fired)
+{
+  OM_UNUSED(fired);
+
+  OmModChan* self = static_cast<OmModChan*>(ptr);
+
+  // unlock the local library
+  self->_locked_mod_library = false;
+
+  Om_threadClear(self->_download_start_hth, self->_download_start_hwo);
+
+  self->_download_start_hth = nullptr;
+  self->_download_start_hwo = nullptr;
 }
 
 ///
@@ -2493,7 +2527,7 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
 
   // start queued download if any
   if(self->_download_queue.size())
-    OmModChan::_download_start_fn(self);
+    self->_download_srart_queued();
 
   // increase download done count
   self->_download_dones++;
