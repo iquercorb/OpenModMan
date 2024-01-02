@@ -131,6 +131,8 @@ inline static void __utf8_encode(OmCString& utf8, const OmWString& wstr)
 }
 */
 
+
+
 /// \brief Multibyte Decode
 ///
 /// Static inlined function to convert the given multibyte string into wide
@@ -757,28 +759,46 @@ bool Om_hasIllegalUrlChar(const OmWString& path)
   return false;
 }
 
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
+static const wchar_t __hex_digit[] = L"0123456789abcdef";
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void Om_urlEscape(OmCString* esc, const OmWString& url)
 {
   // convert to UTF-8
-  OmCString utf8;
-  __multibyte_encode(CP_UTF8, &utf8, url.c_str());
+  int32_t mb_len = WideCharToMultiByte(CP_UTF8, 0, url.c_str(), -1, nullptr, 0, nullptr, nullptr);
+  if(mb_len > 0) {
 
-  char buf[16];
+    char* mb_buf = static_cast<char*>(Om_alloc(mb_len));
 
-  for(size_t i = 0; i < utf8.size(); ++i) {
+    WideCharToMultiByte(CP_UTF8, 0, url.c_str(), -1, mb_buf, mb_len, nullptr, nullptr);
 
-    for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
-      if(utf8[i] == __illegal_url_chr[k]) {
-        std::sprintf(buf, "%%%X", static_cast<int>(utf8[i]));
-        esc->append(buf);
-        continue;
+    mb_len--; //< reduce to string length without nullchar
+
+    for(int32_t i = 0; i < mb_len; ++i) {
+
+      for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
+        if(mb_buf[i] == __illegal_url_chr[k]) {
+
+          uint8_t c = mb_buf[i];
+
+          esc->push_back('%');
+          esc->push_back(__hex_digit[(c >> 4) & 0x0F]);
+          esc->push_back(__hex_digit[(c)      & 0x0F]);
+
+          continue;
+        }
       }
+
+      esc->push_back(mb_buf[i]);
     }
 
-    esc->push_back(utf8[i]);
+    Om_free(mb_buf);
   }
 }
 
