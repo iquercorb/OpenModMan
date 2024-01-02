@@ -30,7 +30,8 @@ OmDirNotify::OmDirNotify() :
   _user_ptr(nullptr),
   _stop_hev(nullptr),
   _changes_hth(nullptr),
-  _available_hth(nullptr)
+  _access_check_hth(nullptr),
+  _access_check_hwo(nullptr)
 {
   //ctor
 }
@@ -55,6 +56,35 @@ void OmDirNotify::setCallback(Om_notifyCb notify_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmDirNotify::stopMonitor()
+{
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDirNotify::stopMonitor\n";
+  #endif
+
+  // set 'stop' event
+  SetEvent(this->_stop_hev);
+
+  if(this->_access_check_hth) {
+    // wait for threads to quit
+    WaitForSingleObject(this->_access_check_hth, INFINITE);
+    this->_added_queue.clear();
+    this->_unadd_queue.clear();
+  }
+
+  if(this->_changes_hth) {
+    // wait for threads to quit
+    WaitForSingleObject(this->_changes_hth, INFINITE);
+    CloseHandle(this->_changes_hth);
+    this->_changes_hth = nullptr;
+    this->_modif_queue.clear();
+  }
+
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmDirNotify::startMonitor(const OmWString& path)
 {
   #ifdef DEBUG
@@ -63,20 +93,7 @@ void OmDirNotify::startMonitor(const OmWString& path)
 
   this->_path = path;
 
-  if(this->_changes_hth) {
-
-    // set 'stop' event
-    SetEvent(this->_stop_hev);
-
-    // wait for threads to quit
-    WaitForSingleObject(this->_changes_hth, INFINITE);
-    CloseHandle(this->_changes_hth);
-    this->_changes_hth = nullptr;
-
-    WaitForSingleObject(this->_available_hth, INFINITE);
-    CloseHandle(this->_available_hth);
-    this->_available_hth = nullptr;
-  }
+  this->stopMonitor();
 
   // create or reset custom 'stop' event
   if(this->_stop_hev) {
@@ -86,32 +103,6 @@ void OmDirNotify::startMonitor(const OmWString& path)
   }
 
   this->_changes_hth = Om_threadCreate(OmDirNotify::_changes_run_fn, this);
-  this->_available_hth = Om_threadCreate(OmDirNotify::_available_run_fn, this);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmDirNotify::stopMonitor()
-{
-  #ifdef DEBUG
-  std::wcout << L"DEBUG => OmDirNotify::stopMonitor\n";
-  #endif
-
-  if(this->_changes_hth) {
-
-    // set 'stop' event
-    SetEvent(this->_stop_hev);
-
-    // wait for threads to quit
-    WaitForSingleObject(this->_changes_hth, INFINITE);
-    CloseHandle(this->_changes_hth);
-    this->_changes_hth = nullptr;
-
-    WaitForSingleObject(this->_available_hth, INFINITE);
-    CloseHandle(this->_available_hth);
-    this->_available_hth = nullptr;
-  }
 }
 
 ///
@@ -186,7 +177,7 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
         {
         case FILE_ACTION_ADDED:
 
-          Om_push_backUnique(self->_added_queue, FilePath);
+          self->_access_check_add(FilePath);
 
           break;
 
@@ -240,7 +231,7 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
           // called twice from two threads, we add to queue like another file creation,
           // verifying it is not already in queue.
 
-          Om_push_backUnique(self->_added_queue, FilePath);
+          self->_access_check_add(FilePath);
 
           break;
         }
@@ -277,15 +268,33 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmDirNotify::_available_run_fn(void* ptr)
+void OmDirNotify::_access_check_add(const OmWString& path)
 {
+  Om_push_backUnique(this->_added_queue, path);
+
+  // prevent simultaneous startings
+  if(!this->_access_check_hth) {
+    this->_access_check_hth = Om_threadCreate(OmDirNotify::_access_check_run_fn, this);
+    this->_access_check_hwo = Om_threadWaitEnd(this->_access_check_hth, OmDirNotify::_access_check_end_fn, this);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+DWORD WINAPI OmDirNotify::_access_check_run_fn(void* ptr)
+{
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDirNotify::_access_check_run_fn : enter\n";
+  #endif // DEBUG
+
   OmDirNotify* self = static_cast<OmDirNotify*>(ptr);
 
   HANDLE hFile;
   DWORD FileAttr;
   DWORD Flags;
 
-  while(true) {
+  while(self->_added_queue.size()) {
 
     // Check for 'stop' event, wait 50 MS each loop to to prevent flood of 'CreateFileW'
     if(0 == WaitForSingleObject(self->_stop_hev, 50))
@@ -335,5 +344,28 @@ DWORD WINAPI OmDirNotify::_available_run_fn(void* ptr)
 
   }
 
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDirNotify::_access_check_run_fn : leave\n";
+  #endif // DEBUG
+
   return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+VOID WINAPI OmDirNotify::_access_check_end_fn(void* ptr, uint8_t fired)
+{
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDirNotify::_access_check_end_fn\n";
+  #endif // DEBUG
+
+  OM_UNUSED(fired);
+
+  OmDirNotify* self = static_cast<OmDirNotify*>(ptr);
+
+  Om_threadClear(self->_access_check_hth, self->_access_check_hwo);
+
+  self->_access_check_hth = nullptr;
+  self->_access_check_hwo = nullptr;
 }

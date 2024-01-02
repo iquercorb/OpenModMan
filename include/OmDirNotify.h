@@ -97,14 +97,19 @@ class OmDirNotify
 
     void*                 _changes_hth;
 
-    void                  _changes_enable(bool enable);
-
     static DWORD WINAPI   _changes_run_fn(void*);
 
 
-    void*                 _available_hth;
+    void*                 _access_check_hth;
 
-    static DWORD WINAPI   _available_run_fn(void*);
+    void*                 _access_check_hwo;
+
+    void                  _access_check_add(const OmWString& path);
+
+    static DWORD WINAPI   _access_check_run_fn(void*);
+
+    static VOID WINAPI    _access_check_end_fn(void*,uint8_t);
+
 };
 
 #endif // OMDIRNOTIFY_H
