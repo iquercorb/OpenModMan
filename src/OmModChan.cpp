@@ -2527,10 +2527,6 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
   // remove download from stack
   Om_eraseValue(self->_download_array, NetPack);
 
-  // start queued download if any
-  if(self->_download_queue.size())
-    self->_download_srart_queued();
-
   // increase download done count
   self->_download_dones++;
 
@@ -2538,7 +2534,15 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
   if(self->_download_result_cb)
     self->_download_result_cb(self->_download_user_ptr, final_result, param);
 
-  if(!self->_download_array.size()) {
+  if(self->_download_array.size()) {
+
+    // if abort request was fired, we must stop downloads sequentially to
+    // prevent callback concurrent calls that mess up all process
+    if(self->_download_abort) {
+      self->_download_array.back()->stopDownload();
+    }
+
+  } else {
 
     self->_locked_net_library = false;
 
