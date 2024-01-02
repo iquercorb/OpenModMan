@@ -2425,7 +2425,7 @@ DWORD WINAPI OmModChan::_download_start_run_fn(void* ptr)
 
     if(self->_down_max_thread > 0) {
       if(self->_download_array.size() >= self->_down_max_thread)
-        break;
+        continue;
     }
 
     OmNetPack* NetPack = self->_download_queue.front();
@@ -2536,15 +2536,7 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
   if(self->_download_result_cb)
     self->_download_result_cb(self->_download_user_ptr, final_result, param);
 
-  if(self->_download_array.size()) {
-
-    // if abort request was fired, we must stop downloads sequentially to
-    // prevent callback concurrent calls that mess up all process
-    if(self->_download_abort) {
-      self->_download_array.back()->stopDownload();
-    }
-
-  } else {
+  if(!self->_download_array.size()) {
 
     self->_locked_net_library = false;
 

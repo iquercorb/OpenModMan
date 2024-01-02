@@ -291,7 +291,6 @@ DWORD WINAPI OmDirNotify::_available_run_fn(void* ptr)
     if(0 == WaitForSingleObject(self->_stop_hev, 50))
       break;
 
-
     // check for files that will never be available anymore, we remove them
     // from queue to ensure they will not be tested forever
     while(self->_unadd_queue.size()) {
