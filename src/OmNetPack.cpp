@@ -423,7 +423,7 @@ bool OmNetPack::finalizeDownload()
   // thread and prevent useless multiple notifications to be sent
 
   HANDLE hFile;
-  uint8_t attempt = 20;
+  uint8_t attempt = 40;
   while(attempt--) {
 
     hFile = CreateFileW(this->_dnl_temp.c_str(),
