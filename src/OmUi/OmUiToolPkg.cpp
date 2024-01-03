@@ -1552,7 +1552,7 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_BC_DPABT, this->cliWidth()-32, foot_y-38, 22, 22, true);
 
   // Foot status bar
-  this->_setItemPos(IDC_SC_STATUS, 2, this->cliHeight()-24, this->cliWidth()-4, 22, true);
+  this->_setItemPos(IDC_SC_STATUS, -1, this->cliHeight()-24, this->cliWidth()+2, 26, true);
   this->_setItemPos(IDC_SC_FILE, 7, this->cliHeight()-20, this->cliWidth()-110, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-20, 90, 16, true);
 

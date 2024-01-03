@@ -1540,9 +1540,9 @@ void OmUiToolRep::_onResize()
   this->_setItemPos(IDC_EC_READ3, half_w+10, foot_y-25, half_w-20, 48, true);
 
   // Foot status bar
-  this->_setItemPos(IDC_SC_STATUS, 2, this->cliHeight()-24, this->cliWidth()-4, 22, true);
-  this->_setItemPos(IDC_SC_FILE, 7, this->cliHeight()-20, this->cliWidth()-110, 16, true);
-  this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-20, 90, 16, true);
+  this->_setItemPos(IDC_SC_STATUS, -1, this->cliHeight()-24, this->cliWidth()+2, 26, true);
+  this->_setItemPos(IDC_SC_FILE, 7, this->cliHeight()-19, this->cliWidth()-110, 16, true);
+  this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
   // redraw the window
   RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
