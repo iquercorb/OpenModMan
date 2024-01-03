@@ -1733,9 +1733,9 @@ void OmUiMan::_onResize()
   this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
 
   // Foot status bar
-  this->_setItemPos(IDC_SC_STATUS, 3, this->cliHeight()-24, this->cliWidth()-6, 22, true);
-  this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-20, this->cliWidth()-100, 16, true);
-  this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-20, 90, 16, true);
+  this->_setItemPos(IDC_SC_STATUS, -1, this->cliHeight()-24, this->cliWidth()+2, 26, true);
+  this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-19, this->cliWidth()-100, 16, true);
+  this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
   if(!this->_split_curs_dragg) {
 
