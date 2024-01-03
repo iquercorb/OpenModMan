@@ -17,14 +17,14 @@
 #include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 #include <ctime>
 
-static time_t __time_rtime;
-static struct tm* __time_ltime;
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 void Om_getTime(int *t_sec, int *t_min, int *t_hour)
 {
+  time_t __time_rtime;
+  struct tm* __time_ltime;
+
   time(&__time_rtime);
   __time_ltime = localtime(&__time_rtime);
 
@@ -39,6 +39,9 @@ void Om_getTime(int *t_sec, int *t_min, int *t_hour)
 ///
 void Om_getDate(int *t_day, int *t_mon, int *t_year)
 {
+  time_t __time_rtime;
+  struct tm* __time_ltime;
+
   time(&__time_rtime);
   __time_ltime = localtime(&__time_rtime);
 

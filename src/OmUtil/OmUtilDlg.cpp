@@ -27,6 +27,90 @@
 #include "OmUtilWin.h"   //< Om_getErrorStr
 #include "OmUtilStr.h"   //< Om_hasLegalSysChar, etc.
 
+/// \brief Microsoft COM library initialization flag
+///
+/// Flag used for Microsoft COM library initialization function, to
+/// prevent multiple initialization attemp
+///
+static bool __co_initialized = false;
+
+/// \brief Microsoft COM library initialization
+///
+/// Initialization function for the Microsoft COM library for main application thread
+///
+inline static void __co_initialize()
+{
+  if(!__co_initialized) {
+    if(S_OK == CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE)) {
+      __co_initialized = true;
+    }
+  }
+}
+
+/// \brief COMDLG_FILTERSPEC static array size
+///
+/// Size of the COMDLG_FILTERSPEC static array array.
+///
+#define OM_MAX_COMDLG_FILTERSPEC  64
+
+/// \brief Static array of COMDLG_FILTERSPEC
+///
+/// Static array of COMDLG_FILTERSPEC structure used for OFN filter conversion
+///
+static COMDLG_FILTERSPEC __comdlg_filterspec_buf[OM_MAX_COMDLG_FILTERSPEC];
+
+/// \brief Parse OFN filter as COMDLG_FILTERSPEC
+///
+/// Parse old OFN filter null-delimited string array into an array of COMDLG_FILTERSPEC structures.
+///
+/// \param[in]  ofn_filter  : Old OFN filter null-delimited string array
+/// \param[out] spec_count  : Point to integer that receive size of the returned COMDLG_FILTERSPEC array
+///
+/// \return Pointer to COMDLG_FILTERSPEC array or nullptr if failed
+///
+inline static COMDLG_FILTERSPEC* __ofn_filter_to_comdlg_spec(const wchar_t* ofn_filter, uint32_t* spec_count)
+{
+  uint32_t n;
+  const wchar_t* p;
+
+  // 1. get count of individual null-terminated string in the OFN filter
+  n = 0; p = ofn_filter;
+  while(*p != 0) {
+    n++;  p = &p[wcslen(p)+1];
+  }
+
+  // 2. check whether string count is even and compatible with
+  // static buffer size
+  if(n % 2 != 0) {
+    *spec_count = 0;
+    return nullptr;
+  }
+
+  n /= 2;
+
+  if(n > OM_MAX_COMDLG_FILTERSPEC) {
+    *spec_count = 0;
+    return nullptr;
+  }
+
+  // 3. fill the comdlg spec buffer
+  *spec_count = n;
+
+  n = 0; p = ofn_filter;
+  while(*p != 0) {
+
+    __comdlg_filterspec_buf[n].pszName = p;
+    p = &p[wcslen(p)+1];
+
+    __comdlg_filterspec_buf[n].pszSpec = p;
+    p = &p[wcslen(p)+1];
+
+    n++;
+  }
+
+  return __comdlg_filterspec_buf;
+}
+
 /// \brief IDs for message box.
 ///
 /// Custom IDs for message box dialog controls.
@@ -49,6 +133,18 @@
 static HFONT __Om_dlgBox_FontB = nullptr;
 static HFONT __Om_dlgBox_FontS = nullptr;
 static HICON __Om_dlgBox_TIcon = nullptr;
+
+/// \brief Constant strings for message box.
+///
+/// Constant string for message box buttons and template.
+///
+static const wchar_t* __Om_dlgBox_str_OK = L"OK";
+static const wchar_t* __Om_dlgBox_str_YE = L"Yes";
+static const wchar_t* __Om_dlgBox_str_CO = L"Continue";
+static const wchar_t* __Om_dlgBox_str_NO = L"No";
+static const wchar_t* __Om_dlgBox_str_CA = L"Cancel";
+static const wchar_t* __Om_dlgBox_str_AB = L"Abort";
+static const wchar_t* __Om_dlgBox_str_FNT = L"Ms Shell Dlg";
 
 inline static void __Om_dlgBox_peekMessages(HWND hwnd)
 {
@@ -280,18 +376,6 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
   return 0;
 }
-
-/// \brief Constant strings for message box.
-///
-/// Constant string for message box buttons and template.
-///
-static const wchar_t* __Om_dlgBox_str_OK = L"OK";
-static const wchar_t* __Om_dlgBox_str_YE = L"Yes";
-static const wchar_t* __Om_dlgBox_str_CO = L"Continue";
-static const wchar_t* __Om_dlgBox_str_NO = L"No";
-static const wchar_t* __Om_dlgBox_str_CA = L"Cancel";
-static const wchar_t* __Om_dlgBox_str_AB = L"Abort";
-static const wchar_t* __Om_dlgBox_str_FNT = L"Ms Shell Dlg";
 
 /// \brief Message dialog box.
 ///
@@ -950,26 +1034,6 @@ INT CALLBACK __dialogBrowseDir_Proc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM 
   return 0;
 }
 
-/// \brief Microsoft COM library initialization flag
-///
-/// Flag used for Microsoft COM library initialization function, to
-/// prevent multiple initialization attemp
-///
-static bool __co_initialized = false;
-
-/// \brief Microsoft COM library initialization
-///
-/// Initialization function for the Microsoft COM library for main application thread
-///
-inline static void __co_initialize()
-{
-  if(!__co_initialized) {
-    if(S_OK == CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED|COINIT_DISABLE_OLE1DDE)) {
-      __co_initialized = true;
-    }
-  }
-}
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1093,70 +1157,6 @@ bool Om_dlgOpenDirMultiple(OmWStringArray& result, HWND hWnd, const wchar_t* tit
   }
 
   return !has_cancel;
-}
-
-/// \brief COMDLG_FILTERSPEC static array size
-///
-/// Size of the COMDLG_FILTERSPEC static array array.
-///
-#define OM_MAX_COMDLG_FILTERSPEC  64
-
-/// \brief Static array of COMDLG_FILTERSPEC
-///
-/// Static array of COMDLG_FILTERSPEC structure used for OFN filter conversion
-///
-static COMDLG_FILTERSPEC __comdlg_filterspec_buf[OM_MAX_COMDLG_FILTERSPEC];
-
-/// \brief Parse OFN filter as COMDLG_FILTERSPEC
-///
-/// Parse old OFN filter null-delimited string array into an array of COMDLG_FILTERSPEC structures.
-///
-/// \param[in]  ofn_filter  : Old OFN filter null-delimited string array
-/// \param[out] spec_count  : Point to integer that receive size of the returned COMDLG_FILTERSPEC array
-///
-/// \return Pointer to COMDLG_FILTERSPEC array or nullptr if failed
-///
-inline static COMDLG_FILTERSPEC* __ofn_filter_to_comdlg_spec(const wchar_t* ofn_filter, uint32_t* spec_count)
-{
-  uint32_t n;
-  const wchar_t* p;
-
-  // 1. get count of individual null-terminated string in the OFN filter
-  n = 0; p = ofn_filter;
-  while(*p != 0) {
-    n++;  p = &p[wcslen(p)+1];
-  }
-
-  // 2. check whether string count is even and compatible with
-  // static buffer size
-  if(n % 2 != 0) {
-    *spec_count = 0;
-    return nullptr;
-  }
-
-  n /= 2;
-
-  if(n > OM_MAX_COMDLG_FILTERSPEC) {
-    *spec_count = 0;
-    return nullptr;
-  }
-
-  // 3. fill the comdlg spec buffer
-  *spec_count = n;
-
-  n = 0; p = ofn_filter;
-  while(*p != 0) {
-
-    __comdlg_filterspec_buf[n].pszName = p;
-    p = &p[wcslen(p)+1];
-
-    __comdlg_filterspec_buf[n].pszSpec = p;
-    p = &p[wcslen(p)+1];
-
-    n++;
-  }
-
-  return __comdlg_filterspec_buf;
 }
 
 ///

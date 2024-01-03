@@ -193,11 +193,6 @@ void Om_uint64ToStr(OmWString* dest, uint64_t num)
   }
 }
 
-///
-/// Currently not used
-///
-//#define UINT64_C(n) n##ull
-
 /// \brief CRC64 table.
 ///
 /// CRC64 table for fast CRC calculation.

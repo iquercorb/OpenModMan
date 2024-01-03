@@ -27,6 +27,13 @@ static const uint8_t __b64_dec_table[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                           0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25, 0, 0, 0, 0, 0,
                                           0,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51, 0, 0, 0, 0, 0};
 
+/// \brief Data URI Regex pattern
+///
+/// Regular expression pattern for Data URI.
+///
+//static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,([\w\W]+))"); // cause crash
+static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,)");
+
 /// \brief Base64 encode.
 ///
 /// Encode given data to Base64 string.
@@ -65,7 +72,6 @@ static inline void __base64_encode(OmWString& out_b64, const uint8_t* in_data, s
       out_b64[(size - 1) - i] = L'=';
   }
 }
-
 
 /// \brief Base64 decode.
 ///
@@ -139,14 +145,6 @@ uint8_t* Om_fromBase64(size_t* size, const OmWString& b64)
 {
   return __base64_decode(size, b64);
 }
-
-/// \brief Data URI Regex pattern
-///
-/// Regular expression pattern for Data URI.
-///
-//static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,([\w\W]+))"); // cause crash
-static const std::wregex __data_uri_reg(LR"(^(data:)([\w\/-]+);([\w]+)=?([\w\d-]+)?,)");
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

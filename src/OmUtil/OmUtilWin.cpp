@@ -247,7 +247,6 @@ HBITMAP Om_getResImagePremult(unsigned id, HINSTANCE hins)
 ///
 static HICON __internal_ico[100][3] = {nullptr};
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
