@@ -180,20 +180,22 @@ bool Om_itemHasAttr(const OmWString& path, uint32_t mask);
 /// Checks whether the specified item is file with Zip signature.
 ///
 /// \param[in]  path   : Path to item to check.
+/// \param[in]  quick  : Perform quick check without Central-Directory verification.
 ///
 /// \return True if item is actually a file with Zip signature, false otherwise.
 ///
-bool Om_isFileZip(const OmWString& path);
+bool Om_isFileZip(const OmWString& path, bool quick = true);
 
 /// \brief Check valid Zip file
 ///
 /// Checks whether the specified item is file with Zip signature.
 ///
 /// \param[in]  hFile  : file HANDLE to check.
+/// \param[in]  quick  : Perform quick check without Central-Directory verification.
 ///
 /// \return True if item is actually a file with Zip signature, false otherwise.
 ///
-bool Om_isFileZip(void* hFile);
+bool Om_isFileZip(void* hFile, bool quick = true);
 
 /// \brief List folders
 ///

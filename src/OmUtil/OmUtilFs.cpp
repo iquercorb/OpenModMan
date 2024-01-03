@@ -189,8 +189,11 @@ int Om_dirDeleteRecursive(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFileZip(const OmWString& path)
+bool Om_isFileZip(const OmWString& path, bool quick)
 {
+  uint8_t read_buf[65557];
+  DWORD rb = 0;
+
   HANDLE hFile = CreateFileW(path.c_str(),
                              GENERIC_READ,
                              FILE_SHARE_READ|FILE_SHARE_WRITE,
@@ -202,35 +205,38 @@ bool Om_isFileZip(const OmWString& path)
   if(hFile == INVALID_HANDLE_VALUE)
     return false;
 
-  /*
-  char buf[64]; //< read buffer
-  DWORD rb = 0;
+  // read the first file bytes to check for Local-File header PK\3\4
+  ReadFile(hFile, &read_buf, 130, &rb, nullptr);
 
-  ReadFile(hFile, &buf, 64, &rb, nullptr);
-  CloseHandle(hFile);
+  bool has_PK34 = false;
+  if(rb >= 128) //< too small data cannot be valid ZIP file
+    has_PK34 = (*reinterpret_cast<uint32_t*>(read_buf) == 0x04034b50); //< Local-File header signature: PK\3\4 (little-endian)
 
-  if(rb >= 4) {
-    return (*reinterpret_cast<uint32_t*>(buf) == 0x04034b50); //< PK\3\4 in little-endian
+  // if there is no Local-File header signature this cannot be a ZIP file, otherwise
+  // if this is a quick check we return result now
+  if(!has_PK34 || quick) {
+    CloseHandle(hFile);
+    return has_PK34;
   }
-  */
+
+  // we now check for ZIP central directory header signature near end of file, if it exist
+  // we have almost 100% chance this is a valid ZIP file.
 
   // Depending on the comment length, the start of the EOCD will be at different offsets from
   // the end of file. The interval where the EOCD signature may exist is between 65557 and
   // 18 from the end.
 
-  uint8_t read_buf[65557];
-
-  DWORD rb = 0;
+  rb = 0;
 
   SetFilePointer(hFile, -65557, 0, FILE_END);
   ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
   CloseHandle(hFile);
 
-  if(rb < 20) { //< file too small, cannot be a Zip file
+  if(rb < 128)  //< too small data cannot be valid ZIP file
     return false;
-  }
 
   while(rb--) {
+    // check for Central-Directory header signature: PK\1\2 (little-endian)
     if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50)
       return true;
   }
@@ -241,37 +247,41 @@ bool Om_isFileZip(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isFileZip(void* hFile)
+bool Om_isFileZip(void* hFile, bool quick)
 {
-  /*
-  char buf[64]; //< read buffer
+  uint8_t read_buf[65557];
   DWORD rb = 0;
 
-  ReadFile(hFile, &buf, 64, &rb, nullptr);
-  CloseHandle(hFile);
+  // read first bytes of file
+  SetFilePointer(hFile, 0, 0, FILE_BEGIN);
+  ReadFile(hFile, &read_buf, 130, &rb, nullptr);
 
-  if(rb >= 4) {
-    return (*reinterpret_cast<uint32_t*>(buf) == 0x04034b50); //< PK\3\4 in little-endian
-  }
-  */
+  bool has_PK34 = false;
+  if(rb >= 128)  //< too small data cannot be valid ZIP file
+    has_PK34 = (*reinterpret_cast<uint32_t*>(read_buf) == 0x04034b50); //< Local-File header signature: PK\3\4 (little-endian)
+
+  // if there is no Local-File header signature this cannot be a ZIP file, otherwise
+  // if this is a quick check we return result now
+  if(!has_PK34 || quick)
+    return has_PK34;
+
+  // we now check for ZIP central directory header signature near end of file, if it exist
+  // we have almost 100% chance this is a valid ZIP file.
 
   // Depending on the comment length, the start of the EOCD will be at different offsets from
   // the end of file. The interval where the EOCD signature may exist is between 65557 and
   // 18 from the end.
 
-  uint8_t read_buf[65557];
-
-  DWORD rb = 0;
+  rb = 0;
 
   SetFilePointer(hFile, -65557, 0, FILE_END);
   ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
-  SetFilePointer(hFile, 0, 0, FILE_BEGIN);
 
-  if(rb < 20) { //< file too small, cannot be a Zip file
+  if(rb < 128)  //< too small data cannot be valid ZIP file
     return false;
-  }
 
   while(rb--) {
+    // check for Central-Directory header signature: PK\1\2 (little-endian)
     if(*reinterpret_cast<uint32_t*>(&read_buf[rb]) == 0x02014b50)
       return true;
   }
