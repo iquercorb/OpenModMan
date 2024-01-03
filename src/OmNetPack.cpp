@@ -117,7 +117,7 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
   this->_file.assign(ref_node.attrAsString(L"file"));
   this->_size = ref_node.attrAsUint64(L"bytes");
   // create formated string
-  Om_formatSizeSysStr(this->_size, &this->_size_str);
+  Om_formatSizeSysStr(&this->_size_str, this->_size);
 
   if(ref_node.hasAttr(L"xxhsum")) {
 
@@ -448,7 +448,7 @@ bool OmNetPack::finalizeDownload()
   }
 
   // check whether received data is a zip file
-  if(!Om_isFileZip(hFile)) {
+  if(!Om_isFileZip(hFile, false)) { //< perform a full-check to ensure file is valid
 
     Om_fileDelete(this->_dnl_temp);
 
