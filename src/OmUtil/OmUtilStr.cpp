@@ -22,7 +22,53 @@
 #include <ShlWApi.h>          //< StrFromKBSizeW, etc.
 
 #define READ_BUF_SIZE 524288
-static uint8_t __read_buf[READ_BUF_SIZE];
+
+/// \brief Hexadecimal digits
+///
+/// Static translation string to convert integer value to hexadecimal digit.
+///
+static const wchar_t __hex_digit[] = L"0123456789ABCDEF";
+
+/// \brief Window-1252 to Unicode table
+///
+/// Translation table to convert Window-125 character to
+/// its unicode counterpart.
+///
+static const uint32_t __cp1252_unicode_map[] = {
+  0x20AC, 0x0000, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
+  0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x0000, 0x017D, 0x0000,
+  0x0000, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
+  0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x0000, 0x017E, 0x0178};
+
+/// \brief UTF-8 BOM sequence
+///
+/// Byte sequence to identify UTF-8 Byte Order Mark to be skipped
+///
+static const uint8_t __utf8_bom[] = {0xEF, 0xBB, 0xBF};
+
+/// \brief Illegal Windows characters
+///
+/// List of forbidden characters to test validity of file name or path.
+///
+static const wchar_t __illegal_win_chr[] = L"/*?\"<>|\\";
+
+/// \brief whitespace characters
+///
+/// List of standard whitespace characters
+///
+static const wchar_t __wspace_chr[] = L" \r\n\t\xA0";
+
+/// \brief URL Regex pattern
+///
+/// Regular expression pattern for URL.
+///
+static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(:[\d]+)?([\/\.\w%-]*\/)?([\w.%-]*)?(\?[\w%-=&]+)?)");
+
+/// \brief Illegal URL path characters
+///
+/// List of forbidden characters to test validity of URL path.
+///
+static const wchar_t __illegal_url_chr[] = L" \"\\#<>|{}^[]`+$:@";
 
 /* Deprecated implementations.
 
@@ -131,8 +177,6 @@ inline static void __utf8_encode(OmCString& utf8, const OmWString& wstr)
 }
 */
 
-
-
 /// \brief Multibyte Decode
 ///
 /// Static inlined function to convert the given multibyte string into wide
@@ -196,23 +240,6 @@ inline static size_t __multibyte_encode(UINT cp, OmCString* pstr, const wchar_t*
   return 0;
 }
 
-/// \brief Window-1252 to Unicode table
-///
-/// Translation table to convert Window-125 character to
-/// its unicode counterpart.
-///
-static const uint32_t __cp1252_unicode_map[] = {
-  0x20AC, 0x0000, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
-  0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x0000, 0x017D, 0x0000,
-  0x0000, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
-  0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x0000, 0x017E, 0x0178};
-
-/// \brief UTF-8 BOM sequence
-///
-/// Byte sequence to identify UTF-8 Byte Order Mark to be skipped
-///
-static const uint8_t __utf8_bom[] = {0xEF, 0xBB, 0xBF};
-
 /// \brief Encode data to UTF-16
 ///
 /// Guess the text data encoding and couvert it to UTF-16
@@ -231,9 +258,7 @@ static inline size_t __utf16_encode(OmWString* pwcs, const uint8_t* data, size_t
                             (((a)[2] & 0xC0) == 0x80)
   #define IS_UTF8_4BYTES(a) (((a)[1] & 0xC0) == 0x80) && \
                             (((a)[2] & 0xC0) == 0x80) && \
-                            (((a)[3] & 0xC0) == 0x80) && \
-
-
+                            (((a)[3] & 0xC0) == 0x80)
   uint32_t u;
 
   const uint8_t* c;
@@ -375,42 +400,22 @@ size_t Om_loadToUTF16(OmWString* result, const OmWString& path)
   if(hFile == INVALID_HANDLE_VALUE)
     return len;
 
+  uint8_t read_buf[READ_BUF_SIZE];
   DWORD rb;
 
-  while(ReadFile(hFile, __read_buf, READ_BUF_SIZE, &rb, nullptr)) {
+  while(ReadFile(hFile, read_buf, READ_BUF_SIZE, &rb, nullptr)) {
 
     if(rb == 0)
       break;
 
     // guess encoding then convert to UTF-16
-    len += __utf16_encode(result, __read_buf, rb);
+    len += __utf16_encode(result, read_buf, rb);
   }
 
   CloseHandle(hFile);
 
   return len;
 }
-
-/* Deprecated
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-OmWString Om_fromUtf8(const char* utf8)
-{
-  OmWString result;
-  __multibyte_decode(CP_UTF8, &result, utf8);
-  return result;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-size_t Om_fromUtf8(OmWString* wstr, const char* utf8)
-{
-  return __multibyte_decode(CP_UTF8, wstr, utf8);
-}
-*/
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -517,52 +522,6 @@ size_t Om_fromZipCDR(OmWString* wstr, const char* cdr)
   return wstr->size();
 }
 
-/*
-/// \brief Sort comparison function
-///
-/// Comparison callback function for std::sort() to sort strings in
-/// alphabetical order
-///
-/// \param[in]  a   : left string to compare.
-/// \param[in]  b   : right string to compare.
-///
-/// \return True if a is "before" b, false otherwise
-///
-static bool __sortStrings_Func(const OmWString& a, const OmWString& b)
-{
-  // get size of the shorter string to compare
-  size_t l = a.size() > b.size() ? b.size() : a.size();
-
-  // test for ASCII value greater than the other
-  for(unsigned i = 0; i < l; ++i) {
-    if(towupper(a[i]) != towupper(b[i])) {
-      if(towupper(a[i]) < towupper(b[i])) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
-
-  // if function does not returned at this stage, this mean strings
-  // are equals in the tested portion, so the longer one is after
-  if(a.size() < b.size())
-    return true;
-
-  // if the two strings are strictly equals, then, we don't care
-  return false;
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void Om_sortStrings(OmWStringArray* strings)
-{
-  sort(strings->begin(), strings->end(), __sortStrings_Func);
-}
-*/
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -611,12 +570,6 @@ bool Om_namesMatches(const OmWString& left, const wchar_t* right)
   return true;
 }
 
-/// \brief whitespace characters
-///
-/// List of standard whitespace characters
-///
-static const wchar_t __wspace_chr[] = L" \r\n\t\xA0";
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -643,24 +596,6 @@ OmWString Om_trimed(const OmWString& wstr)
 
   return trimed;
 }
-
-/// \brief Illegal Windows characters
-///
-/// List of forbidden characters to test validity of file name or path.
-///
-static const wchar_t __illegal_win_chr[] = L"/*?\"<>|\\";
-
-/// \brief URL Regex pattern
-///
-/// Regular expression pattern for URL.
-///
-static const std::wregex __url_reg(LR"(^(https?:\/\/)([\da-z\.-]+\.[\da-z\.-]+)(:[\d]+)?([\/\.\w%-]*\/)?([\w.%-]*)?(\?[\w%-=&]+)?)");
-
-/// \brief Illegal URL path characters
-///
-/// List of forbidden characters to test validity of URL path.
-///
-static const wchar_t __illegal_url_chr[] = L" \"\\#<>|{}^[]`+$:@";
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -759,12 +694,6 @@ bool Om_hasIllegalUrlChar(const OmWString& path)
   return false;
 }
 
-/// \brief Hexadecimal digits
-///
-/// Static translation string to convert integer value to hexadecimal digit.
-///
-static const char __hex_digit[] = "0123456789abcdef";
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -792,8 +721,6 @@ void Om_urlEscape(OmCString* esc, const OmWString& url)
 
       for(size_t k = 0; k < 15; ++k) { //< avoid check for ':' and '@'
         if(c == __illegal_url_chr[k]) {
-
-
 
           esc->push_back('%');
           esc->push_back(__hex_digit[(c >> 4) & 0x0F]);
@@ -1133,13 +1060,12 @@ OmWString Om_formatSizeStr(uint64_t bytes, bool octet)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_formatSizeSysStr(int64_t bytes, OmWString* wstrs)
+void Om_formatSizeSysStr(OmWString* dest, int64_t bytes)
 {
   wchar_t buf[32];
 
-  if(StrFormatKBSizeW(bytes, buf, 32)) {
-    wstrs->assign(buf);
-  }
+  if(StrFormatKBSizeW(bytes, buf, 32))
+    dest->assign(buf);
 }
 
 ///
@@ -1151,9 +1077,8 @@ OmWString Om_formatSizeSysStr(int64_t bytes)
 
   wchar_t buf[32];
 
-  if(StrFormatKBSizeW(bytes, buf, 32)) {
+  if(StrFormatKBSizeW(bytes, buf, 32))
     result.assign(buf);
-  }
 
   return result;
 }
@@ -1198,43 +1123,38 @@ bool Om_strIsVersion(const OmWString& str)
 ///
 void Om_escapeMarkdown(OmWString* dst, const OmWString& src)
 {
-  // the following implementation is twice faster than
-  // usual ways using STL functions and methods.
+  uint32_t new_cap = dst->size() + (src.size() * 2);
 
-  size_t size = dst->size();
-  dst->resize(size + (src.size() * 2));
+  if(dst->capacity() < new_cap)
+    dst->reserve(new_cap);
 
-  wchar_t* back = &(*dst)[size];
-  wchar_t* d = const_cast<wchar_t*>(back);
   const wchar_t* s = src.data();
 
   while(*s != L'\0') {
     if(wcschr(L"*_#`", *s)) {
-      *d++ = L'\\';
+      dst->push_back(L'\\');
     }
-    *d++ = *s++;
+    dst->push_back(*s++);
   }
-
-  dst->resize(size + (d - back));
 }
 
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-size_t Om_escapeMarkdown(wchar_t* buf, const OmWString& src)
+size_t Om_escapeMarkdown(wchar_t* dst, const OmWString& src)
 {
   size_t n = 0;
   const wchar_t* s = src.data();
 
   while(*s != L'\0') {
     if(wcschr(L"*_#`", *s)) {
-      *buf++ = '\\'; n++;
+      *dst++ = '\\'; n++;
     }
-    *buf++ = *s++; n++;
+    *dst++ = *s++; n++;
   }
 
-  *buf++ = '\0';
+  *dst++ = '\0';
 
   return n;
 }
@@ -1250,6 +1170,7 @@ size_t Om_escapeMarkdown(wchar_t* buf, const OmWString& src)
 inline static void __to_crlf(OmWString* out_text, const OmWString& in_text)
 {
   out_text->clear();
+  out_text->reserve(in_text.size() * 2);
 
   for(size_t i = 0; i < in_text.size(); ++i) {
 
@@ -1284,6 +1205,7 @@ inline static void __to_crlf(OmWString* out_text, const OmWString& in_text)
 inline static void __to_crlf(OmCString* out_text, const OmCString& in_text)
 {
   out_text->clear();
+  out_text->reserve(in_text.size() * 2);
 
   for(size_t i = 0; i < in_text.size(); ++i) {
 

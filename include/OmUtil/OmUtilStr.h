@@ -546,10 +546,10 @@ OmWString Om_formatSizeStr(uint64_t bytes, bool octet = false);
 ///
 /// Create a formated string of the given size in bytes as system wide standard.
 ///
+/// \param[in]  dest    : Wide string to be set formated string describing size.
 /// \param[in]  bytes   : Size in bytes.
-/// \param[in]  wstr    : Wide string to be set formated string describing size.
 ///
-void Om_formatSizeSysStr(int64_t bytes, OmWString* wstr);
+void Om_formatSizeSysStr(OmWString* dest, int64_t bytes);
 
 /// \brief Get system formated bytes size string
 ///
