@@ -82,6 +82,22 @@ class OmConnect
     ///
     bool requestHttpGet(const OmWString& url, const OmWString& path, bool resume, Om_resultCb result_cb = nullptr, Om_downloadCb download_cb = nullptr, void* user_ptr = nullptr, uint32_t rate = 0);
 
+    /// \brief Http Get request download
+    ///
+    /// Send an HTTP GET request to download file at specified location
+    ///
+    /// \param[in] url          : Target URL for HTTP request.
+    /// \param[in] hfile        : Download destination file handle.
+    /// \param[in] resume       : Resume download and append data to existing destination file.
+    /// \param[in] result_cb    : Callback to get request result.
+    /// \param[in] download_cb  : Callback for download progression.
+    /// \param[in] user_ptr     : Custom pointer to pass to callback
+    /// \param[in] limit        : Download max rate in bytes per seconds (0 for no limit)
+    ///
+    /// \return True if request sent, false if a previous request still performing.
+    ///
+    bool requestHttpGet(const OmWString& url, void* hfile, bool resume, Om_resultCb result_cb = nullptr, Om_downloadCb download_cb = nullptr, void* user_ptr = nullptr, uint32_t rate = 0);
+
     /// \brief Http Get response code
     ///
     /// Returns HTTP GET request response code of the last performed request.
@@ -151,6 +167,8 @@ class OmConnect
     uint64_t            _get_data_cap;
 
     void*               _get_file_hnd;
+
+    bool                _get_file_own;
 
     uint32_t            _rate_accu;
 
