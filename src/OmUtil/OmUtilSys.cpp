@@ -22,15 +22,20 @@
 ///
 void Om_getTime(int *t_sec, int *t_min, int *t_hour)
 {
-  time_t __time_rtime;
-  struct tm* __time_ltime;
+  /* this is not thread-safe, localtime() returns pointer to global object
+  time_t raw_time;
+  time(&raw_time);
+  struct tm* local_time = localtime(&raw_time);*/
 
-  time(&__time_rtime);
-  __time_ltime = localtime(&__time_rtime);
+  __time64_t long_time;
+  _time64(&long_time);
 
-  if(t_sec != nullptr) *t_sec = __time_ltime->tm_sec;
-  if(t_min != nullptr) *t_min = __time_ltime->tm_min;
-  if(t_hour != nullptr) *t_hour = __time_ltime->tm_hour;
+  struct tm local_time;
+  _localtime64_s(&local_time, &long_time);
+
+  if(t_sec != nullptr) *t_sec = local_time.tm_sec;
+  if(t_min != nullptr) *t_min = local_time.tm_min;
+  if(t_hour != nullptr) *t_hour = local_time.tm_hour;
 }
 
 
@@ -39,13 +44,18 @@ void Om_getTime(int *t_sec, int *t_min, int *t_hour)
 ///
 void Om_getDate(int *t_day, int *t_mon, int *t_year)
 {
-  time_t __time_rtime;
-  struct tm* __time_ltime;
+  /* this is not thread-safe, localtime() returns pointer to global object
+  time_t raw_time;
+  time(&raw_time);
+  struct tm* local_time = localtime(&raw_time);*/
 
-  time(&__time_rtime);
-  __time_ltime = localtime(&__time_rtime);
+  __time64_t long_time;
+  _time64(&long_time);
 
-  if(t_day != nullptr) *t_day = __time_ltime->tm_mday;
-  if(t_mon != nullptr) *t_mon = __time_ltime->tm_mon;
-  if(t_year != nullptr) *t_year = __time_ltime->tm_year;
+  struct tm local_time;
+  _localtime64_s(&local_time, &long_time);
+
+  if(t_day != nullptr) *t_day = local_time.tm_mday;
+  if(t_mon != nullptr) *t_mon = local_time.tm_mon;
+  if(t_year != nullptr) *t_year = local_time.tm_year;
 }
