@@ -230,6 +230,8 @@ void OmUiPropModSrc::_onTbResize()
 ///
 INT_PTR OmUiPropModSrc::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  OM_UNUSED(lParam);
+
   if(uMsg == WM_COMMAND) {
 
     switch(LOWORD(wParam))

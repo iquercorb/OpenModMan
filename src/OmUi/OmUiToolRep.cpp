@@ -759,6 +759,8 @@ void OmUiToolRep::_refs_selchg(int32_t item, bool selected)
 ///
 bool OmUiToolRep::_refs_add(const OmWString& path, bool select)
 {
+  OM_UNUSED(select);
+
   // try to parse package
   OmModPack ModPack;
   if(!ModPack.parseSource(path))
