@@ -385,6 +385,16 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
 
   this->_dnl_percent = 0.0;
 
+  // check for exception when download part is actually the completed download, in this case
+  // we call result callback directly to prevent HTTP error 416
+  if(Om_isFile(this->_dnl_temp)) {
+     if(Om_itemSize(this->_dnl_temp) == this->_size) {
+        OmNetPack::_dnl_download_fn(this, 100, 100, 0, 0L);
+        OmNetPack::_dnl_result_fn(this, OM_RESULT_OK, 0L);
+        return true;
+     }
+  }
+
   if(!this->_connect.requestHttpGet(this->_down_url, this->_dnl_temp, true, OmNetPack::_dnl_result_fn, OmNetPack::_dnl_download_fn, this, rate)) {
     this->_error(L"startDownload", this->_connect.lastError());
     this->_has_error = true;
@@ -423,19 +433,15 @@ bool OmNetPack::finalizeDownload()
   // thread and prevent useless multiple notifications to be sent
 
   HANDLE hFile;
-  uint8_t attempt = 40;
+  uint8_t attempt = 20;
   while(attempt--) {
-
     hFile = CreateFileW(this->_dnl_temp.c_str(),
-                        GENERIC_READ|GENERIC_WRITE,
-                        FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                        GENERIC_READ|GENERIC_WRITE|DELETE,
+                        0, //< exclusive control
                         nullptr,OPEN_EXISTING,
                         0,nullptr);
 
-    if(hFile != INVALID_HANDLE_VALUE)
-      break;
-
-    Sleep(25);
+    if(hFile != INVALID_HANDLE_VALUE) break; else Sleep(25);
   }
 
   // do we have read/write access problem on the file ?
@@ -447,10 +453,14 @@ bool OmNetPack::finalizeDownload()
     return false;
   }
 
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmNetPack::finalizeDownload : Access File ("<< this->_dnl_temp << L")\n";
+  #endif // DEBUG
+
   // check whether received data is a zip file
   if(!Om_isFileZip(hFile, false)) { //< perform a full-check to ensure file is valid
 
-    Om_fileDelete(this->_dnl_temp);
+    Om_fileDelete(hFile);
 
     this->_error(L"finalizeDownload", L"Received invalid data (it is not a Mod package file)");
     this->_has_error = true;
@@ -461,12 +471,9 @@ bool OmNetPack::finalizeDownload()
   }
 
   // check for file size
-  LARGE_INTEGER FileSize;
-  GetFileSizeEx(hFile, &FileSize);
+  if(Om_fileSize(hFile) != this->_size) {
 
-  if(FileSize.QuadPart != this->_size) {
-
-    Om_fileDelete(this->_dnl_temp);
+    Om_fileDelete(hFile);
 
     this->_error(L"finalizeDownload", L"Downloaded file size mismatch the reference");
     this->_has_error = true;
@@ -487,16 +494,16 @@ bool OmNetPack::finalizeDownload()
 
   if(checksum_ok) {
 
-    int32_t result = Om_fileMove(this->_dnl_temp, this->_dnl_path);
+    int32_t result = Om_fileRename(hFile, this->_dnl_path, true);
     if(result != 0) {
-      Om_fileDelete(this->_dnl_temp);
+      Om_fileDelete(hFile);
       this->_error(L"finalizeDownload", Om_errRename(L"Temporary file", this->_dnl_temp, result));
       this->_has_error = true;
     }
 
   } else {
 
-    Om_fileDelete(this->_dnl_temp);
+    Om_fileDelete(hFile);
 
     this->_error(L"finalizeDownload", L"Downloaded file checksum mismatch the reference");
     this->_has_error = true;
@@ -586,10 +593,10 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   // since this function is intended to be called right after download success
   // the refresh of Mod library may had not been occurred yet, so we give us
   // some attempts with little time to get a result
-  int32_t attempt = 4;
+  int32_t attempt = 20;
   while(attempt--) {
     this_ModPack = this->_ModChan->findModpack(this->iden(), true);
-    if(this_ModPack) break; else Sleep(100);
+    if(this_ModPack) break; else Sleep(25);
   }
 
   if(!this_ModPack) {

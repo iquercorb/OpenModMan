@@ -879,3 +879,54 @@ uint8_t* Om_loadBinary(uint64_t* size, const OmWString& path)
 
   return data;
 }
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+uint64_t Om_fileSize(void* hFile)
+{
+  LARGE_INTEGER LargeInt;
+  GetFileSizeEx(static_cast<HANDLE>(hFile), &LargeInt);
+  return LargeInt.QuadPart;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t Om_fileRename(void* hFile, const OmWString& name, bool replace)
+{
+  uint8_t InfoBuffer[4096];
+
+  uint32_t InfoSize =  sizeof(FILE_RENAME_INFO) + (sizeof(wchar_t) * (name.size() + 1));
+  if(InfoSize > 4096) return -1; //< non-standard error code, but safe
+
+  Om_memset(&InfoBuffer, 0, InfoSize);
+
+  FILE_RENAME_INFO* RenameInfo = reinterpret_cast<FILE_RENAME_INFO*>(&InfoBuffer);
+  RenameInfo->ReplaceIfExists = replace;
+  RenameInfo->FileNameLength = name.size();
+
+  for(size_t i = 0; i < name.size(); ++i)
+    RenameInfo->FileName[i] = name[i];
+
+  if(!SetFileInformationByHandle(static_cast<HANDLE>(hFile), FileRenameInfo, &InfoBuffer, InfoSize)) {
+    return GetLastError();
+  }
+
+  return 0;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t Om_fileDelete(void* hFile)
+{
+  FILE_DISPOSITION_INFO DispositionInfo = {};
+  DispositionInfo.DeleteFile = true;
+
+  if(!SetFileInformationByHandle(static_cast<HANDLE>(hFile), FileDispositionInfo, &DispositionInfo, sizeof(FILE_DISPOSITION_INFO))) {
+    return GetLastError();
+  }
+
+  return 0;
+}

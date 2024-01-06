@@ -75,6 +75,7 @@ OmConnect::OmConnect() :
   _get_data_len(0),
   _get_data_cap(0),
   _get_file_hnd(nullptr),
+  _get_file_own(false),
   _rate_accu(0),
   _rate_time(0.0),
   _progress_off(0L),
@@ -136,6 +137,7 @@ void OmConnect::clear()
   this->_get_data_cap = 0;
 
   this->_get_file_hnd = nullptr;
+  this->_get_file_own = false;
 
   this->_rate_accu = 0;
   this->_rate_time = 0.0;
@@ -360,9 +362,99 @@ bool OmConnect::requestHttpGet(const OmWString& url, const OmWString& path, bool
     return false;
   }
 
+  // to close file handle at end
+  this->_get_file_own = true;
+
   LARGE_INTEGER FileSize;
   GetFileSizeEx(static_cast<HANDLE>(this->_get_file_hnd), &FileSize);
   int64_t resume_off = FileSize.QuadPart;
+
+  this->_heasy = curl_easy_init();
+  this->_hmult = curl_multi_init();
+
+  CURL* curl_easy = reinterpret_cast<CURL*>(this->_heasy);
+
+  this->_req_url.clear();
+  Om_urlEscape(&this->_req_url, url);
+  //this->_req_url = curl_easy_escape(curl_easy, Om_toUTF8(url).c_str(), 0); //< this is "too much" escaping, and does not work
+
+  curl_easy_setopt(curl_easy, CURLOPT_URL, this->_req_url.c_str());
+
+  curl_easy_setopt(curl_easy, CURLOPT_HTTPGET, 1L);
+
+  curl_easy_setopt(curl_easy, CURLOPT_WRITEFUNCTION, OmConnect::_perform_write_fio_fn);
+  curl_easy_setopt(curl_easy, CURLOPT_WRITEDATA, this);
+
+  curl_easy_setopt(curl_easy, CURLOPT_XFERINFOFUNCTION, OmConnect::_perform_progress_fn);
+  curl_easy_setopt(curl_easy, CURLOPT_XFERINFODATA, this);
+  curl_easy_setopt(curl_easy, CURLOPT_NOPROGRESS, 0L);
+
+  curl_easy_setopt(curl_easy, CURLOPT_VERBOSE, 0L);
+
+  if(resume_off > 0L) {
+
+    #ifdef DEBUG
+    std::cout << "DEBUG => OmConnect::requestHttpGet : resume from :" << resume_off << "\n";
+    #endif // DEBUG
+
+    SetFilePointer(static_cast<HANDLE>(this->_get_file_hnd), 0, nullptr, FILE_END);
+    curl_easy_setopt(curl_easy, CURLOPT_RESUME_FROM_LARGE, resume_off);
+    this->_progress_off = resume_off;
+  }
+
+  this->_req_user_ptr = user_ptr;
+  this->_req_result_cb = result_cb;
+  this->_req_download_cb = download_cb;
+
+  // download rate limit
+  this->_req_max_rate = rate;
+
+  // initialize download statistics
+  this->_rate_accu = 0;
+  this->_rate_time = clock();
+
+  this->_progress_tot = 0L;
+  this->_progress_now = 0L;
+  this->_progress_bps = 0.0;
+
+  this->_req_abort = false;
+
+  // launch new download thread
+  this->_perform_hth = Om_threadCreate(OmConnect::_perform_run_fn, this);
+  // register wait object to track thread end
+  this->_perform_hwo = Om_threadWaitEnd(this->_perform_hth, OmConnect::_perform_end_fn, this);
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmConnect::requestHttpGet(const OmWString& url, void* hfile, bool resume, Om_resultCb result_cb, Om_downloadCb download_cb, void* user_ptr, uint32_t rate)
+{
+  if(this->_perform_hth)
+    return false;
+
+  __curl_init();
+
+  this->clear();
+
+  this->_get_file_hnd =hfile;
+
+  if(this->_get_file_hnd == INVALID_HANDLE_VALUE) {
+    return false;
+  }
+
+  // to close file handle at end
+  this->_get_file_own = false;
+
+  int64_t resume_off = 0L;
+
+  if(resume) {
+    LARGE_INTEGER FileSize;
+    GetFileSizeEx(static_cast<HANDLE>(this->_get_file_hnd), &FileSize);
+    resume_off = FileSize.QuadPart;
+  }
 
   this->_heasy = curl_easy_init();
   this->_hmult = curl_multi_init();
@@ -530,8 +622,8 @@ DWORD WINAPI OmConnect::_perform_run_fn(void* ptr)
 
   DWORD resultCode = 0;
 
-  // close file handle
-  if(self->_get_file_hnd) {
+  // close file handle if instance created it
+  if(self->_get_file_own && self->_get_file_hnd) {
     CloseHandle(self->_get_file_hnd);
     self->_get_file_hnd = nullptr;
   }

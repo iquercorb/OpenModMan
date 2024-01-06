@@ -393,4 +393,36 @@ size_t Om_loadPlainText(OmCString* pstr, const OmWString& path);
 ///
 uint8_t* Om_loadBinary(uint64_t* size, const OmWString& path);
 
+/// \brief Get file size
+///
+/// Get size of the specified file
+///
+/// \param[in]  hFile   : File Handle.
+///
+/// \return File size in bytes
+///
+uint64_t Om_fileSize(void* hFile);
+
+/// \brief Rename file
+///
+/// Rename file pointed by given Handle
+///
+/// \param[in]  hFile   : Handle of file to rename
+/// \param[in]  name    : New file name to set
+/// \param[in]  replace : Replace file if destination name already exists
+///
+/// \return Error code if operation fail, zero otherwise
+///
+int32_t Om_fileRename(void* hFile, const OmWString& name, bool replace = true);
+
+/// \brief Delete file
+///
+/// Delete file pointed by given Handle
+///
+/// \param[in]  hFile   : Handle of file to delete
+///
+/// \return Error code if operation fail, zero otherwise
+///
+int32_t Om_fileDelete(void* hFile);
+
 #endif // OMUTILFS_H
