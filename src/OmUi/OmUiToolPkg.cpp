@@ -404,6 +404,9 @@ void OmUiToolPkg::_modpack_open()
                  L"The following file parse failed, it is either corrupted or not a valid Mod-package",
                  result);
   }
+
+  // save default Start path for Open dialogs
+  if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
 }
 
 ///
@@ -433,6 +436,9 @@ void OmUiToolPkg::_modpack_build()
                  L"The following directory parse failed, and this should never happen, so...",
                  result);
   }
+
+  // save default Start path for Open dialogs
+  if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
 }
 
 ///
@@ -656,10 +662,6 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->enableItem(IDC_LB_DPN, true);
     this->_depend_populate();
   }
-
-  // set this sources location as default Start path for Open dialogs
-  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(path));
 
   return true;
 }
