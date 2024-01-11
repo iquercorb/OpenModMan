@@ -463,7 +463,7 @@ bool OmModChan::open(const OmWString& path)
     this->setWarnExtraUnin(this->_warn_extra_unin);
   }
 
-  // Get network repository list
+  // get 'network' parameters (repositories and options)
   if(this->_xml.hasChild(L"network")) {
 
     OmXmlNode network_node = this->_xml.child(L"network");
@@ -477,6 +477,7 @@ bool OmModChan::open(const OmWString& path)
     OmXmlNodeArray repository_nodes;
     network_node.children(repository_nodes, L"repository");
 
+    // Get network repository list
     OmWString base, name;
 
     for(size_t i = 0; i < repository_nodes.size(); ++i) {
@@ -533,6 +534,24 @@ bool OmModChan::open(const OmWString& path)
     this->setWarnMissDnld(this->_warn_miss_dnld);
     this->setWarnUpgdBrkDeps(this->_warn_upgd_brk_deps);
     this->setDownLimits(this->_down_max_rate, this->_down_max_thread);
+  }
+
+
+  // // get 'tools' parameters
+  if(this->_xml.hasChild(L"tools")) {
+
+    OmXmlNode tools_node = this->_xml.child(L"tools");
+
+    if(tools_node.hasChild(L"sources_path")) {
+      this->_mods_sources_path = tools_node.child(L"sources_path").content();
+    } else {
+      this->setModsSourcesPath(L"");
+    }
+
+  } else {
+    // create default
+    this->_xml.addChild(L"tools");
+    this->setModsSourcesPath(L"");
   }
 
   this->_log(OM_LOG_OK, L"open", L"OK");
@@ -3888,6 +3907,37 @@ void OmModChan::setDownLimits(uint32_t rate, uint32_t thread)
 
   limits_node.setAttr(L"rate", static_cast<int>(this->_down_max_rate));
   limits_node.setAttr(L"thread", static_cast<int>(this->_down_max_thread));
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setModsSourcesPath(const OmWString& path)
+{
+  if(!this->_xml.valid())
+    return;
+
+  this->_mods_sources_path = path;
+
+  OmXmlNode tools_node;
+
+  if(this->_xml.hasChild(L"tools")) {
+    tools_node = this->_xml.child(L"tools");
+  } else {
+    tools_node = this->_xml.addChild(L"tools");
+  }
+
+  OmXmlNode sources_path_node;
+
+  if(tools_node.hasChild(L"sources_path")) {
+    sources_path_node = tools_node.child(L"sources_path");
+  } else {
+    sources_path_node = tools_node.addChild(L"sources_path");
+  }
+
+  sources_path_node.setContent(path);
 
   this->_xml.save();
 }

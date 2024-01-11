@@ -387,10 +387,11 @@ void OmUiToolPkg::_modpack_open()
     case -1: return;                       //< 'Cancel'
   }
 
-  // if available, select current active channel library as start location
+  // get Channel saved editor's sources path or library path as starting directory
   OmWString start;
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(ModChan) start = ModChan->libraryPath();
+  if(ModChan) start = (ModChan->modsSourcesPath().empty()) ?
+                          ModChan->libraryPath() : ModChan->modsSourcesPath();
 
   // new dialog to open file (allow multiple selection)
   OmWString result;
@@ -415,10 +416,11 @@ void OmUiToolPkg::_modpack_build()
     case -1: return;                       //< 'Cancel'
   }
 
-  // if available, select current active channel library as start location
+  // get Channel saved editor's sources path or library path as starting directory
   OmWString start;
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
-  if(ModChan) start = ModChan->libraryPath();
+  if(ModChan) start = (ModChan->modsSourcesPath().empty()) ?
+                          ModChan->libraryPath() : ModChan->modsSourcesPath();
 
   // new dialog to open file (allow multiple selection)
   OmWString result;
@@ -654,6 +656,10 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->enableItem(IDC_LB_DPN, true);
     this->_depend_populate();
   }
+
+  // set this sources location as default Start path for Open dialogs
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(path));
 
   return true;
 }

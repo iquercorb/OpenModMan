@@ -1243,6 +1243,24 @@ class OmModChan
     ///
     void setDownLimits(uint32_t rate, uint32_t thread);
 
+    /// \brief Get Mod-Pack editor sources path
+    ///
+    /// Returns default directory path for Mod-Pack editor 'Open' dialogs.
+    ///
+    /// \return Path to directory
+    ///
+    const OmWString& modsSourcesPath() const {
+      return this->_mods_sources_path;
+    }
+
+    /// \brief Set Mod-Pack editor sources path
+    ///
+    /// Define the default directory path for Mod-Pack editor 'Open' dialogs.
+    ///
+    /// \param[in] path   : Path to set.
+    ///
+    void setModsSourcesPath(const OmWString& path);
+
     /// \brief Get Mod Hub
     ///
     /// Return affiliated Mod Hub.
@@ -1491,6 +1509,8 @@ class OmModChan
     uint32_t              _down_max_rate;
 
     uint32_t              _down_max_thread;
+
+    OmWString             _mods_sources_path;
 
     // sorting comparison functions
     static bool           _compare_mod_name(const OmModPack* a, const OmModPack* b);
