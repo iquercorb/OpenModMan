@@ -1004,7 +1004,7 @@ DWORD WINAPI OmModHub::_psetup_run_fn(void* ptr)
   std::wcout << "DEBUG => OmModHub::_psetup_run_fn : enter\n";
   #endif // DEBUG
 
-  OmPModPackArray installs, restores;
+  OmPModPackArray entrylist, installs, restores;
 
   while(self->_psetup_queue.size()) {
 
@@ -1036,22 +1036,26 @@ DWORD WINAPI OmModHub::_psetup_run_fn(void* ptr)
 
       OmModChan* ModChan = self->_channel_list[i];
 
+      entrylist.clear();
+      ModPset->getSetupEntryList(ModChan, &entrylist);
+
       installs.clear();
       restores.clear();
 
-      ModPset->getSetupEntryList(ModChan, &installs);
+      for(size_t j = 0; j < ModChan->modpackCount(); ++j) {
 
-      if(!ModPset->installOnly()) {
+        OmModPack* ModPack = ModChan->getModpack(j);
 
-        // create the restores list
-        for(size_t j = 0; j < ModChan->modpackCount(); ++j) {
+        if(Om_arrayContain(entrylist, ModPack)) {
 
-          OmModPack* ModPack = ModChan->getModpack(j);
-
+          // add to the installs list
           if(!ModPack->hasBackup())
-            continue;
+            installs.push_back(ModPack);
 
-          if(!Om_arrayContain(installs, ModPack))
+        } else {
+
+          // add to the restores list
+          if(!ModPset->installOnly() && ModPack->hasBackup())
             restores.push_back(ModPack);
         }
       }
