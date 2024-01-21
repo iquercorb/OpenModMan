@@ -1204,7 +1204,7 @@ bool OmModHub::_migrate_120(const OmWString& path, OmWString* omx_path)
     xmlnode = xmldoc.child(OM_XMAGIC_BAT);
     if(!xmlnode.empty()) xmlnode.setName(OM_XMAGIC_PST);
 
-    // Rename all Scripts <location> by <modchan>
+    // Rename all Scripts <location> by <setup>
     xmlnode.children(location_nodes, L"location");
     for(size_t i = 0; i < location_nodes.size(); ++i)
       location_nodes[i].setName(L"setup");
