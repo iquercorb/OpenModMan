@@ -439,6 +439,7 @@ bool OmModPset::repair()
     OmModChan* ModChan = this->_ModHub->findChannel(xml_setup[i].attrAsString(L"uuid"));
 
     // get install list for this setup
+    xml_install.clear();
     xml_setup[i].children(xml_install, L"install");
 
     // clear the discard list
