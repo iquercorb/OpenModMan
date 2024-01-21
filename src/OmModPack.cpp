@@ -37,55 +37,6 @@
 #define SAVEAS_README_NAME      L"readme.md"
 #define SAVEAS_MODDEF_NAME      L"modpack.xml"
 
-/// \brief Get package folder tree.
-///
-/// Get the full list, in recursive way, of items (subfolders and files)
-/// contained in the specified folder.
-///
-/// \param[in]  ent_ls  : Pointer to Mod Entry vector object to be filled
-/// \param[in]  orig    : Path to where to begin the inspection.
-///
-/// \return The filled buffer as const char
-///
-static void __parse_source_dir(OmModEntryArray* ent_ls, const OmWString& orig, const OmWString& from)
-{
-  OmWString item;
-  OmWString root;
-
-  OmModEntry_t entry;
-  entry.cdid = -1;
-
-  OmWString srch(orig);
-  srch += L"\\*";
-
-  WIN32_FIND_DATAW fd;
-  HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
-  if(hnd != INVALID_HANDLE_VALUE) {
-    do {
-      // skip this and parent folder
-      if(!wcscmp(fd.cFileName, L".")) continue;
-      if(!wcscmp(fd.cFileName, L"..")) continue;
-
-      item = from + L"\\"; item += fd.cFileName;
-
-      entry.path = item;
-
-      if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        entry.attr = OM_MODENTRY_DIR;
-        ent_ls->push_back(entry);
-        // go deep in tree
-        root = orig + L"\\"; root += fd.cFileName;
-        __parse_source_dir(ent_ls, root, item);
-      } else {
-        entry.attr = 0;
-        ent_ls->push_back(entry);
-      }
-    } while(FindNextFileW(hnd, &fd));
-  }
-  FindClose(hnd);
-}
-
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -225,11 +176,19 @@ void OmModPack::_src_parse_dir(OmModEntryArray* entries, const OmWString& orig, 
       if(!wcscmp(fd.cFileName, L".")) continue;
       if(!wcscmp(fd.cFileName, L"..")) continue;
 
-      item = from + L"\\"; item += fd.cFileName;
+      // prevent leading back-slash
+      if(from.empty()) {
+        item = L"";
+      } else {
+        item = from; item += L"\\";
+      }
+
+      item += fd.cFileName;
 
       entry.path = item;
 
       if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+
         entry.attr = OM_MODENTRY_DIR;
         entries->push_back(entry);
         // go deep in tree
@@ -261,7 +220,6 @@ bool OmModPack::parseSource(const OmWString& path)
 
     isdir = true;
 
-    //__parse_source_dir(&this->_src_entry, path, L"");
     OmModPack::_src_parse_dir(&this->_src_entry, path, L"");
     src_root = path;
 
@@ -979,7 +937,7 @@ bool OmModPack::canOverlap(const OmModPack* other) const
         continue;
 
       // same path mean overlap
-      if(this->_src_entry[i].path == other->_src_entry[j].path)
+      if(Om_namesMatches(this->_src_entry[i].path, other->_src_entry[j].path))
         return true;
     }
   }
