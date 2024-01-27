@@ -4,3 +4,7 @@ bin/
 obj/
 art/*.png
 setup/*.exe
+setup/*.zip
+setup/OpenModMan_x86/
+setup/OpenModMan_x64/
+
