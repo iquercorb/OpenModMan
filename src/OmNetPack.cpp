@@ -511,6 +511,13 @@ bool OmNetPack::finalizeDownload()
 
   CloseHandle(hFile);
 
+  // We now wait until the Channel local Library updated so everything is
+  // up to date for further operations, notably upgrade.
+  attempt = 20;
+  while(attempt--) {
+    if(this->_ModChan->findModpack(this->iden(), true)) break; else Sleep(25);
+  }
+
   return !this->_has_error;
 }
 
@@ -588,17 +595,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   this->_cli_progress_cb = progress_cb;
 
   // find Mod Pack corresponding to this Net Pack
-  OmModPack* this_ModPack;
-
-  // since this function is intended to be called right after download success
-  // the refresh of Mod library may had not been occurred yet, so we give us
-  // some attempts with little time to get a result
-  int32_t attempt = 20;
-  while(attempt--) {
-    this_ModPack = this->_ModChan->findModpack(this->iden(), true);
-    if(this_ModPack) break; else Sleep(25);
-  }
-
+  OmModPack* this_ModPack = this->_ModChan->findModpack(this->iden(), true);
   if(!this_ModPack) {
     this->_error(L"upgradeReplace", L"corresponding Mod Pack object not found in Mod library");
     return OM_RESULT_ERROR;
@@ -610,7 +607,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   // simulate slow progressing process
   for(size_t i = 0; i < 100; ++i) {
     OmNetPack::_upg_progress_fn(this, 100, i, 0);
-    Sleep(100);
+    Sleep(25);
   }
   #endif //DEBUG
 
