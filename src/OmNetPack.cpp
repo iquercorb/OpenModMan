@@ -186,12 +186,12 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
   }
 
   // check for thumbnail
-  if(ref_node.hasChild(L"picture")) {
+  if(ref_node.hasChild(L"thumbnail")) {
 
     // decode the DataURI
     size_t jpg_size;
     OmWString mimetype, charset;
-    uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"picture").content());
+    uint8_t* jpg_data = Om_decodeDataUri(&jpg_size, mimetype, charset, ref_node.child(L"thumbnail").content());
 
     // load Jpeg image
     if(jpg_data) {
