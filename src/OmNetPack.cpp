@@ -136,26 +136,33 @@ bool OmNetPack::parseReference(OmNetRepo* NetRepo, size_t i)
     this->_has_part = Om_isFile(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"));
   }
 
-  // check for custom URL or download path
+  // check for custom link
   if(ref_node.hasChild(L"url")) {
 
-    // get custom URL/Path
+    // get custom link
     this->_cust_url = ref_node.child(L"url").content();
 
-    // check whether the supplied custom path is a full URL
+    // check whether the supplied custom link is a full URL
     if(Om_isUrl(this->_cust_url)) {
-      // set dwonload URL as supplied custom path
+      // set download URL as supplied custom link
       this->_down_url = this->_cust_url;
     } else {
-      // compose basic download URL with custom path
+      // compose basic download URL with custom link
       Om_concatURLs(this->_down_url, this->_NetRepo->base(), this->_cust_url);
     }
   } else {
-    // compose download URL from common default parameters
-    Om_concatURLs(this->_down_url, this->_NetRepo->base(), this->_NetRepo->downpath());
+
+    // check whether the supplied global link is a full URL
+    if(Om_isUrl(this->_NetRepo->downpath())) {
+      // set download URL as supplied global link
+      this->_down_url = this->_NetRepo->downpath();
+    } else {
+      // compose download URL from common default parameters
+      Om_concatURLs(this->_down_url, this->_NetRepo->base(), this->_NetRepo->downpath());
+    }
   }
 
-  // if download path is not already a full URL to file, add file
+  // if download link is not already a full URL to file, add file
   if(!Om_isFileUrl(this->_down_url)) {
     // finally add file to this URL
     Om_concatURLs(this->_down_url, this->_down_url, this->_file);
