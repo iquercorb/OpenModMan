@@ -1,4 +1,4 @@
-# Open Mod Mananager
+# Open Mod Manager
 
 Open source and generic Mod ("Modifications") manager.
 
@@ -6,7 +6,7 @@ Open source and generic Mod ("Modifications") manager.
 
 ## Presentation
 
-Open Mod Manager is an open source and generic Mod manager. Mod term come from
+Open Mod Manager is an open source and generic Mod manager. Mod term comes from
 Modification and refers to one or several unofficial files which are added to, or
 replace original editor's files of a software (usually a game) to change its behaviour,
 add features, components or items.
