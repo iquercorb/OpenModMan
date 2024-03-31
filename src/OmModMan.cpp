@@ -704,16 +704,11 @@ void OmModMan::addStartHub(const OmWString& path)
   OmXmlNodeArray path_nodes;
   start_list_node.children(path_nodes, L"path");
 
-  bool exists = false;
+  for(size_t i = 0; i < path_nodes.size(); ++i)
+    if(path_nodes[i].content() == path)
+      return;
 
-  for(size_t i = 0; i < path_nodes.size(); ++i) {
-    if(path_nodes[i].content() == path) {
-      exists = true; break;
-    }
-  }
-
-  if(!exists)
-    start_list_node.addChild(L"path").setContent(path);
+  start_list_node.addChild(L"path").setContent(path);
 
   this->_xml.save();
 }
