@@ -16,9 +16,12 @@
 */
 #include "OmBase.h"           //< string, vector, Om_alloc, OM_MAX_PATH, etc.
 
+
 #include "OmBaseWin.h"        //< WinAPI
 #include <ShlwApi.h>          //< PathIsDirectoryEmptyW
 #include <ShlObj.h>           //< SHCreateDirectoryExW
+
+#include "OmUtilWin.h"
 
 #define READ_BUF_SIZE 524288
 
@@ -226,8 +229,10 @@ bool Om_isFileZip(const OmWString& path, bool quick)
   // 18 from the end.
 
   rb = 0;
+  LARGE_INTEGER LargeDist;
+  LargeDist.QuadPart = -65557;
+  SetFilePointerEx(hFile, LargeDist, nullptr, FILE_END);
 
-  SetFilePointer(hFile, -65557, 0, FILE_END);
   ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
   CloseHandle(hFile);
 
@@ -272,8 +277,10 @@ bool Om_isFileZip(void* hFile, bool quick)
   // 18 from the end.
 
   rb = 0;
+  LARGE_INTEGER LargeDist;
+  LargeDist.QuadPart = -65557;
+  SetFilePointerEx(hFile, LargeDist, nullptr, FILE_END);
 
-  SetFilePointer(hFile, -65557, 0, FILE_END);
   ReadFile(hFile, &read_buf, 65557, &rb, nullptr);
 
   if(rb < 128)  //< too small data cannot be valid ZIP file
