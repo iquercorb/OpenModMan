@@ -1681,8 +1681,11 @@ void OmUiManMainNet::_onShow()
   std::cout << "DEBUG => OmUiManMainNet::_onShow\n";
   #endif
 
-  // refresh dialog
+  // refresh processing
   this->_refresh_processing();
+
+  // check selection to refresh foot tabs
+  this->_lv_net_on_selchg();
 }
 
 ///

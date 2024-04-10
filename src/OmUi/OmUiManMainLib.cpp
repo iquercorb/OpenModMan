@@ -1536,7 +1536,12 @@ void OmUiManMainLib::_onShow()
 
   // refresh dialog
   //this->_onRefresh();
+
+  // refresh processing
   this->_refresh_processing();
+
+  // check selection to update foot tabs
+  this->_lv_mod_on_selchg();
 }
 
 ///
