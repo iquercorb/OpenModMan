@@ -519,9 +519,6 @@ class OmModHub
     void                  _error(const OmWString& origin, const OmWString& detail);
 
     OmWString             _lasterr;
-
-    // special function for migration to 1.2.0
-    bool                  _migrate_120(const OmWString& path, OmWString* omx_path);
 };
 
 /// \brief OmModHub pointer array

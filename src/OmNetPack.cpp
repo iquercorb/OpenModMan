@@ -537,7 +537,7 @@ bool OmNetPack::_dnl_download_fn(void* ptr, int64_t tot, int64_t cur, int64_t ra
 
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
-  self->_dnl_percent = ((double)cur / tot) * 100;
+  self->_dnl_percent = ((double)cur / tot) * 100.0;
   self->_dnl_remain = (double)(tot - cur) / rate;
 
   if(self->_cli_download_cb) {

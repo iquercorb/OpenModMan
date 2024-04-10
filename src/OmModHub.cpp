@@ -139,30 +139,21 @@ bool OmModHub::open(const OmWString& path)
     return false;
   }
 
-  // path of migrated HUB definition file (renamed by migration process)
-  OmWString omx_path;
-
-  // Migrate old standard to new standard
-  if(!this->_migrate_120(path, &omx_path)) {
-    this->_error(L"open", L"Migration required but has failed (see logs more details)");
-    return false;
-  }
-
   // try to open and parse the XML file
-  if(!this->_xml.load(omx_path, OM_XMAGIC_HUB)) {
-    this->_error(L"open", Om_errParse(L"Definition file", Om_getFilePart(omx_path), this->_xml.lastErrorStr()));
+  if(!this->_xml.load(path, OM_XMAGIC_HUB)) {
+    this->_error(L"open", Om_errParse(L"Definition file", Om_getFilePart(path), this->_xml.lastErrorStr()));
     return false;
   }
 
   // check for the presence of <uuid> entry
   if(!this->_xml.hasChild(L"uuid") || !this->_xml.hasChild(L"title")) {
-    this->_error(L"open", Om_errParse(L"Definition file", Om_getFilePart(omx_path), L"missing essential node(s)"));
+    this->_error(L"open", Om_errParse(L"Definition file", Om_getFilePart(path), L"missing essential node(s)"));
     return false;
   }
 
   // right now this Mod Hub appear usable, even if it is empty
-  this->_path = omx_path;
-  this->_home = Om_getDirPart(omx_path);
+  this->_path = path;
+  this->_home = Om_getDirPart(path);
   this->_uuid = this->_xml.child(L"uuid").content();
   this->_title = this->_xml.child(L"title").content();
 
@@ -1147,172 +1138,4 @@ void OmModHub::_error(const OmWString& origin, const OmWString& detail)
 {
   this->_lasterr = detail;
   this->_log(OM_LOG_ERR, origin, detail);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModHub::_migrate_120(const OmWString& path, OmWString* omx_path)
-{
-  // Function to migrate Mod Hub structure and definitions files from old standard
-  // to new standard
-  OmXmlDoc xmldoc;
-  OmXmlNode xmlnode;
-
-  OmWStringArray filename;
-  OmWStringArray to_delete;
-
-  OmWString modhub_home = Om_isFile(path) ? Om_getDirPart(path) : path;
-
-  // Check whether we got an OMC file, meaning migration is required
-  Om_lsFileFiltered(&filename, modhub_home, L"*." OM_CTX_DEF_FILE_EXT, true);
-  if(!filename.size()) {
-    omx_path->assign(path); //< keep original path as migrated path
-    return true;
-  }
-
-  OmWString presets_dir = Om_concatPaths(modhub_home, OM_MODHUB_MODPSET_DIR);
-
-  // Here we go for Mod Hub set migration
-  this->_log(OM_LOG_OK, L"_migrate", L"Found old fashion Mod Hub that must be migrated");
-
-  // We first create the new 'OM_MODHUB_MODPSET_DIR' folder, this will also tell us
-  // that Mod Hub directory is writable
-  if(!Om_isDir(presets_dir)) {
-    // Create "Preset" directory, fail silently
-    int32_t result = Om_dirCreate(presets_dir);
-    if(result != 0) {
-      this->_error(L"_migrate", Om_errCreate(L"presets directory", presets_dir, result));
-      return false;
-    }
-  }
-
-  // We now migrate Preset files, xml 'magic' node is modified and file
-  // saved into the new dedicated '_Script' folder
-
-  // Search for Preset within Mod Hub home directory
-  filename.clear();
-  Om_lsFileFiltered(&filename, modhub_home, L"*." OM_BAT_DEF_FILE_EXT, true);
-
-  // Modify and save each Preset file
-  OmWString preset_path;
-  OmXmlNodeArray location_nodes;
-  for(size_t i = 0; i < filename.size(); ++i) {
-
-    // Load definition and change the 'magic' node
-    xmldoc.load(filename[i]);
-    xmlnode = xmldoc.child(OM_XMAGIC_BAT);
-    if(!xmlnode.empty()) xmlnode.setName(OM_XMAGIC_PST);
-
-    // Rename all Scripts <location> by <setup>
-    xmlnode.children(location_nodes, L"location");
-    for(size_t i = 0; i < location_nodes.size(); ++i)
-      location_nodes[i].setName(L"setup");
-
-    // Save file with new name at new location
-    Om_concatPathsExt(preset_path, presets_dir, Om_spacesToUnderscores(Om_getNamePart(filename[i])), OM_XML_DEF_EXT);
-    if(!xmldoc.save(preset_path)) {
-      this->_error(L"_migrate", Om_errSave(L"preset file", preset_path, xmldoc.lastErrorStr()));
-      return false;
-    }
-
-    xmldoc.clear();
-
-    // add old file to be deleted
-    to_delete.push_back(filename[i]);
-  }
-
-  // Now migrate Mod Channel(s)
-  OmWStringArray subdir;
-  Om_lsDir(&subdir, modhub_home, false);
-
-  OmWString channel_home, channel_path;
-  for(size_t i = 0; i < subdir.size(); ++i) {
-
-    channel_home = Om_concatPaths(modhub_home, subdir[i]);
-
-    // check for presence of old standard Mod Channel definition file
-    filename.clear();
-    Om_lsFileFiltered(&filename, channel_home, L"*." OM_LOC_DEF_FILE_EXT, true);
-
-    // Parse the first file found
-    if(filename.size()) {
-
-      // Load definition and change the 'magic' node
-      xmldoc.load(filename[0]);
-      xmlnode = xmldoc.child(OM_XMAGIC_LOC);
-      if(!xmlnode.empty()) xmlnode.setName(OM_XMAGIC_CHN);
-
-      // migrate backup zip options to new standard with default values
-      xmlnode = xmlnode.child(L"backup_comp");
-      if(!xmlnode.empty()) {
-        xmlnode.setAttr(L"method", (int)OM_METHOD_ZSTD);
-        xmlnode.setAttr(L"level", (int)OM_LEVEL_FAST);
-      }
-
-      channel_path = Om_concatPaths(channel_home, OM_MODCHN_FILENAME);
-
-      // Save file with new name
-      if(!xmldoc.save(channel_path)) {
-        this->_error(L"_migrate", Om_errSave(L"Mod Channel definition file", channel_path, xmldoc.lastErrorStr()));
-        return false;
-      }
-
-      xmldoc.clear();
-
-      // add old file to be deleted
-      to_delete.push_back(filename[0]);
-    }
-  }
-
-  // Finally migrate the Mod Hub definition file
-  filename.clear();
-  Om_lsFileFiltered(&filename, modhub_home, L"*." OM_CTX_DEF_FILE_EXT, true);
-
-  if(filename.size()) {
-
-    // Load definition and change the 'magic' node
-    xmldoc.load(filename[0]);
-    xmlnode = xmldoc.child(OM_XMAGIC_CTX);
-    if(!xmlnode.empty()) xmlnode.setName(OM_XMAGIC_HUB);
-
-    OmWString modhub_path = Om_concatPaths(modhub_home, OM_MODHUB_FILENAME);
-
-    // Save file with new name
-    if(!xmldoc.save(modhub_path)) {
-      this->_error(L"_migrate", Om_errSave(L"Mod Hub definition file", modhub_path, xmldoc.lastErrorStr()));
-      return false;
-    }
-
-    xmldoc.clear();
-
-    // Replace startup path entry if exist
-    if(this->_ModMan->removeStartHub(path)) {
-      this->_ModMan->addStartHub(modhub_path);
-    }
-
-    // Replace recent file entry if exist
-    if(this->_ModMan->removeRecentFile(path)) {
-      this->_ModMan->addRecentFile(modhub_path);
-    }
-
-    // set the new path to migrated Hub
-    omx_path->assign(modhub_path);
-
-    // add old file to be deleted
-    to_delete.push_back(filename[0]);
-  }
-
-  // Here we go for Mod Hub set migration
-  this->_log(OM_LOG_OK, L"_migrate", L"Migration appear successful, cleaning old data.");
-
-  for(size_t i = 0; i < to_delete.size(); ++i) {
-    int32_t result = Om_fileDelete(to_delete[i]);
-    if(result != 0) {
-      this->_error(L"_migrate", Om_errDelete(L"old file", to_delete[i], result));
-      return false;
-    }
-  }
-
-  return true;
 }

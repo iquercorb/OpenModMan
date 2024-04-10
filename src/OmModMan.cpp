@@ -103,13 +103,13 @@ bool OmModMan::init(const char* arg)
                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
   // Load existing configuration or create a new one
-  if(!this->_xml.load(this->_home + L"\\config.xml", OM_XMAGIC_APP)) {
+  OmWString conf_path = this->_home + L"\\config.xml";
+
+  if(!this->_xml.load(conf_path, OM_XMAGIC_APP)) {
 
     this->_log(OM_LOG_WRN, L"Manager.init", L"missing configuration file, create new one");
 
     this->_xml.init(OM_XMAGIC_APP);
-
-    OmWString conf_path = this->_home + L"\\config.xml";
 
     if(!this->_xml.save(conf_path)) {
       // this is not a fatal error, but this will surely be a problem...
@@ -121,9 +121,6 @@ bool OmModMan::init(const char* arg)
     // default icons size
     this->setIconsSize(this->_icon_size);
   }
-
-  // migrate config file
-  this->_migrate_120();
 
   // load saved parameters
   if(this->_xml.hasChild(L"icon_size")) {
@@ -1137,69 +1134,4 @@ void OmModMan::_error(const OmWString& origin, const OmWString& detail)
 {
   this->_lasterr = detail;
   this->_log(OM_LOG_ERR, origin, detail);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmModMan::_migrate_120()
-{
-  if(!this->_xml.valid())
-    return false;
-
-  // Migrate startup Mod Hub list if required
-  if(this->_xml.hasChild(L"start_list")) {
-
-    OmXmlNode start_list = this->_xml.child(L"start_list");
-
-    if(start_list.hasChild(L"file")) {
-
-      OmXmlNodeArray file_ls;
-      start_list.children(file_ls, L"file");
-
-      OmWStringArray temp_ls;
-
-      // get list
-      for(size_t i = 0; i < file_ls.size(); ++i)
-        temp_ls.push_back(file_ls[i].content());
-
-      // remove all current file list
-      for(size_t i = 0; i < file_ls.size(); ++i)
-        start_list.remChild(file_ls[i]);
-
-      // add new list
-      for(size_t i = 0; i < temp_ls.size(); ++i)
-        start_list.addChild(L"path").setContent(temp_ls[i]);
-    }
-  }
-  // Migrate startup Mod Hub list if required
-  if(this->_xml.hasChild(L"recent_list")) {
-
-    OmXmlNode recent_list = this->_xml.child(L"recent_list");
-
-    if(recent_list.hasChild(L"file")) {
-
-      OmXmlNodeArray file_ls;
-      recent_list.children(file_ls, L"file");
-
-      OmWStringArray temp_ls;
-
-      // get list
-      for(size_t i = 0; i < file_ls.size(); ++i)
-        temp_ls.push_back(file_ls[i].content());
-
-      // remove all current file list
-      for(size_t i = 0; i < file_ls.size(); ++i)
-        recent_list.remChild(file_ls[i]);
-
-      // add new list
-      for(size_t i = 0; i < temp_ls.size(); ++i)
-        recent_list.addChild(L"path").setContent(temp_ls[i]);
-    }
-  }
-
-  this->_xml.save();
-
-
-  return true;
 }
