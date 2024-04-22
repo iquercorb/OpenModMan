@@ -642,7 +642,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
     // keep hash of uinstalled package to be re-installed later
     unins_hash.push_back(restores[i]->hash());
 
-    if(!restores[i]->restoreData(OmNetPack::_upg_progress_fn, this)) {
+    if(OM_HAS_BIT(restores[i]->restoreData(OmNetPack::_upg_progress_fn, this), OM_RESULT_ERROR)) {
       this->_error(L"upgradeReplace", restores[i]->lastError());
       has_error = true;
     }

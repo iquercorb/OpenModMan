@@ -851,7 +851,6 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
     RECT rect;
     self->getLvSubRect(IDC_LV_MOD, item_id, 5 /* 'Progress' column */, &rect);
     self->redrawItem(IDC_LV_MOD, &rect, RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
-
   }
 
   if(result == OM_RESULT_ERROR) {
