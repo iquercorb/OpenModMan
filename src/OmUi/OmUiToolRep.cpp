@@ -463,7 +463,7 @@ void OmUiToolRep::_repository_save_as()
     return;
 
   // check for ".omx" extension, add it if needed
-  if(!Om_extensionMatches(dlg_result, OM_XML_DEF_EXT)) {
+  if(!Om_extensionMatches(dlg_result, OM_XML_DEF_EXT) && !Om_extensionMatches(dlg_result, L"xml")) {
     dlg_result += L"." OM_XML_DEF_EXT;
   }
 
