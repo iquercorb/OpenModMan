@@ -1286,7 +1286,7 @@ bool OmModChan::_compare_mod_name(const OmModPack* a, const OmModPack* b)
 ///
 bool OmModChan::_compare_mod_stat(const OmModPack* a, const OmModPack* b)
 {
-  if(a->hasBackup() && b->hasBackup()) {
+  if(a->hasBackup() == b->hasBackup()) {
     return OmModChan::_compare_mod_name(a, b);
   } else {
     return (a->hasBackup() && !b->hasBackup());
