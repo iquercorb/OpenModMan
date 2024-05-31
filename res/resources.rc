@@ -379,7 +379,7 @@ FONT 8, "Ms Shell Dlg"
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                                MAIN WINDOW
 //
-//                            TOP FRAME CHILD DIALOG
+//                          MIDDLE FRAME CHILD DIALOG
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDD_MGR_MAIN DIALOGEX 0, 25, 505, 210

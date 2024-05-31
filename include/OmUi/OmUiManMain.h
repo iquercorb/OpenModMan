@@ -21,10 +21,10 @@
 
 class OmUiMan;
 
-/// \brief Window Main (top) Frame.
+/// \brief Window Main (middle) Frame.
 ///
-/// OmDialog class derived for the main window top frame which contain
-/// main application tabs.
+/// OmDialog class derived for the main window middle frame which contain
+/// Scripts, Mods Library and Network library.
 ///
 class OmUiManMain : public OmDialog
 {

@@ -13,8 +13,9 @@
 #define IDR_MENU_REPEDI                         615
 #define IDR_MENU_MODEDI                         616
 #define IDD_MGR                                 700
-#define IDD_MGR_MAIN                            701
-#define IDD_MGR_FOOT                            702
+//#define IDD_MGR_HEAD                            701
+#define IDD_MGR_MAIN                            702
+#define IDD_MGR_FOOT                            703
 #define IDD_MGR_MAIN_LIB                        704
 #define IDD_MGR_MAIN_NET                        705
 #define IDD_MGR_MAIN_TST                        706

@@ -188,7 +188,7 @@ class OmUiMan : public OmDialog
     /// \return True if in frame resize process, false otherwise
     ///
     bool splitterCursorDragg() const {
-      return _split_curs_dragg;
+      return _split_captured;
     }
 
     /// \brief Check whether mouse hover frame split
@@ -199,7 +199,7 @@ class OmUiMan : public OmDialog
     /// \return True mouse cursor hovering between frames, false otherwise
     ///
     bool splitterCursorHover() const {
-      return _split_curs_hover;
+      return _split_hover_foot;
     }
 
     /// \brief List views ImageList handle
@@ -280,11 +280,13 @@ class OmUiMan : public OmDialog
     int32_t             _lock_idch;
 
     // frame splitter
-    bool                _split_curs_hover;
+    bool                _split_hover_head;
 
-    bool                _split_curs_dragg;
+    bool                _split_hover_foot;
 
-    long                _split_move_param[3];
+    bool                _split_captured;
+
+    long                _split_params[3];
 
     // common elements
     HIMAGELIST          _listview_himl;

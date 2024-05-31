@@ -50,7 +50,6 @@ OmUiManMain::OmUiManMain(HINSTANCE hins) : OmDialog(hins),
   this->setAccel(IDR_ACCEL);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -58,7 +57,6 @@ OmUiManMain::~OmUiManMain()
 {
 
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

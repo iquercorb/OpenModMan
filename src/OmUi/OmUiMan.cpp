@@ -70,9 +70,10 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _safe_mode(false),
   _lock_mode(false),
   _lock_idch(-1),
-  _split_curs_hover(false),
-  _split_curs_dragg(false),
-  _split_move_param{},
+  _split_hover_head(false),
+  _split_hover_foot(false),
+  _split_captured(false),
+  _split_params{},
   _listview_himl(nullptr),
   _listview_himl_size(0),
   _psetup_count(0),
@@ -1592,10 +1593,10 @@ void OmUiMan::_onInit()
   ModMan->loadWindowFoot(&h);
   if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
   // we emulate frame resize by user
-  this->_split_curs_dragg = true;
-  this->_split_move_param[2] = h;
+  this->_split_captured = true;
+  this->_split_params[2] = h;
   this->_onResize();
-  this->_split_curs_dragg = false;
+  this->_split_captured = false;
 
   // get Library dialog, required for Presets
   this->_UiManMainLib = static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB));
@@ -1680,7 +1681,7 @@ void OmUiMan::_onResize()
 
   long y, h, rc[4];
 
-  if(!this->_split_curs_dragg) {
+  if(!this->_split_captured) {
 
     // Mod Hubs ComboBox
     //this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 32, true);
@@ -1714,7 +1715,7 @@ void OmUiMan::_onResize()
 
   // get foot frame height, if we are in frame resize process we get it
   // from the temporary value stored after WM_MOUSEMOVE message
-  h = (this->_split_curs_dragg) ? this->_split_move_param[2] : this->_UiManFoot->height();
+  h = (this->_split_captured) ? this->_split_params[2] : this->_UiManFoot->height();
 
   // Make sure frame height got correct value
   if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
@@ -1737,7 +1738,7 @@ void OmUiMan::_onResize()
   this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-19, this->cliWidth()-100, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
-  if(!this->_split_curs_dragg) {
+  if(!this->_split_captured) {
 
     // simple resize, we can redraw entire window
     RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
@@ -1896,11 +1897,11 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   // release the previously captured mouse for frames move and resize process
   if(uMsg == WM_LBUTTONUP) {
-    if(this->_split_curs_dragg) {
+    if(this->_split_captured) {
       // release captured mouse
       ReleaseCapture();
       // quit the frame move and resize process
-      this->_split_curs_dragg = false;
+      this->_split_captured = false;
     }
     return 0;
   }
@@ -1908,15 +1909,15 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // if mouse cursor is hovering between frames, checks for left button click
   // by user to capture mouse and entering the frames move and resize process
   if(uMsg == WM_LBUTTONDOWN || (uMsg == WM_PARENTNOTIFY && wParam == WM_LBUTTONDOWN)) {
-    if(this->_split_curs_hover) {
+    if(this->_split_hover_foot || this->_split_hover_head) {
       // keeps mouse pointer position and foot frame height at
       // capture to later calculate relative moves and size changes
-      this->_split_move_param[0] = HIWORD(lParam);
-      this->_split_move_param[1] = this->_UiManFoot->height();
+      this->_split_params[0] = HIWORD(lParam);
+      this->_split_params[1] = this->_UiManFoot->height();
       // capture the mouse
       SetCapture(this->_hwnd);
       // we now are in frame move and resize process
-      this->_split_curs_dragg = true;
+      this->_split_captured = true;
     }
     return 0;
   }
@@ -1925,7 +1926,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // cursor hovering between the frames.
   if(uMsg == WM_SETCURSOR) {
     // checks whether cursor is hovering between frames
-    if(this->_split_curs_hover) {
+    if(this->_split_hover_foot || this->_split_hover_head) {
       SetCursor(LoadCursor(0,IDC_SIZENS));
       return 1; //< bypass default process
     }
@@ -1938,20 +1939,20 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     long p = HIWORD(lParam);
     if(GetCapture() == this->_hwnd) {
       // calculate new foot height according new cursor position
-      long h = this->_split_move_param[1] + this->_split_move_param[0] - p;
+      long h = this->_split_params[1] + this->_split_params[0] - p;
       // clamp to reasonable values
       if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
       if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
       // move the splitter / resize frames
       if(h != this->_UiManFoot->height()) {
-        this->_split_move_param[2] = h;
+        this->_split_params[2] = h;
         this->_onResize();
       }
     } else {
       // checks whether mouse cursor is hovering between frames, we take a
       // good margin around the gap to make it easier to catch.
       long y = this->cliHeight() - (this->_UiManFoot->height() + SATUSBAR_HEIGHT);
-      this->_split_curs_hover = (p > (y - 10) && p < (y - 1));
+      this->_split_hover_foot = (p > (y - 10) && p < (y - 1));
     }
     return 0;
   }
