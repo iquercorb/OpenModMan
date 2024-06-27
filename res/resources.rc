@@ -263,7 +263,7 @@ IDR_CONTEXT_MENU MENU
   {
     MENUITEM "&Install\tEnter", IDM_MOD_INST
     MENUITEM "&Uninstall\tBackspace", IDM_MOD_UINS
-    MENUITEM "&Clean uninstall\tShift+Backspace", IDM_MOD_CLNS
+    MENUITEM "&Complete Uninstall (clean dependencies)\tShift+Backspace", IDM_MOD_CLNS
     MENUITEM SEPARATOR
     MENUITEM "Di&scard backup data\tCtrl+Shift+Backspace", IDM_MOD_DISC
     MENUITEM SEPARATOR
