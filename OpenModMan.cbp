@@ -621,6 +621,7 @@
 			<Option compilerVar="WINDRES" />
 		</Unit>
 		<Unit filename="setup/OpenModMan.nsh" />
+		<Unit filename="setup/OpenModMan_Portable.ps1" />
 		<Unit filename="setup/setup-x64.nsi" />
 		<Unit filename="setup/setup-x86.nsi" />
 		<Unit filename="src/OmArchive.cpp" />
