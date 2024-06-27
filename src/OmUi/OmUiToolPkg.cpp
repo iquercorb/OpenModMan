@@ -1230,7 +1230,16 @@ void OmUiToolPkg::_depend_browse()
 
   OmWString identity;
   for(size_t i = 0; i < result.size(); ++i) {
+
     identity = Om_getNamePart(result[i]);
+
+    // check whether dependency is self reference
+    if(Om_namesMatches(this->_ModPack->iden(), identity)) {
+      Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_DLG_ERR, L"Invalid dependency",
+                 L"The following dependency refers to the current Mod, a Mod cannot depend on itself.", identity);
+      continue;
+    }
+
     this->msgItem(IDC_LB_DPN, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(identity.c_str()));
   }
 
@@ -1271,6 +1280,13 @@ void OmUiToolPkg::_depend_add_valid()
   this->setItemText(IDC_EC_INP08, L"");
 
   Om_trim(&ec_content);
+
+  // check whether dependency is self reference
+  if(Om_namesMatches(this->_ModPack->iden(), ec_content)) {
+    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_DLG_ERR, L"Invalid dependency",
+               L"The following dependency refers to the current Mod, a Mod cannot depend on itself.", ec_content);
+    return;
+  }
 
   LPARAM lpzText = reinterpret_cast<LPARAM>(ec_content.c_str());
 

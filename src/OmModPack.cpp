@@ -227,7 +227,7 @@ bool OmModPack::parseSource(const OmWString& path)
 
   bool isdir = false;
 
-  OmWString src_root, src_iden;
+  OmWString src_root, src_iden, dep_iden;
 
   if(Om_isDir(path)) {
 
@@ -304,8 +304,18 @@ bool OmModPack::parseSource(const OmWString& path)
 
         source_cfg.child(L"dependencies").children(xml_iden_ls, L"ident");
 
-        for(size_t i = 0; i < xml_iden_ls.size(); ++i)
-          this->_src_depend.push_back(xml_iden_ls[i].content());
+        for(size_t i = 0; i < xml_iden_ls.size(); ++i) {
+
+          dep_iden = xml_iden_ls[i].content();
+
+          // Prevent dependency to self
+          if(Om_namesMatches(this->_iden, dep_iden)) {
+            this->_log(OM_LOG_WRN, L"parseSource", L"Dependency reference to itself has been discarded");
+            continue;
+          }
+
+          this->_src_depend.push_back(dep_iden);
+        }
       }
 
       // search for <category>
