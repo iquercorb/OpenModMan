@@ -2037,8 +2037,19 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   if(uMsg == WM_COMMAND) {
 
     // Prevent command/shorcut execution when dialog is not active
-    if(!this->active())
+    if(!this->active()) {
+
+      OmDialog* UiTool;
+
+      // Reroot to proper Tool dialog if any
+      UiTool = this->childById(IDD_TOOL_PKG);
+      if(UiTool->active()) UiTool->postMessage(uMsg, wParam, lParam);
+
+      UiTool = this->childById(IDD_TOOL_REP);
+      if(UiTool->active()) UiTool->postMessage(uMsg, wParam, lParam);
+
       return false;
+    }
 
     #ifdef DEBUG
     std::cout << "DEBUG => OmUiMan::_onMsg : WM_COMMAND=" << LOWORD(wParam) << "\n";
@@ -2235,7 +2246,6 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->childById(IDD_TOOL_PKG)->modeless();
       break;
 
-
     // Menu : Help > []
     case IDM_DBGLOG:
       this->childById(IDD_HELP_LOG)->modeless();
@@ -2243,6 +2253,19 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_ABOUT:
       this->childById(IDD_HELP_ABT)->open();
+      break;
+
+    // Common shortcut (accelerator) commands
+    case IDM_COM_INFO: {
+
+        OmDialog* UiManMain;
+
+        UiManMain = this->_UiManMain->childById(IDD_MGR_MAIN_LIB);
+        if(UiManMain->visible()) static_cast<OmUiManMainLib*>(UiManMain)->showProperties();
+
+        UiManMain = this->_UiManMain->childById(IDD_MGR_MAIN_NET);
+        if(UiManMain->visible()) static_cast<OmUiManMainNet*>(UiManMain)->showProperties();
+      }
       break;
 
     // Debug Shortcut

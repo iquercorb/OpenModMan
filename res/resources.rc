@@ -270,7 +270,7 @@ IDR_CONTEXT_MENU MENU
     MENUITEM "&Open in Explorer...\tCtrl+E", IDM_MOD_OPEN
     MENUITEM "Move to &recycle bin\tDelete", IDM_MOD_TRSH
     MENUITEM SEPARATOR
-    MENUITEM "Open in Mod-package &Editor...\tCtrl+S", IDM_MOD_EDIT
+    MENUITEM "Open in Mod-package &Editor...\tCtrl+T", IDM_MOD_EDIT
     MENUITEM SEPARATOR
     MENUITEM "&Properties...\tCtrl+I", IDM_MOD_INFO
   }
@@ -295,7 +295,7 @@ IDR_MENU_REPEDI MENU
     {
         POPUP "&New"
         {
-            MENUITEM "&Repository definition", IDM_FILE_NEW
+            MENUITEM "&Repository definition\tCtrl+N", IDM_FILE_NEW
         }
         MENUITEM SEPARATOR
         MENUITEM "&Open\tCtrl+O", IDM_FILE_OPEN
@@ -333,8 +333,8 @@ IDR_MENU_PKGEDI MENU
         //    MENUITEM "&Mod-Package", IDM_FILE_NEW
         //}
         //MENUITEM SEPARATOR
-        MENUITEM "&Open\tCtrl+O", IDM_FILE_OPEN
-        MENUITEM "&Build from directory", IDM_MOD_BUIL
+        MENUITEM "&Open...\tCtrl+O", IDM_FILE_OPEN
+        MENUITEM "&Build from directory...\tCtrl+B", IDM_MOD_BUIL
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S", IDM_FILE_SAVE
         MENUITEM "Save &as...", IDM_FILE_SAVAS
@@ -1365,22 +1365,24 @@ FONT 8, "Ms Shell Dlg"
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDR_ACCEL ACCELERATORS
 {
-    "O",            IDM_FILE_OPEN, VIRTKEY, CONTROL
-    "W",            IDM_FILE_CLOSE, VIRTKEY, CONTROL
     "Q",            IDM_QUIT, VIRTKEY, CONTROL
+    "N",            IDM_FILE_NEW, VIRTKEY, CONTROL
+    "O",            IDM_FILE_OPEN, VIRTKEY, CONTROL
+    "S",            IDM_FILE_SAVE, VIRTKEY, CONTROL
+    "W",            IDM_FILE_CLOSE, VIRTKEY, CONTROL
     VK_RETURN,      IDM_MOD_INST, VIRTKEY
     VK_BACK,        IDM_MOD_UINS, VIRTKEY
     VK_BACK,        IDM_MOD_CLNS, VIRTKEY, SHIFT
     "E",            IDM_MOD_OPEN, VIRTKEY, CONTROL
+    "B",            IDM_MOD_BUIL, VIRTKEY, CONTROL
+    "T",            IDM_MOD_EDIT, VIRTKEY, CONTROL
     VK_DELETE,      IDM_MOD_TRSH, VIRTKEY
-    "S",            IDM_MOD_EDIT, VIRTKEY, CONTROL
-    "I",            IDM_MOD_INFO, VIRTKEY, CONTROL
     VK_RETURN,      IDM_NET_DNWS, VIRTKEY
     VK_RETURN,      IDM_NET_DNLD, VIRTKEY, SHIFT
     "P",            IDM_NET_STOP, VIRTKEY, CONTROL
     VK_DELETE,      IDM_NET_RVOK, VIRTKEY
     VK_RETURN,      IDM_NET_FIXD, VIRTKEY, CONTROL
-    "I",            IDM_NET_INFO, VIRTKEY, CONTROL
+    "I",            IDM_COM_INFO, VIRTKEY, CONTROL
     "D",            IDM_DBGLOG, VIRTKEY, CONTROL
     "M",            IDA_DEBUG_LOCK_MAN,  VIRTKEY, CONTROL, ALT
     "H",            IDA_DEBUG_LOCK_HUB,  VIRTKEY, CONTROL, ALT
