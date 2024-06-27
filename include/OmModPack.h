@@ -601,6 +601,16 @@ class OmModPack
     ///
     OmResult saveAs(const OmWString& path, int32_t method = 93, int32_t level = 6, Om_progressCb progress_cb = nullptr, Om_progressCb compress_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Check dependency status
+    ///
+    /// Returns current dependency status of this instance.
+    ///
+    /// \return 0 if instance is not dependent, 1 if instance dependency is satisfied and -1 in case of unsatisfied dependency
+    ///
+    int8_t isDependent() const {
+      return this->_is_dependent;
+    }
+
     /// \brief Check overlapped
     ///
     /// Returns whether this instance is currently overlapped by another
@@ -732,6 +742,8 @@ class OmModPack
     OmUint64Array       _bck_overlap;
 
     // analytical properties
+    int8_t              _is_dependent;
+
     bool                _is_overlapped;
 
     bool                _op_backup;

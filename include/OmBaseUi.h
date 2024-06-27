@@ -27,26 +27,28 @@ enum OmLvIconsId : int
   ICON_STS_WRN = 2,
   ICON_STS_WIP = 3,
   ICON_STS_OVR = 4,
-  ICON_STS_NEW = 5,
-  ICON_STS_UPG = 6,
-  ICON_STS_DNG = 7,
-  ICON_STS_DNL = 8,
-  ICON_STS_RES = 9,
-  ICON_STS_QUE = 10,
-  ICON_STS_RB0 = 11,
-  ICON_STS_RB1 = 12,
-  ICON_MOD_DIR = 13,
-  ICON_MOD_PKG = 14,
-  ICON_MOD_DEP = 15,
-  ICON_MOD_ERR = 16,
-  ICON_CHN = 17,
-  ICON_PST = 18,
-  ICON_REP = 19,
-  ICON_FIL = 20,
-  ICON_DIR = 21
+  ICON_STS_DPN = 5,
+  ICON_STS_BRK = 6,
+  ICON_STS_NEW = 7,
+  ICON_STS_UPG = 8,
+  ICON_STS_DNG = 9,
+  ICON_STS_DNL = 10,
+  ICON_STS_RES = 11,
+  ICON_STS_QUE = 12,
+  ICON_STS_RB0 = 13,
+  ICON_STS_RB1 = 14,
+  ICON_MOD_DIR = 15,
+  ICON_MOD_PKG = 16,
+  ICON_MOD_DEP = 17,
+  ICON_MOD_ERR = 18,
+  ICON_CHN = 19,
+  ICON_PST = 20,
+  ICON_REP = 21,
+  ICON_FIL = 22,
+  ICON_DIR = 23
 };
 
-#define OM_LISTVIEW_ICON_COUNT       22
+#define OM_LISTVIEW_ICON_COUNT       24
 
 inline void Om_setupLvIconsDb(unsigned* icon_db)
 {
@@ -55,6 +57,8 @@ inline void Om_setupLvIconsDb(unsigned* icon_db)
   icon_db[ICON_STS_WRN] = IDB_STS_WRN;
   icon_db[ICON_STS_WIP] = IDB_STS_WIP;
   icon_db[ICON_STS_OVR] = IDB_STS_OVR;
+  icon_db[ICON_STS_DPN] = IDB_STS_DPN;
+  icon_db[ICON_STS_BRK] = IDB_STS_BRK;
   icon_db[ICON_STS_NEW] = IDB_STS_NEW;
   icon_db[ICON_STS_UPG] = IDB_STS_UPG;
   icon_db[ICON_STS_DNG] = IDB_STS_DNG;

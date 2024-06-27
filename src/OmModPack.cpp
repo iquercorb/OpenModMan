@@ -47,6 +47,7 @@ OmModPack::OmModPack() :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
+  _is_dependent(0),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -66,6 +67,7 @@ OmModPack::OmModPack(OmModChan* ModChan) :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
+  _is_dependent(0),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -99,6 +101,8 @@ void OmModPack::clearAll()
   this->_name.clear();
   this->_version.clear();
 
+  this->_is_dependent = 0;
+  this->_is_overlapped = false;
   this->_op_backup = false;
   this->_op_restore = false;
   this->_op_apply = false;
@@ -110,12 +114,12 @@ void OmModPack::clearAll()
 ///
 bool OmModPack::refreshAnalytics()
 {
-  bool has_changes = false;
-
-  // check for overlapping
   if(!this->_ModChan)
     return false;
 
+  bool has_changes = false;
+
+  // check for overlapping
   bool is_overlapped = false;
 
   for(size_t i = 0; i < this->_ModChan->modpackCount(); ++i) {
@@ -128,6 +132,17 @@ bool OmModPack::refreshAnalytics()
     has_changes = true;
 
   this->_is_overlapped = is_overlapped;
+
+  // Check for dependencies
+  int8_t is_dependent = 0;
+
+  if(!this->_src_depend.empty())
+    is_dependent = this->_ModChan->hasMissingDepend(this) ? -1 : 1;
+
+  if(is_dependent != this->_is_dependent)
+    has_changes = true;
+
+  this->_is_dependent = is_dependent;
 
   return has_changes;
 }
