@@ -23,6 +23,7 @@
 #define CHN_PROP_LIB_DEVMODE     1
 #define CHN_PROP_LIB_WARNINGS    2
 #define CHN_PROP_LIB_SHOWHIDDEN  3
+#define CHN_PROP_LIB_CLEANUNINS  4
 
 /// \brief Mod Channel Properties: "Mods Library" tab
 ///

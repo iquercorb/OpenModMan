@@ -93,6 +93,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _query_user_ptr(nullptr),
   _library_devmode(true),
   _library_showhidden(false),
+  _library_cleanunins(false),
   _warn_overlaps(true),
   _warn_extra_inst(true),
   _backup_method(OM_METHOD_ZSTD),
@@ -238,6 +239,7 @@ void OmModChan::close()
   this->_cust_library_path = false;
   this->_library_devmode = true;
   this->_library_showhidden = false;
+  this->_library_cleanunins = false;
   this->_warn_overlaps = true;
   this->_warn_extra_inst = true;
   this->_cust_backup_path = false;
@@ -414,6 +416,13 @@ bool OmModChan::open(const OmWString& path)
   } else {
     // create default values
     this->setLibraryShowhidden(this->_library_showhidden); //< create default
+  }
+
+  if(this->_xml.hasChild(L"library_cleanunins")) {
+    this->_library_cleanunins = this->_xml.child(L"library_cleanunins").attrAsInt(L"enable");
+  } else {
+    // create default values
+    this->setLibraryCleanUnins(this->_library_cleanunins); //< create default
   }
 
   if(this->_xml.hasChild(L"remotes_sort")) {
@@ -3632,6 +3641,28 @@ void OmModChan::setLibraryShowhidden(bool enable)
     this->_xml.child(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
   } else {
     this->_xml.addChild(L"library_showhidden").setAttr(L"enable", this->_library_showhidden ? 1 : 0);
+  }
+
+  this->_xml.save();
+
+  // refresh library content
+  this->reloadModLibrary();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setLibraryCleanUnins(bool enable)
+{
+  if(!this->_xml.valid())
+    return;
+
+  this->_library_cleanunins = enable;
+
+  if(this->_xml.hasChild(L"library_cleanunins")) {
+    this->_xml.child(L"library_cleanunins").setAttr(L"enable", this->_library_cleanunins ? 1 : 0);
+  } else {
+    this->_xml.addChild(L"library_cleanunins").setAttr(L"enable", this->_library_cleanunins ? 1 : 0);
   }
 
   this->_xml.save();

@@ -93,6 +93,7 @@ void OmUiPropChnLib::_onTbInit()
   this->_createTooltip(IDC_BC_CKBX2,  L"Parse Library's sub-directories as Mods for development purpose or legacy support");
 
   this->_createTooltip(IDC_BC_CKBX7,  L"Parse and show Library's hidden files and sub-directories");
+  this->_createTooltip(IDC_BC_CKBX8,  L"Perform Complete Uninstall when double-click on installed Mod");
 
   this->_createTooltip(IDC_BC_CKBX3,  L"Warn if Mod installation will overlap any previously installed");
   this->_createTooltip(IDC_BC_CKBX4,  L"Warn if Mod install require additional dependencies installation");
@@ -123,6 +124,7 @@ void OmUiPropChnLib::_onTbRefresh()
   this->msgItem(IDC_BC_CKBX5, BM_SETCHECK, ModChan->warnMissDeps());
   this->msgItem(IDC_BC_CKBX6, BM_SETCHECK, ModChan->warnExtraUnin());
   this->msgItem(IDC_BC_CKBX7, BM_SETCHECK, ModChan->libraryShowhidden());
+  this->msgItem(IDC_BC_CKBX8, BM_SETCHECK, ModChan->libraryCleanUnins());
 }
 
 
@@ -143,16 +145,19 @@ void OmUiPropChnLib::_onTbResize()
   this->_setItemPos(IDC_BC_CKBX2, 50, y_base+60, 300, 16, true);
 
   // Show Hidden CheckBox
-  this->_setItemPos(IDC_BC_CKBX7, 50, y_base+100, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX7, 50, y_base+90, 300, 16, true);
+
+  // Complete Uninstall CheckBox
+  this->_setItemPos(IDC_BC_CKBX8, 50, y_base+120, 300, 16, true);
 
   // Enable warnings Label
-  this->_setItemPos(IDC_SC_LBL01, 50, y_base+140, 300, 16, true);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base+160, 300, 16, true);
 
   // Enable warnings CheckBoxes
-  this->_setItemPos(IDC_BC_CKBX3, 75, y_base+160, 300, 16, true);
-  this->_setItemPos(IDC_BC_CKBX4, 75, y_base+180, 300, 16, true);
-  this->_setItemPos(IDC_BC_CKBX5, 75, y_base+200, 300, 16, true);
-  this->_setItemPos(IDC_BC_CKBX6, 75, y_base+220, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX3, 75, y_base+180, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX4, 75, y_base+200, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX5, 75, y_base+220, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX6, 75, y_base+240, 300, 16, true);
 }
 
 
@@ -193,6 +198,12 @@ INT_PTR OmUiPropChnLib::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       if(HIWORD(wParam) == BN_CLICKED)
         // notify parameter changes
         this->paramCheck(CHN_PROP_LIB_SHOWHIDDEN);
+      break;
+
+    case IDC_BC_CKBX8: //< CheckBox : Complete Uninstall as default
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(CHN_PROP_LIB_CLEANUNINS);
       break;
 
     case IDC_BC_CKBX3: //< CheckBox : Warn overlapping

@@ -183,6 +183,14 @@ bool OmUiPropChn::checkChanges()
     }
   }
 
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_CLEANUNINS)) {
+    if(UiPropChnLib->msgItem(IDC_BC_CKBX8, BM_GETCHECK) != this->_ModChan->libraryCleanUnins()) {
+      changed = true;
+    } else {
+      UiPropChnLib->paramReset(CHN_PROP_LIB_CLEANUNINS);
+    }
+  }
+
   // Data backup Tab
   OmUiPropChnBck* UiPropChnBck  = static_cast<OmUiPropChnBck*>(this->childById(IDD_PROP_CHN_BCK));
 
@@ -543,6 +551,14 @@ bool OmUiPropChn::applyChanges()
 
     // Reset parameter as unmodified
     UiPropChnLib->paramReset(CHN_PROP_LIB_SHOWHIDDEN);
+  }
+
+  if(UiPropChnLib->paramChanged(CHN_PROP_LIB_CLEANUNINS)) {
+
+    this->_ModChan->setLibraryCleanUnins(UiPropChnLib->msgItem(IDC_BC_CKBX8, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    UiPropChnLib->paramReset(CHN_PROP_LIB_CLEANUNINS);
   }
 
   // Data Backup Tab

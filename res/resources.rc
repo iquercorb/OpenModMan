@@ -760,6 +760,7 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "...", IDC_BC_BRW01, 261, 30, 16, 13, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Developer mode (parse sub-directories as Mods)", IDC_BC_CKBX2, 50, 20, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Show hidden files and directories", IDC_BC_CKBX7, 50, 40, 170, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Perform Complete Uninstall as default action", IDC_BC_CKBX8, 50, 40, 170, 9, 0, WS_EX_LEFT
     LTEXT           "Enable warning messages for :", IDC_SC_LBL01, 50, 50, 170, 9, SS_LEFT, WS_EX_LEFT
     AUTOCHECKBOX    "Mods installation overlapping", IDC_BC_CKBX3, 65, 60, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Additional installation of dependency Mods", IDC_BC_CKBX4, 70, 72, 170, 9, 0, WS_EX_LEFT

@@ -334,6 +334,7 @@
 #define IDC_BC_CKBX5                            40704
 #define IDC_BC_CKBX6                            40705
 #define IDC_BC_CKBX7                            40706
+#define IDC_BC_CKBX8                            40708
 #define IDC_BC_RAD01                            40710
 #define IDC_BC_RAD02                            40711
 #define IDC_LM_LNK01                            40720

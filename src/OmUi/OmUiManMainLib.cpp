@@ -550,7 +550,11 @@ void OmUiManMainLib::queueAuto(bool silent)
   int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   if(ModChan->getModpack(lv_sel)->hasBackup()) {
-    this->queueRestores(silent);
+    if(ModChan->libraryCleanUnins()) {
+      this->queueCleaning(silent);
+    } else {
+      this->queueRestores(silent);
+    }
   } else {
     this->queueInstalls(silent);
   }

@@ -1070,6 +1070,25 @@ class OmModChan
     ///
     void setLibraryShowhidden(bool enable);
 
+
+    /// \brief Default clean uninstall option.
+    ///
+    /// Returns Default clean uninstall option value option value.
+    ///
+    /// \return Default clean uninstall option value.
+    ///
+    bool libraryCleanUnins() const {
+      return _library_cleanunins;
+    }
+
+    /// \brief Set default clean uninstall option.
+    ///
+    /// Define default clean uninstall option value.
+    ///
+    /// \param[in]  enable    : Default clean uninstall enable or disable.
+    ///
+    void setLibraryCleanUnins(bool enable);
+
     /// \brief Get warning for overlaps option.
     ///
     /// Returns warning for overlaps option value.
@@ -1485,6 +1504,8 @@ class OmModChan
     bool                  _library_devmode;
 
     bool                  _library_showhidden;
+
+    bool                  _library_cleanunins;
 
     bool                  _warn_overlaps;
 
