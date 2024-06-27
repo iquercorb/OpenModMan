@@ -164,20 +164,14 @@ void OmUiToolPkg::_set_unsaved(bool enable)
 {
   this->_has_unsaved = enable;
 
-  bool file_exists = (!this->_ModPack->sourcePath().empty() && !this->_ModPack->sourceIsDir());
-
   // enable/disable and change tool bar 'save' button image
   TBBUTTONINFOA tbBi = {}; tbBi.cbSize = sizeof(TBBUTTONINFOA);
   tbBi.dwMask = TBIF_STATE;
-  tbBi.fsState = (this->_has_unsaved && file_exists) ? TBSTATE_ENABLED : 0;
+  tbBi.fsState = (this->_has_unsaved) ? TBSTATE_ENABLED : 0;
   this->msgItem(IDC_TB_TOOLS, TB_SETBUTTONINFO, IDC_BC_SAVE, reinterpret_cast<LPARAM>(&tbBi));
 
   // enable/disable and change menu 'save' item
-  if(this->_has_unsaved && file_exists) {
-    this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, MF_ENABLED);
-  } else {
-    this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, MF_GRAYED);
-  }
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, this->_has_unsaved ? MF_ENABLED : MF_GRAYED);
 }
 
 ///
@@ -212,6 +206,9 @@ void OmUiToolPkg::_reset_controls()
   this->_method_cache = -1;
   this->_content_cache.clear();
   this->_thumb_image.clear();
+
+  // disable 'save as...' menu item
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_GRAYED);
 
   // empty controls
   this->setItemText(IDC_EC_INP01, L"");
@@ -407,6 +404,9 @@ void OmUiToolPkg::_modpack_open()
 
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
+
+  // enable 'save as...' menu item
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
 }
 
 ///
@@ -439,6 +439,12 @@ void OmUiToolPkg::_modpack_build()
 
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
+
+  // enable 'save as...' menu item
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
+
+  // Set unsaved
+  this->_set_unsaved(true);
 }
 
 ///
@@ -1338,7 +1344,7 @@ void OmUiToolPkg::_onInit()
     //{ICON_NEW, IDC_BC_NEW,  TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("New Package")},
     {ICON_OPN, IDC_BC_OPEN, TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Open Package file")},
     {ICON_BLD, IDC_BC_OPEN2,TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Build from directory")},
-    {ICON_SAV, IDC_BC_SAVE, 0,               0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Save Package file")}
+    {ICON_SAV, IDC_BC_SAVE, 0              , 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Save Package file")}
   };
 
   // Add buttons
@@ -1464,7 +1470,6 @@ void OmUiToolPkg::_onInit()
   this->_createTooltip(IDC_EC_INP08,  L"Dependency Mod Identity string");
   this->_createTooltip(IDC_BC_DPVAL,  L"Valid");
   this->_createTooltip(IDC_BC_DPABT,  L"Abort");
-
 
   // update status
   this->_status_update_filename();
@@ -1603,6 +1608,8 @@ void OmUiToolPkg::_onClose()
     case  1: this->_modpack_save(); break; //< 'Yes'
     case -1: return;                    //< 'Cancel'
   }
+
+  this->_ModPack->clearAll();
 
   this->quit();
 }
