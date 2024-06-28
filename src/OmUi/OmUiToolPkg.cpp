@@ -207,6 +207,12 @@ void OmUiToolPkg::_reset_controls()
   this->_content_cache.clear();
   this->_thumb_image.clear();
 
+  // Reset unsaved status
+  this->_categ_unsaved = false;
+  this->_thumb_unsaved = false;
+  this->_desc_unsaved = false;
+  this->_depend_unsaved = false;
+
   // disable 'save as...' menu item
   this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_GRAYED);
 
@@ -322,7 +328,6 @@ void OmUiToolPkg::_modpack_close()
 
   // resets all controls to initial state
   this->_reset_controls();
-
 }
 
 ///
@@ -1474,9 +1479,6 @@ void OmUiToolPkg::_onInit()
   // update status
   this->_status_update_filename();
 
-  // reset controls to initial states
-  this->_reset_controls();
-
   // parse init modpack if any
   if(!this->_init_path.empty()) {
 
@@ -1485,6 +1487,9 @@ void OmUiToolPkg::_onInit()
     this->_init_path.clear();
 
   } else {
+
+    // reset controls to initial states
+    this->_reset_controls();
 
     // nothing to save
     this->_set_unsaved(false);
