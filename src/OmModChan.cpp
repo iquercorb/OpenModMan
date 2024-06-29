@@ -801,22 +801,24 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
   // get name hash
   uint64_t name_hash = Om_getXXHash3(Om_getFilePart(path));
 
-  bool has_changes = false;
-  bool has_created = false;
+  // Forwarded notification type
+  OmNotify fw_notify = OM_NOTIFY_UNDEFINED;
 
-  if(notify == OM_NOTIFY_DELETED) {
-    // search for Mod Pack to delete
-    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
-      if(name_hash == self->_modpack_list[p]->hash()) {
-        delete self->_modpack_list[p];
-        self->_modpack_list.erase(self->_modpack_list.begin() + p);
-        has_changes = true; break;
-      }
+  // search for Mod Pack object
+  OmModPack* ModPack = self->findModpack(name_hash);
+
+  if(notify == OM_NOTIFY_ALTERED) {
+
+    // refresh Mod Pack source
+    if(ModPack) {
+      ModPack->refreshSource();
+      // forward alternation notification
+      fw_notify = OM_NOTIFY_ALTERED;
     }
 
     #ifdef DEBUG
-    if(has_changes)
-      std::cout << "DEBUG => OmModChan::_mod_library_alter --\n";
+    if(fw_notify)
+      std::cout << "DEBUG => OmModChan::_monitor_notify_fn ~=\n";
     #endif
   }
 
@@ -828,76 +830,59 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
        Om_extensionMatches(path, OM_PKG_FILE_EXT)) {
 
       // check whether this Mod Source matches an existing Backup
-      for(size_t p = 0; p < self->_modpack_list.size(); p++) {
-        if(name_hash == self->_modpack_list[p]->hash()) {
-          self->_modpack_list[p]->parseSource(path);
-          has_changes = true; break;
-        }
-      }
-      // no Backup found for this Mod Source, adding new
-      if(!has_changes) {
-        OmModPack* ModPack = new OmModPack(self);
+      if(ModPack) {
+        ModPack->parseSource(path);
+        // forward alternation notification
+        fw_notify = OM_NOTIFY_ALTERED;
+      } else {
+        // no Backup found for this Mod Source, adding new
+        ModPack = new OmModPack(self);
         if(ModPack->parseSource(path)) {
           self->_modpack_list.push_back(ModPack);
-          has_changes = true; has_created = true;
+          // forward creation notification
+          fw_notify = OM_NOTIFY_CREATED;
         } else {
           delete ModPack;
         }
       }
 
       #ifdef DEBUG
-      if(has_changes)
-        std::cout << "DEBUG => OmModChan::_mod_library_alter ++\n";
+      if(fw_notify)
+        std::cout << "DEBUG => OmModChan::_monitor_notify_fn ++\n";
       #endif
     }
   }
 
-  if(notify == OM_NOTIFY_ALTERED) {
-    // search for Mod Pack to refresh
-    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
-      if(name_hash == self->_modpack_list[p]->hash()) {
-        self->_modpack_list[p]->refreshSource();
-        has_changes = true; break;
+  if(notify == OM_NOTIFY_DELETED) {
+
+    // delete or modify Mod Pack
+    if(ModPack) {
+      // check whether Mod Pack has backup data (is installed)
+      if(ModPack->hasBackup()) {
+        // Clear Mod Pack source side and
+        ModPack->clearSource();
+        // forward alternation notification
+        fw_notify = OM_NOTIFY_ALTERED;
+      } else {
+        // Remove Mod Pack from Mod Library
+        int32_t p = self->indexOfModpack(ModPack);
+        self->_modpack_list.erase(self->_modpack_list.begin() + p);
+        delete ModPack;
+        // forward deletion notification
+        fw_notify = OM_NOTIFY_DELETED;
       }
     }
 
     #ifdef DEBUG
-    if(has_changes)
-      std::cout << "DEBUG => OmModChan::_mod_library_alter ~=\n";
+    if(fw_notify)
+      std::cout << "DEBUG => OmModChan::_monitor_notify_fn --\n";
     #endif
   }
 
-  // at this point, if not changes was made this mean the file is not a
-  // Mod Pack, so we check whether this is an image or text file used
-  // as thumbnail or description for a dev Mod directory
-  if(!has_changes && self->_library_devmode) {
-
-    // get presumed mod 'identity' from file name
-    OmWString iden = Om_getNamePart(path);
-
-    for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
-
-      // we ignore non directory Mods
-      if(!self->_modpack_list[p]->sourceIsDir())
-        continue;
-
-      if(Om_namesMatches(iden, self->_modpack_list[p]->iden())) {
-        self->_modpack_list[p]->loadDirDescription();
-        self->_modpack_list[p]->loadDirThumbnail();
-        has_changes = true; break;
-      }
-    }
-
-    #ifdef DEBUG
-    if(has_changes)
-      std::cout << "DEBUG => OmModChan::_mod_library_alter **\n";
-    #endif
-  }
-
-  if(has_changes) {
+  if(fw_notify) {
 
     // if an element was added to list we need to sort again
-    if(has_created) {
+    if(fw_notify == OM_NOTIFY_CREATED) {
 
       self->sortModLibrary(); //< this will send rebuild notification
 
@@ -905,12 +890,49 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
 
       // this is a simple alteration we can optimize changes
       if(self->_modpack_notify_cb)
-        self->_modpack_notify_cb(self->_modpack_notify_ptr, notify, name_hash);
+        self->_modpack_notify_cb(self->_modpack_notify_ptr, fw_notify, name_hash);
     }
 
     // as changes in local library may change status
     // in Network library we refresh Network library
     self->refreshNetLibrary();
+
+  } else {
+
+    // at this point, if not changes was made this mean the file is not a
+    // Mod Pack, so we check whether this is an image or text file used
+    // as thumbnail or description for a dev Mod directory
+    if(self->_library_devmode) {
+
+      // get presumed mod 'identity' from file name
+      OmWString iden = Om_getNamePart(path);
+
+      for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
+
+        ModPack = self->_modpack_list[p];
+
+        // we ignore non directory Mods
+        if(!ModPack->sourceIsDir())
+          continue;
+
+        // we compare against Mod core name (without version)
+        if(Om_namesMatches(iden, ModPack->core())) {
+
+          ModPack->loadDirDescription();
+          ModPack->loadDirThumbnail();
+
+          // forward alteration notification
+          if(self->_modpack_notify_cb)
+            self->_modpack_notify_cb(self->_modpack_notify_ptr, OM_NOTIFY_ALTERED, ModPack->hash());
+
+          #ifdef DEBUG
+          std::cout << "DEBUG => OmModChan::_monitor_notify_fn //\n";
+          #endif
+        }
+      }
+
+
+    }
   }
 }
 
@@ -1061,7 +1083,7 @@ bool OmModChan::ghostbusterModLibrary()
       OmModPack* ModPack = this->_modpack_list[p];
 
       // send library changes notifications
-      if(has_change && this->_modpack_notify_cb)
+      if(this->_modpack_notify_cb)
         this->_modpack_notify_cb(this->_modpack_notify_ptr, OM_NOTIFY_DELETED, ModPack->hash());
 
       // delete object
@@ -1079,6 +1101,34 @@ bool OmModChan::ghostbusterModLibrary()
   #endif
 
   return has_change;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModChan::ghostbusterModPack(const OmModPack* ModPack)
+{
+  if(!ModPack->hasBackup() && !ModPack->hasSource()) {
+
+    int32_t p = this->indexOfModpack(ModPack);
+
+    if(p != 0) {
+
+      // send library changes notifications
+      if(this->_modpack_notify_cb)
+        this->_modpack_notify_cb(this->_modpack_notify_ptr, OM_NOTIFY_DELETED, ModPack->hash());
+
+      // delete object
+      delete ModPack;
+
+      // remove from list
+      this->_modpack_list.erase(this->_modpack_list.begin() + p);
+
+      return true;
+    }
+  }
+
+  return false;
 }
 
 ///
@@ -1948,6 +1998,9 @@ DWORD WINAPI OmModChan::_modops_run_fn(void* ptr)
       // call client result callback so it can perform proper operations
       if(self->_modops_result_cb)
         self->_modops_result_cb(self->_modops_user_ptr, result, reinterpret_cast<uint64_t>(ModPack));
+
+      // check whether mod pack is a ghost to be removed
+      self->ghostbusterModPack(ModPack);
 
       if(result != OM_RESULT_OK) {
         exit_code = result;

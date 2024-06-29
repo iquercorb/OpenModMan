@@ -168,9 +168,22 @@ class OmModChan
     /// \brief Who you gonna call ?
     ///
     /// Check Local Mod Library for "ghost" Mod instances (that has no
-    /// Source nor Backup) and removes them.
+    /// Source nor Backup) then removes them.
+    ///
+    /// \return True if one or more "ghost" has been removed, false otherwise
     ///
     bool ghostbusterModLibrary();
+
+    /// \brief Who you gonna call ?
+    ///
+    /// Check whether the given Mod Pack instance is "ghost" Mod instance (that has no
+    /// Source nor Backup) then remove it from Mod Library.
+    ///
+    /// \param[in] ModPack      : Pointer to Mod Pack instance to check
+    ///
+    /// \return True if Mod Pack has been removed, false otherwise
+    ///
+    bool ghostbusterModPack(const OmModPack* ModPack);
 
     /// \brief Import Mods
     ///
