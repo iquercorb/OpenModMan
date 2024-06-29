@@ -1338,7 +1338,7 @@ void OmUiManMainNet::_lv_net_on_selchg()
     */
 
     // show nothing in footer frame
-    this->_UiMan->pUiMgrFoot()->clearItem();
+    this->_UiMan->pUiManFoot()->clearItem();
 
   } else {
 
@@ -1374,9 +1374,9 @@ void OmUiManMainNet::_lv_net_on_selchg()
 
     // if single selection show mod pack overview
     if(lv_nsl == 1) {
-      this->_UiMan->pUiMgrFoot()->selectItem(NetPack);
+      this->_UiMan->pUiManFoot()->selectItem(NetPack);
     } else {
-      this->_UiMan->pUiMgrFoot()->clearItem();
+      this->_UiMan->pUiManFoot()->clearItem();
     }
 
     OmWString down_text(can_rvok ? L"Resume" : L"Download");

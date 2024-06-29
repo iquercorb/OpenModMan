@@ -166,7 +166,7 @@ class OmUiMan : public OmDialog
     ///
     /// \return Main (top) frame dialog.
     ///
-    OmUiManMain* pUiMgrMain() const {
+    OmUiManMain* pUiManMain() const {
       return _UiManMain;
     }
 
@@ -176,7 +176,7 @@ class OmUiMan : public OmDialog
     ///
     /// \return Secondary (bottom) frame dialog.
     ///
-    OmUiManFoot* pUiMgrFoot() const {
+    OmUiManFoot* pUiManFoot() const {
       return _UiManFoot;
     }
 

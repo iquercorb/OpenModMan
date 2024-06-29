@@ -33,7 +33,9 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
 OmUiManFoot::OmUiManFoot(HINSTANCE hins) : OmDialog(hins),
-  _UiMan(nullptr)
+  _UiMan(nullptr),
+  _ModPack(nullptr),
+  _NetPack(nullptr)
 {
   // create child tab dialogs
   this->_tab_add_dialog(L"Mod Overview", new OmUiManFootOvw(hins));
@@ -63,6 +65,8 @@ void OmUiManFoot::selectItem(OmModPack* ModPack)
 {
   static_cast<OmUiManFootOvw*>(this->_tab_get_dialog(IDD_MGR_FOOT_OVW))->setPreview(ModPack);
   static_cast<OmUiManFootDet*>(this->_tab_get_dialog(IDD_MGR_FOOT_DET))->setDetails(ModPack);
+  this->_ModPack = ModPack;
+  this->_NetPack = nullptr;
 }
 
 
@@ -73,6 +77,8 @@ void OmUiManFoot::selectItem(OmNetPack* NetPack)
 {
   static_cast<OmUiManFootOvw*>(this->_tab_get_dialog(IDD_MGR_FOOT_OVW))->setPreview(NetPack);
   static_cast<OmUiManFootDet*>(this->_tab_get_dialog(IDD_MGR_FOOT_DET))->setDetails(NetPack);
+  this->_NetPack = NetPack;
+  this->_ModPack = nullptr;
 }
 
 
@@ -83,6 +89,8 @@ void OmUiManFoot::clearItem()
 {
   static_cast<OmUiManFootOvw*>(this->_tab_get_dialog(IDD_MGR_FOOT_OVW))->clearPreview();
   static_cast<OmUiManFootDet*>(this->_tab_get_dialog(IDD_MGR_FOOT_DET))->clearDetails();
+  this->_NetPack = nullptr;
+  this->_ModPack = nullptr;
 }
 
 ///

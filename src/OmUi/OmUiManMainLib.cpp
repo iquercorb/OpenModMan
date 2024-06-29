@@ -1175,7 +1175,7 @@ void OmUiManMainLib::_lv_mod_alterate(OmNotify action, uint64_t param)
 
     // update item data
     OmModPack* ModPack = ModChan->findModpack(param);
-    if(!ModPack) return; //< what ?!
+    if(!ModPack) return;
 
     LVITEMW lvI = {};
 
@@ -1227,6 +1227,10 @@ void OmUiManMainLib::_lv_mod_alterate(OmNotify action, uint64_t param)
     lvI.iSubItem = 3; lvI.mask = LVIF_TEXT;
     lvI.pszText = const_cast<LPWSTR>(ModPack->category().c_str());
     this->msgItem(IDC_LV_MOD, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
+
+    // refresh current Mod Pack overview if required
+    if(this->_UiMan->pUiManFoot()->ModPack() == ModPack)
+      this->_UiMan->pUiManFoot()->selectItem(ModPack);
   }
 }
 
@@ -1267,7 +1271,7 @@ void OmUiManMainLib::_lv_mod_on_selchg()
       this->setPopupItem(hPopup, i, MF_GRAYED);
     */
     // show nothing in footer frame
-    this->_UiMan->pUiMgrFoot()->clearItem();
+    this->_UiMan->pUiManFoot()->clearItem();
 
   } else {
 
@@ -1297,9 +1301,9 @@ void OmUiManMainLib::_lv_mod_on_selchg()
 
     // if single selection show mod pack overview
     if(lv_nsl == 1) {
-      this->_UiMan->pUiMgrFoot()->selectItem(ModPack);
+      this->_UiMan->pUiManFoot()->selectItem(ModPack);
     } else {
-      this->_UiMan->pUiMgrFoot()->clearItem();
+      this->_UiMan->pUiManFoot()->clearItem();
     }
 
     // enable / disable buttons

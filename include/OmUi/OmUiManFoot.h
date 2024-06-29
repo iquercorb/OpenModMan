@@ -76,6 +76,26 @@ class OmUiManFoot : public OmDialog
     ///
     void clearItem();
 
+    /// \brief Selected Mod Pack
+    ///
+    /// Returns currently selected Mod Pack pointer if any
+    ///
+    /// \return Currently selected Mod Pack pointer or null pointer if none
+    ///
+    OmModPack* ModPack() const {
+      return this->_ModPack;
+    }
+
+    /// \brief Selected Network Mod Pack
+    ///
+    /// Returns currently selected Network Mod Pack pointer if any
+    ///
+    /// \return Currently selected Network Mod Pack pointer or null pointer if none
+    ///
+    OmNetPack* NetPack() const {
+      return this->_NetPack;
+    }
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMan*            _UiMan;
@@ -88,6 +108,11 @@ class OmUiManFoot : public OmDialog
     void                _tab_add_dialog(const OmWString& name, OmDialog* dialog);
 
     OmDialog*           _tab_get_dialog(int32_t id);
+
+    // Item references
+    OmModPack*          _ModPack;
+
+    OmNetPack*          _NetPack;
 
     // Dialog common functions
     void                _onInit();
