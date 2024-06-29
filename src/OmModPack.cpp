@@ -577,13 +577,14 @@ bool OmModPack::loadDirDescription()
   if(found) {
     time_t new_time = Om_itemTime(found_path);
     if(new_time != this->_description_time) {
+      this->_description.clear();
       Om_loadToUTF16(&this->_description, found_path);
       this->_description_time = new_time;
       changed = true;
     }
   } else {
-    this->_description_time = 0;
     this->_description.clear();
+    this->_description_time = 0;
   }
 
   return changed;
