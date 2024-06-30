@@ -3144,7 +3144,13 @@ void OmModChan::removeRepository(size_t index)
   size_t i = this->_netpack_list.size();
   while(i--) {
     if(this->_netpack_list[i]->NetRepo() == NetRepo) {
+
+      // notify delete
+      if(this->_netpack_notify_cb)
+        this->_netpack_notify_cb(this->_netpack_notify_ptr, OM_NOTIFY_DELETED, this->_netpack_list[i]->hash());
+
       delete this->_netpack_list[i];
+
       this->_netpack_list.erase(this->_netpack_list.begin() + i);
     }
   }
@@ -3308,7 +3314,6 @@ DWORD WINAPI OmModChan::_query_run_fn(void* ptr)
           for(size_t j = 0; j < self->_netpack_list.size(); ++j) {
 
             if(self->_netpack_list[j]->iden() == NetPack->iden()) {
-
               delete self->_netpack_list[j]; //< remove previous
               self->_netpack_list[j] = NetPack; //< replace object
               is_unique = false; break;
