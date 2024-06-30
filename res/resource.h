@@ -406,7 +406,7 @@
 #define IDM_REPEDITOR                           40881
 #define IDM_DBGLOG                              40882
 #define IDM_ABOUT                               40883
-#define IDM_COM_INFO                          40884
+#define IDM_COM_INFO                            40884
 #define IDA_DEBUG_LOCK_MAN                      40890
 #define IDA_DEBUG_LOCK_HUB                      40891
 #define IDA_DEBUG_LOCKMODE                      40892
