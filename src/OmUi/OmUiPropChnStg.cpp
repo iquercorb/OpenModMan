@@ -56,6 +56,16 @@ long OmUiPropChnStg::id() const
 ///
 void OmUiPropChnStg::_browse_dir_target()
 {
+  OmModChan* ModChan = static_cast<OmUiPropChn*>(this->_parent)->ModChan();
+  if(!ModChan) return;
+
+  // check whether
+  if(ModChan->hasBackupData()) {
+    Om_dlgBox_ok(this->_hwnd, L"Channel properties", IDI_DLG_WRN, L"Unsafe Target directory modification",
+                 L"One or more Mods are installed in the current target, please uninstall all Mods or discard all backup data first.");
+    return;
+  }
+
   OmWString start, result;
 
   this->getItemText(IDC_EC_INP02, start);

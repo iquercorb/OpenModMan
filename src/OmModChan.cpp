@@ -3436,6 +3436,11 @@ OmResult OmModChan::setTargetPath(const OmWString& path)
     return OM_RESULT_ABORT;
   }
 
+  if(this->hasBackupData()) {
+    this->_error(L"setTargetPath", L"one or more Mods are currently installed");
+    return OM_RESULT_ABORT;
+  }
+
   if(!Om_isDir(path)) {
     this->_error(L"setTargetPath", Om_errNotDir(L"directory", path));
     return OM_RESULT_ERROR;
