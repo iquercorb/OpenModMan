@@ -167,7 +167,7 @@ class OmUiMan : public OmDialog
     /// \return Main (top) frame dialog.
     ///
     OmUiManMain* pUiManMain() const {
-      return _UiManMain;
+      return this->_UiManMain;
     }
 
     /// \brief Get footer frame dialog
@@ -177,7 +177,7 @@ class OmUiMan : public OmDialog
     /// \return Secondary (bottom) frame dialog.
     ///
     OmUiManFoot* pUiManFoot() const {
-      return _UiManFoot;
+      return this->_UiManFoot;
     }
 
     /// \brief Check whether in frame resize
@@ -188,7 +188,7 @@ class OmUiMan : public OmDialog
     /// \return True if in frame resize process, false otherwise
     ///
     bool splitterCursorDragg() const {
-      return _split_captured;
+      return this->_split_captured;
     }
 
     /// \brief Check whether mouse hover frame split
@@ -199,7 +199,7 @@ class OmUiMan : public OmDialog
     /// \return True mouse cursor hovering between frames, false otherwise
     ///
     bool splitterCursorHover() const {
-      return _split_hover_foot;
+      return (this->_split_hover_foot || this->_split_hover_head);
     }
 
     /// \brief List views ImageList handle
@@ -280,6 +280,10 @@ class OmUiMan : public OmDialog
     int32_t             _lock_idch;
 
     // frame splitter
+    int32_t             _split_head_h;
+
+    int32_t             _split_foot_h;
+
     bool                _split_hover_head;
 
     bool                _split_hover_foot;

@@ -56,9 +56,13 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiMan.h"
 
-#define FOOT_MIN_HEIGHT 170
-#define MAIN_MIN_HEIGHT 200
-#define SATUSBAR_HEIGHT 24
+// fixed values for resize and split calculations
+#define RSIZE_SEP_H         4
+#define RSIZE_TOP_H         30
+#define RSIZE_BOT_H         28
+#define RSIZE_HEAD_MIN_H    70
+#define RSIZE_MAIN_MIN_H    200
+#define RSIZE_FOOT_MIN_H    170
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -70,6 +74,8 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _safe_mode(false),
   _lock_mode(false),
   _lock_idch(-1),
+  _split_head_h(0),
+  _split_foot_h(0),
   _split_hover_head(false),
   _split_hover_foot(false),
   _split_captured(false),
@@ -1589,14 +1595,9 @@ void OmUiMan::_onInit()
   this->_UiManFoot->modeless(true);
 
   // initialize frames to the proper size and position
-  h = -1;
-  ModMan->loadWindowFoot(&h);
-  if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
-  // we emulate frame resize by user
-  this->_split_captured = true;
-  this->_split_params[2] = h;
+  ModMan->loadWindowHead(&this->_split_head_h);
+  ModMan->loadWindowFoot(&this->_split_foot_h);
   this->_onResize();
-  this->_split_captured = false;
 
   // get Library dialog, required for Presets
   this->_UiManMainLib = static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB));
@@ -1679,71 +1680,81 @@ void OmUiMan::_onResize()
   std::cout << "DEBUG => OmUiMan::_onResize\n";
   #endif
 
-  long y, h, rc[4];
+  // Mod Hubs ComboBox
+  this->_setItemPos(IDC_CB_HUB, 5, 2, this->cliWidth()-10 , 26, true);
 
-  if(!this->_split_captured) {
+  long rc[4];
 
-    // Mod Hubs ComboBox
-    //this->_setItemPos(IDC_CB_HUB, 4, 5, this->cliWidth()-46 , 32, true);
-    this->_setItemPos(IDC_CB_HUB, 4, 4, this->cliWidth()-8 , 32, true);
-    // Mod Hub Icon
-    //this->_setItemPos(IDC_SB_ICON, 3, 5, 24, 24, true);
-    //this->_setItemPos(IDC_SB_ICON, this->cliWidth()-37, 1, 26, 26, true);
+  // Setup limits values
+  long head_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
+  long head_max = this->cliHeight() - (this->_split_foot_h + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+  long foot_min = RSIZE_BOT_H + RSIZE_FOOT_MIN_H;
+  long foot_max = this->cliHeight() - (this->_split_head_h + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
 
-    // Channel buttons
-    this->_setItemPos(IDC_BC_CHEDI, 4, 34, 22, 22, true);
-    this->_setItemPos(IDC_BC_CHADD, 4, 69, 22, 22, true);
-    this->_setItemPos(IDC_BC_CHDEL, 4, 92, 22, 22, true);
+  if(this->_split_captured) {
 
-    // Mod Channel ListView
-    //this->_setItemPos(IDC_LV_CHN, 30, 35, this->cliWidth()-35, 79, true);
-    this->_setItemPos(IDC_LV_CHN, 30, 35, this->cliWidth()-35, 79, true);
-    this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
+    // Save the area to be redrawn after resize and update line position from split move param
+    rc[0] = 2; rc[2] = this->cliWidth() - 4;
 
-    // set Presets buttons Position
-    this->_setItemPos(IDC_BC_PSRUN, this->cliWidth() - 204, 117, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, 117, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, 117, 22, 22, true);
-    this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, 117, 22, 22, true);
+    if(this->_split_hover_head) {
+      rc[1] = RSIZE_TOP_H;
+      rc[3] = this->cliHeight() - this->_split_foot_h;
 
-  } else {
+      // update height
+      this->_split_head_h = this->_split_params[2];
+    }
 
-    // store old foot frame rect for future redraw
-    GetWindowRect(this->_UiManFoot->hwnd(), reinterpret_cast<LPRECT>(&rc));
-    MapWindowPoints(HWND_DESKTOP, this->_hwnd, reinterpret_cast<LPPOINT>(&rc), 2);
+    if(this->_split_hover_foot) {
+      long max_h = this->_split_foot_h > this->_split_params[2] ? this->_split_foot_h : this->_split_params[2];
+      rc[1] = this->cliHeight() - (max_h + 45);
+      rc[3] = this->cliHeight() - RSIZE_BOT_H;
+
+      // update height
+      this->_split_foot_h = this->_split_params[2];
+    }
   }
 
-  // get foot frame height, if we are in frame resize process we get it
-  // from the temporary value stored after WM_MOUSEMOVE message
-  h = (this->_split_captured) ? this->_split_params[2] : this->_UiManFoot->height();
+  // Clamp to limits
+  if(this->_split_foot_h < foot_min) this->_split_foot_h = foot_min;
+  if(this->_split_head_h > head_max) this->_split_head_h = head_max;
+  if(this->_split_head_h < head_min) this->_split_head_h = head_min;
+  if(this->_split_foot_h > foot_max) this->_split_foot_h = foot_max;
 
-  // Make sure frame height got correct value
-  if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
-  if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
+  // ---
+  int32_t main_y = this->_split_head_h + RSIZE_SEP_H;
+  int32_t foot_y = this->cliHeight() - this->_split_foot_h;
 
-  // foot frame top position, relative to client
-  y = this->cliHeight() - (h + SATUSBAR_HEIGHT);
+  // Mod Channel ListView
+  this->_setItemPos(IDC_LV_CHN, 30, RSIZE_TOP_H, this->cliWidth()-35, this->_split_head_h - RSIZE_TOP_H, true);
+  this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
 
-  // resize and move frames
-  //this->_setChildPos(this->_UiManFoot->hwnd(), 4, y - 4 , this->cliWidth() - 8, h, true);
-  this->_setChildPos(this->_UiManFoot->hwnd(), 4, y - 4 , this->cliWidth() - 8, h, true);
-  this->_setChildPos(this->_UiManMain->hwnd(), 4, 118, this->cliWidth() - 212, y - 126, true);
+  // Channel buttons
+  this->_setItemPos(IDC_BC_CHEDI, 4, RSIZE_TOP_H, 22, 22, true);
+  this->_setItemPos(IDC_BC_CHADD, 4, this->_split_head_h - 46, 22, 22, true);
+  this->_setItemPos(IDC_BC_CHDEL, 4, this->_split_head_h - 22, 22, 22, true);
 
-  // resize Presets ListView
-  this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, 142, 200, y - 151, true);
+  // Presets buttons
+  this->_setItemPos(IDC_BC_PSRUN, this->cliWidth() - 204, main_y - 1, 22, 22, true);
+  this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, main_y - 1, 22, 22, true);
+  this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, main_y - 1, 22, 22, true);
+  this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, main_y - 1, 22, 22, true);
+
+  // Presets ListView
+  this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, main_y + 24, 200, (foot_y - main_y) - 28, true);
   this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
+
+  // Library Frame
+  this->_setChildPos(this->_UiManMain->hwnd(), 4, main_y, this->cliWidth() - 212, (foot_y - this->_split_head_h) - (RSIZE_SEP_H * 2), true);
+
+  // Overview Frame
+  this->_setChildPos(this->_UiManFoot->hwnd(), 4, foot_y, this->cliWidth() - 8, this->_split_foot_h - RSIZE_BOT_H, true);
 
   // Foot status bar
   this->_setItemPos(IDC_SC_STATUS, -1, this->cliHeight()-24, this->cliWidth()+2, 26, true);
   this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-19, this->cliWidth()-100, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
-  if(!this->_split_captured) {
-
-    // simple resize, we can redraw entire window
-    RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
-
-  } else {
+  if(this->_split_captured) {
 
     // Calling SetWindowPos outside a resize modal loop (standard resize by user),
     // causes insane amount of flickering, probably due to suboptimal erase and
@@ -1761,15 +1772,20 @@ void OmUiMan::_onResize()
     // handling redraw 'manually' from the parent window, using only RedrawWindow
     // with the proper flags.
 
-    // update the footer frame and area around the splitter, without
-    // erasing window background to reduce flickering.
-    rc[1] -= 56; //< encompasses the bottom row of buttons and h-scroll of the main frame
+    // update the footer frame and area around the splitter, without erasing window background to reduce flickering.
     RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
 
-    // force redraw only the area between the two frames, now we erase
-    // the window background
-    rc[1] = y - 8; rc[3] = y - 4;
-    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+    if(this->_split_hover_head) {
+      rc[1] = this->_split_head_h - 80; rc[3] = this->_split_head_h + 30;
+      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+    }
+    if(this->_split_hover_foot) {
+      rc[3] = this->cliHeight() - this->_split_foot_h;
+      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+    }
+  } else {
+    // simple resize, we can redraw entire window
+    RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
   }
 }
 
@@ -1886,7 +1902,8 @@ void OmUiMan::_onQuit()
   #endif
 
   ModMan->saveWindowRect(rec);
-  ModMan->saveWindowFoot(this->_UiManFoot->height());
+  ModMan->saveWindowHead(this->_split_head_h);
+  ModMan->saveWindowFoot(this->_split_foot_h);
 }
 
 
@@ -1913,7 +1930,14 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // keeps mouse pointer position and foot frame height at
       // capture to later calculate relative moves and size changes
       this->_split_params[0] = HIWORD(lParam);
-      this->_split_params[1] = this->_UiManFoot->height();
+
+      // Save initial line position
+      if(this->_split_hover_head)
+        this->_split_params[1] = this->_split_head_h;
+
+      if(this->_split_hover_foot)
+        this->_split_params[1] = this->_split_foot_h;
+
       // capture the mouse
       SetCapture(this->_hwnd);
       // we now are in frame move and resize process
@@ -1936,23 +1960,39 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // between the frames (to change cursor) or, if we captured cursor, to
   // process the move and resize of the frames
   if(uMsg == WM_MOUSEMOVE) {
-    long p = HIWORD(lParam);
+    long y, p = HIWORD(lParam); //< Cursor Y position relative to client area
     if(GetCapture() == this->_hwnd) {
-      // calculate new foot height according new cursor position
-      long h = this->_split_params[1] + this->_split_params[0] - p;
-      // clamp to reasonable values
-      if(h < FOOT_MIN_HEIGHT) h = FOOT_MIN_HEIGHT;
-      if(h > this->cliHeight() - MAIN_MIN_HEIGHT) h = this->cliHeight() - MAIN_MIN_HEIGHT;
-      // move the splitter / resize frames
-      if(h != this->_UiManFoot->height()) {
-        this->_split_params[2] = h;
-        this->_onResize();
+
+      if(this->_split_hover_head) {
+        // calculate new line position according new cursor moves
+        y = this->_split_params[1] + (p - this->_split_params[0]);
+        // move the splitter / resize frames
+        if(y != this->_split_head_h) {
+          this->_split_params[2] = y;
+          this->_onResize();
+        }
       }
+
+      if(this->_split_hover_foot) {
+
+        // calculate new line position according new cursor moves
+        y = this->_split_params[1] + (this->_split_params[0] - p);
+        // move the splitter / resize frames
+        if(y != this->_split_foot_h) {
+          this->_split_params[2] = y;
+          this->_onResize();
+        }
+      }
+
     } else {
       // checks whether mouse cursor is hovering between frames, we take a
       // good margin around the gap to make it easier to catch.
-      long y = this->cliHeight() - (this->_UiManFoot->height() + SATUSBAR_HEIGHT);
-      this->_split_hover_foot = (p > (y - 10) && p < (y - 1));
+      // check for head split
+      y = this->_split_head_h;
+      this->_split_hover_head = (p > (y - 3) && p < (y + 8));
+      // check for foot split
+      y = this->cliHeight() - this->_split_foot_h;
+      this->_split_hover_foot = (p > (y - 8) && p < (y + 3));
     }
     return 0;
   }

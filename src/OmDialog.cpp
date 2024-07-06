@@ -675,7 +675,8 @@ void OmDialog::_getItemPos(unsigned id, long* pos, bool pixel)
 void OmDialog::_getItemSize(unsigned id, long* size, bool pixel)
 {
   long rect[4] = {};
-  GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
+  //GetWindowRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
+  GetClientRect(GetDlgItem(this->_hwnd, id), reinterpret_cast<LPRECT>(&rect));
   size[0] = (pixel) ? rect[2] : MulDiv(rect[2] - rect[0], 4, this->_ubase[0]); // right - left, unit x
   size[1] = (pixel) ? rect[3] : MulDiv(rect[3] - rect[1], 8, this->_ubase[1]); // bottom - top, unit y
 }

@@ -1163,7 +1163,7 @@ OmResult OmModChan::addToLibrary(const OmWStringArray& files, Om_progressCb prog
 
     int32_t result = Om_fileCopy(src_path[i], dst_path, true);
     if(result != 0) {
-      this->_error(L"importMods", Om_errCopy(L"import Mod", src_path[i], result));
+      this->_error(L"addToLibrary", Om_errCopy(L"Mod file", src_path[i], result));
       has_error = true;
     }
 
@@ -1201,7 +1201,7 @@ OmResult OmModChan::importToLibrary(const OmWStringArray& paths, Om_progressCb p
 
     // parse directory as Mod-package
     if(!ModPack->parseSource(paths[i])) {
-      this->_error(L"importDirs", Om_errParse(L"Mod directory", Om_getFilePart(paths[i]), ModPack->lastError()));
+      this->_error(L"importToLibrary", Om_errParse(L"Mod directory", Om_getFilePart(paths[i]), ModPack->lastError()));
       has_error = true;
       continue;
     }
