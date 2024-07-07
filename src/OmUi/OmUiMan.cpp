@@ -2106,8 +2106,11 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // good margin around the gap to make it easier to catch.
 
       // check for head split
-      if(this->_lv_chn_show)
+      if(this->_lv_chn_show) {
         this->_split_hover_head = (my > (this->_lv_chn_span - 3) && my < (this->_lv_chn_span + 8));
+      } else {
+        this->_split_hover_head = false;
+      }
 
       // check for side split
       if(this->_lv_pst_show) {
@@ -2115,12 +2118,16 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         long bot = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : RSIZE_BOT_H;
         long sx = this->cliWidth() - (this->_lv_pst_span);
         this->_split_hover_side = (my > top) && (my < bot) && (mx > (sx - 5) && mx < sx);
+      } else {
+        this->_split_hover_side = false;
       }
 
       // check for foot split
       if(this->_ui_ovw_show) {
         long s = this->cliHeight() - this->_ui_ovw_span;
         this->_split_hover_foot = (my > (s - 8) && my < (s + 3));
+      } else {
+        this->_split_hover_foot = false;
       }
     }
     return 0;
