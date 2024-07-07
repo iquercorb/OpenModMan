@@ -19,8 +19,10 @@
 
 #include "OmDialogPropTab.h"
 
-#define HUB_PROP_STG_TITLE   0
-#define HUB_PROP_STG_ICON    1
+#define HUB_PROP_STG_TITLE        0
+#define HUB_PROP_STG_ICON         1
+#define HUB_PROP_STG_LAYOUT       2
+
 
 /// \brief Mod Hub Properties / Settings tab child
 ///

@@ -87,6 +87,24 @@ bool OmUiPropHub::checkChanges()
     }
   }
 
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_LAYOUT)) {  //< parameter for Layout options
+
+    different = false;
+
+    if(UiPropHubStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModHub->layoutChannelsShow())
+      different = true;
+
+    if(UiPropHubStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModHub->layoutPresetsShow())
+      different = true;
+
+    if(different) {
+      changed = true;
+    } else {
+      UiPropHubStg->paramReset(HUB_PROP_STG_LAYOUT);
+    }
+  }
+
+/*
   if(UiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
 
     OmWString ec_entry;
@@ -99,7 +117,7 @@ bool OmUiPropHub::checkChanges()
       UiPropHubStg->paramReset(HUB_PROP_STG_ICON);
     }
   }
-
+*/
   // Mod Channels Tab
   OmUiPropHubChn* UiPropHubChn  = static_cast<OmUiPropHubChn*>(this->childById(IDD_PROP_HUB_CHN));
 
@@ -203,7 +221,7 @@ bool OmUiPropHub::applyChanges()
     // Reset parameter as unmodified
     UiPropHubStg->paramReset(HUB_PROP_STG_TITLE);
   }
-
+/*
   if(UiPropHubStg->paramChanged(HUB_PROP_STG_ICON)) { // parameter for Mod Hub icon
 
     OmWString ec_entry;
@@ -218,6 +236,16 @@ bool OmUiPropHub::applyChanges()
 
     // Reset parameter as unmodified
     UiPropHubStg->paramReset(HUB_PROP_STG_ICON);
+  }
+*/
+
+  if(UiPropHubStg->paramChanged(HUB_PROP_STG_LAYOUT)) {  //< parameter for Layout options
+
+    this->_ModHub->setLayoutChannelsShow(UiPropHubStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
+    this->_ModHub->setLayoutPresetsShow(UiPropHubStg->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    UiPropHubStg->paramReset(HUB_PROP_STG_LAYOUT);
   }
 
   // Mod Channels Tab

@@ -121,13 +121,6 @@ void OmUiPropHubStg::_onTbInit()
   this->_createTooltip(IDC_BC_BRW01,  L"Select icon or application");
   this->_createTooltip(IDC_BC_DEL,    L"Remove icon");
 
-  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
-  if(!ModHub) return;
-
-  this->setItemText(IDC_EC_INP01, ModHub->home());
-  this->setItemText(IDC_EC_INP03, ModHub->title());
-  this->setItemText(IDC_EC_INP04, ModHub->iconSource()); //< hidden icon path
-
   // refresh with default values
   this->_onTbRefresh();
 }
@@ -147,16 +140,25 @@ void OmUiPropHubStg::_onTbResize()
   this->_setItemPos(IDC_SC_LBL03, 50, y_base+50, 300, 16, true);
   this->_setItemPos(IDC_EC_INP03, 50, y_base+70, this->cliWidth()-80, 21, true);
 
+  /*
   // Icon Label
   this->_setItemPos(IDC_SC_LBL04, 50, y_base+110, 300, 16, true);
   // Icon path (hidden)
   this->_setItemPos(IDC_EC_INP04, 350, y_base+110, 50, 21, true); //< hidden field
   // Icon image
   this->_setItemPos(IDC_SB_ICON, 75, y_base+130, 96, 96, true);
-
   // Select & Remove Buttons
   this->_setItemPos(IDC_BC_BRW01, 50, y_base+130, 22, 22, true);
   this->_setItemPos(IDC_BC_DEL, 50, y_base+153, 22, 22, true);
+  */
+
+  // Layout label
+  this->_setItemPos(IDC_SC_LBL04, 50, y_base+110, 300, 16, true);
+  // Show Channels check box
+  this->_setItemPos(IDC_BC_CKBX1, 75, y_base+130, 300, 16, true);
+  // Show Presets check box
+  this->_setItemPos(IDC_BC_CKBX2, 75, y_base+150, 300, 16, true);
+
 }
 
 
@@ -165,6 +167,7 @@ void OmUiPropHubStg::_onTbResize()
 ///
 void OmUiPropHubStg::_onTbRefresh()
 {
+  /*
   OmWString icon_src;
   HICON hIc = nullptr;
 
@@ -183,6 +186,16 @@ void OmUiPropHubStg::_onTbRefresh()
   if(hIc) {
     if(hIc != Om_getShellIcon(SIID_APPLICATION, true)) DeleteObject(hIc);
   }
+  */
+
+  OmModHub* ModHub = static_cast<OmUiPropHub*>(this->_parent)->ModHub();
+  if(!ModHub) return;
+
+  this->setItemText(IDC_EC_INP01, ModHub->home());
+  this->setItemText(IDC_EC_INP03, ModHub->title());
+
+  this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, ModHub->layoutChannelsShow());
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, ModHub->layoutPresetsShow());
 }
 
 
@@ -202,6 +215,7 @@ INT_PTR OmUiPropHubStg::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->paramCheck(HUB_PROP_STG_TITLE);
       break;
 
+    /*
     case IDC_BC_BRW01:  //< Button: Browse to select Icon/Application
       if(HIWORD(wParam) == BN_CLICKED)
         this->_browse_hub_icon();
@@ -210,6 +224,14 @@ INT_PTR OmUiPropHubStg::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_BC_DEL:    //< Button: Remove icon
       if(HIWORD(wParam) == BN_CLICKED)
         this->_delete_hub_icon();
+      break;
+    */
+
+    case IDC_BC_CKBX1:
+    case IDC_BC_CKBX2:
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameters changes
+        this->paramCheck(HUB_PROP_STG_LAYOUT);
       break;
     }
   }
