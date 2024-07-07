@@ -45,6 +45,12 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmUiManMainNet.h"
 
+#define RSIZE_SEP_H         4
+#define RSIZE_TOP_H         0
+#define RSIZE_BOT_H         26
+#define RSIZE_HEAD_MIN_H    70
+#define RSIZE_MAIN_MIN_H    70
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -54,7 +60,11 @@ OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _upgrade_abort(false),
   _lv_rep_icons_size(0),
   _lv_net_icons_size(0),
-  _lv_net_cdraw_htheme(nullptr)
+  _lv_net_cdraw_htheme(nullptr),
+  _split_h(RSIZE_HEAD_MIN_H),
+  _split_hover(false),
+  _split_captured(false),
+  _split_params{}
 {
   // set the accelerator table for the dialog
   this->setAccel(IDR_ACCEL);
@@ -1549,6 +1559,34 @@ void OmUiManMainNet::_bc_abort_clicked()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiManMainNet::_layout_save()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  ModChan->saveLayout(this->_split_h);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::_layout_load()
+{
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(!ModChan) return;
+
+  this->_split_h = -1;
+  ModChan->loadLayout(&this->_split_h);
+
+  this->_onResize();
+
+  // redraw the entire client
+  RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiManMainNet::_onInit()
 {
   #ifdef DEBUG
@@ -1705,18 +1743,43 @@ void OmUiManMainNet::_onHide()
 ///
 void OmUiManMainNet::_onResize()
 {
+  // Setup limits values
+  long h_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
+  long h_max = this->cliHeight() - (RSIZE_BOT_H + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+
+  long rc[4];
+
+  if(this->_split_captured) {
+
+    // Save the area to be redrawn after resize and update line position from split move param
+    rc[0] = 0; rc[2] = this->cliWidth();
+
+    if(this->_split_hover) {
+      rc[1] = RSIZE_TOP_H;
+      rc[3] = this->cliHeight() - RSIZE_BOT_H;
+
+      // update height
+      this->_split_h = this->_split_params[2];
+    }
+  }
+
+  if(this->_split_h < h_min) this->_split_h = h_min;
+  if(this->_split_h > h_max) this->_split_h = h_max;
+
   // Repositories ListBox
-  this->_setItemPos(IDC_LV_REP, 28, 0, this->cliWidth()-29, 80, true);
+  this->_setItemPos(IDC_LV_REP, 28, RSIZE_TOP_H, this->cliWidth()-29, this->_split_h, true);
   this->_lv_rep_on_resize(); //< resize ListView columns adapted to client area
 
   // Repositories Apply, New.. and Delete buttons
-  this->_setItemPos(IDC_BC_RPQRY, 2, 0, 22, 22, true);
-  this->_setItemPos(IDC_SC_SEPAR, 3, 29, 19, 1, true);
-  this->_setItemPos(IDC_BC_RPADD, 2, 37, 22, 22, true);
-  this->_setItemPos(IDC_BC_RPDEL, 2, 59, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPQRY, 2, RSIZE_TOP_H, 22, 22, true);
+  //this->_setItemPos(IDC_SC_SEPAR, 3, 29, 19, 1, true);
+  this->_setItemPos(IDC_BC_RPADD, 2, this->_split_h - 46, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPDEL, 2, this->_split_h - 22, 22, 22, true);
+
+  int32_t main_y = this->_split_h + RSIZE_SEP_H;
 
   // Network Mods List ListView
-  this->_setItemPos(IDC_LV_NET, 2, 84, this->cliWidth()-3, this->cliHeight()-110, true);
+  this->_setItemPos(IDC_LV_NET, 2, main_y, this->cliWidth()-3, this->cliHeight() - (main_y + RSIZE_BOT_H), true);
   this->_lv_net_on_resize(); //< resize ListView columns adapted to client area
 
   // Download & Pause buttons
@@ -1726,6 +1789,13 @@ void OmUiManMainNet::_onResize()
   this->_setItemPos(IDC_PB_MOD, 161, this->cliHeight()-22, this->cliWidth()-241, 21, true);
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->cliWidth()-78, this->cliHeight()-23, 78, 23, true);
+
+  if(this->_split_captured) {
+    // update the footer frame and area around the splitter, without erasing window background to reduce flickering.
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
+    rc[1] = this->_split_h - 80; rc[3] = this->_split_h + 30;
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+  }
 }
 
 ///
@@ -1760,6 +1830,9 @@ void OmUiManMainNet::_onRefresh()
   // Display error dialog AFTER ListView refreshed its content
   if(ModChan) {
     this->_UiMan->checkLibraryWrite(L"Mods Library");
+
+    // Load saved channel's UI layout
+    this->_layout_load();
   }
 
   this->_refresh_processing();
@@ -1792,6 +1865,75 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     // Refresh the dialog
     this->_onRefresh();
     return false;
+  }
+
+  // release the previously captured mouse for frames move and resize process
+  if(uMsg == WM_LBUTTONUP) {
+    if(this->_split_captured) {
+      // release captured mouse
+      ReleaseCapture();
+      // quit the frame move and resize process
+      this->_split_captured = false;
+      // Save current UI parameters
+      this->_layout_save();
+    }
+    return 0;
+  }
+  // if mouse cursor is hovering between frames, checks for left button click
+  // by user to capture mouse and entering the frames move and resize process
+  if(uMsg == WM_LBUTTONDOWN || (uMsg == WM_PARENTNOTIFY && wParam == WM_LBUTTONDOWN)) {
+    if(this->_split_hover) {
+      // keeps mouse pointer position and foot frame height at
+      // capture to later calculate relative moves and size changes
+      this->_split_params[0] = HIWORD(lParam);
+
+      // Save initial line position
+      this->_split_params[1] = this->_split_h;
+
+      // capture the mouse
+      SetCapture(this->_hwnd);
+      // we now are in frame move and resize process
+      this->_split_captured = true;
+    }
+    return 0;
+  }
+
+  // changes the default cursor arrow to north-south resize arrows according
+  // cursor hovering between the frames.
+  if(uMsg == WM_SETCURSOR) {
+    // checks whether cursor is hovering between frames
+    if(this->_split_hover) {
+      SetCursor(LoadCursor(0,IDC_SIZENS));
+      return 1; //< bypass default process
+    }
+  }
+
+  // track mouse cursor position either to detect whether cursor hover
+  // between the frames (to change cursor) or, if we captured cursor, to
+  // process the move and resize of the frames
+  if(uMsg == WM_MOUSEMOVE) {
+    long y, p = HIWORD(lParam); //< Cursor Y position relative to client area
+    if(GetCapture() == this->_hwnd) {
+
+      if(this->_split_hover) {
+        // calculate new line position according new cursor moves
+        y = this->_split_params[1] + (p - this->_split_params[0]);
+        // move the splitter / resize frames
+        if(y != this->_split_h) {
+          this->_split_params[2] = y;
+          this->_onResize();
+        }
+      }
+
+    } else {
+      // checks whether mouse cursor is hovering between frames, we take a
+      // good margin around the gap to make it easier to catch.
+      // check for head split
+      y = this->_split_h;
+      this->_split_hover = (p > (y - 3) && p < (y + 8));
+
+    }
+    return 0;
   }
 
   if(uMsg == WM_NOTIFY) {

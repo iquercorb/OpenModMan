@@ -4039,6 +4039,53 @@ void OmModChan::setModsSourcesPath(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmModChan::saveLayout(int netlib_split)
+{
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  OmXmlNode netlib_node;
+
+  if(layout_node.hasChild(L"network_library")) {
+    netlib_node = layout_node.child(L"network_library");
+  } else {
+    netlib_node = layout_node.addChild(L"network_library");
+  }
+
+  netlib_node.setAttr(L"split", netlib_split);
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::loadLayout(int* netlib_split) const
+{
+  if(!this->_xml.valid())
+    return;
+
+  if(this->_xml.hasChild(L"layout")) {
+
+    OmXmlNode layout_node = this->_xml.child(L"layout");
+
+    if(layout_node.hasChild(L"network_library")) {
+      *netlib_split = layout_node.child(L"network_library").attrAsInt(L"split");
+    }
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmModChan::_log(unsigned level, const OmWString& origin,  const OmWString& detail) const
 {
   OmWString root(L"ModChan["); root.append(this->_title); root.append(L"].");

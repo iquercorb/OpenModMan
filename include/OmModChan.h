@@ -1293,6 +1293,22 @@ class OmModChan
     ///
     void setModsSourcesPath(const OmWString& path);
 
+    /// \brief Save UI layout settings
+    ///
+    /// Save UI layout settings related to this Channel.
+    ///
+    /// \param[in] netlib_split : Network library split height.
+    ///
+    void saveLayout(int netlib_split);
+
+    /// \brief Load UI layout settings
+    ///
+    /// Load the saved UI layout settings related to this Channel.
+    ///
+    /// \param[out] netlib_split : Pointer to receive Network library split height.
+    ///
+    void loadLayout(int* netlib_split) const;
+
     /// \brief Get Mod Hub
     ///
     /// Return affiliated Mod Hub.

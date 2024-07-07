@@ -91,7 +91,6 @@ class OmUiManMainNet : public OmDialog
     ///
     void showProperties() const;
 
-
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMan*            _UiMan;
@@ -179,11 +178,26 @@ class OmUiManMainNet : public OmDialog
 
     void                _lv_net_on_rclick();
 
-
+    // main buttons
     void                _bc_stop_clicked();
 
     void                _bc_abort_clicked();
 
+    // ListView splitter
+    int32_t             _split_h;
+
+    bool                _split_hover;
+
+    bool                _split_captured;
+
+    long                _split_params[3];
+
+    // Layout functions
+    void                _layout_save();
+
+    void                _layout_load();
+
+    // common functions
     void                _onInit();
 
     void                _onShow();
