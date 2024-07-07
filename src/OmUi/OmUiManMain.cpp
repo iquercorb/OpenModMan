@@ -175,22 +175,15 @@ void OmUiManMain::_onQuit()
 ///
 INT_PTR OmUiManMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // set cursor depending mouse hover between frames. The cursor switch is
-  // 'decided' by main window (UiMgr) but must be done here since when cursor
-  // does not hover the parent window, it does not receive WM_SETCURSOR.
+  // we forward WM_SETCURSOR event to parent window (UiMan) for proper
+  // mouse cursor changes
   if(uMsg == WM_SETCURSOR) {
-    // checks whether cursor is hovering between frames
-    if(this->_UiMan->cursorResizeHor()) {
-      SetCursor(LoadCursor(0,IDC_SIZENS));
-      return 1; //< bypass default process
-    }
-    if(this->_UiMan->cursorResizeVer()) {
-      SetCursor(LoadCursor(0,IDC_SIZEWE));
-      return 1; //< bypass default process
-    }
+    // send message to parent
+    SendMessage(this->_UiMan->hwnd(), WM_SETCURSOR, wParam, lParam);
+    return 1;
   }
 
-  // we forward WM_MOUSEMOVE event to parent window (UiMgr) to better catch the
+  // we forward WM_MOUSEMOVE event to parent window (UiMan) to better catch the
   // mouse cursor when around the frame split.
   if(uMsg == WM_MOUSEMOVE) {
     // get current cursor position, relative to client

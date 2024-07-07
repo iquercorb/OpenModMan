@@ -198,6 +198,9 @@ class OmUiManMainNet : public OmDialog
 
     void                _layout_load();
 
+    // Controls subClassing
+    static LRESULT WINAPI _subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
     // common functions
     void                _onInit();
 

@@ -1714,6 +1714,10 @@ void OmUiMan::_onInit()
     }
   }
 
+  // Subclass Channels and Presets ListView to properly forward WM_MOUSEMOVE message
+  SetWindowSubclass(this->getItem(IDC_LV_CHN), OmUiMan::_subMsg, 0, reinterpret_cast<DWORD_PTR>(this));
+  SetWindowSubclass(this->getItem(IDC_LV_PST), OmUiMan::_subMsg, 0, reinterpret_cast<DWORD_PTR>(this));
+
   // refresh all elements
   this->_onRefresh();
 }
@@ -1730,8 +1734,6 @@ void OmUiMan::_onResize()
   #ifdef DEBUG
   std::cout << "DEBUG => OmUiMan::_onResize\n";
   #endif
-
-
 
   // Setup limits values
   long head_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
@@ -1963,7 +1965,6 @@ void OmUiMan::_onClose()
   this->quit();
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1988,7 +1989,6 @@ void OmUiMan::_onQuit()
   ModMan->saveWindowRect(rec);
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -2010,6 +2010,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // if mouse cursor is hovering between frames, checks for left button click
   // by user to capture mouse and entering the frames move and resize process
   if(uMsg == WM_LBUTTONDOWN || (uMsg == WM_PARENTNOTIFY && wParam == WM_LBUTTONDOWN)) {
+
     if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
 
       long mx = LOWORD(lParam); //< Cursor X position relative to client area
@@ -2065,6 +2066,10 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     long my = HIWORD(lParam); //< Cursor Y position relative to client area
 
     if(GetCapture() == this->_hwnd) {
+
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmUiMan::_onMsg : WM_MOUSEMOVE : GetCapture() == this->_hwnd\n";
+      #endif
 
       if(this->_split_hover_head) {
         // calculate new line position according new cursor moves
@@ -2456,5 +2461,51 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   }
 
   return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+LRESULT WINAPI OmUiMan::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+  // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
+  // window (UiMan) for proper resize controls
+  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {
+
+    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    // send message to parent
+    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
+  }
+
+  // we forward WM_SETCURSOR, WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
+  // window (UiMan) for proper mouse cursor
+  if(uMsg == WM_SETCURSOR) {
+
+    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    // send message to parent
+    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
+    return 1;
+  }
+
+  // we forward WM_MOUSEMOVE event to parent window (UiMan) to better catch the
+  // mouse cursor when around the frame split.
+  if(uMsg == WM_MOUSEMOVE) {
+
+    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    // get current cursor position, relative to client
+    long p[2] = {LOWORD(lParam), HIWORD(lParam)};
+
+    // convert coordinate to relative to parent's client
+    ClientToScreen(hWnd, reinterpret_cast<POINT*>(&p));
+    ScreenToClient(UiMan->hwnd(), reinterpret_cast<POINT*>(&p));
+
+    // send message to parent
+    SendMessage(UiMan->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
+  }
+
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
