@@ -157,6 +157,8 @@ class OmUiManMainNet : public OmDialog
 
     int32_t             _lv_rep_get_status_icon(const OmNetRepo* NetRepo);
 
+    int32_t             _lv_rep_span;
+
     // network library ListView
     uint32_t            _lv_net_icons_size;
 
@@ -184,7 +186,6 @@ class OmUiManMainNet : public OmDialog
     void                _bc_abort_clicked();
 
     // ListView splitter
-    int32_t             _split_h;
 
     bool                _split_hover;
 

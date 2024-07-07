@@ -59,9 +59,9 @@ OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _download_upgrd(false),
   _upgrade_abort(false),
   _lv_rep_icons_size(0),
+  _lv_rep_span(RSIZE_HEAD_MIN_H),
   _lv_net_icons_size(0),
   _lv_net_cdraw_htheme(nullptr),
-  _split_h(RSIZE_HEAD_MIN_H),
   _split_hover(false),
   _split_captured(false),
   _split_params{}
@@ -69,7 +69,6 @@ OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   // set the accelerator table for the dialog
   this->setAccel(IDR_ACCEL);
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -1564,7 +1563,7 @@ void OmUiManMainNet::_layout_save()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  ModChan->saveLayout(this->_split_h);
+  ModChan->setLayoutRepositoriesSpan(this->_lv_rep_span);
 }
 
 ///
@@ -1575,8 +1574,7 @@ void OmUiManMainNet::_layout_load()
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  this->_split_h = -1;
-  ModChan->loadLayout(&this->_split_h);
+  this->_lv_rep_span = ModChan->layoutRepositoriesSpan();
 
   this->_onResize();
 
@@ -1759,24 +1757,24 @@ void OmUiManMainNet::_onResize()
       rc[3] = this->cliHeight() - RSIZE_BOT_H;
 
       // update height
-      this->_split_h = this->_split_params[2];
+      this->_lv_rep_span = this->_split_params[2];
     }
   }
 
-  if(this->_split_h < h_min) this->_split_h = h_min;
-  if(this->_split_h > h_max) this->_split_h = h_max;
+  if(this->_lv_rep_span < h_min) this->_lv_rep_span = h_min;
+  if(this->_lv_rep_span > h_max) this->_lv_rep_span = h_max;
 
   // Repositories ListBox
-  this->_setItemPos(IDC_LV_REP, 28, RSIZE_TOP_H, this->cliWidth()-29, this->_split_h, true);
+  this->_setItemPos(IDC_LV_REP, 28, RSIZE_TOP_H, this->cliWidth()-29, this->_lv_rep_span, true);
   this->_lv_rep_on_resize(); //< resize ListView columns adapted to client area
 
   // Repositories Apply, New.. and Delete buttons
   this->_setItemPos(IDC_BC_RPQRY, 2, RSIZE_TOP_H, 22, 22, true);
   //this->_setItemPos(IDC_SC_SEPAR, 3, 29, 19, 1, true);
-  this->_setItemPos(IDC_BC_RPADD, 2, this->_split_h - 46, 22, 22, true);
-  this->_setItemPos(IDC_BC_RPDEL, 2, this->_split_h - 22, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPADD, 2, this->_lv_rep_span - 46, 22, 22, true);
+  this->_setItemPos(IDC_BC_RPDEL, 2, this->_lv_rep_span - 22, 22, 22, true);
 
-  int32_t main_y = this->_split_h + RSIZE_SEP_H;
+  int32_t main_y = this->_lv_rep_span + RSIZE_SEP_H;
 
   // Network Mods List ListView
   this->_setItemPos(IDC_LV_NET, 2, main_y, this->cliWidth()-3, this->cliHeight() - (main_y + RSIZE_BOT_H), true);
@@ -1793,7 +1791,7 @@ void OmUiManMainNet::_onResize()
   if(this->_split_captured) {
     // update the footer frame and area around the splitter, without erasing window background to reduce flickering.
     RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
-    rc[1] = this->_split_h - 80; rc[3] = this->_split_h + 30;
+    rc[1] = this->_lv_rep_span - 80; rc[3] = this->_lv_rep_span + 30;
     RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
   }
 }
@@ -1888,7 +1886,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_split_params[0] = HIWORD(lParam);
 
       // Save initial line position
-      this->_split_params[1] = this->_split_h;
+      this->_split_params[1] = this->_lv_rep_span;
 
       // capture the mouse
       SetCapture(this->_hwnd);
@@ -1919,7 +1917,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         // calculate new line position according new cursor moves
         y = this->_split_params[1] + (p - this->_split_params[0]);
         // move the splitter / resize frames
-        if(y != this->_split_h) {
+        if(y != this->_lv_rep_span) {
           this->_split_params[2] = y;
           this->_onResize();
         }
@@ -1929,7 +1927,7 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       // checks whether mouse cursor is hovering between frames, we take a
       // good margin around the gap to make it easier to catch.
       // check for head split
-      y = this->_split_h;
+      y = this->_lv_rep_span;
       this->_split_hover = (p > (y - 3) && p < (y + 8));
 
     }

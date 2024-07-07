@@ -1293,6 +1293,24 @@ class OmModChan
     ///
     void setModsSourcesPath(const OmWString& path);
 
+    /// \brief Get Repositories list layout Span
+    ///
+    /// Returns span of the Network Library's Repositories list.
+    ///
+    /// \return Span in pixels.
+    ///
+    int layoutRepositoriesSpan() const {
+      return this->_layout_repositories_span;
+    }
+
+    /// \brief Set Repositories list layout Span
+    ///
+    /// Define span of the Network Library's Repositories list.
+    ///
+    /// \param[in] span   : Span in pixels to set.
+    ///
+    void setLayoutRepositoriesSpan(int span);
+
     /// \brief Save UI layout settings
     ///
     /// Save UI layout settings related to this Channel.
@@ -1559,6 +1577,8 @@ class OmModChan
     uint32_t              _down_max_rate;
 
     uint32_t              _down_max_thread;
+
+    int32_t               _layout_repositories_span;
 
     OmWString             _mods_sources_path;
 

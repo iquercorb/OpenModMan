@@ -105,7 +105,8 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _warn_upgd_brk_deps(true),
   _upgd_rename(false),
   _down_max_rate(0),
-  _down_max_thread(0)
+  _down_max_thread(0),
+  _layout_repositories_span(70)
 {
   // set parameters for library monitor
   this->_monitor.setCallback(OmModChan::_monitor_notify_fn, this);
@@ -253,6 +254,7 @@ void OmModChan::close()
   this->_upgd_rename = false;
   this->_down_max_rate = 0;
   this->_down_max_thread = 0;
+  this->_layout_repositories_span = 70;
 }
 
 ///
@@ -545,8 +547,17 @@ bool OmModChan::open(const OmWString& path)
     this->setDownLimits(this->_down_max_rate, this->_down_max_thread);
   }
 
+  // get 'layout' parameters
+  if(this->_xml.hasChild(L"layout")) {
+    OmXmlNode layout_node = this->_xml.child(L"layout");
+    this->_layout_repositories_span = layout_node.child(L"repositories").attrAsInt(L"span");
+  } else {
+    // create default
+    this->_xml.addChild(L"layout");
+    this->setLayoutRepositoriesSpan(this->_layout_repositories_span);
+  }
 
-  // // get 'tools' parameters
+  // get 'tools' parameters
   if(this->_xml.hasChild(L"tools")) {
 
     OmXmlNode tools_node = this->_xml.child(L"tools");
@@ -4039,10 +4050,12 @@ void OmModChan::setModsSourcesPath(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::saveLayout(int netlib_split)
+void OmModChan::setLayoutRepositoriesSpan(int span)
 {
   if(!this->_xml.valid())
     return;
+
+  this->_layout_repositories_span = span;
 
   OmXmlNode layout_node;
 
@@ -4052,35 +4065,13 @@ void OmModChan::saveLayout(int netlib_split)
     layout_node = this->_xml.addChild(L"layout");
   }
 
-  OmXmlNode netlib_node;
-
-  if(layout_node.hasChild(L"network_library")) {
-    netlib_node = layout_node.child(L"network_library");
+  if(layout_node.hasChild(L"repositories")) {
+    layout_node.child(L"repositories").setAttr(L"span", span);
   } else {
-    netlib_node = layout_node.addChild(L"network_library");
+    layout_node.addChild(L"repositories").setAttr(L"span", span);
   }
-
-  netlib_node.setAttr(L"split", netlib_split);
 
   this->_xml.save();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModChan::loadLayout(int* netlib_split) const
-{
-  if(!this->_xml.valid())
-    return;
-
-  if(this->_xml.hasChild(L"layout")) {
-
-    OmXmlNode layout_node = this->_xml.child(L"layout");
-
-    if(layout_node.hasChild(L"network_library")) {
-      *netlib_split = layout_node.child(L"network_library").attrAsInt(L"split");
-    }
-  }
 }
 
 ///
