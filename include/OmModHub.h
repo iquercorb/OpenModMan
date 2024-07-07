@@ -390,6 +390,10 @@ class OmModHub
       return this->_locked_presets;
     }
 
+    void queuePresets(OmModPset* ModPset, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+
+    void abortPresets();
+
     /// \brief Get batches warning quiet mode.
     ///
     /// Returns batches warning quiet mode option value.
@@ -408,35 +412,113 @@ class OmModHub
     ///
     void setPresetQuietMode(bool enable);
 
-    void queuePresets(OmModPset* ModPset, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
+    /// \brief Get Show Channels option value.
+    ///
+    /// Returns Show Channels layout option value.
+    ///
+    /// \return True or false.
+    ///
+    bool layoutChannelsShow() const {
+      return this->_layout_channels_show;
+    }
 
-    void abortPresets();
+    /// \brief Set Show Channels option value.
+    ///
+    /// Define and save Show Channels layout option value.
+    ///
+    /// \param[in]  enable    : Show Channels enable or disable.
+    ///
+    void setLayoutChannelsShow(bool enable);
 
-    /// \brief Save UI layout settings
+    /// \brief Get Show Presets option value.
     ///
-    /// Save UI layout settings related to this Hub.
+    /// Returns Show Presets layout option value.
     ///
-    /// \param[in] chnlv    : Channels List-View visible.
-    /// \param[in] chnlv_h  : Channels List-View height.
-    /// \param[in] pstlv    : Presets List-View visible.
-    /// \param[in] pstlv_w  : Presets List-View width.
-    /// \param[in] overw    : Mod overview visible.
-    /// \param[in] overw_h  : Mod overview height.
+    /// \return True or false.
     ///
-    void saveLayout(bool chnlv, int chnlv_h, bool pstlv, int pstlv_w, bool overw, int overw_h);
+    bool layoutPresetsShow() const {
+      return this->_layout_presets_show;
+    }
 
-    /// \brief Load UI layout settings
+    /// \brief Set Show Presets option value.
     ///
-    /// Load the saved UI layout settings related to this Hub.
+    /// Define and save Show Presets layout option value.
     ///
-    /// \param[out] chnlv    : Pointer to receive Channels List-View visible.
-    /// \param[out] chnlv_h  : Pointer to receive Channels List-View height.
-    /// \param[out] pstlv    : Pointer to receive Presets List-View visible.
-    /// \param[out] pstlv_w  : Pointer to receive Presets List-View width.
-    /// \param[out] overw    : Pointer to receive Mod overview visible.
-    /// \param[out] overw_h  : Pointer to receive Mod overview height.
+    /// \param[in]  enable    : Show Presets enable or disable.
     ///
-    void loadLayout(bool* chnlv, int* chnlv_h, bool* pstlv, int* pstlv_w, bool* overw, int* overw_h) const;
+    void setLayoutPresetsShow(bool enable);
+
+    /// \brief Get Show Overview option value.
+    ///
+    /// Returns Show Overview layout option value.
+    ///
+    /// \return True or false.
+    ///
+    bool layoutOverviewShow() const {
+      return this->_layout_overview_show;
+    }
+
+    /// \brief Set Show Overview option value.
+    ///
+    /// Define and save Show Overview layout option value.
+    ///
+    /// \param[in]  enable    : Show Overview enable or disable.
+    ///
+    void setLayoutOverviewShow(bool enable);
+
+    /// \brief Get Channels list layout.
+    ///
+    /// Returns saved Channels list layout span value.
+    ///
+    /// \return Height value in pixels.
+    ///
+    int layoutChannelsSpan() const {
+      return this->_layout_channels_span;
+    }
+
+    /// \brief Set Channels list layout.
+    ///
+    /// Define and save Channels list layout span value.
+    ///
+    /// \param[in]  span     : Channels list layout span value.
+    ///
+    void setLayoutChannelsSpan(int span);
+
+    /// \brief Get Presets list layout.
+    ///
+    /// Returns saved Presets list layout span value.
+    ///
+    /// \return Height value in pixels.
+    ///
+    int layoutPresetsSpan() const {
+      return this->_layout_presets_span;
+    }
+
+    /// \brief Set Presets list layout.
+    ///
+    /// Define and save Presets list layout span value.
+    ///
+    /// \param[in]  span    : Presets list layout span value.
+    ///
+    void setLayoutPresetsSpan(int span);
+
+    /// \brief Get Overview list layout.
+    ///
+    /// Returns saved Overview list layout span value.
+    ///
+    /// \return Height value in pixels.
+    ///
+    int layoutOverviewSpan() const {
+      return this->_layout_overview_span;
+    }
+
+    /// \brief Set Overview list layout.
+    ///
+    /// Define and save Overview list layout span value.
+    ///
+    /// \param[in]  span    : Overview list layout span value.
+    ///
+    void setLayoutOverviewSpan(int span);
 
     /// \brief Get last error string.
     ///
@@ -538,6 +620,18 @@ class OmModHub
 
     // options
     bool                  _presets_quietmode;
+
+    bool                  _layout_channels_show;
+
+    int32_t               _layout_channels_span;
+
+    bool                  _layout_presets_show;
+
+    int32_t               _layout_presets_span;
+
+    bool                  _layout_overview_show;
+
+    int32_t               _layout_overview_span;
 
     // logs and errors
     void                  _log(unsigned level, const OmWString& origin, const OmWString& detail) const;

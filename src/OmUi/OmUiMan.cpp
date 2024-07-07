@@ -58,11 +58,13 @@
 
 // fixed values for resize and split calculations
 #define RSIZE_SEP_H         4
+#define RSIZE_SEP_W         4
 #define RSIZE_TOP_H         30
 #define RSIZE_BOT_H         28
-#define RSIZE_SIDE_MIN_W    200
+#define RSIZE_SIDE_MIN_W    140
 #define RSIZE_HEAD_MIN_H    70
 #define RSIZE_MAIN_MIN_H    200
+#define RSIZE_MAIN_MIN_W    200
 #define RSIZE_FOOT_MIN_H    170
 
 ///
@@ -90,13 +92,13 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _delchan_hdlg(nullptr),
   _delchan_abort(0),
   _lv_chn_icons_size(0),
-  _lv_chn_visible(true),
-  _lv_chn_height(RSIZE_HEAD_MIN_H),
+  _lv_chn_show(true),
+  _lv_chn_span(RSIZE_HEAD_MIN_H),
   _lv_pst_icons_size(0),
-  _lv_pst_visible(true),
-  _lv_pst_width(RSIZE_SIDE_MIN_W),
-  _ui_ovw_visible(true),
-  _ui_ovw_height(RSIZE_FOOT_MIN_H)
+  _lv_pst_show(true),
+  _lv_pst_span(RSIZE_SIDE_MIN_W),
+  _ui_ovw_show(true),
+  _ui_ovw_span(RSIZE_FOOT_MIN_H)
 {
   // add main frames
   this->_UiManMain = new OmUiManMain(hins);
@@ -1451,9 +1453,9 @@ void OmUiMan::_layout_save()
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
-  ModHub->saveLayout(this->_lv_chn_visible, this->_lv_chn_height,
-                     this->_lv_pst_visible, this->_lv_pst_width,
-                     this->_ui_ovw_visible, this->_ui_ovw_height);
+  ModHub->setLayoutChannelsSpan(this->_lv_chn_span);
+  ModHub->setLayoutPresetsSpan(this->_lv_pst_span);
+  ModHub->setLayoutOverviewSpan(this->_ui_ovw_span);
 }
 
 ///
@@ -1464,16 +1466,27 @@ void OmUiMan::_layout_load()
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
-  this->_lv_chn_visible = true;
-  this->_lv_chn_height = -1;
-  this->_lv_pst_visible = true;
-  this->_lv_pst_width = -1;
-  this->_ui_ovw_visible = true;
-  this->_ui_ovw_height = -1;
+  this->_lv_chn_show = ModHub->layoutChannelsShow();
+  this->_lv_chn_span = ModHub->layoutChannelsSpan();
 
-  ModHub->loadLayout( &this->_lv_chn_visible, &this->_lv_chn_height,
-                      &this->_lv_pst_visible, &this->_lv_pst_width,
-                      &this->_ui_ovw_visible, &this->_ui_ovw_height);
+  // show or hide Channels list
+  this->showItem(IDC_LV_CHN, this->_lv_chn_show);
+  this->showItem(IDC_BC_CHEDI, this->_lv_chn_show);
+  this->showItem(IDC_BC_CHADD, this->_lv_chn_show);
+  this->showItem(IDC_BC_CHDEL, this->_lv_chn_show);
+
+  this->_lv_pst_show = ModHub->layoutPresetsShow();
+  this->_lv_pst_span = ModHub->layoutPresetsSpan();
+
+  // show or hide Presets list
+  this->showItem(IDC_LV_PST, this->_lv_pst_show);
+  this->showItem(IDC_BC_PSRUN, this->_lv_pst_show);
+  this->showItem(IDC_BC_PSNEW, this->_lv_pst_show);
+  this->showItem(IDC_BC_PSDEL, this->_lv_pst_show);
+  this->showItem(IDC_BC_PSEDI, this->_lv_pst_show);
+
+  this->_ui_ovw_show = true/*ModHub->layoutOverviewShow()*/;
+  this->_ui_ovw_span = ModHub->layoutOverviewSpan();
 
   this->_onResize();
 
@@ -1637,11 +1650,6 @@ void OmUiMan::_onInit()
   this->_UiManMain->modeless(true);
   this->_UiManFoot->modeless(true);
 
-  // initialize frames to the proper size and position
-  //ModMan->loadWindowHead(&this->_lv_chn_height);
-  //ModMan->loadWindowFoot(&this->_ui_ovw_height);
-  //this->_onResize();
-
   // get Library dialog, required for Presets
   this->_UiManMainLib = static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB));
   this->_UiManMainNet = static_cast<OmUiManMainNet*>(this->_UiManMain->childById(IDD_MGR_MAIN_NET));
@@ -1723,74 +1731,100 @@ void OmUiMan::_onResize()
   std::cout << "DEBUG => OmUiMan::_onResize\n";
   #endif
 
-  // Mod Hubs ComboBox
-  this->_setItemPos(IDC_CB_HUB, 5, 2, this->cliWidth()-10 , 26, true);
+
 
   // Setup limits values
   long head_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
-  long head_max = this->cliHeight() - (this->_ui_ovw_height + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+  long head_max = this->cliHeight() - (this->_ui_ovw_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
   long foot_min = RSIZE_BOT_H + RSIZE_FOOT_MIN_H;
-  long foot_max = this->cliHeight() - (this->_lv_chn_height + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+  long foot_max = this->cliHeight() - (this->_lv_chn_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+  long side_min = RSIZE_SEP_W + RSIZE_SIDE_MIN_W;
+  long side_max = this->cliWidth() - (this->_lv_pst_span + RSIZE_MAIN_MIN_W + (RSIZE_SEP_W * 2));
 
   long rc[4];
 
   if(this->_split_captured) {
 
     // Save the area to be redrawn after resize and update line position from split move param
-    rc[0] = 2; rc[2] = this->cliWidth() - 4;
-
     if(this->_split_hover_head) {
+      rc[0] = 2; rc[2] = this->cliWidth() - 4;
       rc[1] = RSIZE_TOP_H;
-      rc[3] = this->cliHeight() - this->_ui_ovw_height;
+      rc[3] = this->cliHeight() - this->_ui_ovw_span;
 
       // update height
-      this->_lv_chn_height = this->_split_params[2];
+      this->_lv_chn_span = this->_split_params[2];
+    }
+
+    if(this->_split_hover_side) {
+      rc[1] = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
+      rc[3] = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;
+      rc[0] = RSIZE_SEP_W;
+      rc[2] = this->cliWidth() - RSIZE_SEP_W;
+
+      // update height
+      this->_lv_pst_span = this->_split_params[2];
     }
 
     if(this->_split_hover_foot) {
-      long max_h = this->_ui_ovw_height > this->_split_params[2] ? this->_ui_ovw_height : this->_split_params[2];
+      rc[0] = 2; rc[2] = this->cliWidth() - 4;
+      long max_h = this->_ui_ovw_span > this->_split_params[2] ? this->_ui_ovw_span : this->_split_params[2];
       rc[1] = this->cliHeight() - (max_h + 45);
       rc[3] = this->cliHeight() - RSIZE_BOT_H;
 
       // update height
-      this->_ui_ovw_height = this->_split_params[2];
+      this->_ui_ovw_span = this->_split_params[2];
     }
   }
 
   // Clamp to limits
-  if(this->_lv_chn_height < head_min) this->_lv_chn_height = head_min;
-  if(this->_lv_chn_height > head_max) this->_lv_chn_height = head_max;
-  if(this->_ui_ovw_height < foot_min) this->_ui_ovw_height = foot_min;
-  if(this->_ui_ovw_height > foot_max) this->_ui_ovw_height = foot_max;
+  if(this->_lv_chn_span < head_min) this->_lv_chn_span = head_min;
+  if(this->_lv_chn_span > head_max) this->_lv_chn_span = head_max;
+  if(this->_lv_pst_span < side_min) this->_lv_pst_span = side_min;
+  if(this->_lv_pst_span > side_max) this->_lv_pst_span = side_max;
+  if(this->_ui_ovw_span < foot_min) this->_ui_ovw_span = foot_min;
+  if(this->_ui_ovw_span > foot_max) this->_ui_ovw_span = foot_max;
 
   // ---
-  int32_t main_y = this->_lv_chn_height + RSIZE_SEP_H;
-  int32_t foot_y = this->cliHeight() - this->_ui_ovw_height;
 
-  // Mod Channel ListView
-  this->_setItemPos(IDC_LV_CHN, 30, RSIZE_TOP_H, this->cliWidth()-35, this->_lv_chn_height - RSIZE_TOP_H, true);
-  this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
+  // Mod Hubs ComboBox
+  this->_setItemPos(IDC_CB_HUB, 5, 2, this->cliWidth()-10 , 26, true);
 
-  // Channel buttons
-  this->_setItemPos(IDC_BC_CHEDI, 4, RSIZE_TOP_H, 22, 22, true);
-  this->_setItemPos(IDC_BC_CHADD, 4, this->_lv_chn_height - 46, 22, 22, true);
-  this->_setItemPos(IDC_BC_CHDEL, 4, this->_lv_chn_height - 22, 22, 22, true);
+  int32_t main_y = this->_lv_chn_show ? this->_lv_chn_span + RSIZE_SEP_H : RSIZE_TOP_H;
+  int32_t foot_y = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;
+  int32_t pset_x = this->_lv_pst_show ? this->cliWidth() - this->_lv_pst_span : this->cliWidth();
 
-  // Presets buttons
-  this->_setItemPos(IDC_BC_PSRUN, this->cliWidth() - 204, main_y - 1, 22, 22, true);
-  this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, main_y - 1, 22, 22, true);
-  this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, main_y - 1, 22, 22, true);
-  this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, main_y - 1, 22, 22, true);
+  if(this->_lv_chn_show) {
 
-  // Presets ListView
-  this->_setItemPos(IDC_LV_PST, this->cliWidth() - 204, main_y + 24, 200, (foot_y - main_y) - 28, true);
-  this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
+    // Mod Channel ListView
+    this->_setItemPos(IDC_LV_CHN, 30, RSIZE_TOP_H, this->cliWidth()-35, this->_lv_chn_span - RSIZE_TOP_H, true);
+    this->_lv_chn_on_resize(); //< Resize the Mod Channel ListView column
+
+    // Channel buttons
+    this->_setItemPos(IDC_BC_CHEDI, RSIZE_SEP_W, RSIZE_TOP_H, 22, 22, true);
+    this->_setItemPos(IDC_BC_CHADD, RSIZE_SEP_W, this->_lv_chn_span - 46, 22, 22, true);
+    this->_setItemPos(IDC_BC_CHDEL, RSIZE_SEP_W, this->_lv_chn_span - 22, 22, 22, true);
+  }
+
+  if(this->_lv_pst_show) {
+
+    // Presets buttons
+    this->_setItemPos(IDC_BC_PSRUN, pset_x, main_y - 1, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSNEW, this->cliWidth() - 72, main_y - 1, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSDEL, this->cliWidth() - 49, main_y - 1, 22, 22, true);
+    this->_setItemPos(IDC_BC_PSEDI, this->cliWidth() - 26, main_y - 1, 22, 22, true);
+
+    // Presets ListView
+    this->_setItemPos(IDC_LV_PST, pset_x, main_y + 24, this->_lv_pst_span - RSIZE_SEP_W, (foot_y - main_y) - 28, true);
+    this->_lv_pst_on_resize(); //< Resize the Mod Channel ListView column
+  }
 
   // Library Frame
-  this->_setChildPos(this->_UiManMain->hwnd(), 4, main_y, this->cliWidth() - 212, (foot_y - this->_lv_chn_height) - (RSIZE_SEP_H * 2), true);
+  this->_setChildPos(this->_UiManMain->hwnd(), RSIZE_SEP_W, main_y, pset_x - (RSIZE_SEP_W * 2), (foot_y - main_y) - (RSIZE_SEP_H), true);
 
-  // Overview Frame
-  this->_setChildPos(this->_UiManFoot->hwnd(), 4, foot_y, this->cliWidth() - 8, this->_ui_ovw_height - RSIZE_BOT_H, true);
+  if(this->_ui_ovw_show) {
+    // Overview Frame
+    this->_setChildPos(this->_UiManFoot->hwnd(), RSIZE_SEP_W, foot_y, this->cliWidth() - (RSIZE_SEP_W * 2), this->_ui_ovw_span - RSIZE_BOT_H, true);
+  }
 
   // Foot status bar
   this->_setItemPos(IDC_SC_STATUS, -1, this->cliHeight()-24, this->cliWidth()+2, 26, true);
@@ -1819,11 +1853,15 @@ void OmUiMan::_onResize()
     RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
 
     if(this->_split_hover_head) {
-      rc[1] = this->_lv_chn_height - 80; rc[3] = this->_lv_chn_height + 30;
+      rc[1] = this->_lv_chn_span - 80; rc[3] = this->_lv_chn_span + 50;
+      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+    }
+    if(this->_split_hover_side) {
+      rc[0] = this->cliWidth() - (this->_lv_pst_span + 10); rc[2] = this->cliWidth() - (this->_lv_pst_span - 80);
       RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
     }
     if(this->_split_hover_foot) {
-      rc[3] = this->cliHeight() - this->_ui_ovw_height;
+      rc[3] = this->cliHeight() - this->_ui_ovw_span;
       RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
     }
   } else {
@@ -1948,8 +1986,6 @@ void OmUiMan::_onQuit()
   #endif
 
   ModMan->saveWindowRect(rec);
-  //ModMan->saveWindowHead(this->_lv_chn_height);
-  //ModMan->saveWindowFoot(this->_ui_ovw_height);
 }
 
 
@@ -1974,17 +2010,29 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // if mouse cursor is hovering between frames, checks for left button click
   // by user to capture mouse and entering the frames move and resize process
   if(uMsg == WM_LBUTTONDOWN || (uMsg == WM_PARENTNOTIFY && wParam == WM_LBUTTONDOWN)) {
-    if(this->_split_hover_foot || this->_split_hover_head) {
+    if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
+
+      long mx = LOWORD(lParam); //< Cursor X position relative to client area
+      long my = HIWORD(lParam); //< Cursor Y position relative to client area
+
       // keeps mouse pointer position and foot frame height at
       // capture to later calculate relative moves and size changes
-      this->_split_params[0] = HIWORD(lParam);
 
       // Save initial line position
-      if(this->_split_hover_head)
-        this->_split_params[1] = this->_lv_chn_height;
+      if(this->_split_hover_head) {
+        this->_split_params[0] = my;
+        this->_split_params[1] = this->_lv_chn_span;
+      }
 
-      if(this->_split_hover_foot)
-        this->_split_params[1] = this->_ui_ovw_height;
+      if(this->_split_hover_side) {
+        this->_split_params[0] = mx;
+        this->_split_params[1] = this->_lv_pst_span;
+      }
+
+      if(this->_split_hover_foot) {
+        this->_split_params[0] = my;
+        this->_split_params[1] = this->_ui_ovw_span;
+      }
 
       // capture the mouse
       SetCapture(this->_hwnd);
@@ -1997,9 +2045,13 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // changes the default cursor arrow to north-south resize arrows according
   // cursor hovering between the frames.
   if(uMsg == WM_SETCURSOR) {
-    // checks whether cursor is hovering between frames
+    // checks whether cursor is hovering resize anchor
     if(this->_split_hover_foot || this->_split_hover_head) {
       SetCursor(LoadCursor(0,IDC_SIZENS));
+      return 1; //< bypass default process
+    }
+    if(this->_split_hover_side) {
+      SetCursor(LoadCursor(0,IDC_SIZEWE));
       return 1; //< bypass default process
     }
   }
@@ -2008,26 +2060,38 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // between the frames (to change cursor) or, if we captured cursor, to
   // process the move and resize of the frames
   if(uMsg == WM_MOUSEMOVE) {
-    long y, p = HIWORD(lParam); //< Cursor Y position relative to client area
+
+    long mx = LOWORD(lParam); //< Cursor X position relative to client area
+    long my = HIWORD(lParam); //< Cursor Y position relative to client area
+
     if(GetCapture() == this->_hwnd) {
 
       if(this->_split_hover_head) {
         // calculate new line position according new cursor moves
-        y = this->_split_params[1] + (p - this->_split_params[0]);
+        long s = this->_split_params[1] + (my - this->_split_params[0]);
         // move the splitter / resize frames
-        if(y != this->_lv_chn_height) {
-          this->_split_params[2] = y;
+        if(s != this->_lv_chn_span) {
+          this->_split_params[2] = s;
+          this->_onResize();
+        }
+      }
+
+      if(this->_split_hover_side) {
+        // calculate new line position according new cursor moves
+        long s = this->_split_params[1] + (this->_split_params[0] - mx);
+        // move the splitter / resize frames
+        if(s != this->_lv_pst_span) {
+          this->_split_params[2] = s;
           this->_onResize();
         }
       }
 
       if(this->_split_hover_foot) {
-
         // calculate new line position according new cursor moves
-        y = this->_split_params[1] + (this->_split_params[0] - p);
+        long s = this->_split_params[1] + (this->_split_params[0] - my);
         // move the splitter / resize frames
-        if(y != this->_ui_ovw_height) {
-          this->_split_params[2] = y;
+        if(s != this->_ui_ovw_span) {
+          this->_split_params[2] = s;
           this->_onResize();
         }
       }
@@ -2035,12 +2099,24 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     } else {
       // checks whether mouse cursor is hovering between frames, we take a
       // good margin around the gap to make it easier to catch.
+
       // check for head split
-      y = this->_lv_chn_height;
-      this->_split_hover_head = (p > (y - 3) && p < (y + 8));
+      if(this->_lv_chn_show)
+        this->_split_hover_head = (my > (this->_lv_chn_span - 3) && my < (this->_lv_chn_span + 8));
+
+      // check for side split
+      if(this->_lv_pst_show) {
+        long top = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
+        long bot = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : RSIZE_BOT_H;
+        long sx = this->cliWidth() - (this->_lv_pst_span);
+        this->_split_hover_side = (my > top) && (my < bot) && (mx > (sx - 5) && mx < sx);
+      }
+
       // check for foot split
-      y = this->cliHeight() - this->_ui_ovw_height;
-      this->_split_hover_foot = (p > (y - 8) && p < (y + 3));
+      if(this->_ui_ovw_show) {
+        long s = this->cliHeight() - this->_ui_ovw_span;
+        this->_split_hover_foot = (my > (s - 8) && my < (s + 3));
+      }
     }
     return 0;
   }

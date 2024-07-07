@@ -191,15 +191,24 @@ class OmUiMan : public OmDialog
       return this->_split_captured;
     }
 
-    /// \brief Check whether mouse hover frame split
+    /// \brief Check whether mouse hover horizontal resizing split
     ///
-    /// Checks whether the mouse cursor is currently hovering between
-    /// frames.
+    /// Checks whether the mouse cursor is currently hovering horizontal resizing split
     ///
-    /// \return True mouse cursor hovering between frames, false otherwise
+    /// \return True mouse cursor hovering horizontal resizing split, false otherwise
     ///
-    bool splitterCursorHover() const {
+    bool cursorResizeHor() const {
       return (this->_split_hover_foot || this->_split_hover_head);
+    }
+
+    /// \brief Check whether mouse hover vertical resizing split
+    ///
+    /// Checks whether the mouse cursor is currently hovering vertical resizing split
+    ///
+    /// \return True mouse cursor hovering vertical resizing split, false otherwise
+    ///
+    bool cursorResizeVer() const {
+      return this->_split_hover_side;
     }
 
     /// \brief List views ImageList handle
@@ -285,6 +294,8 @@ class OmUiMan : public OmDialog
 
     bool                _split_hover_foot;
 
+    bool                _split_hover_side;
+
     bool                _split_captured;
 
     long                _split_params[3];
@@ -357,9 +368,9 @@ class OmUiMan : public OmDialog
 
     void                _lv_chn_on_rclick();
 
-    bool                _lv_chn_visible;
+    bool                _lv_chn_show;
 
-    int32_t             _lv_chn_height;
+    int32_t             _lv_chn_span;
 
     // Mod Presets controls
     uint32_t            _lv_pst_icons_size;
@@ -372,15 +383,15 @@ class OmUiMan : public OmDialog
 
     void                _lv_pst_on_rclick();
 
-    bool                _lv_pst_visible;
+    bool                _lv_pst_show;
 
-    int32_t             _lv_pst_width;
+    int32_t             _lv_pst_span;
 
     // Mod Overview controls
 
-    bool                _ui_ovw_visible;
+    bool                _ui_ovw_show;
 
-    int32_t             _ui_ovw_height;
+    int32_t             _ui_ovw_span;
 
     // Layout functions
     void                _layout_save();

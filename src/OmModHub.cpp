@@ -58,7 +58,13 @@ OmModHub::OmModHub(OmModMan* ModMan) :
   _psetup_progress_cb(nullptr),
   _psetup_result_cb(nullptr),
   _psetup_user_ptr(nullptr),
-  _presets_quietmode(true)
+  _presets_quietmode(true),
+  _layout_channels_show(true),
+  _layout_channels_span(70),
+  _layout_presets_show(true),
+  _layout_presets_span(170),
+  _layout_overview_show(true),
+  _layout_overview_span(170)
 {
 
 }
@@ -179,6 +185,35 @@ bool OmModHub::open(const OmWString& path)
     this->_presets_quietmode = this->_xml.child(L"batches_quietmode").attrAsInt(L"enable");
   } else {
     this->setPresetQuietMode(this->_presets_quietmode); //< create default
+  }
+
+  // get Layout parameters
+  if(this->_xml.hasChild(L"layout")) {
+    OmXmlNode layout_node = this->_xml.child(L"layout");
+
+    this->_layout_channels_show = layout_node.child(L"channels").attrAsInt(L"show");
+    this->_layout_channels_span = layout_node.child(L"channels").attrAsInt(L"span");
+
+    this->_layout_presets_show = layout_node.child(L"presets").attrAsInt(L"show");
+    this->_layout_presets_span = layout_node.child(L"presets").attrAsInt(L"span");
+
+    this->_layout_overview_show = layout_node.child(L"overview").attrAsInt(L"show");
+    this->_layout_overview_span = layout_node.child(L"overview").attrAsInt(L"span");
+
+  } else {
+    OmXmlNode child_node, layout_node = this->_xml.addChild(L"layout");
+
+    child_node = layout_node.addChild(L"channels");
+    child_node.setAttr(L"show", this->_layout_channels_show);
+    child_node.setAttr(L"span", this->_layout_channels_span);
+
+    child_node = layout_node.addChild(L"presets");
+    child_node.setAttr(L"show", this->_layout_presets_show);
+    child_node.setAttr(L"span", this->_layout_presets_span);
+
+    child_node = layout_node.addChild(L"overview");
+    child_node.setAttr(L"show", this->_layout_overview_show);
+    child_node.setAttr(L"span", this->_layout_overview_span);
   }
 
   OmXmlConf test_cfg;
@@ -912,77 +947,7 @@ OmResult OmModHub::renamePreset(size_t index, const OmWString& title)
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModHub::setPresetQuietMode(bool enable)
-{
-  this->_presets_quietmode = enable;
-
-  if(!this->_xml.valid())
-    return;
-
-  if(this->_xml.hasChild(L"batches_quietmode")) {
-    this->_xml.child(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
-  } else {
-    this->_xml.addChild(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
-  }
-
-  this->_xml.save();
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModHub::abortPresets()
-{
-  this->_psetup_abort = true;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
-{
-  if(this->_psetup_queue.empty()) {
-
-    this->_psetup_begin_cb = begin_cb;
-    this->_psetup_progress_cb = progress_cb;
-    this->_psetup_result_cb = result_cb;
-    this->_psetup_user_ptr = user_ptr;
-
-    // reset global progression parameters
-    this->_psetup_dones = 0;
-    this->_psetup_percent = 0;
-
-    // presets list and parameters is locked
-    this->_locked_presets = true;
-
-  } else {
-
-    // emit a warning in case a crazy client starts new download with
-    // different parameters than current
-    if(this->_psetup_begin_cb != begin_cb ||
-       this->_psetup_result_cb != result_cb ||
-       this->_psetup_progress_cb != progress_cb ||
-       this->_psetup_user_ptr != user_ptr) {
-      this->_log(OM_LOG_WRN, L"queuePresets", L"changing callbacks for a running thread is not allowed");
-    }
-  }
-
-  // reset abort flag
-  this->_psetup_abort = false;
-
-  Om_push_backUnique(this->_psetup_queue, ModPset);
-
-  if(!this->_psetup_hth) {
-
-    // launch thread
-    this->_psetup_hth = Om_threadCreate(OmModHub::_psetup_run_fn, this);
-    this->_psetup_hwo = Om_threadWaitEnd(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
-  }
-}
-
+/*
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1061,6 +1026,59 @@ void OmModHub::loadLayout(bool* chnlv, int* chnlv_h, bool* pstlv, int* pstlv_w, 
   if(layout_node.hasChild(L"overview")) {
     *overw = static_cast<bool>(layout_node.child(L"overview").attrAsInt(L"visible"));
     *overw_h = layout_node.child(L"overview").attrAsInt(L"height");
+  }
+}
+*/
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::abortPresets()
+{
+  this->_psetup_abort = true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, void* user_ptr)
+{
+  if(this->_psetup_queue.empty()) {
+
+    this->_psetup_begin_cb = begin_cb;
+    this->_psetup_progress_cb = progress_cb;
+    this->_psetup_result_cb = result_cb;
+    this->_psetup_user_ptr = user_ptr;
+
+    // reset global progression parameters
+    this->_psetup_dones = 0;
+    this->_psetup_percent = 0;
+
+    // presets list and parameters is locked
+    this->_locked_presets = true;
+
+  } else {
+
+    // emit a warning in case a crazy client starts new download with
+    // different parameters than current
+    if(this->_psetup_begin_cb != begin_cb ||
+       this->_psetup_result_cb != result_cb ||
+       this->_psetup_progress_cb != progress_cb ||
+       this->_psetup_user_ptr != user_ptr) {
+      this->_log(OM_LOG_WRN, L"queuePresets", L"changing callbacks for a running thread is not allowed");
+    }
+  }
+
+  // reset abort flag
+  this->_psetup_abort = false;
+
+  Om_push_backUnique(this->_psetup_queue, ModPset);
+
+  if(!this->_psetup_hth) {
+
+    // launch thread
+    this->_psetup_hth = Om_threadCreate(OmModHub::_psetup_run_fn, this);
+    this->_psetup_hwo = Om_threadWaitEnd(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
   }
 }
 
@@ -1201,6 +1219,187 @@ VOID WINAPI OmModHub::_psetup_end_fn(void* ptr,uint8_t fired)
 
   // unlock presets list and parameters
   self->_locked_presets = false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setPresetQuietMode(bool enable)
+{
+  this->_presets_quietmode = enable;
+
+  if(!this->_xml.valid())
+    return;
+
+  if(this->_xml.hasChild(L"batches_quietmode")) {
+    this->_xml.child(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
+  } else {
+    this->_xml.addChild(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutChannelsShow(bool enable)
+{
+  this->_layout_channels_show = enable;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"channels")) {
+    layout_node.child(L"channels").setAttr(L"show", static_cast<int>(enable));
+  } else {
+    layout_node.addChild(L"channels").setAttr(L"show", static_cast<int>(enable));
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutPresetsShow(bool enable)
+{
+  this->_layout_presets_show = enable;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"presets")) {
+    layout_node.child(L"presets").setAttr(L"show", static_cast<int>(enable));
+  } else {
+    layout_node.addChild(L"presets").setAttr(L"show", static_cast<int>(enable));
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutOverviewShow(bool enable)
+{
+  this->_layout_overview_show = enable;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"overview")) {
+    layout_node.child(L"overview").setAttr(L"show", static_cast<int>(enable));
+  } else {
+    layout_node.addChild(L"overview").setAttr(L"show", static_cast<int>(enable));
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutChannelsSpan(int span)
+{
+  this->_layout_channels_span = span;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"channels")) {
+    layout_node.child(L"channels").setAttr(L"span", span);
+  } else {
+    layout_node.addChild(L"channels").setAttr(L"span", span);
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutPresetsSpan(int span)
+{
+  this->_layout_presets_span = span;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"presets")) {
+    layout_node.child(L"presets").setAttr(L"span", span);
+  } else {
+    layout_node.addChild(L"presets").setAttr(L"span", span);
+  }
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::setLayoutOverviewSpan(int span)
+{
+  this->_layout_overview_span = span;
+
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  if(layout_node.hasChild(L"overview")) {
+    layout_node.child(L"overview").setAttr(L"span", span);
+  } else {
+    layout_node.addChild(L"overview").setAttr(L"span", span);
+  }
+
+  this->_xml.save();
 }
 
 ///

@@ -180,8 +180,12 @@ INT_PTR OmUiManMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   // does not hover the parent window, it does not receive WM_SETCURSOR.
   if(uMsg == WM_SETCURSOR) {
     // checks whether cursor is hovering between frames
-    if(this->_UiMan->splitterCursorHover()) {
+    if(this->_UiMan->cursorResizeHor()) {
       SetCursor(LoadCursor(0,IDC_SIZENS));
+      return 1; //< bypass default process
+    }
+    if(this->_UiMan->cursorResizeVer()) {
+      SetCursor(LoadCursor(0,IDC_SIZEWE));
       return 1; //< bypass default process
     }
   }
