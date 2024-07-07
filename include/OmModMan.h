@@ -220,38 +220,6 @@ class OmModMan
     ///
     void loadWindowRect(RECT& rect);
 
-    /// \brief Save configuration window head height.
-    ///
-    /// Stores the specified window head frame height to configuration file.
-    ///
-    /// \param[in]  height  : Foot height to save.
-    ///
-    void saveWindowHead(int height);
-
-    /// \brief Load configuration window head height.
-    ///
-    /// Retrieve the stored window head frame height to configuration file.
-    ///
-    /// \param[out]  height : Foot height to save.
-    ///
-    void loadWindowHead(int* height);
-
-    /// \brief Save configuration window foot height.
-    ///
-    /// Stores the specified window foot frame height to configuration file.
-    ///
-    /// \param[in]  height  : Foot height to save.
-    ///
-    void saveWindowFoot(int height);
-
-    /// \brief Load configuration window foot height.
-    ///
-    /// Retrieve the stored window foot frame height to configuration file.
-    ///
-    /// \param[out]  height : Foot height to save.
-    ///
-    void loadWindowFoot(int* height);
-
     /// \brief Add path to recent file list.
     ///
     /// Add a new path ot recent file list.

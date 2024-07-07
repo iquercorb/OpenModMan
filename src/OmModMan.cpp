@@ -345,7 +345,6 @@ void OmModMan::saveWindowRect(const RECT& rect)
   this->_xml.save();
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -364,88 +363,6 @@ void OmModMan::loadWindowRect(RECT& rect)
     rect.bottom = window.attrAsInt(L"bottom");
   }
 }
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModMan::saveWindowFoot(int h)
-{
-  if(!this->_xml.valid())
-    return;
-
-  OmXmlNode window;
-  if(this->_xml.hasChild(L"window")) {
-
-    window = this->_xml.child(L"window");
-
-  } else {
-
-    window = this->_xml.addChild(L"window");
-  }
-
-  window.setAttr(L"foot", h);
-
-  this->_xml.save();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModMan::loadWindowFoot(int* h)
-{
-  if(!this->_xml.valid())
-    return;
-
-  if(this->_xml.hasChild(L"window")) {
-
-    OmXmlNode window = this->_xml.child(L"window");
-
-    *h = window.attrAsInt(L"foot");
-  }
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModMan::saveWindowHead(int h)
-{
-  if(!this->_xml.valid())
-    return;
-
-  OmXmlNode window;
-  if(this->_xml.hasChild(L"window")) {
-
-    window = this->_xml.child(L"window");
-
-  } else {
-
-    window = this->_xml.addChild(L"window");
-  }
-
-  window.setAttr(L"head", h);
-
-  this->_xml.save();
-}
-
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-void OmModMan::loadWindowHead(int* h)
-{
-  if(!this->_xml.valid())
-    return;
-
-  if(this->_xml.hasChild(L"window")) {
-
-    OmXmlNode window = this->_xml.child(L"window");
-
-    *h = window.attrAsInt(L"head");
-  }
-}
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
