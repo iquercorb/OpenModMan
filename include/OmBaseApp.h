@@ -22,7 +22,7 @@
 
 #define OM_APP_MAJ               1
 #define OM_APP_MIN               2
-#define OM_APP_REV               8
+#define OM_APP_REV               9
 
 #ifdef _WIN64
   #define OM_APP_ARCH            L"64-bit"
@@ -34,8 +34,8 @@
 #define OM_APP_AUTHOR             L"Eric M."
 #define OM_APP_CONTRIB            L""
 #define OM_APP_C_YEAR             L"2024"
-#define OM_APP_GIT                L"https://github.com/sedenion/OpenModMan"
-#define OM_APP_URL                L"https://github.com/sedenion/OpenModMan"
+#define OM_APP_GIT                L"https://github.com/iquercorb/OpenModMan"
+#define OM_APP_URL                L"https://github.com/iquercorb/OpenModMan"
 #define OM_DON_URL                L"https://www.paypal.com/donate/?hosted_button_id=458U4MNAPB2KL"
 
 #define OM_XMAGIC_APP             L"Open_Mod_Manager_Main"
