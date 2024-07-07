@@ -280,9 +280,6 @@ class OmUiMan : public OmDialog
     int32_t             _lock_idch;
 
     // frame splitter
-    int32_t             _split_head_h;
-
-    int32_t             _split_foot_h;
 
     bool                _split_hover_head;
 
@@ -360,6 +357,10 @@ class OmUiMan : public OmDialog
 
     void                _lv_chn_on_rclick();
 
+    bool                _lv_chn_visible;
+
+    int32_t             _lv_chn_height;
+
     // Mod Presets controls
     uint32_t            _lv_pst_icons_size;
 
@@ -370,6 +371,21 @@ class OmUiMan : public OmDialog
     void                _lv_pst_on_selchg();
 
     void                _lv_pst_on_rclick();
+
+    bool                _lv_pst_visible;
+
+    int32_t             _lv_pst_width;
+
+    // Mod Overview controls
+
+    bool                _ui_ovw_visible;
+
+    int32_t             _ui_ovw_height;
+
+    // Layout functions
+    void                _layout_save();
+
+    void                _layout_load();
 
     // Dialog common functions
     void                _onInit();

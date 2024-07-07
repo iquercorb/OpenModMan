@@ -256,18 +256,18 @@ bool OmModHub::open(const OmWString& path)
 ///
 void OmModHub::setTitle(const OmWString& title)
 {
-  if(this->_xml.valid()) {
+  if(!this->_xml.valid())
+    return;
 
-    this->_title = title;
+  this->_title = title;
 
-    if(this->_xml.hasChild(L"title")) {
-      this->_xml.child(L"title").setContent(title);
-    } else {
-      this->_xml.addChild(L"title").setContent(title);
-    }
-
-    this->_xml.save();
+  if(this->_xml.hasChild(L"title")) {
+    this->_xml.child(L"title").setContent(title);
+  } else {
+    this->_xml.addChild(L"title").setContent(title);
   }
+
+  this->_xml.save();
 }
 
 
@@ -276,47 +276,47 @@ void OmModHub::setTitle(const OmWString& title)
 ///
 void OmModHub::setIcon(const OmWString& path)
 {
-  if(this->_xml.valid()) {
+  if(!this->_xml.valid())
+    return;
 
-    // delete previous object
-    if(this->_icon_handle)
-      DestroyIcon(this->_icon_handle);
+  // delete previous object
+  if(this->_icon_handle)
+    DestroyIcon(this->_icon_handle);
 
-    this->_icon_handle = nullptr;
+  this->_icon_handle = nullptr;
 
-    // empty source path mean remove icon
-    if(!path.empty()) {
+  // empty source path mean remove icon
+  if(!path.empty()) {
 
-      HICON hIcon = nullptr;
+    HICON hIcon = nullptr;
 
-      if(Om_isFile(path))
-        ExtractIconExW(path.c_str(), 0, &hIcon, nullptr, 1);
+    if(Om_isFile(path))
+      ExtractIconExW(path.c_str(), 0, &hIcon, nullptr, 1);
 
-      if(hIcon) {
+    if(hIcon) {
 
-        this->_icon_source = path;
-        this->_icon_handle = hIcon;
-
-        if(this->_xml.hasChild(L"icon")) {
-          this->_xml.child(L"icon").setContent(this->_icon_source);
-        } else {
-          this->_xml.addChild(L"icon").setContent(this->_icon_source);
-        }
-
-      } else {
-        this->_log(OM_LOG_WRN, L"setIcon", L"icon extraction failed");
-      }
-    }
-
-    if(!this->_icon_handle) {
+      this->_icon_source = path;
+      this->_icon_handle = hIcon;
 
       if(this->_xml.hasChild(L"icon")) {
-        this->_xml.remChild(this->_xml.child(L"icon"));
+        this->_xml.child(L"icon").setContent(this->_icon_source);
+      } else {
+        this->_xml.addChild(L"icon").setContent(this->_icon_source);
       }
-    }
 
-    this->_xml.save();
+    } else {
+      this->_log(OM_LOG_WRN, L"setIcon", L"icon extraction failed");
+    }
   }
+
+  if(!this->_icon_handle) {
+
+    if(this->_xml.hasChild(L"icon")) {
+      this->_xml.remChild(this->_xml.child(L"icon"));
+    }
+  }
+
+  this->_xml.save();
 }
 
 
@@ -919,16 +919,16 @@ void OmModHub::setPresetQuietMode(bool enable)
 {
   this->_presets_quietmode = enable;
 
-  if(this->_xml.valid()) {
+  if(!this->_xml.valid())
+    return;
 
-    if(this->_xml.hasChild(L"batches_quietmode")) {
-      this->_xml.child(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
-    } else {
-      this->_xml.addChild(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
-    }
-
-    this->_xml.save();
+  if(this->_xml.hasChild(L"batches_quietmode")) {
+    this->_xml.child(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
+  } else {
+    this->_xml.addChild(L"batches_quietmode").setAttr(L"enable", this->_presets_quietmode ? 1 : 0);
   }
+
+  this->_xml.save();
 }
 
 ///
@@ -980,6 +980,87 @@ void OmModHub::queuePresets(OmModPset* ModPset, Om_beginCb begin_cb, Om_progress
     // launch thread
     this->_psetup_hth = Om_threadCreate(OmModHub::_psetup_run_fn, this);
     this->_psetup_hwo = Om_threadWaitEnd(this->_psetup_hth, OmModHub::_psetup_end_fn, this);
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::saveLayout(bool chnlv, int chnlv_h, bool pstlv, int pstlv_w, bool overw, int overw_h)
+{
+  if(!this->_xml.valid())
+    return;
+
+  OmXmlNode layout_node;
+
+  if(this->_xml.hasChild(L"layout")) {
+    layout_node = this->_xml.child(L"layout");
+  } else {
+    layout_node = this->_xml.addChild(L"layout");
+  }
+
+  OmXmlNode channels_node;
+
+  if(layout_node.hasChild(L"channels")) {
+    channels_node = layout_node.child(L"channels");
+  } else {
+    channels_node = layout_node.addChild(L"channels");
+  }
+
+  channels_node.setAttr(L"visible", static_cast<int>(chnlv));
+  channels_node.setAttr(L"height", chnlv_h);
+
+  OmXmlNode presets_node;
+
+  if(layout_node.hasChild(L"presets")) {
+    presets_node = layout_node.child(L"presets");
+  } else {
+    presets_node = layout_node.addChild(L"presets");
+  }
+
+  presets_node.setAttr(L"visible", static_cast<int>(pstlv));
+  presets_node.setAttr(L"width", pstlv_w);
+
+  OmXmlNode overview_node;
+
+  if(layout_node.hasChild(L"overview")) {
+    overview_node = layout_node.child(L"overview");
+  } else {
+    overview_node = layout_node.addChild(L"overview");
+  }
+
+  overview_node.setAttr(L"visible", static_cast<int>(overw));
+  overview_node.setAttr(L"height", overw_h);
+
+  this->_xml.save();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModHub::loadLayout(bool* chnlv, int* chnlv_h, bool* pstlv, int* pstlv_w, bool* overw, int* overw_h) const
+{
+  if(!this->_xml.valid())
+    return;
+
+  if(!this->_xml.hasChild(L"layout"))
+    return;
+
+  OmXmlNode layout_node = this->_xml.child(L"layout");
+
+  if(layout_node.hasChild(L"channels")) {
+    *chnlv = static_cast<bool>(layout_node.child(L"channels").attrAsInt(L"visible"));
+    *chnlv_h = layout_node.child(L"channels").attrAsInt(L"height");
+  }
+
+  if(layout_node.hasChild(L"presets")) {
+    *pstlv = static_cast<bool>(layout_node.child(L"presets").attrAsInt(L"visible"));
+    *pstlv_w = layout_node.child(L"presets").attrAsInt(L"width");
+  }
+
+  if(layout_node.hasChild(L"overview")) {
+    *overw = static_cast<bool>(layout_node.child(L"overview").attrAsInt(L"visible"));
+    *overw_h = layout_node.child(L"overview").attrAsInt(L"height");
   }
 }
 

@@ -412,6 +412,32 @@ class OmModHub
 
     void abortPresets();
 
+    /// \brief Save UI layout settings
+    ///
+    /// Save UI layout settings related to this Hub.
+    ///
+    /// \param[in] chnlv    : Channels List-View visible.
+    /// \param[in] chnlv_h  : Channels List-View height.
+    /// \param[in] pstlv    : Presets List-View visible.
+    /// \param[in] pstlv_w  : Presets List-View width.
+    /// \param[in] overw    : Mod overview visible.
+    /// \param[in] overw_h  : Mod overview height.
+    ///
+    void saveLayout(bool chnlv, int chnlv_h, bool pstlv, int pstlv_w, bool overw, int overw_h);
+
+    /// \brief Load UI layout settings
+    ///
+    /// Load the saved UI layout settings related to this Hub.
+    ///
+    /// \param[out] chnlv    : Pointer to receive Channels List-View visible.
+    /// \param[out] chnlv_h  : Pointer to receive Channels List-View height.
+    /// \param[out] pstlv    : Pointer to receive Presets List-View visible.
+    /// \param[out] pstlv_w  : Pointer to receive Presets List-View width.
+    /// \param[out] overw    : Pointer to receive Mod overview visible.
+    /// \param[out] overw_h  : Pointer to receive Mod overview height.
+    ///
+    void loadLayout(bool* chnlv, int* chnlv_h, bool* pstlv, int* pstlv_w, bool* overw, int* overw_h) const;
+
     /// \brief Get last error string.
     ///
     /// Returns last error message string.
