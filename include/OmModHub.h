@@ -194,7 +194,7 @@ class OmModHub
     ///
     /// \param[in]  index  : Mod Channel index.
     ///
-    /// \return Mod Channel object at index or nullptr if index is out of bound.
+    /// \return Mod Channel object at index or \c nullptr if index is out of bound.
     ///
     OmModChan* getChannel(size_t index) const {
       return (index < this->_channel_list.size()) ? this->_channel_list[index] : nullptr;
@@ -320,7 +320,7 @@ class OmModHub
     ///
     /// \param[in]  index  : index to get Mod Preset
     ///
-    /// \return Mod Preset object at index or nullptr if index is out of bound.
+    /// \return Mod Preset object at index or \c nullptr if index is out of bound.
     ///
     OmModPset* getPreset(size_t index) {
       return (index < this->_preset_list.size()) ? this->_preset_list[index] : nullptr;

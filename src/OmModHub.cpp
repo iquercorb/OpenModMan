@@ -285,7 +285,6 @@ bool OmModHub::open(const OmWString& path)
   return true;
 }
 
-
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -304,7 +303,6 @@ void OmModHub::setTitle(const OmWString& title)
 
   this->_xml.save();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -353,7 +351,6 @@ void OmModHub::setIcon(const OmWString& path)
 
   this->_xml.save();
 }
-
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

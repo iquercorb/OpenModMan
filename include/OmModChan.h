@@ -224,7 +224,7 @@ class OmModChan
     ///
     /// \param[in] index  : Index of Mod Pack to get.
     ///
-    /// \return Pointer to Mod Pack object.
+    /// \return Pointer to Mod Pack object or \c nullptr if index is out of bound.
     ///
     OmModPack* getModpack(size_t index) const {
       return (index < this->_modpack_list.size()) ? this->_modpack_list[index] : nullptr;
@@ -544,7 +544,7 @@ class OmModChan
     ///
     /// \param[in] index  : Index of Net Pack to get.
     ///
-    /// \return Pointer to Net Pack object.
+    /// \return Pointer to Net Pack object or \c nullptr if index is out of bound.
     ///
     OmNetPack* getNetpack(size_t index) const {
       return (index < this->_netpack_list.size()) ? this->_netpack_list[index] : nullptr;
@@ -763,10 +763,10 @@ class OmModChan
     ///
     /// \param[in] index : Index to get Net Repository
     ///
-    /// \return Net Repository object
+    /// \return Net Repository object or \c nullptr if index is out of bound.
     ///
     OmNetRepo* getRepository(size_t index) const {
-      return this->_repository_list[index];
+      return (index < this->_repository_list.size()) ? this->_repository_list[index] : nullptr;
     }
 
     /// \brief Get Repository index.

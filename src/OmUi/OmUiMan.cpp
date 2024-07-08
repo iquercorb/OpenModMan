@@ -2476,6 +2476,8 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 LRESULT WINAPI OmUiMan::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+  OM_UNUSED(uIdSubclass);
+
   // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
   // window (UiMan) for proper resize controls
   if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {

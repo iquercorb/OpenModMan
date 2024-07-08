@@ -251,36 +251,7 @@ bool OmUiPropChn::checkChanges()
 
   }
 
-  // Mods Repositories Tab
-  OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
-/*
-  if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
-
-     different = false;
-
-    if(UiPropChnNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK) != this->_ModChan->warnExtraDnld())
-      different = true;
-    if(UiPropChnNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != this->_ModChan->warnMissDnld())
-      different = true;
-    if(UiPropChnNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->warnUpgdBrkDeps())
-      different = true;
-
-    if(different) {
-      changed = true;
-    } else {
-      UiPropChnNet->paramReset(CHN_PROP_NET_WARNINGS);
-    }
-  }
-
-  if(UiPropChnNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
-    if(UiPropChnNet->msgItem(IDC_BC_RAD02, BM_GETCHECK) != this->_ModChan->upgdRename()) {
-      changed = true;
-    } else {
-      UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
-    }
-  }
-*/
-  // Data backup Tab
+  // Download options Tab
   OmUiPropChnDnl* UiPropChnDnl  = static_cast<OmUiPropChnDnl*>(this->childById(IDD_PROP_CHN_DNL));
 
   if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_WARNINGS)) {
@@ -319,7 +290,7 @@ bool OmUiPropChn::checkChanges()
         OmWString ec_entry;
         UiPropChnDnl->getItemText(IDC_EC_NUM01, ec_entry);
 
-        uint32_t rate = std::stoi(ec_entry) * 1000;
+        uint32_t rate = std::stoul(ec_entry) * 1000;
         if(rate != this->_ModChan->downMaxRate())
           different = true;
 
@@ -337,7 +308,7 @@ bool OmUiPropChn::checkChanges()
         OmWString ec_entry;
         UiPropChnDnl->getItemText(IDC_EC_NUM02, ec_entry);
 
-        if(std::stoi(ec_entry) != this->_ModChan->downMaxThread())
+        if(std::stoul(ec_entry) != this->_ModChan->downMaxThread())
           different = true;
 
       } else {
@@ -627,28 +598,7 @@ bool OmUiPropChn::applyChanges()
     UiPropChnBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
   }
 
-  // Mods Repositories Tab
-  OmUiPropChnNet* UiPropChnNet  = static_cast<OmUiPropChnNet*>(this->childById(IDD_PROP_CHN_NET));
-/*
-  if(UiPropChnNet->paramChanged(CHN_PROP_NET_WARNINGS)) {
-
-    this->_ModChan->setWarnExtraDnld(UiPropChnNet->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
-    this->_ModChan->setWarnMissDnld(UiPropChnNet->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
-    this->_ModChan->setWarnUpgdBrkDeps(UiPropChnNet->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
-
-    // Reset parameter as unmodified
-    UiPropChnNet->paramReset(CHN_PROP_NET_WARNINGS);
-  }
-
-  if(UiPropChnNet->paramChanged(CHN_PROP_NET_ONUPGRADE)) {
-
-    this->_ModChan->setUpgdRename(UiPropChnNet->msgItem(IDC_BC_RAD02, BM_GETCHECK));
-
-    // Reset parameter as unmodified
-    UiPropChnNet->paramReset(CHN_PROP_NET_ONUPGRADE);
-  }
-*/
-  // Data backup Tab
+  // Download options Tab
   OmUiPropChnDnl* UiPropChnDnl  = static_cast<OmUiPropChnDnl*>(this->childById(IDD_PROP_CHN_DNL));
 
   if(UiPropChnDnl->paramChanged(CHN_PROP_DNL_WARNINGS)) {

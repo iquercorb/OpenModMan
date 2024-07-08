@@ -404,7 +404,7 @@ void OmUiManMainNet::_refresh_processing()
         if(has_queue) {
           this->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
 
-          uint32_t progress;
+          uint32_t progress = 0;
 
           if(ModChan->upgradesQueueSize())
             progress = ModChan->upgradesProgress();
@@ -1328,9 +1328,6 @@ void OmUiManMainNet::_lv_net_on_selchg()
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
 
-  // handle to "Edit > Repository []
-  //HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_NET);
-
   // get count of ListView selected item
   uint32_t lv_nsl = this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT);
 
@@ -1340,22 +1337,14 @@ void OmUiManMainNet::_lv_net_on_selchg()
     this->enableItem(IDC_BC_DNLD, false);
     this->enableItem(IDC_BC_STOP, false);
 
-    // disable all menu items
-    /*
-    for(uint32_t i = 0; i < 12; ++i)
-      this->setPopupItem(hPopup, i, MF_GRAYED);
-    */
-
     // show nothing in footer frame
     this->_UiMan->pUiManFoot()->clearItem();
 
   } else {
 
     bool can_down = false;
-    bool can_upgd = false;
     bool can_stop = false;
     bool can_rvok = false;
-    bool can_fixd = false;
 
     OmNetPack* NetPack = nullptr;
 
@@ -1365,13 +1354,11 @@ void OmUiManMainNet::_lv_net_on_selchg()
 
       NetPack = ModChan->getNetpack(lv_sel);
 
-      if(NetPack->hasLocal()) {
-        if(NetPack->hasMissingDepend()) can_fixd = true;
-      } else {
+      if(!NetPack->hasLocal()) {
         if(!NetPack->isDownloading()) {
           can_down = true;
-          if(NetPack->upgradableCount())  can_upgd = true;
-          if(NetPack->isResumable())      can_rvok = true;
+          if(NetPack->isResumable())
+            can_rvok = true;
         } else {
           can_stop = true;
         }
@@ -1393,15 +1380,6 @@ void OmUiManMainNet::_lv_net_on_selchg()
     this->setItemText(IDC_BC_DNLD, down_text);
     this->enableItem(IDC_BC_DNLD, can_down);
     this->enableItem(IDC_BC_STOP, can_stop);
-    /*
-    this->setPopupItemText(hPopup, POP_NET_DNLD, down_text);
-    this->setPopupItem(hPopup, MNU_NET_DNLD, can_down ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_NET_DNWS, can_upgd ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_NET_STOP, can_stop ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_NET_RVOK, can_rvok ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_NET_FIXD, can_fixd ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_NET_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
-    */
   }
 }
 
@@ -2137,6 +2115,8 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 LRESULT WINAPI OmUiManMainNet::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+  OM_UNUSED(uIdSubclass);
+
   // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
   // window (UiMan) for proper resize controls
   if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {

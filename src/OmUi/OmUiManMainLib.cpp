@@ -1256,20 +1256,12 @@ void OmUiManMainLib::_lv_mod_on_selchg()
   // get count of ListView selected item
   uint32_t lv_nsl = this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT);
 
-  // handle to sub-menu
-  //HMENU hPopup = this->_UiMan->getPopupItem(MNU_EDIT, MNU_EDIT_MOD);
-
   if((lv_nsl < 1) || (ModChan == nullptr)) {
 
     // disable buttons
     this->enableItem(IDC_BC_INST, false);
     this->enableItem(IDC_BC_UNIN, false);
 
-    // disable all menu items
-    /*
-    for(uint32_t i = 0; i < 12; ++i)
-      this->setPopupItem(hPopup, i, MF_GRAYED);
-    */
     // show nothing in footer frame
     this->_UiMan->pUiManFoot()->clearItem();
 
@@ -1277,7 +1269,6 @@ void OmUiManMainLib::_lv_mod_on_selchg()
 
     bool can_install = false;
     bool can_restore = false;
-    bool can_cleanng = false;
 
     OmModPack* ModPack = nullptr;
 
@@ -1289,8 +1280,6 @@ void OmUiManMainLib::_lv_mod_on_selchg()
 
       if(ModPack->hasBackup()) {
         can_restore = true;
-        if(ModPack->dependCount())
-          can_cleanng = true;
       } else {
         can_install = true;
       }
@@ -1309,18 +1298,6 @@ void OmUiManMainLib::_lv_mod_on_selchg()
     // enable / disable buttons
     this->enableItem(IDC_BC_INST, can_install);
     this->enableItem(IDC_BC_UNIN, can_restore);
-
-    // enable / disable menu items
-    /*
-    this->setPopupItem(hPopup, MNU_MOD_INST, can_install ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_MOD_UINS, can_restore ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_MOD_CLNS, can_cleanng ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_MOD_DISC, MF_ENABLED);
-    this->setPopupItem(hPopup, MNU_MOD_OPEN, MF_ENABLED);
-    this->setPopupItem(hPopup, MNU_MOD_TRSH, MF_ENABLED);
-    this->setPopupItem(hPopup, MNU_MOD_EDIT, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, MNU_MOD_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
-    */
   }
 }
 
@@ -1823,6 +1800,8 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ///
 LRESULT WINAPI OmUiManMainLib::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+  OM_UNUSED(uIdSubclass);
+
   // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
   // window (UiMan) for proper resize controls
   if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {

@@ -125,8 +125,8 @@ bool OmUiPropHub::checkChanges()
 
     different = false;
 
-    unsigned n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
-    for(unsigned i = 0; i < n; ++i) {
+    int32_t n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
+    for(int32_t i = 0; i < n; ++i) {
       if(UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i) != i) {
         different = true; break;
       }
@@ -146,8 +146,8 @@ bool OmUiPropHub::checkChanges()
 
     different = false;
 
-    unsigned n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
-    for(unsigned i = 0; i < n; ++i) {
+    int32_t n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
+    for(int32_t i = 0; i < n; ++i) {
       if(UiPropHubPst->msgItem(IDC_LB_PST, LB_GETITEMDATA, i) != i) {
         different = true; break;
       }
@@ -238,7 +238,6 @@ bool OmUiPropHub::applyChanges()
     UiPropHubStg->paramReset(HUB_PROP_STG_ICON);
   }
 */
-
   if(UiPropHubStg->paramChanged(HUB_PROP_STG_LAYOUT)) {  //< parameter for Layout options
 
     this->_ModHub->setLayoutChannelsShow(UiPropHubStg->msgItem(IDC_BC_CKBX1, BM_GETCHECK));
@@ -256,8 +255,8 @@ bool OmUiPropHub::applyChanges()
     // To prevent inconsistency we unselect location in the main dialog
     static_cast<OmUiMan*>(this->root())->enableLockMode(true);
 
-    unsigned n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
-    for(unsigned i = 0; i < n; ++i) {
+    uint32_t n = UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETCOUNT);
+    for(uint32_t i = 0; i < n; ++i) {
       // set new index number of Mod Channel according current List-Box order
       this->_ModHub->getChannel(UiPropHubChn->msgItem(IDC_LB_CHN, LB_GETITEMDATA, i))->setIndex(i);
     }
@@ -281,8 +280,8 @@ bool OmUiPropHub::applyChanges()
 
   if(UiPropHubPst->paramChanged(HUB_PROP_BAT_ORDER)) { // parameter for Batches index order
 
-    unsigned n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
-    for(unsigned i = 0; i < n; ++i) {
+    uint32_t n = UiPropHubPst->msgItem(IDC_LB_PST, LB_GETCOUNT);
+    for(uint32_t i = 0; i < n; ++i) {
       // set new index number of Mod Channel according current List-Box order
       this->_ModHub->getPreset(UiPropHubPst->msgItem(IDC_LB_PST, LB_GETITEMDATA,i))->setIndex(i);
     }
