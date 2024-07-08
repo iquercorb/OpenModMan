@@ -402,6 +402,20 @@ void OmUiManFootDet::_onQuit()
 ///
 INT_PTR OmUiManFootDet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+  if(uMsg == WM_SETCURSOR) {
+
+    // local window update cursor according split zone hovering
+    if(this->_UiMan->splitCursorUpdate())
+      return 1; //< prevent default
+  }
+
+  if(uMsg == WM_MOUSEMOVE) {
+
+    // proceed to split move for local window
+    if(this->_UiMan->splitMoveProcess())
+      return 0;
+  }
+
   if(uMsg == WM_NOTIFY) {
 
     if(LOWORD(wParam) == IDC_FT_DESC) { //< Rich Edit (MD parsed)

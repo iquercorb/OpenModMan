@@ -180,37 +180,6 @@ class OmUiMan : public OmDialog
       return this->_UiManFoot;
     }
 
-    /// \brief Check whether in frame resize
-    ///
-    /// Checks whether dialog has captured the mouse to process frame
-    /// resize by user.
-    ///
-    /// \return True if in frame resize process, false otherwise
-    ///
-    bool splitterCursorDragg() const {
-      return this->_split_captured;
-    }
-
-    /// \brief Check whether mouse hover horizontal resizing split
-    ///
-    /// Checks whether the mouse cursor is currently hovering horizontal resizing split
-    ///
-    /// \return True mouse cursor hovering horizontal resizing split, false otherwise
-    ///
-    bool cursorResizeHor() const {
-      return (this->_split_hover_foot || this->_split_hover_head);
-    }
-
-    /// \brief Check whether mouse hover vertical resizing split
-    ///
-    /// Checks whether the mouse cursor is currently hovering vertical resizing split
-    ///
-    /// \return True mouse cursor hovering vertical resizing split, false otherwise
-    ///
-    bool cursorResizeVer() const {
-      return this->_split_hover_side;
-    }
-
     /// \brief List views ImageList handle
     ///
     /// Handle to shared ImageList for child dialogs ListView controls.
@@ -271,6 +240,21 @@ class OmUiMan : public OmDialog
 
     bool warnBreakings(bool enabled, const OmWString& operation, const OmWStringArray& breakings);
 
+
+    bool splitCursorUpdate();
+
+    bool splitCaptureCheck();
+
+    bool splitCaptured();
+
+    bool splitCaptureRelease();
+
+    bool splitMoveProcess();
+
+
+    // Controls subClassing
+    static LRESULT WINAPI splitSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiManMain*         _UiManMain;
@@ -288,15 +272,13 @@ class OmUiMan : public OmDialog
 
     int32_t             _lock_idch;
 
-    // frame splitter
+    // layout split parameters
 
     bool                _split_hover_head;
 
     bool                _split_hover_foot;
 
     bool                _split_hover_side;
-
-    bool                _split_captured;
 
     long                _split_params[3];
 
@@ -397,9 +379,6 @@ class OmUiMan : public OmDialog
     void                _layout_save();
 
     void                _layout_load();
-
-    // Controls subClassing
-    static LRESULT WINAPI _subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
     // Dialog common functions
     void                _onInit();

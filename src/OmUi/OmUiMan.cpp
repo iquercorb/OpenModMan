@@ -80,7 +80,6 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _split_hover_head(false),
   _split_hover_foot(false),
   _split_hover_side(false),
-  _split_captured(false),
   _split_params{},
   _listview_himl(nullptr),
   _listview_himl_size(0),
@@ -800,6 +799,244 @@ bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWS
   }
 
   return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::splitCursorUpdate()
+{
+  if(this->_split_hover_foot || this->_split_hover_head) {
+
+    // Set horizontal (North-South) resize cursor
+    SetCursor(LoadCursor(0,IDC_SIZENS));
+
+    return true; //< bypass default process
+  }
+
+  if(this->_split_hover_side) {
+
+    // Set vertical (West-East) resize cursor
+    SetCursor(LoadCursor(0,IDC_SIZEWE));
+
+    return true; //< bypass default process
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::splitCaptureCheck()
+{
+  if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
+
+    // Get cursor position relative to client area
+    POINT pos;
+    GetCursorPos(&pos);
+    ScreenToClient(this->_hwnd, &pos);
+
+    // keeps mouse pointer position and layout span at capture to later
+    // calculate relative moves and size changes
+
+    if(this->_split_hover_head) {
+      this->_split_params[0] = pos.y;
+      this->_split_params[1] = this->_lv_chn_span;
+    }
+
+    if(this->_split_hover_side) {
+      this->_split_params[0] = pos.x;
+      this->_split_params[1] = this->_lv_pst_span;
+    }
+
+    if(this->_split_hover_foot) {
+      this->_split_params[0] = pos.y;
+      this->_split_params[1] = this->_ui_ovw_span;
+    }
+
+    // capture the mouse
+    SetCapture(this->_hwnd);
+
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmUiMan::splitCapture : captured\n";
+    #endif // DEBUG
+
+    return true;
+
+  }
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::splitCaptured()
+{
+  return (GetCapture() == this->_hwnd);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::splitCaptureRelease()
+{
+  if(this->splitCaptured()) {
+
+    // release captured mouse
+    ReleaseCapture();
+
+    // Save current UI layout parameters
+    this->_layout_save();
+
+    return true;
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::splitMoveProcess()
+{
+  // Get cursor position relative to client area
+  POINT pos;
+  GetCursorPos(&pos);
+  ScreenToClient(this->_hwnd, &pos);
+
+  bool changed = false;
+
+  if(GetCapture() == this->_hwnd) {
+
+    if(this->_split_hover_head) {
+      // calculate new line position according new cursor moves
+      long s = this->_split_params[1] + (pos.y - this->_split_params[0]);
+      // move the splitter / resize frames
+      if(s != this->_lv_chn_span) {
+        this->_split_params[2] = s;
+        this->_onResize();
+      }
+    }
+
+    if(this->_split_hover_side) {
+      // calculate new line position according new cursor moves
+      long s = this->_split_params[1] + (this->_split_params[0] - pos.x);
+      // move the splitter / resize frames
+      if(s != this->_lv_pst_span) {
+        this->_split_params[2] = s;
+        this->_onResize();
+      }
+    }
+
+    if(this->_split_hover_foot) {
+      // calculate new line position according new cursor moves
+      long s = this->_split_params[1] + (this->_split_params[0] - pos.y);
+      // move the splitter / resize frames
+      if(s != this->_ui_ovw_span) {
+        this->_split_params[2] = s;
+        this->_onResize();
+      }
+    }
+
+    changed = true;
+
+  } else {
+
+    // checks whether mouse cursor is hovering between frames, we take a
+    // good margin around the gap to make it easier to catch.
+
+    bool hover;
+
+    // check for head split
+    if(this->_lv_chn_show) {
+      hover = (pos.y > (this->_lv_chn_span - 2) && pos.y < (this->_lv_chn_span + 6));
+    } else {
+      hover = false;
+    }
+
+    if(hover != this->_split_hover_head) {
+      this->_split_hover_head = hover;
+      changed = true;
+    }
+
+    // check for side split
+    if(this->_lv_pst_show) {
+      // top limit
+      long t = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
+      // bottom limit
+      long b = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : RSIZE_BOT_H;
+      // split position
+      long s = this->cliWidth() - (this->_lv_pst_span);
+      hover = (pos.y > t) && (pos.y < b) && (pos.x > (s - 6) && pos.x < (s + 2));
+    } else {
+      hover = false;
+    }
+
+    if(hover != this->_split_hover_side) {
+      this->_split_hover_side = hover;
+      changed = true;
+    }
+
+    // check for foot split
+    if(this->_ui_ovw_show) {
+      // split position
+      long s = this->cliHeight() - this->_ui_ovw_span;
+      hover = (pos.y > (s - 6) && pos.y < (s + 2));
+    } else {
+      hover = false;
+    }
+
+    if(hover != this->_split_hover_foot) {
+      this->_split_hover_foot = hover;
+      changed = true;
+    }
+  }
+
+  if(changed)
+    this->splitCursorUpdate();
+
+  return changed;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+LRESULT WINAPI OmUiMan::splitSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+  OM_UNUSED(uIdSubclass);
+
+  // handle WM_SETCURSOR for main window split move cursor update
+  if(uMsg == WM_SETCURSOR) {
+
+    OmUiMan* self = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    if(self->splitCursorUpdate())
+      return 1; //< prevent default
+
+  }
+
+  // handle WM_MOUSEMOVE for main window split move process
+  if(uMsg == WM_MOUSEMOVE || uMsg == WM_NCMOUSEMOVE) {
+
+    OmUiMan* self = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    // update split parameters according mouse cursor position
+    self->splitMoveProcess();
+
+  }
+
+  // handle WM_LBUTTONDOWN for main window split move capture check
+  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_NCLBUTTONDOWN) { //< WM_NCLBUTTONDOWN to handle borders pixels
+
+    OmUiMan* self = reinterpret_cast<OmUiMan*>(dwRefData);
+
+    // Check for mouse capture (mouse hover split zone)
+    if(self->splitCaptureCheck())
+      return 1; //< prevent default, required for SetCapture to be effective
+  }
+
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 ///
@@ -1716,9 +1953,9 @@ void OmUiMan::_onInit()
     }
   }
 
-  // Subclass Channels and Presets ListView to properly forward WM_MOUSEMOVE message
-  SetWindowSubclass(this->getItem(IDC_LV_CHN), OmUiMan::_subMsg, 0, reinterpret_cast<DWORD_PTR>(this));
-  SetWindowSubclass(this->getItem(IDC_LV_PST), OmUiMan::_subMsg, 0, reinterpret_cast<DWORD_PTR>(this));
+  // Subclass Channels and Presets ListView to properly handle main window split layout process
+  SetWindowSubclass(this->getItem(IDC_LV_CHN), OmUiMan::splitSubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
+  SetWindowSubclass(this->getItem(IDC_LV_PST), OmUiMan::splitSubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
 
   // refresh all elements
   this->_onRefresh();
@@ -1747,7 +1984,7 @@ void OmUiMan::_onResize()
 
   long rc[4];
 
-  if(this->_split_captured) {
+  if(this->splitCaptured()) {
 
     // Save the area to be redrawn after resize and update line position from split move param
     if(this->_split_hover_head) {
@@ -1835,7 +2072,7 @@ void OmUiMan::_onResize()
   this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-19, this->cliWidth()-100, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
-  if(this->_split_captured) {
+  if(this->splitCaptured()) {
 
     // Calling SetWindowPos outside a resize modal loop (standard resize by user),
     // causes insane amount of flickering, probably due to suboptimal erase and
@@ -1996,143 +2233,42 @@ void OmUiMan::_onQuit()
 ///
 INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // release the previously captured mouse for frames move and resize process
+  // release the previously captured mouse for split move process
   if(uMsg == WM_LBUTTONUP) {
-    if(this->_split_captured) {
-      // release captured mouse
-      ReleaseCapture();
-      // quit the frame move and resize process
-      this->_split_captured = false;
-      // Save current UI layout parameters
-      this->_layout_save();
-    }
+
+    // release split move mouse capture
+    this->splitCaptureRelease();
+
     return 0;
   }
 
-  // if mouse cursor is hovering between frames, checks for left button click
-  // by user to capture mouse and entering the frames move and resize process
+  // if mouse cursor is hovering a split zone, checks for left button click
+  // by user to capture mouse and entering the split move process
   if(uMsg == WM_LBUTTONDOWN || (uMsg == WM_PARENTNOTIFY && wParam == WM_LBUTTONDOWN)) {
 
-    if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
-
-      long mx = LOWORD(lParam); //< Cursor X position relative to client area
-      long my = HIWORD(lParam); //< Cursor Y position relative to client area
-
-      // keeps mouse pointer position and foot frame height at
-      // capture to later calculate relative moves and size changes
-
-      // Save initial line position
-      if(this->_split_hover_head) {
-        this->_split_params[0] = my;
-        this->_split_params[1] = this->_lv_chn_span;
-      }
-
-      if(this->_split_hover_side) {
-        this->_split_params[0] = mx;
-        this->_split_params[1] = this->_lv_pst_span;
-      }
-
-      if(this->_split_hover_foot) {
-        this->_split_params[0] = my;
-        this->_split_params[1] = this->_ui_ovw_span;
-      }
-
-      // capture the mouse
-      SetCapture(this->_hwnd);
-      // we now are in frame move and resize process
-      this->_split_captured = true;
-    }
-    return 0;
+    // check and enable split move mouse capture
+    if(this->splitCaptureCheck())
+      return 1; //< prevent default, required for SetCapture to be effective
   }
 
-  // changes the default cursor arrow to north-south resize arrows according
-  // cursor hovering between the frames.
+  // changes the default cursor arrow to resize arrows according
+  // cursor hovering split zones.
   if(uMsg == WM_SETCURSOR) {
-    // checks whether cursor is hovering resize anchor
-    if(this->_split_hover_foot || this->_split_hover_head) {
-      SetCursor(LoadCursor(0,IDC_SIZENS));
-      return 1; //< bypass default process
-    }
-    if(this->_split_hover_side) {
-      SetCursor(LoadCursor(0,IDC_SIZEWE));
-      return 1; //< bypass default process
-    }
+
+    // update mouse cursor
+    if(this->splitCursorUpdate())
+      return 1; //< prevent default
   }
 
   // track mouse cursor position either to detect whether cursor hover
-  // between the frames (to change cursor) or, if we captured cursor, to
-  // process the move and resize of the frames
+  // a split zone (to change cursor) or, if we captured cursor, to
+  // process the move and resize of elements
   if(uMsg == WM_MOUSEMOVE) {
 
-    long mx = LOWORD(lParam); //< Cursor X position relative to client area
-    long my = HIWORD(lParam); //< Cursor Y position relative to client area
+    // update split parameters according mouse cursor position
+    this->splitMoveProcess();
 
-    if(GetCapture() == this->_hwnd) {
-
-      #ifdef DEBUG
-      std::cout << "DEBUG => OmUiMan::_onMsg : WM_MOUSEMOVE : GetCapture() == this->_hwnd\n";
-      #endif
-
-      if(this->_split_hover_head) {
-        // calculate new line position according new cursor moves
-        long s = this->_split_params[1] + (my - this->_split_params[0]);
-        // move the splitter / resize frames
-        if(s != this->_lv_chn_span) {
-          this->_split_params[2] = s;
-          this->_onResize();
-        }
-      }
-
-      if(this->_split_hover_side) {
-        // calculate new line position according new cursor moves
-        long s = this->_split_params[1] + (this->_split_params[0] - mx);
-        // move the splitter / resize frames
-        if(s != this->_lv_pst_span) {
-          this->_split_params[2] = s;
-          this->_onResize();
-        }
-      }
-
-      if(this->_split_hover_foot) {
-        // calculate new line position according new cursor moves
-        long s = this->_split_params[1] + (this->_split_params[0] - my);
-        // move the splitter / resize frames
-        if(s != this->_ui_ovw_span) {
-          this->_split_params[2] = s;
-          this->_onResize();
-        }
-      }
-
-    } else {
-      // checks whether mouse cursor is hovering between frames, we take a
-      // good margin around the gap to make it easier to catch.
-
-      // check for head split
-      if(this->_lv_chn_show) {
-        this->_split_hover_head = (my > (this->_lv_chn_span - 3) && my < (this->_lv_chn_span + 8));
-      } else {
-        this->_split_hover_head = false;
-      }
-
-      // check for side split
-      if(this->_lv_pst_show) {
-        long top = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
-        long bot = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : RSIZE_BOT_H;
-        long sx = this->cliWidth() - (this->_lv_pst_span);
-        this->_split_hover_side = (my > top) && (my < bot) && (mx > (sx - 5) && mx < sx);
-      } else {
-        this->_split_hover_side = false;
-      }
-
-      // check for foot split
-      if(this->_ui_ovw_show) {
-        long s = this->cliHeight() - this->_ui_ovw_span;
-        this->_split_hover_foot = (my > (s - 8) && my < (s + 3));
-      } else {
-        this->_split_hover_foot = false;
-      }
-    }
-    return 0;
+    return 0; // return now
   }
 
   // The WM_COPYDATA is received if another instance was run
@@ -2471,52 +2607,3 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   return false;
 }
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-LRESULT WINAPI OmUiMan::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-{
-  OM_UNUSED(uIdSubclass);
-
-  // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
-  // window (UiMan) for proper resize controls
-  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
-  }
-
-  // we forward WM_SETCURSOR, WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
-  // window (UiMan) for proper mouse cursor
-  if(uMsg == WM_SETCURSOR) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
-    return 1;
-  }
-
-  // we forward WM_MOUSEMOVE event to parent window (UiMan) to better catch the
-  // mouse cursor when around the frame split.
-  if(uMsg == WM_MOUSEMOVE) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // get current cursor position, relative to client
-    long p[2] = {LOWORD(lParam), HIWORD(lParam)};
-
-    // convert coordinate to relative to parent's client
-    ClientToScreen(hWnd, reinterpret_cast<POINT*>(&p));
-    ScreenToClient(UiMan->hwnd(), reinterpret_cast<POINT*>(&p));
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
-  }
-
-  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-}
-

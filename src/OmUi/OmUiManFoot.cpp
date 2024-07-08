@@ -151,6 +151,9 @@ void OmUiManFoot::_onInit()
     }
   }
 
+  // Subclass Tab Control to properly handle main window split layout process
+  SetWindowSubclass(this->getItem(IDC_TC_MAIN), OmUiMan::splitSubclassProc, 0, reinterpret_cast<DWORD_PTR>(this->_UiMan));
+
   // refresh all elements
   this->_onRefresh();
 }
@@ -218,24 +221,33 @@ void OmUiManFoot::_onQuit()
 ///
 INT_PTR OmUiManFoot::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // we forward WM_SETCURSOR event to parent window (UiMan) for proper
-  // mouse cursor changes
-  if(uMsg == WM_SETCURSOR) {
-    // send message to parent
-    SendMessage(this->_UiMan->hwnd(), WM_SETCURSOR, wParam, lParam);
-    return 1;
+  // handle WM_LBUTTONUP for main window split move capture release
+  if(uMsg == WM_LBUTTONUP) {
+
+    // if currently captured, release the capture
+    this->_UiMan->splitCaptureRelease();
   }
 
-  // we forward WM_MOUSEMOVE event to parent window (UiMgr) to better catch the
-  // mouse cursor when around the frame split.
+  // handle WM_LBUTTONDOWN for main window split move capture check
+  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_NCLBUTTONDOWN) { //< WM_NCLBUTTONDOWN to handle borders pixels
+
+    // Check for mouse capture (mouse hover split zone)
+    if(this->_UiMan->splitCaptureCheck())
+      return 1; //< prevent default, required for SetCapture to be effective
+  }
+
+  // handle WM_MOUSEMOVE for main window split move process
   if(uMsg == WM_MOUSEMOVE) {
-    // get current cursor position, relative to client
-    long p[2] = {LOWORD(lParam), HIWORD(lParam)};
-    // convert coordinate to relative to parent's client
-    ClientToScreen(this->_hwnd, reinterpret_cast<POINT*>(&p));
-    ScreenToClient(this->_UiMan->hwnd(), reinterpret_cast<POINT*>(&p));
-    // send message to parent
-    SendMessage(this->_UiMan->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
+
+    // update split parameters according mouse cursor position
+    this->_UiMan->splitMoveProcess();
+  }
+
+  // handle WM_SETCURSOR for main window split move cursor update
+  if(uMsg == WM_SETCURSOR) {
+
+    if(this->_UiMan->splitCursorUpdate())
+      return 1; //< prevent default
   }
 
   // UWM_MAIN_ABORT_REQUEST is a custom message sent from Main (parent) Dialog

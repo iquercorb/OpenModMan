@@ -1511,8 +1511,8 @@ void OmUiManMainLib::_onInit()
   // "subscribe" to active channel library directory changes notifications
   static_cast<OmModMan*>(this->_data)->notifyModLibraryStart(OmUiManMainLib::_modlib_notify_fn, this);
 
-  // Subclass Channels and Presets ListView to properly forward WM_MOUSEMOVE message
-  SetWindowSubclass(this->getItem(IDC_LV_MOD), OmUiManMainLib::_subMsg, 0, reinterpret_cast<DWORD_PTR>(this->_UiMan));
+  // Subclass Mods ListView to properly handle main window split layout process
+  SetWindowSubclass(this->getItem(IDC_LV_MOD), OmUiMan::splitSubclassProc, 0, reinterpret_cast<DWORD_PTR>(this->_UiMan));
 
   this->_onRefresh();
 }
@@ -1637,6 +1637,20 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     // Refresh the dialog
     this->_onRefresh();
     return false;
+  }
+
+  if(uMsg == WM_SETCURSOR) {
+
+    // local window update cursor according split zone hovering
+    if(this->_UiMan->splitCursorUpdate())
+      return 1; //< prevent default
+  }
+
+  if(uMsg == WM_MOUSEMOVE) {
+
+    // proceed to split move for local window
+    if(this->_UiMan->splitMoveProcess())
+      return 0;
   }
 
   if(uMsg == WM_NOTIFY) {
@@ -1793,52 +1807,4 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
   }
 
   return false;
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-LRESULT WINAPI OmUiManMainLib::_subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-{
-  OM_UNUSED(uIdSubclass);
-
-  // we forward WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
-  // window (UiMan) for proper resize controls
-  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
-  }
-
-  // we forward WM_SETCURSOR, WM_LBUTTONDOWN and WM_LBUTTONUP event to parent
-  // window (UiMan) for proper mouse cursor
-  if(uMsg == WM_SETCURSOR) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), uMsg, wParam, lParam);
-    return 1;
-  }
-
-  // we forward WM_MOUSEMOVE event to parent window (UiMan) to better catch the
-  // mouse cursor when around the frame split.
-  if(uMsg == WM_MOUSEMOVE) {
-
-    OmUiMan* UiMan = reinterpret_cast<OmUiMan*>(dwRefData);
-
-    // get current cursor position, relative to client
-    long p[2] = {LOWORD(lParam), HIWORD(lParam)};
-
-    // convert coordinate to relative to parent's client
-    ClientToScreen(hWnd, reinterpret_cast<POINT*>(&p));
-    ScreenToClient(UiMan->hwnd(), reinterpret_cast<POINT*>(&p));
-
-    // send message to parent
-    SendMessage(UiMan->hwnd(), WM_MOUSEMOVE, 0, MAKELPARAM(p[0], p[1]));
-  }
-
-  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }

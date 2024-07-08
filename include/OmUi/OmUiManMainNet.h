@@ -91,6 +91,20 @@ class OmUiManMainNet : public OmDialog
     ///
     void showProperties() const;
 
+
+    bool splitCursorUpdate();
+
+    bool splitCaptureCheck();
+
+    bool splitCaptured();
+
+    bool splitCaptureRelease();
+
+    bool splitMoveProcess();
+
+    static LRESULT WINAPI splitSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
+
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     OmUiMan*            _UiMan;
@@ -187,9 +201,7 @@ class OmUiManMainNet : public OmDialog
 
     // ListView splitter
 
-    bool                _split_hover;
-
-    bool                _split_captured;
+    bool                _split_hover_lvrep;
 
     long                _split_params[3];
 
@@ -197,9 +209,6 @@ class OmUiManMainNet : public OmDialog
     void                _layout_save();
 
     void                _layout_load();
-
-    // Controls subClassing
-    static LRESULT WINAPI _subMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
     // common functions
     void                _onInit();
