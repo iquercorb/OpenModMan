@@ -310,19 +310,19 @@ class OmUiMan : public OmDialog
     HMENU               _context_menu;
 
     // Preset setup processing
-    int32_t             _psetup_count;
+    int32_t             _psexec_count;
 
-    int32_t             _psetup_idch;
+    int32_t             _psexec_idch;
 
-    bool                _psetup_abort;
+    bool                _psexec_abort;
 
-    void                _psetup_add(OmModPset*);
+    void                _psexec_add(OmModPset*);
 
-    static void         _psetup_begin_fn(void*, uint64_t);
+    static void         _psexec_begin_fn(void*, uint64_t);
 
-    static bool         _psetup_progress_fn(void*, size_t, size_t, uint64_t);
+    static bool         _psexec_progress_fn(void*, size_t, size_t, uint64_t);
 
-    static void         _psetup_result_fn(void*, OmResult, uint64_t);
+    static void         _psexec_result_fn(void*, OmResult, uint64_t);
 
     // Delete channel processing
     void*               _delchan_hth;

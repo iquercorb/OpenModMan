@@ -197,7 +197,7 @@ class OmModHub
     /// \return Mod Channel object at index or nullptr if index is out of bound.
     ///
     OmModChan* getChannel(size_t index) const {
-      return this->_channel_list[index];
+      return (index < this->_channel_list.size()) ? this->_channel_list[index] : nullptr;
     }
 
     /// \brief Get Mod Channel.
@@ -320,10 +320,10 @@ class OmModHub
     ///
     /// \param[in]  index  : index to get Mod Preset
     ///
-    /// \return Mod Preset object at index
+    /// \return Mod Preset object at index or nullptr if index is out of bound.
     ///
     OmModPset* getPreset(size_t index) {
-      return this->_preset_list[index];
+      return (index < this->_preset_list.size()) ? this->_preset_list[index] : nullptr;
     }
 
     /// \brief Index of Mod Preset
@@ -390,8 +390,33 @@ class OmModHub
       return this->_locked_presets;
     }
 
+    /// \brief Add Mod Preset to execution queue
+    ///
+    /// Adds the given Mod Preset to the execution queue. The Presets will be executed sequentially
+    /// and according their position in queue.
+    ///
+    /// The Presets execution does not performs install or uninstall of referenced Mod Packs by
+    /// itself. Instead,  pointers to referenced Mod Pack objects are supplied sequentially as
+    /// \c param parameter through the \c progress_cb callback function. It is up to client to
+    /// perform proper action (either install, uninstall or abort) within the callback function.
+    ///
+    /// Within this context, the \c param parameter of \c begin_cb and \c result_cb callback
+    /// functions is a pointer to the currently processing Mod Preset object.
+    ///
+    /// \param[in] ModPset      : Mod Preset to execute
+    /// \param[in] begin_cb     : Callback called each Preset execution begin
+    /// \param[in] progress_cb  : Callback called each Mod Pack reference to be processed
+    /// \param[in] result_cb    : Callback called each Preset execution end
+    /// \param[in] user_ptr     : User pointer to pass to result callback
+    ///
+    /// \return True if request was sent, false if query already processing.
+    ///
     void queuePresets(OmModPset* ModPset, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, void* user_ptr = nullptr);
 
+    /// \brief Abort Preset execution.
+    ///
+    /// Abort all processing Preset execution.
+    ///
     void abortPresets();
 
     /// \brief Get batches warning quiet mode.
@@ -593,30 +618,30 @@ class OmModHub
     bool                  _locked_presets;
 
     // mods install/restore
-    bool                  _psetup_abort;
+    bool                  _psexec_abort;
 
-    void*                 _psetup_hth;
+    void*                 _psexec_hth;
 
-    void*                 _psetup_hwo;
+    void*                 _psexec_hwo;
 
-    OmPModPsetQueue       _psetup_queue;
+    OmPModPsetQueue       _psexec_queue;
 
-    uint32_t              _psetup_dones;
+    uint32_t              _psexec_dones;
 
-    uint32_t              _psetup_percent;
+    uint32_t              _psexec_percent;
 
-    static DWORD WINAPI   _psetup_run_fn(void*);
+    static DWORD WINAPI   _psexec_run_fn(void*);
 
 
-    static VOID WINAPI    _psetup_end_fn(void*,uint8_t);
+    static VOID WINAPI    _psexec_end_fn(void*,uint8_t);
 
-    Om_beginCb            _psetup_begin_cb;
+    Om_beginCb            _psexec_begin_cb;
 
-    Om_progressCb         _psetup_progress_cb;
+    Om_progressCb         _psexec_progress_cb;
 
-    Om_resultCb           _psetup_result_cb;
+    Om_resultCb           _psexec_result_cb;
 
-    void*                 _psetup_user_ptr;
+    void*                 _psexec_user_ptr;
 
     // options
     bool                  _presets_quietmode;

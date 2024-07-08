@@ -83,9 +83,9 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _split_params{},
   _listview_himl(nullptr),
   _listview_himl_size(0),
-  _psetup_count(0),
-  _psetup_idch(-1),
-  _psetup_abort(false),
+  _psexec_count(0),
+  _psexec_idch(-1),
+  _psexec_abort(false),
   _delchan_hth(nullptr),
   _delchan_hwo(nullptr),
   _delchan_idch(-1),
@@ -481,6 +481,7 @@ void OmUiMan::deletePreset()
   int32_t lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
   OmModPset* ModPset = ModHub->getPreset(lv_sel);
+  if(!ModPset) return;
 
   // warns the user before committing the irreparable
   if(!Om_dlgBox_ynl(this->_hwnd, L"Mod Hub properties", IDI_DLG_QRY, L"Delete Preset",
@@ -513,7 +514,7 @@ void OmUiMan::runPreset()
   // Get ListView unique selection
   int32_t lv_sel = this->msgItem(IDC_LV_PST, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
-  this->_psetup_add(ModHub->getPreset(lv_sel));
+  this->_psexec_add(ModHub->getPreset(lv_sel));
 }
 
 ///
@@ -803,28 +804,28 @@ bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWS
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_psetup_add(OmModPset* ModPset)
+void OmUiMan::_psexec_add(OmModPset* ModPset)
 {
   OmModHub* ModHub = static_cast<OmModMan*>(this->_data)->activeHub();
   if(!ModHub) return;
 
   // if no queued operation, this is global start
-  if(!this->_psetup_count)
+  if(!this->_psexec_count)
     //this->_refresh_processing();
 
   // increase count of queued mod operations
-  this->_psetup_count++;
+  this->_psexec_count++;
 
   // reset abort status
-  this->_psetup_abort = false;
+  this->_psexec_abort = false;
 
-  ModHub->queuePresets(ModPset, OmUiMan::_psetup_begin_fn, OmUiMan::_psetup_progress_fn, OmUiMan::_psetup_result_fn, this);
+  ModHub->queuePresets(ModPset, OmUiMan::_psexec_begin_fn, OmUiMan::_psexec_progress_fn, OmUiMan::_psexec_result_fn, this);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_psetup_begin_fn(void* ptr, uint64_t param)
+void OmUiMan::_psexec_begin_fn(void* ptr, uint64_t param)
 {
   OmUiMan* self = reinterpret_cast<OmUiMan*>(ptr);
 
@@ -832,7 +833,7 @@ void OmUiMan::_psetup_begin_fn(void* ptr, uint64_t param)
   if(!ModHub) return;
 
   // store the currently selected channel to restore it after
-  self->_psetup_idch = ModHub->activeChannelIndex();
+  self->_psexec_idch = ModHub->activeChannelIndex();
 
   OmModPset* ModPset = reinterpret_cast<OmModPset*>(param);
 
@@ -848,7 +849,7 @@ void OmUiMan::_psetup_begin_fn(void* ptr, uint64_t param)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMan::_psetup_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmUiMan::_psexec_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
   OM_UNUSED(cur);
 
@@ -865,7 +866,7 @@ bool OmUiMan::_psetup_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t pa
   self->selectChannel(chn_index);
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmUiMan::_psetup_progress_fn : chn_index=" << chn_index << L"\n";
+  std::wcout << L"DEBUG => OmUiMan::_psexec_progress_fn : chn_index=" << chn_index << L"\n";
   #endif // DEBUG
 
   OmResult result;
@@ -881,15 +882,15 @@ bool OmUiMan::_psetup_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t pa
   }
 
   if(result == OM_RESULT_ABORT)
-    self->_psetup_abort = true;
+    self->_psexec_abort = true;
 
-  return !self->_psetup_abort;
+  return !self->_psexec_abort;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiMan::_psetup_result_fn(void* ptr, OmResult result, uint64_t param)
+void OmUiMan::_psexec_result_fn(void* ptr, OmResult result, uint64_t param)
 {
   OM_UNUSED(result);
 
@@ -909,10 +910,10 @@ void OmUiMan::_psetup_result_fn(void* ptr, OmResult result, uint64_t param)
   self->msgItem(IDC_LV_PST, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&lvI));
 
   // select the initially selected channel
-  self->selectChannel(self->_psetup_idch);
+  self->selectChannel(self->_psexec_idch);
 
   #ifdef DEBUG
-  std::wcout << L"DEBUG => OmUiMan::_psetup_result_fn : _psetup_chan_sel=" << self->_psetup_idch << L"\n";
+  std::wcout << L"DEBUG => OmUiMan::_psexec_result_fn : _psexec_chan_sel=" << self->_psexec_idch << L"\n";
   #endif // DEBUG
 }
 
