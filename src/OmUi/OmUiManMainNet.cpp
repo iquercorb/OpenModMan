@@ -62,6 +62,7 @@ OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _lv_rep_span(RSIZE_HEAD_MIN_H),
   _lv_net_icons_size(0),
   _lv_net_cdraw_htheme(nullptr),
+  _split_moving(false),
   _split_hover_lvrep(false),
   _split_params{}
 {
@@ -388,6 +389,8 @@ bool OmUiManMainNet::splitCaptureCheck()
     // capture the mouse
     SetCapture(this->_hwnd);
 
+    this->_split_moving = true;
+
     // we now are in frame move and resize process
     return true;
 
@@ -400,23 +403,17 @@ bool OmUiManMainNet::splitCaptureCheck()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiManMainNet::splitCaptured()
-{
-  return (GetCapture() == this->_hwnd);
-}
-
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
 bool OmUiManMainNet::splitCaptureRelease()
 {
-  if(this->splitCaptured()) {
+  if(this->_split_moving) {
 
     // release captured mouse
     ReleaseCapture();
 
     // Save current UI parameters
     this->_layout_save();
+
+    this->_split_moving = false;
 
     return true;
   }
@@ -436,7 +433,7 @@ bool OmUiManMainNet::splitMoveProcess()
 
   bool changed = false;
 
-  if(GetCapture() == this->_hwnd) {
+  if(this->_split_moving) {
 
     if(this->_split_hover_lvrep) {
 
@@ -1887,18 +1884,23 @@ void OmUiManMainNet::_onResize()
   long h_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
   long h_max = this->cliHeight() - (RSIZE_BOT_H + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
 
-  long rc[4];
+  // stuff for splitter move invalidate/redraw process
+  long redraw_delta, redraw_rect[4];
 
-  if(this->splitCaptured()) {
+  if(this->_split_moving) {
 
     // Save the area to be redrawn after resize and update line position from split move param
-    rc[0] = 0; rc[2] = this->cliWidth();
+    redraw_rect[0] = 0;
+    redraw_rect[2] = this->cliWidth();
 
     if(this->_split_hover_lvrep) {
-      rc[1] = RSIZE_TOP_H;
-      rc[3] = this->cliHeight() - RSIZE_BOT_H;
 
-      // update height
+      // from lower repositories buttons to bottom of Library List View
+      redraw_rect[1] = this->_lv_rep_span - 46;
+      redraw_rect[3] = this->cliHeight() - RSIZE_BOT_H;
+
+      // store move delta in pixel from last position then update span to new position
+      redraw_delta = this->_lv_rep_span - this->_split_params[2];
       this->_lv_rep_span = this->_split_params[2];
     }
   }
@@ -1930,11 +1932,40 @@ void OmUiManMainNet::_onResize()
   // Abort button
   this->_setItemPos(IDC_BC_ABORT, this->cliWidth()-78, this->cliHeight()-23, 78, 23, true);
 
-  if(this->splitCaptured()) {
+  if(this->_split_moving) {
+
+    // Calling SetWindowPos outside a resize modal loop (standard resize by user),
+    // causes insane amount of flickering, probably due to suboptimal erase and
+    // redraw sequences from child to parent.
+    //
+    // I tested almost every approach, handling WM_NCCALCSIZE and WM_ERASEBKGND
+    // window messages, implementing a hierachical DeferWindowPos mechanism,
+    // NOTHING WORKED ! The resize modal loop seem to use some internal bypass to
+    // gracefully redraw the whole window at once without flickering. Thing that I
+    // cannot reproduce (but THIS is what should be done), since this is
+    // documented nowhere.
+    //
+    // The only thing that reduce significantly the flickering where to prevent
+    // ALL call to SetWindowPos to redraw by including the SWP_NOREDRAW flag, then
+    // handling redraw 'manually' from the parent window, using only RedrawWindow
+    // with the proper flags.
+
     // update the footer frame and area around the splitter, without erasing window background to reduce flickering.
-    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
-    rc[1] = this->_lv_rep_span - 80; rc[3] = this->_lv_rep_span + 30;
-    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&redraw_rect), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
+
+    // calculate new area strictly around the moving controls to be erased and redrawn
+    if(this->_split_hover_lvrep) {
+      redraw_rect[1] = this->_lv_rep_span - 46;
+      redraw_rect[3] = this->_lv_rep_span + 5;
+      if(redraw_delta < 0) {
+        redraw_rect[1] += redraw_delta;
+      } else {
+        redraw_rect[3] += redraw_delta;
+      }
+    }
+
+    // erase and redraw the area around the moving controls and edges
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&redraw_rect), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
   }
 }
 

@@ -178,45 +178,6 @@ void OmUiManMain::_onQuit()
 ///
 INT_PTR OmUiManMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  /*
-  // handle WM_LBUTTONUP for main window split move capture release
-  if(uMsg == WM_LBUTTONUP) {
-
-    // if currently captured, release the capture
-    this->_UiMan->splitCaptureRelease();
-  }
-  */
-
-  // handle WM_LBUTTONDOWN for main window split move capture check
-  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_NCLBUTTONDOWN) { //< WM_NCLBUTTONDOWN to handle borders pixels
-
-    // Check for mouse capture (mouse hover split zone)
-    if(this->_UiMan->splitCaptureCheck())
-      return 1; //< prevent default, required for SetCapture to be effective
-  }
-
-  // handle WM_MOUSEMOVE for main window split move process
-  if(uMsg == WM_MOUSEMOVE) {
-    /*
-    // update split parameters according mouse cursor position
-    this->_UiMan->splitMoveProcess();
-    */
-    // forward message to parent window
-    SendMessage(GetParent(this->_hwnd), WM_MOUSEMOVE, wParam, lParam);
-  }
-
-  // handle WM_SETCURSOR for main window split move cursor update
-  if(uMsg == WM_SETCURSOR) {
-
-    /*
-    if(this->_UiMan->splitCursorUpdate())
-      return 1; //< prevent default
-    */
-    // forward message to parent window
-    SendMessage(GetParent(this->_hwnd), WM_SETCURSOR, wParam, lParam);
-    return 1;
-  }
-
   // UWM_MAIN_ABORT_REQUEST is a custom message sent from Main (parent) Dialog
   // to notify its child tab dialogs they must abort all running threaded jobs
   if(uMsg == UWM_MAIN_ABORT_REQUEST) {
@@ -225,6 +186,27 @@ INT_PTR OmUiManMain::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       this->_tab_dialog[i]->postMessage(UWM_MAIN_ABORT_REQUEST);
     }
     return false;
+  }
+
+  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_NCLBUTTONDOWN) { //< WM_NCLBUTTONDOWN to handle borders pixels
+
+    // Check for mouse capture (mouse hover split zone)
+    if(this->_UiMan->splitCaptureCheck())
+      return 1; //< prevent default, required for SetCapture to be effective
+  }
+
+  if(uMsg == WM_SETCURSOR) {
+
+    // local window update cursor according split zone hovering
+    if(this->_UiMan->splitCursorUpdate())
+      return 1; //< prevent default
+  }
+
+  if(uMsg == WM_MOUSEMOVE) {
+
+    // proceed to split move for local window
+    if(this->_UiMan->splitMoveProcess())
+      return 0;
   }
 
   if(uMsg == WM_NOTIFY) {

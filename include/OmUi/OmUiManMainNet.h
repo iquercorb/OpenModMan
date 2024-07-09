@@ -96,7 +96,9 @@ class OmUiManMainNet : public OmDialog
 
     bool splitCaptureCheck();
 
-    bool splitCaptured();
+    bool splitMoving() const {
+      return this->_split_moving;
+    }
 
     bool splitCaptureRelease();
 
@@ -200,6 +202,8 @@ class OmUiManMainNet : public OmDialog
     void                _bc_abort_clicked();
 
     // ListView splitter
+
+    bool                _split_moving;
 
     bool                _split_hover_lvrep;
 

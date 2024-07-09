@@ -1639,6 +1639,13 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return false;
   }
 
+  if(uMsg == WM_LBUTTONDOWN || uMsg == WM_NCLBUTTONDOWN) { //< WM_NCLBUTTONDOWN to handle borders pixels
+
+    // Check for mouse capture (mouse hover split zone)
+    if(this->_UiMan->splitCaptureCheck())
+      return 1; //< prevent default, required for SetCapture to be effective
+  }
+
   if(uMsg == WM_SETCURSOR) {
 
     // local window update cursor according split zone hovering

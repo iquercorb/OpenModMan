@@ -80,6 +80,7 @@ OmUiMan::OmUiMan(HINSTANCE hins) : OmDialog(hins),
   _split_hover_head(false),
   _split_hover_foot(false),
   _split_hover_side(false),
+  _split_moving(false),
   _split_params{},
   _listview_himl(nullptr),
   _listview_himl_size(0),
@@ -830,6 +831,8 @@ bool OmUiMan::splitCursorUpdate()
 ///
 bool OmUiMan::splitCaptureCheck()
 {
+  this->_split_moving = false;
+
   if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
 
     // Get cursor position relative to client area
@@ -858,22 +861,14 @@ bool OmUiMan::splitCaptureCheck()
     // capture the mouse
     SetCapture(this->_hwnd);
 
+    this->_split_moving = true;
+
     #ifdef DEBUG
     std::wcout << L"DEBUG => OmUiMan::splitCapture : captured\n";
     #endif // DEBUG
-
-    return true;
-
   }
-  return false;
-}
 
-///
-///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-///
-bool OmUiMan::splitCaptured()
-{
-  return (GetCapture() == this->_hwnd);
+  return this->_split_moving;
 }
 
 ///
@@ -881,13 +876,15 @@ bool OmUiMan::splitCaptured()
 ///
 bool OmUiMan::splitCaptureRelease()
 {
-  if(this->splitCaptured()) {
+  if(this->_split_moving) {
 
     // release captured mouse
     ReleaseCapture();
 
     // Save current UI layout parameters
     this->_layout_save();
+
+    this->_split_moving = false;
 
     return true;
   }
@@ -907,7 +904,7 @@ bool OmUiMan::splitMoveProcess()
 
   bool changed = false;
 
-  if(GetCapture() == this->_hwnd) {
+  if(this->_split_moving) {
 
     if(this->_split_hover_head) {
       // calculate new line position according new cursor moves
@@ -1970,10 +1967,6 @@ void OmUiMan::_onResize()
   if(this->minimized())
     return;
 
-  #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::_onResize\n";
-  #endif
-
   // Setup limits values
   long head_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
   long head_max = this->cliHeight() - (this->_ui_ovw_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
@@ -1982,37 +1975,49 @@ void OmUiMan::_onResize()
   long side_min = RSIZE_SEP_W + RSIZE_SIDE_MIN_W;
   long side_max = this->cliWidth() - (this->_lv_pst_span + RSIZE_MAIN_MIN_W + (RSIZE_SEP_W * 2));
 
-  long rc[4];
+  // stuff for splitter move invalidate/redraw process
+  long redraw_delta, redraw_rect[4];
 
-  if(this->splitCaptured()) {
+  // special processing for window layout changes
+  if(this->_split_moving) {
 
-    // Save the area to be redrawn after resize and update line position from split move param
+    // define area which must be invalidated due to layout resize, this may include entire
+    // child control area that must be updated (especially List view controls)
+
+    // in all cases, invalidate from left to right of client area
+    redraw_rect[0] = RSIZE_SEP_W;
+    redraw_rect[2] = this->cliWidth() - RSIZE_SEP_W;
+
+    // compute specific top to bottom area depending splitter currently moving
     if(this->_split_hover_head) {
-      rc[0] = 2; rc[2] = this->cliWidth() - 4;
-      rc[1] = RSIZE_TOP_H;
-      rc[3] = this->cliHeight() - this->_ui_ovw_span;
 
-      // update height
+      // from lower channel buttons to bottom of Library List View
+      redraw_rect[1] = this->_lv_chn_span - 46;
+      redraw_rect[3] = this->cliHeight() - (this->_ui_ovw_span + 35);
+
+      // store move delta in pixel from last position then update span to new position
+      redraw_delta = this->_lv_chn_span - this->_split_params[2];
       this->_lv_chn_span = this->_split_params[2];
     }
 
     if(this->_split_hover_side) {
-      rc[1] = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
-      rc[3] = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;
-      rc[0] = RSIZE_SEP_W;
-      rc[2] = this->cliWidth() - RSIZE_SEP_W;
 
-      // update height
+      // from head split (channel) to foot split (overview)
+      redraw_rect[1] = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
+      redraw_rect[3] = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;
+
+      // store move delta in pixel from last position then update span to new position
+      redraw_delta = this->_lv_pst_span - this->_split_params[2];
       this->_lv_pst_span = this->_split_params[2];
     }
 
     if(this->_split_hover_foot) {
-      rc[0] = 2; rc[2] = this->cliWidth() - 4;
-      long max_h = this->_ui_ovw_span > this->_split_params[2] ? this->_ui_ovw_span : this->_split_params[2];
-      rc[1] = this->cliHeight() - (max_h + 45);
-      rc[3] = this->cliHeight() - RSIZE_BOT_H;
 
-      // update height
+      redraw_rect[1] = this->cliHeight() - (this->_ui_ovw_span + 45);
+      redraw_rect[3] = this->cliHeight() - RSIZE_BOT_H;
+
+      // store move delta in pixel from last position then update span to new position
+      redraw_delta = this->_ui_ovw_span - this->_split_params[2];
       this->_ui_ovw_span = this->_split_params[2];
     }
   }
@@ -2072,7 +2077,7 @@ void OmUiMan::_onResize()
   this->_setItemPos(IDC_SC_FILE, 9, this->cliHeight()-19, this->cliWidth()-100, 16, true);
   this->_setItemPos(IDC_SC_INFO, this->cliWidth()-97, this->cliHeight()-19, 90, 16, true);
 
-  if(this->splitCaptured()) {
+  if(this->_split_moving) {
 
     // Calling SetWindowPos outside a resize modal loop (standard resize by user),
     // causes insane amount of flickering, probably due to suboptimal erase and
@@ -2091,20 +2096,42 @@ void OmUiMan::_onResize()
     // with the proper flags.
 
     // update the footer frame and area around the splitter, without erasing window background to reduce flickering.
-    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&redraw_rect), nullptr, RDW_INVALIDATE|RDW_UPDATENOW);
 
+    // calculate new area strictly around the moving controls to be erased and redrawn
     if(this->_split_hover_head) {
-      rc[1] = this->_lv_chn_span - 80; rc[3] = this->_lv_chn_span + 50;
-      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+      redraw_rect[1] = this->_lv_chn_span - 46;
+      redraw_rect[3] = this->_lv_chn_span + 28;
+      if(redraw_delta < 0) {
+        redraw_rect[1] += redraw_delta;
+      } else {
+        redraw_rect[3] += redraw_delta;
+      }
     }
+
     if(this->_split_hover_side) {
-      rc[0] = this->cliWidth() - (this->_lv_pst_span + 10); rc[2] = this->cliWidth() - (this->_lv_pst_span - 80);
-      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+      redraw_rect[0] = this->cliWidth() - (this->_lv_pst_span + 5);
+      redraw_rect[2] = this->cliWidth() - (this->_lv_pst_span - 24);
+      if(redraw_delta > 0) {
+        redraw_rect[0] -= redraw_delta;
+      } else {
+        redraw_rect[2] -= redraw_delta;
+      }
     }
+
     if(this->_split_hover_foot) {
-      rc[3] = this->cliHeight() - this->_ui_ovw_span;
-      RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&rc), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+      redraw_rect[1] = this->cliHeight() - (this->_ui_ovw_span + 5);
+      redraw_rect[3] = this->cliHeight() - this->_ui_ovw_span;
+      if(redraw_delta > 0) {
+        redraw_rect[1] -= redraw_delta;
+      } else {
+        redraw_rect[3] -= redraw_delta;
+      }
     }
+
+    // erase and redraw the area around the moving controls and edges
+    RedrawWindow(this->_hwnd, reinterpret_cast<RECT*>(&redraw_rect), nullptr, RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE);
+
   } else {
     // simple resize, we can redraw entire window
     RedrawWindow(this->_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW);

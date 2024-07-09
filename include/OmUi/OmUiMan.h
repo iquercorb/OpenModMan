@@ -220,39 +220,181 @@ class OmUiMan : public OmDialog
       return GetSubMenu(this->_context_menu, index);
     }
 
+    /// \brief Check Target directory read/write access
+    ///
+    /// Test read/write access for current Channel's Target directory
+    /// and open a custom error message if access is denied.
+    ///
+    /// \param[in]  operation : Custom context string for error message.
+    ///
+    /// \return true if access granted, false otherwise
+    ///
     bool checkTargetWrite(const OmWString& operation);
 
+    /// \brief Check Mod Library directory read (only) access
+    ///
+    /// Test read (only) access for current Channel's Mod Library directory
+    /// and open a custom error message if access is denied.
+    ///
+    /// \param[in]  operation : Custom context string for error message.
+    ///
+    /// \return true if access granted, false otherwise
+    ///
     bool checkLibraryRead(const OmWString& operation);
 
+    /// \brief Check Mod Library directory read/write access
+    ///
+    /// Test read/write access for current Channel's Mod Library directory
+    /// and open a custom error message if access is denied.
+    ///
+    /// \param[in]  operation : Custom context string for error message.
+    ///
+    /// \return true if access granted, false otherwise
+    ///
     bool checkLibraryWrite(const OmWString& operation);
 
+    /// \brief Check Backup Data directory read/write access
+    ///
+    /// Test read/write access for current Channel's Backup Data directory
+    /// and open a custom error message dialog if access is denied.
+    ///
+    /// \param[in]  operation : Custom context string for error message.
+    ///
+    /// \return true if access granted, false otherwise
+    ///
     bool checkBackupWrite(const OmWString& operation);
 
+    /// \brief Automatic Missing Mod dependencies dialog
+    ///
+    /// Quick check against supplied parameters for missing Mod dependencies
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled   : Channel's option value for this warning.
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  missings  : Produced missing dependencies list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnMissings(bool enabled, const OmWString& operation, const OmWStringArray& missings);
 
+    /// \brief Automatic Missing Mod overlapping dialog
+    ///
+    /// Quick check against supplied parameters for Mod overlapping
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled   : Channel's option value for this warning.
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  overlaps  : Produced overlapping list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnOverlaps(bool enabled, const OmWString& operation, const OmWStringArray& overlaps);
 
+    /// \brief Automatic Mod Additional Installs dialog
+    ///
+    /// Quick check against supplied parameters for Mod Additional Installs
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled   : Channel's option value for this warning.
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  depends   : Produced additional dependencies list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnExtraInstalls(bool enabled, const OmWString& operation, const OmWStringArray& depends);
 
+    /// \brief Automatic Mod Additional Downloads dialog
+    ///
+    /// Quick check against supplied parameters for Mod Additional Downloads
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled   : Channel's option value for this warning.
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  depends   : Produced additional dependencies list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnExtraDownloads(bool enabled, const OmWString& operation, const OmWStringArray& depends);
 
+    /// \brief Automatic Mod Additional Uninstalls dialog
+    ///
+    /// Quick check against supplied parameters for Mod Additional Uninstalls
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled     : Channel's option value for this warning.
+    /// \param[in]  operation   : Custom context string for dialog message.
+    /// \param[in]  overlappers : Produced additional overlappers list (can be empty).
+    /// \param[in]  dependents  : Produced additional dependents list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnExtraRestores(bool enabled, const OmWString& operation, const OmWStringArray& overlappers, const OmWStringArray& dependents);
 
+    /// \brief Automatic Mod Breaking dependencies dialog
+    ///
+    /// Quick check against supplied parameters for Mod Uninstall that break dependencies
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// \param[in]  enabled     : Channel's option value for this warning.
+    /// \param[in]  operation   : Custom context string for dialog message.
+    /// \param[in]  breakings   : Produced additional broken dependencies list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
     bool warnBreakings(bool enabled, const OmWString& operation, const OmWStringArray& breakings);
 
-
+    /// \brief UI Layout split Cursor update
+    ///
+    /// Public function to proceed proper mouse cursor changes (usually on WM_SETCURSOR message)
+    /// in response to mouse hovering layout split zone.
+    ///
+    /// \return true if mouse cursor changed from default (hovering split zone)
+    ///
     bool splitCursorUpdate();
 
+    /// \brief UI Layout split cursor capture
+    ///
+    /// Public function to test and capture mouse cursor (usually on WM_LBUTTONDOWN message)
+    /// in order to enter Layout split move process.
+    ///
+    /// \return true if mouse cursor was captured, false otherwise
+    ///
     bool splitCaptureCheck();
 
-    bool splitCaptured();
+    /// \brief UI Layout split moving (captured) state
+    ///
+    /// Returns whether mouse cursor is currently captured by main window
+    /// for Layout split move process.
+    ///
+    /// \return true if mouse cursor is captured, false otherwise
+    ///
+    bool splitMoving() const {
+      return this->_split_moving;
+    }
 
+    /// \brief UI Layout split capture release
+    ///
+    /// Public function to release mouse cursor capture (usually on WM_LBUTTONUP message)
+    /// in order to exit Layout split move process.
+    ///
+    /// \return true if mouse cursor was released from a capture state, false otherwise
+    ///
     bool splitCaptureRelease();
 
+    /// \brief UI Layout split move process
+    ///
+    /// Public function to proceed (usually on WM_MOUSEMOVE message) computation and proper resizes
+    /// according mouse cursor position, or to check for mouse cursor hovering split zone.
+    ///
+    /// \return true if mouse cursor is captured or is hovering split zone, false otherwise.
+    ///
     bool splitMoveProcess();
 
-
-    // Controls subClassing
+    /// \brief UI Layout split subclassing procedure
+    ///
+    /// Public static function to be used as subclass procedure for the various child controls
+    /// to properly handle mouse cursors and motions for Layout split mechanism.
+    ///
     static LRESULT WINAPI splitSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
   private: ///          - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -273,12 +415,13 @@ class OmUiMan : public OmDialog
     int32_t             _lock_idch;
 
     // layout split parameters
-
     bool                _split_hover_head;
 
     bool                _split_hover_foot;
 
     bool                _split_hover_side;
+
+    bool                _split_moving;
 
     long                _split_params[3];
 
