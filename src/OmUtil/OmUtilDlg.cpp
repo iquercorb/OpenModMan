@@ -132,6 +132,7 @@ inline static COMDLG_FILTERSPEC* __ofn_filter_to_comdlg_spec(const wchar_t* ofn_
 ///
 static HFONT __Om_dlgBox_FontB = nullptr;
 static HFONT __Om_dlgBox_FontS = nullptr;
+static HFONT __Om_dlgBox_FontM = nullptr;
 static HICON __Om_dlgBox_TIcon = nullptr;
 
 /// \brief Constant strings for message box.
@@ -170,7 +171,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     wchar_t* str_buf;
     int str_len;
     long rect[4] = {0,0,0,0};
-    long X, Y, xalign, yalign = 25;
+    long X, Y, xalign, width = 400, yalign = 25;
     HWND hParent = GetParent(hWnd);
     UINT uSwp;
 
@@ -197,6 +198,11 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       __Om_dlgBox_FontS = CreateFontW(16,0,0,0,400,false,false,false,
                                       ANSI_CHARSET,OUT_TT_PRECIS,0,
                                       CLEARTYPE_QUALITY,0,L"Ms Shell Dlg");
+    // create monospace font
+    if(__Om_dlgBox_FontM == nullptr)
+      __Om_dlgBox_FontM = CreateFontW(14,0,0,0,400,false,false,false,
+                                      ANSI_CHARSET,OUT_TT_PRECIS,0,
+                                      CLEARTYPE_QUALITY,0,L"Consolas");
 
     // create and setup HDC for DrawText
     HDC hDc = GetDC(hWnd);
@@ -218,6 +224,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
       // set font for this control
       SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_dlgBox_FontS), true);
+      SelectObject(hDc, __Om_dlgBox_FontS); //< change reference font for DrawTextW
 
       // retrieve control inner text string
       str_len = SendMessageW(hItem, WM_GETTEXTLENGTH, 0, 0);
@@ -237,28 +244,39 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     // Static Control - Item List
     hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_LIST);
     if(hItem) {
-
       // set font for this control
-      SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_dlgBox_FontS), true);
+      SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_dlgBox_FontM), true);
+      SelectObject(hDc, __Om_dlgBox_FontM); //< change reference font for DrawTextW
 
       // retrieve control inner text string
       str_len = SendMessageW(hItem, WM_GETTEXTLENGTH, 0, 0);
       str_buf = new wchar_t[str_len+1];
       SendMessageW(hItem, WM_GETTEXT , str_len+1, reinterpret_cast<LPARAM>(str_buf));
 
-      // use DrawText to calculate proper control height
+      // use DrawText to calculate proper control width and height
       rect[2] = 370; //< initial width
-      DrawTextW(hDc, str_buf, -1, reinterpret_cast<LPRECT>(&rect), DT_CALCRECT);
-      delete[] str_buf;
 
-      // if list exceed size, we clamp and add a vertical scroll
-      if(rect[3] > 64) {
-        rect[3] = 64;
-        SetWindowLongPtr(hItem,GWL_STYLE,GetWindowLongPtr(hItem,GWL_STYLE)|WS_VSCROLL);
+      // check whether "list" string is Edit Control (Multi-line list)
+      long style = GetWindowLongPtr(hItem, GWL_STYLE);
+      if(OM_HAS_BIT(style, ES_MULTILINE)) {
+        DrawTextW(hDc, str_buf, -1, reinterpret_cast<LPRECT>(&rect), DT_CALCRECT);
+        // if list exceed size, we clamp and add a vertical scroll
+        if(rect[3] > 64) {
+          rect[3] = 64;
+          SetWindowLongPtr(hItem,GWL_STYLE,style|WS_VSCROLL);
+        }
+      } else {
+        DrawTextW(hDc, str_buf, -1, reinterpret_cast<LPRECT>(&rect), DT_WORDBREAK|DT_CALCRECT);
       }
 
+      delete[] str_buf;
+
+      // increase message required with
+      if(rect[2] > 370)
+        width += rect[2] - 370;
+
       // move and resize control
-      SetWindowPos(hItem, nullptr, 80, yalign, 370, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, nullptr, 80, yalign, rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 10;
     }
 
@@ -289,14 +307,17 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     SelectObject(hDc, hOldFont);
     ReleaseDC(hWnd, hDc);
 
+    width += 100;
+
     // resize white rect
     hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_RECT);
     yalign += 20;
-    SetWindowPos(hItem, nullptr, 0, 0, 500, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
+    SetWindowPos(hItem, nullptr, 0, 0, width, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
     // button initial position
     yalign += 11;
-    xalign = 394; // alignment for 2 buttons
+    //xalign = 394; // alignment for 2 buttons
+    xalign = width - 106;
 
     // if present, move the No/Cancel button to the left of dialog
     hItem = GetDlgItem(hWnd, OM_DLGBOX_BTNX);
@@ -330,7 +351,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       X = Y = 0;
       uSwp |= SWP_NOMOVE;
     }
-    SetWindowPos(hWnd, nullptr, X, Y, 500, yalign, uSwp);
+    SetWindowPos(hWnd, nullptr, X, Y, width, yalign, uSwp);
   }
 
   if(uMsg == WM_CTLCOLORSTATIC) {
@@ -564,7 +585,7 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
 
     // align to word boundary
     if(reinterpret_cast<uint64_t>(pTpl) & 0x2) pTpl++;
-    // Edit Control for item list
+    // Progress bar
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
     itmt->id = OM_DLGBOX_PB_BAR0;
     itmt->style = WS_CHILD|WS_VISIBLE;
@@ -584,16 +605,22 @@ static INT_PTR __Om_dlgBox(HINSTANCE hins, HWND hwnd, const wchar_t* cpt, uint16
     // Edit Control for item list
     itmt = reinterpret_cast<DLGITEMTEMPLATE*>(pTpl);
     itmt->id = OM_DLGBOX_SC_LIST;
-    itmt->style = WS_CHILD|WS_VISIBLE|ES_MULTILINE|ES_READONLY|ES_AUTOHSCROLL;
+    itmt->style = WS_CHILD|WS_VISIBLE;
     itmt->dwExtendedStyle = WS_EX_LEFT;
     itmt->x = 45; itmt->y = 50; itmt->cx = 255; itmt->cy = 0;
     pTpl = reinterpret_cast<uint16_t*>(itmt + 1);
-    *pTpl++ = 0xFFFF; *pTpl++ = 0x0081; //< WC_EDIT
+    if(Om_hasCRLF(lst)) {
+      // Edit Control for item list
+      itmt->style |= ES_READONLY|ES_MULTILINE|ES_AUTOHSCROLL;
+      *pTpl++ = 0xFFFF; *pTpl++ = 0x0081; //< WC_EDIT
+    } else {
+      // Static Control for error log string
+      *pTpl++ = 0xFFFF; *pTpl++ = 0x0082; //< WC_STATIC
+    }
     while((*reinterpret_cast<wchar_t*>(pTpl++) = *lst++)); //< Item text
     *pTpl++ = 0; //< No creation
     dlgt->cdit++; //< increment item count
   }
-
 
   INT_PTR result = DialogBoxIndirectParamW(hins, dlgt, hwnd, __Om_dlgBox_dlgProc, 0);
 

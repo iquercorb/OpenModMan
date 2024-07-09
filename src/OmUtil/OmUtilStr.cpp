@@ -1272,6 +1272,36 @@ OmCString Om_toCRLF(const OmCString& lf_txt)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool Om_hasCRLF(const OmWString& str)
+{
+  for(size_t i = 0; i < str.size(); ++i) {
+    if(str[i] == L'\n') {
+      // check for receding '\r'
+      if(i > 0 && str[i - 1] == L'\r')
+        return true;
+    }
+  }
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool Om_hasCRLF(const OmCString& str)
+{
+  for(size_t i = 0; i < str.size(); ++i) {
+    if(str[i] == '\n') {
+      // check for receding '\r'
+      if(i > 0 && str[i - 1] == '\r')
+        return true;
+    }
+  }
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 OmWString Om_concatStrings(const OmWStringArray& strings, const OmWString& separator)
 {
   OmWString concat;

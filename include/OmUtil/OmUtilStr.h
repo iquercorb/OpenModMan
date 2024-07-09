@@ -635,6 +635,26 @@ void Om_toCRLF(OmCString* crlf, const OmCString& lf);
 ///
 OmCString Om_toCRLF(const OmCString& lf);
 
+/// \brief Detect CRLF
+///
+/// Check whether the supplied string contain CRLF sequence
+///
+/// \param[in] str       : String to check
+///
+/// \return True if string contain CRLF sequence, false otherwise
+///
+bool Om_hasCRLF(const OmWString& str);
+
+/// \brief Detect CRLF
+///
+/// Check whether the supplied string contain CRLF sequence
+///
+/// \param[in] str       : String to check
+///
+/// \return True if string contain CRLF sequence, false otherwise
+///
+bool Om_hasCRLF(const OmCString& str);
+
 /// \brief Concatenate strings
 ///
 /// Concatenate strings from given array of string separated
