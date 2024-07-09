@@ -272,8 +272,11 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       delete[] str_buf;
 
       // increase message required with
-      if(rect[2] > 370)
+      if(rect[2] > 370) {
         width += rect[2] - 370;
+      } else if(rect[2] < 370) {
+        rect[2] = 370;
+      }
 
       // move and resize control
       SetWindowPos(hItem, nullptr, 80, yalign, rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
