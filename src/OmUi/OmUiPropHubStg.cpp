@@ -120,6 +120,8 @@ void OmUiPropHubStg::_onTbInit()
   this->_createTooltip(IDC_EC_INP03,  L"Hub title");
   this->_createTooltip(IDC_BC_BRW01,  L"Select icon or application");
   this->_createTooltip(IDC_BC_DEL,    L"Remove icon");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Show or hide Channels list and related buttons in main window");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Show or hide Presets list and related buttons in main window");
 
   // refresh with default values
   this->_onTbRefresh();
@@ -158,7 +160,6 @@ void OmUiPropHubStg::_onTbResize()
   this->_setItemPos(IDC_BC_CKBX1, 75, y_base+130, 300, 16, true);
   // Show Presets check box
   this->_setItemPos(IDC_BC_CKBX2, 75, y_base+150, 300, 16, true);
-
 }
 
 
