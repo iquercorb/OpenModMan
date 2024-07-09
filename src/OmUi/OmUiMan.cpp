@@ -1967,13 +1967,25 @@ void OmUiMan::_onResize()
   if(this->minimized())
     return;
 
-  // Setup limits values
+  // setup layout limits
   long head_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
   long head_max = this->cliHeight() - (this->_ui_ovw_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
-  long foot_min = RSIZE_BOT_H + RSIZE_FOOT_MIN_H;
-  long foot_max = this->cliHeight() - (this->_lv_chn_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+
   long side_min = RSIZE_SEP_W + RSIZE_SIDE_MIN_W;
   long side_max = this->cliWidth() - (this->_lv_pst_span + RSIZE_MAIN_MIN_W + (RSIZE_SEP_W * 2));
+
+  long foot_min = RSIZE_BOT_H + RSIZE_FOOT_MIN_H;
+  long foot_max = this->cliHeight() - (this->_lv_chn_span + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+
+  // clamp layout to limits
+  if(this->_lv_chn_span < head_min) this->_lv_chn_span = head_min;
+  if(this->_lv_chn_span > head_max) this->_lv_chn_span = head_max;
+
+  if(this->_lv_pst_span < side_min) this->_lv_pst_span = side_min;
+  if(this->_lv_pst_span > side_max) this->_lv_pst_span = side_max;
+
+  if(this->_ui_ovw_span < foot_min) this->_ui_ovw_span = foot_min;
+  if(this->_ui_ovw_span > foot_max) this->_ui_ovw_span = foot_max;
 
   // stuff for splitter move invalidate/redraw process
   long redraw_delta, redraw_rect[4];
@@ -1984,12 +1996,12 @@ void OmUiMan::_onResize()
     // define area which must be invalidated due to layout resize, this may include entire
     // child control area that must be updated (especially List view controls)
 
-    // in all cases, invalidate from left to right of client area
-    redraw_rect[0] = RSIZE_SEP_W;
-    redraw_rect[2] = this->cliWidth() - RSIZE_SEP_W;
-
     // compute specific top to bottom area depending splitter currently moving
     if(this->_split_hover_head) {
+
+      // avoid useless resize/redraw
+      if(this->_split_params[2] < head_min) return;
+      if(this->_split_params[2] > head_max) return;
 
       // from lower channel buttons to bottom of Library List View
       redraw_rect[1] = this->_lv_chn_span - 46;
@@ -2002,6 +2014,10 @@ void OmUiMan::_onResize()
 
     if(this->_split_hover_side) {
 
+      // avoid useless resize/redraw
+      if(this->_split_params[2] < side_min) return;
+      if(this->_split_params[2] > side_max) return;
+
       // from head split (channel) to foot split (overview)
       redraw_rect[1] = this->_lv_chn_show ? this->_lv_chn_span : RSIZE_TOP_H;
       redraw_rect[3] = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;
@@ -2013,6 +2029,10 @@ void OmUiMan::_onResize()
 
     if(this->_split_hover_foot) {
 
+      // avoid useless resize/redraw
+      if(this->_split_params[2] < foot_min) return;
+      if(this->_split_params[2] > foot_max) return;
+
       redraw_rect[1] = this->cliHeight() - (this->_ui_ovw_span + 45);
       redraw_rect[3] = this->cliHeight() - RSIZE_BOT_H;
 
@@ -2020,17 +2040,12 @@ void OmUiMan::_onResize()
       redraw_delta = this->_ui_ovw_span - this->_split_params[2];
       this->_ui_ovw_span = this->_split_params[2];
     }
+
+    // in all cases, invalidate from left to right of client area
+    redraw_rect[0] = RSIZE_SEP_W;
+    redraw_rect[2] = this->cliWidth() - RSIZE_SEP_W;
   }
 
-  // Clamp to limits
-  if(this->_lv_chn_span < head_min) this->_lv_chn_span = head_min;
-  if(this->_lv_chn_span > head_max) this->_lv_chn_span = head_max;
-  if(this->_lv_pst_span < side_min) this->_lv_pst_span = side_min;
-  if(this->_lv_pst_span > side_max) this->_lv_pst_span = side_max;
-  if(this->_ui_ovw_span < foot_min) this->_ui_ovw_span = foot_min;
-  if(this->_ui_ovw_span > foot_max) this->_ui_ovw_span = foot_max;
-
-  // ---
 
   // Mod Hubs ComboBox
   this->_setItemPos(IDC_CB_HUB, 5, 2, this->cliWidth()-10 , 26, true);
@@ -2120,7 +2135,7 @@ void OmUiMan::_onResize()
     }
 
     if(this->_split_hover_foot) {
-      redraw_rect[1] = this->cliHeight() - (this->_ui_ovw_span + 5);
+      redraw_rect[1] = this->cliHeight() - (this->_ui_ovw_span + 45);
       redraw_rect[3] = this->cliHeight() - this->_ui_ovw_span;
       if(redraw_delta > 0) {
         redraw_rect[1] -= redraw_delta;

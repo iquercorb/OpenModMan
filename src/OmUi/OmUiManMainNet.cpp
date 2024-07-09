@@ -1880,20 +1880,24 @@ void OmUiManMainNet::_onHide()
 ///
 void OmUiManMainNet::_onResize()
 {
-  // Setup limits values
-  long h_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
-  long h_max = this->cliHeight() - (RSIZE_BOT_H + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+  // setup layout limits
+  long span_min = RSIZE_TOP_H + RSIZE_HEAD_MIN_H;
+  long span_max = this->cliHeight() - (RSIZE_BOT_H + RSIZE_MAIN_MIN_H + (RSIZE_SEP_H * 2));
+
+  // clamp layout to limits
+  if(this->_lv_rep_span < span_min) this->_lv_rep_span = span_min;
+  if(this->_lv_rep_span > span_max) this->_lv_rep_span = span_max;
 
   // stuff for splitter move invalidate/redraw process
   long redraw_delta, redraw_rect[4];
 
   if(this->_split_moving) {
 
-    // Save the area to be redrawn after resize and update line position from split move param
-    redraw_rect[0] = 0;
-    redraw_rect[2] = this->cliWidth();
-
     if(this->_split_hover_lvrep) {
+
+      // avoid useless resize/redraw
+      if(this->_split_params[2] < span_min) return;
+      if(this->_split_params[2] > span_max) return;
 
       // from lower repositories buttons to bottom of Library List View
       redraw_rect[1] = this->_lv_rep_span - 46;
@@ -1903,10 +1907,12 @@ void OmUiManMainNet::_onResize()
       redraw_delta = this->_lv_rep_span - this->_split_params[2];
       this->_lv_rep_span = this->_split_params[2];
     }
+
+    // Save the area to be redrawn after resize and update line position from split move param
+    redraw_rect[0] = 0;
+    redraw_rect[2] = this->cliWidth();
   }
 
-  if(this->_lv_rep_span < h_min) this->_lv_rep_span = h_min;
-  if(this->_lv_rep_span > h_max) this->_lv_rep_span = h_max;
 
   // Repositories ListBox
   this->_setItemPos(IDC_LV_REP, 28, RSIZE_TOP_H, this->cliWidth()-29, this->_lv_rep_span, true);
