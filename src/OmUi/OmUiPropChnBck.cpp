@@ -116,6 +116,8 @@ void OmUiPropChnBck::_onTbInit()
   this->_createTooltip(IDC_CB_ZMD,    L"Compression method for backup archives");
   this->_createTooltip(IDC_CB_ZLV,    L"Compression level for backup archives");
 
+  this->_createTooltip(IDC_BC_CKBX3,  L"Allows Mods to overwrite files from each other using advanced backup process");
+
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_WRN));
 
@@ -177,16 +179,7 @@ void OmUiPropChnBck::_onTbRefresh()
         this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, i); break;
       }
     }
-/*
-    switch(comp_method)
-    {
-    case OM_METHOD_DEFLATE: this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 1); break; //< MZ_COMPRESS_METHOD_DEFLATE
-    case OM_METHOD_LZMA:    this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 2); break; //< MZ_COMPRESS_METHOD_LZMA
-    case OM_METHOD_LZMA2:   this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 3); break; //< MZ_COMPRESS_METHOD_XZ
-    case OM_METHOD_ZSTD:    this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 4); break; //< MZ_COMPRESS_METHOD_ZSTD
-    default:                this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 0); break; //< MZ_COMPRESS_METHOD_STORE
-    }
-*/
+
     this->enableItem(IDC_CB_ZMD, true);
 
     // select proper compression level
@@ -196,15 +189,7 @@ void OmUiPropChnBck::_onTbRefresh()
         this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, i); break;
       }
     }
-/*
-    switch(comp_level)
-    {
-    case OM_LEVEL_FAST:   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 1); break; //< MZ_COMPRESS_LEVEL_FAST
-    case OM_LEVEL_SLOW:   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 2); break; //< MZ_COMPRESS_LEVEL_NORMAL
-    case OM_LEVEL_BEST:   this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 3); break; //< MZ_COMPRESS_LEVEL_BEST
-    default:              this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 0); break;
-    }
-*/
+
     this->enableItem(IDC_CB_ZLV, true);
 
   } else {
@@ -215,6 +200,8 @@ void OmUiPropChnBck::_onTbRefresh()
     this->msgItem(IDC_CB_ZLV, CB_SETCURSEL, 2);
     this->enableItem(IDC_CB_ZLV, false);
   }
+
+  this->msgItem(IDC_BC_CKBX3, BM_SETCHECK, ModChan->backupOverlap());
 }
 
 ///
@@ -245,6 +232,9 @@ void OmUiPropChnBck::_onTbResize()
   this->_setItemPos(IDC_CB_ZLV, 190, y_base+135, this->cliWidth()-270, 21, true);
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ZLV), nullptr, true);
+
+  // Disallow Overlapping CheckBox
+  this->_setItemPos(IDC_BC_CKBX3, 50, y_base+180, 350, 16, true);
 }
 
 ///
@@ -284,6 +274,11 @@ INT_PTR OmUiPropChnBck::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_CB_ZLV: //< ComboBox: compression level
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->paramCheck(CHN_PROP_BCK_COMP_LEVEL);
+      break;
+
+    case IDC_BC_CKBX3: //< CheckBox: compress backup data
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->paramCheck(CHN_PROP_BCK_NO_OVERLAP);
       break;
     }
   }

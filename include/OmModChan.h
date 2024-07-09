@@ -368,8 +368,9 @@ class OmModChan
     /// \param[out] overlaps      : Identity list of overlapped Mods
     /// \param[out] depends       : Identity list of the supplementary installed dependencies Mods
     /// \param[out] missings      : Identity list of missing dependencies Mods
+    /// \param[out] conflicts     : If Channel is in No-Overlapping mode, list of conflicting Mods
     ///
-    void prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings) const;
+    void prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings, OmWStringArray* conflicts) const;
 
     /// \brief Prepare Mods backup restoration
     ///
@@ -1024,7 +1025,7 @@ class OmModChan
     /// \return Zip compression method.
     ///
     int backupCompMethod() const {
-      return _backup_method;
+      return this->_backup_method;
     }
 
     /// \brief Get backup compression method.
@@ -1034,7 +1035,7 @@ class OmModChan
     /// \return Zip compression method.
     ///
     int backupCompLevel() const {
-      return _backup_level;
+      return this->_backup_level;
     }
 
     /// \brief Set Backup compression level.
@@ -1046,6 +1047,24 @@ class OmModChan
     /// \param[in]  level   : Compression level
     ///
     void setBackupComp(int32_t method, int32_t level);
+
+    /// \brief No Overlapping option
+    ///
+    /// Returns No Mod Overlapping at install option value.
+    ///
+    /// \return No Overlapping option value.
+    ///
+    bool backupOverlap() const {
+      return this->_backup_overlap;
+    }
+
+    /// \brief Set No Overlapping option.
+    ///
+    /// Define No Mod Overlapping at install option value.
+    ///
+    /// \param[in]  enable    : No Overlapping enable or disable.
+    ///
+    void setBackupOverlap(bool enable);
 
     /// \brief Get package legacy support size option.
     ///
@@ -1083,10 +1102,9 @@ class OmModChan
     ///
     void setLibraryShowhidden(bool enable);
 
-
     /// \brief Default clean uninstall option.
     ///
-    /// Returns Default clean uninstall option value option value.
+    /// Returns Default clean uninstall option value.
     ///
     /// \return Default clean uninstall option value.
     ///
@@ -1561,6 +1579,8 @@ class OmModChan
     int32_t               _backup_method;
 
     int32_t               _backup_level;
+
+    bool                  _backup_overlap;
 
     bool                  _warn_extra_unin;
 

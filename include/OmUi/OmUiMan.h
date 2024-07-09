@@ -277,10 +277,12 @@ class OmUiMan : public OmDialog
     ///
     bool warnMissings(bool enabled, const OmWString& operation, const OmWStringArray& missings);
 
-    /// \brief Automatic Missing Mod overlapping dialog
+    /// \brief Automatic Missing Mod overlapping dialog (overwritten Mods)
     ///
-    /// Quick check against supplied parameters for Mod overlapping
+    /// Quick check against supplied parameters for Mods overlapping
     /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// This function will show message to warn user that overlapped Mods will be overwritten
     ///
     /// \param[in]  enabled   : Channel's option value for this warning.
     /// \param[in]  operation : Custom context string for dialog message.
@@ -288,7 +290,22 @@ class OmUiMan : public OmDialog
     ///
     /// \return true if user clicked Continue, false otherwise.
     ///
-    bool warnOverlaps(bool enabled, const OmWString& operation, const OmWStringArray& overlaps);
+    bool warnOverlapsOverw(bool enabled, const OmWString& operation, const OmWStringArray& overlaps);
+
+    /// \brief Automatic Missing Mod overlapping dialog (uninstalled Mods)
+    ///
+    /// Quick check against supplied parameters for Mods overlapping
+    /// then open the required custom dialog box to ask user to Continue or Abort.
+    ///
+    /// This function will show message to warn user that overlapped Mods will be uninstalled
+    ///
+    /// \param[in]  enabled   : Channel's option value for this warning.
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  overlaps  : Produced overlapping list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
+    bool warnOverlapsUnins(bool enabled, const OmWString& operation, const OmWStringArray& overlaps);
 
     /// \brief Automatic Mod Additional Installs dialog
     ///
@@ -342,6 +359,18 @@ class OmUiMan : public OmDialog
     /// \return true if user clicked Continue, false otherwise.
     ///
     bool warnBreakings(bool enabled, const OmWString& operation, const OmWStringArray& breakings);
+
+    /// \brief Automatic Conflicting Mod installation dialog
+    ///
+    /// Quick check against supplied parameters for conflicting Mods installation
+    /// then open the required custom error dialog box.
+    ///
+    /// \param[in]  operation : Custom context string for dialog message.
+    /// \param[in]  missings  : Produced conflicting Mods list (can be empty).
+    ///
+    /// \return true if user clicked Continue, false otherwise.
+    ///
+    bool errorConflict(const OmWString& operation, const OmWStringArray& conflicts);
 
     /// \brief UI Layout split Cursor update
     ///

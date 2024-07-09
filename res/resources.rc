@@ -788,6 +788,7 @@ FONT 8, "Ms Shell Dlg"
     COMBOBOX        IDC_CB_ZLV, 80, 50, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     LTEXT           "Compression level :", IDC_SC_LBL02, 50, 60, 80, 9, SS_RIGHT, WS_EX_LEFT
     COMBOBOX        IDC_CB_ZMD, 80, 60, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    AUTOCHECKBOX    "Allow Mods overlaps (advanced backup process)", IDC_BC_CKBX3, 50, 80, 150, 9, 0, WS_EX_LEFT
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //                         MOD CHANNEL PROPERTIES

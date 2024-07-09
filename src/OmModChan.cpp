@@ -98,6 +98,7 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _warn_extra_inst(true),
   _backup_method(OM_METHOD_ZSTD),
   _backup_level(OM_LEVEL_FAST),
+  _backup_overlap(false),
   _warn_extra_unin(true),
   _warn_extra_dnld(true),
   _warn_miss_deps(true),
@@ -396,6 +397,13 @@ bool OmModChan::open(const OmWString& path)
   } else {
     // create default values
     this->setBackupComp(this->_backup_method, this->_backup_level);
+  }
+
+  if(this->_xml.hasChild(L"backup_overlap")) {
+    this->_backup_overlap = this->_xml.child(L"backup_overlap").attrAsInt(L"enable");
+  } else {
+    // create default values
+    this->setBackupOverlap(this->_backup_overlap); //< create default
   }
 
   if(this->_xml.hasChild(L"library_sort")) {
@@ -1625,7 +1633,7 @@ void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* d
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings) const
+void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings, OmWStringArray* conflicts) const
 {
   // gather dependencies and create missing lists
   OmPModPackArray found_depends;
@@ -1650,27 +1658,45 @@ void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArra
   std::vector<OmModEntryArray> footprintArray;
   OmModEntryArray footprint;
 
-  // get overlaps list including simulated installation
+  // get overlaps list against Mods selection (to be installed) on itself
   for(size_t i = 0; i < installs->size(); ++i) {
-
-    // test overlapping against installed Mods
-    for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
-      if(this->_modpack_list[j]->hasBackup()) {
-        if(installs->at(i)->canOverlap(this->_modpack_list[j]))
-          overlaps->push_back(this->_modpack_list[j]->iden());
-      }
-    }
-
     // test overlapping against Mods to be installed
     for(size_t j = 0; j < footprintArray.size(); ++j) {
-      if(installs->at(i)->canOverlap(footprintArray[j]))
+      if(installs->at(i)->canOverlap(footprintArray[j])) {
         overlaps->push_back(installs->at(j)->iden());
+
+        // If channel is in No-Overlapping mode, store conflicting Mods
+        if(!this->_backup_overlap) {
+          Om_push_backUnique(*conflicts, installs->at(i)->iden());
+          Om_push_backUnique(*conflicts, installs->at(j)->iden());
+        }
+      }
     }
 
     // create installation footprint of package
     footprint.clear();
     installs->at(i)->getFootprint(&footprint);
     footprintArray.push_back(footprint);
+  }
+
+  // get overlaps list against already installed Mods
+  for(size_t i = 0; i < installs->size(); ++i) {
+
+    // test overlapping against installed Mods
+    for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
+      if(this->_modpack_list[j]->hasBackup()) {
+        if(installs->at(i)->canOverlap(this->_modpack_list[j])) {
+          overlaps->push_back(this->_modpack_list[j]->iden());
+
+          // If channel is in No-Overlapping mode, insert Overlapped Mod in
+          // the install list, it will be uninstalled during modops process
+          if(!this->_backup_overlap) {
+            installs->insert(installs->begin() + i, this->_modpack_list[j]);
+            i++;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -3740,9 +3766,25 @@ void OmModChan::setLibraryCleanUnins(bool enable)
   }
 
   this->_xml.save();
+}
 
-  // refresh library content
-  this->reloadModLibrary();
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModChan::setBackupOverlap(bool enable)
+{
+  if(!this->_xml.valid())
+    return;
+
+  this->_backup_overlap = enable;
+
+  if(this->_xml.hasChild(L"backup_overlap")) {
+    this->_xml.child(L"backup_overlap").setAttr(L"enable", this->_backup_overlap ? 1 : 0);
+  } else {
+    this->_xml.addChild(L"backup_overlap").setAttr(L"enable", this->_backup_overlap ? 1 : 0);
+  }
+
+  this->_xml.save();
 }
 
 ///

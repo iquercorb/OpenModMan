@@ -395,10 +395,14 @@ void OmUiManMainLib::queueInstalls(bool silent)
     lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
-  OmWStringArray overlaps, depends, missings;
+  OmWStringArray overlaps, depends, missings, conflicts;
 
   // prepare Mod installation
-  ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings);
+  ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings, &conflicts);
+
+  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
+  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
+    return;
 
   // warn user for extra and missing stuff
   if(!silent) {
@@ -409,8 +413,13 @@ void OmUiManMainLib::queueInstalls(bool silent)
     if(!this->_UiMan->warnExtraInstalls(ModChan->warnExtraInst(), L"Install Mods", depends))
       return;
 
-    if(!this->_UiMan->warnOverlaps(ModChan->warnOverlaps(), L"Install Mods", overlaps))
-      return;
+    if(ModChan->backupOverlap()) {
+      if(!this->_UiMan->warnOverlapsOverw(ModChan->warnOverlaps(), L"Install Mods", overlaps))
+        return;
+    } else {
+      if(!this->_UiMan->warnOverlapsUnins(ModChan->warnOverlaps(), L"Install Mods", overlaps))
+        return;
+    }
   }
 
   this->_modops_add(installs);
@@ -436,10 +445,14 @@ OmResult OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool sil
     return OM_RESULT_ERROR;
 
   OmPModPackArray installs;
-  OmWStringArray overlaps, depends, missings;
+  OmWStringArray overlaps, depends, missings, conflicts;
 
   // prepare Mod installation
-  ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings);
+  ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings, &conflicts);
+
+  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
+  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
+    return OM_RESULT_ABORT;
 
   // warn user for extra and missing stuff
   if(!silent) {
@@ -450,8 +463,13 @@ OmResult OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool sil
     if(!this->_UiMan->warnExtraInstalls(ModChan->warnExtraInst(), L"Install Mods", depends))
       return OM_RESULT_ABORT;
 
-    if(!this->_UiMan->warnOverlaps(ModChan->warnOverlaps(), L"Install Mods", overlaps))
-      return OM_RESULT_ABORT;
+    if(ModChan->backupOverlap()) {
+      if(!this->_UiMan->warnOverlapsOverw(ModChan->warnOverlaps(), L"Install Mods", overlaps))
+        return OM_RESULT_ABORT;
+    } else {
+      if(!this->_UiMan->warnOverlapsUnins(ModChan->warnOverlaps(), L"Install Mods", overlaps))
+        return OM_RESULT_ABORT;
+    }
   }
 
   return this->_modops_exec(installs);

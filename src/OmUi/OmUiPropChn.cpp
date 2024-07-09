@@ -251,6 +251,15 @@ bool OmUiPropChn::checkChanges()
 
   }
 
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_NO_OVERLAP)) { //< parameter for Disallow Overlapping
+
+    if(UiPropChnBck->msgItem(IDC_BC_CKBX3, BM_GETCHECK) != this->_ModChan->backupOverlap()) {
+      changed = true;
+    } else {
+      UiPropChnBck->paramReset(CHN_PROP_BCK_NO_OVERLAP);
+    }
+  }
+
   // Download options Tab
   OmUiPropChnDnl* UiPropChnDnl  = static_cast<OmUiPropChnDnl*>(this->childById(IDD_PROP_CHN_DNL));
 
@@ -596,6 +605,13 @@ bool OmUiPropChn::applyChanges()
 
     // Reset parameter as unmodified
     UiPropChnBck->paramReset(CHN_PROP_BCK_COMP_LEVEL);
+  }
+
+  if(UiPropChnBck->paramChanged(CHN_PROP_BCK_NO_OVERLAP)) { //< parameter for Disallow Overlapping
+
+    this->_ModChan->setBackupOverlap(UiPropChnBck->msgItem(IDC_BC_CKBX3, BM_GETCHECK));
+
+    UiPropChnBck->paramReset(CHN_PROP_BCK_NO_OVERLAP);
   }
 
   // Download options Tab

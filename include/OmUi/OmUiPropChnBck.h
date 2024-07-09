@@ -21,6 +21,7 @@
 
 #define CHN_PROP_BCK_CUSTDIR      0
 #define CHN_PROP_BCK_COMP_LEVEL   1
+#define CHN_PROP_BCK_NO_OVERLAP   2
 
 /// \brief Mod Channel Properties: "Data Backup" tab
 ///

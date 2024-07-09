@@ -30,7 +30,7 @@
 /// \return True if value found, false otherwise
 ///
 template<typename T>
-bool Om_arrayContain(const std::vector<T>& references, const T value)
+bool Om_arrayContain(const std::vector<T>& references, const T& value)
 {
   return (std::find(references.begin(), references.end(), value) != references.end());
 }
@@ -44,7 +44,7 @@ bool Om_arrayContain(const std::vector<T>& references, const T value)
 /// \param[in] value       : Unique value to add
 ///
 template<typename T>
-void Om_push_backUnique(std::vector<T>& destination, const T value)
+void Om_push_backUnique(std::vector<T>& destination, const T& value)
 {
   if(std::find(destination.begin(), destination.end(), value) == destination.end())
     destination.push_back(value);
@@ -59,7 +59,7 @@ void Om_push_backUnique(std::vector<T>& destination, const T value)
 /// \param[in] value       : Unique value to add
 ///
 template<typename T>
-void Om_push_backUnique(std::deque<T>& destination, const T value)
+void Om_push_backUnique(std::deque<T>& destination, const T& value)
 {
   if(std::find(destination.begin(), destination.end(), value) == destination.end())
     destination.push_back(value);
@@ -75,7 +75,7 @@ void Om_push_backUnique(std::deque<T>& destination, const T value)
 /// \param[in] value        : Unique value to add
 ///
 template<typename T>
-void Om_push_backUnique(std::vector<T>& destination, const std::vector<T>& references, const T value)
+void Om_push_backUnique(std::vector<T>& destination, const std::vector<T>& references, const T& value)
 {
   if(std::find(references.begin(), references.end(), value) == references.end())
     destination.push_back(value);
@@ -105,7 +105,7 @@ void Om_mergeUniques(std::vector<T>& destination, std::vector<T>& source) {
 /// \param[in] value  : Value to search and erase in array
 ///
 template<typename T>
-void Om_eraseValue(std::vector<T>& array, const T value) {
+void Om_eraseValue(std::vector<T>& array, const T& value) {
 
   typename std::vector<T>::iterator pos;
 
@@ -123,7 +123,7 @@ void Om_eraseValue(std::vector<T>& array, const T value) {
 /// \param[in] value  : Value to search and erase in array
 ///
 template<typename T>
-void Om_eraseValue(std::deque<T>& array, const T value) {
+void Om_eraseValue(std::deque<T>& array, const T& value) {
 
   typename std::deque<T>::iterator pos;
 

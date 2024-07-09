@@ -723,11 +723,26 @@ bool OmUiMan::warnMissings(bool enabled, const OmWString& operation, const OmWSt
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiMan::warnOverlaps(bool enabled, const OmWString& operation, const OmWStringArray& overlaps)
+bool OmUiMan::warnOverlapsOverw(bool enabled, const OmWString& operation, const OmWStringArray& overlaps)
 {
   if(overlaps.size() && enabled) {
     if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_OWR, L"Mods are overlapping",
                       L"Selected Mods are overlapping others, the following Mods will be overwritten:",
+                      Om_concatStrings(overlaps, L"\r\n")))
+      return false;
+  }
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::warnOverlapsUnins(bool enabled, const OmWString& operation, const OmWStringArray& overlaps)
+{
+  if(overlaps.size() && enabled) {
+    if(!Om_dlgBox_cal(this->_hwnd, operation, IDI_DLG_PKG_OWR, L"Mods are overlapping",
+                      L"Selected Mods are overlapping others, the following Mods will be uninstalled:",
                       Om_concatStrings(overlaps, L"\r\n")))
       return false;
   }
@@ -800,6 +815,21 @@ bool OmUiMan::warnBreakings(bool enabled, const OmWString& operation, const OmWS
   }
 
   return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmUiMan::errorConflict(const OmWString& operation, const OmWStringArray& conflicts)
+{
+   if(conflicts.size()) {
+    Om_dlgBox_okl(this->_hwnd, operation, IDI_DLG_PKG_ERR, L"Conflicting Mods installation",
+                  L"Mods overlaps are not allowed by current backup setting and the following Mods would overlap over each other once installed:",
+                  Om_concatStrings(conflicts,L"\r\n"));
+    return true;
+   }
+
+   return false;
 }
 
 ///
