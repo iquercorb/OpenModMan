@@ -342,7 +342,15 @@ void OmNetPack::revokeDownload()
   if(!this->_ModChan)
     return;
 
-  Om_fileDelete(Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part"));
+  OmWString dnl_temp = Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part");
+
+  int32_t result = Om_fileDelete(dnl_temp);
+  if(result != 0) {
+    this->_error(L"revokeDownload", Om_errDelete(L"Download data", dnl_temp, result));
+    return;
+  }
+
+  this->_log(OM_LOG_OK, L"stopDownload", L"Download data deleted");
 
   this->refreshAnalytics();
 }
@@ -361,6 +369,8 @@ bool OmNetPack::isDownloading() const
 void OmNetPack::stopDownload()
 {
   this->_connect.abortRequest();
+
+  this->_log(OM_LOG_OK, L"stopDownload", L"Download stopped");
 }
 
 ///
@@ -381,9 +391,8 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
   this->_has_error = false;
 
   // set file path
-  Om_concatPaths(this->_dnl_path, this->_ModChan->libraryPath(), this->_file);
-  this->_dnl_temp = this->_dnl_path;
-  this->_dnl_temp += L".dl_part";
+  this->_dnl_path = Om_concatPaths(this->_ModChan->libraryPath(), this->_file);
+  this->_dnl_temp = Om_concatPathsExt(this->_ModChan->libraryPath(), this->_file, L"dl_part");
 
   // set user defined parameters
   this->_cli_ptr = user_ptr;
@@ -409,6 +418,8 @@ bool OmNetPack::startDownload(Om_downloadCb download_cb, Om_resultCb result_cb, 
   }
 
   this->_dnl_result = OM_RESULT_PENDING;
+
+  this->_log(OM_LOG_OK, L"startDownload", L"\"" + this->_down_url + L"\"");
 
   return true;
 }
@@ -504,7 +515,7 @@ bool OmNetPack::finalizeDownload()
     int32_t result = Om_fileRename(hFile, this->_dnl_path, true);
     if(result != 0) {
       Om_fileDelete(hFile);
-      this->_error(L"finalizeDownload", Om_errRename(L"Temporary file", this->_dnl_temp, result));
+      this->_error(L"finalizeDownload", Om_errRename(L"Download data", this->_dnl_temp, result));
       this->_has_error = true;
     }
 
@@ -524,6 +535,9 @@ bool OmNetPack::finalizeDownload()
   while(attempt--) {
     if(this->_ModChan->findModpack(this->iden(), true)) break; else Sleep(25);
   }
+
+  if(!this->_has_error)
+    this->_log(OM_LOG_OK, L"finalizeDownload", L"download successfully finalized");
 
   return !this->_has_error;
 }
@@ -761,6 +775,9 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   this->_cli_progress_cb = nullptr;
 
   this->_is_upgrading = false;
+
+  if(!has_error)
+    this->_log(OM_LOG_OK, L"upgradeReplace", L"old version replaced successfully");
 
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }

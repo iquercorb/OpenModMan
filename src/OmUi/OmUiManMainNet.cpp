@@ -888,7 +888,8 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
     }
 
     Om_dlgBox_okl(self->_hwnd, L"Download Mods", IDI_DLG_PKG_ERR,
-                L"Download error", NetPack->fileName(), NetPack->lastError());
+                  L"Download error", L"Mod download failed (" + NetPack->iden() + L")",
+                  NetPack->lastError());
   }
 
   // if we are downloading for upgrade, here we go
@@ -1912,7 +1913,6 @@ void OmUiManMainNet::_onResize()
     redraw_rect[0] = 0;
     redraw_rect[2] = this->cliWidth();
   }
-
 
   // Repositories ListBox
   this->_setItemPos(IDC_LV_REP, 28, RSIZE_TOP_H, this->cliWidth()-29, this->_lv_rep_span, true);
