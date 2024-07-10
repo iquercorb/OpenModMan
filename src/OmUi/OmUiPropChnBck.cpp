@@ -116,7 +116,7 @@ void OmUiPropChnBck::_onTbInit()
   this->_createTooltip(IDC_CB_ZMD,    L"Compression method for backup archives");
   this->_createTooltip(IDC_CB_ZLV,    L"Compression level for backup archives");
 
-  this->_createTooltip(IDC_BC_CKBX3,  L"Allows Mods to overwrite files from each other using advanced backup process");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Allows installed Mods to overwrite files from each other using advanced backup process");
 
   // Set buttons inner icons
   this->setBmIcon(IDC_BC_DEL, Om_getResIcon(IDI_BT_WRN));

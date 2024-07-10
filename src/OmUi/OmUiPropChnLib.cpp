@@ -95,10 +95,10 @@ void OmUiPropChnLib::_onTbInit()
   this->_createTooltip(IDC_BC_CKBX7,  L"Parse and show Library's hidden files and sub-directories");
   this->_createTooltip(IDC_BC_CKBX8,  L"Perform Complete Uninstall when double-click on installed Mod");
 
-  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if Mod installation will overlap any previously installed");
-  this->_createTooltip(IDC_BC_CKBX4,  L"Warn if Mod install require additional dependencies installation");
-  this->_createTooltip(IDC_BC_CKBX5,  L"Warn if Mod dependencies are missing");
-  this->_createTooltip(IDC_BC_CKBX6,  L"Warn if Mod uninstall require additional uninstallations");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if Mods installation files conflicts and would overwrites each other");
+  this->_createTooltip(IDC_BC_CKBX4,  L"Warn if Mods installation require additional installation of dependencies");
+  this->_createTooltip(IDC_BC_CKBX5,  L"Warn if required dependencies are missing for Mods installation");
+  this->_createTooltip(IDC_BC_CKBX6,  L"Warn if Mods uninstall require additional uninstall of overlapping or dependent Mods.");
 
 
   this->_onTbRefresh();
