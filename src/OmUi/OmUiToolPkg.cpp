@@ -674,6 +674,10 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->_depend_populate();
   }
 
+  // Set unsaved in case parsed Mod is directory
+  if(this->_ModPack->sourceIsDir())
+    this->_set_unsaved(true);
+
   return true;
 }
 
