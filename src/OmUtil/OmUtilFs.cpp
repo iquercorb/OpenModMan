@@ -364,7 +364,7 @@ void Om_lsFile(OmWStringArray* ls, const OmWString& orig, bool absolute, bool hi
 
 /// \brief List files recursively
 ///
-/// This is the private function used to list files recursively.
+/// This is the static function used to list files recursively.
 ///
 /// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  orig    : Path where to list items from.
@@ -485,7 +485,7 @@ void Om_lsAll(OmWStringArray* ls, const OmWString& orig, bool absolute, bool hid
 
 /// \brief List files and folders recursively
 ///
-/// This is the private function used to list files and folder recursively.
+/// This is the static function used to list files and folder recursively.
 ///
 /// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  orig    : Path where to list items from.
@@ -541,14 +541,14 @@ void Om_lsAllRecursive(OmWStringArray* ls, const OmWString& origin, bool absolut
 
 /// \brief Compute folder size recursively
 ///
-/// Private function to calculate the total size of folder content including
+/// Static function to calculate the total size of folder content including
 /// all it sub-folders. The function act recursively.
 ///
 /// \param[out] size    : Pointer to variable to be incremented as result.
 /// \param[in]  orig    : Path of folder to get total size (start of recursive
 ///                       exploration).
 ///
-void __folderSize(uint64_t* size, const OmWString& orig)
+static void __folderSize(uint64_t* size, const OmWString& orig)
 {
   OmWString root;
 
@@ -936,4 +936,63 @@ int32_t Om_fileDelete(void* hFile)
   }
 
   return 0;
+}
+
+
+/// \brief List files recursively
+///
+/// This is the static function used to list files recursively.
+///
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
+/// \param[in]  orig    : Path where to list items from.
+/// \param[in]  from    : Path to prepend to result to obtain the item full
+///                       path from the beginning of the tree exploration.
+/// \param[in]  hidden  : Include items marked as Hidden.
+///
+static void __findFiles_Recurse(OmWStringArray* ls, const OmWStringArray& search, const OmWString& orig, const OmWString& from, bool hidden)
+{
+  OmWString item;
+  OmWString root;
+
+  OmWString srch(orig);
+  srch += L"\\*";
+
+  WIN32_FIND_DATAW fd;
+  HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
+  if(hnd != INVALID_HANDLE_VALUE) {
+    do {
+      // skip this and parent folder
+      if(!wcscmp(fd.cFileName, L".")) continue;
+      if(!wcscmp(fd.cFileName, L"..")) continue;
+
+      // skip in case we do not include hidden items
+      if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+        continue;
+
+      if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        item = from; item += L"\\"; item += fd.cFileName;
+        root = orig; root += L"\\"; root += fd.cFileName;
+        // go deep in tree
+        __findFiles_Recurse(ls, search, root, item, hidden);
+
+      } else {
+        item = from; item += L"\\"; item += fd.cFileName;
+
+        // search for occurences
+        for(size_t i = 0; i < search.size(); ++i)
+          if(item.find(search[i], item.size() - search[i].size()) != std::string::npos)
+            ls->push_back(item);
+
+      }
+    } while(FindNextFileW(hnd, &fd));
+  }
+  FindClose(hnd);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void Om_findFiles(OmWStringArray* ls, const OmWStringArray& search, const OmWString& orig, bool hidden)
+{
+  __findFiles_Recurse(ls, search, orig.c_str(), orig.c_str(), hidden);
 }

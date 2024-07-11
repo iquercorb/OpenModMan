@@ -19,7 +19,6 @@
 
 #include "OmBase.h"
 
-
 /// \brief Convert UTF-8 to UTF-16
 ///
 /// Converts the given UTF-8 string to UTF-16.

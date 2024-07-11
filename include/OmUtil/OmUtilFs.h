@@ -425,4 +425,15 @@ int32_t Om_fileRename(void* hFile, const OmWString& name, bool replace = true);
 ///
 int32_t Om_fileDelete(void* hFile);
 
+/// \brief Search files
+///
+/// Search the supplied files path recursively starting at the given origin
+///
+/// \param[out] ls      : Pointer to array of OmWString to be filled with result.
+/// \param[in]  search  : List of file name (or file path) to search.
+/// \param[in]  origin  : Path where to list files from.
+/// \param[in]  hidden  : Include items marked as Hidden.
+///
+void Om_findFiles(OmWStringArray* ls, const OmWStringArray& search, const OmWString& origin, bool hidden);
+
 #endif // OMUTILFS_H
