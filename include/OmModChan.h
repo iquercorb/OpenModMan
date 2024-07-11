@@ -341,11 +341,12 @@ class OmModChan
     ///
     /// Check whether the specified Mod is a dependency of any other in the current Library
     ///
-    /// \param[in] ModPack  : Mod to check dependency.
+    /// \param[in] ModPack    : Mod to check dependency.
+    /// \param[in] installed  : Check against installed Mods only.
     ///
     /// \return True if Mod is a dependency, false otherwise.
     ///
-    bool isDependency(const OmModPack* ModPack) const;
+    bool isDependency(const OmModPack* ModPack, bool installed = false) const;
 
     /// \brief Check for missing dependency
     ///

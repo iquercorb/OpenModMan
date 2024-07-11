@@ -48,6 +48,7 @@ OmModPack::OmModPack() :
   _has_bck(false),
   _bck_isdir(false),
   _is_dependent(0),
+  _is_dependency(false),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -68,6 +69,7 @@ OmModPack::OmModPack(OmModChan* ModChan) :
   _has_bck(false),
   _bck_isdir(false),
   _is_dependent(0),
+  _is_dependency(false),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -136,13 +138,24 @@ bool OmModPack::refreshAnalytics()
   // Check for dependencies
   int8_t is_dependent = 0;
 
-  if(!this->_src_depend.empty())
+  if(this->_has_bck)
     is_dependent = this->_ModChan->hasMissingDepend(this) ? -1 : 1;
 
   if(is_dependent != this->_is_dependent)
     has_changes = true;
 
   this->_is_dependent = is_dependent;
+
+  // Check for dependents Mods
+  bool is_dependency = false;
+
+  if(this->_has_bck)
+    is_dependency = this->_ModChan->isDependency(this, true);
+
+  if(is_dependency != this->_is_dependency)
+    has_changes = true;
+
+  this->_is_dependency = is_dependency;
 
   return has_changes;
 }

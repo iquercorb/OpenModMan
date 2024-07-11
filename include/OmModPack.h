@@ -611,6 +611,16 @@ class OmModPack
       return this->_is_dependent;
     }
 
+    /// \brief Check whether is dependency
+    ///
+    /// Returns whether this Mod is a dependency of other installed Mods
+    ///
+    /// \return true if Mod has dependents, false otherwise
+    ///
+    bool isDependency() const {
+      return this->_is_dependency;
+    }
+
     /// \brief Check overlapped
     ///
     /// Returns whether this instance is currently overlapped by another
@@ -743,6 +753,8 @@ class OmModPack
 
     // analytical properties
     int8_t              _is_dependent;
+
+    bool                _is_dependency;
 
     bool                _is_overlapped;
 

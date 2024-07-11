@@ -1550,12 +1550,22 @@ bool OmModChan::backupEntryExists(const OmWString& path, int32_t attr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::isDependency(const OmModPack* ModPack) const
+bool OmModChan::isDependency(const OmModPack* ModPack, bool installed) const
 {
-  for(size_t i = 0; i < this->_modpack_list.size(); ++i)
-    if(ModPack != this->_modpack_list[i])
-      if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
-        return true;
+  if(installed) {
+
+    for(size_t i = 0; i < this->_modpack_list.size(); ++i)
+      if(this->_modpack_list[i]->hasBackup() && ModPack != this->_modpack_list[i])
+        if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+          return true;
+
+  } else {
+
+    for(size_t i = 0; i < this->_modpack_list.size(); ++i)
+      if(ModPack != this->_modpack_list[i])
+        if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+          return true;
+  }
 
   return false;
 }
