@@ -47,8 +47,8 @@ OmModPack::OmModPack() :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
-  _is_dependent(0),
-  _is_dependency(false),
+  _has_broken_dep(false),
+  _is_install_dep(false),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -68,8 +68,8 @@ OmModPack::OmModPack(OmModChan* ModChan) :
   _src_isdir(false),
   _has_bck(false),
   _bck_isdir(false),
-  _is_dependent(0),
-  _is_dependency(false),
+  _has_broken_dep(false),
+  _is_install_dep(false),
   _is_overlapped(false),
   _op_backup(false),
   _op_restore(false),
@@ -103,7 +103,8 @@ void OmModPack::clearAll()
   this->_name.clear();
   this->_version.clear();
 
-  this->_is_dependent = 0;
+  this->_has_broken_dep = false;
+  this->_is_install_dep = false;
   this->_is_overlapped = false;
   this->_op_backup = false;
   this->_op_restore = false;
@@ -136,26 +137,26 @@ bool OmModPack::refreshAnalytics()
   this->_is_overlapped = is_overlapped;
 
   // Check for dependencies
-  int8_t is_dependent = 0;
+  bool has_broken_dep = false;
 
   if(this->_has_bck)
-    is_dependent = this->_ModChan->hasMissingDepend(this) ? -1 : 1;
+    has_broken_dep = this->_ModChan->hasBrokenDepend(this);
 
-  if(is_dependent != this->_is_dependent)
+  if(has_broken_dep != this->_has_broken_dep)
     has_changes = true;
 
-  this->_is_dependent = is_dependent;
+  this->_has_broken_dep = has_broken_dep;
 
   // Check for dependents Mods
-  bool is_dependency = false;
+  bool is_install_dep = false;
 
   if(this->_has_bck)
-    is_dependency = this->_ModChan->isDependency(this, true);
+    is_install_dep = this->_ModChan->isDependency(this, true);
 
-  if(is_dependency != this->_is_dependency)
+  if(is_install_dep != this->_is_install_dep)
     has_changes = true;
 
-  this->_is_dependency = is_dependency;
+  this->_is_install_dep = is_install_dep;
 
   return has_changes;
 }

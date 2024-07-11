@@ -1575,7 +1575,6 @@ bool OmModChan::isDependency(const OmModPack* ModPack, bool installed) const
 ///
 bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
 {
-
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
     bool is_missing = true;
@@ -1599,6 +1598,44 @@ bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
     }
 
     if(is_missing)
+      return true;
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModChan::hasBrokenDepend(const OmModPack* ModPack) const
+{
+  for(size_t i = 0; i < ModPack->dependCount(); ++i) {
+
+    bool is_broken = true;
+
+    for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
+
+      // ignore directory and not installed Mods
+      if(this->_modpack_list[j]->sourceIsDir())
+        continue;
+
+      if(ModPack->getDependIden(i) == this->_modpack_list[j]->iden()) {
+
+        // check whether Mod is installed
+        if(!this->_modpack_list[j]->hasBackup())
+          return true;
+
+        // recursively check
+        if(this->hasBrokenDepend(this->_modpack_list[j]))
+          return true;
+
+        is_broken = false;
+
+        break;
+      }
+    }
+
+    if(is_broken)
       return true;
   }
 

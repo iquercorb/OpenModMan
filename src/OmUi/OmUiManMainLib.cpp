@@ -1441,9 +1441,9 @@ int32_t OmUiManMainLib::_lv_mod_get_status_icon(const OmModPack* ModPack)
     if(ModPack->isOverlapped()) {
       return ICON_STS_OVR;
     } else {
-      if(ModPack->isDependent() < 0) {
+      if(ModPack->hasBrokenDepend()) {
         return ICON_STS_BRK;
-      } else if(ModPack->isDependency()) {
+      } else if(ModPack->isInstallDepend()) {
         return ICON_STS_DPN;
       } else {
         return ICON_STS_CHK;

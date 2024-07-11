@@ -601,24 +601,24 @@ class OmModPack
     ///
     OmResult saveAs(const OmWString& path, int32_t method = 93, int32_t level = 6, Om_progressCb progress_cb = nullptr, Om_progressCb compress_cb = nullptr, void* user_ptr = nullptr);
 
-    /// \brief Check dependency status
+    /// \brief Check missing dependency status
     ///
-    /// Returns current dependency status of this instance.
+    /// Returns current missing dependency status of this instance.
     ///
-    /// \return 0 if instance is not dependent, 1 if instance dependency is satisfied and -1 in case of unsatisfied dependency
+    /// \return true if instance has missing dependency Mod, false otherwise
     ///
-    int8_t isDependent() const {
-      return this->_is_dependent;
+    bool hasBrokenDepend() const {
+      return this->_has_broken_dep;
     }
 
-    /// \brief Check whether is dependency
+    /// \brief Check installed dependent status
     ///
-    /// Returns whether this Mod is a dependency of other installed Mods
+    /// Returns current installed dependent status of this instance.
     ///
-    /// \return true if Mod has dependents, false otherwise
+    /// \return true if Mod is the dependency of installed Mod, false otherwise
     ///
-    bool isDependency() const {
-      return this->_is_dependency;
+    bool isInstallDepend() const {
+      return this->_is_install_dep;
     }
 
     /// \brief Check overlapped
@@ -752,9 +752,9 @@ class OmModPack
     OmUint64Array       _bck_overlap;
 
     // analytical properties
-    int8_t              _is_dependent;
+    bool                _has_broken_dep;
 
-    bool                _is_dependency;
+    bool                _is_install_dep;
 
     bool                _is_overlapped;
 

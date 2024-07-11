@@ -358,6 +358,16 @@ class OmModChan
     ///
     bool hasMissingDepend(const OmModPack* ModPack) const;
 
+    /// \brief Check for broken dependency
+    ///
+    /// Check whether the specified Mod has at least one broken (not installed) dependency.
+    ///
+    /// \param[in] ModPack  : Mod to check dependencies.
+    ///
+    /// \return True if at least one dependency is broken (not installed), false otherwise.
+    ///
+    bool hasBrokenDepend(const OmModPack* ModPack) const;
+
     /// \brief Prepare Mods installation
     ///
     /// Performs Mods installation preparation for the given Mods selection. The function
