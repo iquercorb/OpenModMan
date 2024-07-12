@@ -185,7 +185,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
     // make sure icon is 32 pixels wide
     hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_ICON);
-    SetWindowPos(hItem, nullptr, 25, yalign, 32, 32, SWP_NOZORDER|SWP_NOACTIVATE);
+    SetWindowPos(hItem, 0, 25, yalign, 32, 32, SWP_NOZORDER|SWP_NOACTIVATE);
 
     // create header font
     if(__Om_dlgBox_FontB == nullptr)
@@ -214,7 +214,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       // set font for this control
       SendMessageW(hItem, WM_SETFONT, reinterpret_cast<WPARAM>(__Om_dlgBox_FontB), true);
       // move and resize control
-      SetWindowPos(hItem, nullptr, 70, yalign, 400, 20, SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, 0, 70, yalign, 400, 20, SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += 30;
     }
 
@@ -237,7 +237,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       delete[] str_buf;
 
       // move and resize control
-      SetWindowPos(hItem, nullptr, 70, yalign, 400, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, 0, 70, yalign, 400, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 10;
     }
 
@@ -279,7 +279,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
       }
 
       // move and resize control
-      SetWindowPos(hItem, nullptr, 80, yalign, rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, 0, 80, yalign, rect[2], rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 10;
     }
 
@@ -294,7 +294,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     if(hItem) {
       rect[3] = 10; //< smaller progress bars
       // move and resize control
-      SetWindowPos(hItem, nullptr, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, 0, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 2;
     }
 
@@ -302,7 +302,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     hItem = GetDlgItem(hWnd, OM_DLGBOX_PB_BAR0);
     if(hItem) {
       // move and resize control
-      SetWindowPos(hItem, nullptr, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
+      SetWindowPos(hItem, 0, 30, yalign, 430, rect[3], SWP_NOZORDER|SWP_NOACTIVATE);
       yalign += rect[3] + 10;
     }
 
@@ -315,7 +315,7 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     // resize white rect
     hItem = GetDlgItem(hWnd, OM_DLGBOX_SC_RECT);
     yalign += 20;
-    SetWindowPos(hItem, nullptr, 0, 0, width, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
+    SetWindowPos(hItem, 0, 0, 0, width, yalign, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 
     // button initial position
     yalign += 11;
@@ -325,20 +325,20 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
     // if present, move the No/Cancel button to the left of dialog
     hItem = GetDlgItem(hWnd, OM_DLGBOX_BTNX);
     if(hItem) {
-      SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+      SetWindowPos(hItem, 0, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
       xalign -= 95; // shift position for the next button
     }
 
     // if present, move the No/Cancel button to the left of dialog
     hItem = GetDlgItem(hWnd, OM_DLGBOX_BTN0);
     if(hItem) {
-      SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+      SetWindowPos(hItem, 0, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
       xalign -= 95; // shift position for the next button
     }
 
     // move the OK/Yes button button
     hItem = GetDlgItem(hWnd, OM_DLGBOX_BTN1);
-    SetWindowPos(hItem, nullptr, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
+    SetWindowPos(hItem, 0, xalign, yalign, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE);
 
     // finaly resize the dialog and center to parent client
     yalign += 64;
@@ -358,10 +358,8 @@ static INT_PTR CALLBACK __Om_dlgBox_dlgProc(HWND hWnd, UINT uMsg, WPARAM wParam,
   }
 
   if(uMsg == WM_CTLCOLORSTATIC) {
-    // set white background for static controls
-    SetBkMode(reinterpret_cast<HDC>(wParam),TRANSPARENT);
-    SetBkColor(reinterpret_cast<HDC>(wParam), 0x00FFFFFF);
 
+    // Set blue for Header
     if(reinterpret_cast<HWND>(lParam) == GetDlgItem(hWnd, OM_DLGBOX_SC_HEAD)) {
       SetTextColor(reinterpret_cast<HDC>(wParam), 0x00993322);
     }
