@@ -938,27 +938,22 @@ int32_t Om_fileDelete(void* hFile)
   return 0;
 }
 
-
 /// \brief List files recursively
 ///
 /// This is the static function used to list files recursively.
 ///
 /// \param[out] ls      : Pointer to array of OmWString to be filled with result.
 /// \param[in]  orig    : Path where to list items from.
-/// \param[in]  from    : Path to prepend to result to obtain the item full
-///                       path from the beginning of the tree exploration.
 /// \param[in]  hidden  : Include items marked as Hidden.
 ///
-static void __findFiles_Recurse(OmWStringArray* ls, const OmWStringArray& search, const OmWString& orig, const OmWString& from, bool hidden)
+static void __findFiles_Recurse(OmWStringArray* result, const OmWStringArray& search, const OmWString& start, bool hidden)
 {
   OmWString item;
-  OmWString root;
-
-  OmWString srch(orig);
-  srch += L"\\*";
+  OmWString path(start);
+  path += L"\\*";
 
   WIN32_FIND_DATAW fd;
-  HANDLE hnd = FindFirstFileW(srch.c_str(), &fd);
+  HANDLE hnd = FindFirstFileW(path.c_str(), &fd);
   if(hnd != INVALID_HANDLE_VALUE) {
     do {
       // skip this and parent folder
@@ -969,30 +964,28 @@ static void __findFiles_Recurse(OmWStringArray* ls, const OmWStringArray& search
       if(!hidden && (fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
         continue;
 
+      // update path
+      item = start; item += L"\\"; item += fd.cFileName;
+
       if(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        item = from; item += L"\\"; item += fd.cFileName;
-        root = orig; root += L"\\"; root += fd.cFileName;
         // go deep in tree
-        __findFiles_Recurse(ls, search, root, item, hidden);
-
+        __findFiles_Recurse(result, search, item, hidden);
       } else {
-        item = from; item += L"\\"; item += fd.cFileName;
-
-        // search for occurences
+        // search for occurrences
         for(size_t i = 0; i < search.size(); ++i)
-          if(item.find(search[i], item.size() - search[i].size()) != std::string::npos)
-            ls->push_back(item);
-
+          if(item.find(search[i], item.size() - search[i].size()) != -1)
+            result->push_back(item);
       }
     } while(FindNextFileW(hnd, &fd));
   }
+
   FindClose(hnd);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void Om_findFiles(OmWStringArray* ls, const OmWStringArray& search, const OmWString& orig, bool hidden)
+void Om_findFiles(OmWStringArray* result, const OmWStringArray& search, const OmWString& start, bool hidden)
 {
-  __findFiles_Recurse(ls, search, orig.c_str(), orig.c_str(), hidden);
+  __findFiles_Recurse(result, search, start, hidden);
 }

@@ -576,7 +576,7 @@ class OmModHub
 
     static bool           _compare_pst_index(const OmModPset*, const OmModPset*);
 
-    // channel properties
+    // Hub properties
     OmWString             _path;
 
     OmWString             _home;
@@ -589,7 +589,7 @@ class OmModHub
 
     HICON                 _icon_handle;
 
-    // active channel libraries monitoring
+    // Active Channel libraries monitoring
     void                  _modlib_notify_enable(bool enable);
 
     static void           _modlib_notify_fn(void*, OmNotify, uint64_t);
@@ -617,7 +617,7 @@ class OmModHub
     // threads management
     bool                  _locked_presets;
 
-    // mods install/restore
+    // Presets executions
     bool                  _psexec_abort;
 
     void*                 _psexec_hth;
@@ -632,7 +632,6 @@ class OmModHub
 
     static DWORD WINAPI   _psexec_run_fn(void*);
 
-
     static VOID WINAPI    _psexec_end_fn(void*,uint8_t);
 
     Om_beginCb            _psexec_begin_cb;
@@ -643,7 +642,7 @@ class OmModHub
 
     void*                 _psexec_user_ptr;
 
-    // options
+    // hub options
     bool                  _presets_quietmode;
 
     bool                  _layout_channels_show;
