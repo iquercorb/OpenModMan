@@ -584,8 +584,8 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
     this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0);
   }
 
-  // force filename preview to the current file
-  this->setItemText(IDC_EC_RESUL, Om_getFilePart(path));
+  // update file name preview
+  this->_name_compose();
 
   // try to get a compression method
   this->_method_cache = this->_ModPack->getSourceCompMethod();
