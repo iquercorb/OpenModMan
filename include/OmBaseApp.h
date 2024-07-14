@@ -21,8 +21,8 @@
 #define OM_APP_SHORT_NAME        L"OpenModMan"
 
 #define OM_APP_MAJ               1
-#define OM_APP_MIN               2
-#define OM_APP_REV               9
+#define OM_APP_MIN               3
+#define OM_APP_REV               0
 
 #ifdef _WIN64
   #define OM_APP_ARCH            L"64-bit"
@@ -60,7 +60,6 @@
 #define OM_MODCHAN_MODLIB_DIR     L"\\Library"
 
 #define OM_MODPACK_THUMB_SIZE     128
-
 
 // old signatures, used only for migration to new standard
 #define OM_XMAGIC_CTX             L"Open_Mod_Manager_Context"

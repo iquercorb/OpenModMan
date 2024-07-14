@@ -2,7 +2,7 @@
 
 Open source and generic Mod ("Modifications") manager.
 
-## Version: 1.2
+## Version: 1.3
 
 ## Presentation
 

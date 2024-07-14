@@ -4,8 +4,8 @@
 !define MUI_UNICON        "..\res\images\setup_unin.ico"
 
 !define AAP_MAJ           "1"
-!define AAP_MIN           "2"
-!define AAP_REV           "9"
+!define AAP_MIN           "3"
+!define AAP_REV           "0"
 
 !define APP_NAME          "Open Mod Manager"
 !define APP_SHORT_NAME    "OpenModMan"
