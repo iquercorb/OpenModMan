@@ -1,3 +1,9 @@
+# global variables
+
+$AAP_MAJ =          "1";
+$AAP_MIN =          "3";
+$AAP_REV =          "0";
+
 # copy required files
 
 Write-Host "Copying x64 binary...";
@@ -35,7 +41,7 @@ Write-Host "Making Zip archive for x86...";
 $compress_x86 = @{
   Path = "$PSScriptRoot\OpenModMan_x86"
   CompressionLevel = "Optimal"
-  DestinationPath = "$PSScriptRoot\OpenModMan_Portable_x86.zip"
+  DestinationPath = "$PSScriptRoot\OpenModMan_" + $AAP_MAJ + "-" + $AAP_MIN + "-" + $AAP_REV + "-x86_Portable.zip"
 }
 Compress-Archive -Force @compress_x86
 
@@ -44,6 +50,6 @@ Write-Host "Making Zip archive for x64..."
 $compress_x64 = @{
   Path = "$PSScriptRoot\OpenModMan_x64"
   CompressionLevel = "Optimal"
-  DestinationPath = "$PSScriptRoot\OpenModMan_Portable_x64.zip"
+  DestinationPath = "$PSScriptRoot\OpenModMan_" + $AAP_MAJ + "-" + $AAP_MIN + "-" + $AAP_REV + "-x64_Portable.zip"
 }
 Compress-Archive -Force @compress_x64
