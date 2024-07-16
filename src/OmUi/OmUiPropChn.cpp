@@ -54,7 +54,7 @@ OmUiPropChn::OmUiPropChn(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create tab dialogs
   this->_addPage(L"General Settings", new OmUiPropChnStg(hins));
-  this->_addPage(L"Mod Library", new OmUiPropChnLib(hins));
+  this->_addPage(L"Mods Library", new OmUiPropChnLib(hins));
   this->_addPage(L"Backup storage", new OmUiPropChnBck(hins));
   this->_addPage(L"Network Repositories", new OmUiPropChnNet(hins));
   this->_addPage(L"Download options", new OmUiPropChnDnl(hins));

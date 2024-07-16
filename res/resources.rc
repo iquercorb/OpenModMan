@@ -684,7 +684,7 @@ IDD_PROP_HUB_CHN DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Channels :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Modding Channels :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_CHN, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -708,7 +708,7 @@ IDD_PROP_HUB_PST DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Presets :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Installation Presets :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_PST, 70, 70, 190, 80, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -758,7 +758,7 @@ IDD_PROP_CHN_LIB DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    AUTOCHECKBOX    "Use custom directory for Mod Library", IDC_BC_CKBX1, 70, 20, 120, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Use custom directory for Mods Library", IDC_BC_CKBX1, 70, 20, 120, 9, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 70, 30, 188, 13, ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW01, 261, 30, 16, 13, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Developer mode (parse sub-directories as Mods)", IDC_BC_CKBX2, 50, 20, 170, 9, 0, WS_EX_LEFT
@@ -800,7 +800,7 @@ IDD_PROP_CHN_NET DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Repositories :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Network Repositories :", IDC_SC_LBL01, 5, 20, 64, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_REP, 70, 20, 190, 30, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Remove", IDC_BC_RPDEL, 70, 55, 50, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Query", IDC_BC_RPQRY, 122, 55, 50, 14, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
@@ -871,7 +871,7 @@ IDD_PROP_PST_LST DIALOGEX 0, 0, 305, 175
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Channel :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Modding Channel :", IDC_SC_LBL02, 5, 60, 64, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_CHN, 10, 65, 300, 12, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     LTEXT           "To uninstall (or ignore) :", IDC_SC_LBL03, 10, 85, 150, 9, SS_LEFT, WS_EX_LEFT
     LISTBOX         IDC_LB_EXC, 10, 95, 125, 210, WS_TABSTOP | WS_VSCROLL | LBS_DISABLENOSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | LBS_NOTIFY, WS_EX_LEFT
@@ -1236,10 +1236,10 @@ IDD_WIZ_CHN_CUS DIALOGEX 0, 0, 225, 200
 STYLE DS_CONTROL | DS_SHELLFONT | WS_CHILDWINDOW
 FONT 8, "Ms Shell Dlg"
 {
-    LTEXT           "Please configure Mod Library and Backup data directories.\n\n"
-                    "The Mod library directory is where Mods are to be found for this Channel while backup data is stored in another directory.\n\n"
+    LTEXT           "Please configure Mods Library and Backup data directories.\n\n"
+                    "The Mods library directory is where Mods are to be found for this Channel while backup data is stored in another directory.\n\n"
                     "You can choose a custom location for each, otherwise they are located in the Channel's subdirectory within the Hub.", IDC_SC_HELP, 5, 5, 210, 25, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "Use custom directory for Mod Library :", IDC_BC_CKBX1, 5, 120, 200, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Use custom directory for Mods Library :", IDC_BC_CKBX1, 5, 120, 200, 8, 0, WS_EX_LEFT
     EDITTEXT        IDC_EC_INP01, 5, 130, 182, 13, WS_DISABLED | ES_AUTOHSCROLL, WS_EX_LEFT
     PUSHBUTTON      "...", IDC_BC_BRW01, 190, 130, 16, 13, WS_DISABLED, WS_EX_LEFT
     AUTOCHECKBOX    "Use custom directory for Backup storage :", IDC_BC_CKBX2, 5, 150, 200, 8, 0, WS_EX_LEFT

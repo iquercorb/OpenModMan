@@ -40,8 +40,8 @@ OmUiPropHub::OmUiPropHub(HINSTANCE hins) : OmDialogProp(hins),
 {
   // create child tab dialogs
   this->_addPage(L"General Settings", new OmUiPropHubStg(hins));
-  this->_addPage(L"Channels", new OmUiPropHubChn(hins));
-  this->_addPage(L"Presets", new OmUiPropHubPst(hins));
+  this->_addPage(L"Modding Channels", new OmUiPropHubChn(hins));
+  this->_addPage(L"Installation Presets", new OmUiPropHubPst(hins));
 }
 
 ///

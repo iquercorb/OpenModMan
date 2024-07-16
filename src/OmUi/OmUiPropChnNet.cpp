@@ -275,7 +275,7 @@ void OmUiPropChnNet::_onTbResize()
   int32_t y_base = 40;
 
   // Repositories list Label & ListBox
-  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 68, 16, true);
+  this->_setItemPos(IDC_SC_LBL01, 50, y_base, 150, 16, true);
   this->_setItemPos(IDC_LB_REP, 75, y_base+20, this->cliWidth()-125, 64, true);
 
   // Actions buttons
