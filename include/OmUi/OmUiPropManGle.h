@@ -21,8 +21,9 @@
 
 #define MAN_PROP_GLE_ICON_SIZE          0
 #define MAN_PROP_GLE_NO_MDPARSE         1
-#define MAN_PROP_GLE_START_LIST         2
-#define MAN_PROP_GLE_SARRT_ORDER        3
+#define MAN_PROP_GLE_LINK_CONFIRM         2
+#define MAN_PROP_GLE_START_LIST         3
+#define MAN_PROP_GLE_SARRT_ORDER        4
 
 /// \brief Manager Options / General tab child
 ///

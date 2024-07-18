@@ -628,8 +628,10 @@ FONT 8, "Ms Shell Dlg"
 {
     LTEXT           "List views icons size :", IDC_SC_LBL01, 50, 20, 100, 9, SS_LEFT, WS_EX_LEFT
     COMBOBOX        IDC_CB_ICS, 50, 30, 205, 14, WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    AUTOCHECKBOX    "Disable Markdown (display descriptions as raw text)", IDC_BC_CKBX1, 50, 45, 100, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Open Mod Hub at startup :", IDC_BC_CKBX2, 50, 70, 100, 9, 0, WS_EX_LEFT
+    LTEXT           "Mod Overview options :", IDC_SC_LBL02, 50, 20, 100, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Disable Markdown (display description as raw text)", IDC_BC_CKBX1, 75, 45, 100, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Ask confirmation before opening external links", IDC_BC_CKBX2, 75, 75, 100, 9, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Open Mod Hub at startup :", IDC_BC_CKBX5, 50, 70, 100, 9, 0, WS_EX_LEFT
     LISTBOX         IDC_LB_PATH, 50, 80, 205, 35, WS_TABSTOP | WS_VSCROLL | WS_DISABLED | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
     PUSHBUTTON      "Up", IDC_BC_UP, 200, 20, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT
     PUSHBUTTON      "Dn", IDC_BC_DN, 200, 35, 16, 15, WS_DISABLED | BS_BITMAP, WS_EX_LEFT

@@ -200,6 +200,8 @@ void OmUiManFootOvw::_desc_set_text(const OmWString& text)
 ///
 void OmUiManFootOvw::_ft_desc_on_link(LPARAM lParam)
 {
+  OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
+
   wchar_t url[512];
 
   ENLINK* el = reinterpret_cast<ENLINK*>(lParam);
@@ -211,11 +213,13 @@ void OmUiManFootOvw::_ft_desc_on_link(LPARAM lParam)
 
   this->msgItem(IDC_FT_DESC, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&trw));
 
-  if(Om_dlgBox_ynl(this->_hwnd, L"Open link", IDI_DLG_QRY, L"Open link",
-                   L"Do you want to open this link in browser ?", url)) {
-
-      ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+  if(ModMan->linkConfirm()) {
+    if(!Om_dlgBox_ynl(this->_hwnd, L"Open external link", IDI_DLG_QRY, L"Open external link",
+                     L"Do you want to open this link in browser ?", url))
+                     return;
   }
+
+  ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
 }
 
 

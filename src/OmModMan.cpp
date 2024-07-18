@@ -50,7 +50,8 @@ OmModMan::OmModMan() :
   _netlib_notify_ptr(nullptr),
   _log_hfile(nullptr),
   _icon_size(16),
-  _no_markdown(false)
+  _no_markdown(false),
+  _link_confirm(true)
 {
 
 }
@@ -125,11 +126,22 @@ bool OmModMan::init(const char* arg)
   // load saved parameters
   if(this->_xml.hasChild(L"icon_size")) {
     this->_icon_size = this->_xml.child(L"icon_size").attrAsInt(L"pixels");
+  } else {
+    this->setIconsSize(this->_icon_size); //< set default
   }
 
   // load saved no-markdown option
   if(this->_xml.hasChild(L"no_markdown")) {
     this->_no_markdown = this->_xml.child(L"no_markdown").attrAsInt(L"enable");
+  } else {
+    this->setNoMarkdown(this->_no_markdown); //< set default
+  }
+
+  // load saved no-markdown option
+  if(this->_xml.hasChild(L"link_confirm")) {
+    this->_link_confirm = this->_xml.child(L"link_confirm").attrAsInt(L"enable");
+  }else {
+    this->setLinkConfirm(this->_link_confirm); //< set default
   }
 
   // load startup Mod Hub files if any
@@ -713,6 +725,27 @@ void OmModMan::setNoMarkdown(bool enable)
   this->_xml.save();
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmModMan::setLinkConfirm(bool enable)
+{
+  this->_link_confirm = enable;
+
+  if(!this->_xml.valid())
+    return;
+
+  if(this->_xml.hasChild(L"link_confirm")) {
+
+    this->_xml.child(L"link_confirm").setAttr(L"enable", (int)this->_link_confirm);
+
+  } else {
+
+    this->_xml.addChild(L"link_confirm").setAttr(L"enable", (int)this->_link_confirm);
+  }
+
+  this->_xml.save();
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

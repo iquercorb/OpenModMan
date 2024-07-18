@@ -341,6 +341,24 @@ class OmModMan
     ///
     void setNoMarkdown(bool enable);
 
+    /// \brief Get Link Warning option.
+    ///
+    /// Returns Link Warning option value.
+    ///
+    /// \return True if enabled, false otherwise.
+    ///
+    bool linkConfirm() const {
+      return this->_link_confirm;
+    }
+
+    /// \brief Set Link Warning option.
+    ///
+    /// Define and save Link Warning option value.
+    ///
+    /// \param[in]  enable  : Boolean value to set.
+    ///
+    void setLinkConfirm(bool enable);
+
     /// \brief Start active Channel Local Library changes notifications
     ///
     /// Set parameters and enable active channel Local Library changes notifications
@@ -468,6 +486,8 @@ class OmModMan
     unsigned              _icon_size;
 
     bool                  _no_markdown;
+
+    bool                  _link_confirm;
 
     // logs and errors
     void                  _log(unsigned level, const OmWString& origin, const OmWString& detail);

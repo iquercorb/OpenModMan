@@ -98,6 +98,14 @@ bool OmUiPropMan::checkChanges()
     }
   }
 
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_LINK_CONFIRM)) {
+    if(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != ModMan->linkConfirm()) {
+      changed = true;
+    } else {
+      UiPropManGle->paramReset(MAN_PROP_GLE_LINK_CONFIRM);
+    }
+  }
+
   if(UiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
 
     different = false;
@@ -107,7 +115,7 @@ bool OmUiPropMan::checkChanges()
 
     ModMan->getStartHubs(&autoload, paths);
 
-    if(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK) != autoload)
+    if(UiPropManGle->msgItem(IDC_BC_CKBX5, BM_GETCHECK) != autoload)
       different = true;
 
     if(!different) {
@@ -189,6 +197,15 @@ bool OmUiPropMan::applyChanges()
     UiPropManGle->paramReset(MAN_PROP_GLE_NO_MDPARSE);
   }
 
+  // Parameter Ask confirmation to open links
+  if(UiPropManGle->paramChanged(MAN_PROP_GLE_LINK_CONFIRM)) {
+
+    ModMan->setLinkConfirm(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK));
+
+    // Reset parameter as unmodified
+    UiPropManGle->paramReset(MAN_PROP_GLE_LINK_CONFIRM);
+  }
+
   // Parameter: Open Mod Hub(s) at startup
   if(UiPropManGle->paramChanged(MAN_PROP_GLE_START_LIST)) {
 
@@ -201,7 +218,7 @@ bool OmUiPropMan::applyChanges()
       paths.push_back(lb_entry);
     }
 
-    ModMan->saveStartHubs(UiPropManGle->msgItem(IDC_BC_CKBX2, BM_GETCHECK), paths);
+    ModMan->saveStartHubs(UiPropManGle->msgItem(IDC_BC_CKBX5, BM_GETCHECK), paths);
 
     // Reset parameter as unmodified
     UiPropManGle->paramReset(MAN_PROP_GLE_START_LIST);

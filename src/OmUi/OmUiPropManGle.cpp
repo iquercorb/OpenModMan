@@ -60,7 +60,7 @@ long OmUiPropManGle::id() const
 ///
 void OmUiPropManGle::_starthub_toggle()
 {
-  int32_t bm_chk = this->msgItem(IDC_BC_CKBX2, BM_GETCHECK);
+  int32_t bm_chk = this->msgItem(IDC_BC_CKBX5, BM_GETCHECK);
 
   this->enableItem(IDC_LB_PATH, bm_chk);
   this->enableItem(IDC_BC_BRW01, bm_chk);
@@ -202,8 +202,10 @@ void OmUiPropManGle::_onTbInit()
   // define controls tool-tips
   this->_createTooltip(IDC_CB_ICS,    L"Size of icons in interface List Views");
 
-  this->_createTooltip(IDC_BC_CKBX2,  L"Disables Markdown parsing and display descriptions as raw text");
-  this->_createTooltip(IDC_BC_CKBX2,  L"Automatically opens Mod Hub files at application startup");
+  this->_createTooltip(IDC_BC_CKBX1,  L"Disables Markdown parsing and display Mod overview as raw text");
+  this->_createTooltip(IDC_BC_CKBX2,  L"Show confirmation dialog before opening external links from Mod overview");
+
+  this->_createTooltip(IDC_BC_CKBX5,  L"Automatically opens Mod Hub files at application startup");
   this->_createTooltip(IDC_LB_PATH,   L"Path to Mod Hub files");
   this->_createTooltip(IDC_BC_UP,     L"Move up");
   this->_createTooltip(IDC_BC_DN,     L"Move down");
@@ -232,20 +234,24 @@ void OmUiPropManGle::_onTbResize()
   // force ComboBox to repaint by invalidate rect, else it randomly disappears on resize
   InvalidateRect(this->getItem(IDC_CB_ICS), nullptr, true);
 
+  // Overview options label
+  this->_setItemPos(IDC_SC_LBL02, 50, y_base+70, 300, 16, true);
   // No Markdown checkbox
-  this->_setItemPos(IDC_BC_CKBX1, 50, y_base+70, 300, 16, true);
+  this->_setItemPos(IDC_BC_CKBX1, 75, y_base+90, 300, 16, true);
+  // Open Link warning check box
+  this->_setItemPos(IDC_BC_CKBX2, 75, y_base+110, 300, 16, true);
 
   // Startup Mod Hub list Actions buttons
-  this->_setItemPos(IDC_BC_BRW01, 50, y_base+130, 22, 22, true);
-  this->_setItemPos(IDC_BC_DEL, 50, y_base+153, 22, 22, true);
+  this->_setItemPos(IDC_BC_BRW01, 50, y_base+170, 22, 22, true);
+  this->_setItemPos(IDC_BC_DEL, 50, y_base+193, 22, 22, true);
 
   // Startup Mod Hub list CheckBox & ListBox
-  this->_setItemPos(IDC_BC_CKBX2, 50, y_base+110, 300, 16, true);
-  this->_setItemPos(IDC_LB_PATH, 75, y_base+131, this->cliWidth()-150, 64, true);
+  this->_setItemPos(IDC_BC_CKBX5, 50, y_base+150, 300, 16, true);
+  this->_setItemPos(IDC_LB_PATH, 75, y_base+171, this->cliWidth()-150, 64, true);
 
   // Startup Mod Hub list Up and Down buttons
-  this->_setItemPos(IDC_BC_UP, this->cliWidth()-73, y_base+130, 22, 22, true);
-  this->_setItemPos(IDC_BC_DN, this->cliWidth()-73, y_base+174, 22, 22, true);
+  this->_setItemPos(IDC_BC_UP, this->cliWidth()-73, y_base+170, 22, 22, true);
+  this->_setItemPos(IDC_BC_DN, this->cliWidth()-73, y_base+214, 22, 22, true);
 }
 
 
@@ -271,12 +277,15 @@ void OmUiPropManGle::_onTbRefresh()
   // set No Markdown CheckBox
   this->msgItem(IDC_BC_CKBX1, BM_SETCHECK, pMgr->noMarkdown());
 
+  // set Confirm link open
+  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, pMgr->linkConfirm());
+
   bool auto_open;
   OmWStringArray path_ls;
 
   // set Load at Startup CheckBox
   pMgr->getStartHubs(&auto_open, path_ls);
-  this->msgItem(IDC_BC_CKBX2, BM_SETCHECK, auto_open);
+  this->msgItem(IDC_BC_CKBX5, BM_SETCHECK, auto_open);
 
   // Enable or disable Browse button and ListBox
   this->enableItem(IDC_BC_BRW01, auto_open);
@@ -318,7 +327,13 @@ INT_PTR OmUiPropManGle::_onTbMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
         this->paramCheck(MAN_PROP_GLE_NO_MDPARSE);
       break;
 
-    case IDC_BC_CKBX2: //< CheckBox for Open Mod Hub(s) at startup
+    case IDC_BC_CKBX2: //< CheckBox: Ask Confirmation to open links
+      if(HIWORD(wParam) == BN_CLICKED)
+        // notify parameter changes
+        this->paramCheck(MAN_PROP_GLE_LINK_CONFIRM);
+      break;
+
+    case IDC_BC_CKBX5: //< CheckBox for Open Mod Hub(s) at startup
       if(HIWORD(wParam) == BN_CLICKED)
         this->_starthub_toggle();
       break;
