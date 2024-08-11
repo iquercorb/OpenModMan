@@ -372,6 +372,15 @@ bool OmUiManMainNet::splitCursorUpdate()
 ///
 bool OmUiManMainNet::splitCaptureCheck()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiManMainNet::splitCaptureCheck\n";
+  #endif
+
+  // Force refresh mouse cursor positions and hover parameters
+  this->splitMoveProcess();
+
+  //this->_split_moving = false;
+
   if(this->_split_hover_lvrep) {
 
     // Get cursor position relative to client area
@@ -390,6 +399,10 @@ bool OmUiManMainNet::splitCaptureCheck()
     SetCapture(this->_hwnd);
 
     this->_split_moving = true;
+
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmUiManMainNet::splitCaptureCheck : captured\n";
+    #endif // DEBUG
 
     // we now are in frame move and resize process
     return true;
@@ -430,6 +443,10 @@ bool OmUiManMainNet::splitMoveProcess()
   POINT pos;
   GetCursorPos(&pos);
   ScreenToClient(this->_hwnd, &pos);
+
+  #ifdef DEBUG
+  //std::cout << "DEBUG => OmUiManMainNet::splitMoveProcess [" << pos.x << ", " << pos.y << "]\n";
+  #endif
 
   bool changed = false;
 

@@ -861,7 +861,14 @@ bool OmUiMan::splitCursorUpdate()
 ///
 bool OmUiMan::splitCaptureCheck()
 {
-  this->_split_moving = false;
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiMan::splitCaptureCheck\n";
+  #endif
+
+  // Force refresh mouse cursor positions and hover parameters
+  this->splitMoveProcess();
+
+  //this->_split_moving = false;
 
   if(this->_split_hover_foot || this->_split_hover_head || this->_split_hover_side) {
 
@@ -894,7 +901,7 @@ bool OmUiMan::splitCaptureCheck()
     this->_split_moving = true;
 
     #ifdef DEBUG
-    std::wcout << L"DEBUG => OmUiMan::splitCapture : captured\n";
+    std::wcout << L"DEBUG => OmUiMan::splitCaptureCheck : captured\n";
     #endif // DEBUG
   }
 
@@ -931,6 +938,10 @@ bool OmUiMan::splitMoveProcess()
   POINT pos;
   GetCursorPos(&pos);
   ScreenToClient(this->_hwnd, &pos);
+
+  #ifdef DEBUG
+  //std::cout << "DEBUG => OmUiMan::splitMoveProcess [" << pos.x << ", " << pos.y << "]\n";
+  #endif
 
   bool changed = false;
 
