@@ -316,14 +316,15 @@ void OmUiManMainLib::exploreSources()
 
   for(size_t i = 0; i < selection.size(); ++i) {
 
-    // the default behavior is to explore (open explorer with deployed folders)
-    // however, it may happen that zip file are handled by an application
-    // (typically, WinRar or 7zip) and the "explore" command may fail, in this
-    // case, we call the "open" command.
+    OmWString path;
 
-    if(ShellExecuteW(this->_hwnd, L"explore", selection[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL ) <= (HINSTANCE)32) {
-      ShellExecuteW(this->_hwnd, L"open", selection[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL );
+    if(selection[i]->sourceIsDir()) {
+      path = selection[i]->sourcePath();
+    } else {
+      path = Om_getDirPart(selection[i]->sourcePath());
     }
+
+    ShellExecuteW(this->_hwnd, L"explore", path.c_str(), nullptr, nullptr, SW_NORMAL );
   }
 }
 
