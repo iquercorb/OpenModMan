@@ -80,6 +80,26 @@ void OmUiPropModSrc::_comput_checksum()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmWString OmUiPropModSrc::_size_string()
+{
+  OmWString result;
+
+  OmModPack* ModPack = static_cast<OmUiPropMod*>(this->_parent)->getModPack();
+  if(!ModPack) return result;
+
+  uint64_t bytes = Om_itemSize(ModPack->sourcePath());
+
+  result = Om_formatSizeSysStr(bytes);
+  result += L"  ( ";
+  result += std::to_wstring(bytes);
+  result += L" bytes )";
+
+  return result;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiPropModSrc::_onTbInit()
 {
   // defines fonts for package description, title, and log output
@@ -145,7 +165,8 @@ void OmUiPropModSrc::_onTbInit()
 
     // Total Size
     this->enableItem(IDC_EC_READ4, true);
-    this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->sourcePath())));
+    //this->setItemText(IDC_EC_READ4, Om_formatSizeSysStr(Om_itemSize(ModPack->sourcePath())));
+    this->setItemText(IDC_EC_READ4, this->_size_string());
 
     // Source Files
     if(ModPack->sourceEntryCount()) {

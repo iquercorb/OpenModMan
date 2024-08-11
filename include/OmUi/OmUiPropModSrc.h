@@ -54,6 +54,8 @@ class OmUiPropModSrc : public OmDialogPropTab
 
     void                _comput_checksum();
 
+    OmWString           _size_string();
+
     void                _onTbInit();
 
     void                _onTbResize();
