@@ -94,7 +94,9 @@ class OmUiToolPkg : public OmDialog
     // misc
     void                _reset_controls();
 
-    void                _check_zip_method();
+    void                _ext_changed();
+
+    void                _method_changed();
 
     int32_t             _method_cache;
 

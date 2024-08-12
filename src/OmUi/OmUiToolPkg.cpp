@@ -273,20 +273,26 @@ void OmUiToolPkg::_reset_controls()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiToolPkg::_check_zip_method()
+void OmUiToolPkg::_ext_changed()
 {
-  int32_t cb_sel = this->msgItem(IDC_CB_ZMD, CB_GETCURSEL);
-  int32_t method = this->msgItem(IDC_CB_ZMD, CB_GETITEMDATA, cb_sel);
+  // check whether selection is ".zip"
+  if(this->msgItem(IDC_CB_EXT, CB_GETCURSEL) == 1 /* ".Zip" */) {
 
-  cb_sel = this->msgItem(IDC_CB_EXT, CB_GETCURSEL);
-  OmWString cb_entry;
-  this->getCbText(IDC_CB_EXT, cb_sel, cb_entry);
+    if(this->msgItem(IDC_CB_ZMD, CB_GETCURSEL) > 1 /* Deflate */)
+      this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 1); //< Switch to "Deflate"
+  }
+}
 
-  if(Om_namesMatches(cb_entry, L".zip") && method != OM_METHOD_DEFLATE) {
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_method_changed()
+{
+  // check whether selection is "Deflate"
+  if(this->msgItem(IDC_CB_ZMD, CB_GETCURSEL) > 1 /* Deflate */) {
 
-    Om_dlgBox_ok(this->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Non-standard Zip compression",
-                 L"The selected compression method is not widely supported for Zip files, for "
-                 "maximum compatibility prefer the \"Defalte\" method.");
+    if(this->msgItem(IDC_CB_EXT, CB_GETCURSEL) == 1 /* ".zip" */)
+      this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0); //< Switch to ".Ozp"
   }
 
   // check for changes
@@ -1388,14 +1394,14 @@ void OmUiToolPkg::_onInit()
   // add items to extension ComboBox
   this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"." OM_PKG_FILE_EXT));
   this->msgItem(IDC_CB_EXT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L".zip"));
-  this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0, 0);
+  this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0);
 
   // add items into Category ComboBox
   for(size_t i = 0; i < __categ_count; ++i) {
     this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(__categ_list[i]));
   }
   this->msgItem(IDC_CB_CAT, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"- custom -"));
-  this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0, 0);
+  this->msgItem(IDC_CB_CAT, CB_SETCURSEL, 0);
 
   int32_t cb_id;
 
@@ -1671,14 +1677,14 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case IDC_CB_EXT:  //< ComboBox: File extension
       if(HIWORD(wParam) == CBN_SELCHANGE) {
+        this->_ext_changed();
         this->_name_compose();
-        this->_check_zip_method();
       }
       break;
 
     case IDC_CB_ZMD:  //< ComboBox: File extension
       if(HIWORD(wParam) == CBN_SELCHANGE)
-        this->_check_zip_method();
+        this->_method_changed();
       break;
 
     case IDC_CB_CAT:  //< ComboBox: Category
