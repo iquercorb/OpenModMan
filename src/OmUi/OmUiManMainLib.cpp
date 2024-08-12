@@ -1458,6 +1458,25 @@ int32_t OmUiManMainLib::_lv_mod_get_status_icon(const OmModPack* ModPack)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmUiManMainLib::_lv_mod_set_tooltip(uint32_t item, LPWSTR pszText, int32_t cchTextMax)
+{
+  LVITEMW lvI = {}; lvI.mask = LVIF_IMAGE; lvI.iItem = item;
+  this->msgItem(IDC_LV_MOD, LVM_GETITEM, 0, reinterpret_cast<LPARAM>(&lvI));
+
+  switch(lvI.iImage)
+  {
+  case ICON_STS_OVR: swprintf(pszText, cchTextMax, L"Installed (Overlapped)"); break;
+  case ICON_STS_BRK: swprintf(pszText, cchTextMax, L"Installed (Missing dependencies)"); break;
+  case ICON_STS_DPN: swprintf(pszText, cchTextMax, L"Installed (As dependency)"); break;
+  case ICON_STS_CHK: swprintf(pszText, cchTextMax, L"Installed"); break;
+  case ICON_STS_QUE: swprintf(pszText, cchTextMax, L"Queued for operation"); break;
+  case ICON_STS_WIP: swprintf(pszText, cchTextMax, L"Processing..."); break;
+  }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmUiManMainLib::_onInit()
 {
   #ifdef DEBUG
@@ -1483,7 +1502,7 @@ void OmUiManMainLib::_onInit()
   LPARAM himl = reinterpret_cast<LPARAM>(this->_UiMan->listViewImgList());
 
   // Initialize Mods ListView control
-  DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
+  DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER|LVS_EX_INFOTIP;
 
   this->msgItem(IDC_LV_MOD, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
   // set explorer theme
@@ -1725,6 +1744,12 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       switch(reinterpret_cast<NMHDR*>(lParam)->code)
       {
+      case LVN_GETINFOTIPW: {
+          NMLVGETINFOTIPW* nmGit = reinterpret_cast<NMLVGETINFOTIPW*>(lParam);
+          this->_lv_mod_set_tooltip(nmGit->iItem, nmGit->pszText, nmGit->cchTextMax);
+          break;
+        }
+
       case NM_DBLCLK:
         this->queueAuto();
         break;

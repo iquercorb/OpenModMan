@@ -1675,11 +1675,33 @@ int32_t OmUiManMainNet::_lv_net_get_status_icon(const OmNetPack* NetPack)
     } else if(NetPack->downgradableCount()) {
       return ICON_STS_DNG;
     } else {
-      return ICON_STS_NEW;
+      return ICON_NONE/*ICON_STS_NEW*/;
     }
   }
 
   return ICON_NONE;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiManMainNet::_lv_net_set_tooltip(uint32_t item, LPWSTR pszText, int32_t cchTextMax)
+{
+  LVITEMW lvI = {}; lvI.mask = LVIF_IMAGE; lvI.iItem = item;
+  this->msgItem(IDC_LV_NET, LVM_GETITEM, 0, reinterpret_cast<LPARAM>(&lvI));
+
+  switch(lvI.iImage)
+  {
+  case ICON_STS_ERR: swprintf(pszText, cchTextMax, L"Error"); break;
+  case ICON_STS_WIP: swprintf(pszText, cchTextMax, L"Upgrading..."); break;
+  case ICON_STS_DNL: swprintf(pszText, cchTextMax, L"Downloading..."); break;
+  case ICON_STS_RES: swprintf(pszText, cchTextMax, L"Download paused"); break;
+  case ICON_STS_WRN: swprintf(pszText, cchTextMax, L"Dependencies missing in repository"); break;
+  case ICON_STS_CHK: swprintf(pszText, cchTextMax, L"Downloaded"); break;
+  case ICON_STS_UPG: swprintf(pszText, cchTextMax, L"Newer version (Upgrade)"); break;
+  case ICON_STS_DNG: swprintf(pszText, cchTextMax, L"Older version (Downgrade)"); break;
+  //case ICON_STS_NEW: swprintf(pszText, cchTextMax, L"New"); break;
+  }
 }
 
 ///
@@ -1761,7 +1783,7 @@ void OmUiManMainNet::_onInit()
   this->_createTooltip(IDC_BC_RPQRY,  L"Query repositories");
   this->_createTooltip(IDC_BC_RPADD,  L"Add Repository");
   this->_createTooltip(IDC_BC_RPDEL,  L"Delete Repository");
-  this->_createTooltip(IDC_LV_NET,    L"Downloadable Mod list");
+  //this->_createTooltip(IDC_LV_NET,    L"Downloadable Mod list");
   this->_createTooltip(IDC_BC_DNLD,   L"Download selected Mods");
   this->_createTooltip(IDC_BC_ABORT,  L"Abort Mod download");
 
@@ -1769,7 +1791,7 @@ void OmUiManMainNet::_onInit()
   LPARAM himl = reinterpret_cast<LPARAM>(this->_UiMan->listViewImgList());
 
   // ListView style
-  DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER;
+  DWORD lvStyle = LVS_EX_FULLROWSELECT|LVS_EX_SUBITEMIMAGES|LVS_EX_DOUBLEBUFFER|LVS_EX_INFOTIP;
 
   // Initialize Repository ListView control
   this->msgItem(IDC_LV_REP, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, lvStyle);
@@ -2164,6 +2186,12 @@ INT_PTR OmUiManMainNet::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       switch(reinterpret_cast<NMHDR*>(lParam)->code)
       {
+      case LVN_GETINFOTIPW: {
+          NMLVGETINFOTIPW* nmGit = reinterpret_cast<NMLVGETINFOTIPW*>(lParam);
+          this->_lv_net_set_tooltip(nmGit->iItem, nmGit->pszText, nmGit->cchTextMax);
+          break;
+        }
+
       case LVN_ITEMCHANGED: {
           NMLISTVIEW* nmLv = reinterpret_cast<NMLISTVIEW*>(lParam);
           // detect only selection changes

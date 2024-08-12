@@ -242,6 +242,7 @@ class OmUiManMainLib : public OmDialog
 
     int32_t             _lv_mod_get_status_icon(const OmModPack* ModPack);
 
+    void                _lv_mod_set_tooltip(uint32_t item, LPWSTR pszText, int32_t cchTextMax);
 
     void                _bc_abort_clicked();
 

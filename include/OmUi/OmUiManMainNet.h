@@ -194,6 +194,8 @@ class OmUiManMainNet : public OmDialog
 
     int32_t             _lv_net_get_status_icon(const OmNetPack* NetPack);
 
+    void                _lv_net_set_tooltip(uint32_t item, LPWSTR pszText, int32_t cchTextMax);
+
     void                _lv_net_on_rclick();
 
     // main buttons
