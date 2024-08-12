@@ -1731,7 +1731,7 @@ void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArra
 
     // test overlapping against installed Mods
     for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
-      if(this->_modpack_list[j]->hasBackup()) {
+      if(this->_modpack_list[j]->hasBackup() || this->_modpack_list[j]->isApplying()) {
         if(installs->at(i)->canOverlap(this->_modpack_list[j])) {
           overlaps->push_back(this->_modpack_list[j]->iden());
 
