@@ -291,7 +291,7 @@ void OmUiManMainLib::discardBackups()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainLib::exploreSources()
+void OmUiManMainLib::openSources()
 {
   // prevent useless processing
   if(!this->msgItem(IDC_LV_MOD, LVM_GETSELECTEDCOUNT))
@@ -315,16 +315,11 @@ void OmUiManMainLib::exploreSources()
   }
 
   for(size_t i = 0; i < selection.size(); ++i) {
-
-    OmWString path;
-
     if(selection[i]->sourceIsDir()) {
-      path = selection[i]->sourcePath();
+      ShellExecuteW(this->_hwnd, L"explore", selection[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL);
     } else {
-      path = Om_getDirPart(selection[i]->sourcePath());
+      ShellExecuteW(this->_hwnd, L"open", selection[i]->sourcePath().c_str(), nullptr, nullptr, SW_NORMAL);
     }
-
-    ShellExecuteW(this->_hwnd, L"explore", path.c_str(), nullptr, nullptr, SW_NORMAL );
   }
 }
 
@@ -1345,12 +1340,16 @@ void OmUiManMainLib::_lv_mod_on_rclick()
     bool can_install = false;
     bool can_restore = false;
     bool can_cleanng = false;
+    bool can_explore = true;
 
     // scan selection to check what can be done
     int32_t lv_sel = this->msgItem(IDC_LV_MOD, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
     while(lv_sel != -1) {
 
       OmModPack* ModPack = ModChan->getModpack(lv_sel);
+
+      if(!ModPack->sourceIsDir())
+         can_explore = false;
 
       if(ModPack->hasBackup()) {
         can_restore = true;
@@ -1369,6 +1368,7 @@ void OmUiManMainLib::_lv_mod_on_rclick()
     this->setPopupItem(hPopup, POP_MOD_CLNS, can_cleanng ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_DISC, can_restore ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_OPEN, MF_ENABLED);
+    this->setPopupItemText(hPopup, POP_MOD_OPEN, can_explore ? L"&Open in Explorer...\tCtrl+E" : L"&Open with default program...\tCtrl+E");
     this->setPopupItem(hPopup, POP_MOD_TRSH, MF_ENABLED);
     this->setPopupItem(hPopup, POP_MOD_EDIT, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_MOD_INFO, (lv_nsl == 1)?MF_ENABLED:MF_GRAYED);
@@ -1821,7 +1821,7 @@ INT_PTR OmUiManMainLib::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_MOD_OPEN:
-      this->exploreSources();
+      this->openSources();
       break;
 
     case IDM_MOD_EDIT:

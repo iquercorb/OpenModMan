@@ -82,11 +82,11 @@ class OmUiManMainLib : public OmDialog
     ///
     void discardBackups();
 
-    /// \brief Open package in explorer.
+    /// \brief Open package of folder.
     ///
-    /// Opens the selected Mods in explorer or compatible application
+    /// Opens the selected Mods in explorer or default application
     ///
-    void exploreSources();
+    void openSources();
 
     /// \brief Open Mod in Mod Pack editor.
     ///

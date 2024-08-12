@@ -2593,7 +2593,7 @@ INT_PTR OmUiMan::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDM_MOD_OPEN:
-      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->exploreSources();
+      static_cast<OmUiManMainLib*>(this->_UiManMain->childById(IDD_MGR_MAIN_LIB))->openSources();
       break;
 
     case IDM_MOD_EDIT:
