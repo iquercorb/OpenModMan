@@ -262,6 +262,40 @@ bool OmModPset::deleteSetupEntry(const OmModChan* ModChan, const OmWString& iden
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmModPset::replaceSetupEntry(const OmModChan* ModChan, const OmWString& iden, const OmModPack* ModPack)
+{
+  if(this->_locked || !this->_xml.valid())
+    return false;
+
+  bool found = false;
+
+  // get the proper <setup> node.
+  OmXmlNode xml_setup = this->_xml.child(L"setup", L"uuid", ModChan->uuid());
+
+  // if no <setup> with uuid was found, return
+  if(xml_setup.empty()) {
+    return false;
+  }
+
+  // check for <install> entry and replace it
+  if(xml_setup.hasChild(L"install", L"ident", iden)) {
+
+    OmXmlNode xml_ins = xml_setup.child(L"install", L"ident", iden);
+    xml_ins.setAttr(L"ident", ModPack->iden());
+    xml_ins.setAttr(L"hash", ModPack->hash());
+
+    found = true;
+  }
+
+  // save definition
+  //this->_xml.save();
+
+  return found;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 size_t OmModPset::setupEntryCount(const OmModChan* ModChan)
 {
   if(this->_xml.valid()) {

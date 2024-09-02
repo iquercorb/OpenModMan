@@ -670,18 +670,27 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
 
     OmModPset* ModPset = ModHub->getPreset(i);
 
-    bool had_entry = false;
+    bool replaced = false;
 
     // remove all reference to deleted packages
     for(size_t j = 0; j < this->_upgrade.size(); ++j) {
 
-      if(ModPset->deleteSetupEntry(this->_ModChan, this->_upgrade[j]->iden()))
-        had_entry = true;
+      // replace only one reference (the first) to prevent doubles
+      if(!replaced) {
+
+        // Replaces first found superseded package reference by the new one
+        if(ModPset->replaceSetupEntry(this->_ModChan, this->_upgrade[j]->iden(), this_ModPack))
+          replaced = true;
+
+      } else {
+
+        // Deletes any other superseded package references
+        ModPset->deleteSetupEntry(this->_ModChan, this->_upgrade[j]->iden());
+      }
     }
 
-    // old reference was found, add reference to the new version
-    if(had_entry)
-      ModPset->addSetupEntry(this->_ModChan, this_ModPack);
+    // save Preset or you'll lose changes !
+    ModPset->save();
   }
 
   // 3. rename or move to trash replaced Mods, this will delete

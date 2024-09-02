@@ -203,6 +203,18 @@ class OmModPset
     ///
     bool deleteSetupEntry(const OmModChan* ModChan, const OmWString& iden);
 
+    /// \brief Replace package entry of install list.
+    ///
+    /// Replace the specified Package references by the new specified one.
+    ///
+    /// \param[in]  ModChan : Pointer to Mod Channel object.
+    /// \param[in]  iden    : Package identity to be replaced.
+    /// \param[in]  ModPack : Pointer to new Package object.
+    ///
+    /// \return true if reference was removed, false otherwise
+    ///
+    bool replaceSetupEntry(const OmModChan* ModChan, const OmWString& iden, const OmModPack* ModPack);
+
     /// \brief Get install list size.
     ///
     /// Returns size of the install list for the specified Mod Channel.
