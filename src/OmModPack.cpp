@@ -1434,27 +1434,28 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     #endif
   }
 
-  // cleanup backup data
-  if(this->_bck_isdir) {
+  // if no error, cleanup backup data
+  if(!has_abort && !has_error) {
 
-    int32_t result = Om_dirDeleteRecursive(this->_bck_path);
-    if(result != 0) {
-      this->_error(L"restoreData", Om_errDelete(L"Backup directories", this->_bck_path, result));
-      has_error = true;
+    if(this->_bck_isdir) {
+      // remove backup directory
+      int32_t result = Om_dirDeleteRecursive(this->_bck_path);
+      if(result != 0) {
+        this->_error(L"restoreData", Om_errDelete(L"Backup directories", this->_bck_path, result));
+        has_error = true;
+      }
+    } else {
+      // delete backup file
+      int32_t result = Om_fileDelete(this->_bck_path);
+      if(result != 0) {
+        this->_error(L"restoreData", Om_errDelete(L"Backup archive file", this->_bck_path, result));
+        has_error = true;
+      }
     }
 
-  } else {
-
-    int32_t result = Om_fileDelete(this->_bck_path);
-    if(result != 0) {
-      this->_error(L"restoreData", Om_errDelete(L"Backup archive file", this->_bck_path, result));
-      has_error = true;
-    }
-
+    // revoke and clean Backup side of this instance
+    this->clearBackup();
   }
-
-  // revoke and clean Backup side of this instance
-  this->clearBackup();
 
   // making report
   wchar_t done_str[32];
