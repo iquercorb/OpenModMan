@@ -2,7 +2,7 @@
 
 $AAP_MAJ =          "1";
 $AAP_MIN =          "3";
-$AAP_REV =          "0";
+$AAP_REV =          "1";
 
 # copy required files
 
