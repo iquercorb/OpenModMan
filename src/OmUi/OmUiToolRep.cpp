@@ -323,6 +323,7 @@ bool OmUiToolRep::_repository_save(const OmWString& path)
 
   // set title to repository instance
   if(this->_title_unsaved) {
+    this->getItemText(IDC_EC_INP01, ec_content);
     this->_NetRepo->setTitle(ec_content);
     this->_title_unsaved = false;
   }
