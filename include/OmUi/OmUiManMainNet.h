@@ -131,7 +131,7 @@ class OmUiManMainNet : public OmDialog
     static void         _query_ended_fn(void*, OmNotify, uint64_t);
 
     // Mods download stuff
-    bool                _download_upgrd;
+    bool                _download_supsed;
 
     void                _download_abort();
 
@@ -146,17 +146,17 @@ class OmUiManMainNet : public OmDialog
     static void         _download_ended_fn(void*, OmNotify, uint64_t);
 
     // Mods upgrade stuff
-    bool                _upgrade_abort;
+    bool                _supersed_abort;
 
-    void                _upgrade_start(OmModChan*, const OmPNetPackArray&);
+    void                _supersed_start(OmModChan*, const OmPNetPackArray&);
 
-    static void         _upgrade_begin_fn(void*, uint64_t);
+    static void         _supersed_begin_fn(void*, uint64_t);
 
-    static bool         _upgrade_progress_fn(void*, size_t, size_t, uint64_t);
+    static bool         _supersed_progress_fn(void*, size_t, size_t, uint64_t);
 
-    static void         _upgrade_result_fn(void*, OmResult, uint64_t);
+    static void         _supersed_result_fn(void*, OmResult, uint64_t);
 
-    static void         _upgrade_ended_fn(void*, OmNotify, uint64_t);
+    static void         _supersed_ended_fn(void*, OmNotify, uint64_t);
 
     // repositories ListView
     void                _lv_rep_populate();

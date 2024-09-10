@@ -72,16 +72,16 @@ OmModChan::OmModChan(OmModHub* ModHub) :
   _download_result_cb(nullptr),
   _download_notify_cb(nullptr),
   _download_user_ptr(nullptr),
-  _upgrade_abort(false),
-  _upgrade_hth(nullptr),
-  _upgrade_hwo(nullptr),
-  _upgrade_dones(0),
-  _upgrade_percent(0),
-  _upgrade_begin_cb(nullptr),
-  _upgrade_progress_cb(nullptr),
-  _upgrade_result_cb(nullptr),
-  _upgrade_notify_cb(nullptr),
-  _upgrade_user_ptr(nullptr),
+  _supersed_abort(false),
+  _supersed_hth(nullptr),
+  _supersed_hwo(nullptr),
+  _supersed_dones(0),
+  _supersed_percent(0),
+  _supersed_begin_cb(nullptr),
+  _supersed_progress_cb(nullptr),
+  _supersed_result_cb(nullptr),
+  _supersed_notify_cb(nullptr),
+  _supersed_user_ptr(nullptr),
   _query_abort(false),
   _query_hth(nullptr),
   _query_hwo(nullptr),
@@ -139,14 +139,14 @@ void OmModChan::close()
   this->_modops_hth = nullptr;
   this->_modops_hwo = nullptr;
 
-  // stop and clear Upgrades thread
-  if(this->_upgrade_hth) {
-    this->_upgrade_abort = true;
-    WaitForSingleObject(this->_upgrade_hth, 1000);
+  // stop and clear Supersed thread
+  if(this->_supersed_hth) {
+    this->_supersed_abort = true;
+    WaitForSingleObject(this->_supersed_hth, 1000);
   }
-  Om_threadClear(this->_upgrade_hth, this->_upgrade_hwo);
-  this->_upgrade_hth = nullptr;
-  this->_upgrade_hwo = nullptr;
+  Om_threadClear(this->_supersed_hth, this->_supersed_hwo);
+  this->_supersed_hth = nullptr;
+  this->_supersed_hwo = nullptr;
 
   // stop and clear Queries thread
   if(this->_query_hth) {
@@ -219,15 +219,15 @@ void OmModChan::close()
   this->_download_notify_cb = nullptr;
   this->_download_user_ptr = nullptr;
 
-  this->_upgrade_abort = false;
-  this->_upgrade_dones = 0;
-  this->_upgrade_percent = 0;
-  this->_upgrade_queue.clear();
-  this->_upgrade_begin_cb = nullptr;
-  this->_upgrade_progress_cb = nullptr;
-  this->_upgrade_result_cb = nullptr;
-  this->_upgrade_notify_cb = nullptr;
-  this->_upgrade_user_ptr = nullptr;
+  this->_supersed_abort = false;
+  this->_supersed_dones = 0;
+  this->_supersed_percent = 0;
+  this->_supersed_queue.clear();
+  this->_supersed_begin_cb = nullptr;
+  this->_supersed_progress_cb = nullptr;
+  this->_supersed_result_cb = nullptr;
+  this->_supersed_notify_cb = nullptr;
+  this->_supersed_user_ptr = nullptr;
 
   this->_query_abort = false;
   this->_query_queue.clear();
@@ -2729,14 +2729,14 @@ void OmModChan::_download_result_fn(void* ptr, OmResult result, uint64_t param)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
+void OmModChan::queueSupersede(const OmPNetPackArray& selection, Om_beginCb begin_cb, Om_progressCb progress_cb, Om_resultCb result_cb, Om_notifyCb notify_cb, void* user_ptr)
 {
-  if(this->_upgrade_queue.empty()) {
+  if(this->_supersed_queue.empty()) {
 
     // another operation is currently processing
     if(this->_locked_mod_library) {
 
-      this->_log(OM_LOG_WRN, L"launchUpgrades", L"local library is locked by another operation");
+      this->_log(OM_LOG_WRN, L"queueSupersede", L"local library is locked by another operation");
 
       if(result_cb)  // flush all results with abort
         for(size_t i = 0; i << selection.size(); ++i)
@@ -2745,26 +2745,26 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
       return;
     }
 
-    this->_upgrade_begin_cb = begin_cb;
-    this->_upgrade_progress_cb = progress_cb;
-    this->_upgrade_result_cb = result_cb;
-    this->_upgrade_notify_cb = notify_cb;
-    this->_upgrade_user_ptr = user_ptr;
+    this->_supersed_begin_cb = begin_cb;
+    this->_supersed_progress_cb = progress_cb;
+    this->_supersed_result_cb = result_cb;
+    this->_supersed_notify_cb = notify_cb;
+    this->_supersed_user_ptr = user_ptr;
 
     // reset global progress
-    this->_upgrade_dones = 0;
-    this->_upgrade_percent = 0;
+    this->_supersed_dones = 0;
+    this->_supersed_percent = 0;
 
   } else {
 
     // emit a warning in case a crazy client starts new download with
     // different parameters than current
-    if(this->_upgrade_begin_cb != begin_cb ||
-       this->_upgrade_progress_cb != progress_cb ||
-       this->_upgrade_result_cb != result_cb ||
-       this->_upgrade_notify_cb != notify_cb ||
-       this->_upgrade_user_ptr != user_ptr) {
-      this->_log(OM_LOG_WRN, L"launchUpgrades", L"subsequent upgrade with different parameters");
+    if(this->_supersed_begin_cb != begin_cb ||
+       this->_supersed_progress_cb != progress_cb ||
+       this->_supersed_result_cb != result_cb ||
+       this->_supersed_notify_cb != notify_cb ||
+       this->_supersed_user_ptr != user_ptr) {
+      this->_log(OM_LOG_WRN, L"queueSupersede", L"subsequent supersede with different parameters");
     }
   }
 
@@ -2772,62 +2772,62 @@ void OmModChan::queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin
   this->_locked_mod_library = true;
 
   // reset abort flag
-  this->_upgrade_abort = false;
+  this->_supersed_abort = false;
 
   for(size_t i = 0; i < selection.size(); ++i)
-    Om_push_backUnique(this->_upgrade_queue, selection[i]);
+    Om_push_backUnique(this->_supersed_queue, selection[i]);
 
-  if(!this->_upgrade_hth) {
+  if(!this->_supersed_hth) {
 
     // launch thread
-    this->_upgrade_hth = Om_threadCreate(OmModChan::_upgrade_run_fn, this);
-    this->_upgrade_hwo = Om_threadWaitEnd(this->_upgrade_hth, OmModChan::_upgrade_end_fn, this);
+    this->_supersed_hth = Om_threadCreate(OmModChan::_supersed_run_fn, this);
+    this->_supersed_hwo = Om_threadWaitEnd(this->_supersed_hth, OmModChan::_supersed_end_fn, this);
   }
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmModChan::abortUpgrades()
+void OmModChan::abortSupersede()
 {
-  if(this->_upgrade_queue.size())
-    this->_upgrade_abort = true;
+  if(this->_supersed_queue.size())
+    this->_supersed_abort = true;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-DWORD WINAPI OmModChan::_upgrade_run_fn(void* ptr)
+DWORD WINAPI OmModChan::_supersed_run_fn(void* ptr)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   DWORD exit_code = 0;
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_upgrade_run_fn : enter\n";
+  std::wcout << "DEBUG => OmModChan::_supersed_run_fn : enter\n";
   #endif // DEBUG
 
-  while(self->_upgrade_queue.size()) {
+  while(self->_supersed_queue.size()) {
 
-    OmNetPack* NetPack = self->_upgrade_queue.front();
+    OmNetPack* NetPack = self->_supersed_queue.front();
 
-    if(self->_upgrade_abort) {
+    if(self->_supersed_abort) {
 
       // flush all queue with abort
 
-      if(self->_upgrade_result_cb)
-        self->_upgrade_result_cb(self->_upgrade_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(NetPack));
+      if(self->_supersed_result_cb)
+        self->_supersed_result_cb(self->_supersed_user_ptr, OM_RESULT_ABORT, reinterpret_cast<uint64_t>(NetPack));
 
-      self->_upgrade_queue.pop_front();
+      self->_supersed_queue.pop_front();
 
       continue;
     }
 
     // call client begin callback so it can perform proper operations
-    if(self->_upgrade_begin_cb)
-      self->_upgrade_begin_cb(self->_upgrade_user_ptr, reinterpret_cast<uint64_t>(NetPack));
+    if(self->_supersed_begin_cb)
+      self->_supersed_begin_cb(self->_supersed_user_ptr, reinterpret_cast<uint64_t>(NetPack));
 
-    OmResult result = NetPack->upgradeReplace(OmModChan::_upgrade_progress_fn, self);
+    OmResult result = NetPack->supersede(OmModChan::_supersed_progress_fn, self);
 
     // update status and send propers notifications
     self->refreshNetLibrary();
@@ -2836,16 +2836,16 @@ DWORD WINAPI OmModChan::_upgrade_run_fn(void* ptr)
       exit_code = 1;
 
     // call client result callback so it can perform proper operations
-    if(self->_upgrade_result_cb)
-      self->_upgrade_result_cb(self->_upgrade_user_ptr, result, reinterpret_cast<uint64_t>(NetPack));
+    if(self->_supersed_result_cb)
+      self->_supersed_result_cb(self->_supersed_user_ptr, result, reinterpret_cast<uint64_t>(NetPack));
 
-    self->_upgrade_dones++;
+    self->_supersed_dones++;
 
-    self->_upgrade_queue.pop_front();
+    self->_supersed_queue.pop_front();
   }
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_upgrade_run_fn : leave\n";
+  std::wcout << "DEBUG => OmModChan::_supersed_run_fn : leave\n";
   #endif // DEBUG
 
   return exit_code;
@@ -2854,33 +2854,33 @@ DWORD WINAPI OmModChan::_upgrade_run_fn(void* ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModChan::_upgrade_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmModChan::_supersed_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   // update global progress
-  double queue_percents = self->_upgrade_dones * 100;
-  for(size_t i = 0; i < self->_upgrade_queue.size(); ++i)
-    queue_percents += self->_upgrade_queue[i]->upgradeProgress();
+  double queue_percents = self->_supersed_dones * 100;
+  for(size_t i = 0; i < self->_supersed_queue.size(); ++i)
+    queue_percents += self->_supersed_queue[i]->supersedeProgress();
 
-  self->_upgrade_percent = queue_percents / (self->_upgrade_dones + self->_upgrade_queue.size());
+  self->_supersed_percent = queue_percents / (self->_supersed_dones + self->_supersed_queue.size());
 
-  if(self->_upgrade_progress_cb)
-    if(!self->_upgrade_progress_cb(self->_upgrade_user_ptr, tot, cur, param))
-      self->abortUpgrades();
+  if(self->_supersed_progress_cb)
+    if(!self->_supersed_progress_cb(self->_supersed_user_ptr, tot, cur, param))
+      self->abortSupersede();
 
-  return !self->_upgrade_abort;
+  return !self->_supersed_abort;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-VOID WINAPI OmModChan::_upgrade_end_fn(void* ptr, uint8_t fired)
+VOID WINAPI OmModChan::_supersed_end_fn(void* ptr, uint8_t fired)
 {
   OM_UNUSED(fired);
 
   #ifdef DEBUG
-  std::wcout << "DEBUG => OmModChan::_upgrade_end_fn\n";
+  std::wcout << "DEBUG => OmModChan::_supersed_end_fn\n";
   #endif // DEBUG
 
   OmModChan* self = static_cast<OmModChan*>(ptr);
@@ -2888,24 +2888,24 @@ VOID WINAPI OmModChan::_upgrade_end_fn(void* ptr, uint8_t fired)
   // unlock the local library
   self->_locked_mod_library = false;
 
-  //DWORD exit_code = Om_threadExitCode(self->_upgrade_hth);
-  Om_threadClear(self->_upgrade_hth, self->_upgrade_hwo);
+  //DWORD exit_code = Om_threadExitCode(self->_supersed_hth);
+  Om_threadClear(self->_supersed_hth, self->_supersed_hwo);
 
-  self->_upgrade_hth = nullptr;
-  self->_upgrade_hwo = nullptr;
+  self->_supersed_hth = nullptr;
+  self->_supersed_hwo = nullptr;
 
   // call notify callback
-  if(self->_upgrade_notify_cb)
-    self->_upgrade_notify_cb(self->_upgrade_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
+  if(self->_supersed_notify_cb)
+    self->_supersed_notify_cb(self->_supersed_user_ptr, OM_NOTIFY_ENDED, reinterpret_cast<uint64_t>(self));
 
-  self->_upgrade_dones = 0;
-  self->_upgrade_percent = 0;
+  self->_supersed_dones = 0;
+  self->_supersed_percent = 0;
 
-  self->_upgrade_user_ptr = nullptr;
-  self->_upgrade_progress_cb = nullptr;
-  self->_upgrade_result_cb = nullptr;
-  self->_upgrade_notify_cb = nullptr;
-  self->_upgrade_begin_cb = nullptr;
+  self->_supersed_user_ptr = nullptr;
+  self->_supersed_progress_cb = nullptr;
+  self->_supersed_result_cb = nullptr;
+  self->_supersed_notify_cb = nullptr;
+  self->_supersed_begin_cb = nullptr;
 }
 
 ///
@@ -2954,7 +2954,7 @@ bool OmModChan::_compare_net_stat(const OmNetPack* a, const OmNetPack* b)
   if(a->hasError()) {
     a_score = 1;
   } else if(a->hasLocal()) {
-    if(a->isUpgrading()) {
+    if(a->isSuperseding()) {
       a_score = 1;
     } else if(a->hasMissingDepend()) {
       a_score = 7;
@@ -2979,7 +2979,7 @@ bool OmModChan::_compare_net_stat(const OmNetPack* a, const OmNetPack* b)
   if(b->hasError()) {
     b_score = 1;
   } else if(b->hasLocal()) {
-    if(b->isUpgrading()) {
+    if(b->isSuperseding()) {
       b_score = 1;
     } else if(b->hasMissingDepend()) {
       b_score = 7;

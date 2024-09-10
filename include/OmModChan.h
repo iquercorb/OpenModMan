@@ -689,13 +689,13 @@ class OmModChan
     /// \param[in] notify_cb     : Callback function to be called once upgrades queue is empty
     /// \param[in] user_ptr      : Custom pointer to be passed to callback functions.
     ///
-    void queueUpgrades(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
+    void queueSupersede(const OmPNetPackArray& selection, Om_beginCb begin_cb = nullptr, Om_progressCb progress_cb = nullptr, Om_resultCb result_cb = nullptr, Om_notifyCb notify_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Stop upgrades
     ///
     /// Abort processing upgrade and flush queue.
     ///
-    void abortUpgrades();
+    void abortSupersede();
 
     /// \brief Upgrades progression
     ///
@@ -703,8 +703,8 @@ class OmModChan
     ///
     /// \return Cumulative upgrades progression in percent.
     ///
-    uint32_t upgradesProgress() const {
-      return this->_upgrade_percent;
+    uint32_t supersedeProgress() const {
+      return this->_supersed_percent;
     }
 
     /// \brief Upgrades queue size
@@ -714,8 +714,8 @@ class OmModChan
     ///
     /// \return Upgrades queue size
     ///
-    size_t upgradesQueueSize() const {
-      return this->_upgrade_queue.size();
+    size_t supersedeQueueSize() const {
+      return this->_supersed_queue.size();
     }
 
     /// \brief Sort network Mod Library
@@ -1523,33 +1523,33 @@ class OmModChan
     void*                 _download_user_ptr;
 
     // mods upgrade stuff
-    bool                  _upgrade_abort;
+    bool                  _supersed_abort;
 
-    void*                 _upgrade_hth;
+    void*                 _supersed_hth;
 
-    void*                 _upgrade_hwo;
+    void*                 _supersed_hwo;
 
-    OmPNetPackQueue       _upgrade_queue;
+    OmPNetPackQueue       _supersed_queue;
 
-    uint32_t              _upgrade_dones;
+    uint32_t              _supersed_dones;
 
-    uint32_t              _upgrade_percent;
+    uint32_t              _supersed_percent;
 
-    static DWORD WINAPI   _upgrade_run_fn(void*);
+    static DWORD WINAPI   _supersed_run_fn(void*);
 
-    static bool           _upgrade_progress_fn(void*, size_t, size_t, uint64_t);
+    static bool           _supersed_progress_fn(void*, size_t, size_t, uint64_t);
 
-    static VOID WINAPI    _upgrade_end_fn(void*,uint8_t);
+    static VOID WINAPI    _supersed_end_fn(void*,uint8_t);
 
-    Om_beginCb            _upgrade_begin_cb;
+    Om_beginCb            _supersed_begin_cb;
 
-    Om_progressCb         _upgrade_progress_cb;
+    Om_progressCb         _supersed_progress_cb;
 
-    Om_resultCb           _upgrade_result_cb;
+    Om_resultCb           _supersed_result_cb;
 
-    Om_notifyCb           _upgrade_notify_cb;
+    Om_notifyCb           _supersed_notify_cb;
 
-    void*                 _upgrade_user_ptr;
+    void*                 _supersed_user_ptr;
 
     // repositories query stuff
     bool                  _query_abort;

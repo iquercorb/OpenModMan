@@ -108,10 +108,10 @@ void OmUiPropChnDnl::_onTbInit()
 
   this->_createTooltip(IDC_BC_CKBX1,  L"Warn if Mods download requires additional dependencies to be downloaded");
   this->_createTooltip(IDC_BC_CKBX2,  L"Warn if Mods to download have missing dependencies");
-  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if upgrading Mods will delete older versions required by other");
+  this->_createTooltip(IDC_BC_CKBX3,  L"Warn if supersede Mods will delete previous versions required by other");
 
-  this->_createTooltip(IDC_BC_RAD01,  L"On Mod upgrade, the older Mod is moved to recycle bin");
-  this->_createTooltip(IDC_BC_RAD02,  L"On Mod upgrade, the older Mod is renamed with .old extension");
+  this->_createTooltip(IDC_BC_RAD01,  L"On Mod supersede, the previous Mod is moved to recycle bin");
+  this->_createTooltip(IDC_BC_RAD02,  L"On Mod supersede, the previous Mod is renamed with .old extension");
 
   this->_createTooltip(IDC_BC_CKBX4,  L"Limit download rate for individual download thread");
   this->_createTooltip(IDC_EC_NUM01,  L"Maximum download rate in Kilobytes per seconds");

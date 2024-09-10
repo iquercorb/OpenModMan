@@ -47,7 +47,7 @@ OmNetPack::OmNetPack() :
   _has_local(false),
   _has_error(false),
   _has_misg_dep(false),
-  _is_upgrading(false),
+  _is_superseding(false),
   _cli_ptr(nullptr),
   _cli_result_cb(nullptr),
   _cli_download_cb(nullptr),
@@ -55,7 +55,7 @@ OmNetPack::OmNetPack() :
   _dnl_result(OM_RESULT_UNKNOW),
   _dnl_remain(0),
   _dnl_percent(0),
-  _upg_percent(0)
+  _sps_percent(0)
 {
 
 }
@@ -72,7 +72,7 @@ OmNetPack::OmNetPack(OmModChan* ModChan) :
   _has_local(false),
   _has_error(false),
   _has_misg_dep(false),
-  _is_upgrading(false),
+  _is_superseding(false),
   _cli_ptr(nullptr),
   _cli_result_cb(nullptr),
   _cli_download_cb(nullptr),
@@ -80,7 +80,7 @@ OmNetPack::OmNetPack(OmModChan* ModChan) :
   _dnl_result(OM_RESULT_UNKNOW),
   _dnl_remain(0),
   _dnl_percent(0),
-  _upg_percent(0)
+  _sps_percent(0)
 {
 
 }
@@ -590,26 +590,26 @@ void OmNetPack::_dnl_result_fn(void* ptr, OmResult result, uint64_t param)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
+OmResult OmNetPack::supersede(Om_progressCb progress_cb, void* user_ptr)
 {
   if(!this->_ModChan) {
-    this->_error(L"upgradeReplace", L"no Mod Channel");
+    this->_error(L"supersede", L"no Mod Channel");
     return OM_RESULT_ABORT;
   }
 
-  if(this->_upgrade.empty()) {
-    this->_error(L"upgradeReplace", L"nothing to upgrade");
+  if(!this->canSupersede()) {
+    this->_error(L"supersede", L"nothing to supersede");
     return OM_RESULT_ABORT;
   }
 
   if(this->isDownloading() || this->_has_error  || this->_has_part) {
-    this->_error(L"upgradeReplace", L"invalid call");
+    this->_error(L"supersede", L"invalid call");
     return OM_RESULT_ABORT;
   }
 
-  this->_upg_percent = 0;
+  this->_sps_percent = 0;
 
-  this->_is_upgrading = true;
+  this->_is_superseding = true;
 
   // setup client parameters
   this->_cli_ptr = user_ptr;
@@ -618,7 +618,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   // find Mod Pack corresponding to this Net Pack
   OmModPack* this_ModPack = this->_ModChan->findModpack(this->iden(), true);
   if(!this_ModPack) {
-    this->_error(L"upgradeReplace", L"corresponding Mod Pack object not found in Mod library");
+    this->_error(L"supersede", L"corresponding Mod Pack object not found in Mod library");
     return OM_RESULT_ERROR;
   }
 
@@ -627,24 +627,31 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   #ifdef DEBUG
   // simulate slow progressing process
   for(size_t i = 0; i < 100; ++i) {
-    OmNetPack::_upg_progress_fn(this, 100, i, 0);
+    OmNetPack::_sps_progress_fn(this, 100, i, 0);
     Sleep(25);
   }
   #endif //DEBUG
 
 
   // Mod Pack lists for uninstall and install process
-  OmPModPackArray selection, restores;
+  OmPModPackArray replaces, selection, restores;
   OmWStringArray overlaps, depends;
+
+  // Create full list of replaced Mods, either downgrade or upgrade
+  for(size_t i = 0; i < this->_upgrade.size(); ++i)
+    replaces.push_back(this->_upgrade[i]);
+
+  for(size_t i = 0; i < this->_dngrade.size(); ++i)
+    replaces.push_back(this->_dngrade[i]);
 
   // to keep track of all uninstalled Mods to be re-installed
   OmUint64Array unins_hash;
 
   // 1. uninstall all replaced Mods before renaming/trashing them
 
-  for(size_t i = 0; i < this->_upgrade.size(); ++i) {
-    if(this->_upgrade[i]->hasBackup())
-      selection.push_back(this->_upgrade[i]);
+  for(size_t i = 0; i < replaces.size(); ++i) {
+    if(replaces[i]->hasBackup())
+      selection.push_back(replaces[i]);
   }
 
   // prepare Mods uninstall and backups restoration
@@ -656,8 +663,8 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
     // keep hash of uinstalled package to be re-installed later
     unins_hash.push_back(restores[i]->hash());
 
-    if(OM_HAS_BIT(restores[i]->restoreData(OmNetPack::_upg_progress_fn, this), OM_RESULT_ERROR)) {
-      this->_error(L"upgradeReplace", restores[i]->lastError());
+    if(OM_HAS_BIT(restores[i]->restoreData(OmNetPack::_sps_progress_fn, this), OM_RESULT_ERROR)) {
+      this->_error(L"supersede", restores[i]->lastError());
       has_error = true;
     }
   }
@@ -673,19 +680,19 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
     bool replaced = false;
 
     // remove all reference to deleted packages
-    for(size_t j = 0; j < this->_upgrade.size(); ++j) {
+    for(size_t j = 0; j < replaces.size(); ++j) {
 
       // replace only one reference (the first) to prevent doubles
       if(!replaced) {
 
         // Replaces first found superseded package reference by the new one
-        if(ModPset->replaceSetupEntry(this->_ModChan, this->_upgrade[j]->iden(), this_ModPack))
+        if(ModPset->replaceSetupEntry(this->_ModChan, replaces[j]->iden(), this_ModPack))
           replaced = true;
 
       } else {
 
         // Deletes any other superseded package references
-        ModPset->deleteSetupEntry(this->_ModChan, this->_upgrade[j]->iden());
+        ModPset->deleteSetupEntry(this->_ModChan, replaces[j]->iden());
       }
     }
 
@@ -696,9 +703,9 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
   // 3. rename or move to trash replaced Mods, this will delete
   //    old Mod Pack from Library
 
-  for(size_t i = 0; i < this->_upgrade.size(); ++i) {
+  for(size_t i = 0; i < replaces.size(); ++i) {
 
-    OmModPack* ModPack = this->_upgrade[i];
+    OmModPack* ModPack = replaces[i];
 
     // rename or trash package source
     if(!ModPack->hasSource())
@@ -714,7 +721,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
 
       int32_t result = Om_fileMove(mod_path, mod_old);
       if(result != 0) {
-        this->_error(L"upgradeReplace", Om_errRename(L"replaced Mod archive", mod_path, result));
+        this->_error(L"supersede", Om_errRename(L"replaced Mod archive", mod_path, result));
         has_error = true;
       }
 
@@ -722,7 +729,7 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
       // move to recycle bin
       int32_t result = Om_moveToTrash(mod_path);
       if(result != 0) {
-        this->_error(L"upgradeReplace", Om_errMove(L"replaced Mod archive", mod_path, result));
+        this->_error(L"supersede", Om_errMove(L"replaced Mod archive", mod_path, result));
         has_error = true;
       }
     }
@@ -766,27 +773,28 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
     this->_ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings);
 
     for(size_t i = 0; i < installs.size(); ++i) {
-      if(!installs[i]->applySource(OmNetPack::_upg_progress_fn, this)) {
-        this->_error(L"upgradeReplace", installs[i]->lastError());
+      if(!installs[i]->applySource(OmNetPack::_sps_progress_fn, this)) {
+        this->_error(L"supersede", installs[i]->lastError());
         has_error = true;
       }
     }
   }
   */
 
-  this->_upg_percent = 0;
+  this->_sps_percent = 0;
 
   // clear the replaced list, pointers are now invalid
   this->_upgrade.clear();
+  this->_dngrade.clear();
 
   // reset client parameters
   this->_cli_ptr = nullptr;
   this->_cli_progress_cb = nullptr;
 
-  this->_is_upgrading = false;
+  this->_is_superseding = false;
 
   if(!has_error)
-    this->_log(OM_LOG_OK, L"upgradeReplace", L"old version replaced successfully");
+    this->_log(OM_LOG_OK, L"supersede", L"old version replaced successfully");
 
   return has_error ? OM_RESULT_ERROR : OM_RESULT_OK;
 }
@@ -794,13 +802,13 @@ OmResult OmNetPack::upgradeReplace(Om_progressCb progress_cb, void* user_ptr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmNetPack::_upg_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
+bool OmNetPack::_sps_progress_fn(void* ptr, size_t tot, size_t cur, uint64_t param)
 {
   OM_UNUSED(param);
 
   OmNetPack* self = static_cast<OmNetPack*>(ptr);
 
-  self->_upg_percent = ((double)cur / tot) * 100;
+  self->_sps_percent = ((double)cur / tot) * 100;
 
   if(self->_cli_progress_cb) {
     return self->_cli_progress_cb(self->_cli_ptr, tot, cur, reinterpret_cast<uint64_t>(self));

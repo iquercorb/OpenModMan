@@ -824,10 +824,10 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "Enable warning messages for :", IDC_SC_LBL02, 5, 100, 64, 9, SS_LEFT, WS_EX_LEFT
     AUTOCHECKBOX    "Additional download of Mod dependencies", IDC_BC_CKBX1, 65, 110, 170, 9, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Mod download dependencies missing", IDC_BC_CKBX2, 65, 62, 120, 9, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Mod upgrade breaks dependencies", IDC_BC_CKBX3, 65, 62, 130, 9, 0, WS_EX_LEFT
-    LTEXT           "On Mod upgrade :", IDC_SC_LBL03, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTORADIOBUTTON "Move older version file to recycle bin", IDC_BC_RAD01, 5, 145, 64, 9, SS_LEFT, WS_EX_LEFT
-    AUTORADIOBUTTON "Rename older version file with .old extension", IDC_BC_RAD02, 5, 165, 64, 9, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "Mod supersede breaks dependencies", IDC_BC_CKBX3, 65, 62, 130, 9, 0, WS_EX_LEFT
+    LTEXT           "On Mod supersede :", IDC_SC_LBL03, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
+    AUTORADIOBUTTON "Move previous version file to recycle bin", IDC_BC_RAD01, 5, 145, 64, 9, SS_LEFT, WS_EX_LEFT
+    AUTORADIOBUTTON "Rename previous version file with .old extension", IDC_BC_RAD02, 5, 165, 64, 9, SS_LEFT, WS_EX_LEFT
     LTEXT           "Download limits :", IDC_SC_LBL04, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
     AUTOCHECKBOX    "Per-thread max rate :", IDC_BC_CKBX4, 5, 130, 64, 9, SS_LEFT, WS_EX_LEFT
     EDITTEXT        IDC_EC_NUM01, 5, 175, 188, 13, WS_DISABLED | ES_NUMBER | ES_RIGHT, WS_EX_LEFT

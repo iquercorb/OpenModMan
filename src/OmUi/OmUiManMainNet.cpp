@@ -56,8 +56,8 @@
 ///
 OmUiManMainNet::OmUiManMainNet(HINSTANCE hins) : OmDialog(hins),
   _UiMan(nullptr),
-  _download_upgrd(false),
-  _upgrade_abort(false),
+  _download_supsed(false),
+  _supersed_abort(false),
   _lv_rep_icons_size(0),
   _lv_rep_span(RSIZE_HEAD_MIN_H),
   _lv_net_icons_size(0),
@@ -185,7 +185,7 @@ void OmUiManMainNet::deleteRepository()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::startDownloads(bool upgrade)
+void OmUiManMainNet::startDownloads(bool supersede)
 {
   // prevent useless processing
   if(!this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT))
@@ -227,13 +227,13 @@ void OmUiManMainNet::startDownloads(bool upgrade)
   if(!this->_UiMan->warnExtraDownloads(ModChan->warnExtraDnld(), L"Download Mods", depends))
     return;
 
-  this->_download_start(upgrade, downloads);
+  this->_download_start(supersede, downloads);
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::downloadDepends(bool upgrade)
+void OmUiManMainNet::downloadDepends(bool supersede)
 {
   // prevent useless processing
   if(this->msgItem(IDC_LV_NET, LVM_GETSELECTEDCOUNT) != 1)
@@ -270,7 +270,7 @@ void OmUiManMainNet::downloadDepends(bool upgrade)
   if(depends.empty())
     return;
 
-  this->_download_start(upgrade, depends);
+  this->_download_start(supersede, depends);
 }
 
 ///
@@ -563,7 +563,7 @@ void OmUiManMainNet::_refresh_processing()
 
       OmModChan* ModChan = ModHub->getChannel(c);
 
-      if(ModChan->queriesQueueSize() || ModChan->downloadQueueSize() || ModChan->upgradesQueueSize()) {
+      if(ModChan->queriesQueueSize() || ModChan->downloadQueueSize() || ModChan->supersedeQueueSize()) {
         has_queue = true; is_safe = false;
       }
 
@@ -580,8 +580,8 @@ void OmUiManMainNet::_refresh_processing()
 
           uint32_t progress = 0;
 
-          if(ModChan->upgradesQueueSize())
-            progress = ModChan->upgradesProgress();
+          if(ModChan->supersedeQueueSize())
+            progress = ModChan->supersedeProgress();
 
           if(ModChan->queriesQueueSize()) {
             progress = ModChan->queriesProgress();
@@ -625,7 +625,7 @@ void OmUiManMainNet::_abort_processing()
       OmModChan* ModChan = ModHub->getChannel(c);
 
       ModChan->abortQueries();
-      ModChan->abortUpgrades();
+      ModChan->abortSupersede();
       ModChan->stopDownloads();
     }
   }
@@ -758,13 +758,13 @@ void OmUiManMainNet::_download_abort()
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_download_start(bool upgrade, const OmPNetPackArray& selection)
+void OmUiManMainNet::_download_start(bool supersede, const OmPNetPackArray& selection)
 {
   OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
   if(!ModChan) return;
 
-  // do (or do not) upgrade at download end
-  this->_download_upgrd = upgrade;
+  // do (or do not) supersede at download end
+  this->_download_supsed = supersede;
 
   // update selected Net Pack ListView items
   LVITEMW lvI = {};
@@ -910,9 +910,9 @@ void OmUiManMainNet::_download_result_fn(void* ptr, OmResult result, uint64_t pa
   }
 
   // if we are downloading for upgrade, here we go
-  if(self->_download_upgrd) {
-    if(NetPack->upgradableCount() && NetPack->hasLocal())
-      self->_upgrade_start(NetPack->ModChan(), OmPNetPackArray(1, NetPack));
+  if(self->_download_supsed) {
+    if(NetPack->canSupersede() && NetPack->hasLocal())
+      self->_supersed_start(NetPack->ModChan(), OmPNetPackArray(1, NetPack));
   }
 }
 
@@ -932,19 +932,19 @@ void OmUiManMainNet::_download_ended_fn(void* ptr, OmNotify notify, uint64_t par
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_upgrade_start(OmModChan* ModChan, const OmPNetPackArray& selection)
+void OmUiManMainNet::_supersed_start(OmModChan* ModChan, const OmPNetPackArray& selection)
 {
-  // since upgrade may be queued while active channel is different than
+  // since supersede may be queued while active channel is different than
   // when download start, we use the passed pointer instead of current active one
 
   // reset abort status
-  this->_upgrade_abort = false;
+  this->_supersed_abort = false;
 
-  ModChan->queueUpgrades(selection,
-                         OmUiManMainNet::_upgrade_begin_fn,
-                         OmUiManMainNet::_upgrade_progress_fn,
-                         OmUiManMainNet::_upgrade_result_fn,
-                         OmUiManMainNet::_upgrade_ended_fn,
+  ModChan->queueSupersede(selection,
+                         OmUiManMainNet::_supersed_begin_fn,
+                         OmUiManMainNet::_supersed_progress_fn,
+                         OmUiManMainNet::_supersed_result_fn,
+                         OmUiManMainNet::_supersed_ended_fn,
                          this);
 
   // enter processing
@@ -954,7 +954,7 @@ void OmUiManMainNet::_upgrade_start(OmModChan* ModChan, const OmPNetPackArray& s
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_upgrade_begin_fn(void* ptr, uint64_t param)
+void OmUiManMainNet::_supersed_begin_fn(void* ptr, uint64_t param)
 {
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
@@ -974,7 +974,7 @@ void OmUiManMainNet::_upgrade_begin_fn(void* ptr, uint64_t param)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uint64_t param)
+bool OmUiManMainNet::_supersed_progress_fn(void* ptr, size_t cur, size_t tot, uint64_t param)
 {
   OM_UNUSED(cur); OM_UNUSED(tot);
 
@@ -999,17 +999,17 @@ bool OmUiManMainNet::_upgrade_progress_fn(void* ptr, size_t cur, size_t tot, uin
   // update global progression, but prevent interfering with current downloading
   if(ModChan->downloadQueueSize() == 0) {
     self->msgItem(IDC_PB_MOD, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress()+1);
-    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->upgradesProgress());
+    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->supersedeProgress()+1);
+    self->msgItem(IDC_PB_MOD, PBM_SETPOS, ModChan->supersedeProgress());
   }
 
-  return !self->_upgrade_abort;
+  return !self->_supersed_abort;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t param)
+void OmUiManMainNet::_supersed_result_fn(void* ptr, OmResult result, uint64_t param)
 {
   OmUiManMainNet* self = static_cast<OmUiManMainNet*>(ptr);
 
@@ -1048,8 +1048,8 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
       self->_UiMan->selectChannel(chn_id);
     }
 
-    Om_dlgBox_okl(self->_hwnd, L"Upgrade Mods", IDI_DLG_PKG_ERR,
-                L"Mod upgrade error", L"The upgrading of \""
+    Om_dlgBox_okl(self->_hwnd, L"Supersede Mods", IDI_DLG_PKG_ERR,
+                L"Mod supersede error", L"The supersedment of \""
                 +NetPack->core()+L"\" failed:", NetPack->lastError());
   }
 }
@@ -1057,7 +1057,7 @@ void OmUiManMainNet::_upgrade_result_fn(void* ptr, OmResult result, uint64_t par
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmUiManMainNet::_upgrade_ended_fn(void* ptr, OmNotify notify, uint64_t param)
+void OmUiManMainNet::_supersed_ended_fn(void* ptr, OmNotify notify, uint64_t param)
 {
   OM_UNUSED(notify); OM_UNUSED(param);
 
@@ -1449,7 +1449,7 @@ void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
   OmNetPack* NetPack = ModChan->getNetpack(item);
   if(!NetPack) return;
 
-  if(!NetPack->isDownloading() && !NetPack->isUpgrading())
+  if(!NetPack->isDownloading() && !NetPack->isSuperseding())
     return;
 
   // get rectangle of subitem to draw
@@ -1468,13 +1468,13 @@ void OmUiManMainNet::_lv_net_cdraw_progress(HDC hDc, uint64_t item, int32_t subi
     StrFromTimeIntervalW(item_str, OM_MAX_ITEM, static_cast<uint32_t>(NetPack->downloadRemain()) * 1000, 3);
   }
 
-  if(NetPack->isUpgrading()) {
+  if(NetPack->isSuperseding()) {
 
     // progress ratio from upgrading percent
-    progress = (double)NetPack->upgradeProgress() * 0.01;
+    progress = (double)NetPack->supersedeProgress() * 0.01;
 
     // laconic text...
-    swprintf(item_str, OM_MAX_ITEM, L"Cleaning for upgrade");
+    swprintf(item_str, OM_MAX_ITEM, L"Cleaning for supersede");
   }
 
   // all drawing rectangle base on subitem rectangle
@@ -1605,7 +1605,7 @@ void OmUiManMainNet::_lv_net_on_rclick()
   } else {
 
     bool can_down = false;
-    bool can_upgd = false;
+    bool can_repl = false;
     bool can_stop = false;
     bool can_rvok = false;
     bool can_fixd = false;
@@ -1621,8 +1621,13 @@ void OmUiManMainNet::_lv_net_on_rclick()
       } else {
         if(!NetPack->isDownloading()) {
           can_down = true;
-          if(NetPack->upgradableCount())  can_upgd = true;
-          if(NetPack->isResumable())      can_rvok = true;
+
+          if(NetPack->canSupersede())
+            can_repl = true;
+
+          if(NetPack->isResumable())
+            can_rvok = true;
+
         } else {
           can_stop = true;
         }
@@ -1634,7 +1639,7 @@ void OmUiManMainNet::_lv_net_on_rclick()
 
     this->setPopupItemText(hPopup, POP_NET_DNLD, can_rvok ? L"Resume" : L"Download");
     this->setPopupItem(hPopup, POP_NET_DNLD, can_down ? MF_ENABLED:MF_GRAYED);
-    this->setPopupItem(hPopup, POP_NET_DNWS, can_upgd ? MF_ENABLED:MF_GRAYED);
+    this->setPopupItem(hPopup, POP_NET_DNWS, can_repl ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_NET_STOP, can_stop ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_NET_RVOK, can_rvok ? MF_ENABLED:MF_GRAYED);
     this->setPopupItem(hPopup, POP_NET_FIXD, can_fixd ? MF_ENABLED:MF_GRAYED);
@@ -1658,7 +1663,7 @@ int32_t OmUiManMainNet::_lv_net_get_status_icon(const OmNetPack* NetPack)
   if(NetPack->hasError()) {
     return ICON_STS_ERR;
   } else if(NetPack->hasLocal()) {
-    if(NetPack->isUpgrading()) {
+    if(NetPack->isSuperseding()) {
       return ICON_STS_WIP;
     } else if(NetPack->hasMissingDepend()) {
       return ICON_STS_WRN;
@@ -1693,7 +1698,7 @@ void OmUiManMainNet::_lv_net_set_tooltip(uint32_t item, LPWSTR pszText, int32_t 
   switch(lvI.iImage)
   {
   case ICON_STS_ERR: swprintf(pszText, cchTextMax, L"Error"); break;
-  case ICON_STS_WIP: swprintf(pszText, cchTextMax, L"Upgrading..."); break;
+  case ICON_STS_WIP: swprintf(pszText, cchTextMax, L"Replacing..."); break;
   case ICON_STS_DNL: swprintf(pszText, cchTextMax, L"Downloading..."); break;
   case ICON_STS_RES: swprintf(pszText, cchTextMax, L"Download paused"); break;
   case ICON_STS_WRN: swprintf(pszText, cchTextMax, L"Dependencies missing in repository"); break;
@@ -1727,7 +1732,7 @@ void OmUiManMainNet::_bc_abort_clicked()
   // Abort all running operation
   this->_download_abort();
   this->_query_abort();
-  this->_upgrade_abort = true;
+  this->_supersed_abort = true;
 }
 
 ///

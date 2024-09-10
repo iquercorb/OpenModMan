@@ -298,6 +298,16 @@ class OmNetPack
       return this->_dngrade[index];
     }
 
+    /// \brief Check whether can Supersedes
+    ///
+    /// Returns whether this Mod can supersedes local Mod older or newer versions.
+    ///
+    /// \return True if can supersedes, false otherwise
+    ///
+    size_t canSupersede() const {
+      return this->_upgrade.size() || this->_dngrade.size();
+    }
+
     /// \brief Check for local version
     ///
     /// check whether this instance already has local version, therefor
@@ -414,8 +424,8 @@ class OmNetPack
     ///
     /// \return True if upgrading, false otherwise
     ///
-    bool isUpgrading() const {
-      return this->_is_upgrading;
+    bool isSuperseding() const {
+      return this->_is_superseding;
     }
 
     /// \brief upgrade and replace
@@ -431,7 +441,7 @@ class OmNetPack
     ///
     /// \return True if operation succeed, false if error occurred.
     ///
-    OmResult upgradeReplace(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
+    OmResult supersede(Om_progressCb progress_cb = nullptr, void* user_ptr = nullptr);
 
     /// \brief Upgrade progress
     ///
@@ -439,8 +449,8 @@ class OmNetPack
     ///
     /// \return Upgrading progress in percent.
     ///
-    uint32_t upgradeProgress() const {
-      return this->_upg_percent;
+    uint32_t supersedeProgress() const {
+      return this->_sps_percent;
     }
 
     /// \brief Get Mod Channel
@@ -529,7 +539,7 @@ class OmNetPack
 
     bool                _has_misg_dep;
 
-    bool                _is_upgrading;
+    bool                _is_superseding;
 
     // client parameters
     void*               _cli_ptr;
@@ -558,9 +568,9 @@ class OmNetPack
     static bool         _dnl_download_fn(void*, int64_t, int64_t, int64_t, uint64_t);
 
     // upgrade-replace stuff
-    uint32_t            _upg_percent;
+    uint32_t            _sps_percent;
 
-    static bool         _upg_progress_fn(void*, size_t, size_t, uint64_t);
+    static bool         _sps_progress_fn(void*, size_t, size_t, uint64_t);
 
     // logs and errors
     void                _log(unsigned level, const OmWString& origin, const OmWString& detail);
