@@ -43,7 +43,7 @@ from one location to another.
 
 Open Mod Mananager currently implements the following key features:
 
-- Mdular and flexible usage with Hubs and Channels
+- Modular and flexible usage with Hubs and Channels
 - Allow custom directories everywhere
 - Support Mods as directory or 'Packaged' archive files
 - Online Mod repositories mechanism with resumable downloads
