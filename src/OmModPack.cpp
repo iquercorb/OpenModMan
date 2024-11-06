@@ -679,10 +679,34 @@ void OmModPack::clearThumbnail()
 ///
 bool OmModPack::hasDepend(const OmWString& ident) const
 {
-  // you don't like raw loops ? I LOVE row loops...
   for(size_t i = 0; i < this->_src_depend.size(); ++i)
     if(this->_src_depend[i] == ident)
       return true;
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModPack::matchDepend(const OmModPack* ModPack) const
+{
+  OmWString core, vers;
+
+  for(size_t i = 0; i < this->_src_depend.size(); ++i) {
+
+    if(Om_parseModIdent(this->_src_depend[i], &core, &vers, nullptr)) {
+
+      if(ModPack->_core == core && ModPack->_version.match(vers))
+        return true;
+
+    } else {
+
+      if(ModPack->_core == core)
+        return true;
+    }
+
+  }
 
   return false;
 }
@@ -1360,7 +1384,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     } else {
 
       // extract from backup archive to target, overwriting existing
-      if(!backup_zip.entrySave(this->_bck_entry[i].cdid, tgt_file)) { //< TODO: des erreur d'index ici, le cdid est incohérent... data perdue ? mal parsé ?
+      if(!backup_zip.entrySave(this->_bck_entry[i].cdid, tgt_file)) { //< TODO: des erreur d'index ici, le cdid est incohÃ©rent... data perdue ? mal parsÃ© ?
         this->_error(L"restoreData", Om_errZipExtr(L"Backup to Target file", this->_bck_entry[i].path, backup_zip.lastErrorStr()));
         has_error = true;
       }

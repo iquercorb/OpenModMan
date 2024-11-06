@@ -79,7 +79,7 @@ class OmVersion
     ///
     /// Parses the supplied string to get version data.
     ///
-    /// \param[in]  str     : Version string to parse.
+    /// \param[in]  str       : Version string to parse.
     ///
     /// \return True if parsing succeed, false otherwise.
     ///
@@ -89,11 +89,11 @@ class OmVersion
     ///
     /// Defines this instance according the given values.
     ///
-    /// \param[in]  maj     : Major number to set.
-    /// \param[in]  min     : Minor number to set.
-    /// \param[in]  rev     : Revision number to set.
+    /// \param[in] major    : Major number to set.
+    /// \param[in] minor    : Minor number to set.
+    /// \param[in] revis    : Revision number to set.
     ///
-    void define(unsigned maj, unsigned min, unsigned rev);
+    void define(uint32_t major, uint32_t minor, uint32_t revis);
 
     /// \brief Check validity
     ///
@@ -111,7 +111,7 @@ class OmVersion
     ///
     /// \return Version major number.
     ///
-    unsigned major() const {
+    uint32_t major() const {
       return _maj;
     }
 
@@ -121,7 +121,7 @@ class OmVersion
     ///
     /// \return Version minor number.
     ///
-    unsigned minor() const {
+    uint32_t minor() const {
       return _min;
     }
 
@@ -131,7 +131,7 @@ class OmVersion
     ///
     /// \return Version revision number.
     ///
-    unsigned revis() const {
+    uint32_t revis() const {
       return _rev;
     }
 
@@ -151,7 +151,7 @@ class OmVersion
     ///
     /// \return Version number.
     ///
-    unsigned operator[](unsigned i) const {
+    uint32_t operator[](unsigned i) const {
       switch(i) {
         case 0: return _maj;
         case 1: return _min;
@@ -223,6 +223,16 @@ class OmVersion
     ///
     bool operator>=(const OmVersion& other) const;
 
+    /// \brief Version filter test.
+    ///
+    /// Check this version against a filter with wildcards.
+    ///
+    /// \param[in] filter   : Filter string.
+    ///
+    /// \return True if this instance pass filter, false otherwise.
+    ///
+    bool match(const OmWString& filter) const;
+
     /// \brief Check whether is null.
     ///
     /// Checks whether this instance is null.
@@ -243,11 +253,11 @@ class OmVersion
 
     OmWStringArray     _str;   //< version as string
 
-    unsigned            _maj;   //< version major number
+    uint32_t           _maj;   //< version major number
 
-    unsigned            _min;   //< version minor number
+    uint32_t           _min;   //< version minor number
 
-    unsigned            _rev;   //< version revision number
+    uint32_t           _rev;   //< version revision number
 };
 
 #endif // OMVERSION_H

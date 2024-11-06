@@ -337,6 +337,17 @@ class OmModChan
     ///
     bool backupEntryExists(const OmWString& path, int32_t attr) const;
 
+    /// \brief find best suitable dependency
+    ///
+    /// Search for the most suitable Mod version according given identity filter.
+    ///
+    /// \param[in] filter     : Mod dependency identity filter.
+    /// \param[in] installed  : Search among installed Mods only.
+    ///
+    /// \return Most suitable Mod or nullptr if not found.
+    ///
+    OmModPack* findModDepend(const OmWString& filter, bool installed = false) const;
+
     /// \brief Check whether is dependency
     ///
     /// Check whether the specified Mod is a dependency of any other in the current Library
@@ -591,6 +602,16 @@ class OmModChan
     /// \return Index of Network Mods in list or -1 if not found
     ///
     int32_t indexOfNetpack(const OmNetPack* NetPack) const;
+
+    /// \brief find best suitable dependency
+    ///
+    /// Search for the most suitable Network Mod version according given identity filter.
+    ///
+    /// \param[in] filter     : Mod dependency identity filter.
+    ///
+    /// \return Most suitable Network Mod or nullptr if not found.
+    ///
+    OmNetPack* findNetDepend(const OmWString& filter) const;
 
     /// \brief Get Network Pack Dependencies
     ///

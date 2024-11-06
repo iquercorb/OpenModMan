@@ -1093,7 +1093,8 @@ bool Om_strIsVersion(const OmWString& str)
 
   for(unsigned i = 0; i < str.size(); ++i) {
 
-    if(str[i] > 47 && str[i] < 58) { // 0123456789
+    // we accept wildcard
+    if(str[i] > 47 && str[i] < 58)  { // 0123456789 || *
 
       if(j < 15) {
         ++j;
@@ -1103,9 +1104,13 @@ bool Om_strIsVersion(const OmWString& str)
 
     } else {
 
-      if(str[i] == L'.') {
+      if(str[i] == L'.' || str[i] == L'*') {
         if(j > 0) {
           n++; j = 0;
+        }
+
+        if(str[i] == L'*') {
+          n++;
         }
       }
 

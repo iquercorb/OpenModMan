@@ -19,22 +19,6 @@
 
 #include "OmBase.h"
 
-/// \brief Parse Package filename
-///
-/// Parse the Packag display name and potential version substring from its
-/// file name.
-///
-/// \param[out] name      : Parsed display name.
-/// \param[out] core      : Parsed core name.
-/// \param[out] vers      : Parsed version if any.
-/// \param[in]  filename  : Filename to be parsed.
-/// \param[in]  isfile    : Specify whether filename is file or a folder name.
-/// \param[in]  us2spc    : Specify whether underscores must be replaced by spaces.
-///
-/// \return True if version string candidate was found, false otherwise
-///
-bool Om_parsePkgIdent(OmWString& name, OmWString& core, OmWString& vers, const OmWString& filename, bool isfile = true, bool us2spc = true);
-
 /// \brief Parse Mod file name
 ///
 /// Parse Mod identity, core name, version string and displayed name from file name.

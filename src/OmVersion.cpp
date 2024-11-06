@@ -19,6 +19,63 @@
 #include "OmVersion.h"
 
 
+inline static bool __parse_filter(const OmWString& str, int32_t* major, int32_t* minor, int32_t* revis)
+{
+  wchar_t buf[32];
+
+  size_t n = 0;
+  int32_t number[3] = {};
+
+  uint32_t j = 0;
+  for(size_t i = 0; i < str.size(); ++i) {
+
+    if(str[i] > 47 && str[i] < 58) { // 0123456789
+
+      if(j < 15) {
+        buf[j] = str[i]; ++j;
+      } else {
+        return false;
+      }
+
+    } else {
+
+      if(str[i] == L'.' || str[i] == L'*') {
+
+        // add last gathered number
+        if(j > 0) {
+          buf[j] = L'\0';
+          number[n++] = wcstoul(buf, nullptr, 10);
+          j = 0;
+        }
+
+        if(str[i] == L'*')
+          number[n++] = -1;
+      }
+
+      if(n > 2)
+        break;
+    }
+  }
+
+  if(j > 0 && n < 3) {
+    buf[j] = L'\0';
+    number[n++] = wcstoul(buf, nullptr, 10);
+  }
+
+  if(n < 2 && number[0] < 0)
+    number[1] = -1;
+
+  if(n < 3 && number[1] < 0)
+    number[2] = -1;
+
+  (*major) = number[0];
+  (*minor) = number[1];
+  (*revis) = number[2];
+
+  return true;
+}
+
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -35,50 +92,7 @@ OmVersion::OmVersion() :
 OmVersion::OmVersion(const OmWString& vstr) :
   _str(), _maj(0), _min(0), _rev(0)
 {
-  wchar_t num[32];
-
-  unsigned j = 0;
-  for(size_t i = 0; i < vstr.size(); ++i) {
-
-    if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
-
-      if(j < 15) {
-        num[j] = vstr[i]; ++j;
-      } else {
-        return;
-      }
-
-    } else {
-
-      if(vstr[i] == L'.') {
-        if(j > 0) {
-          num[j] = 0;
-          _str.push_back(num);
-          j = 0;
-        }
-      }
-
-      if(_str.size() > 2)
-        break;
-    }
-  }
-
-  if(j > 0) {
-    num[j] = 0; _str.push_back(num);
-  }
-
-  if(_str.size() > 0) {
-    _maj = wcstoul(_str[0].c_str(), nullptr, 10);
-    if(_str.size() > 1) {
-      _min = wcstoul(_str[1].c_str(), nullptr, 10);
-      if(_str.size() > 2) {
-        _rev = wcstoul(_str[2].c_str(), nullptr, 10);
-      }
-    }
-    return;
-  }
-
-  return;
+  this->parse(vstr);
 }
 
 
@@ -132,9 +146,10 @@ bool OmVersion::parse(const OmWString& vstr)
 
     } else {
 
-      if(vstr[i] == L'.') {
+      if(vstr[i] == L'.' || vstr[i] == L'*') {
+        // add last gathered number
         if(j > 0) {
-          num[j] = 0;
+          num[j] = L'\0';
           _str.push_back(num);
           j = 0;
         }
@@ -145,15 +160,20 @@ bool OmVersion::parse(const OmWString& vstr)
     }
   }
 
-  if(j > 0) {
+  if(j > 0 && _str.size() < 3) {
     num[j] = 0; _str.push_back(num);
   }
 
   if(_str.size() > 0) {
+
     _maj = wcstoul(_str[0].c_str(), nullptr, 10);
+
     if(_str.size() > 1) {
+
       _min = wcstoul(_str[1].c_str(), nullptr, 10);
+
       if(_str.size() > 2) {
+
         _rev = wcstoul(_str[2].c_str(), nullptr, 10);
       }
     }
@@ -167,21 +187,25 @@ bool OmVersion::parse(const OmWString& vstr)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-void OmVersion::define(unsigned maj, unsigned min, unsigned rev)
+void OmVersion::define(uint32_t major, uint32_t minor, uint32_t revis)
 {
-  _maj = maj;
-  _min = min;
-  _rev = rev;
+  _maj = major;
+  _min = minor;
+  _rev = revis;
 
   _str.clear();
 
   wchar_t wcbuf[32];
 
-  swprintf(wcbuf, 32, L"%u", _maj);
-  _str.push_back(wcbuf);
+  if(_maj > 0) {
+    swprintf(wcbuf, 32, L"%u", _maj);
+    _str.push_back(wcbuf);
+  }
 
-  swprintf(wcbuf, 32, L"%u", _min);
-  _str.push_back(wcbuf);
+  if(_min > 0) {
+    swprintf(wcbuf, 32, L"%u", _min);
+    _str.push_back(wcbuf);
+  }
 
   if(_rev > 0) {
     swprintf(wcbuf, 32, L"%u", _rev);
@@ -212,55 +236,7 @@ OmVersion& OmVersion::operator=(const OmVersion& other)
 ///
 OmVersion& OmVersion::operator=(const OmWString& vstr)
 {
-  wchar_t digits[16];
-
-  _maj = 0;
-  _min = 0;
-  _rev = 0;
-
-  _str.clear();
-
-  unsigned j = 0;
-  for(size_t i = 0; i < vstr.size(); ++i) {
-
-    if(vstr[i] > 47 && vstr[i] < 58) { // 0123456789
-
-      if(j < 15) {
-        digits[j] = vstr[i]; ++j;
-      } else {
-        return *this;
-      }
-
-    } else {
-
-      if(vstr[i] == L'.') {
-        if(j > 0) {
-          digits[j] = 0;
-          _str.push_back(digits);
-          j = 0;
-        }
-      }
-
-      if(_str.size() > 2)
-        break;
-    }
-  }
-
-  if(j > 0) {
-    digits[j] = 0; _str.push_back(digits);
-  }
-
-  if(_str.size() > 0) {
-    _maj = wcstoul(_str[0].c_str(), nullptr, 10);
-    if(_str.size() > 1) {
-      _min = wcstoul(_str[1].c_str(), nullptr, 10);
-      if(_str.size() > 2) {
-        _rev = wcstoul(_str[2].c_str(), nullptr, 10);
-      }
-    }
-    return *this;
-  }
-
+  this->parse(vstr);
   return *this;
 }
 
@@ -382,6 +358,26 @@ bool OmVersion::operator>=(const OmVersion& other) const
   return false;
 }
 
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmVersion::match(const OmWString& filter) const
+{
+  int32_t major, minor, revis;
+
+  __parse_filter(filter, &major, &minor, &revis);
+
+  if((major >= 0) && ((int32_t)_maj != major))
+      return false;
+
+  if((minor >= 0) && ((int32_t)_min != minor))
+      return false;
+
+  if((revis >= 0) && ((int32_t)_rev != revis))
+      return false;
+
+  return true;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -

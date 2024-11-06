@@ -436,6 +436,16 @@ class OmModPack
     ///
     bool hasDepend(const OmWString& iden) const;
 
+    /// \brief Check for dependency Mod match
+    ///
+    /// Checks whether specified Mod matches any dependency referenced by this Mod.
+    ///
+    /// \param[in] ModPack  : Other instance to test
+    ///
+    /// \return True if Mod matches dependency, false otherwise
+    ///
+    bool matchDepend(const OmModPack* ModPack) const;
+
     /// \brief Add dependency Mod identity
     ///
     /// Add dependency Mod identity reference for this Mod.

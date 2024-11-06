@@ -23,6 +23,7 @@
 #include "OmUtilErr.h"
 #include "OmUtilStr.h"
 #include "OmUtilAlg.h"
+#include "OmUtilPkg.h"
 
 #include "OmArchive.h"          //< Archive compression methods / level
 
@@ -1550,20 +1551,73 @@ bool OmModChan::backupEntryExists(const OmWString& path, int32_t attr) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+OmModPack* OmModChan::findModDepend(const OmWString& filter, bool installed) const
+{
+  // parsed identity filter
+  OmWString core, vers;
+
+  if(Om_parseModIdent(filter, &core, &vers, nullptr)) {
+
+    // gather candidates
+    OmPModPackArray candidates;
+
+    for(size_t i = 0; i < this->_modpack_list.size(); ++i) {
+
+      if(installed && !this->_modpack_list[i]->hasBackup())
+        continue;
+
+      if(this->_modpack_list[i]->core() != core)
+        continue;
+
+      if(!this->_modpack_list[i]->version().match(vers))
+        continue;
+
+      candidates.push_back(this->_modpack_list[i]);
+    }
+
+    if(candidates.size()) {
+
+      // more than one candidate, sort by version
+      if(candidates.size() > 1)
+        std::sort(candidates.begin(), candidates.end(), _compare_mod_vers);
+
+      return candidates[candidates.size()-1];
+    }
+
+  } else {
+
+    for(size_t i = 0; i < this->_modpack_list.size(); ++i) {
+
+      if(installed && !this->_modpack_list[i]->hasBackup())
+        continue;
+
+      if(this->_modpack_list[i]->iden() == core)
+        return this->_modpack_list[i];
+    }
+  }
+
+  return nullptr;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmModChan::isDependency(const OmModPack* ModPack, bool installed) const
 {
   if(installed) {
 
     for(size_t i = 0; i < this->_modpack_list.size(); ++i)
       if(this->_modpack_list[i]->hasBackup() && ModPack != this->_modpack_list[i])
-        if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+        //if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+        if(this->_modpack_list[i]->matchDepend(ModPack))
           return true;
 
   } else {
 
     for(size_t i = 0; i < this->_modpack_list.size(); ++i)
       if(ModPack != this->_modpack_list[i])
-        if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+        //if(this->_modpack_list[i]->hasDepend(ModPack->iden()))
+        if(this->_modpack_list[i]->matchDepend(ModPack))
           return true;
   }
 
@@ -1578,7 +1632,7 @@ bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
     bool is_missing = true;
-
+/*
     for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
 
       // ignore directory Mods
@@ -1593,6 +1647,18 @@ bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
 
         is_missing = false;
 
+        break;
+      }
+    }
+*/
+    OmModPack* DepMod = this->findModDepend(ModPack->getDependIden(i));
+
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      // recursively check
+      if(this->hasMissingDepend(DepMod)) {
+
+        is_missing = false;
         break;
       }
     }
@@ -1612,10 +1678,10 @@ bool OmModChan::hasBrokenDepend(const OmModPack* ModPack) const
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
     bool is_broken = true;
-
+/*
     for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
 
-      // ignore directory and not installed Mods
+      // ignore directory Mods
       if(this->_modpack_list[j]->sourceIsDir())
         continue;
 
@@ -1634,6 +1700,24 @@ bool OmModChan::hasBrokenDepend(const OmModPack* ModPack) const
         break;
       }
     }
+*/
+    OmModPack* DepMod = this->findModDepend(ModPack->getDependIden(i), true);
+
+    // ignore directory Mods
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      // check whether Mod is installed
+      if(!DepMod->hasBackup())
+        return true;
+
+      // recursively check
+      if(this->hasBrokenDepend(DepMod))
+        return true;
+
+      is_broken = false;
+
+      break;
+    }
 
     if(is_broken)
       return true;
@@ -1642,6 +1726,7 @@ bool OmModChan::hasBrokenDepend(const OmModPack* ModPack) const
   return false;
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -1649,13 +1734,14 @@ void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* d
 {
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
-    bool missing = true;
-
+    bool is_missing = true;
+    /*
     for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
 
       // rely only on packages
       if(this->_modpack_list[j]->sourceIsDir())
         continue;
+
 
       if(ModPack->getDependIden(i) == this->_modpack_list[j]->iden()) {
 
@@ -1667,12 +1753,29 @@ void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* d
         if(!this->_modpack_list[j]->hasBackup())
           Om_push_backUnique(*depends, this->_modpack_list[j]);
 
-        missing = false;
+        is_missing = false;
         break;
       }
     }
+    */
 
-    if(missing)
+    OmModPack* DepMod = this->findModDepend(ModPack->getDependIden(i));
+
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      this->_get_modops_depends(DepMod, depends, missings);
+
+      // we add to list only if unique and not already installed, this allow
+      // us to get a consistent dependency list for a bunch of package by
+      // calling this function for each package without clearing the list
+      if(!DepMod->hasBackup())
+        Om_push_backUnique(*depends, DepMod);
+
+      is_missing = false;
+      break;
+    }
+
+    if(is_missing)
       Om_push_backUnique(*missings, ModPack->getDependIden(i));
   }
 }
@@ -2314,7 +2417,7 @@ void OmModChan::_get_missing_depends(const OmModPack* ModPack, OmWStringArray* m
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
 
     bool is_missing = true;
-
+/*
     for(size_t m = 0; m < this->_modpack_list.size(); ++m) {
 
       // ignore directory Mods
@@ -2323,16 +2426,73 @@ void OmModChan::_get_missing_depends(const OmModPack* ModPack, OmWStringArray* m
 
       if(ModPack->getDependIden(i) == this->_modpack_list[m]->iden()) {
 
-        this->_get_missing_depends(ModPack, missings);
+        this->_get_missing_depends(this->_modpack_list[m], missings);
 
         is_missing = false;
         break;
       }
     }
+*/
+
+    OmModPack* DepMod = this->findModDepend(ModPack->getDependIden(i));
+
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      this->_get_missing_depends(DepMod, missings);
+
+      is_missing = false;
+
+      break;
+    }
 
     if(is_missing)
       Om_push_backUnique(*missings, ModPack->getDependIden(i));
   }
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmNetPack* OmModChan::findNetDepend(const OmWString& filter) const
+{
+  // parsed identity filter
+  OmWString core, vers;
+
+  if(Om_parseModIdent(filter, &core, &vers, nullptr)) {
+
+    // gather candidates
+    OmPNetPackArray candidates;
+
+    for(size_t i = 0; i < this->_netpack_list.size(); ++i) {
+
+      if(this->_netpack_list[i]->core() != core)
+        continue;
+
+      if(!this->_netpack_list[i]->version().match(vers))
+        continue;
+
+      candidates.push_back(this->_netpack_list[i]);
+    }
+
+    if(candidates.size()) {
+
+      // more than one candidate, sort by version
+      if(candidates.size() > 1)
+        std::sort(candidates.begin(), candidates.end(), _compare_net_vers);
+
+      return candidates[candidates.size()-1];
+    }
+
+  } else {
+
+    for(size_t i = 0; i < this->_netpack_list.size(); ++i) {
+
+      if(this->_netpack_list[i]->iden() == core)
+        return this->_netpack_list[i];
+    }
+  }
+
+  return nullptr;
 }
 
 ///
@@ -2353,6 +2513,7 @@ void OmModChan::_get_source_downloads(const OmModPack* ModPack, OmPNetPackArray*
 
     bool is_missing = true;
 
+    /*
     for(size_t n = 0; n < this->_netpack_list.size(); ++n) {
 
       if(missing_depends.at(i) == this->_netpack_list[n]->iden()) {
@@ -2365,6 +2526,20 @@ void OmModChan::_get_source_downloads(const OmModPack* ModPack, OmPNetPackArray*
 
         is_missing = false;
       }
+    }
+    */
+
+    OmNetPack* DepNet = this->findNetDepend(missing_depends.at(i));
+
+    if(DepNet) {
+
+      // add Mod dependencies
+      this->getDepends(DepNet, downloads, missings);
+
+      // add Mod itslef
+      Om_push_backUnique(*downloads, DepNet);
+
+      is_missing = false;
     }
 
     if(is_missing)
@@ -2385,6 +2560,7 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
     bool in_library = false;
 
     // first check whether required dependency is in package library
+    /*
     for(size_t m = 0; m < this->_modpack_list.size(); ++m) {
 
       // ignore directories
@@ -2402,12 +2578,24 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
         break;
       }
     }
+    */
+
+    OmModPack* DepMod = this->findModDepend(NetPack->getDependIden(i));
+
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      // get all available dependencies for this Mod
+      this->_get_source_downloads(DepMod, depends, missings);
+
+      in_library = true;
+    }
 
     if(in_library) //< skip if already in library
       continue;
 
     bool is_missing = true;
 
+    /*
     for(size_t n = 0; n < this->_netpack_list.size(); ++n) {
 
       if(NetPack->getDependIden(i) == this->_netpack_list[n]->iden()) {
@@ -2421,6 +2609,17 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
         is_missing = false;
         break;
       }
+    }
+    */
+
+    OmNetPack* DepNet = this->findNetDepend(NetPack->getDependIden(i));
+
+    if(DepNet) {
+
+      // add Mod dependencies
+      this->getDepends(DepNet, depends, missings);
+
+      is_missing = false;
     }
 
     if(is_missing)

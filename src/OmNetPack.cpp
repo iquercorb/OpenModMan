@@ -263,6 +263,31 @@ bool OmNetPack::hasDepend(const OmWString& ident) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmNetPack::matchDepend(const OmNetPack* NetPack) const
+{
+  OmWString core, vers;
+
+  for(size_t i = 0; i < this->_depend.size(); ++i) {
+
+    if(Om_parseModIdent(this->_depend[i], &core, &vers, nullptr)) {
+
+      if(NetPack->_core == core && NetPack->_version.match(vers))
+        return true;
+
+    } else {
+
+      if(NetPack->_core == core)
+        return true;
+    }
+
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmNetPack::refreshAnalytics()
 {
   if(!this->_ModChan)

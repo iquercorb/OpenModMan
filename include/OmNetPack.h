@@ -175,6 +175,16 @@ class OmNetPack
     ///
     bool hasDepend(const OmWString& iden) const;
 
+    /// \brief Check for dependency Mod match
+    ///
+    /// Checks whether specified Mod matches any dependency referenced by this Mod.
+    ///
+    /// \param[in] NetPack  : Other instance to test
+    ///
+    /// \return True if Mod matches dependency, false otherwise
+    ///
+    bool matchDepend(const OmNetPack* NetPack) const;
+
     /// \brief Downloadable file name
     ///
     /// Downloadable Mod file name.
