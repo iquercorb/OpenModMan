@@ -954,8 +954,8 @@ void Om_concatPathsExt(OmWString& conc, const OmWString& left, const OmWString& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_isRootOfPath(const OmWString& root, const OmWString& path) {
-
+bool Om_isRootOfPath(const OmWString& root, const OmWString& path)
+{
   size_t l = root.size();
 
   if(l > path.size())
@@ -971,8 +971,8 @@ bool Om_isRootOfPath(const OmWString& root, const OmWString& path) {
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& path) {
-
+bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& path)
+{
   size_t l = root.size();
 
   if(l > path.size())
@@ -994,8 +994,37 @@ bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmWString Om_concatURLs(const OmWString& left, const OmWString& right) {
+bool Om_clipSubtree(OmWString* clp, const OmWString& root, const OmWString& path)
+{
+  size_t e = std::wstring::npos;
+  size_t s = root.size();
 
+  if(s > path.size())
+    return false;
+
+  if(path.compare(0,s,root) == 0) {
+    if(path[s] == L'\\') { //< verify this is a folder
+      s++;
+      if(path.size() > s)
+        e = path.find_first_of(L'\\', s); //< find the next back-slash
+    }
+  }
+
+  if(e < path.size()) {
+    *clp = path.substr(0, e);
+    return true;
+  } else {
+    *clp = path;
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+OmWString Om_concatURLs(const OmWString& left, const OmWString& right)
+{
   OmWString result;
   if(left.empty()) {
     result = right;

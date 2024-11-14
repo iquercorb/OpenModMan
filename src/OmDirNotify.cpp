@@ -58,10 +58,6 @@ void OmDirNotify::setCallback(Om_notifyCb notify_cb, void* user_ptr)
 ///
 void OmDirNotify::stopMonitor()
 {
-  #ifdef DEBUG
-  std::wcout << L"DEBUG => OmDirNotify::stopMonitor\n";
-  #endif
-
   // set 'stop' event
   SetEvent(this->_stop_hev);
 
@@ -80,6 +76,11 @@ void OmDirNotify::stopMonitor()
     this->_modif_queue.clear();
   }
 
+  #ifdef DEBUG
+  std::wcout << L"DEBUG => OmDirNotify::stopMonitor (" << this->_path << ")\n";
+  #endif
+
+  this->_path.clear();
 }
 
 ///
@@ -87,13 +88,14 @@ void OmDirNotify::stopMonitor()
 ///
 void OmDirNotify::startMonitor(const OmWString& path)
 {
+  this->_path = path;
+
   #ifdef DEBUG
   std::wcout << L"DEBUG => OmDirNotify::startMonitor (" << path << L")\n";
   #endif
 
-  this->_path = path;
-
-  this->stopMonitor();
+  if(this->_access_check_hth || this->_changes_hth)
+    this->stopMonitor();
 
   // create or reset custom 'stop' event
   if(this->_stop_hev) {
@@ -135,7 +137,7 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
   uint8_t FileNotifyBuf[512000];
 
   // Request for changes in directory
-  ReadDirectoryChangesW(hDirectory, FileNotifyBuf, 512000, false, NotifyFilter, nullptr, &Overlapped, nullptr);
+  ReadDirectoryChangesW(hDirectory, FileNotifyBuf, 512000, true, NotifyFilter, nullptr, &Overlapped, nullptr);
 
   // Buffer for file name
   wchar_t FileName[OM_MAX_PATH];

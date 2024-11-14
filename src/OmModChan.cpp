@@ -805,21 +805,25 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
-  // path to element related to notify message
-  OmWString path = reinterpret_cast<wchar_t*>(param);
+  OmWString mod_path;
 
-  // ignore directories except in dev mode
-  if(!self->_library_devmode)
-    if(Om_isDir(path))
-      return;
+  // We clip subtree part if any, so we get only mod folder
+  if(Om_clipSubtree(&mod_path, self->_library_path, reinterpret_cast<wchar_t*>(param))) {
+    // If notification is about subtree element of a Directory Mod, we requalify the
+    // notification type to OM_NOTIFY_ALTERED, since we only need to refresh Mod.
+    notify = OM_NOTIFY_ALTERED;
+  }
 
   // ignore hidden file except if required
-  if(!self->_library_showhidden)
-    if(Om_isHidden(path))
+  if(!self->_library_showhidden && Om_isHidden(mod_path))
+      return;
+
+  // ignore directories except in dev mode
+  if(!self->_library_devmode && Om_isDir(mod_path))
       return;
 
   // get name hash
-  uint64_t name_hash = Om_getXXHash3(Om_getFilePart(path));
+  uint64_t name_hash = Om_getXXHash3(Om_getFilePart(mod_path));
 
   // Forwarded notification type
   OmNotify fw_notify = OM_NOTIFY_UNDEFINED;
@@ -845,19 +849,19 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
   if(notify == OM_NOTIFY_CREATED) {
 
     // filter by directory / file extension
-    if(Om_isDir(path) ||
-       Om_extensionMatches(path, L"zip") ||
-       Om_extensionMatches(path, OM_PKG_FILE_EXT)) {
+    if(Om_isDir(mod_path) ||
+       Om_extensionMatches(mod_path, L"zip") ||
+       Om_extensionMatches(mod_path, OM_PKG_FILE_EXT)) {
 
       // check whether this Mod Source matches an existing Backup
       if(ModPack) {
-        ModPack->parseSource(path);
+        ModPack->parseSource(mod_path);
         // forward alternation notification
         fw_notify = OM_NOTIFY_ALTERED;
       } else {
         // no Backup found for this Mod Source, adding new
         ModPack = new OmModPack(self);
-        if(ModPack->parseSource(path)) {
+        if(ModPack->parseSource(mod_path)) {
           self->_modpack_list.push_back(ModPack);
           // forward creation notification
           fw_notify = OM_NOTIFY_CREATED;
@@ -925,7 +929,7 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
     if(self->_library_devmode) {
 
       // get presumed mod 'identity' from file name
-      OmWString iden = Om_getNamePart(path);
+      OmWString iden = Om_getNamePart(mod_path);
 
       for(size_t p = 0; p < self->_modpack_list.size(); ++p) {
 

@@ -414,7 +414,6 @@ OmWString Om_getFilePart(const OmWString& path);
 ///
 OmWString Om_getDirPart(const OmWString& uri);
 
-
 /// \brief Extract file name without extension from path
 ///
 /// Extracts and returns the file name, without its extension, from
@@ -488,7 +487,7 @@ void Om_concatPathsExt(OmWString& conc, const OmWString& left, const OmWString& 
 /// Checks whether the given path has the specified root.
 ///
 /// \param[in]  root    : Root path for verification.
-/// \param[in]  item    : Path to verify if it has the specified root.
+/// \param[in]  path    : Path to verify if it has the specified root.
 ///
 /// \return True if path actually has the specified root, false otherwise.
 ///
@@ -501,12 +500,25 @@ bool Om_isRootOfPath(const OmWString& root, const OmWString& path);
 ///
 /// \param[out] rel     : Pointer to string to be set as relative path.
 /// \param[in]  root    : Root of path used to check and extract relative part.
-/// \param[in]  item    : Path to be checked and to get the relative part from.
+/// \param[in]  path    : Path to be checked and to get the relative part from.
 ///
 /// \return True if path actually has the specified root and operation succeed,
 ///         false otherwise.
 ///
 bool Om_getRelativePath(OmWString* rel, const OmWString& root, const OmWString& path);
+
+/// \brief Remove subtree part of a full path
+///
+/// Checks whether the given path has the specified root, then remove the subtree
+/// part of the first direct child.
+///
+/// \param[out] clp     : Pointer to string to be set as isolated folder.
+/// \param[in]  root    : Root of path used to check and extract relative part.
+/// \param[in]  path    : Path to be checked and to get the relative part from.
+///
+/// \return True if path actually has subtree and was clipped, false otherwise.
+///
+bool Om_clipSubtree(OmWString* clp, const OmWString& root, const OmWString& path);
 
 /// \brief Concatenate paths
 ///
