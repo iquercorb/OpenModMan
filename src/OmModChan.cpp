@@ -1789,6 +1789,10 @@ void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* d
 ///
 void OmModChan::prepareInstalls(const OmPModPackArray& selection, OmPModPackArray* installs, OmWStringArray* overlaps, OmWStringArray* depends, OmWStringArray* missings, OmWStringArray* conflicts) const
 {
+  // Force refresh Mod content
+  for(size_t i = 0; i < selection.size(); ++i)
+    selection[i]->refreshSource();
+
   // gather dependencies and create missing lists
   OmPModPackArray found_depends;
   for(size_t i = 0; i < selection.size(); ++i)
