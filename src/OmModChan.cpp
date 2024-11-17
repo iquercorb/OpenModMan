@@ -805,14 +805,7 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
 {
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
-  OmWString mod_path;
-
-  // We clip subtree part if any, so we get only mod folder
-  bool is_subitem = Om_clipSubtree(&mod_path, self->_library_path, reinterpret_cast<wchar_t*>(param));
-
-  // If notification is about subtree element of a Directory Mod, we requalify the
-  // notification type to OM_NOTIFY_ALTERED, since we only need to refresh Mod.
-  if(is_subitem)  notify = OM_NOTIFY_ALTERED;
+  OmWString mod_path = reinterpret_cast<wchar_t*>(param);
 
   // ignore hidden file except if required
   if(!self->_library_showhidden && Om_isHidden(mod_path))
@@ -917,9 +910,9 @@ void OmModChan::_monitor_notify_fn(void* ptr, OmNotify notify, uint64_t param)
         self->_modpack_notify_cb(self->_modpack_notify_ptr, fw_notify, name_hash);
     }
 
-    // except for sub-tree items, as changes in local library may
-    // change status in Network library we refresh Network library
-    if(!is_subitem) self->refreshNetLibrary();
+    // As changes in local library may change status in Network library
+    // we refresh Network library
+    self->refreshNetLibrary();
 
   } else {
 

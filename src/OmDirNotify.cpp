@@ -21,6 +21,31 @@
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 #include "OmDirNotify.h"
 
+/// Routine to extract FILE_NOTIFY_INFORMATION Filename to proper
+/// null-terminated string and indicating whether it is subtree item
+static inline bool __get_item_name(wchar_t* dst, const wchar_t* src, size_t src_len)
+{
+  // supplied length is in bytes count
+  size_t num_char = src_len / sizeof(wchar_t);
+
+  size_t len;
+
+  for(len = 0; len < num_char; ++len) {
+
+    // we stop at the first '\' indicating this is subitem, we
+    // keep only the direct child, no subitem
+    if(src[len] == L'\\') {
+      dst[len] = 0;
+      return true;
+    }
+
+    dst[len] = src[len];
+  }
+
+  dst[len] = 0;
+
+  return false;
+}
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -141,6 +166,9 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
   // Buffer for file name
   wchar_t FileName[OM_MAX_PATH];
 
+  // Flag for subtree item notification
+  bool is_subitem = false;
+
   OmWString FilePath;
 
   while(true) {
@@ -164,13 +192,11 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
 
       while(true) {
 
-        size_t len = Notify->FileNameLength / sizeof(wchar_t);
-
-        // file name into null-terminated string
-        for(size_t i = 0; i < len; ++i)
-          FileName[i] = Notify->FileName[i];
-
-        FileName[len] = 0;
+        // We extract item filename from notify structure. We extract only the direct child
+        // of the tracked folder, removing any subtree items from the path. If notification
+        // is about subtree item the function return true, so we can make specific operations
+        // for such case.
+        is_subitem = __get_item_name(FileName, Notify->FileName, Notify->FileNameLength);
 
         Om_concatPaths(FilePath, self->_path, FileName);
 
@@ -178,18 +204,34 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
         {
         case FILE_ACTION_ADDED:
 
-          self->_access_check_add(FilePath);
+          if(is_subitem) {
+
+            // If notification is about subtree item, we treat it as modification of its parent
+            Om_push_backUnique(self->_modif_queue, FilePath);
+
+          } else {
+
+            self->_access_check_add(FilePath);
+          }
 
           break;
 
         case FILE_ACTION_REMOVED:
 
           #ifdef DEBUG
-          std::wcout << L"DEBUG => OmDirNotify : File Rem (" << FilePath << L")\n";
+          std::wcout << L"DEBUG => OmDirNotify : FILE_ACTION_REMOVED (" << FilePath << L")\n";
           #endif // DEBUG
 
-          if(self->_notify_cb)
-            self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+          if(is_subitem) {
+
+            // If notification is about subtree item, we treat it as modification of its parent
+            Om_push_backUnique(self->_modif_queue, FilePath);
+
+          } else {
+
+            if(self->_notify_cb)
+              self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+          }
 
           break;
 
@@ -203,18 +245,26 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
         case FILE_ACTION_RENAMED_OLD_NAME:
 
           #ifdef DEBUG
-          std::wcout << L"DEBUG => OmDirNotify : File Rem (Rename) (" << FileName << L")\n";
+          std::wcout << L"DEBUG => OmDirNotify : FILE_ACTION_RENAMED_OLD_NAME (" << FileName << L")\n";
           #endif // DEBUG
 
-          if(self->_notify_cb)
-            self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+          if(is_subitem) {
+
+            // If notification is about subtree item, we treat it as modification of its parent
+            Om_push_backUnique(self->_modif_queue, FilePath);
+
+          } else {
+
+            if(self->_notify_cb)
+              self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
+          }
 
           break;
 
         case FILE_ACTION_RENAMED_NEW_NAME:
 
           #ifdef DEBUG
-          std::wcout << L"DEBUG => OmDirNotify : File Add (Rename) (" << FileName << L")\n";
+          std::wcout << L"DEBUG => OmDirNotify : FILE_ACTION_RENAMED_NEW_NAME (" << FileName << L")\n";
           #endif // DEBUG
 
           // In case of file rename, the system send both FILE_ACTION_RENAMED_NEW_NAME
@@ -222,28 +272,37 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
           // called twice from two threads, we add to queue like another file creation,
           // verifying it is not already in queue.
 
-          self->_access_check_add(FilePath);
+          if(is_subitem) {
+
+            // If notification is about subtree item, we treat it as modification of its parent
+            Om_push_backUnique(self->_modif_queue, FilePath);
+
+          } else {
+
+            self->_access_check_add(FilePath);
+          }
 
           break;
-        }
-
-        size_t i = self->_modif_queue.size();
-        while(i--) {
-
-          #ifdef DEBUG
-          std::wcout << L"DEBUG => OmDirNotify : File Mod (" << self->_modif_queue[i] << L")\n";
-          #endif // DEBUG
-
-          if(self->_notify_cb)
-            self->_notify_cb(self->_user_ptr, OM_NOTIFY_ALTERED, reinterpret_cast<uint64_t>(self->_modif_queue[i].c_str()));
-
-          self->_modif_queue.erase(self->_modif_queue.begin() + i);
         }
 
         if(Notify->NextEntryOffset == 0)
           break;
 
         Notify = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<uint8_t*>(Notify) + Notify->NextEntryOffset);
+      }
+
+      // Flushes the modification queue, effectively sending notification to client
+      size_t i = self->_modif_queue.size();
+      while(i--) {
+
+        #ifdef DEBUG
+        std::wcout << L"DEBUG => OmDirNotify : File Mod (" << self->_modif_queue[i] << L")\n";
+        #endif // DEBUG
+
+        if(self->_notify_cb)
+          self->_notify_cb(self->_user_ptr, OM_NOTIFY_ALTERED, reinterpret_cast<uint64_t>(self->_modif_queue[i].c_str()));
+
+        self->_modif_queue.erase(self->_modif_queue.begin() + i);
       }
     }
 
@@ -263,7 +322,7 @@ void OmDirNotify::_access_check_add(const OmWString& path)
 {
   Om_push_backUnique(this->_added_queue, path);
 
-  // prevent simultaneous startings
+  // start thread
   if(!this->_access_check_hth) {
     this->_access_check_hth = Om_threadCreate(OmDirNotify::_access_check_run_fn, this);
     this->_access_check_hwo = Om_threadWaitEnd(this->_access_check_hth, OmDirNotify::_access_check_end_fn, this);
