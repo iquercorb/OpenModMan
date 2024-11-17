@@ -65,7 +65,6 @@ void OmDirNotify::stopMonitor()
     // wait for threads to quit
     WaitForSingleObject(this->_access_check_hth, INFINITE);
     this->_added_queue.clear();
-    this->_unadd_queue.clear();
   }
 
   if(this->_changes_hth) {
@@ -192,11 +191,6 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
           if(self->_notify_cb)
             self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
 
-          // this file will never be accessible anymore, we ensure it will
-          // not still tested forever in the availability check thread
-          //if(Om_arrayContain(self->_added_queue, FilePath))
-            //Om_push_backUnique(self->_unadd_queue, FilePath);
-
           break;
 
         case FILE_ACTION_MODIFIED:
@@ -214,11 +208,6 @@ DWORD WINAPI OmDirNotify::_changes_run_fn(void* ptr)
 
           if(self->_notify_cb)
             self->_notify_cb(self->_user_ptr, OM_NOTIFY_DELETED, reinterpret_cast<uint64_t>(FilePath.c_str()));
-
-          // this file will never be accessible anymore, we ensure it will
-          // not still tested forever in the availability check thread
-          //if(Om_arrayContain(self->_added_queue, FilePath))
-            //Om_push_backUnique(self->_unadd_queue, FilePath);
 
           break;
 
@@ -298,19 +287,6 @@ DWORD WINAPI OmDirNotify::_access_check_run_fn(void* ptr)
 
   while(self->_added_queue.size()) {
 
-    // Check for 'stop' event, wait 50 MS each loop to to prevent flood of 'CreateFileW'
-    if(0 == WaitForSingleObject(self->_stop_hev, 50))
-      break;
-/*
-    // check for files that will never be available anymore, we remove them
-    // from queue to ensure they will not be tested forever
-    while(self->_unadd_queue.size()) {
-
-      Om_eraseValue(self->_added_queue, self->_unadd_queue.back());
-
-      self->_unadd_queue.pop_back();
-    }
-*/
     // test added files true availability, so we are sure once notification is sent the file
     // is available for read/write operation
     size_t i = self->_added_queue.size();
@@ -320,6 +296,9 @@ DWORD WINAPI OmDirNotify::_access_check_run_fn(void* ptr)
 
       // If file does not exist, remove it from queue
       if(FileAttr == INVALID_FILE_ATTRIBUTES) {
+        #ifdef DEBUG
+        std::wcout << L"DEBUG => OmDirNotify::_access_check_run_fn : removed from invalid file (" << self->_added_queue[i] << L")\n";
+        #endif // DEBUG
         self->_added_queue.erase(self->_added_queue.begin() + i);
         continue;
       }
@@ -350,6 +329,9 @@ DWORD WINAPI OmDirNotify::_access_check_run_fn(void* ptr)
       }
     }
 
+    // Check for 'stop' event, wait 50 MS each loop to prevent flood of 'CreateFileW'
+    if(0 == WaitForSingleObject(self->_stop_hev, 50))
+      break;
   }
 
   #ifdef DEBUG
@@ -374,6 +356,13 @@ VOID WINAPI OmDirNotify::_access_check_end_fn(void* ptr, uint8_t fired)
 
   Om_threadClear(self->_access_check_hth, self->_access_check_hwo);
 
-  self->_access_check_hth = nullptr;
-  self->_access_check_hwo = nullptr;
+  // An item may be added in the queue after exiting the loop but before thread
+  // closing so if item remain in queue, we restart the thread right now.
+  if(self->_added_queue.size()) {
+    self->_access_check_hth = Om_threadCreate(OmDirNotify::_access_check_run_fn, self);
+    self->_access_check_hwo = Om_threadWaitEnd(self->_access_check_hth, OmDirNotify::_access_check_end_fn, self);
+  } else {
+    self->_access_check_hth = nullptr;
+    self->_access_check_hwo = nullptr;
+  }
 }

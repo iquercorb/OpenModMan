@@ -89,8 +89,6 @@ class OmDirNotify
 
     OmWStringArray        _modif_queue;
 
-    OmWStringArray        _unadd_queue;
-
 
     void*                 _stop_hev;
 
