@@ -1384,7 +1384,7 @@ OmResult OmModPack::restoreData(Om_progressCb progress_cb, void* user_ptr, bool 
     } else {
 
       // extract from backup archive to target, overwriting existing
-      if(!backup_zip.entrySave(this->_bck_entry[i].cdid, tgt_file)) { //< TODO: des erreur d'index ici, le cdid est incohÃ©rent... data perdue ? mal parsÃ© ?
+      if(!backup_zip.entrySave(this->_bck_entry[i].cdid, tgt_file)) { //< TODO: des erreur d'index ici, le cdid est incohérent... data perdue ? mal parsé ?
         this->_error(L"restoreData", Om_errZipExtr(L"Backup to Target file", this->_bck_entry[i].path, backup_zip.lastErrorStr()));
         has_error = true;
       }
