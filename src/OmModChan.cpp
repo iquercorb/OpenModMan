@@ -1627,8 +1627,6 @@ bool OmModChan::isDependency(const OmModPack* ModPack, bool installed) const
 bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
 {
   for(size_t i = 0; i < ModPack->dependCount(); ++i) {
-
-    bool is_missing = true;
 /*
     for(size_t j = 0; j < this->_modpack_list.size(); ++j) {
 
@@ -1653,15 +1651,9 @@ bool OmModChan::hasMissingDepend(const OmModPack* ModPack) const
     if(DepMod && !DepMod->sourceIsDir()) {
 
       // recursively check
-      if(this->hasMissingDepend(DepMod)) {
-
-        is_missing = false;
-        break;
-      }
+      if(this->hasMissingDepend(DepMod))
+        return true;
     }
-
-    if(is_missing)
-      return true;
   }
 
   return false;
@@ -1769,7 +1761,6 @@ void OmModChan::_get_modops_depends(const OmModPack* ModPack, OmPModPackArray* d
         Om_push_backUnique(*depends, DepMod);
 
       is_missing = false;
-      break;
     }
 
     if(is_missing)
@@ -2499,6 +2490,38 @@ OmNetPack* OmModChan::findNetDepend(const OmWString& filter) const
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+bool OmModChan::hasMissingDepend(const OmNetPack* NetPack) const
+{
+  for(size_t i = 0; i < NetPack->dependCount(); ++i) {
+
+    // Search dependency in Local Library
+    OmModPack* DepMod = this->findModDepend(NetPack->getDependIden(i));
+
+    if(DepMod && !DepMod->sourceIsDir()) {
+
+      // recursively check
+      if(this->hasMissingDepend(DepMod)) {
+
+        // Search dependency in Network Library
+        OmNetPack* DepNet = this->findNetDepend(NetPack->getDependIden(i));
+
+        if(DepNet) {
+
+          // recursively check
+          if(this->hasMissingDepend(DepNet))
+            return true;
+        }
+      }
+    }
+
+  }
+
+  return false;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 void OmModChan::_get_source_downloads(const OmModPack* ModPack, OmPNetPackArray* downloads, OmWStringArray* missings) const
 {
   // get all missing dependencies for this package
@@ -2558,7 +2581,7 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
   // to found in the remote package list
   for(size_t i = 0; i < NetPack->dependCount(); ++i) {
 
-    bool in_library = false;
+    //bool in_library = false;
 
     // first check whether required dependency is in package library
     /*
@@ -2588,12 +2611,14 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
       // get all available dependencies for this Mod
       this->_get_source_downloads(DepMod, depends, missings);
 
-      in_library = true;
-    }
+      //in_library = true;
 
+      continue; //< skip if already in library
+    }
+/*
     if(in_library) //< skip if already in library
       continue;
-
+*/
     bool is_missing = true;
 
     /*
@@ -2619,6 +2644,9 @@ void OmModChan::getDepends(const OmNetPack* NetPack, OmPNetPackArray* depends, O
 
       // add Mod dependencies
       this->getDepends(DepNet, depends, missings);
+
+      // add Mod itslef
+      Om_push_backUnique(*depends, DepNet);
 
       is_missing = false;
     }

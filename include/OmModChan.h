@@ -613,6 +613,16 @@ class OmModChan
     ///
     OmNetPack* findNetDepend(const OmWString& filter) const;
 
+    /// \brief Check for missing dependency
+    ///
+    /// Check whether the specified Network Mod has at least one missing dependency.
+    ///
+    /// \param[in] NetPack  : Net Pack to check dependencies.
+    ///
+    /// \return True if at least one dependency is missing, false otherwise.
+    ///
+    bool hasMissingDepend(const OmNetPack* NetPack) const;
+
     /// \brief Get Network Pack Dependencies
     ///
     /// Retrieve list of dependencies of the specified Net Pack among those available

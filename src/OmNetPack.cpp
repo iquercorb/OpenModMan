@@ -332,12 +332,6 @@ bool OmNetPack::refreshAnalytics()
         this->_has_local = true;
         OM_ADD_BIT(new_stat, 0x02);
 
-        // check for missing dependencies
-        if(this->_ModChan->hasMissingDepend(ModPack)) {
-          this->_has_misg_dep = true;
-          OM_ADD_BIT(new_stat, 0x04);
-        }
-
       } else {
 
         // check versions
@@ -354,6 +348,12 @@ bool OmNetPack::refreshAnalytics()
 
       }
     }
+  }
+
+  // check for missing dependencies
+  if(this->_ModChan->hasMissingDepend(this)) {
+    this->_has_misg_dep = true;
+    OM_ADD_BIT(new_stat, 0x04);
   }
 
   return (new_stat != old_stat);

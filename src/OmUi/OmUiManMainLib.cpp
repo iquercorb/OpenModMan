@@ -396,10 +396,6 @@ void OmUiManMainLib::queueInstalls(bool silent)
   // prepare Mod installation
   ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings, &conflicts);
 
-  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
-  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
-    return;
-
   // warn user for extra and missing stuff
   if(!silent) {
 
@@ -417,6 +413,10 @@ void OmUiManMainLib::queueInstalls(bool silent)
         return;
     }
   }
+
+  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
+  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
+    return;
 
   this->_modops_add(installs);
 }
@@ -446,10 +446,6 @@ OmResult OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool sil
   // prepare Mod installation
   ModChan->prepareInstalls(selection, &installs, &overlaps, &depends, &missings, &conflicts);
 
-  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
-  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
-    return OM_RESULT_ABORT;
-
   // warn user for extra and missing stuff
   if(!silent) {
 
@@ -467,6 +463,10 @@ OmResult OmUiManMainLib::execInstalls(const OmPModPackArray& selection, bool sil
         return OM_RESULT_ABORT;
     }
   }
+
+  // warn user for conflicting installation (may happen if No Overlapping channel option is enabled)
+  if(this->_UiMan->errorConflict(L"Install Mods", conflicts))
+    return OM_RESULT_ABORT;
 
   return this->_modops_exec(installs);
 }
