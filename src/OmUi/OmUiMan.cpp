@@ -1908,15 +1908,15 @@ void OmUiMan::_onInit()
   // window size
   int w = rec.right - rec.left;
   int h = rec.bottom - rec.top;
-  if(w <= 0) w = 505; //< default width
-  if(h <= 0) h = 340; //< default height
+  if(w <= 540) w = 540; //< min width
+  if(h <= 370) h = 370; //< min height
 
   // window placement flags
   uint32_t uFlags = SWP_NOZORDER;
 
   // check whether any top-left or top-right window corner is outside visible desktop
-  if(!MonitorFromPoint({rec.top, rec.left}, MONITOR_DEFAULTTONULL) ||
-     !MonitorFromPoint({rec.top, rec.right}, MONITOR_DEFAULTTONULL) ) {
+  if(!MonitorFromPoint({rec.left, rec.top}, MONITOR_DEFAULTTONULL) ||
+     !MonitorFromPoint({rec.right, rec.top}, MONITOR_DEFAULTTONULL) ) {
     uFlags |= SWP_NOMOVE; //< keep window default placement by the system
   }
 
@@ -2287,6 +2287,7 @@ void OmUiMan::_onClose()
   this->quit();
 }
 
+
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
@@ -2298,17 +2299,18 @@ void OmUiMan::_onQuit()
 
   OmModMan* ModMan = static_cast<OmModMan*>(this->_data);
 
-  RECT rec;
-  GetWindowRect(this->_hwnd, &rec);
+  WINDOWPLACEMENT wndpl = {};
+  wndpl.length = sizeof(WINDOWPLACEMENT);
+  GetWindowPlacement(this->_hwnd, &wndpl);
 
   #ifdef DEBUG
-  std::cout << "DEBUG => OmUiMan::_onQuit : Window Rect { left=" << rec.left
-                                                    << ", top=" << rec.top
-                                                    << ", bottom=" << rec.bottom
-                                                    << ", right=" << rec.right << "}\n";
+  std::cout << "DEBUG => OmUiMan::_onQuit : Window Rect { left=" << wndpl.rcNormalPosition.left
+                                                    << ", top=" << wndpl.rcNormalPosition.top
+                                                    << ", bottom=" << wndpl.rcNormalPosition.bottom
+                                                    << ", right=" << wndpl.rcNormalPosition.right << "}\n";
   #endif
 
-  ModMan->saveWindowRect(rec);
+  ModMan->saveWindowRect(wndpl.rcNormalPosition);
 }
 
 ///
