@@ -291,6 +291,17 @@ class OmNetRepo
     ///
     int32_t indexOfReference(const OmWString& iden) const;
 
+    /// \brief Find dependency reference index
+    ///
+    /// Search for referenced Mod identity that match the specified dependency string
+    /// and returns its current index in list.
+    ///
+    /// \param[in] depend : Dependency string to parse and match
+    ///
+    /// \return Reference index or -1 if not found.
+    ///
+    int32_t findDependReference(const OmWString& depend) const;
+
     /// \brief Delete reference
     ///
     /// Search for referenced Mod identity and delete it.

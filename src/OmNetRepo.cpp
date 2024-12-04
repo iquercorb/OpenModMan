@@ -20,6 +20,7 @@
 #include "OmUtilHsh.h"
 #include "OmUtilZip.h"
 #include "OmUtilB64.h"
+#include "OmUtilPkg.h"
 
 #include "OmImage.h"
 
@@ -367,6 +368,41 @@ int32_t OmNetRepo::indexOfReference(const OmWString& iden) const
   for(size_t i = 0; i < this->_reference_list.size(); ++i) {
     if(this->_reference_list[i].attrAsString(L"ident") == iden)
       return i;
+  }
+
+  return -1;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+int32_t OmNetRepo::findDependReference(const OmWString& depend) const
+{
+  OmWString dep_core, dep_vers;
+
+  // Parse dependency string
+  Om_parseModIdent(depend, &dep_core, &dep_vers, nullptr);
+
+  OmWString ref_core, ref_vers;
+  OmVersion ref_version;
+
+  for(size_t i = 0; i < this->_reference_list.size(); ++i) {
+
+    // Parse reference identity
+    if(Om_parseModIdent(this->_reference_list[i].attrAsString(L"ident"), &ref_core, &ref_vers, nullptr)) {
+
+      // Parse version
+      ref_version.parse(ref_vers);
+
+      if(ref_core == dep_core && ref_version.match(dep_vers))
+        return i;
+
+    } else {
+
+      if(ref_core == dep_core)
+        return i;
+    }
+
   }
 
   return -1;

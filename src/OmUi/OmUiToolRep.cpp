@@ -691,7 +691,7 @@ void OmUiToolRep::_refs_selchg(int32_t item, bool selected)
       OmWStringArray depends;
       this->_NetRepo->getReferenceDepends(item, &depends);
 
-      this->setItemText(IDC_EC_READ3, Om_concatStrings(depends, L"\n"));
+      this->setItemText(IDC_EC_READ3, Om_concatStrings(depends, L"\r\n"));
       this->setPopupItem(MNU_RE_REF, MNU_RE_REF_DEPCHK, MF_ENABLED);
 
       has_depend = true;
@@ -1255,7 +1255,7 @@ void OmUiToolRep::_ref_desc_load()
 void OmUiToolRep::_ref_deps_get(const OmWString& iden, OmWStringArray* missings)
 {
   // retrieve reference from identity
-  int32_t ref_index = this->_NetRepo->indexOfReference(iden);
+  int32_t ref_index = this->_NetRepo->findDependReference(iden);
   if(ref_index < 0) return;
 
   OmXmlNode ref_node = this->_NetRepo->getReference(ref_index);
@@ -1272,7 +1272,7 @@ void OmUiToolRep::_ref_deps_get(const OmWString& iden, OmWStringArray* missings)
 
       dep_iden = ident_nodes[i].content();
 
-      int32_t dep_index = this->_NetRepo->indexOfReference(dep_iden);
+      int32_t dep_index = this->_NetRepo->findDependReference(dep_iden);
       if(dep_index < 0) {
         Om_push_backUnique(*missings, dep_iden);
         continue;
