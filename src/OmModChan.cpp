@@ -2829,7 +2829,10 @@ VOID WINAPI OmModChan::_download_start_end_fn(void* ptr, uint8_t fired)
   OmModChan* self = static_cast<OmModChan*>(ptr);
 
   // unlock the local library
-  self->_locked_mod_library = false;
+  //self->_locked_mod_library = false;
+
+  // unlock the network library
+  self->_locked_net_library = false;
 
   Om_threadClear(self->_download_start_hth, self->_download_start_hwo);
 

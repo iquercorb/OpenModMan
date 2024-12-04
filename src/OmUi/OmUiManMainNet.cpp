@@ -213,6 +213,9 @@ void OmUiManMainNet::startDownloads(bool supersede)
     lv_sel = this->msgItem(IDC_LV_NET, LVM_GETNEXTITEM, lv_sel, LVNI_SELECTED);
   }
 
+  if(selection.empty())
+    return;
+
   OmWStringArray depends, missings, breakings;
 
   // prepare download
