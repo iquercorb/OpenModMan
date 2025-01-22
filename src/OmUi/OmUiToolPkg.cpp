@@ -419,9 +419,6 @@ void OmUiToolPkg::_modpack_open()
 
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
-
-  // enable 'save as...' menu item
-  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
 }
 
 ///
@@ -454,9 +451,6 @@ void OmUiToolPkg::_modpack_build()
 
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
-
-  // enable 'save as...' menu item
-  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
 
   // Set unsaved
   this->_set_unsaved(true);
@@ -688,6 +682,9 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   if(this->_ModPack->sourceIsDir())
     this->_set_unsaved(true);
 
+  // enable save as... menu
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
+
   return true;
 }
 
@@ -845,6 +842,8 @@ void OmUiToolPkg::_name_compose()
   filename += ext;
 
   this->setItemText(IDC_EC_RESUL, filename);
+
+  this->_set_unsaved(true);
 }
 
 ///
