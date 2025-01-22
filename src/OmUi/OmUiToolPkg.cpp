@@ -281,6 +281,8 @@ void OmUiToolPkg::_ext_changed()
     if(this->msgItem(IDC_CB_ZMD, CB_GETCURSEL) > 1 /* Deflate */)
       this->msgItem(IDC_CB_ZMD, CB_SETCURSEL, 1); //< Switch to "Deflate"
   }
+
+  this->_name_compose(); //< update composed filename
 }
 
 ///
@@ -291,8 +293,10 @@ void OmUiToolPkg::_method_changed()
   // check whether selection is "Deflate"
   if(this->msgItem(IDC_CB_ZMD, CB_GETCURSEL) > 1 /* Deflate */) {
 
-    if(this->msgItem(IDC_CB_EXT, CB_GETCURSEL) == 1 /* ".zip" */)
+    if(this->msgItem(IDC_CB_EXT, CB_GETCURSEL) == 1 /* ".zip" */) {
       this->msgItem(IDC_CB_EXT, CB_SETCURSEL, 0); //< Switch to ".Ozp"
+      this->_name_compose(); //< update composed filename
+    }
   }
 
   // check for changes
