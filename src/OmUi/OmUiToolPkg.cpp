@@ -511,6 +511,16 @@ void OmUiToolPkg::_modpack_save()
     return;
   }
 
+  // get default filename
+  OmWString filename;
+  this->getItemText(IDC_EC_RESUL, filename);
+
+  // If filename changed from last save, go to "save as"
+  if(Om_getNamePart(this->_ModPack->sourcePath()) != filename) {
+    this->_modpack_save_as();
+    return;
+  }
+
   // start the "save" thread
   this->_modpack_save_path = this->_ModPack->sourcePath();
 
