@@ -24,14 +24,14 @@
 ///
 /// Predefined common files filter string for Open dialog
 ///
-#define OM_PKG_FILES_FILTER       L"Package file (*.ozp,*.zip)\0*.OZP;*.ZIP;\0Open Mod Pack (*.ozp)\0*.OZP;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
-#define OM_BCK_FILES_FILTER       L"Backup file (*.ozb,*.zip)\0*.ZIP;*.OZB;\0Open Mod Backup (*.ozb)\0*.OZB;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
-#define OM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.BMP;*.JPG;*.JPEG;*.GIF;*.PNG;\0BMP file (*.bmp)\0*.BMP;\0JPEG file (*.jpg,*.jpeg)\0*.JPG;*.JPEG\0PNG file (*.png)\0*.PNG;\0CompuServe GIF (*.gif)\0*.GIF;\0All files (*.*)\0*.*;\0"
-#define OM_XML_FILES_FILTER       L"XML file (*.xml)\0*.XML;\0All files (*.*)\0*.*;\0"
-#define OM_TXT_FILES_FILTER       L"Reamde file (*.txt,*.md,*.mkd)\0*.TXT;*.MD;*.MKD;\0Text file (*.txt)\0*.TXT;\0Markdown file (*.md,*.mkd)\0*.MD;*.MKD;\0All files (*.*)\0*.*;\0"
-#define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ICO;*.EXE;\0Programs (*.exe)\0*.EXE;\0Icons (*.ico)\0*.ICO;\0All files (*.*)\0*.*;\0"
-#define OM_HUB_FILES_FILTER       L"Definition file (*.omx,*.omc)\0*.OMX;*.OMC;\0Open Mod XML (*.omx)\0*.OMX;\0Open Mod Context (*.omc)\0*.OMC;\0All files (*.*)\0*.*;\0"
-#define OM_REP_FILES_FILTER       L"Definition file (*.omx,*.xml)\0*.OMX;*.XML;\0Open Mod XML (*.omx)\0*.OMX;\0XML file (*.xml)\0*.XML;\0All files (*.*)\0*.*;\0"
+#define OM_PKG_FILES_FILTER       L"Package file (*.ozp,*.zip)\0*.ozp;*.ZIP;\0Open Mod Pack (*.ozp)\0*.ozp;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
+#define OM_BCK_FILES_FILTER       L"Backup file (*.ozb,*.zip)\0*.ZIP;*.ozb;\0Open Mod Backup (*.ozb)\0*.ozb;\0Zip file (*.zip)\0*.zip;\0All files (*.*)\0*.*;\0"
+#define OM_IMG_FILES_FILTER       L"Image file (*.bmp,*.jpg,*.jpeg,*.gif,*.png)\0*.bmp;*.jpg;*.jpeg;*.gif;*.png;\0BMP file (*.bmp)\0*.bmp;\0JPEG file (*.jpg,*.jpeg)\0*.jpg;*.jpeg\0PNG file (*.png)\0*.png;\0CompuServe GIF (*.gif)\0*.gif;\0All files (*.*)\0*.*;\0"
+#define OM_XML_FILES_FILTER       L"XML file (*.xml)\0*.xml;\0All files (*.*)\0*.*;\0"
+#define OM_TXT_FILES_FILTER       L"Reamde file (*.txt,*.md,*.mkd)\0*.txt;*.md;*.mkd;\0Text file (*.txt)\0*.txt;\0Markdown file (*.md,*.mkd)\0*.md;*.mkd;\0All files (*.*)\0*.*;\0"
+#define OM_ICO_FILES_FILTER       L"Icon files (*.ico,*.exe)\0*.ico;*.exe;\0Programs (*.exe)\0*.exe;\0Icons (*.ico)\0*.ico;\0All files (*.*)\0*.*;\0"
+#define OM_HUB_FILES_FILTER       L"Definition file (*.omx,*.omc)\0*.omx;*.omc;\0Open Mod XML (*.omx)\0*.omx;\0Open Mod Context (*.omc)\0*.omc;\0All files (*.*)\0*.*;\0"
+#define OM_REP_FILES_FILTER       L"Definition file (*.omx,*.xml)\0*.omx;*.xml;\0Open Mod XML (*.omx)\0*.omx;\0XML file (*.xml)\0*.xml;\0All files (*.*)\0*.*;\0"
 
 typedef struct Om_filterSpec_s
 {
