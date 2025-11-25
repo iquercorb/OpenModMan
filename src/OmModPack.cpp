@@ -580,10 +580,16 @@ bool OmModPack::loadDirDescription()
 
   bool found, changed = false;
 
+  // supported text extensions
+  const wchar_t* txt_ext[] = {L".md", L".txt"};
+
   found = false;
-  // Try text file with same identity, then core name
+  // try text file with same identity, then core name
   for(unsigned i = 0; i < 2; ++i) {
-    if(Om_isFile(found_path = test_path[i] + L".txt")) {
+    if(Om_isFile(found_path = test_path[0] + txt_ext[i])) {
+      found = true; break;
+    }
+    if(Om_isFile(found_path = test_path[1] + txt_ext[i])) {
       found = true; break;
     }
   }
