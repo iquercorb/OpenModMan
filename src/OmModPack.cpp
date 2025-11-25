@@ -174,6 +174,7 @@ void OmModPack::clearSource()
   this->_src_root.clear();
   this->_src_entry.clear();
   this->_src_depend.clear();
+  this->_src_depend_time = 0;
 
   // Optional properties liked to source
   this->_category.clear();
@@ -497,6 +498,8 @@ bool OmModPack::parseSource(const OmWString& path)
     this->loadDirDescription();
 
     this->loadDirThumbnail();
+
+    this->loadDirDepend();
   }
 
   this->_has_src = true;
@@ -647,6 +650,51 @@ bool OmModPack::loadDirThumbnail()
   } else {
     this->_thumbnail_time = 0;
     this->_thumbnail.clear();
+  }
+
+  return changed;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModPack::loadDirDepend()
+{
+  // build bas file path prototypes to search
+  OmWString found_path, test_path[2];
+
+  Om_concatPaths(test_path[0], this->_src_home, this->_iden);
+  Om_concatPaths(test_path[1], this->_src_home, this->_core);
+
+  bool found, changed = false;
+
+  // supported text extensions
+  const wchar_t* dep_ext[] = {L".dep", L".dpn"};
+
+  found = false;
+  // try text file with same identity, then core name
+  for(unsigned i = 0; i < 2; ++i) {
+    if(Om_isFile(found_path = test_path[0] + dep_ext[i])) {
+      found = true; break;
+    }
+    if(Om_isFile(found_path = test_path[1] + dep_ext[i])) {
+      found = true; break;
+    }
+  }
+
+  if(found) {
+    time_t new_time = Om_itemTime(found_path);
+    if(new_time != this->_src_depend_time) {
+      //this->_description.clear();
+      OmWString deplst;
+      Om_loadToUTF16(&deplst, found_path);
+      Om_splitString(deplst, L"\r\n", &this->_src_depend);
+      this->_src_depend_time = new_time;
+      changed = true;
+    }
+  } else {
+    this->_description.clear();
+    this->_src_depend_time = 0;
   }
 
   return changed;

@@ -404,6 +404,15 @@ class OmModPack
     ///
     void clearThumbnail();
 
+    /// \brief Load directory Mod dependency list.
+    ///
+    /// Loads or update dependency list found beside the Mod directory
+    /// according naming rules.
+    ///
+    /// \return True if dependency list was found and updated, false otherwise.
+    ///
+    bool loadDirDepend();
+
     /// \brief Dependencies count
     ///
     /// Returns count of dependencies referenced by this Mod.
@@ -747,6 +756,8 @@ class OmModPack
     OmModEntryArray     _src_entry;
 
     OmWStringArray      _src_depend;
+
+    time_t              _src_depend_time;
 
     // backup data properties
     bool                _has_bck;
