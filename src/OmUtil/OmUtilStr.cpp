@@ -1379,3 +1379,46 @@ OmWString Om_underscoresToSpaces(const OmWString& spaces)
 
   return result;
 }
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+size_t Om_splitString(const OmWString& string, const OmWString& separator, OmWStringArray* strings)
+{
+  strings->clear();
+
+  size_t n = 0;
+
+  OmWString temp;
+
+  for(size_t i = 0; i < string.size(); ++i) {
+
+    bool split = false;
+
+    for(size_t k = 0; k < separator.size(); ++k) {
+      if(string[i] == separator[k]) {
+        split = true;
+        break;
+      }
+    }
+
+    if(split) {
+
+      if(!temp.empty()) {
+        strings->push_back(temp);
+        temp.clear();
+        n++;
+      }
+
+    } else {
+
+      temp += string[i];
+    }
+  }
+
+  if(!temp.empty())
+    strings->push_back(temp);
+
+  return n;
+}

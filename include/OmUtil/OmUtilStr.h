@@ -698,5 +698,17 @@ OmWString Om_spacesToUnderscores(const OmWString& spaces);
 ///
 OmWString Om_underscoresToSpaces(const OmWString& underscores);
 
+/// \brief Split string to substrings
+///
+/// Split the given string using the specified separators characters
+/// into multiple strings
+///
+/// \param[in] string     : String to split
+/// \param[in] separator  : List of separator characters
+/// \param[in] spaces     : Pointer to string array that receive split strings
+///
+/// \return Count of split strings
+///
+size_t Om_splitString(const OmWString& string, const OmWString& separator, OmWStringArray* strings);
 
 #endif // OMUTILSTR_H
