@@ -328,11 +328,8 @@ IDR_MENU_PKGEDI MENU
 {
     POPUP "&File"
     {
-        //POPUP "&New"
-        //{
-        //    MENUITEM "&Mod-Package", IDM_FILE_NEW
-        //}
-        //MENUITEM SEPARATOR
+        MENUITEM "&New", IDM_FILE_NEW
+        MENUITEM SEPARATOR
         MENUITEM "&Open...\tCtrl+O", IDM_FILE_OPEN
         MENUITEM "&Build from directory...\tCtrl+B", IDM_MOD_BUIL
         MENUITEM SEPARATOR
