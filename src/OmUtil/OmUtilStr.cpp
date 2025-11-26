@@ -1386,8 +1386,6 @@ OmWString Om_underscoresToSpaces(const OmWString& spaces)
 ///
 size_t Om_splitString(const OmWString& string, const OmWString& separator, OmWStringArray* strings)
 {
-  strings->clear();
-
   size_t n = 0;
 
   OmWString temp;
