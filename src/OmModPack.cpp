@@ -510,6 +510,52 @@ bool OmModPack::parseSource(const OmWString& path)
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
+void OmModPack::clearEntries()
+{
+  this->_src_time = 0;
+  this->_src_isdir = false;
+  this->_src_path.clear();
+  this->_src_root.clear();
+  this->_src_entry.clear();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModPack::parseEntries(const OmWString& path)
+{
+  if(Om_isDir(path)) {
+
+    // clear files entries
+    this->_src_entry.clear();
+
+    // Parse directory
+    OmModPack::_src_parse_dir(&this->_src_entry, path, L"");
+
+  } else {
+
+    return false;
+  }
+
+  // Update entries related parameters
+  this->_src_isdir = true;
+
+  this->_src_path = path;
+
+  this->_src_root = path;
+
+  this->_src_home = Om_getDirPart(path);
+
+  this->_src_time = Om_itemTime(path);
+
+  this->_has_src = true;
+
+  return true;
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
 bool OmModPack::refreshSource()
 {
   if(this->_has_src) {
@@ -669,7 +715,7 @@ bool OmModPack::loadDirDepend()
   bool found, changed = false;
 
   // supported text extensions
-  const wchar_t* dep_ext[] = {L".dep", L".dpn"};
+  const wchar_t* dep_ext[] = {L".dep", L".req"};
 
   found = false;
   // try text file with same identity, then core name
@@ -685,15 +731,17 @@ bool OmModPack::loadDirDepend()
   if(found) {
     time_t new_time = Om_itemTime(found_path);
     if(new_time != this->_src_depend_time) {
-      //this->_description.clear();
-      OmWString deplst;
-      Om_loadToUTF16(&deplst, found_path);
-      Om_splitString(deplst, L"\r\n", &this->_src_depend);
+      this->_src_depend.clear();
+      // load text file data
+      OmWString dep_txt;
+      Om_loadToUTF16(&dep_txt, found_path);
+      // split string
+      Om_splitString(dep_txt, L"\r\n", &this->_src_depend);
       this->_src_depend_time = new_time;
       changed = true;
     }
   } else {
-    this->_description.clear();
+    this->_src_depend.clear();
     this->_src_depend_time = 0;
   }
 
@@ -1724,23 +1772,20 @@ OmResult OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level,
   // initialize local timer
   clock_t time = clock();
 
-  if(!this->_has_src) {
-    this->_error(L"saveAs", L"Source missing");
-    return OM_RESULT_ERROR;
-  }
-
   OmArchive source_zip;
 
-  // verify we have source to save as...
-  if(this->_src_isdir) {
-    if(!Om_isDir(this->_src_root)) {
-      this->_error(L"saveAs", Om_errNotDir(L"Source directory", this->_src_root));
-      return OM_RESULT_ERROR;
-    }
-  } else {
-    if(!source_zip.read(this->_src_path)) {
-      this->_error(L"saveAs", Om_errLoad(L"Source archive file", this->_src_path, source_zip.lastErrorStr()));
-      return OM_RESULT_ERROR;
+  if(!this->_src_entry.empty()) {
+    // verify access to source data
+    if(this->_src_isdir) {
+      if(!Om_isDir(this->_src_root)) {
+        this->_error(L"saveAs", Om_errNotDir(L"Source directory", this->_src_root));
+        return OM_RESULT_ERROR;
+      }
+    } else {
+      if(!source_zip.read(this->_src_path)) {
+        this->_error(L"saveAs", Om_errLoad(L"Source archive file", this->_src_path, source_zip.lastErrorStr()));
+        return OM_RESULT_ERROR;
+      }
     }
   }
 
@@ -1769,6 +1814,15 @@ OmResult OmModPack::saveAs(const OmWString& path, int32_t method, int32_t level,
   bool has_abort = false;
 
   OmWString out_file;
+
+  // If no entry, simply create the root folder in zip file
+  if(this->_src_entry.empty()) {
+    // add folder to destination archive
+    if(!output_zip.entryAdd(nullptr, 0, out_root)) {
+      this->_error(L"saveAs", Om_errZipComp(L"Source directory to destination", out_root, output_zip.lastErrorStr()));
+      has_error = true;
+    }
+  }
 
   // transfer data from source to output zip
   for(size_t i = 0; i < this->_src_entry.size(); ++i) {

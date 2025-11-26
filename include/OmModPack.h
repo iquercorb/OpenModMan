@@ -154,6 +154,23 @@ class OmModPack
       return this->_src_path;
     }
 
+    /// \brief Delete all entries
+    ///
+    /// Clear all source entries, so the package is now empty.
+    ///
+    void clearEntries();
+
+    /// \brief Parse folder as Mod source entires
+    ///
+    /// Try to parse directory to be used as Mod's source
+    /// files entries, replacing existing entries and related paths.
+    ///
+    /// \param[in]  path    : Path to folder to parse.
+    ///
+    /// \return True operation succeed, false otherwise
+    ///
+    bool parseEntries(const OmWString& path);
+
     /// \brief Source entry count
     ///
     /// Get count of parsed Source entry
