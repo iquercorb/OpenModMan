@@ -150,9 +150,13 @@ class OmUiToolPkg : public OmDialog
 
     void                _content_populate();
 
+    void                _content_adddir();
+
+    void                _content_clear();
+
     OmModEntryArray     _content_cache;
 
-    // thumbnail management
+    // category management
     bool                _categ_compare();
 
     void                _categ_changed();

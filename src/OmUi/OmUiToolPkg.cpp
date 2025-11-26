@@ -170,8 +170,16 @@ void OmUiToolPkg::_set_unsaved(bool enable)
   tbBi.fsState = (this->_has_unsaved) ? TBSTATE_ENABLED : 0;
   this->msgItem(IDC_TB_TOOLS, TB_SETBUTTONINFO, IDC_BC_SAVE, reinterpret_cast<LPARAM>(&tbBi));
 
-  // enable/disable and change menu 'save' item
-  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, this->_has_unsaved ? MF_ENABLED : MF_GRAYED);
+  // enable/disable 'save as..." menu item
+  //this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, this->_has_unsaved ? MF_ENABLED : MF_GRAYED);
+
+  // enable/disable 'save' menu item
+  if(this->_ModPack->sourcePath().empty() || this->_ModPack->sourceIsDir()) {
+    // empty source or directory source, we canno 'save' only
+    this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, MF_GRAYED);
+  } else {
+    this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE, this->_has_unsaved ? MF_ENABLED : MF_GRAYED);
+  }
 }
 
 ///
@@ -214,6 +222,7 @@ void OmUiToolPkg::_reset_controls()
   this->_depend_unsaved = false;
 
   // disable 'save as...' menu item
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVE,  MF_GRAYED);
   this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_GRAYED);
 
   // empty controls
@@ -328,7 +337,8 @@ bool OmUiToolPkg::_method_compare()
 ///
 void OmUiToolPkg::_modpack_close()
 {
-   switch(this->_ask_unsaved()) {
+  switch(this->_ask_unsaved())
+  {
     case  1: this->_modpack_save(); break; //< 'Yes'
     case -1: return;                       //< 'Cancel'
   }
@@ -345,7 +355,8 @@ void OmUiToolPkg::_modpack_close()
 ///
 void OmUiToolPkg::_modpack_new()
 {
-   switch(this->_ask_unsaved()) {
+  switch(this->_ask_unsaved())
+  {
     case  1: this->_modpack_save(); break; //< 'Yes'
     case -1: return;                       //< 'Cancel'
   }
@@ -371,7 +382,7 @@ void OmUiToolPkg::_modpack_new()
   this->enableItem(IDC_CB_ZLV,    true);
 
   // enable Content actions and ListView
-  this->enableItem(IDC_BC_BRW01,  true);
+  //this->enableItem(IDC_BC_BRW01,  true);
   this->enableItem(IDC_BC_BRW02,  true);
   this->enableItem(IDC_BC_DEL,    false);
   this->enableItem(IDC_LV_PAT,    true);
@@ -387,6 +398,12 @@ void OmUiToolPkg::_modpack_new()
   this->setPopupItem(MNU_ME_EDIT, MNU_ME_EDIT_THMBSEL, MF_ENABLED);
   this->setPopupItem(MNU_ME_EDIT, MNU_ME_EDIT_DESCSEL, MF_ENABLED);
   this->setPopupItem(MNU_ME_EDIT, MNU_ME_EDIT_DEPIMP, MF_ENABLED);
+
+  // Mod can be saved
+  this->_set_unsaved(true);
+
+  // enable 'save as...' menu item
+  this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
 }
 
 ///
@@ -394,7 +411,8 @@ void OmUiToolPkg::_modpack_new()
 ///
 void OmUiToolPkg::_modpack_open()
 {
-   switch(this->_ask_unsaved()) {
+  switch(this->_ask_unsaved())
+  {
     case  1: this->_modpack_save(); break; //< 'Yes'
     case -1: return;                       //< 'Cancel'
   }
@@ -419,6 +437,13 @@ void OmUiToolPkg::_modpack_open()
 
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_open : unsaved false\n";
+  #endif
+
+  // Set unsaved
+  this->_set_unsaved(false);
 }
 
 ///
@@ -426,7 +451,8 @@ void OmUiToolPkg::_modpack_open()
 ///
 void OmUiToolPkg::_modpack_build()
 {
-   switch(this->_ask_unsaved()) {
+  switch(this->_ask_unsaved())
+  {
     case  1: this->_modpack_save(); break; //< 'Yes'
     case -1: return;                       //< 'Cancel'
   }
@@ -452,6 +478,10 @@ void OmUiToolPkg::_modpack_build()
   // save default Start path for Open dialogs
   if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
 
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_build : unsaved true\n";
+  #endif
+
   // Set unsaved
   this->_set_unsaved(true);
 }
@@ -461,6 +491,10 @@ void OmUiToolPkg::_modpack_build()
 ///
 void OmUiToolPkg::_modpack_save_as()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_save_as\n";
+  #endif
+
   if(this->_modpack_save_hth)
     return;
 
@@ -503,6 +537,10 @@ void OmUiToolPkg::_modpack_save_as()
 ///
 void OmUiToolPkg::_modpack_save()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_save\n";
+  #endif
+
   if(this->_modpack_save_hth)
     return;
 
@@ -516,7 +554,7 @@ void OmUiToolPkg::_modpack_save()
   this->getItemText(IDC_EC_RESUL, filename);
 
   // If filename changed from last save, go to "save as"
-  if(Om_getNamePart(this->_ModPack->sourcePath()) != filename) {
+  if(Om_getFilePart(this->_ModPack->sourcePath()) != filename) {
     this->_modpack_save_as();
     return;
   }
@@ -546,6 +584,10 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   // update status
   this->_status_update_filename();
 
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_parse : unsaved false\n";
+  #endif
+
   // nothing to save
   this->_set_unsaved(false);
 
@@ -563,8 +605,9 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   this->enableItem(IDC_CB_ZLV,    true);
 
   // Mod content
-  this->enableItem(IDC_BC_BRW01,  true);
+  //this->enableItem(IDC_BC_BRW01,  true);
   this->enableItem(IDC_BC_BRW02,  true);
+  //this->enableItem(IDC_BC_DEL,    false);
   this->enableItem(IDC_LV_PAT,    true);
 
   // Category and CheckBoxes
@@ -617,9 +660,7 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   }
 
   // set pack content
-  if(!this->_ModPack->sourceEntryCount()) {
-    //this->setItemText(IDC_EC_READ1, L"<empty package>");
-  } else {
+  if(this->_ModPack->sourceEntryCount()) {
     // copy to local cache
     for(size_t i = 0; i < this->_ModPack->sourceEntryCount(); ++i) {
       this->_content_cache.push_back(this->_ModPack->getSourceEntry(i));
@@ -689,10 +730,12 @@ bool OmUiToolPkg::_modpack_parse(const OmWString& path)
   }
 
   // Set unsaved in case parsed Mod is directory
-  if(this->_ModPack->sourceIsDir())
-    this->_set_unsaved(true);
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_modpack_parse : unsaved ??\n";
+  #endif
+  this->_set_unsaved(this->_ModPack->sourceIsDir());
 
-  // enable save as... menu
+  // enable 'save as...' menu item
   this->setPopupItem(MNU_ME_FILE, MNU_ME_FILE_SAVAS, MF_ENABLED);
 
   return true;
@@ -853,6 +896,10 @@ void OmUiToolPkg::_name_compose()
 
   this->setItemText(IDC_EC_RESUL, filename);
 
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_name_compose : unsaved true\n";
+  #endif
+
   this->_set_unsaved(true);
 }
 
@@ -876,9 +923,9 @@ void OmUiToolPkg::_content_selchg()
   // get count of ListView selected item
   uint32_t lv_nsl = this->msgItem(IDC_LV_PAT, LVM_GETSELECTEDCOUNT);
 
-  bool has_select = (lv_nsl > 0);
+  //bool has_select = (lv_nsl > 0);
 
-  this->enableItem(IDC_BC_DEL, has_select);
+  //this->enableItem(IDC_BC_DEL, has_select);
 
   /*
   // scan selection to check what can be done
@@ -902,6 +949,9 @@ void OmUiToolPkg::_content_populate()
   // empty list view
   this->msgItem(IDC_LV_PAT, LVM_DELETEALLITEMS);
 
+  // enable or disable "clear" button
+  this->enableItem(IDC_BC_DEL, this->_content_cache.size());
+
   // add item to list view
   LVITEMW lvI = {};
   for(size_t i = 0; i < this->_content_cache.size(); ++i) {
@@ -918,6 +968,7 @@ void OmUiToolPkg::_content_populate()
 
   // we enable the ListView
   this->enableItem(IDC_LV_PAT, true);
+
   // restore ListView scroll position from lvRec
   this->msgItem(IDC_LV_PAT, LVM_SCROLL, 0, -lvRec.top );
 
@@ -926,6 +977,76 @@ void OmUiToolPkg::_content_populate()
 
   // update Mods ListView selection
   this->_content_selchg();
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_content_adddir()
+{
+  // get Channel saved editor's sources path or library path as starting directory
+  OmWString start;
+  OmModChan* ModChan = static_cast<OmModMan*>(this->_data)->activeChannel();
+  if(ModChan) start = (ModChan->modsSourcesPath().empty()) ?
+                          ModChan->libraryPath() : ModChan->modsSourcesPath();
+
+  // new dialog to open file (allow multiple selection)
+  OmWString result;
+  if(!Om_dlgOpenDir(result, this->_hwnd, L"Open source directory", start))
+    return;
+
+  // parse directory for entries
+  if(this->_ModPack->parseEntries(result)) {
+
+    // Reset content cache
+    this->_content_cache.clear();
+
+    // copy to local cache
+    for(size_t i = 0; i < this->_ModPack->sourceEntryCount(); ++i) {
+      this->_content_cache.push_back(this->_ModPack->getSourceEntry(i));
+    }
+
+    // build-up ListView content
+    this->_content_populate();
+
+  } else {
+    Om_dlgBox_okl(this->_hwnd, L"Mod-package editor", IDI_DLG_WRN, L"Mod directory parse error",
+                 L"The following directory parse failed, and this should never happen, so...",
+                 result);
+  }
+
+  // save default Start path for Open dialogs
+  if(ModChan) ModChan->setModsSourcesPath(Om_getDirPart(result));
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_content_adddir : unsaved true\n";
+  #endif
+
+  // Set unsaved
+  this->_set_unsaved(true);
+}
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+void OmUiToolPkg::_content_clear()
+{
+  if(!this->_ModPack->sourceEntryCount())
+    return;
+
+  this->_ModPack->clearEntries();
+
+  this->_content_cache.clear();
+
+  // build-up ListView content
+  this->_content_populate();
+
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiToolPkg::_content_clear : unsaved true\n";
+  #endif
+
+  // Set unsaved
+  this->_set_unsaved(true);
 }
 
 ///
@@ -1345,7 +1466,7 @@ void OmUiToolPkg::_onInit()
 
   // Set menu icons
   HMENU hMnuFile = this->getPopup(MNU_ME_FILE);
-  //this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
+  this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_NEW, Om_getResIconPremult(IDI_BT_NEW));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_OPEN, Om_getResIconPremult(IDI_BT_OPN));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_BUIL, Om_getResIconPremult(IDI_BT_BLD));
   this->setPopupItemIcon(hMnuFile, MNU_ME_FILE_SAVE, Om_getResIconPremult(IDI_BT_SAV));
@@ -1368,8 +1489,8 @@ void OmUiToolPkg::_onInit()
   this->msgItem(IDC_TB_TOOLS, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(himl));
 
   // Initialize button info.
-  TBBUTTON tbButtons[3] = {
-    //{ICON_NEW, IDC_BC_NEW,  TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("New Package")},
+  TBBUTTON tbButtons[4] = {
+    {ICON_NEW, IDC_BC_NEW,  TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("New Package")},
     {ICON_OPN, IDC_BC_OPEN, TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Open Package file")},
     {ICON_BLD, IDC_BC_OPEN2,TBSTATE_ENABLED, 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Build from directory")},
     {ICON_SAV, IDC_BC_SAVE, 0              , 0/*BTNS_AUTOSIZE*/, {0}, 0, reinterpret_cast<INT_PTR>("Save Package file")}
@@ -1378,7 +1499,7 @@ void OmUiToolPkg::_onInit()
   // Add buttons
   this->msgItem(IDC_TB_TOOLS, TB_SETMAXTEXTROWS, 0); //< disable text under buttons
   this->msgItem(IDC_TB_TOOLS, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON));
-  this->msgItem(IDC_TB_TOOLS, TB_ADDBUTTONS, 3, reinterpret_cast<LPARAM>(&tbButtons));
+  this->msgItem(IDC_TB_TOOLS, TB_ADDBUTTONS, 4, reinterpret_cast<LPARAM>(&tbButtons));
 
   this->msgItem(IDC_TB_TOOLS, TB_SETBUTTONSIZE, 0, MAKELPARAM(26, 22));
   //this->msgItem(IDC_TB_TOOLS, TB_SETLISTGAP, 25);                       //< this does not work
@@ -1446,14 +1567,14 @@ void OmUiToolPkg::_onInit()
   this->setStImage(IDC_SB_SNAP, Om_getResImage(IDB_SC_THMB_BLANK));
 
   // Set buttons icons
-  this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));   //< Add file
+  //this->setBmIcon(IDC_BC_BRW01, Om_getResIcon(IDI_BT_FAD));   //< Add file
   this->setBmIcon(IDC_BC_BRW02, Om_getResIcon(IDI_BT_DAD));   //< Add directory
-  this->setBmIcon(IDC_BC_DEL,   Om_getResIcon(IDI_BT_FRM));   //< Remove entry
+  this->setBmIcon(IDC_BC_DEL,   Om_getResIcon(IDI_BT_NOT));   //< Remove entry
 
   // Hide Content Actions buttons, feature is not implemented yet
   this->showItem(IDC_BC_BRW01,  false);
-  this->showItem(IDC_BC_BRW02,  false);
-  this->showItem(IDC_BC_DEL,    false);
+  //this->showItem(IDC_BC_BRW02,  false);
+  //this->showItem(IDC_BC_DEL,    false);
 
   this->setBmIcon(IDC_BC_BRW03, Om_getResIcon(IDI_BT_ADD_IMG));  //< Thumbnail Select
   this->setBmIcon(IDC_BC_BRW04, Om_getResIcon(IDI_BT_ADD_TXT));  //< Description Load
@@ -1555,7 +1676,7 @@ void OmUiToolPkg::_onResize()
   this->_setItemPos(IDC_CB_ZLV, quar_w+5, base_y+110, quar_w-20, 21, true);
 
   // Content Label
-  this->_setItemPos(IDC_SC_LBL06, 10, base_y+150, 200, 21, true);
+  this->_setItemPos(IDC_SC_LBL06, 10, base_y+150, 100, 21, true);
   // Content Actions buttons
   this->_setItemPos(IDC_BC_BRW01, half_w-78, base_y+148, 22, 22, true);
   this->_setItemPos(IDC_BC_BRW02, half_w-55, base_y+148, 22, 22, true);
@@ -1632,9 +1753,10 @@ void OmUiToolPkg::_onRefresh()
 ///
 void OmUiToolPkg::_onClose()
 {
-   switch(this->_ask_unsaved()) {
+  switch(this->_ask_unsaved())
+  {
     case  1: this->_modpack_save(); break; //< 'Yes'
-    case -1: return;                    //< 'Cancel'
+    case -1: return;                       //< 'Cancel'
   }
 
   this->_ModPack->clearAll();
@@ -1698,6 +1820,16 @@ INT_PTR OmUiToolPkg::_onMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case IDC_CB_ZMD:  //< ComboBox: File extension
       if(HIWORD(wParam) == CBN_SELCHANGE)
         this->_method_changed();
+      break;
+
+    case IDC_BC_BRW02:  //< Button: Content Add directory
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_content_adddir();
+      break;
+
+    case IDC_BC_DEL:    //< Button: Content Clear
+      if(HIWORD(wParam) == BN_CLICKED)
+        this->_content_clear();
       break;
 
     case IDC_CB_CAT:  //< ComboBox: Category
