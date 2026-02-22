@@ -17,6 +17,8 @@
 #ifndef OMBASE_H
 #define OMBASE_H
 
+#include <cstdint>
+
 #include <cstring>              //< memset
 
 #include <string>
