@@ -22,7 +22,7 @@
 
 #define OM_APP_MAJ               1
 #define OM_APP_MIN               3
-#define OM_APP_REV               4
+#define OM_APP_REV               5
 
 #ifdef _WIN64
   #define OM_APP_ARCH            L"64-bit"
@@ -33,7 +33,7 @@
 #define OM_APP_DATE               L"" __DATE__
 #define OM_APP_AUTHOR             L"Eric M."
 #define OM_APP_CONTRIB            L""
-#define OM_APP_C_YEAR             L"2024"
+#define OM_APP_C_YEAR             L"2026"
 #define OM_APP_GIT                L"https://github.com/iquercorb/OpenModMan"
 #define OM_APP_URL                L"https://github.com/iquercorb/OpenModMan"
 #define OM_DON_URL                L"https://www.paypal.com/donate/?hosted_button_id=458U4MNAPB2KL"
