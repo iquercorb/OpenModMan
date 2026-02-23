@@ -52,13 +52,22 @@ class OmModHub
 
     /// \brief Open Mod Hub.
     ///
-    /// Load Mod Hub from specified file.
+    /// Open Mod Hub from specified file.
     ///
-    /// \param[in]  path    : File path of Mod Hub to be loaded.
+    /// \param[in]  path    : File path of Mod Hub to open.
+    /// \param[in]  defer   : Defers Mod Hub components loading.
     ///
     /// \return True if operation succeed, false otherwise.
     ///
-    bool open(const OmWString& path);
+    bool open(const OmWString& path, bool defer = false);
+
+    /// \brief Load Mod Hub components.
+    ///
+    /// Actualy parse and load Mod Hub and related components.
+    ///
+    /// \return True if operation succeed, false otherwise.
+    ///
+    bool load();
 
     /// \brief Close Mod Hub.
     ///
@@ -72,8 +81,8 @@ class OmModHub
     ///
     /// \return True if this instance is valid, false otherwise.
     ///
-    bool valid() const {
-      return this->_xml.valid();
+    bool valid() {
+      return this->_loaded ? true : this->load();
     }
 
     /// \brief Get Mod Hub file path.
@@ -570,6 +579,8 @@ class OmModHub
 
     // needed objects
     OmXmlConf             _xml;
+
+    bool                  _loaded;
 
     // sorting comparison functions
     static bool           _compare_chn_index(const OmModChan*, const OmModChan*);

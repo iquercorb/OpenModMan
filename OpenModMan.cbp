@@ -21,7 +21,7 @@
 				<Option working_dir="dll/64-bit" />
 				<Option object_output="obj/64-bit/Debug" />
 				<Option type="1" />
-				<Option compiler="gcc_mingw-w64_x86_64_152" />
+				<Option compiler="gnu_gcc_mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-m64" />
 					<Add option="-g" />
@@ -45,7 +45,7 @@
 				<Option working_dir="dll/64-bit" />
 				<Option object_output="obj/64-bit/Release" />
 				<Option type="0" />
-				<Option compiler="gcc_mingw-w64_x86_64_152" />
+				<Option compiler="gnu_gcc_mingw-w64_x86_64" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-Wextra" />
@@ -70,7 +70,7 @@
 				<Option working_dir="dll/32-bit" />
 				<Option object_output="obj/32-bit/Debug" />
 				<Option type="1" />
-				<Option compiler="gcc_mingw-w64_i686_152" />
+				<Option compiler="gnu_gcc_mingw64_compiler_i686-dwarf" />
 				<Compiler>
 					<Add option="-m32" />
 					<Add option="-g" />
@@ -94,7 +94,7 @@
 				<Option working_dir="dll/32-bit" />
 				<Option object_output="obj/32-bit/Release" />
 				<Option type="0" />
-				<Option compiler="gcc_mingw-w64_i686_152" />
+				<Option compiler="gnu_gcc_mingw64_compiler_i686-dwarf" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-Wextra" />

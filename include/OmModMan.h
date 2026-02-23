@@ -126,10 +126,11 @@ class OmModMan
     ///
     /// \param[in]  path      : Mod Hub file path.
     /// \param[in]  select    : Select the opened Mod Hub.
+    /// \param[in]  defer     : Defer Mod Hub components loading.
     ///
     /// \return Operation result code.
     ///
-    OmResult openHub(const OmWString& path, bool select = true);
+    OmResult openHub(const OmWString& path, bool select = true, bool defer = false);
 
     /// \brief Close Mod Hub.
     ///

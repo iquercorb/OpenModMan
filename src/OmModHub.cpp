@@ -42,6 +42,7 @@
 ///
 OmModHub::OmModHub(OmModMan* ModMan) :
   _ModMan(ModMan),
+  _loaded(false),
   _icon_handle(nullptr),
   _modlib_notify_cb(nullptr),
   _modlib_notify_ptr(nullptr),
@@ -130,12 +131,14 @@ void OmModHub::close()
   this->_psexec_progress_cb = nullptr;
   this->_psexec_result_cb = nullptr;
   this->_psexec_user_ptr = nullptr;
+
+  this->_loaded = false;
 }
 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-bool OmModHub::open(const OmWString& path)
+bool OmModHub::open(const OmWString& path, bool defer)
 {
   this->close();
 
@@ -163,6 +166,32 @@ bool OmModHub::open(const OmWString& path)
   this->_uuid = this->_xml.child(L"uuid").content();
   this->_title = this->_xml.child(L"title").content();
 
+  if(defer) {
+
+    this->_log(OM_LOG_OK, L"open", L"Defered loading");
+
+  } else {
+
+    if(!this->load())
+      return false;
+  }
+
+  this->_log(OM_LOG_OK, L"open", L"OK");
+
+  return true;
+}
+
+
+///
+///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+///
+bool OmModHub::load()
+{
+  if(!this->_xml.valid()) {
+    this->_log(OM_LOG_ERR, L"load", L"no definition file.");
+    return false;
+  }
+
   // lookup for a icon
   if(this->_xml.hasChild(L"icon")) {
 
@@ -176,7 +205,7 @@ bool OmModHub::open(const OmWString& path)
     if(hIc) {
       this->_icon_handle = hIc;
     } else {
-      this->_log(OM_LOG_WRN, L"open", L"application icon extraction failed.");
+      this->_log(OM_LOG_WRN, L"load", L"application icon extraction failed.");
     }
   }
 
@@ -280,7 +309,9 @@ bool OmModHub::open(const OmWString& path)
   if(this->_channel_list.size())
     this->selectChannel(0);
 
-  this->_log(OM_LOG_OK, L"open", L"OK");
+  this->_log(OM_LOG_OK, L"load", L"OK");
+
+  this->_loaded = true;
 
   return true;
 }

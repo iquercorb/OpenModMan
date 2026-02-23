@@ -156,7 +156,7 @@ bool OmModMan::init(const char* arg)
 
     for(size_t i = 0; i < path_ls.size(); ++i) {
 
-      if(OM_RESULT_OK != this->openHub(path_ls[i], false)) {
+      if(OM_RESULT_OK != this->openHub(path_ls[i], false, true)) {
 
         Om_dlgBox_okl(nullptr, L"Hub startup load", IDI_DLG_ERR, L"Startup Hub open failed",
                       path_ls[i], this->lastError());
@@ -804,7 +804,7 @@ OmResult OmModMan::createHub(const OmWString& path, const OmWString& name, bool 
 ///
 ///  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 ///
-OmResult OmModMan::openHub(const OmWString& path, bool select)
+OmResult OmModMan::openHub(const OmWString& path, bool select, bool defer)
 {
   this->_log(OM_LOG_OK, L"Manager.openHub", path);
 
@@ -820,7 +820,7 @@ OmResult OmModMan::openHub(const OmWString& path, bool select)
 
   OmModHub* ModHub = new OmModHub(this);
 
-  if(!ModHub->open(path)) {
+  if(!ModHub->open(path, defer)) {
     this->_error(L"openHub", ModHub->lastError());
     delete ModHub; return OM_RESULT_ERROR;
   }
@@ -878,6 +878,12 @@ void OmModMan::selectHub(int32_t index)
     this->_modlib_notify_enable(false);
     this->_netlib_notify_enable(false);
 
+    // Load Hub components
+    if(!this->_hub_list[index]->valid()) {
+      this->_log(OM_LOG_ERR, L"Manager.selectHub", L"invalid Hub: " + this->_hub_list[index]->home());
+      return;
+    }
+
     this->_active_hub = index;
 
     // enable library notifications
@@ -891,7 +897,6 @@ void OmModMan::selectHub(int32_t index)
     this->_netlib_notify_enable(false);
 
     this->_active_hub = -1;
-
   }
 }
 
