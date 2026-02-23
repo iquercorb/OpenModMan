@@ -489,11 +489,10 @@ void OmUiMan::deletePreset()
                     L"Delete the following Preset ?", ModPset->title()))
     return;
 
-  if(!ModHub->deletePreset(lv_sel)) {
+  if(OM_RESULT_OK != ModHub->deletePreset(lv_sel)) {
     // warns the user error occurred
     Om_dlgBox_okl(this->_hwnd, L"Mod Hub properties", IDI_DLG_ERR, L"Preset delete error",
                   L"Unable to delete Preset:",ModHub->lastError());
-    return;
   }
 
   // reload the Presets ListView
