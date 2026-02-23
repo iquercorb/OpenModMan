@@ -75,6 +75,13 @@ OmModMan::~OmModMan()
 ///
 bool OmModMan::init(const char* arg)
 {
+  #ifdef BUILD_PORTABLE
+
+  // For portable build keep home directory next to executable
+  this->_home = L".";
+
+  #else
+
   // Create application folder if does not exists
   wchar_t psz_path[MAX_PATH];
   SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, psz_path);
@@ -92,6 +99,8 @@ bool OmModMan::init(const char* arg)
       return false;
     }
   }
+
+  #endif
 
   // initialize log file
   OmWString log_path(this->_home + L"\\log.txt");

@@ -8,7 +8,7 @@ $AAP_REV =          "4";
 
 Write-Host "Copying x64 binary...";
 
-Copy-Item -Force "$PSScriptRoot\..\bin\64-bit\Release\OpenModMan.exe" -Destination "$PSScriptRoot\OpenModMan_x64\";
+Copy-Item -Force "$PSScriptRoot\..\bin\64-bit\Release\OpenModMan-p.exe" -Destination "$PSScriptRoot\OpenModMan_x64\";
 
 Write-Host "Copying x64 dlls...";
 
@@ -19,7 +19,7 @@ Copy-Item -Force "$PSScriptRoot\..\dll\64-bit\zlib1.dll" -Destination "$PSScript
 
 Write-Host "Copying x86 binary...";
 
-Copy-Item -Force "$PSScriptRoot\..\bin\32-bit\Release\OpenModMan.exe" -Destination "$PSScriptRoot\OpenModMan_x86\";
+Copy-Item -Force "$PSScriptRoot\..\bin\32-bit\Release\OpenModMan-p.exe" -Destination "$PSScriptRoot\OpenModMan_x86\";
 
 Write-Host "Copying x86 dlls...";
 
