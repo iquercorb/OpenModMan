@@ -80,6 +80,9 @@ void OmUiHelpAbt::_onInit()
   vers += L'.'; vers += std::to_wstring(OM_APP_REV);
   #endif
   vers += L" - " OM_APP_ARCH;
+  #ifdef BUILD_PORTABLE
+  vers += L" (Portable)";
+  #endif
   this->setItemText(IDC_SC_VERS, vers);
 
   OmWString date_auth = OM_APP_DATE L" - " OM_APP_AUTHOR;
