@@ -15,7 +15,7 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "OmBaseWin.h"
-#include <ShlObj.h>
+#include <shlobj.h>
 
 #ifdef DEBUG
 #include "OmUtilWin.h"
@@ -50,7 +50,7 @@ static inline void __cce_init()
 
     InitCommonControlsEx(&icce);
 
-    LoadLibrary(TEXT("Msftedit.dll"));
+    LoadLibrary(TEXT("msftedit.dll"));
 
     // we need to initialize only once per process
     __cce_initialized = true;
@@ -167,13 +167,13 @@ void OmDialog::open(bool show)
 
   this->_hwnd = CreateDialogParamW( this->_hins,
                                     MAKEINTRESOURCEW(this->id()),
-                                    (this->_parent)?this->_parent->_hwnd:nullptr,
+                                    (this->_parent) ? this->_parent->_hwnd : nullptr,
                                     reinterpret_cast<DLGPROC>(this->_wndproc),
                                     reinterpret_cast<LPARAM>(this));
 
   if(this->_hwnd != nullptr) {
 
-    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    SetWindowLongPtrW(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     if(this->_parent) {
       EnableWindow(this->_parent->_hwnd, false);
@@ -186,10 +186,11 @@ void OmDialog::open(bool show)
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
 
     #ifdef DEBUG
-    //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open (thread=: "<<GetCurrentThreadId()<<L")\n";
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::open (thread=: "<<GetCurrentThreadId()<<L")\n";
     #endif
 
   } else {
+
     #ifdef DEBUG
     int err = GetLastError();
     std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::open : "<<Om_getErrorStr(err)<<L"\n";
@@ -219,7 +220,7 @@ void OmDialog::modeless(bool show)
 
   if(this->_hwnd != nullptr) {
 
-    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    SetWindowLongPtrW(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     // Retrieve the associated dialog menu if exists
     this->_menu = GetMenu(this->_hwnd);
@@ -227,13 +228,14 @@ void OmDialog::modeless(bool show)
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
 
     #ifdef DEBUG
-    //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless (thread=: "<<GetCurrentThreadId()<<L")\n";
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::modeless (thread=: "<<GetCurrentThreadId()<<L")\n";
     #endif
 
   } else {
+
     #ifdef DEBUG
     int err = GetLastError();
-    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : "<<Om_getErrorStr(err)<<L"\n";
+    std::wcout << L"ERROR => OmDialog(ID="<<this->id()<<L")::modeless : Error "<<Om_getErrorStr(err)<<L"\n";
     #endif
   }
 }
@@ -253,7 +255,7 @@ void OmDialog::registered(const char* classname, bool show)
     return;
 
   // register window class
-  WNDCLASS	wc = {};
+  WNDCLASS wc = {};
   wc.style = CS_HREDRAW|CS_VREDRAW;
   wc.cbWndExtra = DLGWINDOWEXTRA;
   wc.hInstance = this->_hins;
@@ -273,7 +275,7 @@ void OmDialog::registered(const char* classname, bool show)
 
   if(this->_hwnd != nullptr) {
 
-    SetWindowLongPtr(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    SetWindowLongPtrW(this->_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
     // disable the TOPMOST style, seam to be set by default since WINVER >= 0x0601
     SetWindowPos(this->_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
@@ -282,11 +284,19 @@ void OmDialog::registered(const char* classname, bool show)
     this->_menu = GetMenu(this->_hwnd);
 
     if(show) ShowWindow(this->_hwnd, SW_SHOW);
+
+    #ifdef DEBUG
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered (thread=: "<<GetCurrentThreadId()<<L")\n";
+    #endif
+
+  } else {
+
+    #ifdef DEBUG
+    int err = GetLastError();
+    std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered : Error " << Om_getErrorStr(err) << L"\n";
+    #endif
   }
 
-  #ifdef DEBUG
-  //std::wcout << L"DEBUG => OmDialog(ID="<<this->id()<<L")::registered (thread=: "<<GetCurrentThreadId()<<L")\n";
-  #endif
 }
 
 
@@ -446,15 +456,15 @@ bool OmDialog::sendMessage(MSG* msg) const
 void OmDialog::loopMessage() const
 {
   MSG msg;
-  while(GetMessage(&msg, nullptr, 0, 0) > 0) {
+  while(GetMessageW(&msg, nullptr, 0, 0) > 0) {
 
     if(!sendMessage(&msg)) {
       TranslateMessage(&msg);
-      DispatchMessage(&msg);
+      DispatchMessageW(&msg);
     }
 
     if(this->_accel)
-      TranslateAccelerator(this->_hwnd, this->_accel, &msg);
+      TranslateAcceleratorW(this->_hwnd, this->_accel, &msg);
   }
 }
 
@@ -840,10 +850,10 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
   OmDialog* self;
 
   if(msg == WM_INITDIALOG) {
-    SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(lParam));
     self = reinterpret_cast<OmDialog*>(lParam);
   } else {
-    self = reinterpret_cast<OmDialog*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    self = reinterpret_cast<OmDialog*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
   }
 
   if(self) {
@@ -857,22 +867,26 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
       self->_active = (LOWORD(wParam) != WA_INACTIVE);
       #ifdef DEBUG
         if(LOWORD(wParam) == WA_INACTIVE) {
-          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_INACTIVE\n";
+          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_INACTIVE\n";
         } else {
-          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_ACTIVE\n";
+          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WA_ACTIVE\n";
         }
       #endif
       break; // case WM_ACTIVATE:
 
     case WM_INITDIALOG:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_INITDIALOG\n";
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_INITDIALOG\n";
       #endif
       self->_init = true;
       return 1; // case WM_INITDIALOG:
 
     case WM_SHOWWINDOW:
       if(wParam) { // SHOW
+
+        #ifdef DEBUG
+        std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_SHOWWINDOW\n";
+        #endif
 
         // Get the initial window size and store it as min size
         GetWindowRect(hwnd, reinterpret_cast<LPRECT>(&self->_recw));
@@ -975,6 +989,9 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_CLOSE:
       self->_onClose();
+      #ifdef DEBUG
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_CLOSE\n";
+      #endif // DEBUG
       return 0; // case WM_CLOSE
 
     case UWM_QUIT: //< Custom QUIT message to destroy window from any thread
@@ -990,7 +1007,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
           self->_modal = false;
         } else {
           #ifdef DEBUG
-          //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : DestroyWindow failed\n";
+          std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : DestroyWindow failed\n";
           #endif // DEBUG
         }
 
@@ -1001,7 +1018,7 @@ INT_PTR CALLBACK OmDialog::_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_DESTROY:
       #ifdef DEBUG
-      //std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DESTROY\n";
+      std::cout << "DEBUG => OmDialog(ID=" << (int)self->id() << ")::_wndproc : WM_DESTROY\n";
       #endif
       return 0;
     }

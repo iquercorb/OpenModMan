@@ -19,7 +19,7 @@
 #include "OmBaseUi.h"
 
 #include "OmBaseWin.h"
-  #include <ShlObj.h>
+  #include <shlobj.h>
 
 #include "OmBaseApp.h"
 
@@ -67,6 +67,10 @@ long OmUiHelpAbt::id() const
 ///
 void OmUiHelpAbt::_onInit()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiHelpAbt::_onInit\n";
+  #endif
+
   // set dialog icon
   this->setIcon(Om_getResIcon(IDI_APP,2),Om_getResIcon(IDI_APP,1));
 
@@ -113,6 +117,10 @@ void OmUiHelpAbt::_onInit()
 ///
 void OmUiHelpAbt::_onResize()
 {
+  #ifdef DEBUG
+  std::cout << "DEBUG => OmUiHelpAbt::_onResize\n";
+  #endif
+
   int32_t half_w = static_cast<int32_t>(this->cliWidth() * 0.5f);
   int32_t base_y = 0;
 

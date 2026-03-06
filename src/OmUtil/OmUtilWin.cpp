@@ -285,8 +285,10 @@ HBITMAP Om_getResIconPremult(unsigned id, unsigned size, HINSTANCE hins)
   if(__internal_paico[db_id][size] == nullptr) {
     HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
     HICON hIc = static_cast<HICON>(LoadImage(hInstance,MAKEINTRESOURCE(id),IMAGE_ICON,w,w,0));
+
     ICONINFO IconInfo;
     GetIconInfo(hIc, &IconInfo);
+    DeleteObject(hIc);
 
     uint8_t* bgra = nullptr;
     uint8_t* mask = nullptr;
@@ -294,17 +296,16 @@ HBITMAP Om_getResIconPremult(unsigned id, unsigned size, HINSTANCE hins)
     HBITMAP hBmRgb = (HBITMAP)CopyImage(IconInfo.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
     HBITMAP hBmMsk = (HBITMAP)CopyImage(IconInfo.hbmMask, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 
-    DeleteObject(hIc);
     // convert pixel data to premultiplied alpha
     HDC hDc = CreateCompatibleDC(nullptr);
     BITMAPINFO BmInfo = {}; BmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 
-    // 1. get Bitmap Info
+    // 1. get Bitmap RGB Info
     GetDIBits(hDc, hBmRgb, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
     bgra = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
     GetDIBits(hDc, hBmRgb, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
 
-    // 1. get Bitmap Info
+    // 2. get Bitmap Mask Info
     GetDIBits(hDc, hBmMsk, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
     mask = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
     GetDIBits(hDc, hBmMsk, 0, BmInfo.bmiHeader.biHeight, mask, &BmInfo, DIB_RGB_COLORS);

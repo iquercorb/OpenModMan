@@ -20,8 +20,8 @@
 #define WINVER          0x0601  //< _WIN32_WINNT_WIN7
 #define NTDDI_VERSION   0x06010000  //< NTDDI_WIN7
 
-#include <Windows.h>
-#include <CommCtrl.h>
+#include <windows.h>
+#include <commctrl.h>
 
 /// \brief Thread run.
 ///

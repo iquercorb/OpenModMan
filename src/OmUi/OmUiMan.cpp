@@ -21,7 +21,7 @@
 #include "OmBaseUi.h"
 
 #include "OmBaseWin.h"
-  #include <UxTheme.h>
+  #include <uxtheme.h>
 
 #include "OmBaseApp.h"
 
@@ -1884,7 +1884,7 @@ void OmUiMan::_onInit()
   this->setIcon(Om_getResIcon(IDI_APP, 2), Om_getResIcon(IDI_APP, 1));
 
   // Defines fonts for Mod Hub ComboBox
-  HFONT hFt = Om_createFont(19, 200, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(16, 200, L"Ms Shell Dlg");
   this->msgItem(IDC_CB_HUB, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   this->_createTooltip(IDC_CB_HUB,    L"Select active Mod Hub");

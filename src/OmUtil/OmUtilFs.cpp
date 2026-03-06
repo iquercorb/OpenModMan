@@ -18,8 +18,8 @@
 
 
 #include "OmBaseWin.h"        //< WinAPI
-#include <ShlwApi.h>          //< PathIsDirectoryEmptyW
-#include <ShlObj.h>           //< SHCreateDirectoryExW
+#include <shlwapi.h>          //< PathIsDirectoryEmptyW
+#include <shlobj.h>           //< SHCreateDirectoryExW
 
 #include "OmUtilWin.h"
 

@@ -19,8 +19,8 @@
 #include "OmBaseUi.h"
 
 #include "OmBaseWin.h"
-  #include <UxTheme.h>
-  #include <RichEdit.h>
+  #include <uxtheme.h>
+  #include <richedit.h>
 
 #include "OmModMan.h"
 #include "OmModPack.h"

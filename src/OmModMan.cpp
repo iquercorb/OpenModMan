@@ -17,7 +17,7 @@
 #include <ctime>
 
 #include "OmBaseWin.h"
-#include <ShlObj.h>
+#include <shlobj.h>
 
 #include "OmBaseUi.h"
 #include "OmBaseApp.h"

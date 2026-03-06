@@ -17,7 +17,7 @@
 #include "OmBase.h"
 
 #include "OmBaseWin.h"
-  #include <UxTheme.h>
+  #include <uxtheme.h>
 //#include <ShlObj.h>
 
 #include "OmBaseUi.h"

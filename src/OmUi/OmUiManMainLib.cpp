@@ -20,7 +20,7 @@
 #include "OmBaseUi.h"
 
 #include "OmBaseWin.h"
-  #include <UxTheme.h>
+  #include <uxtheme.h>
   #include <vssym32.h>      //< for custom draw
 
 #include "OmModMan.h"

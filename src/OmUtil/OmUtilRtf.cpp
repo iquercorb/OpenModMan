@@ -18,7 +18,7 @@
 #include "OmUtilRtf.h"        //< OM_MD2RTF_CTX
 
 #include "OmBaseWin.h"        //< SendMessage etc.
-  #include <RichEdit.h>       //< EM_STREAMIN, SF_RTF, etc.
+  #include <richedit.h>       //< EM_STREAMIN, SF_RTF, etc.
 
 #include "md4c-rtf/md4c-rtf.h"
 

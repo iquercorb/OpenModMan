@@ -18,8 +18,8 @@
 
 #include "OmBaseWin.h"
 #include <commctrl.h>
-#include <ShlObj.h>           //< BROWSEINFOW, etc.
-#include <ShlWApi.h>          //< PathFileExistW, etc.
+#include <shlobj.h>           //< BROWSEINFOW, etc.
+#include <shlwapi.h>          //< PathFileExistW, etc.
 
 #include "OmBaseUi.h"
 #include "OmBaseApp.h"        //< OM_APP_NAME, etc.

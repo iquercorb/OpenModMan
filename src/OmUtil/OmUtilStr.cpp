@@ -19,7 +19,7 @@
 #include <algorithm>          //< std::replace
 
 #include "OmBaseWin.h"        //< WinAPI
-#include <ShlWApi.h>          //< StrFromKBSizeW, etc.
+#include <shlwapi.h>          //< StrFromKBSizeW, etc.
 
 #define READ_BUF_SIZE 524288
 

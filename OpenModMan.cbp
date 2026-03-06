@@ -211,7 +211,7 @@
 			<Add library="uuid" />
 			<Add library="oleaut32" />
 			<Add library="ws2_32" />
-			<Add library="Msimg32" />
+			<Add library="msimg32" />
 		</Linker>
 		<Unit filename="3rdparty/curl/curl.h" />
 		<Unit filename="3rdparty/curl/curlver.h" />

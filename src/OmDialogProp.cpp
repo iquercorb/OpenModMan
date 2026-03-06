@@ -15,7 +15,7 @@
   along with Open Mod Manager. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "OmBaseWin.h"
-#include <UxTheme.h>        //< ETDT_ENABLETAB
+#include <uxtheme.h>        //< ETDT_ENABLETAB
 
 #include "OmBaseUi.h"
 
