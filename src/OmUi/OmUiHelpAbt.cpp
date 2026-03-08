@@ -122,7 +122,7 @@ void OmUiHelpAbt::_onResize()
   #endif
 
   int32_t half_w = static_cast<int32_t>(this->cliWidth() * 0.5f);
-  int32_t base_y = 0;
+  int32_t base_y = 10;
 
   // the white background
   this->_setItemPos(IDC_SC_WHITE, 0, 0, this->cliWidth(), this->cliHeight()-40, true);
@@ -150,7 +150,7 @@ void OmUiHelpAbt::_onResize()
   int32_t btn_w = 116;
   this->_setItemPos(IDC_BC_DONATE, half_w - (btn_w / 2), base_y+75, btn_w, 23, true);
 
-  this->_setItemPos(IDC_EC_RESUL, 10, base_y+120, this->cliWidth()-20, this->cliHeight()-170, true);
+  this->_setItemPos(IDC_EC_RESUL, 10, base_y+120, this->cliWidth()-20, this->cliHeight()-180, true);
 
   // ---- separator
   this->_setItemPos(IDC_SC_SEPAR, 8, this->cliHeight()-40, this->cliWidth()-16, 1, true);

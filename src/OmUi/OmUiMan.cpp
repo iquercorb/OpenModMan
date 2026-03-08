@@ -1884,7 +1884,7 @@ void OmUiMan::_onInit()
   this->setIcon(Om_getResIcon(IDI_APP, 2), Om_getResIcon(IDI_APP, 1));
 
   // Defines fonts for Mod Hub ComboBox
-  HFONT hFt = Om_createFont(16, 200, L"Ms Shell Dlg");
+  HFONT hFt = Om_createFont(15, 200, L"Ms Shell Dlg");
   this->msgItem(IDC_CB_HUB, WM_SETFONT, reinterpret_cast<WPARAM>(hFt), true);
 
   this->_createTooltip(IDC_CB_HUB,    L"Select active Mod Hub");
@@ -2088,7 +2088,7 @@ void OmUiMan::_onResize()
 
 
   // Mod Hubs ComboBox
-  this->_setItemPos(IDC_CB_HUB, 5, 2, this->cliWidth()-10 , 26, true);
+  this->_setItemPos(IDC_CB_HUB, 5, 3, this->cliWidth()-10 , 24, true);
 
   int32_t main_y = this->_lv_chn_show ? this->_lv_chn_span + RSIZE_SEP_H : RSIZE_TOP_H;
   int32_t foot_y = this->_ui_ovw_show ? this->cliHeight() - this->_ui_ovw_span : this->cliHeight() - RSIZE_BOT_H;

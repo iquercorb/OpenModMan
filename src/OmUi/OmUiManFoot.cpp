@@ -178,7 +178,7 @@ void OmUiManFoot::_onShow()
 void OmUiManFoot::_onResize()
 {
   // Main Tab Control
-  this->_setItemPos(IDC_TC_MAIN, -1, -1, this->width()+2, this->height()+2, true);
+  this->_setItemPos(IDC_TC_MAIN, 0, 0, this->width(), this->height(), true);
 
   // Resize page dialogs according IDC_TC_MAIN
   if(this->_tab_dialog.size()) {
