@@ -202,40 +202,36 @@ HBITMAP Om_getResImagePremult(unsigned id, HINSTANCE hins)
     HINSTANCE hInstance = hins ? hins : GetModuleHandle(nullptr);
     HBITMAP hBm = static_cast<HBITMAP>(LoadImageW(hInstance,MAKEINTRESOURCEW(id),IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION));
 
-    uint8_t* bgra = nullptr;
-    HBITMAP hBmPa = (HBITMAP)CopyImage(hBm, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-    // delete source Bitmap
-    DeleteObject(hBm);
-
     // convert pixel data to premultiplied alpha
     HDC hDc = CreateCompatibleDC(nullptr);
     BITMAPINFO BmInfo = {}; BmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 
-    // 1. get Bitmap Info
-    GetDIBits(hDc, hBmPa, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
-    bgra = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
-    GetDIBits(hDc, hBmPa, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+    // get Bitmap RGB Info
+    GetDIBits(hDc, hBm, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
 
     // treat only 32 bpp images
     if(BmInfo.bmiHeader.biBitCount == 32) {
-      if(bgra) {
-        // Convert to premultiplied alpha
-        for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
-          bgra[i+0] = static_cast<uint8_t>(bgra[i+0] * bgra[i+3] / 255);
-          bgra[i+1] = static_cast<uint8_t>(bgra[i+1] * bgra[i+3] / 255);
-          bgra[i+2] = static_cast<uint8_t>(bgra[i+2] * bgra[i+3] / 255);
-        }
-        // 3. set replace pixels data into Bitmap
-        SetDIBits(hDc, hBmPa, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+
+      // get Bitmap object
+      BITMAP Bm;
+      GetObject(hBm, sizeof(Bm), &Bm);
+
+      // get pointer to pixel data
+      uint8_t* data = reinterpret_cast<uint8_t*>(Bm.bmBits);
+
+      // Convert to premultiplied alpha
+      for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
+        float alpha = data[i+3] / 255.0f;
+        data[i+0] *= alpha;
+        data[i+1] *= alpha;
+        data[i+2] *= alpha;
       }
+
     }
 
-    // free pixel buffer
-    if(bgra) free(bgra);
-
     ReleaseDC(nullptr, hDc);
-    __internal_pabmp[db_id] = hBmPa;
+
+    __internal_pabmp[db_id] = hBm;
   }
 
   return __internal_pabmp[db_id];
@@ -288,52 +284,41 @@ HBITMAP Om_getResIconPremult(unsigned id, unsigned size, HINSTANCE hins)
 
     ICONINFO IconInfo;
     GetIconInfo(hIc, &IconInfo);
-    DeleteObject(hIc);
 
-    uint8_t* bgra = nullptr;
-    uint8_t* mask = nullptr;
-
-    HBITMAP hBmRgb = (HBITMAP)CopyImage(IconInfo.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-    HBITMAP hBmMsk = (HBITMAP)CopyImage(IconInfo.hbmMask, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+    HBITMAP hBm = (HBITMAP)CopyImage(IconInfo.hbmColor, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 
     // convert pixel data to premultiplied alpha
     HDC hDc = CreateCompatibleDC(nullptr);
     BITMAPINFO BmInfo = {}; BmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 
-    // 1. get Bitmap RGB Info
-    GetDIBits(hDc, hBmRgb, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
-    bgra = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
-    GetDIBits(hDc, hBmRgb, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
-
-    // 2. get Bitmap Mask Info
-    GetDIBits(hDc, hBmMsk, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
-    mask = static_cast<uint8_t*>(Om_alloc(BmInfo.bmiHeader.biSizeImage));
-    GetDIBits(hDc, hBmMsk, 0, BmInfo.bmiHeader.biHeight, mask, &BmInfo, DIB_RGB_COLORS);
+    // get Bitmap RGB Info
+    GetDIBits(hDc, hBm, 0, 0, nullptr, &BmInfo, DIB_RGB_COLORS);
 
     // treat only 32 bpp images
     if(BmInfo.bmiHeader.biBitCount == 32) {
-      if(bgra && mask) {
-        // Convert to premultiplied alpha
-        for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
-          bgra[i+3] = (bgra[i+3] ^ mask[i]) ? bgra[i+3] : ~mask[i];
-          bgra[i+0] = static_cast<uint8_t>(bgra[i+0] * bgra[i+3] / 255);
-          bgra[i+1] = static_cast<uint8_t>(bgra[i+1] * bgra[i+3] / 255);
-          bgra[i+2] = static_cast<uint8_t>(bgra[i+2] * bgra[i+3] / 255);
-        }
-        // 3. set replace pixels data into Bitmap
-        SetDIBits(hDc, hBmRgb, 0, BmInfo.bmiHeader.biHeight, bgra, &BmInfo, DIB_RGB_COLORS);
+
+      // get Bitmap object
+      BITMAP Bm;
+      GetObject(hBm, sizeof(Bm), &Bm);
+
+      // get pointer to pixel data
+      uint8_t* data = reinterpret_cast<uint8_t*>(Bm.bmBits);
+
+      // Convert to premultiplied alpha
+      for(size_t i = 0; i < BmInfo.bmiHeader.biSizeImage; i += 4) {
+        float alpha = data[i+3] / 255.0f;
+        data[i+0] *= alpha;
+        data[i+1] *= alpha;
+        data[i+2] *= alpha;
       }
+
     }
 
-    // free pixel buffer
-    if(bgra) Om_free(bgra);
-    if(mask) Om_free(mask);
-
-    // free unused mask buffer
-    DeleteObject(hBmMsk);
+    DeleteObject(hIc);
 
     ReleaseDC(nullptr, hDc);
-    __internal_paico[db_id][size] = hBmRgb;
+
+    __internal_paico[db_id][size] = hBm;
   }
 
   return __internal_paico[db_id][size];
